@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.6 2004/05/31 23:34:37 steve Exp $"
+#ident "$Id: net_func.cc,v 1.7 2005/03/18 02:56:03 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -26,52 +26,30 @@
 # include  "PExpr.h"
 # include  <iostream>
 
-static unsigned count_def_pins(const NetFuncDef*def)
-{
-      assert(def->return_sig());
-
-      unsigned sum = def->return_sig()->pin_count();
-      for (unsigned idx = 0 ;  idx < def->port_count() ;  idx += 1)
-	    sum += def->port(idx)->pin_count();
-
-      return sum;
-}
-
+/*
+ * To make a NetUserFunc device, make as many pins as there are ports
+ * in the function. Get the port count from the function definition,
+ * which accounts for all the inputs, plus one for the phantom output
+ * that is the result.
+ */
 NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d)
-: NetNode(s, n, count_def_pins(d->func_def())),
+: NetNode(s, n, d->func_def()->port_count()+1),
   def_(d)
 {
-      NetFuncDef*def = def_->func_def();
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(def_->basename(), 0);
 
-      unsigned port_wid = port_width(0);
-      for (unsigned idx = 0 ;  idx < port_wid ;  idx += 1) {
-	    pin(idx).set_dir(Link::OUTPUT);
-	    pin(idx).set_name(def_->basename(), idx);
-      }
+      for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
-      unsigned pin_base = port_wid;
-      for (unsigned idx = 1 ;  idx < port_count() ;  idx += 1) {
-
-	    const NetNet*port_sig = def->port(idx-1);
-	    unsigned bits = port_width(idx);
-	    for (unsigned bit = 0; bit < bits; bit += 1) {
-		  pin(pin_base+bit).set_dir(Link::INPUT);
-		  pin(pin_base+bit).set_name(port_sig->name(), bit);
-		  pin(pin_base+bit).drive0(Link::HIGHZ);
-		  pin(pin_base+bit).drive1(Link::HIGHZ);
-	    }
-
-	    pin_base += bits;
+	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name(perm_string::literal("D"), idx-1);
+	    pin(idx).drive0(Link::HIGHZ);
+	    pin(idx).drive1(Link::HIGHZ);
       }
 }
 
 NetUserFunc::~NetUserFunc()
 {
-}
-
-unsigned NetUserFunc::port_count() const
-{
-      return def_->func_def()->port_count() + 1;
 }
 
 unsigned NetUserFunc::port_width(unsigned port) const
@@ -82,43 +60,15 @@ unsigned NetUserFunc::port_width(unsigned port) const
       if (port == 0) {
 	    const NetNet*sig = def->return_sig();
 	    assert(sig);
-	    return sig->pin_count();
+	    return sig->vector_width();
       }
 
       port -= 1;
       assert(port < def->port_count());
       const NetNet*port_sig = def->port(port);
 
-      return port_sig->pin_count();
+      return port_sig->vector_width();
 }
-
-Link& NetUserFunc::port_pin(unsigned port, unsigned idx)
-{
-      NetFuncDef*def = def_->func_def();
-      unsigned pin_base = 0;
-      const NetNet*port_sig;
-
-      if (port == 0)
-	    return pin(idx);
-
-      port_sig = def->return_sig();
-      pin_base += port_sig->pin_count();
-      port -= 1;
-
-      assert(port < def->port_count());
-
-      for (unsigned port_idx = 0 ;  port_idx < port ;  port_idx += 1) {
-	    port_sig = def->port(port_idx);
-	    pin_base += port_sig->pin_count();
-      }
-
-      port_sig = def->port(port);
-      assert(idx < port_sig->pin_count());
-      assert((pin_base+idx) < pin_count());
-
-      return pin(pin_base+idx);
-}
-
 
 const NetScope* NetUserFunc::def() const
 {
@@ -164,6 +114,9 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.7  2005/03/18 02:56:03  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.6  2004/05/31 23:34:37  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.144 2005/03/12 06:43:36 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.145 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1012,28 +1012,25 @@ bool dll_target::net_function(const NetUserFunc*net)
 
 	/* Save information about the ports in the ivl_lpm_s
 	   structure. Note that port 0 is the return value. */
-      obj->u_.ufunc.ports = net->port_count();
-      obj->u_.ufunc.port_wid = new unsigned[net->port_count()];
-      for (unsigned idx = 0 ;  idx < obj->u_.ufunc.ports ;  idx += 1)
-	    obj->u_.ufunc.port_wid[idx] = net->port_width(idx);
+      obj->u_.ufunc.ports = net->pin_count();
+
+      assert(net->pin_count() >= 1);
+      obj->u_.ufunc.width = net->port_width(0);
 
 	/* Now collect all the pins and connect them to the nexa of
 	   the net. The output pins have strong drive, and the
 	   remaining input pins are HiZ. */
 
-      unsigned pin_count = net->pin_count();
-      obj->u_.ufunc.pins = new ivl_nexus_t[pin_count];
+      obj->u_.ufunc.pins = new ivl_nexus_t[net->pin_count()];
 
-      for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 	    ivl_nexus_t nn = (ivl_nexus_t)nex->t_cookie();
 	    assert(nn);
 
 	    obj->u_.ufunc.pins[idx] = nn;
-	    ivl_drive_t drive = idx < obj->u_.ufunc.port_wid[0]
-		  ? IVL_DR_STRONG
-		  : IVL_DR_HiZ;
+	    ivl_drive_t drive = idx == 0 ? IVL_DR_STRONG : IVL_DR_HiZ;
 	    nexus_lpm_add(obj->u_.ufunc.pins[idx], obj, idx, drive, drive);
       }
 
@@ -2136,6 +2133,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.145  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.144  2005/03/12 06:43:36  steve
  *  Update support for LPM_MOD.
  *

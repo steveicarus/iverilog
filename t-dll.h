@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.122 2005/02/19 02:43:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.123 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -362,7 +362,7 @@ struct ivl_lpm_s {
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
 		  unsigned ports;
-		  unsigned *port_wid;
+		  unsigned width;
 		  ivl_nexus_t*pins;
 	    } ufunc;
       } u_;
@@ -685,6 +685,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.123  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.122  2005/02/19 02:43:39  steve
  *  Support shifts and divide.
  *

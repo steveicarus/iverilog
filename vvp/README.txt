@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.60 2005/03/09 05:52:04 steve Exp $
+ *  $Id: README.txt,v 1.61 2005/03/18 02:56:04 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -609,8 +609,26 @@ STRUCTURAL FUNCTION CALLS:
 
 The .ufunc statement defines a call to a user defined function.
 
-	<label> .ufunc ;
+	<label> .ufunc <flabel>, <wid>, <isymbols> ( <psymbols> ) <rsymbol> ;
 
+The <flabel> is the code label for the first instruction of the
+function implementation. This is code that the simulator will branch
+to.
+
+The <wid> is the width of the output vector in bits.
+
+The <isymbols> is a list of net symbols for each of the inputs to the
+function. These are points in the net, and the ufunc device watches
+these nets for input changes.
+
+The <psymbols> list is exactly the same size as the <isymbols>
+list. The <psymbols> are variables that represent the input ports for
+the function. The ufunc performs an assignment to these variables
+before calling the function.
+
+Finally, the <rsymbol> is the variable within the function where the
+result will be found when the function code ends. This value is picked
+up and propagated to the output of the functor.
 
 THREAD STATEMENTS:
 

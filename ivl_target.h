@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.146 2005/03/09 04:53:40 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.147 2005/03/18 02:56:03 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -866,6 +866,25 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * ivl_lpm_data(0) nexus is the vector input, and the ivl_lpm_data(1)
  * the shift distance. The vector input is the same width as the
  * output, but the distance has its own width.
+ *
+ * - User Function Call (IVL_LPM_UFUNC)
+ * This device is special as it represents a call to a user defined
+ * function (behavioral code) within a netlist. The inputs to the
+ * function are connected to the net, as is the output.
+ *
+ * The function definition is associated with a scope, and the
+ * ivl_lpm_define fuction returns the scope that is that definition.
+ * See the ivl_scope_* fuctions for how to get at the actual
+ * definition.
+ *
+ * As with many LPM nodes, the ivl_lpm_q function returns the nexus
+ * for the signal function return value. The width of this nexus must
+ * exactly match the width of the device from ivl_lpm_width.
+ *
+ * The ivl_lpm_data function retrives the nexa for all the input
+ * ports. The ivl_lpm_size function returns the number of inputs for
+ * the device, and the ivl_lpm_data() function index argument selects
+ * the port to retrieve. Each port is sized independently.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -891,14 +910,19 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB */
+     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
+     IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
+#if 0
   /* IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
+#endif
+#if 0
   /* IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
+#endif
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_RAM
      IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
@@ -906,7 +930,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT */
+  /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
@@ -1556,6 +1580,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.147  2005/03/18 02:56:03  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.146  2005/03/09 04:53:40  steve
  *  Generate code for new form of memory ports.
  *

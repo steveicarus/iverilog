@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.337 2005/03/12 06:43:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.338 2005/03/18 02:56:03 steve Exp $"
 #endif
 
 /*
@@ -960,7 +960,8 @@ class NetReplicate  : public NetNode {
 
 /*
  * This node represents the call of a user defined function in a
- * structural context.
+ * structural context. The pin count is the same as the port count,
+ * with pin0 the return value.
  */
 class NetUserFunc  : public NetNode {
 
@@ -968,9 +969,7 @@ class NetUserFunc  : public NetNode {
       NetUserFunc(NetScope*s, perm_string n, NetScope*def);
       ~NetUserFunc();
 
-      unsigned port_count() const;
       unsigned port_width(unsigned port) const;
-      Link& port_pin(unsigned port, unsigned idx);
 
       const NetScope* def() const;
 
@@ -3417,6 +3416,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.338  2005/03/18 02:56:03  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.337  2005/03/12 06:43:36  steve
  *  Update support for LPM_MOD.
  *

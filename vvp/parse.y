@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.69 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: parse.y,v 1.70 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -171,11 +171,11 @@ statement
      bits in the symbols list change. */
 
 	| T_LABEL K_UFUNC T_SYMBOL ',' T_NUMBER ',' symbols
-	  '(' symbols ')' symbols ';'
+	  '(' symbols ')' symbol ';'
 		{ compile_ufunc($1, $3, $5,
 				$7.cnt, $7.vect,
 				$9.cnt, $9.vect,
-				$11.cnt, $11.vect); }
+				$11); }
 
   /* Resolver statements are very much like functors. They are
      compiled to functors of a different mode. */
@@ -679,6 +679,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.70  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.69  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

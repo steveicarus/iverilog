@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.65 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: compile.h,v 1.66 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -161,11 +161,14 @@ extern void compile_param_string(char*label, char*name,
 
 /*
  * This function schedules a lookup of an indexed label. The ref
- * points to the vvp_ipoint_t that receives the result. The result may
+ * points to the vvp_net_t that receives the result. The result may
  * be assigned later, if the symbol is defined later in the source
  * file, so the memory that ref points to must persist.
+ *
+ * The text for the label will be deleted by this function, or the
+ * cleanup that completes the binding.
  */
-extern void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx);
+extern void functor_ref_lookup(vvp_net_t**ref, char*lab);
 
 /*
  * This function schedules a lookup of the labeled instruction. The
@@ -212,7 +215,7 @@ extern void compile_memory_init(char *memid, unsigned idx, long val);
 extern void compile_ufunc(char*label, char*code, unsigned wid,
 			  unsigned argc, struct symb_s*argv,
 			  unsigned portc, struct symb_s*portv,
-			  unsigned retc, struct symb_s*retv);
+			  struct symb_s retv);
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -297,6 +300,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.66  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.65  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

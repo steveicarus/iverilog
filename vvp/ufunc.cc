@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.5 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: ufunc.cc,v 1.6 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -39,34 +39,65 @@
 #include <windows.h>
 #endif
 
-ufunc_core::ufunc_core(unsigned ow, vvp_ipoint_t ob, vvp_ipoint_t*op,
-		       unsigned np, vvp_ipoint_t*p,
-		       vvp_code_t start_address,
-		       struct __vpiScope*run_scope)
-: owid_(ow), obase_(ob), oports_(op), nports_(np), ports_(p)
+ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
+		       unsigned nports, vvp_net_t**ports,
+		       vvp_code_t sa, struct __vpiScope*run_scope,
+		       char*result_label)
 {
+      owid_ = owid;
+      onet_ = ptr;
+      nports_ = nports;
+      ports_ = ports;
+      port_values_ = new vvp_vector4_t[nports];
+      code_ = sa;
       thread_ = 0;
       scope_ = run_scope;
-      code_ = start_address;
 
-      ibits_ = new unsigned char[(nports_+3) / 4];
-      memset(ibits_, 0xaa, (nports_+3) / 4);
+      functor_ref_lookup(&result_, result_label);
 }
 
 ufunc_core::~ufunc_core()
 {
-      delete[] ports_;
+      delete[]port_values_;
 }
 
-void ufunc_core::set_bit(unsigned port_idx, unsigned val)
+/*
+ * This method is called by the %fork_ufunc function to prepare the
+ * input variables of the function for execution. The method copies
+ * the input values collected by the core to the variables.
+ */
+void ufunc_core::assign_bits_to_ports(void)
 {
-      unsigned idx = port_idx / 4;
-      unsigned pp  = port_idx % 4;
+      for (unsigned idx = 0 ; idx < nports_ ;  idx += 1) {
+	    vvp_net_t*net = ports_[idx];
+	    vvp_net_ptr_t pp (net, 0);
+	    net->fun->recv_vec4(pp, port_values_[idx]);
+      }
+}
 
-      static const unsigned char mask[4] = {0xfc, 0xf3, 0xcf, 0x3f};
+/*
+ * This method is called by the %join_ufunc instruction to copy the
+ * result from the return code variable and deliver it to the output
+ * of the functor, back into the netlist.
+ */
+void ufunc_core::finish_thread(vthread_t thr)
+{
+      thread_ = 0;
 
-      ibits_[idx] &= mask[pp];
-      ibits_[idx] |= (val&3) << pp*2;
+      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(result_->fun);
+
+      vvp_send_vec4(onet_->out, sig->vec4_value());
+}
+
+/*
+ * The recv_vec4 methods of the input functors call this to assign the
+ * input value to the port of the functor. I save the input value and
+ * arrange for the function to be called.
+ */
+void ufunc_core::recv_vec4_from_inputs(unsigned port, vvp_vector4_t bit)
+{
+      assert(port < nports_);
+      port_values_[port] = bit;
 
       if (thread_ == 0) {
 	    thread_ = vthread_new(code_, scope_);
@@ -74,100 +105,43 @@ void ufunc_core::set_bit(unsigned port_idx, unsigned val)
       }
 }
 
-static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
-
-void ufunc_core::assign_bits_to_ports(void)
+ufunc_input_functor::ufunc_input_functor(ufunc_core*c, unsigned base)
+: core_(c), port_base_(base)
 {
-      for (unsigned idx = 0 ;  idx < nports_ ;  idx += 1) {
-	    unsigned bit_val = ibits_[idx/4] >> (idx%4)*2;
-	    bit_val &= 3;
-
-	    functor_set(ports_[idx], bit_val, strong_values[bit_val], true);
-      }
 }
 
-void ufunc_core::finish_thread(vthread_t thr)
+ufunc_input_functor::~ufunc_input_functor()
 {
-      assert(thread_ == thr);
-      thread_ = 0;
-
-      for (unsigned idx = 0 ;  idx < owid_ ;  idx += 1) {
-	    unsigned val = functor_get(oports_[idx]);
-	    vvp_ipoint_t ptr = ipoint_index(obase_, idx);
-	    functor_set(ptr, val, strong_values[val], false);
-      }
 }
 
-/*
- * There is an instance of ufunc_output_functor_s for each output bit
- * of the function. This is the functor that passes the output bits to
- * the rest of the design. The functor simply puts its input to its
- * output.
- */
-struct ufunc_output_functor_s  : public functor_s {
-      void set(vvp_ipoint_t, bool push, unsigned val, unsigned str = 0);
-};
-
-void ufunc_output_functor_s::set(vvp_ipoint_t, bool push, unsigned
-				 val, unsigned str)
+void ufunc_input_functor::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
-      put_oval(val, push);
-}
-
-struct ufunc_input_functor_s  : public functor_s {
-      void set(vvp_ipoint_t, bool push, unsigned val, unsigned str = 0);
-
-      unsigned core_base_;
-      ufunc_core*core_;
-};
-
-void ufunc_input_functor_s::set(vvp_ipoint_t ptr, bool,
-				unsigned val, unsigned str)
-{
-      unsigned pp = ipoint_port(ptr);
-      core_->set_bit(core_base_+pp, val);
+      unsigned pidx = port_base_ + port.port();
+      core_->recv_vec4_from_inputs(pidx, bit);
 }
 
 /*
  * This function compiles the .ufunc statement that is discovered in
  * the source file. Create all the functors and the thread, and
  * connect them all up.
+ *
+ * The argv list is a list of the inputs to the function.
+ *
+ * The portv list is a list of variables that the function reads as
+ * inputs. The core assigns values to these nets as part of the startup.
  */
 void compile_ufunc(char*label, char*code, unsigned wid,
 		   unsigned argc,  struct symb_s*argv,
 		   unsigned portc, struct symb_s*portv,
-		   unsigned retc,  struct symb_s*retv)
+		   struct symb_s retv)
 {
-#if 0
-	/* Create an array of vvp_ipoint_t pointers, that point to the
-	   .var bits of the function ports. Do this for the input
-	   ports and the output port. */
+	/* The input argument list and port list must have the same
+	   sizes, since internally we will be mapping the inputs list
+	   to the ports list. */
       assert(argc == portc);
-      vvp_ipoint_t* ports = new vvp_ipoint_t [portc];
 
-      for (unsigned idx = 0 ;  idx < portc ;  idx += 1) {
-	    functor_ref_lookup(ports+idx, portv[idx].text, portv[idx].idx);
-      }
-
-      assert(retc == wid);
-      vvp_ipoint_t* rets = new vvp_ipoint_t [retc];
-
-      for (unsigned idx = 0 ;  idx < retc ;  idx += 1) {
-	    functor_ref_lookup(rets+idx, retv[idx].text, retv[idx].idx);
-      }
-
-	/* Create enough output functors for the output bits of the
-	   function. */
-      vvp_ipoint_t obase = functor_allocate(wid);
-      struct ufunc_output_functor_s*fpa
-	    = new struct ufunc_output_functor_s[wid];
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(obase,idx);
-	    functor_define(ptr, fpa+idx);
-      }
-
-      define_functor_symbol(label, obase);
+      struct __vpiScope*run_scope = vpip_peek_current_scope();
+      assert(run_scope);
 
 	/* Construct some phantom code that is the thread of the
 	   function call. The first instruction, at the start_address
@@ -202,43 +176,54 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	codep->opcode = &of_END;
       }
 
-
-	/* Create the function core object that references the output
-	   functors and the function ports. The input functors will
-	   point to this core to deliver input. */
-      ufunc_core*core = new ufunc_core(wid, obase, rets,
-				       portc, ports,
-				       start_code,
-				       vpip_peek_current_scope());
-      start_code->ufunc_core_ptr = core;
-      ujoin_code->ufunc_core_ptr = core;
-
-	/* create enough input functors to connect to all the input
-	   bits of the function. These are used to detect changes and
-	   trigger the function thread. */
-      unsigned icnt = (argc + 3) / 4;
-      vvp_ipoint_t ibase = functor_allocate(icnt);
-      struct ufunc_input_functor_s*ifp
-	    = new struct ufunc_input_functor_s[icnt];
-
-      for (unsigned idx = 0 ;  idx < icnt ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(ibase,idx);
-	    struct ufunc_input_functor_s*cur = ifp+idx;
-
-	    cur->core_base_ = idx*4;
-	    cur->core_ = core;
-
-	    functor_define(ptr, ifp+idx);
+	/* Run through the function ports (which are related to but
+	   not the same as the input ports) and arrange for their
+	   binding. */
+      vvp_net_t**ports = new vvp_net_t*[portc];
+      for (unsigned idx = 0 ;  idx < portc ;  idx += 1) {
+	    functor_ref_lookup(&ports[idx], portv[idx].text);
       }
 
-      inputs_connect(ibase, argc, argv);
-#else
-      fprintf(stderr, "XXXX compile_ufunc not implemented.\n");
-#endif
+	/* Create the output functor and attach it to the label. Tell
+	   it about the start address of the code stub, and the scope
+	   that will contain the execution. */
+      vvp_net_t*ptr = new vvp_net_t;
+      ufunc_core*fcore = new ufunc_core(wid, ptr, portc, ports,
+					start_code, run_scope,
+					retv.text);
+      ptr->fun = fcore;
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      start_code->ufunc_core_ptr = fcore;
+      ujoin_code->ufunc_core_ptr = fcore;
+
+	/* Create input functors to receive values from the
+	   network. These functors pass the data to the core. */
+      unsigned input_functors = (argc+3) / 4;
+      for (unsigned idx = 0 ;  idx < input_functors ;  idx += 1) {
+	    unsigned base = idx*4;
+	    unsigned trans = 4;
+	    if (base+trans > argc)
+		  trans = argc - base;
+
+	    ufunc_input_functor*cur = new ufunc_input_functor(fcore, base);
+	    ptr = new vvp_net_t;
+	    ptr->fun = cur;
+
+	    inputs_connect(ptr, trans, argv+base);
+      }
+
+      free(argv);
+      free(portv);
 }
+
 
 /*
  * $Log: ufunc.cc,v $
+ * Revision 1.6  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.5  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

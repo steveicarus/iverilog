@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.155 2005/03/13 01:26:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.156 2005/03/18 02:56:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1227,7 +1227,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < eparms.count() ;  idx += 1) {
 	    const NetNet* port_reg = def->port(idx);
 	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope,
-						    port_reg->pin_count(),
+						    port_reg->vector_width(),
 						    0, 0, 0,
 						    Link::STRONG,
 						    Link::STRONG);
@@ -1256,21 +1256,19 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	   of the function net. */
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE,
-			       def->return_sig()->pin_count());
+			       def->return_sig()->vector_width());
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
-	    connect(net->port_pin(0, idx), osig->pin(idx));
+      connect(net->pin(0), osig->pin(0));
 
 	/* Connect the parameter pins to the parameter expressions. */
       for (unsigned idx = 0 ; idx < eparms.count() ; idx += 1) {
 	    const NetNet* port = def->port(idx);
 	    NetNet*cur = eparms[idx];
 
-	    NetNet*tmp = pad_to_width(des, cur, port->pin_count());
+	    NetNet*tmp = pad_to_width(des, cur, port->vector_width());
 
-	    for (unsigned pin = 0 ;  pin < port->pin_count() ;  pin += 1)
-		  connect(net->port_pin(idx+1, pin), tmp->pin(pin));
+	    connect(net->pin(idx+1), tmp->pin(0));
       }
 
       return osig;
@@ -2492,6 +2490,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.156  2005/03/18 02:56:03  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.155  2005/03/13 01:26:48  steve
  *  UPdate elabrate continuous assighn of string to net.
  *

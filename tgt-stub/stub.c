@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.116 2005/03/12 06:43:36 steve Exp $"
+#ident "$Id: stub.c,v 1.117 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -604,6 +604,33 @@ static void show_lpm_sub(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
+static void show_lpm_ufunc(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned ports = ivl_lpm_size(net);
+      ivl_scope_t def = ivl_lpm_define(net);
+      ivl_nexus_t nex;
+      unsigned idx;
+
+      fprintf(out, "  LPM_UFUNC %s: <call=%s, width=%u, ports=%u>\n",
+	      ivl_lpm_basename(net), ivl_scope_name(def), width, ports);
+
+      nex = ivl_lpm_q(net, 0);
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Q output nexus width=%u "
+		    " does not match part width\n", width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+
+      for (idx = 0 ;  idx < ports ;  idx += 1) {
+	    nex = ivl_lpm_data(net, idx);
+	    fprintf(out, "    D%u: %s <width=%u>\n", idx,
+		    ivl_nexus_name(nex), width_of_nexus(nex));
+      }
+}
+
 static void show_lpm(ivl_lpm_t net)
 {
       unsigned idx;
@@ -734,6 +761,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_REPEAT:
 	    show_lpm_repeat(net);
+	    break;
+
+	  case IVL_LPM_UFUNC:
+	    show_lpm_ufunc(net);
 	    break;
 
 	  default:
@@ -1185,6 +1216,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.117  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.116  2005/03/12 06:43:36  steve
  *  Update support for LPM_MOD.
  *

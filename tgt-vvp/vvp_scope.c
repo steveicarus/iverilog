@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.121 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.122 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1714,8 +1714,7 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 
 static void draw_lpm_ufunc(ivl_lpm_t net)
 {
-      unsigned idx, bit;
-      char comma;
+      unsigned idx;
       ivl_scope_t def = ivl_lpm_define(net);
 
       fprintf(vvp_out, "L_%p .ufunc TD_%s, %u", net,
@@ -1723,15 +1722,10 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	      ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
-	   function. Print them one per line, for convenience. */
+	   function. */
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
-	    comma = ' ';
-	    fprintf(vvp_out, ",\n");
-	    for (bit = 0 ; bit < ivl_lpm_data2_width(net, idx) ; bit += 1) {
-		  fprintf(vvp_out, "%c ", comma);
-		  draw_input_from_net(ivl_lpm_data2(net, idx, bit));
-		  comma = ',';
-	    }
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(ivl_lpm_data(net, idx));
       }
 
 
@@ -1741,32 +1735,23 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	   receive the input values given in the previous list. */
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
 	    ivl_signal_t psig = ivl_scope_port(def, idx+1);
-	    comma = ' ';
 
 	    if (idx == 0)
-		  fprintf(vvp_out, "\n(");
+		  fprintf(vvp_out, " (");
 	    else
-		  fprintf(vvp_out, ",\n");
+		  fprintf(vvp_out, ", ");
 
-	    for (bit = 0 ; bit < ivl_signal_pins(psig) ; bit += 1) {
-		  fprintf(vvp_out, "%c V_%s[%u]", comma,
-			  vvp_signal_label(psig), bit);
-		  comma = ',';
-	    }
+	    fprintf(vvp_out, "V_%s", vvp_signal_label(psig));
       }
 
-      fprintf(vvp_out, ")\n");
+      fprintf(vvp_out, ")");
 
+	/* Finally, print the reference to the signal from which the
+	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
-        assert(ivl_lpm_width(net) == ivl_signal_pins(psig));
+        assert(ivl_lpm_width(net) == ivl_signal_width(psig));
 
-	comma = ' ';
-	for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
-	      fprintf(vvp_out, "%c V_%s[%u]", comma,
-		      vvp_signal_label(psig),
-		      idx);
-	      comma = ',';
-	}
+	fprintf(vvp_out, " V_%s", vvp_signal_label(psig));
       }
 
       fprintf(vvp_out, ";\n");
@@ -2022,6 +2007,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.122  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.121  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

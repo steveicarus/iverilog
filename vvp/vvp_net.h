@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.18 2005/03/12 04:27:43 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.19 2005/03/18 02:56:04 steve Exp $"
 
 # include  <stdio.h>
 # include  <assert.h>
@@ -579,6 +579,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       unsigned   size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
 
 	// Commands
       void deassign();
@@ -603,6 +604,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.19  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.18  2005/03/12 04:27:43  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

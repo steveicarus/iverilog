@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.18 2005/03/12 04:27:43 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.19 2005/03/18 02:56:04 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -771,6 +771,16 @@ vvp_scalar_t vvp_fun_signal::scalar_value(unsigned idx) const
 	    return vvp_scalar_t(bits4_.value(idx), 6, 6);
 }
 
+vvp_vector4_t vvp_fun_signal::vec4_value() const
+{
+      if (force_active_)
+	    return force_;
+      else if (type_is_vector8_())
+	    return reduce4(bits8_);
+      else
+	    return bits4_;
+}
+
 /* **** vvp_scalar_t methods **** */
 
 /*
@@ -1168,6 +1178,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.19  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.18  2005/03/12 04:27:43  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

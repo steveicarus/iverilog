@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.120 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.121 2005/03/18 02:56:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -798,6 +798,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.repeat.a;
 
+	  case IVL_LPM_UFUNC:
+	      // Skip the return port.
+	    assert(idx < (net->u_.ufunc.ports-1));
+	    return net->u_.ufunc.pins[idx+1];
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -828,8 +833,10 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
       }
 }
 
+#if 0
 extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 {
+      cerr << "ANACHRONISM: Call to anachronistic ivl_lpm_data2." << endl;
       assert(net);
       switch (net->type) {
 
@@ -848,7 +855,8 @@ extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 	    return 0;
       }
 }
-
+#endif
+#if 0
 extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
 {
       assert(net);
@@ -862,6 +870,7 @@ extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
 	    return 0;
       }
 }
+#endif
 
 /*
  * This function returns the hierarchical name for the LPM device. The
@@ -942,8 +951,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    return net->u_.shift.q;
 
 	  case IVL_LPM_UFUNC:
-	    assert(idx < net->u_.ufunc.port_wid[0]);
-	    return net->u_.ufunc.pins[idx];
+	    assert(idx == 0);
+	    return net->u_.ufunc.pins[0];
 
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.pins[0];
@@ -1101,7 +1110,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.width;
 	  case IVL_LPM_UFUNC:
-	    return net->u_.ufunc.port_wid[0];
+	    return net->u_.ufunc.width;
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.width;
 	  case IVL_LPM_PART_VP:
@@ -1991,6 +2000,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.121  2005/03/18 02:56:04  steve
+ *  Add support for LPM_UFUNC user defined functions.
+ *
  * Revision 1.120  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *
