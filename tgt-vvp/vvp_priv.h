@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.8 2001/04/06 02:28:03 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.9 2001/05/06 17:54:33 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -69,11 +69,15 @@ struct vector_info {
 
 extern struct vector_info draw_eval_expr(ivl_expr_t exp);
 extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w);
+extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 
 extern void clr_vector(struct vector_info vec);
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.9  2001/05/06 17:54:33  steve
+ *  Behavioral code to read memories. (Stephan Boettcher)
+ *
  * Revision 1.8  2001/04/06 02:28:03  steve
  *  Generate vvp code for functions with ports.
  *

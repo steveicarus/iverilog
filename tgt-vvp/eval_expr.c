@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.23 2001/05/02 01:57:25 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.24 2001/05/06 17:54:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -734,6 +734,82 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
+{
+      int root = ivl_memory_root(mem);
+      unsigned width = ivl_memory_width(mem);
+      width = (width+7) & ~7;
+
+      switch (ivl_expr_type(ae)) {
+	  case IVL_EX_NUMBER: {
+		unsigned nbits = ivl_expr_width(ae);
+		const char*bits = ivl_expr_bits(ae);
+		unsigned long v = 0;
+		unsigned idx;
+		for (idx = 0 ;  idx < nbits ;  idx += 1) 
+		      switch (bits[idx]) {
+			  case '0':
+			    break;
+			  case '1':
+			    assert(idx < (8*sizeof v));
+			    v |= 1 << idx;
+			    break;
+			  default:
+			    v = ~0UL;
+			    break;
+		      }
+		fprintf(vvp_out, "    %%ix/load 3, %lu;\n", (v-root)*width);
+		break;
+	  }
+	  case IVL_EX_ULONG: {
+		unsigned v = ivl_expr_uvalue(ae); 
+		fprintf(vvp_out, "    %%ix/load 3, %u;\n", (v-root)*width);
+		break;
+	  }
+	  default: {
+		struct vector_info addr = draw_eval_expr(ae);
+		fprintf(vvp_out, "    %%ix/get 3, %u, %u;\n",
+			addr.base, addr.wid);
+		clr_vector(addr);
+		if (root>0)
+		      fprintf(vvp_out, "    %%ix/sub 3, %u\n", root);
+		if (width>1)
+		      fprintf(vvp_out, "    %%ix/mul 3, %u\n", width);
+		break;
+	  }
+      }
+}
+
+static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
+{
+      unsigned swid = ivl_expr_width(exp);
+      const char*name = ivl_expr_name(exp);
+      struct vector_info res;
+      unsigned idx;
+
+      draw_memory_index_expr(ivl_expr_memory(exp), ivl_expr_oper1(exp));
+
+      if (swid > wid)
+	    swid = wid;
+      
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+
+      for (idx = 0 ;  idx < swid ;  idx += 1) {
+	    if (idx)
+		  fprintf(vvp_out, "    %%ix/add 3, 1;\n");
+	    fprintf(vvp_out, "    %%load/m  %u, M_%s;\n",
+		    res.base+idx, name);
+      }
+
+	/* Pad the signal value with zeros. */
+      if (swid < wid)
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    res.base+swid, wid-swid);
+
+      return res;
+}
+
 /*
  * A call to a user defined function generates a result that is the
  * result of this expression.
@@ -868,6 +944,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_signal_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_MEMORY:
+	    res = draw_memory_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_UFUNC:
 	    res = draw_ufunc_expr(exp, wid);
 	    break;
@@ -887,6 +967,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.24  2001/05/06 17:54:33  steve
+ *  Behavioral code to read memories. (Stephan Boettcher)
+ *
  * Revision 1.23  2001/05/02 01:57:25  steve
  *  Support behavioral subtraction.
  *
