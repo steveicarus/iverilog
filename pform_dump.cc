@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.4 1998/11/11 03:13:04 steve Exp $"
 #endif
 
 /*
@@ -271,6 +271,12 @@ void PForStatement::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+3);
 }
 
+void PWhile::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
+      statement_->dump(out, ind+3);
+}
+
 void PProcess::dump(ostream&out, unsigned ind) const
 {
       switch (type_) {
@@ -323,6 +329,9 @@ void pform_dump(ostream&out, Module*mod)
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.4  1998/11/11 03:13:04  steve
+ *  Handle while loops.
+ *
  * Revision 1.3  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: Statement.cc,v 1.3 1998/11/11 03:13:04 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -65,8 +65,17 @@ PCondit::~PCondit()
 }
 
 
+PWhile::~PWhile()
+{
+      delete cond_;
+      delete statement_;
+}
+
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.3  1998/11/11 03:13:04  steve
+ *  Handle while loops.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

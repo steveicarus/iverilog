@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.4 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: parse.y,v 1.5 1998/11/11 03:13:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -554,8 +554,8 @@ statement
 		  yyerror(@3, "Incomprehensible for loop.");
 		}
 	| K_while '(' expression ')' statement
-		{ $$ = 0;
-		  yyerror(@1, "Sorry, while loops not implemented.");
+		{ PWhile*tmp = new PWhile($3, $5);
+		  $$ = tmp;
 		}
 	| K_while '(' error ')' statement
 		{ $$ = 0;

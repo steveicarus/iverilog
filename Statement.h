@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.3 1998/11/09 18:55:33 steve Exp $"
+#ident "$Id: Statement.h,v 1.4 1998/11/11 03:13:04 steve Exp $"
 #endif
 
 # include  <string>
@@ -228,8 +228,26 @@ class PNoop  : public Statement {
       PNoop() { }
 };
 
+class PWhile  : public Statement {
+
+    public:
+      PWhile(PExpr*e1, Statement*st)
+      : cond_(e1), statement_(st) { }
+      ~PWhile();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*cond_;
+      Statement*statement_;
+};
+
 /*
  * $Log: Statement.h,v $
+ * Revision 1.4  1998/11/11 03:13:04  steve
+ *  Handle while loops.
+ *
  * Revision 1.3  1998/11/09 18:55:33  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

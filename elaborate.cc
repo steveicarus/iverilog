@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.4 1998/11/11 03:13:04 steve Exp $"
 #endif
 
 /*
@@ -612,6 +612,16 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       return top;
 }
 
+/*
+ * The while loop is fairly directly represented in the netlist.
+ */
+NetProc* PWhile::elaborate(Design*des, const string&path) const
+{
+      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path),
+				   statement_->elaborate(des, path));
+      return loop;
+}
+
 void Module::elaborate(Design*des, const string&path) const
 {
 	// Get all the explicitly declared wires of the module and
@@ -690,6 +700,9 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.4  1998/11/11 03:13:04  steve
+ *  Handle while loops.
+ *
  * Revision 1.3  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,
