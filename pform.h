@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.33 2000/01/09 05:50:49 steve Exp $"
+#ident "$Id: pform.h,v 1.34 2000/01/10 22:16:24 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -71,7 +71,7 @@ typedef struct named<PExpr*> portname_t;
 
 struct parmvalue_t {
       svector<PExpr*>*by_order;
-      svector<struct portname_t*>*by_name;
+      svector<portname_t*>*by_name;
 };
 
 /* The lgate is gate instantiation information. */
@@ -180,6 +180,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.34  2000/01/10 22:16:24  steve
+ *  minor type syntax fix for stubborn C++ compilers.
+ *
  * Revision 1.33  2000/01/09 05:50:49  steve
  *  Support named parameter override lists.
  *
