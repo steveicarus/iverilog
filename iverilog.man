@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2000/05/05 01:07:42 $" Version "$Date: 2000/05/05 01:07:42 $"
+.TH iverilog 1 "$Date: 2000/05/17 03:53:29 $" Version "$Date: 2000/05/17 03:53:29 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -53,7 +53,8 @@ in the order they appear on the command line.
 .TP 8
 .B -m\fImodule\fP
 Add this module to the list of VPI modules to be loaded by the
-simulation. (NOT IMPLEMENTED)
+simulation. Many modules can be specified, and all will be loaded, in
+the order specified.
 .TP 8
 .B -o \fIfilename\fP
 Place output in the file \fIfilename\fP. If no output file name is

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.14 2000/05/14 19:41:52 steve Exp $"
+#ident "$Id: iverilog.c,v 1.15 2000/05/17 03:53:29 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -38,6 +38,7 @@ char warning_flags[16] = "";
 
 char*inc_list = 0;
 char*def_list = 0;
+char*mod_list = 0;
 
 char*f_list = 0;
 
@@ -107,6 +108,13 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    rc = strlen(f_list);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, f_list);
+	    ncmd += rc;
+      }
+
+      if (mod_list) {
+	    rc = strlen(mod_list);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, mod_list);
 	    ncmd += rc;
       }
 
@@ -213,7 +221,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:D:Ef:I:o:Ss:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:o:Ss:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -259,6 +267,19 @@ int main(int argc, char **argv)
 					   + strlen(optarg) + 1);
 			strcat(inc_list, " -I");
 			strcat(inc_list, optarg);
+		  }
+		  break;
+		case 'm':
+		  if (mod_list == 0) {
+			mod_list = malloc(strlen(" -m")+strlen(optarg)+1);
+			strcpy(mod_list, " -m");
+			strcat(mod_list, optarg);
+		  } else {
+			mod_list = realloc(mod_list, strlen(mod_list)
+					   + strlen(" -m")
+					   + strlen(optarg) + 1);
+			strcat(mod_list, " -m");
+			strcat(mod_list, optarg);
 		  }
 		  break;
 		case 'o':
@@ -355,6 +376,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.15  2000/05/17 03:53:29  steve
+ *  Add the module option to iverilog.
+ *
  * Revision 1.14  2000/05/14 19:41:52  steve
  *  Fix -f flag handling.
  *
