@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.6 1999/07/11 16:59:58 steve Exp $"
+#ident "$Id: lexor.lex,v 1.7 1999/07/11 18:03:56 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -35,6 +35,7 @@ static void output_init();
 
 static void def_match();
 static void def_start();
+static void def_undefine();
 static void do_define();
 static int  is_defined(const char*name);
 
@@ -118,13 +119,16 @@ W [ \t\b\f]+
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-^`define[ \t]+[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
+^`define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
 
 <PPDEFINE>.*\n {
       do_define();
       istack->lineno += 1;
       fputc('\n', yyout);
-      BEGIN(0); }
+      BEGIN(0);
+  }
+
+^`undef{W}[a-zA-Z][a-zA-Z0-9_]*{W}?.* { def_undefine(); }
 
 
   /* Detect conditional compilation directives, and parse them. If I
@@ -181,7 +185,7 @@ struct define_t {
       char*name;
       char*value;
 
-      struct define_t*left, *right;
+      struct define_t*left, *right, *up;
 };
 
 static struct define_t*def_table = 0;
@@ -189,6 +193,9 @@ static struct define_t*def_table = 0;
 static struct define_t*def_lookup(const char*name)
 {
       struct define_t*cur = def_table;
+      if (cur == 0) return 0;
+      assert(cur->up == 0);
+
       while (cur) {
 	    int cmp = strcmp(name, cur->name);
 	    if (cmp == 0) return cur;
@@ -243,6 +250,7 @@ void define_macro(const char*name, const char*value)
       def->value = strdup(value);
       def->left = 0;
       def->right = 0;
+      def->up = 0;
       if (def_table == 0) {
 	    def_table = def;
 
@@ -260,6 +268,7 @@ void define_macro(const char*name, const char*value)
 		  } else if (cmp < 0) {
 			if (cur->left == 0) {
 			      cur->left = def;
+			      def->up = cur;
 			      break;
 			} else {
 			      cur = cur->left;
@@ -268,6 +277,7 @@ void define_macro(const char*name, const char*value)
 		  } else {
 			if (cur->right == 0) {
 			      cur->right = def;
+			      def->up = cur;
 			      break;
 			} else {
 			      cur = cur->right;
@@ -288,6 +298,90 @@ static void do_define()
 	    *cp = 0;
 
       define_macro(def_name, yytext);
+}
+
+static void def_undefine()
+{
+      struct define_t*cur, *tail;
+
+      sscanf(yytext, "`undef %s", def_name);
+
+      cur = def_lookup(def_name);
+      if (cur == 0) return;
+
+      if (cur->up == 0) {
+	    if ((cur->left == 0) && (cur->right == 0)) {
+		  def_table = 0;
+
+	    } else if (cur->left == 0) {
+		  def_table = cur->right;
+		  if (cur->right)
+			cur->right->up = 0;
+
+	    } else if (cur->right == 0) {
+		  assert(cur->left);
+		  def_table = cur->left;
+		  def_table->up = 0;
+
+	    } else {
+		  tail = cur->left;
+		  while (tail->right)
+			tail = tail->right;
+
+		  tail->right = cur->right;
+		  tail->right->up = tail;
+
+		  def_table = cur->left;
+		  def_table->up = 0;
+	    }
+
+      } else if (cur->left == 0) {
+
+	    if (cur->up->left == cur) {
+		  cur->up->left = cur->right;
+
+	    } else {
+		  assert(cur->up->right == cur);
+		  cur->up->right = cur->right;
+	    }
+	    if (cur->right)
+		  cur->right->up = cur->up;
+
+      } else if (cur->right == 0) {
+
+	    assert(cur->left);
+
+	    if (cur->up->left == cur) {
+		  cur->up->left = cur->left;
+
+	    } else {
+		  assert(cur->up->right == cur);
+		  cur->up->right = cur->left;
+	    }
+	    cur->left->up = cur->up;
+
+      } else {
+	    tail = cur->left;
+	    assert(cur->left && cur->right);
+	    while (tail->right)
+		  tail = tail->right;
+
+	    tail->right = cur->right;
+	    tail->right->up = tail;
+
+	    if (cur->up->left == cur) {
+		  cur->up->left = cur->left;
+
+	    } else {
+		  assert(cur->up->right == cur);
+		  cur->up->right = cur->left;
+	    }
+	    cur->left->up = cur->up;
+      }
+
+      free(cur->name);
+      free(cur->value);
+      free(cur);
 }
 
 /*
