@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.5 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.6 2000/08/27 15:51:51 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -41,10 +41,6 @@ struct ivl_process_s {
       const NetProcTop*top_;
 };
 
-struct ivl_scope_s {
-      const NetScope*scope_;
-};
-
 /*
  * The DLL target type loads a named object file to handle the process
  * of scanning the netlist. When it is time to start the design, I
@@ -65,6 +61,7 @@ struct dll_target  : public target_t {
 
       bool process(const NetProcTop*);
       void scope(const NetScope*);
+      void signal(const NetNet*);
 
       void*dll_;
       string dll_path_;
@@ -79,6 +76,7 @@ struct dll_target  : public target_t {
       net_event_f  net_event_;
       net_logic_f  net_logic_;
       net_probe_f  net_probe_;
+      net_signal_f net_signal_;
 
       process_f    process_;
       scope_f      scope_;
@@ -105,6 +103,7 @@ bool dll_target::start_design(const Design*des)
       net_event_  = (net_event_f) dlsym(dll_, LU "target_net_event" TU);
       net_logic_  = (net_logic_f) dlsym(dll_, LU "target_net_logic" TU);
       net_probe_  = (net_probe_f) dlsym(dll_, LU "target_net_probe" TU);
+      net_signal_ = (net_signal_f)dlsym(dll_, LU "target_net_signal" TU);
       process_    = (process_f)   dlsym(dll_, LU "target_process" TU);
       scope_      = (scope_f)     dlsym(dll_, LU "target_scope" TU);
 
@@ -121,7 +120,7 @@ void dll_target::end_design(const Design*)
 bool dll_target::bufz(const NetBUFZ*net)
 {
       if (net_bufz_) {
-	    int rc = (net_bufz_)(net->name().c_str(), 0);
+	    int rc = (net_bufz_)(net->name(), 0);
 	    return rc == 0;
 
       } else {
@@ -152,7 +151,7 @@ void dll_target::logic(const NetLogic*net)
       obj.dev_ = net;
 
       if (net_logic_) {
-	    (net_logic_)(net->name().c_str(), &obj);
+	    (net_logic_)(net->name(), &obj);
 
       } else {
 	    cerr << dll_path_ << ": internal error: target DLL lacks "
@@ -169,7 +168,7 @@ bool dll_target::net_const(const NetConst*net)
       obj.con_ = net;
 
       if (net_const_) {
-	    int rc = (net_const_)(net->name().c_str(), &obj);
+	    int rc = (net_const_)(net->name(), &obj);
 	    return rc == 0;
 
       } else {
@@ -184,7 +183,7 @@ bool dll_target::net_const(const NetConst*net)
 void dll_target::net_probe(const NetEvProbe*net)
 {
       if (net_probe_) {
-	    int rc = (net_probe_)(net->name().c_str(), 0);
+	    int rc = (net_probe_)(net->name(), 0);
 	    return;
 
       } else {
@@ -217,12 +216,21 @@ bool dll_target::process(const NetProcTop*net)
 
 void dll_target::scope(const NetScope*net)
 {
-      struct ivl_scope_s obj;
-
-      obj.scope_ = net;
-
       if (scope_)
-	    (scope_)(&obj);
+	    (scope_)( (ivl_scope_t)net );
+}
+
+void dll_target::signal(const NetNet*net)
+{
+      if (net_signal_) {
+	    int rc = (net_signal_)(net->name(), (ivl_net_signal_t)net);
+	    return;
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_signal function." << endl;
+	    return;
+      }
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
@@ -268,8 +276,20 @@ extern "C" const char* ivl_get_nexus_name(ivl_nexus_t net)
       return nex->name();
 }
 
+extern "C" unsigned ivl_get_signal_pins(ivl_net_signal_t net)
+{
+      const NetNet*sig = (const NetNet*)net;
+      return sig->pin_count();
+}
+
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.6  2000/08/27 15:51:51  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.5  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

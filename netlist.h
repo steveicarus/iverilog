@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.157 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.158 2000/08/27 15:51:50 steve Exp $"
 #endif
 
 /*
@@ -76,7 +76,7 @@ class NetObj {
       explicit NetObj(const string&n, unsigned npins);
       virtual ~NetObj();
 
-      const string& name() const { return name_; }
+      const char* name() const { return name_; }
 
       unsigned pin_count() const { return npins_; }
 
@@ -103,7 +103,7 @@ class NetObj {
       void dump_obj_attr(ostream&, unsigned) const;
 
     private:
-      string name_;
+      char* name_;
       Link*pins_;
       const unsigned npins_;
       unsigned delay1_;
@@ -2378,7 +2378,7 @@ class NetESignal  : public NetExpr {
       NetESignal(NetNet*n);
       ~NetESignal();
 
-      const string& name() const;
+      string name() const;
       virtual bool set_width(unsigned);
 
       virtual NetESignal* dup_expr() const;
@@ -2410,7 +2410,7 @@ class NetESubSignal  : public NetExpr {
       NetESubSignal(NetESignal*sig, NetExpr*ex);
       ~NetESubSignal();
 
-      const string&name() const { return sig_->name(); }
+      string name() const;
       const NetExpr*index() const { return idx_; }
 
       virtual bool set_width(unsigned);
@@ -2513,7 +2513,7 @@ class NetScope {
 	/* The name of the scope is the fully qualified hierarchical
 	   name, whereas the basename is just my name within my parent
 	   scope. */
-      string basename() const;
+      const char* basename() const;
       string name() const;
 
       void run_defparams(class Design*);
@@ -2540,7 +2540,7 @@ class NetScope {
 
     private:
       TYPE type_;
-      string name_;
+      char* name_;
 
       signed char time_unit_, time_prec_;
 
@@ -2726,6 +2726,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.158  2000/08/27 15:51:50  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.157  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

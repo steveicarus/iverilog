@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.43 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: target.h,v 1.44 2000/08/27 15:51:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -63,7 +63,7 @@ struct target_t {
       virtual void event(const NetEvent*);
 
 	/* Output a signal (called for each signal) */
-      virtual void signal(const NetNet*);
+      virtual void signal(const NetNet*) =0;
 
 	/* Output a memory (called for each memory object) */
       virtual void memory(const NetMemory*);
@@ -160,6 +160,12 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.44  2000/08/27 15:51:51  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.43  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

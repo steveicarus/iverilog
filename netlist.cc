@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.133 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.134 2000/08/27 15:51:50 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -163,8 +163,11 @@ Link* find_next_output(Link*lnk)
 }
 
 NetObj::NetObj(const string&n, unsigned np)
-: name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0)
+: npins_(np), delay1_(0), delay2_(0), delay3_(0)
 {
+      name_ = new char[n.length()+1];
+      strcpy(name_, n.c_str());
+
       pins_ = new Link[npins_];
       for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
 	    pins_[idx].node_ = this;
@@ -174,6 +177,7 @@ NetObj::NetObj(const string&n, unsigned np)
 
 NetObj::~NetObj()
 {
+      delete[]name_;
       delete[]pins_;
 }
 
@@ -2155,7 +2159,7 @@ NetESignal::~NetESignal()
       net_->decr_eref();
 }
 
-const string& NetESignal::name() const
+string NetESignal::name() const
 {
       return net_->name();
 }
@@ -2186,6 +2190,11 @@ NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 NetESubSignal::~NetESubSignal()
 {
       delete idx_;
+}
+
+string NetESubSignal::name() const
+{
+      return sig_->name();
 }
 
 NetESubSignal* NetESubSignal::dup_expr() const
@@ -2458,6 +2467,12 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.134  2000/08/27 15:51:50  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.133  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

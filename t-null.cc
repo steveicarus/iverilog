@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.16 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: t-null.cc,v 1.17 2000/08/27 15:51:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,6 +35,7 @@ static class target_null_t  : public target_t {
       void event(const NetEvent*) { }
       void func_def(const NetFuncDef*) { }
       void memory(const NetMemory*) { }
+      void signal(const NetNet*) { }
       void task_def(const NetTaskDef*) { }
       void net_assign(const NetAssign*) { }
       void net_assign_nb(const NetAssignNB*) { }
@@ -54,6 +55,12 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.17  2000/08/27 15:51:51  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.16  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.5 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.6 2000/08/27 15:51:50 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -64,6 +64,7 @@ typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
+typedef struct ivl_net_signal_s*ivl_net_signal_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
@@ -81,6 +82,7 @@ typedef struct ivl_scope_s    *ivl_scope_t;
    of the output file. */
 extern const char* ivl_get_flag(ivl_design_t, const char*key);
 
+/* Get the name of the root module. This can be used as the design name. */
 extern const char* ivl_get_root_name(ivl_design_t net);
 
 /* LOGIC
@@ -104,7 +106,10 @@ extern unsigned    ivl_get_logic_pins(ivl_net_logic_t net);
  * nexus. These functions manage the ivl_nexus_t object.
  */
 
-const char* ivl_get_nexus_name(ivl_nexus_t net);
+extern const char* ivl_get_nexus_name(ivl_nexus_t net);
+
+
+extern unsigned  ivl_get_signal_pins(ivl_net_signal_t net);
 
 
 /* TARGET MODULE ENTRY POINTS
@@ -172,6 +177,13 @@ typedef int (*net_logic_f)(const char*name, ivl_net_logic_t net);
    before this probe is called. */
 typedef int (*net_probe_f)(const char*name, ivl_net_probe_t net);
 
+/* target_net_signal
+
+   Signals are things like "wire foo" or "reg bar;" that is, declared
+   signals in the verilog source. These are not memories, which are
+   handled elsewhere. */
+typedef int (*net_signal_f)(const char*name, ivl_net_signal_t net);
+
 
 /* target_process
 
@@ -198,6 +210,12 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.6  2000/08/27 15:51:50  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.5  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

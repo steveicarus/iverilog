@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.8 2000/07/30 18:25:44 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.9 2000/08/27 15:51:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -32,16 +32,18 @@
  * in question.
  */
 NetScope::NetScope(const string&n)
-: type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
+: type_(NetScope::MODULE), up_(0), sib_(0), sub_(0)
 {
       memories_ = 0;
       signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
+      name_ = new char[n.length()+1];
+      strcpy(name_, n.c_str());
 }
 
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
-: type_(t), name_(n), up_(up), sib_(0), sub_(0)
+: type_(t), up_(up), sib_(0), sub_(0)
 {
       memories_ = 0;
       signals_ = 0;
@@ -59,6 +61,8 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 	    func_ = 0;
 	    break;
       }
+      name_ = new char[n.length()+1];
+      strcpy(name_, n.c_str());
 }
 
 NetScope::~NetScope()
@@ -66,6 +70,7 @@ NetScope::~NetScope()
       assert(sib_ == 0);
       assert(sub_ == 0);
       lcounter_ = 0;
+      delete[]name_;
 }
 
 NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
@@ -162,7 +167,7 @@ int NetScope::time_precision() const
       return time_prec_;
 }
 
-string NetScope::basename() const
+const char* NetScope::basename() const
 {
       return name_;
 }
@@ -350,6 +355,12 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.9  2000/08/27 15:51:50  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.8  2000/07/30 18:25:44  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during

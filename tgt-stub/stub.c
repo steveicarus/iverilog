@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.5 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: stub.c,v 1.6 2000/08/27 15:51:51 steve Exp $"
 #endif
 
 /*
@@ -106,6 +106,13 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
       fprintf(out, "STUB: %s: probe\n", name);
       return 0;
 }
+
+int target_net_signal(const char*name, ivl_net_signal_t net)
+{
+      fprintf(out, "STUB: %s: signal [%u]\n", name, ivl_get_signal_pins(net));
+      return 0;
+}
+
 int target_process(ivl_process_t net)
 {
       fprintf(out, "STUB: process\n");
@@ -114,6 +121,12 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.6  2000/08/27 15:51:51  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.5  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

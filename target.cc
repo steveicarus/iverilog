@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.44 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: target.cc,v 1.45 2000/08/27 15:51:51 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -35,10 +35,6 @@ void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event <" << ev->full_name() << ">." << endl;
-}
-
-void target_t::signal(const NetNet*)
-{
 }
 
 void target_t::memory(const NetMemory*)
@@ -396,6 +392,12 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.45  2000/08/27 15:51:51  steve
+ *  t-dll iterates signals, and passes them to the
+ *  target module.
+ *
+ *  Some of NetObj should return char*, not string.
+ *
  * Revision 1.44  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *
