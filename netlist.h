@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.81 1999/10/31 04:11:27 steve Exp $"
+#ident "$Id: netlist.h,v 1.82 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 /*
@@ -211,6 +211,8 @@ class NetNode  : public NetObj {
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
 
+      virtual void functor_node(Design*, functor_t*);
+
     private:
       friend class Design;
       NetNode*node_next_, *node_prev_;
@@ -319,6 +321,37 @@ class NetAddSub  : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+};
+
+/*
+ * This class represents an LPM_FF device. There is no literal gate
+ * type in Verilog that maps, but gates of this type can be inferred.
+ */
+class NetFF  : public NetNode {
+
+    public:
+      NetFF(const string&n, unsigned width);
+      ~NetFF();
+
+      unsigned width() const;
+
+      NetObj::Link& pin_Clock();
+      NetObj::Link& pin_Enable();
+      NetObj::Link& pin_Aload();
+      NetObj::Link& pin_Aset();
+      NetObj::Link& pin_Aclr();
+      NetObj::Link& pin_Sload();
+      NetObj::Link& pin_Sset();
+      NetObj::Link& pin_Sclr();
+
+      NetObj::Link& pin_Data(unsigned);
+      NetObj::Link& pin_Q(unsigned);
+
+      const NetObj::Link& pin_Q(unsigned) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 };
 
 /*
@@ -1749,6 +1782,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.82  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.81  1999/10/31 04:11:27  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

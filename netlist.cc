@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.78 1999/10/31 04:11:27 steve Exp $"
+#ident "$Id: netlist.cc,v 1.79 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -376,7 +376,122 @@ const NetProc* NetProcTop::statement() const
 }
 
 /*
- * The NetAddSub class represents an LPM ADD_SUB device. The pinout is
+ * The NetFF class represents an LPM_FF device. The pinout is assigned
+ * like so:
+ *    0  -- Clock
+ *    1  -- Enable
+ *    2  -- Aload
+ *    3  -- Aset
+ *    4  -- Aclr
+ *    5  -- Sload
+ *    6  -- Sset
+ *    7  -- Sclr
+ *
+ *    8  -- Data[0]
+ *    9  -- Q[0]
+ *     ...
+ */
+
+NetFF::NetFF(const string&n, unsigned wid)
+: NetNode(n, 8 + 2*wid)
+{
+      pin_Clock().set_dir(Link::INPUT);
+      pin_Clock().set_name("Clock", 0);
+      pin_Enable().set_dir(Link::INPUT);
+      pin_Enable().set_name("Enable", 0);
+      pin_Aload().set_dir(Link::INPUT);
+      pin_Aload().set_name("Aload", 0);
+      pin_Aset().set_dir(Link::INPUT);
+      pin_Aset().set_name("Aset", 0);
+      pin_Aclr().set_dir(Link::INPUT);
+      pin_Aclr().set_name("Aclr", 0);
+      pin_Sload().set_dir(Link::INPUT);
+      pin_Sload().set_name("Sload", 0);
+      pin_Sset().set_dir(Link::INPUT);
+      pin_Sset().set_name("Sset", 0);
+      pin_Sclr().set_dir(Link::INPUT);
+      pin_Sclr().set_name("Sclr", 0);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    pin_Data(idx).set_dir(Link::INPUT);
+	    pin_Data(idx).set_name("Data", idx);
+	    pin_Q(idx).set_dir(Link::OUTPUT);
+	    pin_Q(idx).set_name("Q", idx);
+      }
+}
+
+NetFF::~NetFF()
+{
+}
+
+unsigned NetFF::width() const
+{
+      return (pin_count() - 8) / 2;
+}
+
+NetObj::Link& NetFF::pin_Clock()
+{
+      return pin(0);
+}
+
+NetObj::Link& NetFF::pin_Enable()
+{
+      return pin(1);
+}
+
+NetObj::Link& NetFF::pin_Aload()
+{
+      return pin(2);
+}
+
+NetObj::Link& NetFF::pin_Aset()
+{
+      return pin(3);
+}
+
+NetObj::Link& NetFF::pin_Aclr()
+{
+      return pin(4);
+}
+
+NetObj::Link& NetFF::pin_Sload()
+{
+      return pin(5);
+}
+
+NetObj::Link& NetFF::pin_Sset()
+{
+      return pin(6);
+}
+
+NetObj::Link& NetFF::pin_Sclr()
+{
+      return pin(7);
+}
+
+NetObj::Link& NetFF::pin_Data(unsigned w)
+{
+      unsigned pn = 8 + 2*w;
+      assert(pn < pin_count());
+      return pin(pn);
+}
+
+NetObj::Link& NetFF::pin_Q(unsigned w)
+{
+      unsigned pn = 9 + w*2;
+      assert(pn < pin_count());
+      return pin(pn);
+}
+
+const NetObj::Link& NetFF::pin_Q(unsigned w) const
+{
+      unsigned pn = 9 + w*2;
+      assert(pn < pin_count());
+      return pin(pn);
+}
+
+
+/*
+ * The NetAddSub class represents an LPM_ADD_SUB device. The pinout is
  * assigned like so:
  *    0  -- Add_Sub
  *    1  -- Aclr
@@ -1878,6 +1993,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.79  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.78  1999/10/31 04:11:27  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

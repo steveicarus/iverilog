@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.1 1999/07/17 22:01:13 steve Exp $"
+#ident "$Id: functor.h,v 1.2 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 /*
@@ -42,10 +42,17 @@ struct functor_t {
 	/* This method is called for each process in the design. */
       virtual void process(class Design*des, class NetProcTop*);
 
+	/* This method is called for each FF in the design. */
+      virtual void lpm_ff(class Design*des, class NetFF*);
 };
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.2  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.1  1999/07/17 22:01:13  steve
  *  Add the functor interface for functor transforms.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.2 1999/07/18 05:52:46 steve Exp $"
+#ident "$Id: functor.cc,v 1.3 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -32,6 +32,10 @@ void functor_t::signal(class Design*, class NetNet*)
 }
 
 void functor_t::process(class Design*, class NetProcTop*)
+{
+}
+
+void functor_t::lpm_ff(class Design*, class NetFF*)
 {
 }
 
@@ -53,10 +57,35 @@ void Design::functor(functor_t*fun)
 	    procs_idx_ = idx->next_;
 	    fun->process(this, idx);
       }
+
+	// apply to nodes
+      if (nodes_) {
+	    NetNode*cur = nodes_->node_next_;
+	    do {
+		  NetNode*tmp = cur->node_next_;
+		  cur->functor_node(this, fun);
+		  cur = tmp;
+	    } while (cur != nodes_->node_next_);
+      }
+}
+
+
+void NetNode::functor_node(Design*, functor_t*)
+{
+}
+
+void NetFF::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_ff(des, this);
 }
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.3  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.2  1999/07/18 05:52:46  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.

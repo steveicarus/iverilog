@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.24 1999/10/10 01:59:54 steve Exp $"
+#ident "$Id: emit.cc,v 1.25 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 /*
@@ -68,6 +68,11 @@ void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_const(o, this);
+}
+
+void NetFF::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_ff(o, this);
 }
 
 void NetNEvent::emit_node(ostream&o, struct target_t*tgt) const
@@ -357,6 +362,11 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.25  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.24  1999/10/10 01:59:54  steve
  *  Structural case equals device.
  *

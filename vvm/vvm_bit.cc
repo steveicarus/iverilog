@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.3 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.4 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -39,6 +39,20 @@ ostream& operator << (ostream&os, vpip_bit_t bit)
 	    break;
       }
       return os;
+}
+
+bool posedge(vpip_bit_t from, vpip_bit_t to)
+{
+      switch (from) {
+	  case V1:
+	    return false;
+	  case V0:
+	    return from != to;
+	  case Vx:
+	  case Vz:
+	    return to == V1;
+      }
+      return false;
 }
 
 ostream& operator << (ostream&os, const vvm_bits_t&str)
@@ -100,6 +114,11 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.4  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.3  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.19 1999/10/31 04:11:28 steve Exp $"
+#ident "$Id: vvm.h,v 1.20 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  <vector>
@@ -97,6 +97,9 @@ inline vpip_bit_t not(vpip_bit_t l)
 	    return Vx;
       }
 }
+
+extern bool posedge(vpip_bit_t from, vpip_bit_t to);
+
 
 class vvm_bits_t {
     public:
@@ -253,6 +256,11 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.20  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.19  1999/10/31 04:11:28  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

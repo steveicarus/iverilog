@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.20 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: target.h,v 1.21 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -67,6 +67,7 @@ struct target_t {
 
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
+      virtual void lpm_ff(ostream&os, const NetFF*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
@@ -137,6 +138,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.21  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.20  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *

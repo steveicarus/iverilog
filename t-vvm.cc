@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.70 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.71 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -53,6 +53,7 @@ class target_vvm : public target_t {
       virtual void func_def(ostream&os, const NetFuncDef*);
 
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
+      virtual void lpm_ff(ostream&os, const NetFF*);
 
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
@@ -832,6 +833,21 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	    init_code << "      " <<  mangle(gate->name()) <<
 		  ".init_Add_Sub(0, V0);" << endl;
 
+      }
+}
+
+void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
+{
+      string mname = mangle(gate->name());
+      os << "static vvm_ff<" << gate->width() << "> " << mname << ";"
+	 << endl;
+
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    unsigned pin = gate->pin_Q(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
       }
 }
 
@@ -1802,6 +1818,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.71  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.70  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

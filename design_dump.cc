@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.52 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.53 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 /*
@@ -166,6 +166,13 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "constant " << value_ << ": " << name() << endl;
       dump_node_pins(o, ind+4);
+}
+
+void NetFF::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_FF: " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 void NetLogic::dump_node(ostream&o, unsigned ind) const
@@ -798,6 +805,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.53  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.52  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

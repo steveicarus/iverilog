@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.23 1999/09/22 16:57:23 steve Exp $"
+#ident "$Id: main.cc,v 1.24 1999/11/01 02:07:40 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -79,6 +79,7 @@ extern Design* elaborate(const map<string,Module*>&modules,
 extern void cprop(Design*des);
 extern void propinit(Design*des);
 extern void sigfold(Design*des);
+extern void synth(Design*des);
 extern void nobufz(Design*des);
 extern void xnfio(Design*des);
 extern void xnfsyn(Design*des);
@@ -92,6 +93,7 @@ static struct net_func_map {
       { "nobufz",  &nobufz },
       { "propinit", &propinit },
       { "sigfold", &sigfold },
+      { "synth",   &synth },
       { "xnfio",   &xnfio },
       { "xnfsyn",  &xnfsyn },
       { 0, 0 }
@@ -277,6 +279,11 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.24  1999/11/01 02:07:40  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.23  1999/09/22 16:57:23  steve
  *  Catch parallel blocks in vvm emit.
  *

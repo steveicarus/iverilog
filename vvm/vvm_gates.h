@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.17 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.18 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -150,6 +150,56 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 
       vpip_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
+};
+
+/*
+ * This class simulates the LPM flip-flop device.
+ * XXXX Inverted clock not yet supported.
+ */
+template <unsigned WIDTH> class vvm_ff {
+
+    public:
+      explicit vvm_ff()
+	    { clk_ = Vx;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    q_[idx] = Vx;
+	    }
+      ~vvm_ff() { }
+
+      void init_Data(unsigned idx, vpip_bit_t val) { d_[idx] = val; }
+      void init_Clock(unsigned, vpip_bit_t val) { clk_ = val; }
+
+      void set_Clock(vvm_simulation*sim, unsigned, vpip_bit_t val)
+	    { if (val == clk_) return;
+	      bool flag = posedge(clk_, val);
+	      clk_ = val;
+	      if (flag) latch_(sim);
+	    }
+
+      void set_Data(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { d_[idx] = val;
+	    }
+
+      void config_rout(unsigned idx, vvm_out_event::action_t o)
+	    { out_[idx] = o;
+	    }
+
+    private:
+      vpip_bit_t d_[WIDTH];
+      vpip_bit_t q_[WIDTH];
+      vpip_bit_t clk_;
+
+      vvm_out_event::action_t out_[WIDTH];
+
+      void latch_(vvm_simulation*sim)
+	    { q_ = d_;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    if (out_[idx]) {
+			  vvm_event*ev = new vvm_out_event(sim, q_[idx],
+							   out_[idx]);
+			  sim->active_event(ev);
+		    }
+	    }
 };
 
 template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
@@ -599,6 +649,11 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.18  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.17  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.21 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: target.cc,v 1.22 1999/11/01 02:07:41 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -73,6 +73,12 @@ void target_t::lpm_add_sub(ostream&, const NetAddSub*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetAddSub." << endl;
+}
+
+void target_t::lpm_ff(ostream&, const NetFF*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetFF." << endl;
 }
 
 void target_t::net_assign(ostream&os, const NetAssign*)
@@ -275,6 +281,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.22  1999/11/01 02:07:41  steve
+ *  Add the synth functor to do generic synthesis
+ *  and add the LPM_FF device to handle rows of
+ *  flip-flops.
+ *
  * Revision 1.21  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *
