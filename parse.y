@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.165 2002/11/21 17:40:11 steve Exp $"
+#ident "$Id: parse.y,v 1.166 2002/11/26 03:56:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2084,6 +2084,7 @@ specify_item_list
 
 specify_edge_path_decl
 	: specify_edge_path '=' '(' specify_delay_value_list ')'
+	| specify_edge_path '=' delay_value_simple
 	;
 
 specify_edge_path
