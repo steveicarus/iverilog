@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.24 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.25 2001/04/07 19:26:32 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -371,6 +371,17 @@ bool dll_target::proc_delay(const NetPDelay*net)
       return flag;
 }
 
+bool dll_target::proc_disable(const NetDisable*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_DISABLE;
+      stmt_cur_->u_.disable_.scope = lookup_scope_(net->target());
+      return true;
+}
+
+
 void dll_target::proc_forever(const NetForever*net)
 {
       assert(stmt_cur_);
@@ -576,6 +587,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.25  2001/04/07 19:26:32  steve
+ *  Add the disable statemnent.
+ *
  * Revision 1.24  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.50 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.51 2001/04/07 19:24:36 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -248,6 +248,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_CONDIT,
       IVL_ST_DELAY,
       IVL_ST_DELAYX,
+      IVL_ST_DISABLE,
       IVL_ST_FOREVER,
       IVL_ST_FORK,
       IVL_ST_REPEAT,
@@ -759,6 +760,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.51  2001/04/07 19:24:36  steve
+ *  Add the disable statemnent.
+ *
  * Revision 1.50  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *
