@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.17 2000/03/29 04:36:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.18 2000/04/26 01:35:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -116,14 +116,23 @@ W [ \t\b\f]+
      that follows it. when the directive ends, the do_include function
      performs the include operation. */
 
-^{W}?`include { BEGIN(PPINCLUDE); }
+^{W}?`include { yy_push_state(PPINCLUDE); }
 
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
 <PPINCLUDE>[ \t\b\f] { ; }
 
-<PPINCLUDE>\n { istack->lineno += 1; BEGIN(0); do_include(); }
-<PPINCLUDE><<EOF>> { istack->lineno += 1; BEGIN(0); do_include(); }
+  /* Catch single-line comments that share the line with an include
+     directive. And while I'm at it, I might as well preserve the
+     comment in the output stream. */
+
+<PPINCLUDE>"//".* { ECHO; }
+
+  /* These finish the include directive (EOF or EOL) so I revert the
+     lexor state and execute the inclusion. */
+
+<PPINCLUDE>\n { istack->lineno += 1; yy_pop_state(); do_include(); }
+<PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
 
   /* Detect the define directive, and match the name. Match any
@@ -131,7 +140,7 @@ W [ \t\b\f]+
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-`define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
+`define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { yy_push_state(PPDEFINE); def_start(); }
 
 <PPDEFINE>.* { do_define(); }
 
@@ -139,14 +148,14 @@ W [ \t\b\f]+
       def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
-      BEGIN(0);
+      yy_pop_state();
   }
 
 <PPDEFINE><<EOF>> {
       def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
-      BEGIN(0);
+      yy_pop_state();
   }
 
 `undef{W}[a-zA-Z][a-zA-Z0-9_]*{W}?.* { def_undefine(); }
