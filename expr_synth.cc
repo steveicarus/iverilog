@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.30 2001/12/18 05:34:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.31 2001/12/30 17:06:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -467,6 +467,26 @@ NetNet* NetEUReduce::synthesize(Design*des)
 				NetLogic::AND);
 	    break;
 
+	  case '|':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::OR);
+	    break;
+
+	  case '^':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::XOR);
+	    break;
+
+	  case 'A':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::NAND);
+	    break;
+
+	  case 'X':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::XNOR);
+	    break;
+
 	  default:
 	    cerr << get_line() << ": internal error: "
 		 << "Unable to synthesize " << *this << "." << endl;
@@ -567,6 +587,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.31  2001/12/30 17:06:52  steve
+ *  Synthesize reduction logic.
+ *
  * Revision 1.30  2001/12/18 05:34:02  steve
  *  Comments about MUX synthesis.
  *
