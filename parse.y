@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.115 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: parse.y,v 1.116 2001/01/06 06:31:59 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -209,7 +209,7 @@ block_item_decl
 	| K_integer register_variable_list ';'
 		{ pform_set_reg_integer($2);
 		}
-	| K_time list_of_variables ';'
+	| K_time register_variable_list ';'
 		{ pform_set_reg_time($2);
 		}
 	| K_real list_of_variables ';'
@@ -219,6 +219,30 @@ block_item_decl
 	| K_realtime list_of_variables ';'
 		{ delete $2;
 		  yyerror(@1, "sorry: reatime variables not supported.");
+		}
+
+  /* Recover from errors that happen within variable lists. Use the
+     trailing semi-colon to resync the parser. */
+
+	| K_reg error ';'
+		{ yyerror(@1, "error: syntax error in reg variable list.");
+		  yyerrok;
+		}
+	| K_integer error ';'
+		{ yyerror(@1, "error: syntax error in integer variable list.");
+		  yyerrok;
+		}
+	| K_time error ';'
+		{ yyerror(@1, "error: syntax error in time variable list.");
+		  yyerrok;
+		}
+	| K_real error ';'
+		{ yyerror(@1, "error: syntax error in real variable list.");
+		  yyerrok;
+		}
+	| K_realtime error ';'
+		{ yyerror(@1, "error: syntax error in realtime variable list.");
+		  yyerrok;
 		}
 	;
 
@@ -1225,8 +1249,6 @@ module_item
 
 	| K_assign drive_strength_opt delay3_opt assign_list ';'
 		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
-	| K_assign error '=' expression ';'
-
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
 		  tmp->set_file(@1.text);
@@ -1278,11 +1300,25 @@ module_item
 		{
 		}
 
-  /* These rules match various errors that the user can type. */
+  /* These rules match various errors that the user can type into
+     module items. These rules try to catch them at a point where a
+     reasonable error message can be produced. */
 
 	| error
 		{ yyerror(@1, "error: invalid module item. "
 			  "Did you forget an initial or always?");
+		}
+
+	| K_assign error '=' expression ';'
+		{ yyerror(@1, "error: syntax error in left side "
+			  "of continuous assignment.");
+		  yyerrok;
+		}
+
+	| K_assign error ';'
+		{ yyerror(@1, "error: syntax error in "
+			  "continuous assignment");
+		  yyerrok;
 		}
 
   /* These rules are for the Icarus VErilog specific $attribute

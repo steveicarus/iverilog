@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.69 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: pform.cc,v 1.70 2001/01/06 06:31:59 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -929,10 +929,10 @@ static void pform_set_reg_time(const char*nm)
       string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::TIME, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
 	    pform_cur_module->add_wire(cur);
       } else {
-	    bool rc = cur->set_wire_type(NetNet::TIME);
+	    bool rc = cur->set_wire_type(NetNet::REG);
 	    assert(rc);
       }
       assert(cur);
@@ -1010,6 +1010,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.70  2001/01/06 06:31:59  steve
+ *  declaration initialization for time variables.
+ *
  * Revision 1.69  2001/01/06 02:29:36  steve
  *  Support arrays of integers.
  *

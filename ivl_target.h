@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.30 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.31 2001/01/06 06:31:58 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -207,7 +207,6 @@ typedef enum ivl_signal_type_e {
       IVL_SIT_REG,
       IVL_SIT_SUPPLY0,
       IVL_SIT_SUPPLY1,
-      IVL_SIT_TIME,
       IVL_SIT_TRI,
       IVL_SIT_TRI0,
       IVL_SIT_TRI1,
@@ -645,6 +644,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.31  2001/01/06 06:31:58  steve
+ *  declaration initialization for time variables.
+ *
  * Revision 1.30  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *

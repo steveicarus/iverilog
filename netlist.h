@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.192 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.193 2001/01/06 06:31:58 steve Exp $"
 #endif
 
 /*
@@ -321,7 +321,7 @@ class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
-		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG, TIME };
+		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -2846,6 +2846,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.193  2001/01/06 06:31:58  steve
+ *  declaration initialization for time variables.
+ *
  * Revision 1.192  2001/01/06 02:29:36  steve
  *  Support arrays of integers.
  *

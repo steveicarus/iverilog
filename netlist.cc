@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.152 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.153 2001/01/06 06:31:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -42,9 +42,6 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	    break;
 	  case NetNet::SUPPLY1:
 	    o << "supply1";
-	    break;
-	  case NetNet::TIME:
-	    o << "time";
 	    break;
 	  case NetNet::TRI:
 	    o << "tri";
@@ -2475,6 +2472,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.153  2001/01/06 06:31:58  steve
+ *  declaration initialization for time variables.
+ *
  * Revision 1.152  2001/01/06 02:29:36  steve
  *  Support arrays of integers.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.24 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.25 2001/01/06 06:31:59 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -544,10 +544,6 @@ void dll_target::signal(const NetNet*net)
 	    obj->type_ = IVL_SIT_SUPPLY1;
 	    break;
 
-	  case NetNet::TIME:
-	    obj->type_ = IVL_SIT_TIME;
-	    break;
-
 	  case NetNet::TRI:
 	    obj->type_ = IVL_SIT_TRI;
 	    break;
@@ -643,6 +639,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.25  2001/01/06 06:31:59  steve
+ *  declaration initialization for time variables.
+ *
  * Revision 1.24  2001/01/06 02:29:36  steve
  *  Support arrays of integers.
  *
