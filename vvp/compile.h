@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.10 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: compile.h,v 1.11 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -64,6 +64,15 @@ extern void compile_functor(char*label, char*type, unsigned init,
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern vpiHandle compile_vpi_lookup(const char*label);
+
+/*
+ * The compile_event function takes the parts of the event statement
+ * and makes the various objects needed to simulate it. This includes
+ * the functor that receives the signals and the event_t that holds
+ * the threads.
+ */
+extern void compile_event(char*label, char*type,
+			  unsigned argc, struct symb_s*argv);
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -123,6 +132,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.11  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.10  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *

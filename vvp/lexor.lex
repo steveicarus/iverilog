@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.8 2001/03/25 19:36:45 steve Exp $"
+#ident "$Id: lexor.lex,v 1.9 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -48,6 +48,7 @@
 
 
   /* These are some keywords that are recognized. */
+".event"   { return K_EVENT; }
 ".functor" { return K_FUNCTOR; }
 ".net"     { return K_NET; }
 ".scope"   { return K_SCOPE; }
@@ -104,6 +105,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.9  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.8  2001/03/25 19:36:45  steve
  *  Accept <> characters in labels and symbols.
  *

@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.6 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: functor.cc,v 1.7 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "schedule.h"
+# include  "vthread.h"
 # include  <assert.h>
 
 /*
@@ -131,6 +132,63 @@ functor_t functor_index(vvp_ipoint_t point)
       return functor_table[point]->table[index1]->table + index0;
 }
 
+static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp)
+{
+	/* Locate the new output value in the table. */
+      unsigned char out = fp->table[fp->ival >> 2];
+      out >>= 2 * (fp->ival&0x03);
+      out &= 0x03;
+
+	/* If the output changes, then create a propagation event. */
+      if (out != fp->oval) {
+	    fp->oval = out;
+	    schedule_functor(ptr, 0);
+      }
+}
+
+const unsigned char vvp_edge_posedge[16] = {
+      0, 1, 1, 1, // 0 -> ...
+      0, 0, 0, 0, // 1 -> ...
+      0, 1, 0, 0, // x -> ...
+      0, 1, 0, 0  // z -> ...
+};
+
+const unsigned char vvp_edge_negedge[16] = {
+      0, 0, 0, 0, // 0 -> ...
+      1, 0, 1, 1, // 1 -> ...
+      1, 0, 0, 0, // x -> ...
+      1, 0, 0, 0  // z -> ...
+};
+
+const unsigned char vvp_edge_anyedge[16] = {
+      0, 1, 1, 1, // 0 -> ...
+      1, 0, 1, 1, // 1 -> ...
+      1, 1, 0, 1, // x -> ...
+      1, 1, 1, 0  // z -> ...
+};
+
+static void functor_set_mode1(functor_t fp)
+{
+      vvp_event_t ep = fp->event;
+
+      for (unsigned idx = 0 ;  ep->threads && (idx < 4) ;  idx += 1) {
+	    unsigned oval = (ep->ival >> 2*idx) & 3;
+	    unsigned nval = (fp->ival >> 2*idx) & 3;
+
+	    unsigned val = (oval << 2) | nval;
+	    unsigned char edge_p = ep->vvp_edge_tab[val];
+
+	    if (edge_p) {
+		  vthread_t tmp = ep->threads;
+		  ep->threads = 0;
+		  vthread_schedule_list(tmp);
+	    }
+      }
+
+	/* the new value is the new old value. */
+      ep->ival = fp->ival;
+}
+
 /*
  * Set the addressed bit of the functor, and recalculate the
  * output. If the output changes any, then generate the necessary
@@ -148,15 +206,13 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit)
       unsigned char mask = mask_table[pp];
       fp->ival = (fp->ival & mask) | (bit << (2*pp));
 
-	/* Locate the new output value in the table. */
-      unsigned char out = fp->table[fp->ival >> 2];
-      out >>= 2 * (fp->ival&0x03);
-      out &= 0x03;
-
-	/* If the output changes, then create a propagation event. */
-      if (out != fp->oval) {
-	    fp->oval = out;
-	    schedule_functor(ptr, 0);
+      switch (fp->mode) {
+	  case 0:
+	    functor_set_mode0(ptr, fp);
+	    break;
+	  case 1:
+	    functor_set_mode1(fp);
+	    break;
       }
 }
 
@@ -226,6 +282,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.7  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.6  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *

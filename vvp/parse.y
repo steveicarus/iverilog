@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.12 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: parse.y,v 1.13 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -49,7 +49,7 @@ extern FILE*yyin;
 };
 
 
-%token K_FUNCTOR K_NET K_SCOPE K_THREAD K_VAR K_vpi_call
+%token K_EVENT K_FUNCTOR K_NET K_SCOPE K_THREAD K_VAR K_vpi_call
 %token K_vpi_module
 
 %token <text> T_INSTR
@@ -105,6 +105,14 @@ statement
 		}
 	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
 		{ compile_functor($1, $3, $5, 0, 0); }
+
+  /* Event statements take a label, a type (the first T_SYMBOL) and a
+     list of inputs. */
+
+	| T_LABEL K_EVENT T_SYMBOL ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_event($1, $3, obj.cnt, obj.vect);
+		}
 
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends
@@ -295,6 +303,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.13  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.12  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *

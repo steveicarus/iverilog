@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.15 2001/03/25 19:38:23 steve Exp $"
+#ident "$Id: compile.cc,v 1.16 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -75,6 +75,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
@@ -226,6 +227,7 @@ void compile_functor(char*label, char*type, unsigned init,
 
       obj->ival = init;
       obj->oval = 2;
+      obj->mode = 0;
 
       if (strcmp(type, "OR") == 0) {
 	    obj->table = ft_OR;
@@ -246,6 +248,71 @@ void compile_functor(char*label, char*type, unsigned init,
       free(argv);
       free(label);
       free(type);
+}
+
+void compile_event(char*label, char*type,
+		   unsigned argc, struct symb_s*argv)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+
+      { symbol_value_t val;
+        val.num = fdx;
+	sym_set_value(sym_functors, label, val);
+      }
+
+      assert(argc <= 4);
+
+	/* Run through the arguments looking for the functors that are
+	   connected to my input ports. For each source functor that I
+	   find, connect the output of that functor to the indexed
+	   input by inserting myself (complete with the port number in
+	   the vvp_ipoint_t) into the list that the source heads.
+
+	   If the source functor is not declared yet, then don't do
+	   the link yet. Save the reference to be resolved later. */
+
+      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
+	    vvp_ipoint_t tmp = val.num;
+
+	    if (tmp) {
+		  tmp = ipoint_index(tmp, argv[idx].idx);
+		  functor_t fport = functor_index(tmp);
+		  obj->port[idx] = fport->out;
+		  fport->out = ipoint_make(fdx, idx);
+
+		  free(argv[idx].text);
+
+	    } else {
+		  postpone_functor_input(ipoint_make(fdx, idx),
+					 argv[idx].text,
+					 argv[idx].idx);
+
+	    }
+      }
+
+      free(argv);
+
+      obj->ival = 0xaa;
+      obj->oval = 2;
+      obj->mode = 1;
+
+      obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
+      obj->event->threads = 0;
+      obj->event->ival = obj->ival;
+
+      if (strcmp(type,"posedge") == 0)
+	    obj->event->vvp_edge_tab = vvp_edge_posedge;
+      else if (strcmp(type,"negedge") == 0)
+	    obj->event->vvp_edge_tab = vvp_edge_negedge;
+      else if (strcmp(type,"edge") == 0)
+	    obj->event->vvp_edge_tab = vvp_edge_anyedge;
+      else
+	    obj->event->vvp_edge_tab = 0;
+
+      free(type);
+      free(label);
 }
 
 /*
@@ -453,6 +520,7 @@ void compile_variable(char*label, char*name, int msb, int lsb)
 	    obj->table = ft_var;
 	    obj->ival  = 0x22;
 	    obj->oval  = 0x02;
+	    obj->mode  = 0;
       }
 
 	/* Make the vpiHandle for the reg. */
@@ -477,6 +545,7 @@ void compile_net(char*label, char*name, int msb, int lsb,
 	    obj->table = ft_var;
 	    obj->ival  = 0x22;
 	    obj->oval  = 0x02;
+	    obj->mode  = 0;
       }
 
       assert(argc == wid);
@@ -593,6 +662,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.16  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.15  2001/03/25 19:38:23  steve
  *  Support NOR and NOT gates.
  *

@@ -19,13 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.5 2001/03/25 19:38:23 steve Exp $"
+#ident "$Id: functor.h,v 1.6 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "pointers.h"
 # include  <stdio.h>
 
-typedef const unsigned char*vvp_truth_t;
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -45,11 +44,25 @@ typedef const unsigned char*vvp_truth_t;
  *	1'b1  : 01
  *	1'bx  : 10
  *	1'bz  : 11
+ *
+ * The function of the functor is defined by the table/event
+ * union. Normally, the truth table is the behavior and the functor
+ * output value is picked from the lookup table that the table pointer
+ * points to.
+ *
+ * If the functor is an event functor, however, the event member
+ * points to an extended structure where thread state is stored.
+ *
+ * The major mode is selected by the mode parameter.
  */
 
 struct functor_s {
 	/* This is the truth table for the device */
-      vvp_truth_t table;
+      union {
+	    vvp_truth_t table;
+	    vvp_event_t event;
+      };
+
 	/* This is the output for the device. */
       vvp_ipoint_t out;
 	/* These are the input ports. */
@@ -57,9 +70,25 @@ struct functor_s {
 	/* These are the input values. */
       unsigned char ival;
       unsigned char oval;
+	/* functor mode:  0 == table ;  1 == event */
+      unsigned char mode;
 };
 
 typedef struct functor_s *functor_t;
+
+/*
+ * If functor mode is 1, the event member is valid and the vvp_event_s
+ * points to the extended event information.
+ */
+extern const unsigned char vvp_edge_posedge[16];
+extern const unsigned char vvp_edge_negedge[16];
+extern const unsigned char vvp_edge_anyedge[16];
+
+struct vvp_event_s {
+      vthread_t threads;
+      unsigned char ival;
+      const unsigned char*vvp_edge_tab;
+};
 
 /*
  * Initialize the functors address space. This function must be called
@@ -115,6 +144,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.6  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.5  2001/03/25 19:38:23  steve
  *  Support NOR and NOT gates.
  *

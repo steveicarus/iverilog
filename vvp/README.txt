@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.8 2001/03/24 22:59:28 steve Exp $
+ *  $Id: README.txt,v 1.9 2001/03/26 04:00:39 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -184,6 +184,28 @@ bits of the vector are connected least-significant-bit first. It is
 legal to leave a bit unconnected. To do that, simply leave the
 position for that bit blank. Bits of .nets are initialized to
 z. Unconnected bits keep the value z throughout the simulation.
+
+
+EVENT STATEMENTS
+
+Threads need to interact with the functors of a netlist synchronously,
+as well as asynchronously. There are cases where the web of functors
+needs to wake up a waiting thread. The web of functors signals threads
+through .event objects, that are declare like so:
+
+	<label> .event <type>, <symbols_list>;
+	<label> .event "name";
+
+
+This event statement declares an object that a %waitfor instruction
+can take as an operand. When a thread executes a %waitfor, it puts
+itself in the notification list of the event and suspends. The
+<symbols_list> is a set of inputs that can trigger the event.
+
+The <type> describes the conditions needed to trigger the event. It
+may be posedge, negedge or edge. If the type is instead a "name"
+string, then this is a named event which receives events by the %set
+instruction instead of from the output of a functor.
 
 
 THREAD STATEMENTS:

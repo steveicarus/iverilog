@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.2 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: pointers.h,v 1.3 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 /*
@@ -78,7 +78,25 @@ inline unsigned ipoint_port(vvp_ipoint_t func)
 typedef unsigned vvp_cpoint_t;
 
 /*
+ * The truth table that functors point to are addressed with this
+ * typedef. 
+ */
+typedef const unsigned char*vvp_truth_t;
+
+/*
+ * The functor event mode uses a pointer of this type to point to the
+ * extended event data.
+ */
+typedef struct vvp_event_s *vvp_event_t;
+
+
+typedef struct vthread_s*vthread_t;
+
+/*
  * $Log: pointers.h,v $
+ * Revision 1.3  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.2  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

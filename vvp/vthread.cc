@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.11 2001/03/25 03:54:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.12 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -34,6 +34,8 @@ struct vthread_s {
       unsigned long pc;
       unsigned char *bits;
       unsigned short nbits;
+	/* This is used for keeping wait queues. */
+      struct vthread_s*next;
 };
 
 static void thr_check_addr(struct vthread_s*thr, unsigned addr)
@@ -76,6 +78,7 @@ vthread_t v_newthread(unsigned long pc)
       thr->pc = pc;
       thr->bits = (unsigned char*)malloc(16);
       thr->nbits = 16*4;
+      thr->next = 0;
 
       thr_put_bit(thr, 0, 0);
       thr_put_bit(thr, 1, 1);
@@ -103,6 +106,15 @@ void vthread_run(vthread_t thr)
 	    bool rc = (cp->opcode)(thr, cp);
 	    if (rc == false)
 		  return;
+      }
+}
+
+void vthread_schedule_list(vthread_t thr)
+{
+      while (thr) {
+	    vthread_t tmp = thr;
+	    thr = thr->next;
+	    schedule_vthread(tmp, 0);
       }
 }
 
@@ -250,7 +262,25 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Implement the wait by locating the functor for the event, and
+ * adding this thread to the threads list for the event.
+ */
+bool of_WAIT(vthread_t thr, vvp_code_t cp)
+{
+      functor_t fp = functor_index(cp->iptr);
+      assert(fp->mode == 1);
+      vvp_event_t ep = fp->event;
+      thr->next = ep->threads;
+      ep->threads = thr;
+
+      return false;
+}
+
+/*
  * $Log: vthread.cc,v $
+ * Revision 1.12  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.11  2001/03/25 03:54:26  steve
  *  Add JMP0XZ and postpone net inputs when needed.
  *

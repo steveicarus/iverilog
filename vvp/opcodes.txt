@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.5 2001/03/22 05:08:00 steve Exp $
+ *  $Id: opcodes.txt,v 1.6 2001/03/26 04:00:39 steve Exp $
  */
 
 
@@ -115,7 +115,7 @@ declared using VPI. The operands are compiled down to a vpiHandle for
 the call. The instruction contains only the vpiHandle for the
 call. See the vpi.txt file for more on system task/function calls.
 
-* %waitfor <functor-label>
+* %wait <functor-label>
 
 When a thread executes this instruction, it places itself in the
 sensitive list for the addressed functor. The functor holds all the

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.6 2001/03/25 03:54:26 steve Exp $"
+#ident "$Id: codes.h,v 1.7 2001/03/26 04:00:39 steve Exp $"
 #endif
 
 
@@ -46,6 +46,7 @@ extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
+extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 
@@ -92,6 +93,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.7  2001/03/26 04:00:39  steve
+ *  Add the .event statement and the %wait instruction.
+ *
  * Revision 1.6  2001/03/25 03:54:26  steve
  *  Add JMP0XZ and postpone net inputs when needed.
  *
