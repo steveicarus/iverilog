@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.1 2002/05/19 05:21:00 steve Exp $"
+#ident "$Id: veriuser.h,v 1.2 2002/05/23 03:35:42 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,8 @@
 
 EXTERN_C_START
 
+extern void io_printf (const char *, ...);
+
 extern int tf_dofinish(void);
 extern int tf_dostop(void);
 
@@ -48,6 +50,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.2  2002/05/23 03:35:42  steve
+ *  Add the io_printf function to libveriuser.
+ *
  * Revision 1.1  2002/05/19 05:21:00  steve
  *  Start the libveriuser library.
  *
