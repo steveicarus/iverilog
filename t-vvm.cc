@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.50 1999/09/28 23:45:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.51 1999/09/29 00:42:25 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -337,6 +337,8 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       string rres = result;
 
       result = make_temp();
+      os_ << setw(indent_) << "" << "// " << expr->get_line() <<
+	    ": expression node." << endl;
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << ">" << result << ";" << endl;
       switch (expr->op()) {
@@ -1561,6 +1563,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.51  1999/09/29 00:42:25  steve
+ *  Comment on where binary operator came from.
+ *
  * Revision 1.50  1999/09/28 23:45:09  steve
  *  Use files instead of strstreams for delayed output,
  *  and fix a missing ends in case output code.
