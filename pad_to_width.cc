@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.15 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.16 2005/01/12 03:17:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,33 +70,51 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
       return expr;
 }
 
+/*
+ * Pad a NetNet to the desired vector width by concatenating a
+ * NetConst of constant zeros. Use a NetConcat node to do the
+ * concatenation.
+ */
 NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 {
       NetScope*scope = net->scope();
-      const string path = scope->name();
-      assert(scope);
 
-      if (net->pin_count() >= wid)
+      if (net->vector_width() >= wid)
 	    return net;
 
-      verinum pad(verinum::V0, wid - net->pin_count());
+	// Make the NetConcat and connect the input net to the lsb input.
+      NetConcat*cc = new NetConcat(scope, scope->local_symbol(), wid, 2);
+      des->add_node(cc);
+      connect(cc->pin(1), net->pin(0));
+
+	// Make a NetConst of the desired width and connect in to the
+	// lsb input of the NetConcat.
+      verinum pad(verinum::V0, wid - net->vector_width());
       NetConst*con = new NetConst(scope, scope->local_symbol(), pad);
       des->add_node(con);
+      connect(cc->pin(2), con->pin(0));
 
+	// Make a NetNet for the NetConst to NetConcat link.
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, wid);
+			       NetNet::WIRE, wid - net->vector_width());
       tmp->local_flag(true);
+      connect(cc->pin(2), tmp->pin(0));
 
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1)
-	    connect(tmp->pin(idx), net->pin(idx));
-      for (unsigned idx = net->pin_count() ;  idx < wid ;  idx += 1)
-	    connect(tmp->pin(idx), con->pin(idx-net->pin_count()));
+	// Create a NetNet of the output width and connect it to the
+	// NetConcat node output pin.
+      tmp = new NetNet(scope, scope->local_symbol(),
+		       NetNet::WIRE, wid);
+      tmp->local_flag(true);
+      connect(cc->pin(0), tmp->pin(0));
 
       return tmp;
 }
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.16  2005/01/12 03:17:37  steve
+ *  Properly pad vector widths in pgassign.
+ *
  * Revision 1.15  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

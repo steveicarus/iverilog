@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.324 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: netlist.h,v 1.325 2005/01/12 03:17:37 steve Exp $"
 #endif
 
 /*
@@ -593,7 +593,7 @@ class NetCompare  : public NetNode {
  * for the code generators.
  *
  * When constructing the node, the width is the vector_width of the
- * output, and the cnt is the number of pins. (1 + the number of input
+ * output, and the cnt is the number of pins. (the number of input
  * vectors.)
  */
 class NetConcat  : public NetNode {
@@ -3411,6 +3411,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.325  2005/01/12 03:17:37  steve
+ *  Properly pad vector widths in pgassign.
+ *
  * Revision 1.324  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.313 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.314 2005/01/12 03:17:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,7 +94,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << lval->get_line() << ": debug: Elaborated l-value "
+	    cerr << lval->get_line() << ": debug: PGassign elaborated l-value "
 		 << "width=" << lval->vector_width() << endl;
       }
 
@@ -126,7 +126,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	    unsigned cnt = lval->vector_width();
 	    if (rid->vector_width() < cnt)
-		  cnt = rid->pin_count();
+		  cnt = rid->vector_width();
 
 	    bool need_driver_flag = false;
 
@@ -153,40 +153,36 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    if (rid->pin(0).drive1() != drive1)
 		  need_driver_flag = true;
 
+	      /* If the r-value is more narrow then the l-value, pad
+		 it to the desired width. */
+	    if (cnt < lval->vector_width()) {
+		  if (lval->get_signed() && rid->get_signed()) {
+			cerr << get_line() << ": internal error: "
+			     << "Forgot how to sign-extend r-value "
+			     << "to l-value." << endl;
+		  } else {
+
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: PGAssign "
+				   << "Unsigned pad r-value from "
+				   << cnt << " bits to "
+				   << lval->vector_width() << " bits." << endl;
+
+			NetNet*tmp = pad_to_width(des, rid,
+						  lval->vector_width());
+			rid = tmp;
+		  }
+	    }
 
 	    if (! need_driver_flag) {
+
 		    /* Don't need a driver, presumably because the
 		       r-value already has the needed drivers. Just
 		       hook things up. If the r-value is too narrow
 		       for the l-value, then sign extend it or zero
 		       extend it, whichever makes sense. */
+
 		  connect(lval->pin(0), rid->pin(0));
-
-		  if (cnt < lval->pin_count()) {
-#if 0
-			if (lval->get_signed() && rid->get_signed()) {
-			      for (idx = cnt
-					 ;  idx < lval->pin_count()
-					 ;  idx += 1)
-				    connect(lval->pin(idx), rid->pin(cnt-1));
-
-			} else {
-			      verinum tmpv (0UL, lval->pin_count()-cnt);
-			      NetConst*tmp = new NetConst(scope,
-				                      scope->local_symbol(),
-						      tmpv);
-			      des->add_node(tmp);
-			      for (idx = cnt
-					 ;  idx < lval->pin_count()
-					 ; idx += 1)
-				    connect(lval->pin(idx), tmp->pin(idx-cnt));
-			}
-#else
-			cerr << get_line() << ": internal error: "
-			     << "Forgot how to handle mismatched widths."
-			     << endl;
-#endif
-		  }
 
 	    } else {
 		    /* Do need a driver. Use BUFZ objects to carry the
@@ -2890,6 +2886,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.314  2005/01/12 03:17:36  steve
+ *  Properly pad vector widths in pgassign.
+ *
  * Revision 1.313  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *
