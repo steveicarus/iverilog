@@ -3,7 +3,7 @@ CXXFLAGS = -O -g -Wall -Wno-uninitialized
 
 %.o dep/%.d: %.cc
 	$(CXX) $(CXXFLAGS) -MD -c $< -o $*.o
-	mv $*.d dep
+	mv $*.d dep/$*.d
 
 #TT = t-debug.o t-vvm.o
 TT = t-verilog.o t-vvm.o
