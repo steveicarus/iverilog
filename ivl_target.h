@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.22 2000/10/21 16:49:45 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.23 2000/10/25 05:41:24 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -357,11 +357,27 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  *
  * ivl_nexus_ptr
  *    Return a nexus pointer given the nexus and an index.
+ *
+ * Once an ivl_nexus_ptr_t is selected by the ivl_nexus_ptr method,
+ * the properties of the pointer can be accessed by the following
+ * methods:
+ *
+ * ivl_nexus_ptr_pin
+ *    This returns the pin number of the device where this nexus
+ *    points. It is the bit within the signal or logic device that is
+ *    connected to the nexus.
+ *
+ * ivl_nexus_ptr_sig
+ *    If the target object is an ivl_signal_t, this method returns the
+ *    object. If the target is not a signal, this method returns 0.
  */
 
 extern const char*     ivl_nexus_name(ivl_nexus_t net);
 extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
 extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
+
+extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
+extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
 
 /* SCOPE
@@ -416,7 +432,8 @@ extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
  * Signals have a name (obviously) and types. A signal may also be
  * signed or unsigned.
  */
-extern unsigned  ivl_signal_pins(ivl_signal_t net);
+extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
+extern unsigned    ivl_signal_pins(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
@@ -506,6 +523,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.23  2000/10/25 05:41:24  steve
+ *  Get target signal from nexus_ptr.
+ *
  * Revision 1.22  2000/10/21 16:49:45  steve
  *  Reduce the target entry points to the target_design.
  *

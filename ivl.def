@@ -34,6 +34,9 @@ ivl_nexus_name
 ivl_nexus_ptrs
 ivl_nexus_ptr
 
+ivl_nexus_ptr_pin
+ivl_nexus_ptr_sig
+
 ivl_scope_children
 ivl_scope_logs
 ivl_scope_log

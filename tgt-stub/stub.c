@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.20 2000/10/21 16:49:45 steve Exp $"
+#ident "$Id: stub.c,v 1.21 2000/10/25 05:41:24 steve Exp $"
 #endif
 
 /*
@@ -89,9 +89,11 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		  ivl_nexus_t nex = ivl_lval_pin(lval, 0);
 
 		  fprintf(out, "%*s{%s", ind+4, "", ivl_nexus_name(nex));
+		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
 		  for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
 			nex = ivl_lval_pin(lval, pp);
 			fprintf(out, ", %s", ivl_nexus_name(nex));
+			fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
 		  }
 		  fprintf(out, "}\n");
 	    }
@@ -184,6 +186,7 @@ static int show_process(ivl_process_t net)
 
 static void show_signal(ivl_signal_t net)
 {
+      unsigned pin;
       const char*type = "?";
       const char*port = "";
 
@@ -213,6 +216,27 @@ static void show_signal(ivl_signal_t net)
 
       fprintf(out, "  %s %s[%u] %s\n", type, port,
 	      ivl_signal_pins(net), ivl_signal_basename(net));
+
+      for (pin = 0 ;  pin < ivl_signal_pins(net) ;  pin += 1) {
+	    unsigned idx;
+	    ivl_nexus_t nex = ivl_signal_pin(net, pin);
+
+	    fprintf(out, "    [%u]: nexus=%s\n", pin, ivl_nexus_name(nex));
+
+	    for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+		  ivl_signal_t sig;
+		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+
+		  if ((sig = ivl_nexus_ptr_sig(ptr))) {
+			fprintf(out, "      %s[%u]\n",
+				ivl_signal_name(sig),
+				ivl_nexus_ptr_pin(ptr));
+
+		  } else {
+			fprintf(out, "      ?[%u]\n", ivl_nexus_ptr_pin(ptr));
+		  }
+	    }
+      }
 }
 
 static void show_logic(ivl_net_logic_t net)
@@ -301,6 +325,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.21  2000/10/25 05:41:24  steve
+ *  Get target signal from nexus_ptr.
+ *
  * Revision 1.20  2000/10/21 16:49:45  steve
  *  Reduce the target entry points to the target_design.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.14 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.15 2000/10/25 05:41:24 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -242,6 +242,21 @@ extern "C" ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx)
       return net->ptrs_ + idx;
 }
 
+extern "C" unsigned ivl_nexus_ptr_pin(ivl_nexus_ptr_t net)
+{
+      assert(net);
+      return net->pin_;
+}
+
+extern "C" ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_SIG)
+	    return 0;
+      return net->l.sig;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
@@ -306,6 +321,18 @@ extern "C" const char* ivl_signal_basename(ivl_signal_t net)
 extern "C" const char* ivl_signal_name(ivl_signal_t net)
 {
       return net->name_;
+}
+
+extern "C" ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->width_);
+      if (net->width_ == 1) {
+	    return net->n.pin_;
+
+      } else {
+	    return net->n.pins_[idx];
+      }
 }
 
 extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
@@ -476,6 +503,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.15  2000/10/25 05:41:24  steve
+ *  Get target signal from nexus_ptr.
+ *
  * Revision 1.14  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *
