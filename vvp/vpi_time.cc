@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.8 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.9 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -25,7 +25,17 @@
 # include  <stdio.h>
 # include  <assert.h>
 
+/*
+ * The $time system function is supported in VPI contexts (i.e. an
+ * argument to a system task/function) as a magical time variable. The
+ * VPI sees it as a vpiTimeVar object, but reads from it get the
+ * current value instead of some assigned value.
+ */
 
+/*
+ * vpi_time_precision is the precision of the simulation clock. It is
+ * set by the :vpi_time_precision directive in the vvp source file.
+ */
 static int vpi_time_precision = 0;
 
 void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti)
@@ -42,10 +52,6 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
       return ti;
 }
 
-static struct __vpiSystemTime {
-      struct __vpiHandle base;
-      struct t_vpi_time value;
-} time_handle;
 
 static int timevar_get(int code, vpiHandle ref)
 {
@@ -66,20 +72,31 @@ static int timevar_get(int code, vpiHandle ref)
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       static char buf_obj[128];
-      assert(ref == &time_handle.base);
+
+	/* Keep a persistent structure for passing time values back to
+	   the caller. */
+      static struct t_vpi_time time_value;
+
+      struct __vpiSystemTime*rfp = reinterpret_cast<struct __vpiSystemTime*>(ref);
       unsigned long x, num_bits;
+      vvp_time64_t simtime = schedule_simtime();
+      int units = rfp->scope->time_units;
+      while (units > vpi_time_precision) {
+	    simtime /= 10;
+	    units -= 1;
+      }
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	  case vpiTimeVal:
-	    vp->value.time = &time_handle.value;
+	    vp->value.time = &time_value;
 	    vp->value.time->type = vpiSimTime;
-	    vpip_time_to_timestruct(vp->value.time, schedule_simtime());
+	    vpip_time_to_timestruct(vp->value.time, simtime);
 	    vp->format = vpiTimeVal;
 	    break;
 
 	  case vpiBinStrVal:
-	    x = schedule_simtime();
+	    x = simtime;
 	    num_bits = 8 * sizeof(unsigned long);
 
 	    buf_obj[num_bits] = 0;
@@ -92,17 +109,17 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(buf_obj, "%lu", schedule_simtime());
+	    sprintf(buf_obj, "%lu", simtime);
 	    vp->value.str = buf_obj;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(buf_obj, "%lo", schedule_simtime());
+	    sprintf(buf_obj, "%lo", simtime);
 	    vp->value.str = buf_obj;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(buf_obj, "%lx", schedule_simtime());
+	    sprintf(buf_obj, "%lx", simtime);
 	    vp->value.str = buf_obj;
 	    break;
 
@@ -123,10 +140,11 @@ static const struct __vpirt vpip_system_time_rt = {
 };
 
 
-vpiHandle vpip_sim_time(void)
+vpiHandle vpip_sim_time(struct __vpiScope*scope)
 {
-      time_handle.base.vpi_type = &vpip_system_time_rt;
-      return &time_handle.base;
+      scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
+      scope->scoped_time.scope = scope;
+      return &scope->scoped_time.base;
 }
 
 int vpip_get_time_precision(void)
@@ -142,6 +160,13 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.9  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.8  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.45 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: compile.h,v 1.46 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -116,6 +116,7 @@ extern void compile_shiftl(char*label, long width,
 extern void compile_shiftr(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 
+extern void compile_timescale(long units);
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
@@ -251,6 +252,13 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.46  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.45  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *

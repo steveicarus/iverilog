@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.21 2002/11/15 22:14:12 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.22 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -43,17 +43,36 @@ vpiHandle vpip_make_root_iterator(void)
 				vpip_root_table_ptr, false);
 }
 
+static bool handle_is_scope(vpiHandle obj)
+{
+      return (obj->vpi_type->type_code == vpiModule)
+	    || (obj->vpi_type->type_code == vpiFunction)
+	    || (obj->vpi_type->type_code == vpiTask)
+	    || (obj->vpi_type->type_code == vpiNamedBegin)
+	    || (obj->vpi_type->type_code == vpiNamedFork);
+}
+
+static int scope_get(int code, vpiHandle obj)
+{
+      struct __vpiScope*ref = (struct __vpiScope*)obj;
+
+      assert(handle_is_scope(obj));
+
+      switch (code) {
+	  case vpiTimeUnit:
+	    return ref->time_units;
+      }
+
+      return 0;
+}
+
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
       const char *n, *nn, *name = ref->name;
       char *rbuf = need_result_buf(strlen(name) + 1, RBUF_STR);
 
-      assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiFunction)
-	     || (obj->vpi_type->type_code == vpiTask)
-	     || (obj->vpi_type->type_code == vpiNamedBegin)
-	     || (obj->vpi_type->type_code == vpiNamedFork));
+      assert(handle_is_scope(obj));
 
       switch (code) {
 	  case vpiFullName:
@@ -254,7 +273,7 @@ vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
 
 static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
-      0,
+      scope_get,
       scope_get_str,
       0,
       0,
@@ -302,6 +321,11 @@ static const struct __vpirt vpip_scope_fork_rt = {
       module_iter
 };
 
+/*
+ * The current_scope is a compile time concept. As the vvp source is
+ * compiled, items that have scope are placed in the current
+ * scope. The ".scope" directives select the scope that is current.
+ */
 static struct __vpiScope*current_scope = 0;
 
 static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
@@ -373,6 +397,10 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 	    struct __vpiScope*sp = (struct __vpiScope*) obj;
 	    attach_to_scope_(sp, &scope->base);
 	    scope->scope = (struct __vpiScope*)obj;
+
+	      /* Inherit time units from the parent scope. */
+	    scope->time_units = sp->time_units;
+
       } else {
 	    scope->scope = 0x0;
 
@@ -381,6 +409,9 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 		  realloc(vpip_root_table_ptr, cnt * sizeof(vpiHandle));
 	    vpip_root_table_ptr[vpip_root_table_cnt] = &scope->base;
 	    vpip_root_table_cnt = cnt;
+
+	      /* Root scopes inherit time_units from system precision. */
+	    scope->time_units = vpip_get_time_precision();
       }
 
       functor_set_scope(&current_scope->base);
@@ -391,6 +422,16 @@ void compile_scope_recall(char*symbol)
       compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
       assert(current_scope);
       functor_set_scope(&current_scope->base);
+}
+
+/*
+ * This function handles the ".timescale" directive in the vvp
+ * source. It sets in the current scope the specified units value.
+ */
+void compile_timescale(long units)
+{
+      assert(current_scope);
+      current_scope->time_units = units;
 }
 
 struct __vpiScope* vpip_peek_current_scope(void)
@@ -406,6 +447,13 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.22  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.21  2002/11/15 22:14:12  steve
  *  Add vpiScope iterate on vpiScope objects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.146 2002/11/21 22:43:13 steve Exp $"
+#ident "$Id: compile.cc,v 1.147 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -418,6 +418,18 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
 void compile_vpi_lookup(vpiHandle *handle, char*label)
 {
+      if (strcmp(label, "$time") == 0) {
+	    *handle = vpip_sim_time(vpip_peek_current_scope());
+	    free(label);
+	    return;
+      }
+
+      if (strcmp(label, "$stime") == 0) {
+	    *handle = vpip_sim_time(vpip_peek_current_scope());
+	    free(label);
+	    return;
+      }
+
       struct vpi_handle_resolv_list_s*res
 	    = new struct vpi_handle_resolv_list_s;
 
@@ -576,8 +588,6 @@ void compile_vpi_symbol(const char*label, vpiHandle obj)
 void compile_init(void)
 {
       sym_vpi = new_symbol_table();
-      compile_vpi_symbol("$time",  vpip_sim_time());
-      compile_vpi_symbol("$stime", vpip_sim_time());
 
       sym_functors = new_symbol_table();
       functor_init();
@@ -1483,6 +1493,13 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.147  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.146  2002/11/21 22:43:13  steve
  *  %set/x0 instruction to support bounds checking.
  *

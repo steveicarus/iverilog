@@ -17,13 +17,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.4 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_time.c,v 1.5 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "vpi_user.h"
+# include  <string.h>
 # include  <assert.h>
+
+static vpiHandle module_of_function(vpiHandle obj)
+{
+      while (vpi_get(vpiType, obj) != vpiModule) {
+	    obj = vpi_handle(vpiScope, obj);
+	    assert(obj);
+      }
+
+      return obj;
+}
 
 static int sys_time_sizetf(char*x)
 {
@@ -40,15 +51,38 @@ static int sys_time_calltf(char*name)
       s_vpi_value val;
       s_vpi_time  now;
       vpiHandle call_handle;
+      vpiHandle mod;
+      int units, prec;
+      long scale;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
 
+      mod = module_of_function(call_handle);
+
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
+
+	/* All the variants but $simtime return the time in units of
+	   the local scope. The $simtime function returns the
+	   simulation time. */
+      if (strcmp(name, "$simtime") == 0)
+	    units = vpi_get(vpiTimePrecision, 0);
+      else
+	    units = vpi_get(vpiTimeUnit, mod);
+
+      prec  = vpi_get(vpiTimePrecision, 0);
+      scale = 1;
+      while (units > prec) {
+	    scale *= 10;
+	    units -= 1;
+      }
 
       val.format = vpiIntVal;
       val.value.integer = now.low;
       assert(now.high == 0);
+
+      val.value.integer /= scale;
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
@@ -64,6 +98,7 @@ void sys_time_register()
       tf_data.calltf    = sys_time_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = sys_time_sizetf;
+      tf_data.user_data = "$time";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysFunc;
@@ -71,11 +106,27 @@ void sys_time_register()
       tf_data.calltf    = sys_time_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = sys_stime_sizetf;
+      tf_data.user_data = "$stime";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$simtime";
+      tf_data.calltf    = sys_time_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = sys_time_sizetf;
+      tf_data.user_data = "$simtime";
       vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.5  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.4  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *

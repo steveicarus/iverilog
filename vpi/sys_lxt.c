@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.12 2002/11/17 22:28:42 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.13 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -343,6 +343,7 @@ static int sys_dumpoff_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
             lt_set_time(dump_file, now.low);
@@ -368,6 +369,7 @@ static int sys_dumpon_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
             lt_set_time(dump_file, now.low);
@@ -388,6 +390,7 @@ static int sys_dumpall_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
             lt_set_time(dump_file, now.low);
@@ -817,6 +820,13 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.13  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.12  2002/11/17 22:28:42  steve
  *  Close old file if $dumpfile is called again.
  *

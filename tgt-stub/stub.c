@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.70 2002/10/23 01:45:24 steve Exp $"
+#ident "$Id: stub.c,v 1.71 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -666,25 +666,27 @@ static int show_scope(ivl_scope_t net, void*x)
 
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
-	    fprintf(out, " module %s\n", ivl_scope_tname(net));
+	    fprintf(out, " module %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_FUNCTION:
-	    fprintf(out, " function %s\n", ivl_scope_tname(net));
+	    fprintf(out, " function %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_BEGIN:
-	    fprintf(out, " begin : %s\n", ivl_scope_tname(net));
+	    fprintf(out, " begin : %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_FORK:
-	    fprintf(out, " fork : %s\n", ivl_scope_tname(net));
+	    fprintf(out, " fork : %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_TASK:
-	    fprintf(out, " task %s\n", ivl_scope_tname(net));
+	    fprintf(out, " task %s", ivl_scope_tname(net));
 	    break;
 	  default:
-	    fprintf(out, " type(%u) %s\n", ivl_scope_type(net),
+	    fprintf(out, " type(%u) %s", ivl_scope_type(net),
 		    ivl_scope_tname(net));
 	    break;
       }
+
+      fprintf(out, " time units = 10e%d\n", ivl_scope_time_units(net));
 
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
 	    show_event(ivl_scope_event(net, idx));
@@ -728,6 +730,13 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.71  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.70  2002/10/23 01:45:24  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

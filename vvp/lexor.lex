@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.34 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: lexor.lex,v 1.35 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -100,6 +100,7 @@
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".thread"   { return K_THREAD; }
+".timescale" { return K_TIMESCALE; }
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
@@ -173,6 +174,13 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.35  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.34  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *

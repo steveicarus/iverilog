@@ -344,6 +344,19 @@ language that are defined.
 	The $sizeof function is deprecated in favor of $bits, which is
 	the same thing, but included in the SystemVerilog definition.
 
+    $simtime
+	The $simtime system function returns as a 64bit value the
+	simulation time, unscaled by the time units of local
+	scope. This is different from the $time and $stime functions
+	which return the scaled times. This function is added for
+	regression testing of the compiler and run time, but can be
+	used by applications who really want the simulation time.
+
+	Note that the simulation time can be confusing if there are
+	lots of different `timescales within a design. It is not in
+	general possible to predict what the simulation precision will
+	turn out to be.
+
     Builtin system functions
 
 	Certain of the system functions have well defined meanings, so

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.66 2002/09/21 21:28:18 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.67 2002/12/21 00:55:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -214,6 +214,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       unsigned wid = 32;
 
       if (strcmp(path_.peek_name(0), "$time") == 0)
+	    wid = 64;
+      if (strcmp(path_.peek_name(0), "$simtime") == 0)
 	    wid = 64;
       if (strcmp(path_.peek_name(0), "$stime") == 0)
 	    wid = 32;
@@ -885,6 +887,13 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.67  2002/12/21 00:55:57  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.66  2002/09/21 21:28:18  steve
  *  Allow constant bit selects out of range.
  *

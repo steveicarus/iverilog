@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.5 2001/03/20 06:16:24 steve Exp $
+ *  $Id: vpi.txt,v 1.6 2002/12/21 00:55:58 steve Exp $
  */
 
 
@@ -103,6 +103,7 @@ placed.
 A scope is created with a .scope directive, like so:
 
 	<label> .scope "name" [, <parent>];
+		.timescale <units>;
 
 The scope takes a string name as the first parameter. If there is an
 additional parameter, it is a label of the directive for the parent
@@ -113,6 +114,10 @@ The name string given when creating the scope is the basename for the
 scope. The vvp automatically constructs full names from the scope
 hierarchy, and runtime VPI code can access that full name with the
 vpiFullname reference.
+
+The .timescale directive changes the scope units from the simulation
+precision to the specified precision. The .timescale directive affects
+the current scope.
 
 Objects that place themselves in a scope place themselves in the
 current scope. The current scope is the one that was last mentioned by

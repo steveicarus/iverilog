@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.25 2002/12/11 23:55:22 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.26 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -150,8 +150,8 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
       assert(vp);
 
-	// XXXX Cheat. Ignore timescale for the scope.
-      vp->type = vpiSimTime;
+	// Only vpiSimTime is supported, for now.
+      assert(vp->type == vpiSimTime);
       vp->high = 0;
       vp->low = schedule_simtime();
 }
@@ -369,6 +369,13 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.26  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.25  2002/12/11 23:55:22  steve
  *  Add vpi_handle_by_name to the VPI interface,
  *  and bump the vpithunk magic number.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.95 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: t-dll.h,v 1.96 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -500,6 +500,8 @@ struct ivl_scope_s {
 
       unsigned ports;
       ivl_signal_t*port;
+
+      signed int time_units :8;
 };
 
 /*
@@ -622,6 +624,13 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.96  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.95  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

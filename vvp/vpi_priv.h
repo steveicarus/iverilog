@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.40 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.41 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -128,19 +128,29 @@ struct __vpiCallback {
 extern struct __vpiCallback* new_vpi_callback();
 extern void callback_execute(struct __vpiCallback*cur);
 
+struct __vpiSystemTime {
+      struct __vpiHandle base;
+      struct __vpiScope *scope;
+};
+
 /*
- * Scopes are created by .scope statements in the source.
+ * Scopes are created by .scope statements in the source. These
+ * objects hold the items and properties that are knowably bound to a
+ * scope.
  */
 struct __vpiScope {
       struct __vpiHandle base;
       struct __vpiScope *scope;
 	/* The scope has a name. */
       const char*name;
-      /* Keep an array of internal scope items. */
+	/* The scope has a system time of its own. */
+      struct __vpiSystemTime scoped_time;
+	/* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
       unsigned nintern;
 	/* Keep a list of threads in the scope. */
       vthread_t threads;
+      signed int time_units :8;
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
@@ -317,7 +327,7 @@ extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
  * and to finish compilation in preparation for execution.
  */
 
-vpiHandle vpip_sim_time(void);
+vpiHandle vpip_sim_time(struct __vpiScope*scope);
 
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
@@ -374,6 +384,13 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.41  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.40  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

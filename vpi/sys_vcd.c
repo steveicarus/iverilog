@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.39 2002/11/17 22:28:42 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.40 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -315,6 +315,7 @@ static int sys_dumpoff_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
 	    fprintf(dump_file, "#%u\n", now.low);
@@ -342,6 +343,7 @@ static int sys_dumpon_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
 	    fprintf(dump_file, "#%u\n", now.low);
@@ -364,6 +366,7 @@ static int sys_dumpall_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
+      now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
 	    fprintf(dump_file, "#%u\n", now.low);
@@ -849,6 +852,13 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.40  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.39  2002/11/17 22:28:42  steve
  *  Close old file if $dumpfile is called again.
  *

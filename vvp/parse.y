@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.47 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: parse.y,v 1.48 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,7 +60,7 @@ extern FILE*yyin;
 %token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_GE K_CMP_GT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
-%token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_UFUNC
+%token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_FORCE 
@@ -294,6 +294,12 @@ statement
 
 	|         K_SCOPE T_SYMBOL ';'
 		{ compile_scope_recall($2); }
+
+
+	|         K_TIMESCALE T_NUMBER ';'
+		{ compile_timescale($2); }
+	|         K_TIMESCALE '-' T_NUMBER ';'
+		{ compile_timescale(-$3); }
 
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. */
@@ -553,6 +559,13 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.48  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.47  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *

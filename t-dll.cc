@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.100 2002/11/05 02:12:35 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.101 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -435,6 +435,8 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->mem_ = 0;
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
+      root_->time_units = s->time_unit();
+
       des_.nroots_++;
       if (des_.roots_)
 	    des_.roots_ = (ivl_scope_t *)realloc(des_.roots_, des_.nroots_ * sizeof(ivl_scope_t));
@@ -1776,6 +1778,7 @@ void dll_target::scope(const NetScope*net)
 	    scope->lpm_ = 0;
 	    scope->nmem_ = 0;
 	    scope->mem_ = 0;
+	    scope->time_units = net->time_unit();
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
@@ -1981,6 +1984,13 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.101  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.100  2002/11/05 02:12:35  steve
  *  Fix the call to FormatMessage under Windows.
  *

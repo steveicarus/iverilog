@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.16 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.17 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 /*
@@ -176,7 +176,7 @@ static const struct __vpirt vpip_sysfunc_rt = {
       0,
       0,
       sysfunc_put_value,
-      0,
+      systask_handle,
       systask_iter
 };
 
@@ -344,6 +344,13 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.17  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.16  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

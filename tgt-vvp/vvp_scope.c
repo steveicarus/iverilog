@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.81 2002/11/21 18:08:09 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.82 2002/12/21 00:55:58 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1547,12 +1547,16 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	      vvp_mangle_id(ivl_scope_name(net)), 
 	      type,
 	      vvp_mangle_name(ivl_scope_name(net)));
+
       if (parent) {
 	    fprintf(vvp_out, ", S_%s;\n",
 		    vvp_mangle_id(ivl_scope_name(parent)));
-      }
-      else
+      } else {
+
 	    fprintf(vvp_out, ";\n");
+      }
+
+      fprintf(vvp_out, " .timescale %d;\n", ivl_scope_time_units(net));
       
 	/* Scan the scope for logic devices. For each device, draw out
 	   a functor that connects pin 0 to the output, and the
@@ -1607,6 +1611,13 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.82  2002/12/21 00:55:58  steve
+ *  The $time system task returns the integer time
+ *  scaled to the local units. Change the internal
+ *  implementation of vpiSystemTime the $time functions
+ *  to properly account for this. Also add $simtime
+ *  to get the simulation time.
+ *
  * Revision 1.81  2002/11/21 18:08:09  steve
  *  Better handling of select width of shifters.
  *
