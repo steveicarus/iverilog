@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.110 2001/01/18 03:16:35 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.111 2001/02/17 05:13:36 steve Exp $"
 #endif
 
 /*
@@ -344,6 +344,7 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 
       for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
 	    o << setw(ind+4) << "";
+	    assert(ports_[idx]);
 	    switch (ports_[idx]->port_type()) {
 		case NetNet::PINPUT:
 		  o << "input ";
@@ -1000,6 +1001,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.111  2001/02/17 05:13:36  steve
+ *  Check that the port really exists here.
+ *
  * Revision 1.110  2001/01/18 03:16:35  steve
  *  NetMux needs a scope. (PR#115)
  *
