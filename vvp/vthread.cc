@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.130 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.131 2005/03/05 05:45:18 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1707,6 +1707,10 @@ bool of_LOAD_MV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t word = memory_get_word(cp->mem, adr);
 
+      if (word.size() != wid) {
+	    fprintf(stderr, "internal error: mem width=%u, word.size()=%u, wid=%u\n",
+		    memory_word_width(cp->mem), word.size(), wid);
+      }
       assert(word.size() == wid);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1, bit += 1) {
@@ -3095,6 +3099,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.131  2005/03/05 05:45:18  steve
+ *  Check that lead.mv vector width matches word.
+ *
  * Revision 1.130  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
