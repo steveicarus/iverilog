@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.64 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.65 2000/01/10 01:35:23 steve Exp $"
 #endif
 
 /*
@@ -582,7 +582,7 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 
 void NetScope::dump(ostream&o) const
 {
-      o << name_;
+      o << name();
       switch (type_) {
 	  case BEGIN_END:
 	    o << " sequential block";
@@ -865,6 +865,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.65  2000/01/10 01:35:23  steve
+ *  Elaborate parameters afer binding of overrides.
+ *
  * Revision 1.64  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *

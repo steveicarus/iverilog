@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.106 2000/01/01 06:18:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.107 2000/01/10 01:35:24 steve Exp $"
 #endif
 
 /*
@@ -1914,17 +1914,19 @@ class NetScope {
     public:
       enum TYPE { MODULE, BEGIN_END, FORK_JOIN };
       NetScope(const string&root);
-      NetScope(const string&path, TYPE t);
+      NetScope(NetScope*up, const string&name, TYPE t);
       ~NetScope();
 
       TYPE type() const;
       string name() const;
+      const NetScope* parent() const;
 
       void dump(ostream&) const;
 
     private:
       TYPE type_;
       string name_;
+      NetScope*up_;
 };
 
 /*
@@ -2082,6 +2084,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.107  2000/01/10 01:35:24  steve
+ *  Elaborate parameters afer binding of overrides.
+ *
  * Revision 1.106  2000/01/01 06:18:00  steve
  *  Handle synthesis of concatenation.
  *

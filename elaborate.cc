@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.140 2000/01/09 20:37:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.141 2000/01/10 01:35:23 steve Exp $"
 #endif
 
 /*
@@ -1784,41 +1784,60 @@ bool Module::elaborate(Design*des, NetScope*scope,
 	// pass references them during elaboration.
       typedef map<string,PExpr*>::const_iterator mparm_it_t;
 
-	// So this loop elaborates the parameters, ...
+	// So this loop elaborates the parameters, but doesn't
+	// evaluate references to parameters. This scan practically
+	// locates all the parameters and puts them in the parameter
+	// table in the design. No expressions are evaluated.
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 	    string pname = path + "." + (*cur).first;
 	    des->set_parameter(pname, new NetEParam);
       }
 
-	// and this loop elaborates the expressions.
-      for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    NetExpr*expr = (*cur).second->elaborate_expr(des, path);
-	    des->set_parameter(pname, expr);
-      }
+	// The replace map contains replacement expressions for the
+	// parameters. If there is a replacement expression, use that
+	// instead of the default expression. Otherwise, use the
+	// default expression.
 
-        // Override parameters
-        // FIXME: need to check if too many overrides given
-	// FIXME: need to release the replaced expression.
+	// Replacement expressions can come from the ordered list of
+	// overrides, or from the parameter replace by name list.
+
+      map<string,PExpr*> replace;
 
       if (overrides_) {
 	    assert(parms == 0);
-            list<string>::const_iterator cur = param_names.begin();
-            for (unsigned idx = 0 ;  idx < overrides_->count(); idx += 1, cur++) {
-	          string pname = path + "." + (*cur);
-	          NetExpr*expr = (*overrides_)[idx]->elaborate_expr(des, path);
-	          des->set_parameter(pname, expr);
-            }
+	    list<string>::const_iterator cur = param_names.begin();
+	    for (unsigned idx = 0
+		       ;  idx < overrides_->count()
+		       ; idx += 1, cur++) {
+		  replace[*cur] = (*overrides_)[idx];
+	    }
 
       } else if (parms) {
 
-	    for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
-		  string pname = path + "." + parms[idx].name;
-		  NetExpr*expr =  parms[idx].parm->elaborate_expr(des, path);
-		  des->set_parameter(pname, expr);
-	    }
+	    for (unsigned idx = 0 ;  idx < nparms ;  idx += 1)
+		  replace[parms[idx].name] = parms[idx].parm;
+
+      }
+
+
+	// ... and this loop elaborates the expressions. The parameter
+	// expressions are reduced to ordinary expressions that do not
+	// include references to other parameters. Take careful note
+	// of the fact that override expressions are elaborated in the
+	// *parent* scope.
+
+      for (mparm_it_t cur = parameters.begin()
+		 ; cur != parameters.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    NetExpr*expr;
+
+	    if (PExpr*tmp = replace[(*cur).first])
+		  expr = tmp->elaborate_expr(des, scope->parent()->name());
+	    else
+		  expr = (*cur).second->elaborate_expr(des, path);
+
+	    des->set_parameter(pname, expr);
       }
 
 
@@ -1981,6 +2000,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.141  2000/01/10 01:35:23  steve
+ *  Elaborate parameters afer binding of overrides.
+ *
  * Revision 1.140  2000/01/09 20:37:57  steve
  *  Careful with wires connected to multiple ports.
  *

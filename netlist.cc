@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.102 1999/12/30 04:19:12 steve Exp $"
+#ident "$Id: netlist.cc,v 1.103 2000/01/10 01:35:24 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2101,12 +2101,12 @@ const NetExpr* NetRepeat::expr() const
 }
 
 NetScope::NetScope(const string&n)
-: type_(NetScope::MODULE), name_(n)
+: type_(NetScope::MODULE), name_(n), up_(0)
 {
 }
 
-NetScope::NetScope(const string&p, NetScope::TYPE t)
-: type_(t), name_(p)
+NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
+: type_(t), name_(n), up_(up)
 {
 }
 
@@ -2121,7 +2121,15 @@ NetScope::TYPE NetScope::type() const
 
 string NetScope::name() const
 {
-      return name_;
+      if (up_)
+	    return up_->name() + "." + name_;
+      else
+	    return name_;
+}
+
+const NetScope* NetScope::parent() const
+{
+      return up_;
 }
 
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
@@ -2436,9 +2444,12 @@ NetScope* Design::make_scope(const string&path,
 			     NetScope::TYPE t,
 			     const string&name)
 {
-      string npath = path + "." + name;
-      NetScope*scope = new NetScope(npath, t);
-      scopes_[npath] = scope;
+      NetScope*up = find_scope(path);
+      assert(up);
+
+      NetScope*scope = new NetScope(up, name, t);
+      scopes_[scope->name()] = scope;
+
       return scope;
 }
 
@@ -2764,6 +2775,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.103  2000/01/10 01:35:24  steve
+ *  Elaborate parameters afer binding of overrides.
+ *
  * Revision 1.102  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
  *
