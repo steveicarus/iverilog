@@ -24,7 +24,7 @@ S_main .scope "main";
 child	%vpi_call "$display", "I'm a child";
 	%end;
 
-parent	%fork	child;
+parent	%fork	child, S_main;
 	%vpi_call "$display", "I'm a parent";
 	%join;
 	%vpi_call "$display", "reaped";
