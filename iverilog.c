@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.9 2000/05/03 22:14:31 steve Exp $"
+#ident "$Id: iverilog.c,v 1.10 2000/05/04 20:08:20 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -263,9 +263,9 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s/ivlpp", base);
-      if (verbose_flag)
-	    strcat(tmp, " -v");
+      sprintf(tmp, "%s/ivlpp %s%s", base,
+	      verbose_flag?" -v":"",
+	      e_flag?"":" -L");
 
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
@@ -314,6 +314,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.10  2000/05/04 20:08:20  steve
+ *  Tell ivlpp to generate line number directives.
+ *
  * Revision 1.9  2000/05/03 22:14:31  steve
  *  More features of ivl available through iverilog.
  *
