@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.65 2003/08/26 03:51:05 steve Exp $"
+#ident "$Id: sys_display.c,v 1.66 2003/10/30 03:43:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,7 +69,7 @@ struct strobe_cb_info {
       unsigned mcd;
 };
 
-static int is_constant(vpiHandle obj)
+int is_constant(vpiHandle obj)
 {
       if (vpi_get(vpiType, obj) == vpiConstant)
 	    return vpiConstant;
@@ -1204,77 +1204,6 @@ static int sys_monitoroff_calltf(char*name)
       return 0;
 }
 
-/*
- * Implement the $fopen system function.
- */
-static int sys_fopen_calltf(char *name)
-{
-      s_vpi_value value;
-      unsigned char *mode_string = 0;
-
-      vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
-      vpiHandle item = argv ? vpi_scan(argv) : 0;
-      vpiHandle mode = item ? vpi_scan(argv) : 0;
-
-      if (item == 0) {
-	    vpi_printf("%s: file name parameter missing.\n", name);
-	    return 0;
-      }
-
-      if (mode == 0) {
-	    argv = 0;
-      }
-
-      if (! is_constant(item)) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a string.\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      if (mode) {
-	    if (! is_constant(mode)) {
-		vpi_printf("ERROR: %s parameter must be a constant\n", name);
-		vpi_free_object(argv);
-	        return 0;
-	    }
-
-           if (vpi_get(vpiConstType, mode) != vpiStringConst) {
-               vpi_printf("ERROR: %s parameter must be a string.\n", name);
-               vpi_free_object(argv);
-               return 0;
-           }
-           value.format = vpiStringVal;
-           vpi_get_value(mode, &value);
-           mode_string = strdup(value.value.str);
-      }
-
-      value.format = vpiStringVal;
-      vpi_get_value(item, &value);
-
-      value.format = vpiIntVal;
-      if (mode) {
-	    value.value.integer = vpi_fopen(value.value.str, mode_string);
-	    free(mode_string);
-      } else
-	    value.value.integer = vpi_mcd_open(value.value.str);
-
-      vpi_put_value(call_handle, &value, 0, vpiNoDelay);
-
-      return 0;
-}
-
-static int sys_fopen_sizetf(char*x)
-{
-      return 32;
-}
-
 /* Implement $fdisplay and $fwrite.  
  * Perhaps this could be merged into sys_display_calltf.
  */
@@ -1340,143 +1269,6 @@ static int sys_fdisplay_calltf(char *name)
 	    my_mcd_printf(mcd, "\n");
 
       return 0;
-}
-
-
-/*
- * Implement $fclose system function
- */
-static int sys_fclose_calltf(char *name)
-{
-      unsigned int mcd;
-      int type;
-      s_vpi_value value;
-
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral type",
-		name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      vpi_mcd_close(mcd);
-      return 0;
-}
-
-static int sys_fputc_calltf(char *name)
-{
-      unsigned int mcd;
-      int type;
-      unsigned char x;
-      s_vpi_value value, xvalue;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      FILE *fp;
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      if (IS_MCD(mcd)) return EOF;
-
-      item = vpi_scan(argv);
-
-      xvalue.format = vpiIntVal;
-      vpi_get_value(item, &xvalue);
-      x = xvalue.value.integer;
-
-      fp = vpi_get_file(mcd);
-      if (!fp) return EOF;
-
-      return fputc(x, fp);
-}
-
-static int sys_fgetc_calltf(char *name)
-{
-      unsigned int mcd;
-      int type;
-      s_vpi_value value, rval;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      FILE *fp;
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      rval.format = vpiIntVal;
-
-      fp = vpi_get_file(mcd);
-      if (!fp || IS_MCD(mcd))
-	  rval.value.integer = EOF;
-      else
-	  rval.value.integer = fgetc(fp);
-
-      vpi_put_value(sys, &rval, 0, vpiNoDelay);
-
-      return 0;
-}
-
-static int sys_fgetc_sizetf(char*x)
-{
-      return 32;
 }
 
 static int sys_timeformat_compiletf(char *xx)
@@ -1729,24 +1521,6 @@ void sys_display_register()
       tf_data.user_data = "$monitoroff";
       vpi_register_systf(&tf_data);
 
-      //============================== fopen
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$fopen";
-      tf_data.calltf    = sys_fopen_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = sys_fopen_sizetf;
-      tf_data.user_data = "$fopen";
-      vpi_register_systf(&tf_data);
-
-      //============================== fclose
-      tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$fclose";
-      tf_data.calltf    = sys_fclose_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$fclose";
-      vpi_register_systf(&tf_data);
-
       //============================== fdisplay
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplay";
@@ -1789,24 +1563,6 @@ void sys_display_register()
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
 
-      //============================== fputc
-      tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$fputc";
-      tf_data.calltf    = sys_fputc_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$fputc";
-      vpi_register_systf(&tf_data);
-
-      //============================== fgetc
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$fgetc";
-      tf_data.calltf    = sys_fgetc_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = sys_fgetc_sizetf;
-      tf_data.user_data = "$fgetc";
-      vpi_register_systf(&tf_data);
-
 	//============================ timeformat
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$timeformat";
@@ -1824,6 +1580,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.66  2003/10/30 03:43:19  steve
+ *  Rearrange fileio functions, and add ungetc.
+ *
  * Revision 1.65  2003/08/26 03:51:05  steve
  *  Add support for fstrobe system tasks.
  *
