@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.10 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: xilinx.c,v 1.11 2004/02/10 16:39:33 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -183,8 +183,8 @@ edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib)
       if (cell != 0) return cell;
 
       cell = edif_xcell_create(xlib, "FDCE", 5);
-      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CE, "CE",  IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CLR,"CLR", IVL_SIP_INPUT);
@@ -197,8 +197,8 @@ edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib)
       if (cell != 0) return cell;
 
       cell = edif_xcell_create(xlib, "FDCPE", 6);
-      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CE, "CE",  IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CLR,"CLR", IVL_SIP_INPUT);
@@ -212,8 +212,8 @@ edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib)
       if (cell != 0) return cell;
 
       cell = edif_xcell_create(xlib, "FDRE", 5);
-      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CE, "CE",  IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CLR,"R",   IVL_SIP_INPUT);
@@ -951,6 +951,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.11  2004/02/10 16:39:33  steve
+ *  Fix direction of Q/D signals of FD devices.
+ *
  * Revision 1.10  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *
