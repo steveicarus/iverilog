@@ -10,35 +10,10 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-# Darwin requires -no-cpp-precomp
-case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
-esac
+# may modify CPPFLAGS and CFLAGS
+AX_CPP_PRECOMP
 
-AC_MSG_CHECKING("for shared library link flag")
-shared=-shared
-EXTRALIBS=
-case "${host}" in
-     *-*-cygwin*)
-        shared="-shared -Wl,--enable-auto-image-base"
-	;;
-     *-*-hpux*)
-	shared="-b"
-	;;
-     *-*-darwin1.[0123])
-	shared="-bundle -undefined suppress"
-	;;
-     *-*-darwin*)
-	shared="-bundle -undefined suppress -flat_namespace"
-	;;
-esac
-AC_SUBST(shared)
-AC_MSG_RESULT($shared)
-
-AC_SUBST(shared)
-AC_SUBST(EXTRALIBS)
+# linker options when building a shared library
+# AX_LD_SHAREDLIB_OPTS
 
 AC_OUTPUT(Makefile)

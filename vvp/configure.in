@@ -61,14 +61,11 @@ AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
 fi
 AC_SUBST(DLLIB)
 
+# may modify CPPFLAGS and CFLAGS
+AX_CPP_PRECOMP
 
 # Processor specific compile flags
 case "${host}" in
-    # MacOSX/Darwin needs the -no-cpp-precomp
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
     alpha*-*-linux*)
 	CPPFLAGS="-mieee $CPPFLAGS"
 	CFLAGS="-mieee $CFLAGS"
@@ -80,38 +77,9 @@ esac
 
 AC_CHECK_HEADERS(sys/resource.h)
 case "${host}" in *linux*) AC_DEFINE(LINUX) ;; esac
-	
-# The -rdynamic flag is used by iverilog when compiling the target,
-# to know how to export symbols of the main program to loadable modules
-# that are brought in by -ldl. VPI support requires this.
-AC_MSG_CHECKING(for -rdynamic compiler flag)
 
-rdynamic=-rdynamic
-case "${host}" in
-
-    *-*-netbsd*)
-	rdynamic="-Wl,--export-dynamic"
-	;;
-
-    *-*-solaris*)
-	rdynamic=""
-	;;
-
-    *-*-cygwin*)
-	rdynamic=""
-	;;
-
-    *-*-hpux*)
-	rdynamic="-E"
-	;;
-
-    *-*-darwin*)
-	rdynamic="-Wl,-all_load"
-	;;
-
-esac
-AC_SUBST(rdynamic)
-AC_MSG_RESULT($rdynamic)
+# Linker option used when compiling the target
+AX_LD_RDYNAMIC
 
 AX_LD_EXTRALIBS
 

@@ -18,30 +18,11 @@ AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
 
-# Darwin requires -no-cpp-precomp
-case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
-esac
+# may modify CPPFLAGS and CFLAGS
+AX_CPP_PRECOMP
 
-AC_MSG_CHECKING(for flag to make position independent code)
-PICFLAG=-fPIC
-case "${host}" in
-
-     *-*-cygwin*)
-	PICFLAG=
-	;;
-
-     *-*-hpux*)
-	PICFLAG=+z
-	;;
-
-esac
-AC_SUBST(PICFLAG)
-AC_MSG_RESULT($PICFLAG)
-
+# Compiler option for position independent code, needed whan making shared objects.
+AX_C_PICFLAG
 
 AC_SUBST(EXEEXT)
 AC_SUBST(EXTRALIBS)

@@ -2,6 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(vpi_config.h.in)
 AC_CONFIG_HEADER(vpi_config.h)
 
+AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
@@ -56,18 +57,15 @@ AC_PROG_INSTALL
 AC_LANG_C
 AC_C_BIGENDIAN
 
-AC_CANONICAL_HOST
-# Do some operating system specific setup. We put the file64_support
+# may modify CPPFLAGS and CFLAGS
+AX_CPP_PRECOMP
+
+# Do some more operating system specific setup. We put the file64_support
 # define in a substitution instead of simply a define because there
 # are source files (namely lxt support files) that don't include any
 # config.h header file.
 file64_support=''
 case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
-
     *-*-linux*)
 	AC_DEFINE(_LARGEFILE_SOURCE)
 	file64_support='-D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64'
@@ -77,93 +75,16 @@ AC_SUBST(file64_support)
 
 # $host
 
-# The -fPIC flag is used to tell the compiler to make position
-# independent code. It is needed when making shared objects.
-
-AC_MSG_CHECKING("for flag to make position independent code")
-PICFLAG=-fPIC
-case "${host}" in
-
-     *-*-cygwin*)
-	PICFLAG=
-	;;
-
-     *-*-hpux*)
-	PICFLAG=+z
-	;;
-
-esac
-AC_SUBST(PICFLAG)
-AC_MSG_RESULT($PICFLAG)
+# Compiler option for position independent code, needed whan making shared objects.
+AX_C_PICFLAG
 
 AX_LD_EXTRALIBS
 
-# Darwin requires -no-cpp-precomp
-case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
-esac
+# Linker option used when compiling the target
+AX_LD_RDYNAMIC
 
-# The -rdynamic flag is used by iverilog when compiling the target,
-# to know how to export symbols of the main program to loadable modules
-# that are brought in by -ldl
-AC_MSG_CHECKING("for -rdynamic compiler flag")
-
-rdynamic=-rdynamic
-case "${host}" in
-
-    *-*-netbsd*)
-	rdynamic="-Wl,--export-dynamic"
-	;;
-
-    *-*-solaris*)
-	rdynamic=""
-	;;
-
-    *-*-cygwin*)
-	rdynamic=""
-	;;
-
-    *-*-hpux*)
-	rdynamic="-E"
-	;;
-
-    *-*-darwin*)
-	rdynamic="-Wl,-all_load"
-	strip_dynamic="-SX"
-	;;
-
-esac
-AC_SUBST(rdynamic)
-AC_MSG_RESULT($rdynamic)
-AC_SUBST(strip_dynamic)
-AC_MSG_RESULT($strip_dynamic)
-
-AC_MSG_CHECKING("for shared library link flag")
-shared=-shared
-case "${host}" in
-
-     *-*-cygwin*)
-        shared="-shared -Wl,--enable-auto-image-base"
-	;;
-
-     *-*-hpux*)
-	shared="-b"
-	;;
-
-     *-*-darwin1.[0123])
-	shared="-bundle -undefined suppress"
-	;;
-
-     *-*-darwin*)
-	shared="-bundle -undefined suppress -flat_namespace"
-	;;
-esac
-
-AC_SUBST(shared)
-AC_MSG_RESULT($shared)
+# linker options when building a shared library
+AX_LD_SHAREDLIB_OPTS
 
 AX_CPP_IDENT
 

@@ -15,13 +15,11 @@ AX_WIN32
 
 AC_CHECK_HEADERS(malloc.h)
 
-# Do some operating system specific setup.
-case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
-	CFLAGS="-no-cpp-precomp $CFLAGS"
-	;;
+# may modify CPPFLAGS and CFLAGS
+AX_CPP_PRECOMP
 
+# Do some more operating system specific setup.
+case "${host}" in
     *-*-linux*)
 	AC_DEFINE(_LARGEFILE_SOURCE)
 	AC_DEFINE(_LARGEFILE64_SOURCE)
@@ -30,48 +28,11 @@ esac
 
 AC_CHECK_FUNCS(fopen64)
 
-# The -fPIC flag is used to tell the compiler to make position
-# independent code. It is needed when making shared objects.
+# Compiler option for position independent code, needed whan making shared objects.
+AX_C_PICFLAG
 
-AC_MSG_CHECKING("for flag to make position independent code")
-PICFLAG=-fPIC
-case "${host}" in
-
-     *-*-cygwin*)
-	PICFLAG=
-	;;
-
-     *-*-hpux*)
-	PICFLAG=+z
-	;;
-
-esac
-AC_SUBST(PICFLAG)
-AC_MSG_RESULT($PICFLAG)
-
-AC_MSG_CHECKING("for shared library link flag")
-shared=-shared
-case "${host}" in
-
-     *-*-cygwin*)
-	shared="-shared -Wl,--enable-auto-image-base"
-	;;
-
-     *-*-hpux*)
-	shared="-b"
-	;;
-
-     *-*-darwin1.[0123])
-	shared="-bundle -undefined suppress"
-	;;
-
-     *-*-darwin*)
-	shared="-bundle -undefined suppress -flat_namespace"
-	;;
-
-esac
-AC_SUBST(shared)
-AC_MSG_RESULT($shared)
+# linker options when building a shared library
+AX_LD_SHAREDLIB_OPTS
 
 AX_CPP_IDENT
 

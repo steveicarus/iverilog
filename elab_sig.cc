@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.35 2004/09/05 17:44:41 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.36 2004/09/27 22:34:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -309,6 +309,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(true);
+	    ret_sig->port_type(NetNet::POUTPUT);
+	    break;
+
+	  case PTF_TIME:
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, 64);
+	    ret_sig->set_line(*this);
+	    ret_sig->set_signed(false);
+	    ret_sig->set_isint(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
@@ -615,6 +623,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.36  2004/09/27 22:34:10  steve
+ *  Cleanup and factoring of autoconf.
+ *
  * Revision 1.35  2004/09/05 17:44:41  steve
  *  Add support for module instance arrays.
  *
