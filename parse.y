@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.181 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: parse.y,v 1.182 2003/07/04 03:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1235,63 +1235,71 @@ list_of_port_declarations
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
 					port_declaration_context.sign_flag,
-					port_declaration_context.range);
+					port_declaration_context.range, 0);
 		  delete $1;
 		  $$ = tmp;
 		}
         ;
 
 port_declaration
-	: K_input net_type_opt signed_opt range_opt IDENTIFIER
+	: attribute_list_opt
+          K_input net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($5, @1.text,
-						     @1.first_line);
-		  pform_module_define_port(@1, $5, NetNet::PINPUT,
-					   $2, $3, $4);
+		  ptmp = pform_module_port_reference($6, @2.text,
+						     @2.first_line);
+		  pform_module_define_port(@2, $6, NetNet::PINPUT,
+					   $3, $4, $5, $1);
 		  port_declaration_context.port_type = NetNet::PINPUT;
-		  port_declaration_context.port_net_type = $2;
-		  port_declaration_context.sign_flag = $3;
-		  port_declaration_context.range = $4;
-		  delete $5;
+		  port_declaration_context.port_net_type = $3;
+		  port_declaration_context.sign_flag = $4;
+		  port_declaration_context.range = $5;
+		  delete $1;
+		  delete $6;
 		  $$ = ptmp;
 		}
-	| K_inout  net_type_opt signed_opt range_opt IDENTIFIER
+	| attribute_list_opt
+          K_inout  net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($5, @1.text,
-						     @1.first_line);
-		  pform_module_define_port(@1, $5, NetNet::PINOUT,
-					   $2, $3, $4);
+		  ptmp = pform_module_port_reference($6, @2.text,
+						     @2.first_line);
+		  pform_module_define_port(@2, $6, NetNet::PINOUT,
+					   $3, $4, $5, $1);
 		  port_declaration_context.port_type = NetNet::PINOUT;
-		  port_declaration_context.port_net_type = $2;
-		  port_declaration_context.sign_flag = $3;
-		  port_declaration_context.range = $4;
-		  delete $5;
+		  port_declaration_context.port_net_type = $3;
+		  port_declaration_context.sign_flag = $4;
+		  port_declaration_context.range = $5;
+		  delete $1;
+		  delete $6;
 		  $$ = ptmp;
 		}
-	| K_output net_type_opt signed_opt range_opt IDENTIFIER
+	| attribute_list_opt
+          K_output net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($5, @1.text,
-						     @1.first_line);
-		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
-					   $2, $3, $4);
+		  ptmp = pform_module_port_reference($6, @2.text,
+						     @2.first_line);
+		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
+					   $3, $4, $5, $1);
 		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.port_net_type = $2;
-		  port_declaration_context.sign_flag = $3;
-		  port_declaration_context.range = $4;
-		  delete $5;
+		  port_declaration_context.port_net_type = $3;
+		  port_declaration_context.sign_flag = $4;
+		  port_declaration_context.range = $5;
+		  delete $1;
+		  delete $6;
 		  $$ = ptmp;
 		}
-	| K_output var_type signed_opt range_opt IDENTIFIER
+	| attribute_list_opt
+          K_output var_type signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($5, @1.text,
-						     @1.first_line);
-		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
-					   $2, $3, $4);
+		  ptmp = pform_module_port_reference($6, @2.text,
+						     @2.first_line);
+		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
+					   $3, $4, $5, $1);
 		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.port_net_type = $2;
-		  port_declaration_context.sign_flag = $3;
-		  port_declaration_context.range = $4;
-		  delete $5;
+		  port_declaration_context.port_net_type = $3;
+		  port_declaration_context.sign_flag = $4;
+		  port_declaration_context.range = $5;
+		  delete $1;
+		  delete $6;
 		  $$ = ptmp;
 		}
 	;

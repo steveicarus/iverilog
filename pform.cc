@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.117 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: pform.cc,v 1.118 2003/07/04 03:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -891,7 +891,8 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::PortType port_type,
 			      NetNet::Type type,
 			      bool signed_flag,
-			      svector<PExpr*>*range)
+			      svector<PExpr*>*range,
+			      svector<named_pexpr_t*>*attr)
 {
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -921,6 +922,12 @@ void pform_module_define_port(const struct vlltype&li,
 	    cur->set_range((*range)[0], (*range)[1]);
       }
 
+      if (attr) {
+	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		      named_pexpr_t*tmp = (*attr)[idx];
+		      cur->attributes[tmp->name] = tmp->parm;
+	      }
+      }
       pform_cur_module->add_wire(cur);
 }
 
@@ -1462,6 +1469,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.118  2003/07/04 03:57:19  steve
+ *  Allow attributes on Verilog 2001 port declarations.
+ *
  * Revision 1.117  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.72 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: pform.h,v 1.73 2003/07/04 03:57:19 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -129,7 +129,8 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     bool signed_flag,
-				     svector<PExpr*>*range);
+				     svector<PExpr*>*range,
+				     svector<named_pexpr_t*>*attr);
 
 extern Module::port_t* pform_module_port_reference(char*name,
 						   const char*file,
@@ -282,6 +283,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.73  2003/07/04 03:57:19  steve
+ *  Allow attributes on Verilog 2001 port declarations.
+ *
  * Revision 1.72  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.9 2003/07/04 01:08:03 steve Exp $
+  $Id: fpga.txt,v 1.10 2003/07/04 03:57:19 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -129,17 +129,19 @@ the value of that attribute is a list of locations, one for each bit
 of the signal, that specifies the pin for each bit of the signal. For
 example:
 
-	module main(out, in);
-	    output out;
-	    input [2:0] in;
+	module main( (* PAD = "P10" *)         output out,
+		     (* PAD = "P20,P21,P22" *) input [2:0] in);
+
 	    [...]
-	    $attribute(out, "PAD", "10");
-	    $attribute(in, "PAD", "20,21,22");
+
 	endmodule
 
 In this example, port ``out'' is assigned to pin 10, and port ``in''
 is assigned to pins 20-22. If the architecture supports it, a pin
-number of 0 means let the back end tools choose a pin.
+number of 0 means let the back end tools choose a pin. The format of
+the pin number depends on the architecture family being targeted, so
+for example Xilinx family devices take the name that is associated
+with the "LOC" attribute.
 
 NOTE: If a module port is assigned to a pin (and therefore attached to
 a PAD) then it is *not* connected to a port of the EDIF file. This is
@@ -179,6 +181,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.10  2003/07/04 03:57:19  steve
+ Allow attributes on Verilog 2001 port declarations.
+
 Revision 1.9  2003/07/04 01:08:03  steve
  PAD attribute can be used to assign pins.
 
