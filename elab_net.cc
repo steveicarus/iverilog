@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.35 2000/05/07 19:40:26 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.36 2000/05/07 20:48:14 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -831,15 +831,31 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 
 	    unsigned long repeat = rep->as_ulong();
 
+	      /* Elaborate the expression the first time to figure out
+		 how wide the expression is. Then create a NetTmp
+		 object big enough to hold all the repetitions. */
+
 	    assert(parms_.count() == 1);
 	    NetNet*obj = parms_[0]->elaborate_net(des, path, 0, rise,
 						  fall, decay);
-	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
-				    repeat * obj->pin_count());
 
-	    for (unsigned idx = 0 ;  idx < repeat ;  idx += 1) {
-		  unsigned base = obj->pin_count() * idx;
-		  for (unsigned pin = 0 ;  pin < obj->pin_count() ; pin += 1)
+	    unsigned per_count = obj->pin_count();
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
+				    repeat * per_count);
+
+	    for (unsigned pin = 0 ;  pin < per_count ; pin += 1)
+		  connect(tmp->pin(pin), obj->pin(pin));
+
+	      /* Now elaborate the expression again to fill out the
+		 repetitions, connecting each to the tmp NetNet
+		 object. */
+
+	    for (unsigned idx = 1 ;  idx < repeat ;  idx += 1) {
+		  unsigned base = per_count * idx;
+
+		  obj = parms_[0]->elaborate_net(des, path, per_count,
+						 rise, fall, decay);
+		  for (unsigned pin = 0 ;  pin < per_count ; pin += 1)
 			connect(tmp->pin(base+pin), obj->pin(pin));
 	    }
 
@@ -1464,6 +1480,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.36  2000/05/07 20:48:14  steve
+ *  Properly elaborate repeat concatenations.
+ *
  * Revision 1.35  2000/05/07 19:40:26  steve
  *  Fix connection of Direction of LMP_CLSHIFT
  *  to constant values. Remember to add a signal
