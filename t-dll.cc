@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.73 2001/12/15 02:13:17 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.74 2001/12/18 05:34:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1347,6 +1347,10 @@ void dll_target::lpm_mult(const NetMult*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+/*
+ * Hook up the mux devices so that the select expression selects the
+ * correct sub-expression with the ivl_lpm_data2 function.
+ */
 void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1719,6 +1723,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.74  2001/12/18 05:34:02  steve
+ *  Comments about MUX synthesis.
+ *
  * Revision 1.73  2001/12/15 02:13:17  steve
  *  The IVL_SIT_WIRE type does not exist, it is a
  *  synonym for IVL_SIT_TRI.

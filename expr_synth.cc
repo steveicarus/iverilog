@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.29 2001/11/29 01:58:18 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.30 2001/12/18 05:34:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -481,7 +481,12 @@ NetNet* NetEUReduce::synthesize(Design*des)
       return osig;
 }
 
-
+/*
+ * Synthesize a ?: operator an a NetMux device. Connect the condition
+ * expression to the select input, then connect the true and false
+ * expressions to the B and A inputs. This way, when the select input
+ * is one, the B input, which is the true expression, is selected.
+ */
 NetNet* NetETernary::synthesize(Design *des)
 {
       NetNet*csig = cond_->synthesize(des);
@@ -562,6 +567,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.30  2001/12/18 05:34:02  steve
+ *  Comments about MUX synthesis.
+ *
  * Revision 1.29  2001/11/29 01:58:18  steve
  *  Handle part selects in l-values of DFF devices.
  *
