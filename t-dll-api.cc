@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.76 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.77 2002/03/17 19:30:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -543,6 +543,18 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_scope_t ivl_lpm_define(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_UFUNC:
+	    return net->u_.ufunc.def;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
 {
       assert(net);
@@ -623,12 +635,35 @@ extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 	    assert(idx < net->u_.mux.width);
 	    return net->u_.mux.d[sdx*net->u_.mux.width + idx];
 
+	  case IVL_LPM_UFUNC: {
+		sdx += 1; /* skip the output port. */
+		assert(sdx < net->u_.ufunc.ports);
+		assert(idx < net->u_.ufunc.port_wid[sdx]);
+		unsigned base = 0;
+		for (unsigned i = 0 ;  i < sdx ;  i += 1)
+		      base += net->u_.ufunc.port_wid[i];
+		return net->u_.ufunc.pins[base+idx];
+	  }
+
 	  default:
 	    assert(0);
 	    return 0;
       }
 }
 
+extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_UFUNC:
+	    sdx += 1; /* skip the output port. */
+	    assert(sdx < net->u_.ufunc.ports);
+	    return net->u_.ufunc.port_wid[sdx];
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 {
       return net->name;
@@ -739,6 +774,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.size;
+	  case IVL_LPM_UFUNC:
+	    return net->u_.ufunc.ports - 1;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1458,6 +1495,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.77  2002/03/17 19:30:47  steve
+ *  Add API to support user defined function.
+ *
  * Revision 1.76  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.93 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.94 2002/03/17 19:30:20 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -563,14 +563,18 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
+  /* IVL_LPM_UFUNC */
+extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
+  /* IVL_LPM_MUX IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
+  /* IVL_LPM_UFUNC */
+extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
@@ -1002,6 +1006,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.94  2002/03/17 19:30:20  steve
+ *  Add API to support user defined function.
+ *
  * Revision 1.93  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *
