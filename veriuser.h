@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.29 2003/05/30 04:01:55 steve Exp $"
+#ident "$Id: veriuser.h,v 1.30 2003/05/30 04:18:31 steve Exp $"
 #endif
 
 /*
@@ -162,11 +162,13 @@ extern void veriusertfs_register_table(p_tfcell vtable);
 
 /* callback reasons */
 #define reason_checktf 1
-#define reason_calltf 3
+#define reason_calltf  3
 #define reason_paramvc 7
-#define reason_synch  8
-#define REASON_SYNCH  reason_synch
-#define reason_finish 9
+#define reason_synch   8
+#define REASON_SYNCH   reason_synch
+#define reason_finish  9
+#define reason_rosynch 11
+#define REASON_ROSYNCH reason_rosynch
 #define reason_endofcompile 16
 
 /* These are values returned by tf_typep */
@@ -315,6 +317,9 @@ extern char* tf_imipname(void*);
 extern PLI_INT32 tf_synchronize(void);
 extern PLI_INT32 tf_isynchronize(void* sys);
 
+extern PLI_INT32 tf_rosynchronize(void);
+extern PLI_INT32 tf_irosynchronize(void* sys);
+
 extern PLI_INT32 tf_typep(PLI_INT32 narg);
 
 extern void tf_warning(const char*, ...)
@@ -324,6 +329,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.30  2003/05/30 04:18:31  steve
+ *  Add acc_next function.
+ *
  * Revision 1.29  2003/05/30 04:01:55  steve
  *  Add tf_scale_longdelay.
  *

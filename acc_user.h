@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.15 2003/05/29 02:35:41 steve Exp $"
+#ident "$Id: acc_user.h,v 1.16 2003/05/30 04:18:31 steve Exp $"
 #endif
 
 /*
@@ -226,6 +226,7 @@ extern handle acc_handle_parent(handle obj);
 extern handle acc_handle_tfarg(int n);
 extern handle acc_handle_tfinst(void);
 
+extern handle acc_next(PLI_INT32 *, handle, handle);
 extern handle acc_next_topmod(handle prev_topmod);
 
 extern int acc_object_in_typelist(handle object, PLI_INT32*typelist);
@@ -247,6 +248,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.16  2003/05/30 04:18:31  steve
+ *  Add acc_next function.
+ *
  * Revision 1.15  2003/05/29 02:35:41  steve
  *  acc_fetch_type supports module.
  *

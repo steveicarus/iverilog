@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.5 2003/05/29 02:35:41 steve Exp $"
+#ident "$Id: a_fetch_type.c,v 1.6 2003/05/30 04:18:31 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -86,6 +86,9 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 		return accModuleInstance;
 	    // FIXME accCellInstance
 
+	  case vpiReg:
+	    return accReg;
+
 	  default:
 	    vpi_printf("acc_fetch_fulltype: vpiType %d is what accType?\n",
 		       vpi_get(vpiType, obj));
@@ -95,6 +98,9 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 
 /*
  * $Log: a_fetch_type.c,v $
+ * Revision 1.6  2003/05/30 04:18:31  steve
+ *  Add acc_next function.
+ *
  * Revision 1.5  2003/05/29 02:35:41  steve
  *  acc_fetch_type supports module.
  *
