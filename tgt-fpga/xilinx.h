@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.5 2003/07/02 00:25:40 steve Exp $"
+#ident "$Id: xilinx.h,v 1.6 2003/07/02 03:02:15 steve Exp $"
 #endif
 
 /*
@@ -98,13 +98,14 @@ extern edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib);
 
 /* === Inheritable Methods === */
 
-extern void virtex_show_footer(ivl_design_t des);
 extern void virtex_logic(ivl_net_logic_t net);
 extern void virtex_generic_dff(ivl_lpm_t net);
 extern void virtex_eq(ivl_lpm_t net);
 extern void virtex_ge(ivl_lpm_t net);
 extern void virtex_add(ivl_lpm_t net);
 
+extern void xilinx_common_header(ivl_design_t des);
+extern void xilinx_show_footer(ivl_design_t des);
 extern void xilinx_show_scope(ivl_scope_t scope);
 extern void xilinx_pad(ivl_signal_t, const char*str);
 extern void xilinx_logic(ivl_net_logic_t net);
@@ -114,6 +115,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.6  2003/07/02 03:02:15  steve
+ *  More xilinx common code.
+ *
  * Revision 1.5  2003/07/02 00:25:40  steve
  *  Add xilinx support for bufif1.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.16 2003/06/28 04:18:47 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.17 2003/07/02 03:02:15 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -54,66 +54,9 @@ const static struct edif_xlib_celltable virtex2_celltable[] = {
  */
 static void virtex2_show_header(ivl_design_t des)
 {
-      unsigned idx;
-      ivl_scope_t root = ivl_design_root(des);
-      unsigned sig_cnt = ivl_scope_sigs(root);
-      unsigned nports = 0, pidx;
       const char*part_str = 0;
 
-	/* Count the ports I'm going to use. */
-      for (idx = 0 ;  idx < sig_cnt ;  idx += 1) {
-	    ivl_signal_t sig = ivl_scope_sig(root, idx);
-
-	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
-		  continue;
-
-	    if (ivl_signal_attr(sig, "PAD") != 0)
-		  continue;
-
-	    nports += ivl_signal_pins(sig);
-      }
-
-      edf = edif_create(ivl_scope_basename(root), nports);
-
-      pidx = 0;
-      for (idx = 0 ;  idx < sig_cnt ;  idx += 1) {
-	    edif_joint_t jnt;
-	    ivl_signal_t sig = ivl_scope_sig(root, idx);
-
-	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
-		  continue;
-
-	    if (ivl_signal_attr(sig, "PAD") != 0)
-		  continue;
-
-	    if (ivl_signal_pins(sig) == 1) {
-		  edif_portconfig(edf, pidx, ivl_signal_basename(sig),
-				  ivl_signal_port(sig));
-
-		  assert(ivl_signal_pins(sig) == 1);
-		  jnt = edif_joint_of_nexus(edf, ivl_signal_pin(sig, 0));
-		  edif_port_to_joint(jnt, edf, pidx);
-
-	    } else {
-		  const char*name = ivl_signal_basename(sig);
-		  ivl_signal_port_t dir = ivl_signal_port(sig);
-		  char buf[128];
-		  unsigned bit;
-		  for (bit = 0 ;  bit < ivl_signal_pins(sig) ; bit += 1) {
-			const char*tmp;
-			sprintf(buf, "%s[%u]", name, bit);
-			tmp = strdup(buf);
-			edif_portconfig(edf, pidx+bit, tmp, dir);
-
-			jnt = edif_joint_of_nexus(edf,ivl_signal_pin(sig,bit));
-			edif_port_to_joint(jnt, edf, pidx+bit);
-		  }
-	    }
-
-	    pidx += ivl_signal_pins(sig);
-      }
-
-      assert(pidx == nports);
+      xilinx_common_header(des);
 
       xlib = edif_xlibrary_create(edf, "VIRTEX2");
       edif_xlibrary_set_celltable(xlib, virtex2_celltable);
@@ -133,7 +76,7 @@ static void virtex2_show_header(ivl_design_t des)
 
 const struct device_s d_virtex2_edif = {
       virtex2_show_header,
-      virtex_show_footer,
+      xilinx_show_footer,
       xilinx_show_scope,
       xilinx_pad,
       virtex_logic,
@@ -151,6 +94,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.17  2003/07/02 03:02:15  steve
+ *  More xilinx common code.
+ *
  * Revision 1.16  2003/06/28 04:18:47  steve
  *  Add support for wide OR/NOR gates.
  *
