@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.118 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: parse.y,v 1.119 2001/04/21 00:55:46 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1802,18 +1802,17 @@ register_variable_list
 
 specify_item
 	: K_specparam specparam_list ';'
-	| specify_simple_path '=' '(' delay_value ')' ';'
-		{
-		}
-	| specify_simple_path '=' '(' delay_value ',' delay_value ')' ';'
-		{
-		}
-	| specify_simple_path '=' '(' delay_value ',' delay_value ',' delay_value ')' ';'
+	| specify_simple_path '=' '(' specify_delay_value_list ')' ';'
 		{
 		}
 	| specify_simple_path '=' delay_value_simple ';'
 		{
 		}
+	;
+
+specify_delay_value_list
+	: delay_value { }
+	| specify_delay_value_list ',' delay_value { }
 	;
 
 specify_item_list
@@ -1822,8 +1821,13 @@ specify_item_list
 	;
 
 specify_simple_path
-	: '(' IDENTIFIER spec_polarity K_EG IDENTIFIER ')'
-	| '(' IDENTIFIER spec_polarity K_SG IDENTIFIER ')'
+	: '(' specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
+	| '(' specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
+	;
+
+specify_path_identifiers
+	: IDENTIFIER { }
+	| specify_path_identifiers ',' IDENTIFIER { }
 	;
 
 specparam

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.52 2001/04/15 02:58:11 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.53 2001/04/21 00:55:46 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -710,7 +710,7 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
   /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
-  /* IVL_ST_UTASK */
+  /* IVL_ST_UTASK IVL_ST_DISABLE */
 extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
   /* IVL_ST_CASE */
 extern unsigned ivl_stmt_case_count(ivl_statement_t net);
@@ -765,6 +765,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.53  2001/04/21 00:55:46  steve
+ *  Generate code for disable.
+ *
  * Revision 1.52  2001/04/15 02:58:11  steve
  *  vvp support for <= with internal delay.
  *

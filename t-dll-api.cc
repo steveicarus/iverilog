@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.38 2001/04/15 02:58:11 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.39 2001/04/21 00:55:46 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -669,6 +669,9 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_DISABLE:
+	    return net->u_.disable_.scope;
+
 	  case IVL_ST_UTASK:
 	    return net->u_.utask_.def;
 	  default:
@@ -903,6 +906,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.39  2001/04/21 00:55:46  steve
+ *  Generate code for disable.
+ *
  * Revision 1.38  2001/04/15 02:58:11  steve
  *  vvp support for <= with internal delay.
  *

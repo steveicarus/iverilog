@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.28 2001/04/18 05:12:03 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.29 2001/04/21 00:55:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -215,6 +215,19 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_block(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+      unsigned idx;
+      unsigned cnt = ivl_stmt_block_count(net);
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
+      }
+
+      return rc;
+}
+
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
@@ -359,6 +372,16 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
 
       fprintf(vvp_out, "    %%delay %lu;\n", delay);
       rc += show_statement(stmt, sscope);
+
+      return rc;
+}
+
+static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+
+      ivl_scope_t target = ivl_stmt_call(net);
+      fprintf(vvp_out, "    %%disable S_%s;\n", ivl_scope_name(target));
 
       return rc;
 }
@@ -577,16 +600,9 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_stmt_assign_nb(net);
 	    break;
 
-	      /* Begin-end blocks simply draw their contents. */
-	  case IVL_ST_BLOCK: {
-		unsigned idx;
-		unsigned cnt = ivl_stmt_block_count(net);
-		for (idx = 0 ;  idx < cnt ;  idx += 1) {
-		      rc += show_statement(ivl_stmt_block_stmt(net, idx),
-					   sscope);
-		}
-		break;
-	  }
+	  case IVL_ST_BLOCK:
+	    rc += show_stmt_block(net, sscope);
+	    break;
 
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASEX:
@@ -600,6 +616,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_DELAY:
 	    rc += show_stmt_delay(net, sscope);
+	    break;
+
+	  case IVL_ST_DISABLE:
+	    rc += show_stmt_disable(net, sscope);
 	    break;
 
 	  case IVL_ST_FOREVER:
@@ -729,6 +749,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.29  2001/04/21 00:55:46  steve
+ *  Generate code for disable.
+ *
  * Revision 1.28  2001/04/18 05:12:03  steve
  *  Use the new %fork syntax.
  *
