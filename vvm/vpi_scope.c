@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.c,v 1.3 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.4 1999/12/15 18:21:20 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -27,7 +27,8 @@
 static vpiHandle module_iter(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
-      assert(obj->vpi_type->type_code == vpiModule);
+      assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiNamedBegin));
 
       switch (code) {
 	  case vpiInternalScope:
@@ -46,6 +47,16 @@ static const struct __vpirt vpip_module_rt = {
       module_iter
 };
 
+static const struct __vpirt vpip_named_begin_rt = {
+      vpiNamedBegin,
+      0,
+      0,
+      0,
+      0,
+      0,
+      module_iter
+};
+
 vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
 {
       ref->intern = 0;
@@ -54,6 +65,9 @@ vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
       switch (type) {
 	  case vpiModule:
 	    ref->base.vpi_type = &vpip_module_rt;
+	    break;
+	  case vpiNamedBegin:
+	    ref->base.vpi_type = &vpip_named_begin_rt;
 	    break;
 	  default:
 	    assert(0);
@@ -76,6 +90,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.4  1999/12/15 18:21:20  steve
+ *  Support named begin scope at run time.
+ *
  * Revision 1.3  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *
