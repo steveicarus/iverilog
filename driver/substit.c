@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: substit.c,v 1.4 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: substit.c,v 1.5 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include  <string.h>
@@ -66,7 +66,7 @@ char* substitutions(const char*str)
 		  cp += strlen(cp);
 
 	    } else {
-		  if ( (cp - buf) == nbuf ) {
+		  if ( cp == (buf + nbuf) ) {
 			size_t old_size = nbuf;
 			nbuf = old_size + 32;
 			buf = realloc(buf, nbuf);
@@ -79,7 +79,7 @@ char* substitutions(const char*str)
 
 	/* Add the trailing nul to the string, and reallocate the
 	   buffer to be a tight fit. */
-      if ( (cp - buf) == nbuf ) {
+      if ( cp == (buf + nbuf) ) {
 	    size_t old_size = nbuf;
 	    nbuf = old_size + 1;
 	    buf = realloc(buf, nbuf);
@@ -96,6 +96,9 @@ char* substitutions(const char*str)
 
 /*
  * $Log: substit.c,v $
+ * Revision 1.5  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.4  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.13 2003/05/10 16:06:50 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.14 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -132,7 +132,7 @@ static int sys_readmem_calltf(char*name)
 
       /* min_addr and max_addr are equal to start_addr and stop_addr if
 	 start_addr<stop_addr or vice versa if not... */
-      int min_addr, max_addr;
+      unsigned min_addr, max_addr;
 
 
       /*======================================== Get parameters */
@@ -576,6 +576,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.14  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.13  2003/05/10 16:06:50  steve
  *  $readmem more flexible with file name argument.
  *

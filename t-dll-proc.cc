@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.61 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.62 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -747,7 +747,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
 		 statement so that the generator can find it easily. */
 	    const NetEvent*ev = net->event(edx);
 	    ivl_scope_t ev_scope = lookup_scope_(ev->scope());
-	    ivl_event_t ev_tmp;
+	    ivl_event_t ev_tmp=0;
 
 	    for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
 		  const char*ename = ivl_event_basename(ev_scope->event_[idx]);
@@ -756,6 +756,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
 			break;
 		  }
 	    }
+	    // XXX should we assert(ev_tmp)?
 
 	    if (net->nevents() == 1)
 		  stmt_cur_->u_.wait_.event = ev_tmp;
@@ -842,6 +843,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.62  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.61  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.6 2003/02/25 03:40:45 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.7 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -124,11 +124,11 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	      vvp_mangle_id(ivl_lpm_basename(net)), slice);
 
 
-      if ((2 << (sel-1))/2 < size) {
+      if ((2U << (sel-1))/2 < size) {
 	    fprintf(vvp_out, "L_%s.%s/%u/2/%u, ",
 		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 		    vvp_mangle_id(ivl_lpm_basename(net)),
-		    slice, (2 << (sel-1))/2);
+		    slice, (2U << (sel-1))/2);
       } else {
 	    fprintf(vvp_out, "C<x>, ");
       }
@@ -185,6 +185,9 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.7  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.6  2003/02/25 03:40:45  steve
  *  Eliminate use of ivl_lpm_name function.
  *

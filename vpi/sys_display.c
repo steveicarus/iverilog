@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.66 2003/10/30 03:43:19 steve Exp $"
+#ident "$Id: sys_display.c,v 1.67 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -169,6 +169,7 @@ static void format_time(unsigned mcd, int fsize,
       char*bp, *start_address;
 
       int idx;
+      unsigned int fusize;
       int fraction_chars, fraction_pad, value_chop, whole_fill;
 
 	/* This is the format precision expressed as the power of 10
@@ -179,10 +180,9 @@ static void format_time(unsigned mcd, int fsize,
 	/* If the fsize is <0, then use the value from the
 	   $timeformat. If the fsize is >=0, then it overrides the
 	   $timeformat value. */
-      if (fsize < 0)
-	    fsize = timeformat_info.width;
+      fusize = (fsize<0) ? timeformat_info.width : (unsigned) fsize;
 
-      assert(fsize < (sizeof buf - 1));
+      assert(fusize < (sizeof buf - 1));
 
 
 	/* This is the number of characters to the right of the
@@ -228,12 +228,12 @@ static void format_time(unsigned mcd, int fsize,
 	    whole_fill = 0;
 
 	/* This is the expected start address of the output. It
-	   accounts for the fsize value that is chosen. The output
+	   accounts for the f(u)size value that is chosen. The output
 	   will be filled out to complete the buffer. */
-      if (fsize == 0)
+      if (fusize == 0)
 	    start_address = buf;
       else
-	    start_address = buf + sizeof buf - fsize - 1;
+	    start_address = buf + sizeof buf - fusize - 1;
 
 	/* Now start the character pointers, ready to start copying
 	   the value into the format. */
@@ -286,7 +286,7 @@ static void format_time(unsigned mcd, int fsize,
 	/* Fill the leading characters to make up the desired
 	   width. This may require a '0' if the last character
 	   written was the decimal point. */
-      if (fsize > 0) {
+      if (fusize > 0) {
 	    while (bp > start_address) {
 		  if (*bp == '.')
 			*--bp = '0';
@@ -452,7 +452,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    { char* value_str = value.value.str;
 	      if (leading_zero==1){
 		      // Strip away all leading zeros from string
-		    int i=0;
+		    unsigned int i=0;
 		    while(i< (strlen(value_str)-1) && value_str[i]=='0')
 			  i++;
 		    value_str += i;
@@ -643,7 +643,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 
 			if (!(is_constant(argv[idx])
 			      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
-			      int i=0;
+			      unsigned int i=0;
 				// Strip away all leading zeros from string
 			      while((i < (strlen(value_str)-1))
 				    && (value_str[i]==' '))
@@ -833,7 +833,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
       char*fmt;
       s_vpi_value value;
-      int idx;
+      unsigned int idx;
       int size;
 
       for (idx = 0 ;  idx < info->nitems ;  idx += 1) {
@@ -1580,6 +1580,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.67  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.66  2003/10/30 03:43:19  steve
  *  Rearrange fileio functions, and add ungetc.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.97 2003/10/09 23:45:03 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.98 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -55,7 +55,7 @@ const char *vvp_mangle_id(const char *id)
       
       do {
 	    int n = se - inp;
-	    int nlen = strlen(id) + 4*(++nesc) + 1;
+	    unsigned int nlen = strlen(id) + 4*(++nesc) + 1;
 	    if (out_len < nlen) {
 		  out = (char *) realloc(out, nlen);
 		  assert(out);
@@ -105,7 +105,7 @@ const char *vvp_mangle_name(const char *id)
       
       do {
 	    int n = se - inp;
-	    int nlen = strlen(id) + 2*(++nesc) + 1;
+	    unsigned int nlen = strlen(id) + 2*(++nesc) + 1;
 	    if (out_len < nlen) {
 		  out = (char *) realloc(out, nlen);
 		  assert(out);
@@ -502,7 +502,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 
       level = 0;
       while (ndrivers) {
-	    int inst;
+	    unsigned int inst;
 	    for (inst = 0; inst < ndrivers; inst += 4) {
 		  if (ndrivers > 4)
 			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri", 
@@ -628,7 +628,7 @@ static void draw_delay(ivl_net_logic_t lptr)
 static void draw_udp_def(ivl_udp_t udp)
 {
   unsigned init;
-  int i;
+  unsigned i;
 
   switch (ivl_udp_init(udp))
     {
@@ -1658,6 +1658,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.98  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.97  2003/10/09 23:45:03  steve
  *  Emit .event inputs before the .event statement.
  *

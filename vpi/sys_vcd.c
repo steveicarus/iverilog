@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.51 2003/10/29 03:28:27 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.52 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,7 @@ static void gen_new_vcd_id(void)
 {
       static unsigned value = 0;
       unsigned v = ++value;
-      int i;
+      unsigned int i;
 
       for (i=0; i < sizeof(vcdid)-1; i++) {
            vcdid[i] = (char)((v%94)+33); /* for range 33..126 */
@@ -811,6 +811,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.52  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.51  2003/10/29 03:28:27  steve
  *  Add the PLU_UINT64_FMT string for formatting output.
  *

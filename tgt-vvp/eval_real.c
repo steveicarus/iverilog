@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.9 2003/05/25 02:50:08 steve Exp $"
+#ident "$Id: eval_real.c,v 1.10 2003/12/19 01:27:10 steve Exp $"
 #endif
 
 /*
@@ -103,7 +103,7 @@ static int draw_binary_real(ivl_expr_t exp)
 
 static int draw_number_real(ivl_expr_t exp)
 {
-      int idx;
+      unsigned int idx;
       int res = allocate_word();
       const char*bits = ivl_expr_bits(exp);
       unsigned wid = ivl_expr_width(exp);
@@ -298,6 +298,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.10  2003/12/19 01:27:10  steve
+ *  Fix various unsigned compare warnings.
+ *
  * Revision 1.9  2003/05/25 02:50:08  steve
  *  Add % in real expressions.
  *
