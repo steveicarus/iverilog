@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.4 2001/11/02 04:48:03 steve Exp $"
+#ident "$Id: symbols.cc,v 1.5 2002/05/29 05:37:35 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -41,8 +41,8 @@ struct symbol_table_s {
  * simple binary search to find an item. Each key represents an item.
  */
 
-const unsigned leaf_width = 511;
-const unsigned node_width = 511;
+const unsigned leaf_width = 254;
+const unsigned node_width = 508;
 
 struct tree_node_ {
       bool leaf_flag;
@@ -274,22 +274,35 @@ static symbol_value_t find_value_(symbol_table_t tbl, struct tree_node_*cur,
 	    }
 
       } else {
-
-	    unsigned idx = 0;
+	      /* Do a binary search within the inner node. */
+	    unsigned min = 0;
+	    unsigned max = cur->count;
+	    unsigned idx = max/2;
 	    for (;;) {
-		  if (idx == cur->count) {
-			idx -= 1;
-			return find_value_(tbl, cur->child[idx],
-					  key, val, force_flag);
-		  }
-
 		  int rc = strcmp(key, node_last_key(cur->child[idx]));
-		  if (rc <= 0) {
+		  if (rc == 0) {
 			return find_value_(tbl, cur->child[idx],
-					  key, val, force_flag);
+					   key, val, force_flag);
 		  }
 
-		  idx += 1;
+		  if (rc > 0) {
+			min = idx + 1;
+			if (min == cur->count)
+			      return find_value_(tbl, cur->child[idx],
+						 key, val, force_flag);
+			if (min == max)
+			      return find_value_(tbl, cur->child[max],
+						 key, val, force_flag);
+
+			idx = min + (max-min)/2;
+
+		  } else  {
+			max = idx;
+			if (idx == min)
+			      return find_value_(tbl, cur->child[idx],
+						 key, val, force_flag);
+			idx = min + (max-min)/2;
+		  }
 	    }
       }
 
@@ -347,6 +360,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.5  2002/05/29 05:37:35  steve
+ *  Use binary search to speed up deep lookups.
+ *
  * Revision 1.4  2001/11/02 04:48:03  steve
  *  Implement split_node for symbol table (hendrik)
  *
