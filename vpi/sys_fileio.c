@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.1 2003/10/30 03:43:20 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.2 2003/11/07 19:40:05 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -137,6 +137,12 @@ static int sys_fclose_calltf(char *name)
       mcd = value.value.integer;
 
       vpi_mcd_close(mcd);
+      return 0;
+}
+
+static int sys_fflush_calltf(char *name)
+{
+      fflush(0);
       return 0;
 }
 
@@ -340,6 +346,15 @@ void sys_fileio_register()
       tf_data.user_data = "$fclose";
       vpi_register_systf(&tf_data);
 
+      //============================== fflush
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fflush";
+      tf_data.calltf    = sys_fflush_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fflush";
+      vpi_register_systf(&tf_data);
+
       //============================== fputc
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fputc";
@@ -371,6 +386,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.2  2003/11/07 19:40:05  steve
+ *  Implement basic fflush.
+ *
  * Revision 1.1  2003/10/30 03:43:20  steve
  *  Rearrange fileio functions, and add ungetc.
  *
