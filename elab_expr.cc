@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.37 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.38 2001/06/23 19:53:03 steve Exp $"
 #endif
 
 
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "util.h"
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
 {
@@ -267,9 +268,13 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 	/* Look for the return value signal for the called
 	   function. This return value is a magic signal in the scope
 	   of the function, that has the name of the function. The
-	   function code assigns to this signal to return a value. */
+	   function code assigns to this signal to return a value.
 
-      NetNet*res = des->find_signal(dscope, name_);
+	   dscope, in this case, is the scope of the function, so the
+	   return value is the name within that scope. */
+
+      string rname = name_;
+      NetNet*res = des->find_signal(dscope, parse_last_name(rname));
       if (res == 0) {
 	    cerr << get_line() << ": internal error: Unable to locate "
 		  "function return value for " << name_ << " in " <<
@@ -611,6 +616,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.38  2001/06/23 19:53:03  steve
+ *  Look up functor return register with tail of name.
+ *
  * Revision 1.37  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *
