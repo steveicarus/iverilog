@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.21 2000/11/19 05:26:58 steve Exp $"
+#ident "$Id: cprop.cc,v 1.22 2000/11/23 01:55:52 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -461,6 +461,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		break;
 	  }
 
+	  case NetLogic::XNOR:
 	  case NetLogic::XOR: {
 		unsigned top = obj->pin_count();
 		unsigned idx = 1;
@@ -536,7 +537,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		  /* If all the inputs were eliminated, then replace
 		     the gate with a constant 0 and I am done. */
 		if (top == 1) {
-		      NetConst*tmp = new NetConst(obj->name(), verinum::V0);
+		      verinum::V out = obj->type()==NetLogic::XNOR
+			    ? verinum::V1
+			    : verinum::V0;
+		      NetConst*tmp = new NetConst(obj->name(), out);
 
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -561,9 +565,17 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      else
 			    save = 2;
 
-		      NetLogic*tmp = new NetLogic(obj->scope(),
-						  obj->name(), 2,
-						  NetLogic::NOT);
+		      NetLogic*tmp;
+
+		      if (obj->type() == NetLogic::XOR)
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::NOT);
+		      else
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::BUF);
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -578,9 +590,17 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		  /* If we are down to only one input, then replace
 		     the XOR with a BUF and exit now. */
 		if (top == 2) {
-		      NetLogic*tmp = new NetLogic(obj->scope(),
-						  obj->name(), 2,
-						  NetLogic::BUF);
+		      NetLogic*tmp;
+
+		      if (obj->type() == NetLogic::XOR)
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::BUF);
+		      else
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::NOT);
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -597,7 +617,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(obj->scope(),
 						  obj->name(), top,
-						  NetLogic::XOR);
+						  obj->type());
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -769,6 +789,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.22  2000/11/23 01:55:52  steve
+ *  Propagate constants through xnor gates. (PR#51)
+ *
  * Revision 1.21  2000/11/19 05:26:58  steve
  *  Replace AND constand propagation.
  *
