@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.114 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: compile.cc,v 1.115 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -579,7 +579,7 @@ static vvp_ipoint_t make_const_functor(unsigned val,
       functor_t obj = new const_functor_s(str0, str1);
       functor_define(fdx, obj);
 
-      obj->put_oval(false, val);
+      obj->put_oval(val, false);
 
       return fdx;
 }
@@ -929,6 +929,7 @@ char **compile_udp_table(char **table, char *row)
 }
 
 void compile_udp_functor(char*label, char*type,
+			 vvp_delay_t delay,
 			 unsigned argc, struct symb_s*argv)
 {
       struct vvp_udp_s *u = udp_find(type);
@@ -951,11 +952,13 @@ void compile_udp_functor(char*label, char*type,
 	    }
       }
 
+      udp->delay = delay;
+
       inputs_connect(fdx, argc, argv);
       free(argv);
       
       if (u->sequ)
-	    udp->put_oval(false, u->init);
+	    udp->put_oval(u->init, false);
 }
 
 
@@ -1341,6 +1344,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.115  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.114  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

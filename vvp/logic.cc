@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.3 2001/11/16 04:22:27 steve Exp $"
+#ident "$Id: logic.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -53,7 +53,7 @@ void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       val >>= 2 * (ival&0x03);
       val &= 0x03;
 
-      put_oval(push, val);
+      put_oval(val, push);
 }
 
 /*
@@ -62,7 +62,9 @@ void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
  * functor. Also resolve the inputs to the functor.
  */
 
-void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
+void compile_functor(char*label, char*type,
+		     vvp_delay_t delay,
+		     unsigned argc, struct symb_s*argv)
 {
       functor_t obj;
 
@@ -130,6 +132,8 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
       define_functor_symbol(label, fdx);
       free(label);
 
+      obj->delay = delay;
+
       inputs_connect(fdx, argc, argv);
       free(argv);
 }
@@ -137,6 +141,10 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.4  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.3  2001/11/16 04:22:27  steve
  *  include stdlib.h for portability.
  *

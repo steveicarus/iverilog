@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.29 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.30 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 /*
@@ -404,7 +404,7 @@ static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
 {
       vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
       functor_t fu = functor_index(ptr);
-      fu->put_ostr(true, val, str);
+      fu->put_ostr(val, str, true);
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
@@ -552,6 +552,10 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.30  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.29  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

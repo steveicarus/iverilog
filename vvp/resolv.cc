@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.8 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: resolv.cc,v 1.9 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -164,11 +164,21 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
       }
 
 	/* If the output changes, then create a propagation event. */
-      put_ostr(push, val, sval);
+
+      // Do not propagate (push).  Why?  Because if, for example, a
+      // clock buffer is modeled as parallel inverters, the output
+      // must not show 'bx transitions when the inverters all propagte
+      // at the same time.
+
+      put_ostr(val, sval, false);
 }
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.9  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.8  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

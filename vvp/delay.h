@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: delay.h,v 1.1 2001/11/10 18:07:11 steve Exp $"
+#ident "$Id: delay.h,v 1.2 2001/12/06 03:31:24 steve Exp $"
 #endif
+
+#include "pointers.h"
 
 /*
 **  vvp_delay_t del;
@@ -60,8 +62,6 @@
 **         set then non-masked edges of delay tgt from src.  
 **         tgt and src are deleted.
 */
-
-typedef struct vvp_delay_s *vvp_delay_t;
 
 struct vvp_delay_s {
       vvp_delay_s(unsigned);
@@ -113,6 +113,10 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src,
 
 /*
 ** $Log: delay.h,v $
+** Revision 1.2  2001/12/06 03:31:24  steve
+**  Support functor delays for gates and UDP devices.
+**  (Stephan Boettcher)
+**
 ** Revision 1.1  2001/11/10 18:07:11  steve
 **  Runtime support for functor delays. (Stephan Boettcher)
 **

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.7 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: pointers.h,v 1.8 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 /*
@@ -104,8 +104,17 @@ typedef struct vthread_s*vthread_t;
 
 typedef struct vvp_fvector_s *vvp_fvector_t;
 
+/* delay object */
+
+typedef struct vvp_delay_s *vvp_delay_t;
+
+
 /*
  * $Log: pointers.h,v $
+ * Revision 1.8  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.7  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

@@ -19,18 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.39 2001/11/10 18:07:12 steve Exp $"
+#ident "$Id: functor.h,v 1.40 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "pointers.h"
 # include  "delay.h"
-
-/*
- * Create a propagation event. The fun parameter points to the functor
- * to have its output propagated, and the delay is the delay to
- * schedule the propagation.
- */
-extern void schedule_functor(functor_t fun, unsigned delay);
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -68,7 +61,7 @@ extern void schedule_functor(functor_t fun, unsigned delay);
  *    STRONG = 6,
  *    SUPPLY = 7
  *
- * The output value (oval) is combined with the drive specifications
+ * The output value (cval) is combined with the drive specifications
  * to make a fully strength aware output, as described below.
  *
  * OUTPUT STRENGTHS:
@@ -81,9 +74,9 @@ extern void schedule_functor(functor_t fun, unsigned delay);
  * strength-value closest to supply0.
  *
  * The functor calculates, when it operates, a 4-value output into
- * oval and a fully strength aware value into ostr. The mode-0
- * functors use the odrive0 and odrive1 fields to form the strength
- * value.
+ * oval and a fully strength aware value into ostr.  Functors with
+ * fixed drive strength use the odrive0 and odrive1 fields to form the
+ * strength value.  
  */
 
 /*
@@ -163,14 +156,19 @@ struct functor_s {
 
     private:
 	/* Output value (low bits) and drive1 and drive0 strength. */
-      unsigned oval       : 2;
+      unsigned cval       : 2;
     protected:
       unsigned odrive0    : 3;
       unsigned odrive1    : 3;
     private:
 	/* Strength form of the output value. */
+      unsigned cstr       : 8;
+      
+    protected:
       unsigned ostr       : 8;
+      unsigned oval       : 2;
 
+    private:
       unsigned inhibit    : 1;
 
     public:
@@ -178,18 +176,24 @@ struct functor_s {
         /* True if this functor triggers a breakpoint. */
       unsigned breakpoint : 1;
 #endif
+
+    public:
       virtual void set(vvp_ipoint_t ipt, bool push, 
 		       unsigned val, unsigned str = 0) = 0;
 
-      inline unsigned char get() { return oval; }
+      inline unsigned char get()      { return cval; }
+      inline unsigned char get_str()  { return cstr; }
+      inline unsigned char get_oval() { return oval; }
       inline unsigned char get_ostr() { return ostr; }
+
       void put(vvp_ipoint_t ipt, unsigned val);
-      void put_oval(bool push, unsigned val);
-      void put_ostr(bool push, unsigned val, unsigned str);
+      void put_oval(unsigned val, bool push = true);
+      void put_ostr(unsigned val, unsigned str, bool push = true);
+      void schedule(unsigned delay);
       bool disable(vvp_ipoint_t ptr);
       bool enable(vvp_ipoint_t ptr);
-      void propagate(bool push);
-      void force(unsigned val, unsigned str);
+      void propagate(bool push = true);
+      void propagate(unsigned val, unsigned str, bool push = true);
 };
 
 /*
@@ -204,63 +208,72 @@ inline void functor_s::put(vvp_ipoint_t ptr, unsigned val)
       ival = (ival & imask) | ((val & 3) << (2*pp));
 }
 
-inline void functor_s::propagate(bool push)
+inline void functor_s::propagate(unsigned val, unsigned str, bool push)
 {
+      cval = val;
+      cstr = str;
       vvp_ipoint_t idx = out;
       while (idx) {
 	    functor_t idxp = functor_index(idx);
-	    idxp->set(idx, push, oval, ostr);
+	    idxp->set(idx, push, val, str);
 	    idx = idxp->port[ipoint_port(idx)];
-	    
-#if defined(WITH_DEBUG)
-	    if (fp->breakpoint)
-		  breakpoint();
-#endif
       }
+
+#if defined(WITH_DEBUG)
+      if (breakpoint)
+	    breakpoint();
+#endif
 }
 
-inline void functor_s::put_ostr(bool push, unsigned val, unsigned str)
+inline void functor_s::propagate(bool push)
 {
-      if (val != oval || str != ostr) {
+      propagate(get_oval(), get_ostr(), push);
+}
 
+inline void functor_s::put_ostr(unsigned val, unsigned str, bool push)
+{
+      if (str != get_ostr() || val != get_oval()) {
+
+	    unsigned char ooval = oval;
 	    ostr = str;
+	    oval = val;
 
 	    if (inhibit)
 		  return;
 
-	    oval = val;
-
 	    unsigned del;
 	    if (delay)
-	      del = vvp_delay_get(delay, oval, val);
+	      del = vvp_delay_get(delay, ooval, val);
 	    else
 	      del = 0;
 
-	    if (del == 0  &&  push)
-		  propagate(true);
+	    if (push && del == 0) {
+		  propagate();
+	    }
 	    else
-		  schedule_functor(this, del);
+		  schedule(del);
       }
 }
 
-inline void functor_s::put_oval(bool push, unsigned val)
+inline void functor_s::put_oval(unsigned val, bool push)
 {
+      unsigned char str;
       switch (val) {
 	  case 0:
-	    ostr = 0x00 | (odrive0<<0) | (odrive0<<4);
+	    str = 0x00 | (odrive0<<0) | (odrive0<<4);
 	    break;
 	  case 1:
-	    ostr = 0x88 | (odrive1<<0) | (odrive1<<4);
+	    str = 0x88 | (odrive1<<0) | (odrive1<<4);
 	    break;
 	  case 2:
-	    ostr = 0x80 | (odrive0<<0) | (odrive1<<4);
+	    str = 0x80 | (odrive0<<0) | (odrive1<<4);
 	    break;
-	  case 3:
-	    ostr = 0x00;
+	  default:
+	    str = 0x00;
 	    break;
       }
 
-      put_ostr(push, val, ostr);
+      put_ostr(val, str, push);
 }
 
 /*
@@ -280,7 +293,7 @@ inline void functor_s::put_oval(bool push, unsigned val)
  * propagation events to pass the output on.
  */
 inline static 
-void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
+void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push = true)
 {
       functor_t fp = functor_index(ptr);
       fp->set(ptr, push, val, str);
@@ -301,20 +314,6 @@ unsigned functor_get(vvp_ipoint_t ptr)
       functor_t fp = functor_index(ptr);
       return fp->get();
 }
-
-
-/*
- * When a propagation event happens, this function is called with the
- * address of the affected functor. It propagates the output to all
- * the inputs it is connected to, creating new propagation event on
- * the way.
- */
-inline static
-void functor_propagate(functor_t fp, bool push=true)
-{
-      fp->propagate(push);
-}
-
 
 //          Special infrastructure functor types
 
@@ -376,6 +375,10 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.40  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.39  2001/11/10 18:07:12  steve
  *  Runtime support for functor delays. (Stephan Boettcher)
  *

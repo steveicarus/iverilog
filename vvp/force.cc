@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: force.cc,v 1.3 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: force.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -35,41 +35,29 @@ inline bool functor_s::disable(vvp_ipoint_t ptr)
 
 inline bool functor_s::enable(vvp_ipoint_t ptr)
 {
-      unsigned val;
-      if (ostr == 0)
-	    val = 3;
-      else switch (ostr & 0x88) {
-	  case 0x00: val = 0; break;
-	  case 0x88: val = 1; break;
-	  default:   val = 2;
-      }
-      if (val != oval) {
-	    oval = val;
-	    propagate(true);
-      }
       bool r = inhibit;
       inhibit = 0;
+      if (r) {
+	    if (get_str() != get_ostr())
+		  propagate();
+	    else
+		  assert(get() == get_oval());
+      }
       return r;
 }
 
-inline void functor_s::force(unsigned val, unsigned str)
+void force_functor_s::set(vvp_ipoint_t i, bool push, 
+			  unsigned val, unsigned str)
 {
-      if (ostr != str  ||  oval != val) {
-	    unsigned save = ostr;
+      if (ipoint_port(i) == 0) {
 	    oval = val;
 	    ostr = str;
-	    propagate(true);
-	    ostr = save;
-      }
-}
-
-void force_functor_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned str)
-{
-      put(i, val);
-      if (ipoint_port(i) == 0) {
-	    if (active  && out) {
+	    if (active && out) {
 		  functor_t tgt = functor_index(out);
-		  tgt->force(ival&3, get_ostr());
+		  if (str != tgt->get_str())
+			tgt->propagate(val, str, push);
+		  else
+			assert(val == tgt->get());
 	    }
       }
 }
@@ -123,7 +111,7 @@ bool of_FORCE(vthread_t thr, vvp_code_t cp)
 	    fofu->port[3] = tgt->out;
 	    tgt->out = ipoint_make(ifofu, 3);
 
-	    fofu->set(ifofu, false, fofu->ival&3, fofu->get_ostr());
+	    fofu->set(ifofu, false, fofu->get_oval(), fofu->get_ostr());
       }
 
       return true;
@@ -136,7 +124,6 @@ bool of_RELEASE(vthread_t thr, vvp_code_t cp)
 
       if (release_force(itgt, tgt))
 	    tgt->enable(itgt);
-      // bug:  a strength change will not be propagated.
 
       return true;
 }
@@ -158,7 +145,7 @@ void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
       unsigned pp = ipoint_port(ptr);
       
       if (assigned() && pp==1  ||  !assigned() && pp==0) {
-	    put_oval(push, val);
+	    put_oval(val, push);
       }
 }
 
@@ -249,6 +236,10 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.4  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.3  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

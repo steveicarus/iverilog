@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.40 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: parse.y,v 1.41 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
+# include  "delay.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -51,6 +52,8 @@ extern FILE*yyin;
 
       struct argv_s argv;
       vpiHandle vpi;
+
+      vvp_delay_t cdelay;
 };
 
 
@@ -79,6 +82,7 @@ extern FILE*yyin;
 
 %type <argv> argument_opt argument_list
 %type <vpi>  argument
+%type <cdelay> delay
 
 %%
 
@@ -117,13 +121,11 @@ statement
   /* Functor statements define functors. The functor must have a
      label and a type name, and may have operands. */
 
-	: T_LABEL K_FUNCTOR T_SYMBOL ',' symbols ';'
-		{ struct symbv_s obj = $5;
-		  compile_functor($1, $3, obj.cnt, obj.vect);
-		}
+	: T_LABEL K_FUNCTOR T_SYMBOL delay ',' symbols ';'
+		{ compile_functor($1, $3, $4, $6.cnt, $6.vect); }
 
-	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
-		{ compile_functor($1, $3, 0, 0); }
+	| T_LABEL K_FUNCTOR T_SYMBOL delay ','  T_NUMBER ';'
+		{ compile_functor($1, $3, $4, 0, 0); }
 
 
   /* UDP statements define or instantiate UDPs.  Definitions take a 
@@ -136,8 +138,8 @@ statement
 	| T_LABEL K_UDP_C T_STRING ',' T_NUMBER ',' udp_table ';'
 		{ compile_udp_def(0, $1, $3, $5, 0, $7); }
 
-	| T_LABEL K_UDP T_SYMBOL ',' symbols ';'
-		{ compile_udp_functor($1, $3, $5.cnt, $5.vect); }
+	| T_LABEL K_UDP T_SYMBOL delay ',' symbols ';'
+		{ compile_udp_functor($1, $3, $4, $6.cnt, $6.vect); }
 
 
   /* Memory.  Definition, port, initialization */
@@ -495,6 +497,17 @@ o_komma
 	| ','
 	;
 
+delay
+	: /* empty */ 
+		{ $$ = 0; }
+	| '(' T_NUMBER ')'
+		{ $$ = new vvp_delay_2_s($2, $2); }
+	| '(' T_NUMBER ',' T_NUMBER ')'
+		{ $$ = new vvp_delay_2_s($2, $4); }
+	| '(' T_NUMBER ',' T_NUMBER ',' T_NUMBER ')'
+		{ $$ = new vvp_delay_3_s($2, $4, $6); }
+	;
+
 %%
 
 int compile_design(const char*path)
@@ -514,6 +527,10 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.41  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.40  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

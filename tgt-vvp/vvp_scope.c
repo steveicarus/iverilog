@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.56 2001/11/01 04:26:57 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.57 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -427,6 +427,21 @@ static void draw_net_in_scope(ivl_signal_t sig)
       free(args);
 }
 
+static void draw_delay(ivl_net_logic_t lptr)
+{
+      unsigned d0 = ivl_logic_delay(lptr, 0);
+      unsigned d1 = ivl_logic_delay(lptr, 1);
+      unsigned d2 = ivl_logic_delay(lptr, 2);
+      
+      if (d0 == 0 && d1 == 0 && d2 == 0)
+	    return;
+
+      if (d0 == d1 && d1 == d2)
+	    fprintf(vvp_out, " (%d)", d0);
+      else
+	    fprintf(vvp_out, " (%d,%d,%d)", d0, d1, d2);
+}
+
 static void draw_udp_def(ivl_udp_t udp)
 {
   unsigned init;
@@ -491,6 +506,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	  vvp_mangle_id(ivl_logic_name(lptr)));
   fprintf(vvp_out, " UDP_%s", 
 	  vvp_mangle_id(ivl_udp_name(udp)));
+  draw_delay(lptr);
   
   for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) 
     {
@@ -636,10 +652,12 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 				vvp_mangle_id(ivl_logic_name(lptr)),
 				level, inst,
 				lcasc);
-		  else
+		  else {
 			fprintf(vvp_out, "L_%s .functor %s", 
 				vvp_mangle_id(ivl_logic_name(lptr)),
 				ltype);
+			draw_delay(lptr);
+		  }
 		  for (pdx = inst; pdx < ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
 			      fprintf(vvp_out, ", L_%s/%d/%d",
@@ -1217,6 +1235,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.57  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.56  2001/11/01 04:26:57  steve
  *  Generate code for deassign and cassign.
  *

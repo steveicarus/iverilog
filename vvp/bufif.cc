@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.3 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: bufif.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -80,11 +80,15 @@ void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 	    break;
       }
 
-      put_ostr(push, val, str);
+      put_ostr(val, str, push);
 }
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.4  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.3  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.13 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: schedule.cc,v 1.14 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -56,6 +56,7 @@ struct event_s {
       };
       unsigned val  :2;
       unsigned type :2;
+      // unsigned char str;
 
       struct event_s*next;
       struct event_s*last;
@@ -238,13 +239,15 @@ void schedule_vthread(vthread_t thr, unsigned delay)
       schedule_event_(cur);
 }
 
-void schedule_functor(functor_t funp, unsigned delay)
+void functor_s::schedule(unsigned delay)
 {
       struct event_s*cur = e_alloc();
 
       cur->delay = delay;
-      cur->funp = funp;
+      cur->funp = this;
       cur->type = TYPE_PROP;
+      // cur->str = get_ostr();
+      // cur->val = get_oval();
 
       schedule_event_(cur);
 }
@@ -320,23 +323,23 @@ void schedule_simulate(void)
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
-		  functor_propagate(cur->funp);
+		  cur->funp->propagate();
 		  e_free(cur);
 		  break;
 
 		case TYPE_ASSIGN:
 		  switch (cur->val) {
 		      case 0:
-			functor_set(cur->fun, cur->val, St0, false);
+			functor_set(cur->fun, cur->val, St0);
 			break;
 		      case 1:
-			functor_set(cur->fun, cur->val, St1, false);
+			functor_set(cur->fun, cur->val, St1);
 			break;
 		      case 2:
-			functor_set(cur->fun, cur->val, StX, false);
+			functor_set(cur->fun, cur->val, StX);
 			break;
 		      case 3:
-			functor_set(cur->fun, cur->val, HiZ, false);
+			functor_set(cur->fun, cur->val, HiZ);
 			break;
 		  }
 		  e_free(cur);
@@ -361,6 +364,10 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.14  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.13  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

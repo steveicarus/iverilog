@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.20 2001/11/07 03:34:41 steve Exp $"
+#ident "$Id: arith.cc,v 1.21 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -36,7 +36,7 @@ void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
 	    
-	    obj->put_oval(push, val);
+	    obj->put_oval(val, push);
       }
 }
 
@@ -49,7 +49,7 @@ void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
 	    unsigned val = sum & 1;
 	    sum >>= 1;
 	    
-	    obj->put_oval(push, val);
+	    obj->put_oval(val, push);
       }
 }
 
@@ -79,7 +79,7 @@ void vvp_wide_arith_::output_val_(vvp_ipoint_t base, bool push)
 		  page += 1;
 	    }
 
-	    obj->put_oval(push, val);
+	    obj->put_oval(val, push);
       }
 }
 
@@ -213,7 +213,7 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
 
 	    unsigned val = sum[idx];
 
-	    obj->put_oval(push, val);
+	    obj->put_oval(val, push);
       }
 
       delete[]sum;
@@ -369,7 +369,7 @@ void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 
-      put_oval(push, out_val);
+      put_oval(out_val, push);
 }
 
 void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
@@ -403,7 +403,7 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 
-      put_oval(push, out_val);
+      put_oval(out_val, push);
 }
 
 
@@ -442,7 +442,7 @@ void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    for (unsigned idx = 0 ;  idx < amount ;  idx += 1) {
 		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  ofp->put_oval(push, 0);
+		  ofp->put_oval(0, push);
 	    }
 
 	    for (unsigned idx = amount ;  idx < wid_ ;  idx += 1) {
@@ -451,7 +451,7 @@ void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  iptr = ipoint_index(base, idx - amount);
 		  ifp = functor_index(iptr);
 
-		  ofp->put_oval(push, ifp->ival & 3);
+		  ofp->put_oval(ifp->ival & 3, push);
 	    }
       }
 }
@@ -494,13 +494,13 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  iptr = ipoint_index(base, idx + amount);
 		  ifp = functor_index(iptr);
 
-		  ofp->put_oval(push, ifp->ival & 3);
+		  ofp->put_oval(ifp->ival & 3, push);
 	    }
 
 	    for (unsigned idx = wid_-amount; idx < wid_ ;  idx += 1) {
 		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  ofp->put_oval(push, 0);
+		  ofp->put_oval(0, push);
 	    }
       }
 }
@@ -508,6 +508,10 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.21  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.20  2001/11/07 03:34:41  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: npmos.cc,v 1.6 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: npmos.cc,v 1.7 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -58,10 +58,13 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
       unsigned char val;
       unsigned char str;
 
-      if (in0 == 3 || in1 == 0) {
+      if (in1 == 0) {
 	    // gate on; output follows input
 	    val = in0;
 	    str = istr;
+      } else if (in0 == 3) {
+	    val = 3;
+	    str = HiZ;
       } else if (in1 == 2 || in1 == 3) {
 	    // gate X or Z; output is undefined
 	    val = 2;
@@ -82,11 +85,15 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
 	    str = HiZ;
       }
 
-      put_ostr(push, val, str);
+      put_ostr(val, str, push);
 }
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.7  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.6  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

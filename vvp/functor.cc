@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.34 2001/11/16 04:22:27 steve Exp $"
+#ident "$Id: functor.cc,v 1.35 2001/12/06 03:31:24 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -114,10 +114,12 @@ functor_s::functor_s()
       port[2] = 0;
       port[3] = 0;
       ival = 0xaa;
+      cval = 2;
       oval = 2;
       odrive0 = 6;
       odrive1 = 6;
       ostr = StX;
+      cstr = StX;
       inhibit = 0;
 #if defined(WITH_DEBUG)
       breakpoint = 0;
@@ -169,6 +171,10 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.35  2001/12/06 03:31:24  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.34  2001/11/16 04:22:27  steve
  *  include stdlib.h for portability.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.13 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: udp.cc,v 1.14 2001/12/06 03:31:25 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -31,12 +31,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void udp_functor_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
+void udp_functor_s::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
   // old_ival is set on the way out
   put(i, val);
   unsigned char out = udp->propagate(this, i);
-  put_oval(false, out);
+  put_oval(out, push);
 }
 
 
@@ -350,6 +350,10 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.14  2001/12/06 03:31:25  steve
+ *  Support functor delays for gates and UDP devices.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.13  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *
