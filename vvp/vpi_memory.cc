@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.12 2002/07/03 02:09:38 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.13 2002/07/03 23:16:27 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -494,7 +494,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		  op->aval = op->bval = 0;
 		  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-			switch (memory_get(rfp->mem->mem, idx)) {
+			switch (memory_get(rfp->mem->mem, bidx+idx)) {
 			case 0:
 			      op->aval &= ~(1 << idx % 32);
 			      op->bval &= ~(1 << idx % 32);
@@ -504,12 +504,12 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			      op->bval &= ~(1 << idx % 32);
 			      break;
 			case 2:
-			      op->aval &= ~(1 << idx % 32);
-			      op->bval |=  (1 << idx % 32);
-			      break;
-			case 3:
 			      op->aval |= (1 << idx % 32);
 			      op->bval |= (1 << idx % 32);
+			      break;
+			case 3:
+			      op->aval &= ~(1 << idx % 32);
+			      op->bval |=  (1 << idx % 32);
 			      break;
 			}
 			if (!((idx+1) % 32) && (idx+1 < width)) {
@@ -583,6 +583,10 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.13  2002/07/03 23:16:27  steve
+ *  don't pollute name space
+ *  fix vecval for Z/X cases
+ *
  * Revision 1.12  2002/07/03 02:09:38  steve
  *  vpiName, vpiFullName support in memory types,
  *  length checks for *_get_str() buffers,

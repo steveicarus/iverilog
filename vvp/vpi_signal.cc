@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.37 2002/07/03 02:09:38 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.38 2002/07/03 23:16:27 steve Exp $"
 #endif
 
 /*
@@ -146,7 +146,7 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 }
 
 
-char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
       unsigned wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
@@ -169,7 +169,7 @@ char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 }
 
 
-char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
       unsigned wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
@@ -360,11 +360,11 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		  op->bval &= ~(1 << obit);
 		  break;
 		case 2:
-		  op->aval &= ~(1 << obit);
+		  op->aval |= (1 << obit);
 		  op->bval |= (1 << obit);
 		  break;
 		case 3:
-		  op->aval |= (1 << obit);
+		  op->aval &= ~(1 << obit);
 		  op->bval |= (1 << obit);
 		  break;
 		}
@@ -674,6 +674,10 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.38  2002/07/03 23:16:27  steve
+ *  don't pollute name space
+ *  fix vecval for Z/X cases
+ *
  * Revision 1.37  2002/07/03 02:09:38  steve
  *  vpiName, vpiFullName support in memory types,
  *  length checks for *_get_str() buffers,
