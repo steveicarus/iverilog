@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.21 2000/09/13 22:33:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.22 2001/01/20 03:10:35 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -85,6 +85,7 @@ static int comment_enter = 0;
 %x PPDEFINE
 %x CCOMMENT
 %x CSTRING
+%x ERROR_LINE
 
 %x IFDEF_FALSE
 %s IFDEF_TRUE
@@ -136,6 +137,14 @@ W [ \t\b\f]+
 <PPINCLUDE>\n\r { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
+  /* Anything that is not matched by the above is an error of some
+     sort. Print and error message and absorb the rest of the line. */
+<PPINCLUDE>. {
+      fprintf(stderr, "%s:%u: error: malformed `include directive."
+	      " Did you quote the file name?\n", istack->path,
+	      istack->lineno+1);
+      error_count += 1;
+      BEGIN(ERROR_LINE); }
 
   /* Detect the define directive, and match the name. Match any
      white space that might be found, as well. After I get the
@@ -207,6 +216,9 @@ W [ \t\b\f]+
 
 . { ECHO; }
 \n { istack->lineno += 1; ECHO; }
+
+  /* Absorb the rest of the line when a broken directive is detected. */
+<ERROR_LINE>.* { yy_pop_state(); }
 
 %%
   /* Defined macros are kept in this table for convenient lookup. As
