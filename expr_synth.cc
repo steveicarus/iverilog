@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.20 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.21 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -48,7 +48,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
 
       string oname = des->local_symbol(path);
-      NetAddSub *adder = new NetAddSub(oname, width);
+      NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(lsig->pin(idx), adder->pin_DataA(idx));
 	    connect(rsig->pin(idx), adder->pin_DataB(idx));
@@ -447,6 +447,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.21  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.20  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *

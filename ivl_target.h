@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.63 2001/05/20 01:06:16 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.64 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -201,6 +201,7 @@ typedef enum ivl_logic_e {
 
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
+      IVL_LPM_ADD,
       IVL_LPM_FF,
       IVL_LPM_MUX
 } ivl_lpm_type_t;
@@ -461,7 +462,11 @@ extern const char* ivl_udp_name(ivl_udp_t net);
 
 
 /* LPM
- * These functions support access to the properties of LPM devices.
+ * These functions support access to the properties of LPM
+ * devices. LPM devices are a variety of devices that handle more
+ * complex structural semantics.
+ *
+ * These are the functions that apply to all LPM devices:
  *
  * ivl_lpm_name
  *    Return the name of the device.
@@ -474,9 +479,22 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    the LPM type, but it generally has to do with the width of the
  *    output data path.
  *
+ *
+ * These functions apply to a subset of the LPM devices, or may have
+ * varying meaning depending on the device:
+ *
  * ivl_lpm_data
  *    Return the input data nexus for device types that have a single
- *    input vector.
+ *    input vector. This is also used to the get nexa of the first
+ *    vector for devices that have more inputs.
+ *
+ * ivl_lpm_datab
+ *    Return the input data nexis for device types that have a second
+ *    input vector. For example, arithmetic devices are like this.
+ *
+ * ivl_lpm_q
+ *    Return the output data nexus for device types that have a single
+ *    output vector. This is most devices, it turns out.
  *
  * ivl_lpm_selects
  *    This is the size of the select input for a LPM_MUX device
@@ -492,11 +510,13 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
-  /* IVL_LPM_FF */
+  /* IVL_LPM_ADD IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
+  /* IVL_LPM_ADD */
+extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
-  /* IVL_LPM_FF */
+  /* IVL_LPM_ADD IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
@@ -852,6 +872,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.64  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.63  2001/05/20 01:06:16  steve
  *  stub ivl_expr_parms for sfunctions.
  *

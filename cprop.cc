@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.26 2001/02/18 01:07:32 steve Exp $"
+#ident "$Id: cprop.cc,v 1.27 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -66,7 +66,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	  && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
-	    tmp = new NetAddSub(obj->name(), obj->width()-1);
+	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
 	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
 	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
 	      //connect(tmp->pin_Clock(), obj->pin_Clock());
@@ -91,7 +91,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	  && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
-	    tmp = new NetAddSub(obj->name(), obj->width()-1);
+	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
 	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
 	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
 	      //connect(tmp->pin_Clock(), obj->pin_Clock());
@@ -937,6 +937,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.27  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.26  2001/02/18 01:07:32  steve
  *  check signals in the cprop functor.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.206 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: netlist.h,v 1.207 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 /*
@@ -394,7 +394,7 @@ class NetNet  : public NetObj, public LineInfo {
 class NetAddSub  : public NetNode {
 
     public:
-      NetAddSub(const string&n, unsigned width);
+      NetAddSub(NetScope*s, const string&n, unsigned width);
       ~NetAddSub();
 
 	// Get the width of the device (that is, the width of the
@@ -2809,6 +2809,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.207  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.206  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

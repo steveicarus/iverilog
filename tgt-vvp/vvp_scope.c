@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.28 2001/05/12 16:34:47 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.29 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -110,6 +110,14 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s/%u",
+				ivl_lpm_name(lpm), idx);
+			return result;
+		  }
+
+	  case IVL_LPM_ADD:
+	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
+		  if (ivl_lpm_q(lpm, idx) == nex) {
+			sprintf(result, "L_%s[%u]",
 				ivl_lpm_name(lpm), idx);
 			return result;
 		  }
@@ -598,6 +606,29 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
+static void draw_lpm_add(ivl_lpm_t net)
+{
+      unsigned idx, width;
+
+      width = ivl_lpm_width(net);
+
+      fprintf(vvp_out, "L_%s .arith/sum %u", ivl_lpm_name(net), width);
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t a = ivl_lpm_data(net, idx);
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(a);
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t b = ivl_lpm_datab(net, idx);
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(b);
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_mux(ivl_lpm_t net)
 {
       ivl_nexus_t s;
@@ -628,6 +659,10 @@ static void draw_lpm_mux(ivl_lpm_t net)
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_ADD:
+	    draw_lpm_add(net);
+	    return;
+
 	  case IVL_LPM_MUX:
 	    draw_lpm_mux(net);
 	    return;
@@ -717,6 +752,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.29  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.28  2001/05/12 16:34:47  steve
  *  Fixup the resolver syntax.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.46 2001/05/20 01:06:16 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.47 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -449,12 +449,31 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 {
       assert(net);
       switch (net->type) {
+	  case IVL_LPM_ADD:
+	    assert(idx < net->u_.arith.width);
+	    return net->u_.arith.a[idx];
+
 	  case IVL_LPM_FF:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.d.pin;
 	    else
 		  return net->u_.ff.d.pins[idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
+{
+      assert(net);
+      switch (net->type) {
+
+	  case IVL_LPM_ADD:
+	    assert(idx < net->u_.arith.width);
+	    return net->u_.arith.b[idx];
 
 	  default:
 	    assert(0);
@@ -487,6 +506,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       assert(net);
 
       switch (net->type) {
+	  case IVL_LPM_ADD:
+	    assert(idx < net->u_.arith.width);
+	    return net->u_.arith.q[idx];
+
 	  case IVL_LPM_FF:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
@@ -558,6 +581,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.ff.width;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
+	  case IVL_LPM_ADD:
+	    return net->u_.arith.width;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1146,6 +1171,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.47  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.46  2001/05/20 01:06:16  steve
  *  stub ivl_expr_parms for sfunctions.
  *

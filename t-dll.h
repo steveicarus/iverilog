@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.45 2001/05/20 15:09:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.46 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -61,6 +61,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void event(const NetEvent*);
       void logic(const NetLogic*);
       void udp(const NetUDP*);
+      void lpm_add_sub(const NetAddSub*);
       void lpm_ff(const NetFF*);
       void lpm_mux(const NetMux*);
       void net_assign(const NetAssign_*);
@@ -247,6 +248,10 @@ struct ivl_lpm_s {
 		  } s;
 	    } mux;
 
+	    struct ivl_lpm_arith_s {
+		  unsigned short width;
+		  ivl_nexus_t*q, *a, *b;
+	    } arith;
       } u_;
 };
 
@@ -523,6 +528,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.46  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.45  2001/05/20 15:09:39  steve
  *  Mingw32 support (Venkat Iyer)
  *

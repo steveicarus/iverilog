@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.42 2001/05/22 02:14:47 steve Exp $"
+#ident "$Id: stub.c,v 1.43 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 /*
@@ -99,6 +99,22 @@ static void show_lpm(ivl_lpm_t net)
       unsigned width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_ADD: {
+		fprintf(out, "  LPM_ADD %s: <width=%u>\n",
+			ivl_lpm_name(net), width);
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Q %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Data A %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_data(net, idx)));
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Data B %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_datab(net, idx)));
+		break;
+	  }
+
 	  case IVL_LPM_FF: {
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
@@ -550,6 +566,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.43  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.42  2001/05/22 02:14:47  steve
  *  Update the mingw build to not require cygwin files.
  *

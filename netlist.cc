@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.160 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.161 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -620,8 +620,8 @@ const Link& NetFF::pin_Q(unsigned w) const
  *    7  -- DataB[0]
  *    8  -- Result[0]
  */
-NetAddSub::NetAddSub(const string&n, unsigned w)
-: NetNode(n, w*3+6)
+NetAddSub::NetAddSub(NetScope*s, const string&n, unsigned w)
+: NetNode(s, n, w*3+6)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Add_Sub", 0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Aclr", 0);
@@ -2323,6 +2323,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.161  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.160  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.42 2001/05/20 15:09:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.43 2001/06/07 02:12:43 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -606,6 +606,49 @@ void dll_target::memory(const NetMemory*net)
       scope_add_mem(obj->scope_, obj);
 }
 
+void dll_target::lpm_add_sub(const NetAddSub*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_ADD;
+      obj->name = strdup(net->name());
+      assert(net->scope());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.arith.width = net->width();
+
+      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
+      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
+      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+
+      for (unsigned idx = 0 ;  idx < obj->u_.arith.width ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_Result(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    nex = net->pin_DataA(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    nex = net->pin_DataB(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1020,6 +1063,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.43  2001/06/07 02:12:43  steve
+ *  Support structural addition.
+ *
  * Revision 1.42  2001/05/20 15:09:39  steve
  *  Mingw32 support (Venkat Iyer)
  *
