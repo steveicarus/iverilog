@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.114 1999/10/09 19:24:04 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.115 1999/10/09 21:30:16 steve Exp $"
 #endif
 
 /*
@@ -944,10 +944,28 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			" in this context." << endl;
 		  return 0;
 	    }
-	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
-	    des->add_signal(sig);
-	    cerr << get_line() << ": warning: Implicitly defining "
-		  "wire " << path << "." << text_ << "." << endl;
+
+	    if (const NetExpr*pe = des->find_parameter(path, text_)) {
+
+		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
+		  assert(pc);
+		  verinum pvalue = pc->value();
+		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT,
+				   pc->expr_width());
+		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1) {
+			NetConst*cp = new NetConst(des->local_symbol(path),
+						   pvalue[idx]);
+			connect(sig->pin(idx), cp->pin(0));
+			des->add_node(cp);
+		  }
+
+	    } else {
+
+		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+		  des->add_signal(sig);
+		  cerr << get_line() << ": warning: Implicitly defining "
+			"wire " << path << "." << text_ << "." << endl;
+	    }
       }
 
       assert(sig);
@@ -2596,6 +2614,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.115  1999/10/09 21:30:16  steve
+ *  Support parameters in continuous assignments.
+ *
  * Revision 1.114  1999/10/09 19:24:04  steve
  *  Better message for combinational operators.
  *
