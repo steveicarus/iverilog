@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: netlist.h,v 1.3 1998/11/07 19:17:10 steve Exp $"
 #endif
 
 /*
@@ -475,6 +475,13 @@ class NetProcTop {
 /* =========
  * There are cases where expressions need to be represented. The
  * NetExpr class is the root of a heirarchy that serves that purpose.
+ *
+ * The expr_width() is the width of the expression, that accounts
+ * for the widths of the sub-expressions I might have. It is up to the
+ * derived classes to properly set the expr width, if need be. The
+ * set_width() method is used to compel an expression to have a
+ * certain width, and is used particulary when the expression is an
+ * rvalue in an assignment statement.
  */
 class NetExpr {
     public:
@@ -484,10 +491,11 @@ class NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
 
-      unsigned natural_width() const { return width_; }
+      unsigned expr_width() const { return width_; }
+      virtual void set_width(unsigned);
 
     protected:
-      void natural_width(unsigned w) { width_ = w; }
+      void expr_width(unsigned w) { width_ = w; }
 
     private:
       unsigned width_;
@@ -508,6 +516,8 @@ class NetEBinary  : public NetExpr {
 
       char op() const { return op_; }
 
+      void set_width(unsigned w);
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -526,6 +536,7 @@ class NetEConst  : public NetExpr {
 
       const verinum&value() const { return value_; }
 
+      virtual void set_width(unsigned w);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -537,10 +548,13 @@ class NetEUnary  : public NetExpr {
 
     public:
       NetEUnary(char op, NetExpr*ex)
-      : NetExpr(ex->natural_width()), op_(op), expr_(ex) { }
+      : NetExpr(ex->expr_width()), op_(op), expr_(ex) { }
+      ~NetEUnary();
 
       char op() const { return op_; }
       const NetExpr* expr() const { return expr_; }
+
+      void set_width(unsigned w);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -574,8 +588,11 @@ class NetESignal  : public NetExpr {
     public:
       NetESignal(NetNet*n)
       : NetExpr(n->pin_count()), sig_(n) { }
+      ~NetESignal();
 
       const string& name() const { return sig_->name(); }
+
+      virtual void set_width(unsigned);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -653,6 +670,9 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.3  1998/11/07 19:17:10  steve
+ *  Calculate expression widths at elaboration time.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

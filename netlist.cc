@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: netlist.cc,v 1.3 1998/11/07 19:17:10 steve Exp $"
 #endif
 
 # include  <cassert>
+# include  <typeinfo>
 # include  "netlist.h"
 
 void connect(NetObj::Link&l, NetObj::Link&r)
@@ -98,6 +99,8 @@ NetAssign::NetAssign(NetNet*lv, NetExpr*rv)
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    connect(pin(idx), lv->pin(idx));
       }
+
+      rval_->set_width(lval_->pin_count());
 }
 
 NetAssign::~NetAssign()
@@ -129,26 +132,87 @@ NetExpr::~NetExpr()
 {
 }
 
+void NetExpr::set_width(unsigned w)
+{
+      cerr << typeid(*this).name() << ": set_width(unsigned) "
+	    "not implemented." << endl;
+      expr_width(w);
+}
+
+
 NetEBinary::~NetEBinary()
 {
 }
 
-NetEConst::~NetEConst()
-{
-}
 
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
       switch (op_) {
 	  case 'e':
-	    natural_width(1);
+	    expr_width(1);
 	    break;
 	  default:
-	    natural_width(left_->natural_width() > right_->natural_width()
-			  ? left_->natural_width() : right_->natural_width());
+	    expr_width(left_->expr_width() > right_->expr_width()
+			  ? left_->expr_width() : right_->expr_width());
 	    break;
       }
+}
+
+void NetEBinary::set_width(unsigned w)
+{
+      switch (op_) {
+	      /* Comparison operators allow the subexpressions to have
+		 their own natural width. Do not recurse the
+		 set_width(). */
+	  case 'e':
+	    assert(w == 1);
+	    expr_width(w);
+	    break;;
+
+	      /* The default rule is that the operands of the binary
+		 operator might as well use the same width as the
+		 output from the binary operation. */
+	  default:
+	    cerr << "NetEBinary::set_width(): Using default for " <<
+		  op_ << "." << endl;
+
+	  case '+':
+	    left_->set_width(w);
+	    right_->set_width(w);
+	    expr_width(w);
+	    break;
+      }
+}
+
+NetEConst::~NetEConst()
+{
+}
+
+void NetEConst::set_width(unsigned w)
+{
+      assert(w <= value_.len());
+      expr_width(w);
+}
+
+NetESignal::~NetESignal()
+{
+}
+
+void NetESignal::set_width(unsigned w)
+{
+      assert(w == sig_->pin_count());
+      expr_width(w);
+}
+
+NetEUnary::~NetEUnary()
+{
+}
+
+void NetEUnary::set_width(unsigned w)
+{
+      expr_->set_width(w);
+      expr_width(w);
 }
 
 void Design::add_signal(NetNet*net)
@@ -253,6 +317,9 @@ void Design::add_process(NetProcTop*pro)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.3  1998/11/07 19:17:10  steve
+ *  Calculate expression widths at elaboration time.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

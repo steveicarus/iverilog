@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.3 1998/11/07 19:17:10 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -69,14 +69,13 @@ class target_vvm : public target_t {
 class vvm_proc_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_proc_rval(ostream&os, unsigned width)
-      : result(""), os_(os), width_(width) { }
+      explicit vvm_proc_rval(ostream&os)
+      : result(""), os_(os) { }
 
       string result;
 
     private:
       ostream&os_;
-      unsigned width_;
 
     private:
       virtual void expr_const(const NetEConst*);
@@ -89,8 +88,9 @@ class vvm_proc_rval  : public expr_scan_t {
 void vvm_proc_rval::expr_const(const NetEConst*expr)
 {
       string tname = make_temp();
-      os_ << "        vvm_bitset_t<" << width_ << "> " << tname << ";" << endl;
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> "
+	  << tname << ";" << endl;
+      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
 	    os_ << "        " << tname << "[" << idx << "] = ";
 	    switch (expr->value().get(idx)) {
 		case verinum::V0:
@@ -127,7 +127,8 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       expr->expr()->expr_scan(this);
       string tname = make_temp();
 
-      os_ << "        vvm_bitset_t<" << width_ << "> " << tname << " = ";
+      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> "
+	  << tname << " = ";
       switch (expr->op()) {
 	  case '~':
 	    os_ << "vvm_unop_not(" << result << ");"
@@ -145,22 +146,23 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 
 void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 {
-      if (width_ == 0) {
-	    width_ = expr->left()->natural_width();
-      }
-
       expr->left()->expr_scan(this);
       string lres = result;
 
       expr->right()->expr_scan(this);
       string rres = result;
 
+      result = make_temp();
+      os_ << "        vvm_bitset_t<" << expr->expr_width() << ">" <<
+	    result << ";" << endl;
       switch (expr->op()) {
 	  case 'e':
-	    result = string("vvm_binop_eq(") + lres + "," + rres + ")";
+	    os_ << "        " << result << " = vvm_binop_eq(" << lres
+		<< "," << rres << ");" << endl;
 	    break;
 	  case '+':
-	    result = string("vvm_binop_plus(") + lres + "," + rres + ")";
+	    os_ << "        " << result << " = vvm_binop_plus(" << lres
+		<< "," << rres << ");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
@@ -171,9 +173,9 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       }
 }
 
-static string emit_proc_rval(ostream&os, unsigned width, const NetExpr*expr)
+static string emit_proc_rval(ostream&os, const NetExpr*expr)
 {
-      vvm_proc_rval scan (os, width);
+      vvm_proc_rval scan (os);
       expr->expr_scan(&scan);
       return scan.result;
 }
@@ -400,7 +402,7 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
  */
 void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
-      string rval = emit_proc_rval(os, net->lval()->pin_count(), net->rval());
+      string rval = emit_proc_rval(os, net->rval());
 
       os << "        // " << net->lval()->name() << " = ";
       net->rval()->dump(os);
@@ -419,7 +421,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const NetObj*cur;
 	    unsigned pin;
-	    for (net->lval()->pin(0).next_link(cur, pin)
+	    for (net->lval()->pin(idx).next_link(cur, pin)
 		       ; cur != net->lval()
 		       ; cur->pin(pin).next_link(cur, pin)) {
 
@@ -450,7 +452,7 @@ void target_vvm::proc_block(ostream&os, const NetBlock*net)
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
-      string expr = emit_proc_rval(os, 0, net->expr());
+      string expr = emit_proc_rval(os, net->expr());
       os << "        if (" << expr << "[0] == V1) {" << endl;
       net->emit_recurse_if(os, this);
       os << "        } else {" << endl;
@@ -543,6 +545,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.3  1998/11/07 19:17:10  steve
+ *  Calculate expression widths at elaboration time.
+ *
  * Revision 1.2  1998/11/07 17:05:06  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.
