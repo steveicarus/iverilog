@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.c,v 1.3 1999/11/06 16:52:16 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.4 1999/11/06 22:16:50 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -225,6 +225,20 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
       vp->value.str = buff;
 }
 
+static int string_get(int code, vpiHandle ref)
+{
+      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (code) {
+	  case vpiConstType:
+	    return vpiStringConst;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 
 static void string_value(vpiHandle ref, p_vpi_value vp)
 {
@@ -244,6 +258,21 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
       }
 }
 
+static int number_get(int code, vpiHandle ref)
+{
+      struct __vpiNumberConst*rfp = (struct __vpiNumberConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (code) {
+	  case vpiConstType:
+	    return vpiBinaryConst;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 static void number_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiNumberConst*rfp = (struct __vpiNumberConst*)ref;
@@ -253,7 +282,7 @@ static void number_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_string_rt = {
       vpiConstant,
-      0,
+      string_get,
       0,
       string_value,
       0,
@@ -262,7 +291,7 @@ static const struct __vpirt vpip_string_rt = {
 
 static const struct __vpirt vpip_number_rt = {
       vpiConstant,
-      0,
+      number_get,
       0,
       number_value,
       0,
@@ -288,6 +317,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.4  1999/11/06 22:16:50  steve
+ *  Get the $strobe task working.
+ *
  * Revision 1.3  1999/11/06 16:52:16  steve
  *  complete value retrieval for number constants.
  *
