@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.2 2001/09/09 22:23:28 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.3 2001/09/10 03:48:34 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -362,6 +362,67 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			   "9009");
 	    break;
 
+	  case 4: {
+		char jbuf[1024];
+
+		fprintf(xnf, "(instance (rename U%u \"%s\")"
+			" (property INIT (string \"8\"))",
+			edif_uref, ivl_lpm_name(net));
+		fprintf(xnf, " (viewRef Netlist_representation"
+			" (cellRef LUT2 (libraryRef VIRTEX))))\n");
+
+		sprintf(jbuf, "(portRef O (instanceRef U%u))",
+			edif_uref);
+		edif_set_nexus_joint(ivl_lpm_q(net, 0), jbuf);
+
+		fprintf(xnf, "(instance U%uA"
+			" (property INIT (string \"9009\"))", edif_uref);
+		fprintf(xnf, " (viewRef Netlist_representation"
+			" (cellRef LUT4 (libraryRef VIRTEX))))\n");
+
+		fprintf(xnf, "(instance U%uB"
+			" (property INIT (string \"9009\"))", edif_uref);
+		fprintf(xnf, " (viewRef Netlist_representation"
+			" (cellRef LUT4 (libraryRef VIRTEX))))\n");
+
+		fprintf(xnf, "(net U%uNA (joined"
+			" (portRef O (instanceRef U%uA))"
+			" (portRef I0 (instanceRef U%u))))\n",
+			edif_uref, edif_uref, edif_uref);
+
+		fprintf(xnf, "(net U%uNB (joined"
+			" (portRef O (instanceRef U%uB))"
+			" (portRef I1 (instanceRef U%u))))\n",
+			edif_uref, edif_uref, edif_uref);
+
+		sprintf(jbuf, "(portRef I0 (instanceRef U%uA))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_data(net, 0), jbuf);
+
+		sprintf(jbuf, "(portRef I1 (instanceRef U%uA))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_datab(net, 0), jbuf);
+
+		sprintf(jbuf, "(portRef I2 (instanceRef U%uA))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_data(net, 1), jbuf);
+
+		sprintf(jbuf, "(portRef I3 (instanceRef U%uA))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_datab(net, 1), jbuf);
+
+
+		sprintf(jbuf, "(portRef I0 (instanceRef U%uB))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_data(net, 2), jbuf);
+
+		sprintf(jbuf, "(portRef I1 (instanceRef U%uB))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_datab(net, 2), jbuf);
+
+		sprintf(jbuf, "(portRef I2 (instanceRef U%uB))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_data(net, 3), jbuf);
+
+		sprintf(jbuf, "(portRef I3 (instanceRef U%uB))", edif_uref);
+		edif_set_nexus_joint(ivl_lpm_datab(net, 3), jbuf);
+
+		break;
+	  }
+
 	  default:
 	    fprintf(stderr, "internal error: IVL_LPM_CMP_EQ: "
 		    "Unsupported width (%u)\n", ivl_lpm_width(net));
@@ -544,6 +605,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.3  2001/09/10 03:48:34  steve
+ *  Add 4 wide identity compare.
+ *
  * Revision 1.2  2001/09/09 22:23:28  steve
  *  Virtex support for mux devices and adders
  *  with carry chains. Also, make Virtex specific
