@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.83 1999/09/13 03:10:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.84 1999/09/14 01:50:52 steve Exp $"
 #endif
 
 /*
@@ -371,6 +371,9 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
 	    NetNet*sig = ex->elaborate_net(des, path);
+	    if (sig == 0)
+		  continue;
+
 	    assert(sig);
 
 	    if (sig->pin_count() == 1)
@@ -895,10 +898,10 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 {
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
-	    cerr << get_line() << ": Unable to find signal ``" <<
-		  text_ << "''" << endl;
-	    des->errors+= 1;
-	    return 0;
+	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+	    des->add_signal(sig);
+	    cerr << get_line() << ": warning: Implicitly defining "
+		  "wire " << path << "." << text_ << "." << endl;
       }
 
       assert(sig);
@@ -2375,6 +2378,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.84  1999/09/14 01:50:52  steve
+ *  implicitly declare wires if needed.
+ *
  * Revision 1.83  1999/09/13 03:10:59  steve
  *  Clarify msb/lsb in context of netlist. Properly
  *  handle part selects in lval and rval of expressions,
