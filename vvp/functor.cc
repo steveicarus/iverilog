@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.12 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: functor.cc,v 1.13 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  "functor.h"
+# include  "udp.h"
 # include  "schedule.h"
 # include  "vthread.h"
 # include  <assert.h>
@@ -214,6 +215,27 @@ static void functor_set_mode2(functor_t fp)
 }
 
 /*
+ * A mode-3 functor is a UDP.
+ */
+static void functor_set_mode3(vvp_ipoint_t ptr, functor_t fp)
+{
+  /* If we are down the tree, just propagate */
+  if (!fp->udp)
+    {
+      functor_propagate(ptr);
+      return;
+    }
+
+  unsigned char out = udp_propagate(ptr);
+
+  if (out != fp->oval) 
+    {
+      fp->oval = out;
+      functor_propagate(ptr);
+    }
+}
+
+/*
  * Set the addressed bit of the functor, and recalculate the
  * output. If the output changes any, then generate the necessary
  * propagation events to pass the output on.
@@ -223,7 +245,7 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
       functor_t fp = functor_index(ptr);
       unsigned pp = ipoint_port(ptr);
       assert(fp);
-      assert(fp->table);
+      // assert(fp->table);
 
 	/* Change the bits of the input. */
       static const unsigned char mask_table[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
@@ -239,6 +261,9 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
 	    break;
 	  case 2:
 	    functor_set_mode2(fp);
+	    break;
+	  case 3:
+	    functor_set_mode3(ptr, fp);
 	    break;
       }
 }
@@ -306,6 +331,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.13  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.12  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *

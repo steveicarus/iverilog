@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.34 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.35 2001/04/24 02:23:58 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -416,11 +416,15 @@ void dll_target::udp(const NetUDP*net)
       obj->type_ = IVL_LO_UDP;
 
       static map<string,ivl_udp_t> udps;
+      ivl_udp_t u;
 
-      ivl_udp_t u = udps[net->udp_name()];
-      if (!u)
+      if (udps.find(net->udp_name()) != udps.end())
 	{
-	  u = new ivl_udp_s;
+	  u = udps[net->udp_name()];
+	}
+      else
+	{
+	  u = new struct ivl_udp_s;
 	  u->nrows = net->rows();
 	  u->table = (char**)malloc((u->nrows+1)*sizeof(char*));
 	  assert(u->table);
@@ -439,6 +443,7 @@ void dll_target::udp(const NetUDP*net)
 		string tt = inp+out;
 		u->table[i++] = strdup(tt.c_str());
 	      } while (net->next(inp, out));
+	  assert(i==u->nrows);
 
 	  udps[net->udp_name()] = u;
 	}
@@ -806,6 +811,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.35  2001/04/24 02:23:58  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.34  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

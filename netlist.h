@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.203 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.204 2001/04/24 02:23:58 steve Exp $"
 #endif
 
 /*
@@ -1067,7 +1067,7 @@ class NetLogic  : public NetNode {
 class NetUDP  : public NetNode {
 
     public:
-      explicit NetUDP(const string&n, unsigned pins, PUdp*u);
+      explicit NetUDP(NetScope*s, const string&n, unsigned pins, PUdp*u);
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -2802,6 +2802,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.204  2001/04/24 02:23:58  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.203  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

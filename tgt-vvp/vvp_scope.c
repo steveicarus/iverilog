@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.17 2001/04/21 02:04:01 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.18 2001/04/24 02:23:58 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
+# include  <malloc.h>
 
 /*
  * The draw_scope function draws the major functional items within a
@@ -107,19 +108,90 @@ static void draw_net_in_scope(ivl_signal_t sig)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_udp_def(ivl_udp_t udp)
+{
+  unsigned init;
+  int i;
+
+  switch (ivl_udp_init(udp))
+    {
+    case '0':
+      init = 0;
+      break;
+    case '1':
+      init = 1;
+      break;
+    default:
+      init = 2;
+      break;
+    }
+
+  fprintf(vvp_out, 
+	  "UDP_%s .udp/%s \"%s\", %d, %d",
+	  ivl_udp_name(udp), 
+	  ivl_udp_sequ(udp) ? "sequ" : "comp",
+	  ivl_udp_name(udp),
+	  ivl_udp_nin(udp),
+	  init );
+
+  for (i=0; i<ivl_udp_rows(udp); i++)
+    fprintf(vvp_out, "\n ,\"%s\"", ivl_udp_row(udp, i) );
+
+  fprintf(vvp_out, ";\n");
+}
+
+static void draw_udp_in_scope(ivl_net_logic_t lptr)
+{
+  unsigned pdx;
+
+  ivl_udp_t udp = ivl_logic_udp(lptr);
+  
+  static ivl_udp_t *udps = 0x0;
+  static int nudps = 0;
+  int i;
+
+  for (i=0; i<nudps; i++)
+    if (udps[i] == udp)
+      break;
+  
+  if (i >= nudps)
+    {
+      udps = (ivl_udp_t*)realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
+      assert(udps);
+      udps[nudps++] = udp;
+      draw_udp_def(udp);
+    }
+
+  fprintf(vvp_out, "L_%s .udp UDP_%s",
+	  ivl_logic_name(lptr), ivl_udp_name(udp));
+  
+  for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) 
+    {
+      ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
+      fprintf(vvp_out, ", ");
+      draw_nexus_input(nex);
+    }
+  
+  fprintf(vvp_out, ";\n");
+}
+
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
 	    unsigned pdx;
       const char*ltype = "?";
       unsigned init_val = 0;
 
-	/* Skip BUFZ objects. Things that have a bufz as input
-	   will use the input to bufz instead. */
-      if (ivl_logic_type(lptr) == IVL_LO_BUFZ)
-	    return;
-
 
       switch (ivl_logic_type(lptr)) {
+
+          case IVL_LO_UDP:
+	    draw_udp_in_scope(lptr);
+	    return;
+
+          case IVL_LO_BUFZ:
+	/* Skip BUFZ objects. Things that have a bufz as input
+	   will use the input to bufz instead. */
+	    return;
 
 	  case IVL_LO_AND:
 	    ltype = "AND";
@@ -314,6 +386,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.18  2001/04/24 02:23:58  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.17  2001/04/21 02:04:01  steve
  *  Add NAND and XNOR functors.
  *

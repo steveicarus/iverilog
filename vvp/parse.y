@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.21 2001/04/23 00:37:58 steve Exp $"
+#ident "$Id: parse.y,v 1.22 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -37,6 +37,7 @@ extern FILE*yyin;
 
 %union {
       char*text;
+      char **table;
       long numb;
 
       comp_operands_t opa;
@@ -52,6 +53,7 @@ extern FILE*yyin;
 
 
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
+%token K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_vpi_call K_disable K_fork
 %token K_vpi_module
 
@@ -66,6 +68,7 @@ extern FILE*yyin;
 %type <symbv> symbols symbols_net
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
+%type <table> udp_table
 
 %type <argv> argument_opt argument_list
 %type <vpi>  argument
@@ -109,6 +112,21 @@ statement
 		}
 	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
 		{ compile_functor($1, $3, $5, 0, 0); }
+
+
+  /* UDP statements define or instantiate UDPs.  Definitions take a 
+     label (UDP type id) a name (string), the number of inputs, and 
+     for sequentioal UDPs the initial value. */
+
+	| T_LABEL K_UDP_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' udp_table ';'
+		{ compile_udp_def(1, $1, $3, $5, $7, $9); }
+
+	| T_LABEL K_UDP_C T_STRING ',' T_NUMBER ',' udp_table ';'
+		{ compile_udp_def(0, $1, $3, $5, 0, $7); }
+
+	| T_LABEL K_UDP T_SYMBOL ',' symbols ';'
+		{ compile_udp_functor($1, $3, $5.cnt, $5.vect); }
+
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
      list of inputs. If the type is instead a string, then we have a
@@ -341,6 +359,13 @@ symbol_opt
 		  $$.idx = 0;
 		}
 
+udp_table
+	: T_STRING
+		{ $$ = compile_udp_table(0x0, $1); }
+	| udp_table ',' T_STRING
+		{ $$ = compile_udp_table($1,  $3); }
+	;
+
 %%
 
 int compile_design(const char*path)
@@ -360,6 +385,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.22  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.21  2001/04/23 00:37:58  steve
  *  Support unconnected .net objects.
  *

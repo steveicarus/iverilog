@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.16 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: compile.h,v 1.17 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -64,6 +64,19 @@ extern void compile_functor(char*label, char*type, unsigned init,
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern vpiHandle compile_vpi_lookup(const char*label);
+
+/* 
+ * The first function creates a UDP, the second function adds table 
+   entries, and the third one instantiates a UDP functor.
+ */
+
+extern void compile_udp_def(int sequ, char*label, char *name,
+			    unsigned nin, unsigned init, char **table);
+
+extern void compile_udp_functor(char*label, char*type,
+				unsigned argc, struct symb_s*argv);
+
+extern char **compile_udp_table(char **table, char *row);
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -142,6 +155,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.17  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.16  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *

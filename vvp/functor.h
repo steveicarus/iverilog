@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.13 2001/04/21 02:04:01 steve Exp $"
+#ident "$Id: functor.h,v 1.14 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -82,6 +82,7 @@ struct functor_s {
       union {
 	    vvp_truth_t table;
 	    vvp_event_t event;
+	    struct vvp_udp_s *udp; // mode 3
       };
 
 	/* This is the output for the device. */
@@ -92,7 +93,11 @@ struct functor_s {
       unsigned char ival;
       unsigned char oval;
 	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
+	/*                3 == udp                                    */
       unsigned char mode;
+      union {
+ 	    unsigned char old_ival; // mode 3
+      };
 };
 
 typedef struct functor_s *functor_t;
@@ -179,6 +184,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.14  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.13  2001/04/21 02:04:01  steve
  *  Add NAND and XNOR functors.
  *

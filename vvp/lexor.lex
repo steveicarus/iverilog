@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.13 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: lexor.lex,v 1.14 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -74,6 +74,9 @@
 ".thread"   { return K_THREAD; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
+".udp"         { return K_UDP; }
+".udp/c"(omb)? { return K_UDP_C; }
+".udp/s"(equ)? { return K_UDP_S; }
 
 
   /* instructions start with a % character. The compiler decides what
@@ -127,6 +130,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.14  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.13  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *

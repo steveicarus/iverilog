@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.210 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.211 2001/04/24 02:23:58 steve Exp $"
 #endif
 
 /*
@@ -612,8 +612,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
       const string my_name = path+"."+get_name();
-      NetUDP*net = new NetUDP(my_name, udp->ports.count(), udp);
+      NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
       net->set_attributes(udp->attributes);
 
 	/* Run through the pins, making netlists for the pin
@@ -2300,6 +2301,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.211  2001/04/24 02:23:58  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.210  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

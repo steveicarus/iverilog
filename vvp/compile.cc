@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.38 2001/04/23 00:37:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.39 2001/04/24 02:23:59 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "functor.h"
+# include  "udp.h" 
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -284,6 +285,97 @@ void compile_functor(char*label, char*type, unsigned init,
       free(label);
       free(type);
 }
+
+void compile_udp_def(int sequ, char *label, char *name,
+		     unsigned nin, unsigned init, char **table)
+{
+  struct vvp_udp_s *u = udp_create(label);
+  u->name = name;
+  u->sequ = sequ;
+  u->nin = nin;
+  u->init = init;
+  u->table = table;
+}
+
+char **compile_udp_table(char **table, char *row)
+{
+  if (table)
+    assert(strlen(*table)==strlen(row));
+
+  char **tt;
+  for (tt = table; tt && *tt; tt++);
+  int n = (tt-table) + 2;
+
+  table = (char**)realloc(table, n*sizeof(char*));
+  table[n-2] = row;
+  table[n-1] = 0x0;
+
+  return table;
+}
+
+void compile_udp_functor(char*label, char*type,
+			 unsigned argc, struct symb_s*argv)
+{
+  struct vvp_udp_s *u = udp_find(type);
+  assert (argc == u->nin);
+
+  int nfun = (argc-2) / 3 + 1;
+
+  vvp_ipoint_t fdx = functor_allocate(nfun);
+  functor_t obj = functor_index(fdx);
+
+  { 
+    symbol_value_t val;
+    val.num = fdx;
+    sym_set_value(sym_functors, label, val);
+  }
+
+  /* Run through the arguments looking for the functors that are
+     connected to my input ports. For each source functor that I
+     find, connect the output of that functor to the indexed
+     input by inserting myself (complete with the port number in
+     the vvp_ipoint_t) into the list that the source heads.
+     
+     If the source functor is not declared yet, then don't do
+     the link yet. Save the reference to be resolved later. */
+  
+  udp_init_links(fdx, u);
+  
+  udp_idx_t ux(fdx, u);
+  for (unsigned idx = 0;  idx < argc;  idx += 1) 
+    {
+      vvp_ipoint_t ifdx = ux.ipoint();
+      functor_t iobj = ux.functor();
+      ux.next();
+
+      symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
+      vvp_ipoint_t tmp = val.num;
+      
+      if (tmp) 
+	{
+	  tmp = ipoint_index(tmp, argv[idx].idx);
+	  functor_t fport = functor_index(tmp);
+	  iobj->port[ipoint_port(ifdx)] = fport->out;
+	  fport->out = ifdx;
+	  
+	  free(argv[idx].text);
+	} 
+      else 
+	{
+	  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
+	}
+    }
+  
+  obj->ival = 0xaa;
+  obj->old_ival = obj->ival;
+  obj->oval = u->init;
+  obj->mode = 3;
+  obj->udp = u;
+  
+  free(argv);
+  free(label);
+}
+
 
 void compile_event(char*label, char*type,
 		   unsigned argc, struct symb_s*argv)
@@ -852,6 +944,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.39  2001/04/24 02:23:59  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.38  2001/04/23 00:37:58  steve
  *  Support unconnected .net objects.
  *

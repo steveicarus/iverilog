@@ -18,13 +18,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_udp.cc,v 1.4 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.5 2001/04/24 02:23:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
 
-NetUDP::NetUDP(const string&n, unsigned pins, PUdp *u)
-  : NetNode(n, pins), udp(u)
+NetUDP::NetUDP(NetScope*s, const string&n, unsigned pins, PUdp *u)
+  : NetNode(s, n, pins), udp(u)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
@@ -89,6 +89,9 @@ char NetUDP::get_initial() const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.5  2001/04/24 02:23:58  steve
+ *  Support for UDP devices in VVP (Stephen Boettcher)
+ *
  * Revision 1.4  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *
