@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.2 2001/04/24 15:47:37 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -310,7 +310,7 @@ void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  bits[0] = St1;
 		  break;
 		case vpiX:
-		  bits[1] = StX;
+		  bits[0] = StX;
 		  break;
 		case vpiZ:
 		  bits[0] = HiZ;
@@ -456,6 +456,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.2  2001/04/24 15:47:37  steve
+ *  Fix setting StX in vpip_bits_set_value.
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *
