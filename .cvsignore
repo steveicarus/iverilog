@@ -20,5 +20,6 @@ check.cc
 config.status
 config.log
 config.cache
+autom4te.cache
 config.h
 dosify

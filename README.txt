@@ -429,33 +429,9 @@ language that are defined.
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
 Copyright Stephen Williams. The proper notices are in the head of each
 file. However, I have early on received aid in the form of fixes,
-Verilog guidance, and especially testing from many people, including
-(in alphabetical order):
-
-	Eric Aardoom <eric_aardoom@yahoo.com>
-	Stephan I. Boettcher <stephan@nevis.columbia.edu>
-	Ed Carter <r47652@email.sps.mot.com>
-	Larry Doolittle <LRDoolittle@lbl.gov>
-	Guy Hutchison <ghutchis@pacbell.net>
-	Ales Hvezda <ahvezda@seul.org>
-	Venkat Iyer <venkat@comit.com>
-	Yasuhisa Kato <kato@y.email.ne.jp>
-        James Lee <jml@jmlzone.com>
-	Peter Monta <pmonta@halibut.imedia.com>
-	Daniel H. Nelsen <dhn@qedinc.com>
-	Stefan Petersen <spe@geda.seul.org>
-	Michael Ruff <mruff@chiaro.com>
-	Mike Runyan <mrunyan@chiaro.com>
-	Jason Schonberg <schonm@yahoo.com>
-	Stuart Sutherland <stuart@sutherland.com>
-	Stephen Tell <tell@cs.unc.edu>
-        Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
-	Tom Verbeure
-	Steve Wilson <stevew@home.com>
-
-and others. Testers in particular include a larger community of people
-interested in a GPL Verilog for Linux. Special thanks to Steve Wilson
-for collecting and organizing the test suite code for all those testers.
+Verilog guidance, and especially testing from many people. Testers in
+particular include a larger community of people interested in a GPL
+Verilog for Linux.
 
 
 6.1 PORT MAINTAINERS
