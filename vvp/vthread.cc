@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.51 2001/07/22 00:04:50 steve Exp $"
+#ident "$Id: vthread.cc,v 1.52 2001/08/08 00:53:50 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1144,7 +1144,7 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx1;
       unsigned wid = cp->number;
-      long shift = thr->index[0];
+      unsigned long shift = thr->index[0];
 
       if (shift >= wid) {
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -1169,7 +1169,7 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx1;
       unsigned wid = cp->number;
-      long shift = thr->index[0];
+      unsigned long shift = thr->index[0];
 
       if (shift >= wid) {
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -1336,6 +1336,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.52  2001/08/08 00:53:50  steve
+ *  signed/unsigned warnings?
+ *
  * Revision 1.51  2001/07/22 00:04:50  steve
  *  Add the load/x instruction for bit selects.
  *
