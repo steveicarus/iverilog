@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.215 2001/06/27 18:34:43 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.216 2001/07/19 03:43:15 steve Exp $"
 #endif
 
 /*
@@ -545,6 +545,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		  continue;
 	    }
 
+	      // Elaborate the expression that connects to the module
+	      // port. sig is the thing outside the module that
+	      // connects to the port.
+
 	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path,
 						     prts_pin_count,
 						     0, 0, 0);
@@ -555,6 +559,22 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    }
 
 	    assert(sig);
+
+	      // Check that a reg is not passed as an output or inout
+	      // port of the module. sig is the elaborated signal in
+	      // the outside that is to be passed, and prts is a
+	      // concatenation of signals on the input that receive a
+	      // reg value.
+	    if ((sig->type() == NetNet::REG)
+		&& (prts.count() >= 1)
+		&& (prts[0]->port_type() != NetNet::PINPUT)) {
+		  cerr << get_line() << ": error: reg/variable "
+		       << sig->name() << " cannot connect to "
+		       << "output port " << (idx+1) << " of "
+		       << my_scope->name() << "." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 
 
 	      // Check that the parts have matching pin counts. If
@@ -2321,6 +2341,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.216  2001/07/19 03:43:15  steve
+ *  Do not connect reg to module outputs.
+ *
  * Revision 1.215  2001/06/27 18:34:43  steve
  *  Report line of unsupported cassign.
  *
