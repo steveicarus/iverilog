@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.14 2002/05/05 21:11:50 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.15 2002/05/06 02:30:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -97,7 +97,12 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 
 	    ex->set_line(*parms_[idx]);
 
-	    if (! ex->has_width()) {
+	    if (dynamic_cast<NetEParam*>(ex)) {
+
+		    /* If this parameter is a NetEParam, then put off
+		       the width check for later. */
+
+	    } else if (! ex->has_width()) {
 		  cerr << ex->get_line() << ": error: operand of "
 		       << "concatenation has indefinite width: "
 		       << *ex << endl;
@@ -217,6 +222,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.15  2002/05/06 02:30:27  steve
+ *  Allow parameters in concatenation of widths are defined.
+ *
  * Revision 1.14  2002/05/05 21:11:50  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms

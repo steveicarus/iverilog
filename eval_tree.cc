@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.38 2002/05/05 21:11:50 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.39 2002/05/06 02:30:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -706,6 +706,7 @@ NetEConst* NetEBShift::eval_tree()
 NetEConst* NetEConcat::eval_tree()
 {
       unsigned repeat_val = repeat();
+      unsigned local_errors = 0;
 
       unsigned gap = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
@@ -731,9 +732,20 @@ NetEConst* NetEConcat::eval_tree()
 	    if (expr) {
 		  delete parms_[idx];
 		  parms_[idx] = expr;
+
+		  if (! expr->has_width()) {
+			cerr << get_line() << ": error: concatenation "
+			     << "operand has indefinite width: "
+			     << *parms_[idx] << endl;
+			local_errors += 1;
+		  }
 		  gap += expr->expr_width();
 	    }
+
       }
+
+      if (local_errors > 0)
+	    return 0;
 
 	// Handle the special case that the repeat expression is
 	// zero. In this case, just return a 0 value with the expected
@@ -1086,6 +1098,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.39  2002/05/06 02:30:27  steve
+ *  Allow parameters in concatenation of widths are defined.
+ *
  * Revision 1.38  2002/05/05 21:11:50  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms

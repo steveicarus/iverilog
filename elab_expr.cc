@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.58 2002/05/05 21:11:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.59 2002/05/06 02:30:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -373,7 +373,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    assert(parms_[idx]);
-	    NetExpr*ex = parms_[idx]->elaborate_expr(des, scope);
+	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx]);
 	    if (ex == 0) continue;
 
 	    ex->set_line(*parms_[idx]);
@@ -864,6 +864,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.59  2002/05/06 02:30:27  steve
+ *  Allow parameters in concatenation of widths are defined.
+ *
  * Revision 1.58  2002/05/05 21:11:49  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms
