@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.17 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: synth2.cc,v 1.18 2002/11/06 03:22:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -388,10 +388,14 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  continue;
 
 	      /* Use the nex_map to link up the output from the
-		 substatement to the output of the block as a whole. */
+		 substatement to the output of the block as a
+		 whole. It is occasionally possible to have outputs
+		 beyond the input set, for example when the l-value of
+		 an assignment is smaller then the r-value. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
-		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
+		  if (ptr < nex_out->pin_count())
+			connect(nex_out->pin(ptr), tmp_out->pin(idx));
 	    }
 
 	    delete tmp_map;
@@ -561,15 +565,6 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       if (pclk->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
 
-#if 0
-      if (ev->nprobe() > 1) {
-	    cerr << get_line() << ": sorry: I don't know how "
-		 << "to synthesize asynchronous DFF controls."
-		 << endl;
-	    return false;
-      }
-#endif
-
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, ff,
 					 nex_map, nex_out, events);
@@ -689,6 +684,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.18  2002/11/06 03:22:28  steve
+ *  More forgiving about assignment rval width mismatch.
+ *
  * Revision 1.17  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.
