@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.75 1999/09/01 20:46:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.76 1999/09/02 01:59:27 steve Exp $"
 #endif
 
 /*
@@ -1441,11 +1441,17 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       assert(rval());
 
+      if (delay()) {
+	    cerr << get_line() << ": sorry, cannot elaborate delays"
+		  " is non-blocking assignments." << endl;
+	    return 0;
+      }
+
 	/* Elaborate the r-value expression. This generates a
 	   procedural expression that I attach to the assignment. */
       NetExpr*rv = rval()->elaborate_expr(des, path);
       if (rv == 0) {
-	    cerr << get_line() << ": " << "failed to elaborate expression."
+	    cerr << get_line() << ": failed to elaborate expression."
 		 << endl;
 	    return 0;
       }
@@ -2165,6 +2171,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.76  1999/09/02 01:59:27  steve
+ *  Parse non-blocking assignment delays.
+ *
  * Revision 1.75  1999/09/01 20:46:19  steve
  *  Handle recursive functions and arbitrary function
  *  references to other functions, properly pass

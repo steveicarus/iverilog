@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.12 1999/07/12 00:59:36 steve Exp $"
+#ident "$Id: Statement.cc,v 1.13 1999/09/02 01:59:27 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -55,6 +55,11 @@ PAssign::~PAssign()
 
 PAssignNB::PAssignNB(PExpr*lval, PExpr*ex)
 : PAssign_(lval, 0, ex)
+{
+}
+
+PAssignNB::PAssignNB(PExpr*lval, PExpr*d, PExpr*ex)
+: PAssign_(lval, d, ex)
 {
 }
 
@@ -143,6 +148,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.13  1999/09/02 01:59:27  steve
+ *  Parse non-blocking assignment delays.
+ *
  * Revision 1.12  1999/07/12 00:59:36  steve
  *  procedural blocking assignment delays.
  *

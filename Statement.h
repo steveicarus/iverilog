@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.15 1999/07/12 00:59:36 steve Exp $"
+#ident "$Id: Statement.h,v 1.16 1999/09/02 01:59:27 steve Exp $"
 #endif
 
 # include  <string>
@@ -114,6 +114,7 @@ class PAssignNB  : public PAssign_ {
 
     public:
       explicit PAssignNB(PExpr*lval, PExpr*ex);
+      explicit PAssignNB(PExpr*lval, PExpr*de, PExpr*ex);
       ~PAssignNB();
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -333,6 +334,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.16  1999/09/02 01:59:27  steve
+ *  Parse non-blocking assignment delays.
+ *
  * Revision 1.15  1999/07/12 00:59:36  steve
  *  procedural blocking assignment delays.
  *
