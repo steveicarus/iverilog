@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.69 1999/09/29 21:16:32 steve Exp $"
+#ident "$Id: parse.y,v 1.70 1999/09/29 22:56:31 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -139,12 +139,13 @@ extern void lex_end_table();
 %type <task> task_body
 %type <function> func_body
 %type <exprs> range_or_type_opt
+%type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
 
-%left '?' ':'
+%right '?' ':'
 %left K_LOR
 %left K_LAND
 %left '|'
@@ -156,6 +157,10 @@ extern void lex_end_table();
 %left '+' '-'
 %left '*' '/' '%'
 %left UNARY_PREC
+
+/* to resolve dangling else ambiguity: */
+%nonassoc less_than_K_else
+%nonassoc K_else
 
 %%
 
@@ -328,7 +333,7 @@ event_control
 		{ yyerror(@1, "sorry: event control not supported.");
 		  $$ = 0;
 		}
-	| '@' '(' event_expression ')'
+	| '@' '(' event_expression_list ')'
 		{ PEventStatement*tmp = new PEventStatement(*$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -338,6 +343,17 @@ event_control
 	| '@' '(' error ')'
 		{ yyerror(@1, "error: Malformed event control expression.");
 		  $$ = 0;
+		}
+	;
+
+event_expression_list
+	: event_expression
+		{ $$ = $1; }
+	| event_expression_list K_or event_expression
+		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
 		}
 	;
 
@@ -365,12 +381,6 @@ event_expression
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;
 		  $$ = tl;
-		}
-	| event_expression K_or event_expression
-		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
 		}
 	;
 
@@ -1514,7 +1524,7 @@ statement
 		{ yyerrok; }
 	| K_casez '(' expression ')' error K_endcase
 		{ yyerrok; }
-	| K_if '(' expression ')' statement_opt
+	| K_if '(' expression ')' statement_opt %prec less_than_K_else
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1526,7 +1536,7 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_if '(' error ')' statement_opt
+	| K_if '(' error ')' statement_opt %prec less_than_K_else
 		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
