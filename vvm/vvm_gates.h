@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.33 1999/12/16 02:42:15 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.34 1999/12/19 20:57:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -191,7 +191,7 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	    { dist_[idx] = val;
 	      calculate_dist_();
 	    }
-      void init_Direction(vpip_bit_t val)
+      void init_Direction(unsigned, vpip_bit_t val)
 	    { dir_ = val; }
 
       void set_Data(unsigned idx, vpip_bit_t val)
@@ -933,6 +933,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.34  1999/12/19 20:57:07  steve
+ *  Proper init_ method prototype.
+ *
  * Revision 1.33  1999/12/16 02:42:15  steve
  *  Simulate carry output on adders.
  *
