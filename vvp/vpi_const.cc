@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.25 2003/03/13 04:59:21 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.26 2003/03/14 05:02:13 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -68,10 +68,13 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
+	      /* String parameters by default have vpiStringVal values. */
+	    vp->format = vpiStringVal;
+
 	  case vpiStringVal:
-	    rbuf = need_result_buf(size + 1, RBUF_VAL);
-	    strcpy(rbuf, (char*)rfp->value);
-	    vp->value.str = rbuf;
+	      /* This value is already safe and persistent in the
+		 vpiHandle. No need to copy it. */
+	    vp->value.str = rfp->value;
 	    break;
 
           case vpiDecStrVal:
@@ -182,6 +185,7 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
     
 struct __vpiStringParam  : public __vpiStringConst {
       const char*basename;
+      struct __vpiScope* scope;
 };
 
 static char* string_param_get_str(int code, vpiHandle obj)
@@ -195,6 +199,22 @@ static char* string_param_get_str(int code, vpiHandle obj)
 	  case vpiName:
 	    strcpy(rbuf, rfp->basename);
 	    return rbuf;
+
+	  default:
+	    return 0;
+      }
+}
+
+static vpiHandle string_param_handle(int code, vpiHandle obj)
+{
+      struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
+
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      switch (code) {
+	  case vpiScope:
+	    return &rfp->scope->base;
+
 	  default:
 	    return 0;
       }
@@ -207,7 +227,7 @@ static const struct __vpirt vpip_string_param_rt = {
       string_value,
       0,
 
-      0,
+      string_param_handle,
       0,
       0,
 
@@ -224,6 +244,7 @@ vpiHandle vpip_make_string_param(char*name, char*text)
       obj->base.vpi_type = &vpip_string_param_rt;
       obj->value = text;
       obj->basename = name;
+      obj->scope = vpip_peek_current_scope();
 
       return &obj->base;
 }
@@ -613,6 +634,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.26  2003/03/14 05:02:13  steve
+ *  Streamline parameter string value, get paramete scope.
+ *
  * Revision 1.25  2003/03/13 04:59:21  steve
  *  Use rbufs instead of static buffers.
  *
