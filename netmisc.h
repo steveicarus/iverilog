@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.10 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: netmisc.h,v 1.11 2001/02/10 20:29:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -54,9 +54,20 @@ extern verinum::V driven_value(const Link&lnk);
  */
 extern unsigned count_lval_width(const class NetAssign_*first);
 
+/*
+ * This function elaborates an expression, and tries to evaluate it
+ * right away. It is useful for those places where the user is
+ * supposed to supply a constant expression.
+ */
+class PExpr;
+extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.11  2001/02/10 20:29:39  steve
+ *  In the context of range declarations, use elab_and_eval instead
+ *  of the less robust eval_const methods.
+ *
  * Revision 1.10  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *
@@ -69,32 +80,5 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  *
  * Revision 1.7  2000/05/14 17:55:04  steve
  *  Support initialization of FF Q value.
- *
- * Revision 1.6  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.5  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- *
- * Revision 1.4  2000/03/16 19:03:03  steve
- *  Revise the VVM backend to use nexus objects so that
- *  drivers and resolution functions can be used, and
- *  the t-vvm module doesn't need to write a zillion
- *  output functions.
- *
- * Revision 1.3  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.2  2000/02/16 03:58:27  steve
- *  Fix up width matching in structural bitwise operators.
- *
- * Revision 1.1  1999/09/29 00:42:51  steve
- *  Allow expanding of additive operators.
- *
  */
 #endif

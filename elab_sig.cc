@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.10 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.11 2001/02/10 20:29:39 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -26,6 +26,7 @@
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "util.h"
 
 /*
@@ -320,27 +321,35 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		 here. I will resolve the values later. */
 
 	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-		  verinum*mval = msb_[idx]->eval_const(des,path);
-		  if (mval == 0) {
+
+		  NetEConst*tmp;
+		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx]);
+
+		  tmp = dynamic_cast<NetEConst*>(texpr);
+		  if (tmp == 0) {
 			cerr << msb_[idx]->get_line() << ": error: "
 			      "Unable to evaluate constant expression ``" <<
 			      *msb_[idx] << "''." << endl;
 			des->errors += 1;
 			return;
 		  }
-		  verinum*lval = lsb_[idx]->eval_const(des, path);
-		  if (lval == 0) {
-			cerr << lsb_[idx]->get_line() << ": error: "
+
+		  mnum[idx] = tmp->value().as_long();
+		  delete texpr;
+
+		  texpr = elab_and_eval(des, scope, lsb_[idx]);
+		  tmp = dynamic_cast<NetEConst*>(texpr);
+		  if (tmp == 0) {
+			cerr << msb_[idx]->get_line() << ": error: "
 			      "Unable to evaluate constant expression ``" <<
 			      *lsb_[idx] << "''." << endl;
 			des->errors += 1;
 			return;
 		  }
 
-		  mnum[idx] = mval->as_long();
-		  lnum[idx] = lval->as_long();
-		  delete mval;
-		  delete lval;
+		  lnum[idx] = tmp->value().as_long();
+		  delete texpr;
+
 	    }
 
 	      /* Make sure all the values for msb and lsb match by
@@ -404,6 +413,10 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.11  2001/02/10 20:29:39  steve
+ *  In the context of range declarations, use elab_and_eval instead
+ *  of the less robust eval_const methods.
+ *
  * Revision 1.10  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

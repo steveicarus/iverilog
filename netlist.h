@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.196 2001/02/09 05:44:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.197 2001/02/10 20:29:39 steve Exp $"
 #endif
 
 /*
@@ -2184,6 +2184,8 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_eqeq_();
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
+      NetEConst*eval_gt_();
+      NetEConst*eval_gteq_();
       NetEConst*eval_neeq_();
       NetEConst*eval_eqeqeq_();
       NetEConst*eval_neeqeq_();
@@ -2853,6 +2855,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.197  2001/02/10 20:29:39  steve
+ *  In the context of range declarations, use elab_and_eval instead
+ *  of the less robust eval_const methods.
+ *
  * Revision 1.196  2001/02/09 05:44:23  steve
  *  support evaluation of constant < in expressions.
  *

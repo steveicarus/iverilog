@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.17 2001/02/09 05:44:23 steve Exp $"
+#ident "$Id: verinum.h,v 1.18 2001/02/10 20:29:39 steve Exp $"
 #endif
 
 # include  <string>
@@ -117,10 +117,20 @@ extern verinum operator * (const verinum&left, const verinum&right);
 extern verinum operator / (const verinum&left, const verinum&right);
 extern verinum operator % (const verinum&left, const verinum&right);
 
+inline verinum::V operator > (const verinum&left, const verinum&right)
+{ return right < left; }
+
+inline verinum::V operator >= (const verinum&left, const verinum&right)
+{ return right <= left; }
+
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.18  2001/02/10 20:29:39  steve
+ *  In the context of range declarations, use elab_and_eval instead
+ *  of the less robust eval_const methods.
+ *
  * Revision 1.17  2001/02/09 05:44:23  steve
  *  support evaluation of constant < in expressions.
  *

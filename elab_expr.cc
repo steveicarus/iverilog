@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.35 2001/02/09 05:44:23 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.36 2001/02/10 20:29:39 steve Exp $"
 #endif
 
 
 # include  "pform.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
 {
@@ -174,14 +175,23 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       NetESFunc*fun = new NetESFunc(name_, wid, nparms);
 
 	/* Now run through the expected parameters. If we find that
-	   there are missing parameters, print an error message. */
+	   there are missing parameters, print an error message.
+
+	   While we're at it, try to evaluate the function parameter
+	   expression as much as possible, and use the reduced
+	   expression if one is created. */
 
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    PExpr*expr = parms_[idx];
 	    if (expr) {
-		  NetExpr*tmp = expr->elaborate_expr(des, scope);
-		  fun->parm(idx, tmp);
+		  NetExpr*tmp1 = expr->elaborate_expr(des, scope);
+		  if (NetExpr*tmp2 = tmp1->eval_tree()) {
+			delete tmp1;
+			fun->parm(idx, tmp2);
+		  } else {
+			fun->parm(idx, tmp1);
+		  }
 
 	    } else {
 		  missing_parms += 1;
@@ -283,17 +293,21 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
       if (repeat_) {
-	    verinum*vrep = repeat_->eval_const(des, scope->name());
-	    if (vrep == 0) {
+	    NetExpr*tmp = elab_and_eval(des, scope, repeat_);
+	    assert(tmp);
+	    NetEConst*rep = dynamic_cast<NetEConst*>(tmp);
+
+	    if (rep == 0) {
 		  cerr << get_line() << ": error: "
 			"concatenation repeat expression cannot be evaluated."
 		       << endl;
+		  cerr << get_line() << ":      : The expression is: "
+		       << *tmp << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    repeat = vrep->as_ulong();
-	    delete vrep;
+	    repeat = rep->value().as_ulong();
       }
 
 	/* Make the empty concat expression. */
@@ -597,6 +611,10 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.36  2001/02/10 20:29:39  steve
+ *  In the context of range declarations, use elab_and_eval instead
+ *  of the less robust eval_const methods.
+ *
  * Revision 1.35  2001/02/09 05:44:23  steve
  *  support evaluation of constant < in expressions.
  *
