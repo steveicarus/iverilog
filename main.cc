@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.11 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: main.cc,v 1.12 1999/01/24 01:35:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -32,7 +32,7 @@
 
 extern void pform_parse();
 
-const char*target = "verilog";
+const char*target = "null";
 string start_module = "";
 
 map<string,string> flags;
@@ -224,6 +224,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.12  1999/01/24 01:35:36  steve
+ *  Support null target for generating no output.
+ *
  * Revision 1.11  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *

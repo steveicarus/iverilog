@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,35 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: targets.cc,v 1.3 1999/01/24 01:35:36 steve Exp $"
+#ident "$Id: t-null.cc,v 1.1 1999/01/24 01:35:08 steve Exp $"
 #endif
 
-# include "target.h"
+# include  "netlist.h"
+# include  "target.h"
 
-extern const struct target tgt_null;
-extern const struct target tgt_verilog;
-extern const struct target tgt_vvm;
-extern const struct target tgt_xnf;
+static target_t target_null_obj;
 
-const struct target *target_table[] = {
-      &tgt_null,
-      &tgt_verilog,
-      &tgt_vvm,
-      &tgt_xnf,
-      0
-};
-
+extern const struct target tgt_null = { "null", &target_null_obj };
 /*
- * $Log: targets.cc,v $
- * Revision 1.3  1999/01/24 01:35:36  steve
+ * $Log: t-null.cc,v $
+ * Revision 1.1  1999/01/24 01:35:08  steve
  *  Support null target for generating no output.
- *
- * Revision 1.2  1998/11/16 05:03:53  steve
- *  Add the sigfold function that unlinks excess
- *  signal nodes, and add the XNF target.
- *
- * Revision 1.1  1998/11/03 23:29:07  steve
- *  Introduce verilog to CVS.
  *
  */
 
