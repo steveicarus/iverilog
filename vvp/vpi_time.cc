@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.11 2003/02/02 02:14:14 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.12 2003/02/03 01:09:20 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -38,6 +38,8 @@
  * set by the :vpi_time_precision directive in the vvp source file.
  */
 static int vpi_time_precision = 0;
+
+static struct __vpiSystemTime global_simtime;
 
 void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti)
 {
@@ -142,7 +144,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
       unsigned long x, num_bits;
       vvp_time64_t simtime = schedule_simtime();
-      int units = rfp->scope->time_units;
+      int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 
 	/* Calculate the divisor needed to scale the simulation time
 	   (in time_precision units) to time units of the scope. */
@@ -228,11 +230,22 @@ static const struct __vpirt vpip_system_realtime_rt = {
       0
 };
 
+/*
+ * Create a handle to represent a call to $time/$stime/$simtime. The
+ * $time and $stime system functions return a value scaled to a scope,
+ * and the $simtime returns the unscaled time.
+ */
 vpiHandle vpip_sim_time(struct __vpiScope*scope)
 {
-      scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
-      scope->scoped_time.scope = scope;
-      return &scope->scoped_time.base;
+      if (scope) {
+	    scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
+	    scope->scoped_time.scope = scope;
+	    return &scope->scoped_time.base;
+      } else {
+	    global_simtime.base.vpi_type = &vpip_system_time_rt;
+	    global_simtime.scope = 0;
+	    return &global_simtime.base;
+      }
 }
 
 vpiHandle vpip_sim_realtime(struct __vpiScope*scope)
@@ -255,6 +268,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.12  2003/02/03 01:09:20  steve
+ *  Allow $display of $simtime.
+ *
  * Revision 1.11  2003/02/02 02:14:14  steve
  *  Proper rounding of scaled integer time.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.151 2003/02/01 05:50:04 steve Exp $"
+#ident "$Id: compile.cc,v 1.152 2003/02/03 01:09:20 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -446,6 +446,12 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
 
       if (strcmp(label, "$realtime") == 0) {
 	    *handle = vpip_sim_realtime(vpip_peek_current_scope());
+	    free(label);
+	    return;
+      }
+
+      if (strcmp(label, "$simtime") == 0) {
+	    *handle = vpip_sim_time(0);
 	    free(label);
 	    return;
       }
@@ -1513,6 +1519,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.152  2003/02/03 01:09:20  steve
+ *  Allow $display of $simtime.
+ *
  * Revision 1.151  2003/02/01 05:50:04  steve
  *  Make $time and $realtime available to $display uniquely.
  *
