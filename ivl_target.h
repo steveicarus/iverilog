@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.132 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.133 2005/01/22 17:36:59 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -230,7 +230,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
       IVL_LPM_CMP_NE = 11,
-      IVL_LPM_CMP_NEE= 19, //* Case NE (!==) */
+      IVL_LPM_CMP_NEE= 19, /* Case NE (!==) */
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
       IVL_LPM_MOD    = 13,
@@ -720,7 +720,8 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *
  * ivl_lpm_signed
  *    Arithmetic LPM devices may be signed or unsigned if there is a
- *    distinction.
+ *    distinction. For some devices this gives the signedness of the
+ *    output, but not all devices.
  *
  * ivl_lpm_size
  *    In addition to a width, some devices have a size. The size is
@@ -763,6 +764,12 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * function, and one output available by the ivl_lpm_q function. The
  * output width is always 1, but the ivl_lpm_width() returns the width
  * of the inputs. Both inputs must have the same width.
+ *
+ * The CMP_GE and CMP_GT nodes may also be signed or unsigned, with
+ * the obvious implications. The widths are matched by the compiler
+ * (so the target need not worry about sign extension) but when doing
+ * magnitude compare, the signedness does matter. In any case, the
+ * result of the compare is always unsigned.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -1429,6 +1436,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.133  2005/01/22 17:36:59  steve
+ *  stub dump signed flags of magnitude compare.
+ *
  * Revision 1.132  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

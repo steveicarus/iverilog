@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.98 2005/01/22 16:23:06 steve Exp $"
+#ident "$Id: stub.c,v 1.99 2005/01/22 17:36:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -258,8 +258,9 @@ static void show_lpm_cmp_ge(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
 
-      fprintf(out, "  LPM_CMP_GE %s: <width=%u>\n",
-	      ivl_lpm_basename(net), width);
+      fprintf(out, "  LPM_CMP_GE %s: <width=%u %s>\n",
+	      ivl_lpm_basename(net), width,
+	      ivl_lpm_signed(net)? "signed" : "unsigned");
 
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
@@ -923,6 +924,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.99  2005/01/22 17:36:59  steve
+ *  stub dump signed flags of magnitude compare.
+ *
  * Revision 1.98  2005/01/22 16:23:06  steve
  *  LPM_CMP_NE/EQ are vectored devices.
  *
