@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.146 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: netlist.cc,v 1.147 2000/11/29 05:24:00 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2237,17 +2237,6 @@ NetETernary* NetETernary::dup_expr() const
 NetEUnary::NetEUnary(char op, NetExpr*ex)
 : NetExpr(ex->expr_width()), op_(op), expr_(ex)
 {
-      switch (op_) {
-	  case '!': // Logical not
-	  case '&': // Reduction and
-	  case '|': // Reduction or
-	  case '^': // Reduction XOR
-	  case 'A': // Reduction NAND (~&)
-	  case 'N': // Reduction NOR (~|)
-	  case 'X': // Reduction NXOR (~^)
-	    expr_width(1);
-	    break;
-      }
 }
 
 NetEUnary::~NetEUnary()
@@ -2266,6 +2255,16 @@ NetEUBits::NetEUBits(char op, NetExpr*ex)
 }
 
 NetEUBits::~NetEUBits()
+{
+}
+
+NetEUReduce::NetEUReduce(char op, NetExpr*ex)
+: NetEUnary(op, ex)
+{
+      expr_width(1);
+}
+
+NetEUReduce::~NetEUReduce()
 {
 }
 
@@ -2466,6 +2465,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.147  2000/11/29 05:24:00  steve
+ *  synthesis for unary reduction ! and N operators.
+ *
  * Revision 1.146  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *

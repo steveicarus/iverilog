@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.16 2000/11/29 02:09:52 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.17 2000/11/29 05:24:00 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -370,6 +370,46 @@ NetNet* NetEUBits::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEUReduce::synthesize(Design*des)
+{
+      NetNet*isig = expr_->synthesize(des);
+
+      NetScope*scope = isig->scope();
+      assert(scope);
+      string path = des->local_symbol(scope->name());
+
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+      osig->local_flag(true);
+
+      string oname = des->local_symbol(path);
+      NetLogic*gate;
+
+      switch (op()) {
+	  case 'N':
+	  case '!':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::NOR);
+	    break;
+
+	  case '&':
+	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
+				NetLogic::AND);
+	    break;
+
+	  default:
+	    cerr << get_line() << ": internal error: "
+		 << "Unable to synthesize " << *this << "." << endl;
+	    return 0;
+      }
+
+      des->add_node(gate);
+      connect(gate->pin(0), osig->pin(0));
+      for (unsigned idx = 0 ;  idx < isig->pin_count() ;  idx += 1)
+	    connect(gate->pin(1+idx), isig->pin(idx));
+
+      return osig;
+}
+
 
 NetNet* NetETernary::synthesize(Design *des)
 {
@@ -404,6 +444,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.17  2000/11/29 05:24:00  steve
+ *  synthesis for unary reduction ! and N operators.
+ *
  * Revision 1.16  2000/11/29 02:09:52  steve
  *  Add support for || synthesis (PR#53)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.29 2000/09/26 05:05:58 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.30 2000/11/29 05:24:00 steve Exp $"
 #endif
 
 
@@ -506,6 +506,16 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 	    tmp = new NetEUnary(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+	  case '!': // Logical NOT
+	  case '&': // Reduction AND
+	  case '|': // Reduction or
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    tmp = new NetEUReduce(op_, ip);
+	    tmp->set_line(*this);
+	    break;
 	  case '~':
 	    tmp = new NetEUBits(op_, ip);
 	    tmp->set_line(*this);
@@ -516,6 +526,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.30  2000/11/29 05:24:00  steve
+ *  synthesis for unary reduction ! and N operators.
+ *
  * Revision 1.29  2000/09/26 05:05:58  steve
  *  Detect indefinite widths where definite widths are required.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.181 2000/11/29 02:09:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.182 2000/11/29 05:24:00 steve Exp $"
 #endif
 
 /*
@@ -2426,6 +2426,16 @@ class NetEUBits : public NetEUnary {
 
 };
 
+class NetEUReduce : public NetEUnary {
+
+    public:
+      NetEUReduce(char op, NetExpr*ex);
+      ~NetEUReduce();
+
+      virtual NetNet* synthesize(Design*);
+
+};
+
 /*
  * A reference to a memory is represented by this expression. If the
  * index is not supplied, then the node is only valid in certain
@@ -2814,6 +2824,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.182  2000/11/29 05:24:00  steve
+ *  synthesis for unary reduction ! and N operators.
+ *
  * Revision 1.181  2000/11/29 02:09:53  steve
  *  Add support for || synthesis (PR#53)
  *
