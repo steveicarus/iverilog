@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.19 2004/09/05 21:29:08 steve Exp $"
+#ident "$Id: main.c,v 1.20 2004/09/10 00:15:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,12 +69,12 @@ static unsigned source_cnt = 0;
 void add_source_file(const char*name)
 {
       if (source_list == 0) {
-	    source_list = (char**)calloc(2, sizeof(char*));
+	    source_list = calloc(2, sizeof(char*));
 	    source_list[0] = strdup(name);
 	    source_list[1] = 0;
 	    source_cnt = 1;
       } else {
-	    source_list = (char**)realloc(source_list, sizeof(char*) * (source_cnt+2));
+	    source_list = realloc(source_list, sizeof(char*) * (source_cnt+2));
 	    source_list[source_cnt+0] = strdup(name);
 	    source_list[source_cnt+1] = 0;
 	    source_cnt += 1;
@@ -149,7 +149,7 @@ int main(int argc, char*argv[])
       define_macro("unconnected_drive",   "`unconnected_drive", 1);
       define_macro("uselib",              "`uselib", 1);
 
-      include_dir = (char**)malloc(sizeof(char*));
+      include_dir = malloc(sizeof(char*));
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
@@ -177,14 +177,14 @@ int main(int argc, char*argv[])
 	    break;
 
 	  case 'I':
-	    include_dir = (char**)realloc(include_dir,
+	    include_dir = realloc(include_dir,
 					  (include_cnt+1)*sizeof(char*));
 	    include_dir[include_cnt] = strdup(optarg);
 	    include_cnt += 1;
 	    break;
 
 	  case 'K': {
-		char*buf = (char*)malloc(strlen(optarg) + 2);
+		char*buf = malloc(strlen(optarg) + 2);
 		buf[0] = '`';
 		strcpy(buf+1, optarg);
 		define_macro(optarg, buf, 1);
@@ -290,6 +290,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.20  2004/09/10 00:15:45  steve
+ *  Remove bad casts.
+ *
  * Revision 1.19  2004/09/05 21:29:08  steve
  *  Better type safety.
  *

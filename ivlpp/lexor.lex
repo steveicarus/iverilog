@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.45 2004/09/06 03:01:48 steve Exp $"
+#ident "$Id: lexor.lex,v 1.46 2004/09/10 00:15:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -416,8 +416,7 @@ static void def_start()
 
 void define_macro(const char*name, const char*value, int keyword)
 {
-      struct define_t*def = (struct define_t*)
-	    malloc(sizeof(struct define_t));
+      struct define_t*def = malloc(sizeof(struct define_t));
       def->name = strdup(name);
       def->value = strdup(value);
       def->keyword = keyword;
@@ -539,7 +538,7 @@ static void do_define()
       }
 
 	/* Accumulate this text into the define_text string. */
-      define_text = (char*)realloc(define_text, define_cnt + (cp-yytext) + 1);
+      define_text = realloc(define_text, define_cnt + (cp-yytext) + 1);
       strcpy(define_text+define_cnt, yytext);
       define_cnt += cp-yytext;
 }
@@ -689,8 +688,7 @@ static void include_filename()
 	      fprintf(stderr, "error: malformed `include directive. Extra junk on line?\n");
               exit(1);
       }
-      standby = (struct include_stack_t*)
-	    malloc(sizeof(struct include_stack_t));
+      standby = malloc(sizeof(struct include_stack_t));
       standby->path = strdup(yytext+1);
       standby->path[strlen(standby->path)-1] = 0;
       standby->lineno = 0;
@@ -852,8 +850,7 @@ void reset_lexor(FILE*out, char*paths[])
 {
       unsigned idx;
       struct include_stack_t*tail = 0;
-      struct include_stack_t*isp = (struct include_stack_t*)
-	    malloc(sizeof(struct include_stack_t));
+      struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
       isp->path = strdup(paths[0]);
       isp->file = fopen(paths[0], "r");
       isp->str  = 0;
@@ -877,8 +874,7 @@ void reset_lexor(FILE*out, char*paths[])
 	   that yywrap can pull them when needed. */
       file_queue = 0;
       for (idx = 1 ;  paths[idx] ;  idx += 1) {
-	    isp = (struct include_stack_t*)
-		  malloc(sizeof(struct include_stack_t));
+	    isp = malloc(sizeof(struct include_stack_t));
 	    isp->path = strdup(paths[idx]);
 	    isp->str = 0;
 	    isp->next = 0;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cadpli.c,v 1.6 2004/09/05 21:19:51 steve Exp $"
+#ident "$Id: cadpli.c,v 1.7 2004/09/10 00:15:45 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -53,7 +53,7 @@ static void thunker_register(void)
 	    bp = strchr(cp, ':');
 	    assert(bp);
 
-	    module = (char*)malloc(bp-cp+1);
+	    module = malloc(bp-cp+1);
 	    strncpy(module, cp, bp-cp);
 	    module[bp-cp] = 0;
 
@@ -76,7 +76,7 @@ static void thunker_register(void)
 	    free(module);
 	    assert(boot);
 
-	    tf = (struct t_tfcell*) (*((funcvp)boot))();
+	    tf = (*((funcvp)boot))();
 	    assert(tf);
 
 	    veriusertfs_register_table(tf);
@@ -91,6 +91,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: cadpli.c,v $
+ * Revision 1.7  2004/09/10 00:15:45  steve
+ *  Remove bad casts.
+ *
  * Revision 1.6  2004/09/05 21:19:51  steve
  *  Better type safety.
  *
