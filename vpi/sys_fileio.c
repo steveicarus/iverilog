@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.3 2004/02/19 21:33:13 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.4 2004/02/20 03:20:04 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -281,7 +281,6 @@ static int sys_fgets_calltf(char *name)
 {
       unsigned int mcd;
       FILE*fd;
-      int type;
       s_vpi_value value, rval;
 
       char*txt;
@@ -481,6 +480,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.4  2004/02/20 03:20:04  steve
+ *  unused variable warning.
+ *
  * Revision 1.3  2004/02/19 21:33:13  steve
  *  Add the $fgets function.
  *
