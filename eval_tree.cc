@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.52 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.53 2003/06/04 01:26:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -252,6 +252,12 @@ NetEConst* NetEBComp::eval_leeq_()
 	    return new NetEConst(result);
       }
 
+
+      if (left_->expr_width() == 0) {
+	    cerr << get_line() << ": internal error: Something wrong"
+		 << "with the left side width of <= ?" << endl;
+	    cerr << get_line() << ":               : " << *this << endl;
+      }
 
 	/* Detect the case where the right side is greater that or
 	   equal to the largest value the left side can possibly
@@ -1392,6 +1398,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.53  2003/06/04 01:26:17  steve
+ *  internal error for <= expression errors.
+ *
  * Revision 1.52  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and
