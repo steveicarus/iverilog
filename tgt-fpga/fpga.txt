@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.6 2003/03/24 00:47:54 steve Exp $
+  $Id: fpga.txt,v 1.7 2003/03/24 02:28:38 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -48,6 +48,11 @@ are targeting a Virtex part, so can generate primitives instead of
 using external macros. It includes the VIRTEX internal library, and
 should work properly for any Virtex part.
 
+* arch=virtex2
+
+If this is selected, then the output is EDIF 2 0 0 suitable for
+Virtex-II and Virtex-II Pro devices. It uses the VIRTEX2 library, but
+is very similar to the Virtex target.
 
 XNF ROOT PORTS
 
@@ -174,6 +179,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.7  2003/03/24 02:28:38  steve
+ Document the virtex2 architecture.
+
 Revision 1.6  2003/03/24 00:47:54  steve
  Add new virtex2 architecture family, and
  also the new edif.h EDIF management functions.
