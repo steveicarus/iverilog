@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.32 2001/11/10 18:07:11 steve Exp $"
+#ident "$Id: Makefile.in,v 1.33 2001/12/30 17:20:33 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -39,6 +39,8 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 STRIP = @STRIP@
+LEX = @LEX@
+YACC = @YACC@
 
 CPPFLAGS = -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
 CXXFLAGS = @CXXFLAGS@
@@ -88,11 +90,11 @@ parse.o: parse.cc
 tables.o: tables.cc
 
 parse.h parse.cc: $(srcdir)/parse.y
-	bison --verbose -t -d -o parse.cc $(srcdir)/parse.y
+	$(YACC) --verbose -t -d -o parse.cc $(srcdir)/parse.y
 	mv parse.cc.h parse.h
 
 lexor.cc: $(srcdir)/lexor.lex
-	flex -s -olexor.cc $(srcdir)/lexor.lex
+	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
 
 vvp.pdf: $(srcdir)/vvp.man
 	man -t $(srcdir)/vvp.man | ps2pdf - vvp.pdf

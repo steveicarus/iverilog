@@ -14,6 +14,22 @@ then
         exit 1
 fi
 
+AC_CHECK_PROGS(LEX,flex,none)
+if test "$LEX" = "none"
+then
+	echo "*** Error: No suitable flex found. ***"
+        echo "    Please install the 'flex' package."
+        exit 1
+fi
+
+AC_CHECK_PROGS(YACC,bison,none)
+if test "$YACC" = "none"
+then
+	echo "*** Error: No suitable bison found. ***"
+        echo "    Please install the 'bison' package."
+        exit 1
+fi
+
 AC_LANG_CPLUSPLUS
 
 AC_CHECK_HEADERS(getopt.h malloc.h iosfwd sys/wait.h)

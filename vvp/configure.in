@@ -10,6 +10,22 @@ AC_EXEEXT
 AC_MINGW32
 AC_SUBST(EXEEXT)
 
+AC_CHECK_PROGS(LEX,flex,none)
+if test "$LEX" = "none"
+then
+	echo "*** Error: No suitable flex found. ***"
+        echo "    Please install the 'flex' package."
+        exit 1
+fi
+
+AC_CHECK_PROGS(YACC,bison,none)
+if test "$YACC" = "none"
+then
+	echo "*** Error: No suitable bison found. ***"
+        echo "    Please install the 'bison' package."
+        exit 1
+fi
+
 AC_PROG_INSTALL
 
 AC_ARG_ENABLE(vvp-debug, vvp-debug -- interactive debugger for VVP runtime.,
