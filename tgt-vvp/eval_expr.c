@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.37 2001/07/22 00:17:50 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.38 2001/07/22 19:33:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -576,7 +576,7 @@ static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 {
-      unsigned idx, off;
+      unsigned off, rep;
       struct vector_info res;
 
       assert(wid >= ivl_expr_width(exp));
@@ -584,20 +584,26 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid = wid;
 
-      idx = ivl_expr_parms(exp);
+      rep = ivl_expr_repeat(exp);
       off = 0;
-      while (idx > 0) {
-	    ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
-	    unsigned awid = ivl_expr_width(arg);
 
-	    struct vector_info avec = draw_eval_expr_wid(arg, awid);
+      while (rep > 0) {
+	    unsigned idx = ivl_expr_parms(exp);
+	    while (idx > 0) {
+		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
+		  unsigned awid = ivl_expr_width(arg);
 
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base+off,
-		    avec.base, avec.wid);
-	    clr_vector(avec);
+		  struct vector_info avec = draw_eval_expr_wid(arg, awid);
 
-	    idx -= 1;
-	    off += awid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base+off,
+			  avec.base, avec.wid);
+		  clr_vector(avec);
+
+		  idx -= 1;
+		  off += awid;
+		  assert(off <= wid);
+	    }
+	    rep -= 1;
       }
 
       if (off < wid) {
@@ -1150,6 +1156,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.38  2001/07/22 19:33:51  steve
+ *  Handle repeat for concatenation expressions.
+ *
  * Revision 1.37  2001/07/22 00:17:50  steve
  *  Support the NetESubSignal expressions in vvp.tgt.
  *
