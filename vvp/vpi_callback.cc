@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.20 2002/06/11 03:47:34 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.21 2002/07/12 02:07:36 steve Exp $"
 #endif
 
 /*
@@ -200,6 +200,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 
 	  case vpiReg:
 	  case vpiNet:
+	  case vpiIntegerVar:
 	    struct __vpiSignal*sig;
 	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
@@ -466,6 +467,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.21  2002/07/12 02:07:36  steve
+ *  vpiIntegerVars can have callbacks.
+ *
  * Revision 1.20  2002/06/11 03:47:34  steve
  *  Stub value change callbacks for consts and modules.
  *
