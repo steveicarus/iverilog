@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.14 1999/10/08 17:27:56 steve Exp $"
+#ident "$Id: lexor.lex,v 1.15 2000/03/05 06:13:29 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -522,7 +522,7 @@ static int yywrap()
 	    if (line_direct_flag)
 		  fprintf(yyout, "\n#line \"%s\" 0\n", istack->path);
 
-	    yyrestart(isp->file);
+	    yyrestart(istack->file);
 	    return 0;
       }
 
