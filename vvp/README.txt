@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.50 2004/12/29 23:45:13 steve Exp $
+ *  $Id: README.txt,v 1.51 2004/12/31 06:00:06 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -436,6 +436,9 @@ resolution function.
 	<label> .resolv tri,  <symbols_list>;
 	<label> .resolv tri0, <symbols_list>;
 	<label> .resolv tri1, <symbols_list>;
+
+The output from the resolver is vvp_vector8_t value. That is, the
+result is a vector with strength included.
 
 
 PART SELECT STATEMENTS:

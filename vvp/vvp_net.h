@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.3 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.4 2004/12/31 06:00:06 steve Exp $"
 
 # include  <assert.h>
 
@@ -123,11 +123,17 @@ extern vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b);
  * values. The 8 in the name is the number of possible distinct values
  * a well defined bit may have. When you add in ambiguous values, the
  * number of distinct values span the vvp_scaler_t.
+ *
+ * a vvp_vector8_t object can be created from a vvp_vector4_t and a
+ * strength value. The vvp_vector8_t bits have the values of the input
+ * vector, all with the strength specified.
  */
 class vvp_vector8_t {
 
     public:
       explicit vvp_vector8_t(unsigned size =0);
+	// Make a vvp_vector8_t from a vector4 and a specified strength.
+      explicit vvp_vector8_t(const vvp_vector4_t&that, unsigned str);
 
       ~vvp_vector8_t();
 
@@ -142,6 +148,9 @@ class vvp_vector8_t {
       unsigned size_;
       vvp_scaler_t*bits_;
 };
+
+extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
+extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
 
 /*
  * This class implements a pointer that points to an item within a
@@ -253,7 +262,7 @@ struct vvp_net_t {
 };
 
 extern void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val);
-extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 
@@ -412,6 +421,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       explicit vvp_fun_signal(unsigned wid);
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
       void recv_long(vvp_net_ptr_t port, long bit);
 
 	// Get information about the vector value.
@@ -438,6 +448,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.4  2004/12/31 06:00:06  steve
+ *  Implement .resolv functors, and stub signals recv_vec8 method.
+ *
  * Revision 1.3  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *

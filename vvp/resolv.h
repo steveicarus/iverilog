@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.9 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: resolv.h,v 1.10 2004/12/31 06:00:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -41,15 +41,19 @@ class resolv_functor : public vvp_net_fun_t {
       explicit resolv_functor(vvp_scaler_t hiz_value);
       ~resolv_functor();
 
-      void recv_vec8(vvp_vector8_t bit);
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
     private:
-      vvp_vector8_t driven_;
+      vvp_vector8_t val_[4];
       vvp_scaler_t hiz_;
 };
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.10  2004/12/31 06:00:06  steve
+ *  Implement .resolv functors, and stub signals recv_vec8 method.
+ *
  * Revision 1.9  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

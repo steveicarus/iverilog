@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.2 2004/12/15 17:16:08 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.3 2004/12/31 06:00:06 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -57,6 +57,18 @@ void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
 
 	    if (cur->fun)
 		  cur->fun->recv_vec4(ptr, val);
+
+	    ptr = next;
+      }
+}
+
+void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_vec8(ptr, val);
 
 	    ptr = next;
       }
@@ -190,6 +202,17 @@ void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
       }
 }
 
+vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
+{
+      size_ = that.size_;
+
+      bits_ = new vvp_scaler_t[size_];
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+	    bits_[idx] = that.bits_[idx];
+
+}
+
 vvp_vector8_t::vvp_vector8_t(unsigned size)
 : size_(size)
 {
@@ -201,10 +224,61 @@ vvp_vector8_t::vvp_vector8_t(unsigned size)
       bits_ = new vvp_scaler_t[size_];
 }
 
+vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
+: size_(that.size())
+{
+      if (size_ == 0) {
+	    bits_ = 0;
+	    return;
+      }
+
+      bits_ = new vvp_scaler_t[size_];
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+	    bits_[idx] = vvp_scaler_t (that.value(idx), str);
+
+}
+
 vvp_vector8_t::~vvp_vector8_t()
 {
       if (size_ > 0)
 	    delete[]bits_;
+}
+
+vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
+{
+      if (size_ != that.size_) {
+	    if (size_ > 0)
+		  delete[]bits_;
+	    size_ = 0;
+      }
+
+      if (that.size_ == 0) {
+	    assert(size_ == 0);
+	    return *this;
+      }
+
+      if (size_ == 0) {
+	    size_ = that.size_;
+	    bits_ = new vvp_scaler_t[size_];
+      }
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+	    bits_[idx] = that.bits_[idx];
+
+      return *this;
+}
+
+vvp_scaler_t vvp_vector8_t::value(unsigned idx) const
+{
+      assert(idx < size_);
+      return bits_[idx];
+}
+
+void vvp_vector8_t::set_bit(unsigned idx, vvp_scaler_t val)
+{
+      assert(idx < size_);
+      bits_[idx] = val;
 }
 
 vvp_net_fun_t::vvp_net_fun_t()
@@ -284,6 +358,13 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    assert(0);
 	    break;
       }
+}
+
+void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      fprintf(stderr, "internal error: vvp_fun_signal "
+	      "reducing vector8 input.\n");
+      recv_vec4(ptr, reduce4(bit));
 }
 
 void vvp_fun_signal::deassign()
@@ -407,6 +488,21 @@ vvp_scaler_t::vvp_scaler_t()
       value_ = 0;
 }
 
+vvp_bit4_t vvp_scaler_t::value() const
+{
+      if (value_ == 0) {
+	    return BIT4_Z;
+
+      } else switch (value_ & 0x88) {
+	  case 0x00:
+	    return BIT4_0;
+	  case 0x88:
+	    return BIT4_1;
+	  default:
+	    return BIT4_X;
+      }
+}
+
 vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
 {
 	// If the value is 0, that is the same as HiZ. In that case,
@@ -507,8 +603,33 @@ vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
       return res;
 }
 
+vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
+{
+      assert(a.size() == b.size());
+
+      vvp_vector8_t out (a.size());
+
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+	    out.set_bit(idx, resolve(a.value(idx), b.value(idx)));
+      }
+
+      return out;
+}
+
+vvp_vector4_t reduce4(const vvp_vector8_t&that)
+{
+      vvp_vector4_t out (that.size());
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1)
+	    out.set_bit(idx, that.value(idx).value());
+
+      return out;
+}
+
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.3  2004/12/31 06:00:06  steve
+ *  Implement .resolv functors, and stub signals recv_vec8 method.
+ *
  * Revision 1.2  2004/12/15 17:16:08  steve
  *  Add basic force/release capabilities.
  *
