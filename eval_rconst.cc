@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_rconst.cc,v 1.2 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: eval_rconst.cc,v 1.3 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,8 +36,54 @@ verireal* PEFNumber::eval_rconst(const Design*, const NetScope*) const
       return res;
 }
 
+verireal* PENumber::eval_rconst(const Design*, const NetScope*) const
+{
+      verireal*res = new verireal(value_->as_long());
+      return res;
+}
+
+verireal* PEBinary::eval_rconst(const Design*des, const NetScope*scope) const
+{
+      verireal*lef = left_->eval_rconst(des, scope);
+      verireal*rig = right_->eval_rconst(des, scope);
+      verireal*res = 0;
+
+      switch (op_) {
+	  case '*':
+	    if (lef == 0)
+		  break;
+	    if (rig == 0)
+		  break;
+	    res = new verireal;
+	    *res = (*lef) * (*rig);
+	    break;
+
+	  default:
+	    break;
+      }
+
+      delete lef;
+      delete rig;
+      return res;
+}
+
+
+verireal* PEIdent::eval_rconst(const Design*des, const NetScope*scope) const
+{
+      verinum* val = eval_const(des, scope->name());
+      if (val == 0)
+	    return 0;
+
+      verireal*res = new verireal(val->as_long());
+      delete val;
+      return res;
+}
+
 /*
  * $Log: eval_rconst.cc,v $
+ * Revision 1.3  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.2  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

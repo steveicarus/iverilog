@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.21 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: eval.cc,v 1.22 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,7 +42,6 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
 	    delete l;
 	    return 0;
       }
-
       verinum*res;
 
       switch (op_) {
@@ -198,6 +197,9 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.22  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.21  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

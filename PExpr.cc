@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.24 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.25 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -63,6 +63,15 @@ NetNet* PExpr::elaborate_lnet(Design*des, const string&path) const
       cerr << get_line() << ": error: expression not valid in assign l-value: "
 	   << *this << endl;
       return 0;
+}
+
+PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
+: op_(op), left_(l), right_(r)
+{
+}
+
+PEBinary::~PEBinary()
+{
 }
 
 bool PEBinary::is_constant(Module*mod) const
@@ -255,6 +264,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.25  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.24  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

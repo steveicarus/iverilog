@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.h,v 1.4 2001/01/16 02:44:18 steve Exp $"
+#ident "$Id: verireal.h,v 1.5 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -38,10 +38,12 @@ class ostream;
 class verireal {
 
       friend ostream& operator<< (ostream&, const verireal&);
+      friend verireal operator* (const verireal&, const verireal&);
 
     public:
       explicit verireal();
       explicit verireal(const char*text);
+      explicit verireal(long val);
       ~verireal();
 
 	/* Return the value of the floating point number as an
@@ -59,9 +61,13 @@ class verireal {
 };
 
 extern ostream& operator<< (ostream&, const verireal&);
+extern verireal operator* (const verireal&, const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.5  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.4  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

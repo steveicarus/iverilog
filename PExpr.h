@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.48 2001/01/14 23:04:55 steve Exp $"
+#ident "$Id: PExpr.h,v 1.49 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include  <string>
@@ -234,6 +234,7 @@ class PEIdent : public PExpr {
 
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
+      verireal*eval_rconst(const Design*des, const NetScope*sc) const;
 
       string name() const;
 
@@ -275,6 +276,7 @@ class PENumber : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
+      virtual verireal*eval_rconst(const Design*, const NetScope*) const;
 
       virtual bool is_the_same(const PExpr*that) const;
       virtual bool is_constant(Module*) const;
@@ -328,8 +330,8 @@ class PEUnary : public PExpr {
 class PEBinary : public PExpr {
 
     public:
-      explicit PEBinary(char op, PExpr*l, PExpr*r)
-      : op_(op), left_(l), right_(r) { }
+      explicit PEBinary(char op, PExpr*l, PExpr*r);
+      ~PEBinary();
 
       virtual bool is_constant(Module*) const;
 
@@ -344,6 +346,7 @@ class PEBinary : public PExpr {
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
+      virtual verireal*eval_rconst(const Design*des, const NetScope*sc) const;
 
     private:
       char op_;
@@ -446,6 +449,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.49  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.48  2001/01/14 23:04:55  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

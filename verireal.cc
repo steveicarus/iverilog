@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.5 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: verireal.cc,v 1.6 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,6 +88,12 @@ verireal::verireal(const char*txt)
       assert(*ptr == 0);
 }
 
+verireal::verireal(long val)
+{
+      sign_  = val < 0;
+      mant_  = sign_? -val : +val;
+      exp10_ = 0;
+}
 
 verireal::~verireal()
 {
@@ -118,6 +124,15 @@ long verireal::as_long(int shift) const
 	    return val;
 }
 
+verireal operator* (const verireal&l, const verireal&r)
+{
+      verireal res;
+      res.sign_ = l.sign_ != r.sign_;
+      res.mant_ = l.mant_ * r.mant_;
+      res.exp10_= l.exp10_ + r.exp10_;
+      return res;
+}
+
 ostream& operator<< (ostream&out, const verireal&v)
 {
       out << (v.sign_? "-" : "+") << v.mant_ << "e" << v.exp10_;
@@ -126,6 +141,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.6  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.5  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.27 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: verinum.cc,v 1.28 2001/11/06 06:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,6 +116,8 @@ verinum::verinum(long that)
 	    nbits_ += 1;
 	    tmp /= 2;
       }
+
+      nbits_ += 1;
 
       bits_ = new V[nbits_];
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
@@ -768,6 +770,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.28  2001/11/06 06:11:55  steve
+ *  Support more real arithmetic in delay constants.
+ *
  * Revision 1.27  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
