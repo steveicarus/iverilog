@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.7 2003/03/28 02:33:56 steve Exp $"
+#ident "$Id: eval_real.c,v 1.8 2003/04/23 02:22:47 steve Exp $"
 #endif
 
 /*
@@ -37,19 +37,21 @@ static unsigned long word_alloc_mask = 0x0f;
 int allocate_word()
 {
       int res = 4;
+      int max = 8*sizeof(word_alloc_mask);
 
-      while ((1 << res) & word_alloc_mask)
+      while (res < max && (1U << res) & word_alloc_mask)
 	    res += 1;
 
-      assert(res < 8*sizeof(word_alloc_mask));
-      word_alloc_mask |= 1 << res;
+      assert(res < max);
+      word_alloc_mask |= 1U << res;
       return res;
 }
 
 void clr_word(int res)
 {
-      assert(word_alloc_mask & (1 << res));
-      word_alloc_mask &= ~ (1 << res);
+      int max = 8*sizeof(word_alloc_mask);
+      assert(res < max);
+      word_alloc_mask &= ~ (1U << res);
 }
 
 
@@ -64,22 +66,18 @@ static int draw_binary_real(ivl_expr_t exp)
 
 	  case '+':
 	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", l, r);
-	    clr_word(r);
 	    break;
 
 	  case '-':
 	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", l, r);
-	    clr_word(r);
 	    break;
 
 	  case '*':
 	    fprintf(vvp_out, "    %%mul/wr %d, %d;\n", l, r);
-	    clr_word(r);
 	    break;
 
 	  case '/':
 	    fprintf(vvp_out, "    %%div/wr %d, %d;\n", l, r);
-	    clr_word(r);
 	    break;
 
 	  default:
@@ -87,6 +85,7 @@ static int draw_binary_real(ivl_expr_t exp)
 		    ivl_expr_opcode(exp));
 	    assert(0);
       }
+      clr_word(r);
 
       return l;
 }
@@ -288,6 +287,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.8  2003/04/23 02:22:47  steve
+ *  Fix word register leak.
+ *
  * Revision 1.7  2003/03/28 02:33:56  steve
  *  Add support for division of real operands.
  *

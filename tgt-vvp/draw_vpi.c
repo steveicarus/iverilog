@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.7 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.8 2003/04/23 02:22:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -250,6 +250,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    for (idx = 0; idx < vecs; idx++) {
 		  if (vec[idx].wid > 0)
 			clr_vector(vec[idx]);
+		  else if (vec[idx].wid == 0)
+			clr_word(vec[idx].base);
 	    }
 	    free(vec);
       }
@@ -294,6 +296,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.8  2003/04/23 02:22:47  steve
+ *  Fix word register leak.
+ *
  * Revision 1.7  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *
