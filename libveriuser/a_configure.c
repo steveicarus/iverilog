@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_configure.c,v 1.3 2003/06/17 16:55:07 steve Exp $"
+#ident "$Id: a_configure.c,v 1.4 2003/12/17 15:45:07 steve Exp $"
 #endif
 
 #include  <acc_user.h>
 #include  <vpi_user.h>
 #include  "priv.h"
+#include  <string.h>
 
 int acc_configure(PLI_INT32 config_param, const char*value)
 {
@@ -37,6 +38,32 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 			  "acc_configure(accDevelopmentVersion, %s)\n",
 			  value);
 	    }
+	    break;
+
+	  case accEnableArgs:
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "acc_configure(accEnableArgs, %s)\n",
+			  value);
+	    }
+
+	    rc = 1;
+	    if (strcmp(value,"acc_set_scope") == 0) {
+		  vpi_printf("XXXX acc_configure argument: Sorry: "
+			     "(accEnableArgs, %s\n", value);
+		  rc = 0;
+
+	    } else if (strcmp(value,"no_acc_set_scope") == 0) {
+		  vpi_printf("XXXX acc_configure argument: Sorry: "
+			     "(accEnableArgs, %s\n", value);
+		  rc = 0;
+
+	    } else {
+		  vpi_printf("XXXX acc_configure argument error. "
+			     "(accEnableArgs, %s(invalid)\n", value);
+		  rc = 0;
+	    }
+
 	    break;
 
 	  default:
@@ -56,6 +83,9 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 
 /*
  * $Log: a_configure.c,v $
+ * Revision 1.4  2003/12/17 15:45:07  steve
+ *  Add acc_set_scope function.
+ *
  * Revision 1.3  2003/06/17 16:55:07  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens

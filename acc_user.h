@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.19 2003/10/10 02:57:45 steve Exp $"
+#ident "$Id: acc_user.h,v 1.20 2003/12/17 15:45:07 steve Exp $"
 #endif
 
 /*
@@ -195,6 +195,7 @@ extern void acc_close(void);
  * codes that are accepted.
  */
 extern int   acc_configure(PLI_INT32 config_param, const char*value);
+#define accEnableArgs          6
 #define accDevelopmentVersion 11
 
 extern int   acc_fetch_argc(void);
@@ -258,6 +259,8 @@ extern int acc_object_of_type(handle object, PLI_INT32 type);
 
 extern char*acc_product_version(void);
 
+extern char*acc_set_scope(handle ref, ...);
+
 extern int acc_set_value(handle obj, p_setval_value value,
 			 p_setval_delay delay);
 
@@ -272,6 +275,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.20  2003/12/17 15:45:07  steve
+ *  Add acc_set_scope function.
+ *
  * Revision 1.19  2003/10/10 02:57:45  steve
  *  Some PLI1 stubs.
  *
