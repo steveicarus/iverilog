@@ -17,15 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_finish.c,v 1.1 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.2 1999/08/19 02:51:03 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
-# include  "veriuser.h"
 
 static int sys_finish_calltf(char *xx)
 {
-      tf_dofinish();
+      vpi_sim_control(vpiReset, 0);
       return 0;
 }
 
@@ -43,6 +42,9 @@ void sys_finish_register()
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.2  1999/08/19 02:51:03  steve
+ *  Add vpi_sim_control
+ *
  * Revision 1.1  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *

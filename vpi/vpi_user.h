@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.2 1999/08/18 03:44:49 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.3 1999/08/19 02:51:03 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -135,7 +135,7 @@ extern void vpi_printf(const char*fmt, ...);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-extern int  vpi_sim_control(int operation, ...);
+extern void vpi_sim_control(int operation, ...);
 #define vpiStop 1
 #define vpiFinish 2
 #define vpiReset  3
@@ -161,6 +161,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.3  1999/08/19 02:51:03  steve
+ *  Add vpi_sim_control
+ *
  * Revision 1.2  1999/08/18 03:44:49  steve
  *  declare vou_sim_control
  *

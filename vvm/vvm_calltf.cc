@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.3 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.4 1999/08/19 02:51:11 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -70,9 +70,13 @@ extern "C" void vpi_printf(const char*fmt, ...)
       va_end(ap);
 }
 
-extern "C" void tf_dofinish()
+extern "C" void vpi_sim_control(int func, ...)
 {
-      vpi_sim->s_finish();
+      switch (func) {
+	  case vpiFinish:
+	    vpi_sim->s_finish();
+	    break;
+      }
 }
 
 extern "C" vpiHandle vpi_handle(int type, vpiHandle ref)
@@ -469,6 +473,9 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.4  1999/08/19 02:51:11  steve
+ *  Add vpi_sim_control
+ *
  * Revision 1.3  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *
