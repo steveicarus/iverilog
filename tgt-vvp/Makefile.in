@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.18 2003/12/12 19:58:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.19 2004/01/20 21:00:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -49,7 +49,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall @ident_support@ $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = vvp.o draw_mux.o draw_vpi.o eval_expr.o eval_real.o vector.o \

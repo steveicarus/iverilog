@@ -19,9 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.27 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.28 2004/01/20 21:00:47 steve Exp $"
 #endif
 
+# include  "vvp_config.h"
 # include  "ivl_target.h"
 # include  <stdio.h>
 
@@ -192,6 +193,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.28  2004/01/20 21:00:47  steve
+ *  Isolate configure from containing config.h
+ *
  * Revision 1.27  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *

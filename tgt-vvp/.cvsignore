@@ -1,4 +1,5 @@
 Makefile
+vvp_config.h
 configure
 config.status
 config.log
