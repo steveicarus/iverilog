@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.20 2003/03/03 03:27:35 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.21 2003/03/07 02:44:14 steve Exp $"
 #endif
 
 /*
@@ -169,22 +169,38 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
 	    }
 	    break;
 
-	  case vpiVectorVal: {
-		assert(rfp->vwid <= sizeof (unsigned long));
+	  case vpiVectorVal:
 
-		unsigned long aval = vp->value.vector->aval;
-		unsigned long bval = vp->value.vector->bval;
-		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
-		      int bit = (aval&1) | (((bval^aval)<<1)&2);
+	    for (unsigned wdx = 0 ;  wdx < rfp->vwid ;  wdx += 32) {
+		  unsigned word = wdx / 32;
+		  unsigned long aval = vp->value.vector[word].aval;
+		  unsigned long bval = vp->value.vector[word].bval;
 
-		      vthread_put_bit(vpip_current_vthread,
-				      rfp->vbit+idx, bit);
+		  for (int idx = 0 ;  (wdx+idx) < rfp->vwid ;  idx += 1) {
+			int bit = (aval&1) | ((bval<<1)&2);
 
-		      aval >>= 1;
-		      bval >>= 1;
-		}
-		break;
-	  }
+			switch (bit) {
+			    case 0:
+			      bit = 0;
+			      break;
+			    case 1:
+			      bit = 1;
+			      break;
+			    case 2:
+			      bit = 3;
+			      break;
+			    case 3:
+			      bit = 2;
+			      break;
+			}
+			vthread_put_bit(vpip_current_vthread,
+					rfp->vbit+wdx+idx, bit);
+
+			aval >>= 1;
+			bval >>= 1;
+		  }
+	    }
+	    break;
 
 	  default:
 	    assert(0);
@@ -438,6 +454,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.21  2003/03/07 02:44:14  steve
+ *  Support vector put of function return values.
+ *
  * Revision 1.20  2003/03/03 03:27:35  steve
  *  Support vpiName for system task/function calls.
  *
