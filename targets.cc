@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: targets.cc,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: targets.cc,v 1.6 2000/08/12 16:34:37 steve Exp $"
 #endif
 
 # include "target.h"
 
+extern const struct target tgt_dll;
 extern const struct target tgt_null;
 //extern const struct target tgt_verilog;
 extern const struct target tgt_vvm;
@@ -29,6 +30,7 @@ extern const struct target tgt_xnf;
 
 const struct target *target_table[] = {
       &tgt_null,
+      &tgt_dll,
 	//&tgt_verilog,
       &tgt_vvm,
       &tgt_xnf,
@@ -37,6 +39,9 @@ const struct target *target_table[] = {
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.6  2000/08/12 16:34:37  steve
+ *  Start stub for loadable targets.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

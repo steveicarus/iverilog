@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.61 2000/07/14 06:12:56 steve Exp $"
+#ident "$Id: Makefile.in,v 1.62 2000/08/12 16:34:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -35,6 +35,9 @@ bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
 mandir = @mandir@
 includedir = $(prefix)/include
+
+dllib=@DLLIB@
+rdynamic=@rdynamic@
 
 CC = @CC@
 CXX = @CXX@
@@ -66,7 +69,7 @@ distclean: clean
 	rm -f config.status config.cache config.log
 	rm -f Makefile
 
-TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
+TT = t-dll.o t-null.o t-verilog.o t-vvm.o t-xnf.o
 FF = nodangle.o synth.o syn-rules.o xnfio.o
 
 O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
@@ -101,10 +104,10 @@ verilog: $(srcdir)/verilog.sh
 	    -e 's;@$(tmp4)@;@CXX@;' < $< > $@
 
 ivl: $O
-	$(CXX) $(CXXFLAGS) -o ivl $O
+	$(CXX) $(CXXFLAGS) $(rdynamic) -o ivl $O $(dllib)
 
 iverilog: iverilog.c
-	$(CC) $(CPPFLAGS) -o iverilog -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' iverilog.c
+	$(CC) $(CPPFLAGS) -o iverilog -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' iverilog.c
 
 %.o dep/%.d: %.cc
 	@[ -d dep ] || mkdir dep

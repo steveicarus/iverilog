@@ -71,8 +71,8 @@ case "${host}" in
 
 esac
 
-AC_DEFINE_UNQUOTED(RDYNAMIC,"${rdynamic}")
+AC_SUBST(rdynamic)
 
-AC_MSG_RESULT("$RDYNAMIC")
+AC_MSG_RESULT($rdynamic)
 
-AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile)
+AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile tgt-stub/Makefile)
