@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.8 1999/06/07 03:40:22 steve Exp $"
+#ident "$Id: vvm.h,v 1.9 1999/06/21 01:02:34 steve Exp $"
 #endif
 
 # include  <vector>
@@ -261,6 +261,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
       : vvm_monitor_t(n), bits_(b)
 	    { }
 
+      void init(unsigned idx, vvm_bit_t val)
+	    { (*bits_)[idx] = val; }
+
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { (*bits_)[idx] = val;
 	      trigger(sim);
@@ -277,6 +280,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.9  1999/06/21 01:02:34  steve
+ *  Add init to vvm_signal_t.
+ *
  * Revision 1.8  1999/06/07 03:40:22  steve
  *  Implement the < binary operator.
  *
