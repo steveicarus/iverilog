@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_random.c,v 1.3 2001/02/16 00:26:38 steve Exp $"
+#ident "$Id: sys_random.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  <vpi_user.h>
 # include  <assert.h>
@@ -168,6 +170,10 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.4  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/02/16 00:26:38  steve
  *  Use Mersenne Twister 19937 pseudo-random number generator
  *  for the $random system task, and support the seed paramter.

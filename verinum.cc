@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.26 2001/02/09 05:44:23 steve Exp $"
+#ident "$Id: verinum.cc,v 1.27 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "verinum.h"
 # include  <iostream>
@@ -766,6 +768,10 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.27  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.26  2001/02/09 05:44:23  steve
  *  support evaluation of constant < in expressions.
  *

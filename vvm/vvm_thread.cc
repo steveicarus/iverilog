@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.cc,v 1.7 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vvm_thread.cc,v 1.8 2001/07/25 03:10:51 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vvm.h"
 # include  "vvm_thread.h"
@@ -58,6 +60,10 @@ void vvm_thread::thread_yield(unsigned long delay)
 
 /*
  * $Log: vvm_thread.cc,v $
+ * Revision 1.8  2001/07/25 03:10:51  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.7  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_finish.c,v 1.5 2001/01/01 19:33:44 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.6 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vpi_user.h"
 
@@ -49,6 +51,10 @@ void sys_finish_register()
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.6  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/01/01 19:33:44  steve
  *  Add $stop that does a finish.
  *

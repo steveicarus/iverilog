@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.55 2001/07/22 00:17:49 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.56 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "compiler.h"
 # include  "t-dll.h"
@@ -1480,6 +1484,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.56  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.55  2001/07/22 00:17:49  steve
  *  Support the NetESubSignal expressions in vvp.tgt.
  *

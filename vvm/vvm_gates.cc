@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.21 2001/01/16 03:57:46 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.22 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vvm_gates.h"
 # include  <stdlib.h>
@@ -839,6 +841,10 @@ void vvm_xor::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.22  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.21  2001/01/16 03:57:46  steve
  *  Get rid of gate templates.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.98 2001/07/11 19:32:02 steve Exp $"
+#ident "$Id: Makefile.in,v 1.99 2001/07/25 03:10:48 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -117,7 +117,7 @@ PExpr.o PGate.o \
 PTask.o PFunction.o PWire.o Statement.o \
 $(FF) $(TT)
 
-Makefile: Makefile.in config.status
+Makefile: Makefile.in config.h.in config.status
 	./config.status
 
 

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.9 2000/05/06 15:41:56 steve Exp $"
+#ident "$Id: PGate.cc,v 1.10 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "PGate.h"
 # include  "PExpr.h"
@@ -178,6 +180,10 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.10  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.9  2000/05/06 15:41:56  steve
  *  Carry assignment strength to pform.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.22 2000/07/26 05:08:07 steve Exp $"
+#ident "$Id: Statement.cc,v 1.23 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "Statement.h"
 # include  "PExpr.h"
@@ -260,6 +262,10 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.23  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.22  2000/07/26 05:08:07  steve
  *  Parse disable statements to pform.
  *

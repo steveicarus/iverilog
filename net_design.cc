@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.19 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: net_design.cc,v 1.20 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 /*
  * This source file contains all the implementations of the Design
@@ -473,6 +477,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.20  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.19  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

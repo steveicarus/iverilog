@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.6 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vpi_user.h"
 # include  <string.h>
@@ -143,6 +145,10 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.6  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

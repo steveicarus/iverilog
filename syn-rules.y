@@ -19,8 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.11 2000/11/22 21:18:42 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.12 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 /*
  * This file implements synthesys based on matching threads and

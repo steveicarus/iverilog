@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.42 2001/06/30 20:11:15 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.43 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 /* XNF BACKEND
  * This target supports generating Xilinx Netlist Format netlists for
@@ -923,6 +927,10 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.43  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.42  2001/06/30 20:11:15  steve
  *  typo in CYMODE=EXAMINE-CI string.
  *

@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.23 2001/01/29 22:48:10 steve Exp $"
+#ident "$Id: lexor.lex,v 1.24 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  <stdio.h>
 # include  <malloc.h>

@@ -17,13 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.72 2001/07/07 04:37:18 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.73 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "compiler.h"
+
+# include  <iostream>
 
 /*
  * Elaborating binary operations generally involves elaborating the
@@ -1905,6 +1909,10 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.73  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.72  2001/07/07 04:37:18  steve
  *  Generate !== an an inverted ===
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.7 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: imain.c,v 1.8 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 /*
  * This module generates a PAL that implements the design.
@@ -150,6 +152,10 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.8  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.7  2001/05/20 15:09:40  steve
  *  Mingw32 support (Venkat Iyer)
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PFunction.cc,v 1.4 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: PFunction.cc,v 1.5 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 #include "PTask.h"
 
@@ -52,6 +54,10 @@ void PFunction::set_output(PWire*o)
 
 /*
  * $Log: PFunction.cc,v $
+ * Revision 1.5  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.4  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_anet.cc,v 1.2 2001/01/06 02:29:36 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.3 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 /*
  * The elaborate_anet methods elaborate expressions that are intended
@@ -147,6 +149,10 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.3  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.2  2001/01/06 02:29:36  steve
  *  Support arrays of integers.
  *

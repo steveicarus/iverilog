@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_rconst.cc,v 1.1 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: eval_rconst.cc,v 1.2 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "PExpr.h"
 
@@ -36,6 +38,10 @@ verireal* PEFNumber::eval_rconst(const Design*, const NetScope*) const
 
 /*
  * $Log: eval_rconst.cc,v $
+ * Revision 1.2  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.1  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.17 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.18 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "functor.h"
 # include  "netlist.h"
@@ -363,6 +367,10 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.18  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.17  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *

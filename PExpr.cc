@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.23 2001/01/14 23:04:55 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.24 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "PExpr.h"
 # include  "Module.h"
@@ -251,6 +255,10 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.24  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.23  2001/01/14 23:04:55  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

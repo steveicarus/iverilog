@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem_lex.lex,v 1.3 2000/03/05 20:01:19 steve Exp $"
+#ident "$Id: sys_readmem_lex.lex,v 1.4 2001/07/25 03:10:50 steve Exp $"
 #endif
 # include "sys_readmem_lex.h"
 # include  <string.h>
@@ -59,7 +59,8 @@ static void make_hex_value()
 
       cur = vecval;
       while ((width < word_max) && (end > beg)) {
-	    int aval, bval;
+	    int aval = 0;
+	    int bval = 0;
 
 	    end -= 1;
 	    if (*end == '_') continue;
@@ -75,7 +76,6 @@ static void make_hex_value()
 		case '8':
 		case '9':
 		  aval = *end - '0';
-		  bval = 0;
 		  break;
 		case 'a':
 		case 'b':
@@ -84,7 +84,6 @@ static void make_hex_value()
 		case 'e':
 		case 'f':
 		  aval = *end - 'a' + 10;
-		  bval = 0;
 		  break;
 		case 'A':
 		case 'B':
@@ -93,7 +92,6 @@ static void make_hex_value()
 		case 'E':
 		case 'F':
 		  aval = *end - 'A' + 10;
-		  bval = 0;
 		  break;
 		case 'x':
 		case 'X':
@@ -102,7 +100,6 @@ static void make_hex_value()
 		  break;
 		case 'z':
 		case 'Z':
-		  aval = 0;
 		  bval = 15;
 		  break;
 	    }
@@ -133,7 +130,8 @@ static void make_bin_value()
 
       cur = vecval;
       while ((width < word_max) && (end > beg)) {
-	    int aval, bval;
+	    int aval = 0;
+	    int bval = 0;
 
 	    end -= 1;
 	    if (*end == '_') continue;
@@ -141,7 +139,6 @@ static void make_bin_value()
 		case '0':
 		case '1':
 		  aval = *end - '0';
-		  bval = 0;
 		  break;
 		case 'x':
 		case 'X':
@@ -150,7 +147,6 @@ static void make_bin_value()
 		  break;
 		case 'z':
 		case 'Z':
-		  aval = 0;
 		  bval = 1;
 		  break;
 	    }

@@ -17,11 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.12 2001/02/09 03:16:48 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.13 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "PExpr.h"
 # include  "netlist.h"
+
+# include  <iostream>
 
 /*
  * These methods generate a NetAssign_ object for the l-value of the
@@ -311,6 +315,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.13  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.12  2001/02/09 03:16:48  steve
  *  Report bit/part select out of range errors. (PR#133)
  *

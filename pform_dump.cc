@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.66 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.67 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 /*
  * This file provides the pform_dump function, that dumps the module
@@ -811,6 +813,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.67  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.66  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

@@ -1,6 +1,7 @@
 %{
 /* Command-line: gperf -o -i 1 -C -k 1-3,$ -L C -H keyword_hash -N check_identifier -tT lexor_keyword.gperf */
 
+#include "config.h"
 #include "parse_misc.h"
 #include "parse.h"
 #include <string.h>

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: dump_final.c,v 1.1 2000/12/09 03:42:52 steve Exp $"
+#ident "$Id: dump_final.c,v 1.2 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "priv.h"
 # include  <stdio.h>
@@ -52,6 +54,10 @@ void dump_final_design(FILE*out)
 
 /*
  * $Log: dump_final.c,v $
+ * Revision 1.2  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.1  2000/12/09 03:42:52  steve
  *  Stuff registers into macrocells.
  *

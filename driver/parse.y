@@ -18,8 +18,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.2 2000/11/09 21:58:00 steve Exp $"
+#ident "$Id: parse.y,v 1.3 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  <stdio.h>
 # include  <malloc.h>

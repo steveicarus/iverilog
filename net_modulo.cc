@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_modulo.cc,v 1.1 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.2 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  <typeinfo>
 # include  <iostream>

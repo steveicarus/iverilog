@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.7 2001/01/16 02:44:18 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.8 2001/07/25 03:10:51 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vvm_signal.h"
 # include  <iostream.h>
@@ -97,6 +99,10 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.8  2001/07/25 03:10:51  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.7  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

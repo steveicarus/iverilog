@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.3 2001/07/03 04:09:25 steve Exp $"
+#ident "$Id: build_string.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "globals.h"
 # include  <string.h>
@@ -142,6 +144,10 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.4  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/07/03 04:09:25  steve
  *  Generate verbuse status messages (Stephan Boettcher)
  *

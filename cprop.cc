@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.28 2001/06/15 04:14:18 steve Exp $"
+#ident "$Id: cprop.cc,v 1.29 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "netlist.h"
 # include  "netmisc.h"
@@ -937,6 +939,10 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.29  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.28  2001/06/15 04:14:18  steve
  *  Generate vvp code for GT and GE comparisons.
  *

@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.54 2001/06/27 18:34:43 steve Exp $"
+#ident "$Id: target.cc,v 1.55 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "target.h"
 # include  <typeinfo>
@@ -385,6 +389,10 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.55  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.54  2001/06/27 18:34:43  steve
  *  Report line of unsupported cassign.
  *

@@ -16,8 +16,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: enables.c,v 1.3 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: enables.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
 
+
+# include "config.h"
 # include  "ivl_target.h"
 # include  <assert.h>
 # include  "priv.h"
@@ -77,6 +79,10 @@ void absorb_pad_enables(void)
 
 /*
  * $Log: enables.c,v $
+ * Revision 1.4  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/02/07 22:22:00  steve
  *  ivl_target header search path fixes.
  *

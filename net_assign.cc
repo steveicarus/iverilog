@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.6 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.7 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "netlist.h"
 
@@ -173,6 +175,10 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.7  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.6  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2001/07/25 03:10:50 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -46,7 +46,8 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@
-CFLAGS = @CFLAGS@ -I.
+CFLAGS = @CFLAGS@ -I. -I$(srcdir)/..
+CXXFLAGS = @CXXFLAGS@ -I. -I$(srcdir)/..
 LDFLAGS = @LDFLAGS@
 
 all: iverilog@EXEEXT@
@@ -67,7 +68,7 @@ parse.h parse.c: parse.y
 
 
 main.o: main.c globals.h
-	$(CC) $(CPPFLAGS) -c -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' -DEXEEXT='"@EXEEXT@"' $(srcdir)/main.c
+	$(CC) $(CFLAGS) -c -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' -DEXEEXT='"@EXEEXT@"' $(srcdir)/main.c
 
 build_string.o: build_string.c globals.h
 lexor.o: lexor.c parse.h globals.h

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.2 2000/05/12 01:22:41 steve Exp $"
+#ident "$Id: net_force.cc,v 1.3 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 /*
  * This file contains implementatsion of the NetForce, NetRelease,
@@ -115,6 +117,10 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.3  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.2  2000/05/12 01:22:41  steve
  *  NetCAssign needs to incr_eref its lval to lock it down.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.4 2001/07/07 20:20:10 steve Exp $"
+#ident "$Id: verireal.cc,v 1.5 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "verireal.h"
 # include  <ctype.h>
@@ -124,6 +126,10 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.5  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.4  2001/07/07 20:20:10  steve
  *  Pass parameters to system functions.
  *

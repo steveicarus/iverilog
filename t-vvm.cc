@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.209 2001/06/18 01:54:49 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.210 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  <iostream>
 # include  <fstream>
@@ -3642,6 +3644,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.210  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.209  2001/06/18 01:54:49  steve
  *  Add the ~& reduction operator.
  *

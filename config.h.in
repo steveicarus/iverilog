@@ -1,3 +1,5 @@
+#ifndef __config_H                                           /* -*- c++ -*- */
+#define __config_H
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
@@ -16,40 +18,35 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.cc,v 1.2 2001/07/25 03:10:49 steve Exp $"
+#if !defined(WINNT)
+#ident "$Id: config.h.in,v 1.1 2001/07/25 03:10:48 steve Exp $"
 #endif
 
-# include "config.h"
+#if defined(__cplusplus)
+#  if !defined(__GNUC__)
+     using namespace std;
+#  elif (__GNUC__ == 3)
+     using namespace std;
+#  endif
+#endif
 
-# include  "netlist.h"
-# include  "netmisc.h"
-# include  "PExpr.h"
-
-
-NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
-{
-      NetExpr*tmp = pe->elaborate_expr(des, scope);
-      if (tmp == 0)
-	    return 0;
-
-      if (NetExpr*tmp2 = tmp->eval_tree()) {
-	    delete tmp;
-	    tmp = tmp2;
-      }
-
-      return tmp;
-}
-
+# undef NEED_LU
+# undef NEED_TU  
+# undef WLU
+# undef WTU
+# undef HAVE_TIMES
+# undef HAVE_IOSFWD
+# undef HAVE_GETOPT_H
+# undef HAVE_DLFCN_H
+# undef HAVE_DL_H
+# undef HAVE_FCHMOD
+# undef HAVE_LIBREADLINE
 
 /*
- * $Log: netmisc.cc,v $
- * Revision 1.2  2001/07/25 03:10:49  steve
+ * $Log: config.h.in,v $
+ * Revision 1.1  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
  *
- * Revision 1.1  2001/02/11 02:15:52  steve
- *  Add the netmisc.cc source file.
- *
  */
-
+#endif // __config_H

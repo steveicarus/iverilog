@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.8 2001/04/28 23:18:08 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.9 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the
@@ -451,6 +455,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.9  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.8  2001/04/28 23:18:08  steve
  *  UDP instances need not have user supplied names.
  *

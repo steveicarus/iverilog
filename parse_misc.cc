@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse_misc.cc,v 1.4 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.5 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "parse_misc.h"
 # include  <iostream.h>
@@ -58,6 +60,10 @@ int VLwrap()
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.5  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.4  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.7 2001/02/16 03:25:09 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.8 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "netlist.h"
 # include  "netmisc.h"
@@ -72,6 +74,10 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.8  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.7  2001/02/16 03:25:09  steve
  *  Missing . in names generated from scope locals.
  *

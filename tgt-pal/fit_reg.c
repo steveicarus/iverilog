@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_reg.c,v 1.5 2001/05/16 03:55:30 steve Exp $"
+#ident "$Id: fit_reg.c,v 1.6 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "ivl_target.h"
 # include  <stdio.h>
@@ -134,6 +136,10 @@ int scan_ff_q(ivl_lpm_t ff, unsigned q)
 
 /*
  * $Log: fit_reg.c,v $
+ * Revision 1.6  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/05/16 03:55:30  steve
  *  Update to new LPM API for flip-flops.
  *

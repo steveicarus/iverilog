@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.77 2001/05/25 02:21:34 steve Exp $"
+#ident "$Id: pform.cc,v 1.78 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "compiler.h"
 # include  "pform.h"
@@ -1017,6 +1019,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.78  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.77  2001/05/25 02:21:34  steve
  *  Detect input and input ports declared as reg.
  *

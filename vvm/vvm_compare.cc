@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_compare.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_compare.cc,v 1.3 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vvm_gates.h"
 # include  <assert.h>
@@ -116,6 +118,10 @@ void vvm_compare::compute_()
 
 /*
  * $Log: vvm_compare.cc,v $
+ * Revision 1.3  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.2  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.17 2001/02/08 01:10:30 steve Exp $"
+#ident "$Id: set_width.cc,v 1.18 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 /*
  * This file contains set_width methods for the various NetExpr
@@ -337,6 +341,10 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.18  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.17  2001/02/08 01:10:30  steve
  *  Remove dead code.
  *

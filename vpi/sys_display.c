@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.27 2001/07/16 18:40:19 steve Exp $"
+#ident "$Id: sys_display.c,v 1.28 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vpi_user.h"
 # include  <assert.h>
@@ -726,6 +728,10 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.28  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.27  2001/07/16 18:40:19  steve
  *  Add a stdlog output for vvp, and vvp options
  *  to direct them around. (Stephan Boettcher.)

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Attrib.cc,v 1.1 2000/12/04 17:37:03 steve Exp $"
+#ident "$Id: Attrib.cc,v 1.2 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "Attrib.h"
 # include  <assert.h>
@@ -118,6 +120,10 @@ string Attrib::value(unsigned idx) const
 
 /*
  * $Log: Attrib.cc,v $
+ * Revision 1.2  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.1  2000/12/04 17:37:03  steve
  *  Add Attrib class for holding NetObj attributes.
  *

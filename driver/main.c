@@ -16,15 +16,17 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.20 2001/06/30 21:53:42 steve Exp $"
+#ident "$Id: main.c,v 1.21 2001/07/25 03:10:50 steve Exp $"
+
+# include "config.h"
 
 const char HELP[] =
-"Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]
-                [-D macro[=defn]] [-I includedir] [-m module]
-                [-N file] [-o filename] [-p flag=value]
-                [-s topmodule] [-t target] [-T min|typ|max]
-                [-W class] source_file(s)
-See man page for details.";
+"Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]\n"
+"                [-D macro[=defn]] [-I includedir] [-m module]\n"
+"                [-N file] [-o filename] [-p flag=value]\n"
+"                [-s topmodule] [-t target] [-T min|typ|max]\n"
+"                [-W class] source_file(s)\n"
+"See man page for details.";
 
 #define MAXSIZE 4096
 
@@ -637,6 +639,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.21  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.20  2001/06/30 21:53:42  steve
  *  Make the vvp target the default.
  *

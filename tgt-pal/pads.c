@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pads.c,v 1.2 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: pads.c,v 1.3 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "priv.h"
 # include  <stdio.h>
@@ -79,6 +81,10 @@ int get_pad_bindings(ivl_scope_t net, void*x)
 
 /*
  * $Log: pads.c,v $
+ * Revision 1.3  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.2  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *

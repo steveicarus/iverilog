@@ -18,8 +18,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.31 2001/07/19 04:55:06 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.32 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "target.h"
 # include  "ivl_target.h"
@@ -689,6 +693,10 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.32  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/07/19 04:55:06  steve
  *  Support calculated delays in vvp.tgt.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_imod.cc,v 1.3 2000/09/17 21:26:16 steve Exp $"
+#ident "$Id: vvm_imod.cc,v 1.4 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 
 # include  "vvm_func.h"
@@ -143,6 +145,10 @@ void vvm_imod::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_imod.cc,v $
+ * Revision 1.4  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.3  2000/09/17 21:26:16  steve
  *  Add support for modulus (Eric Aardoom)
  *

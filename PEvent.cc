@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PEvent.cc,v 1.1 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: PEvent.cc,v 1.2 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "PEvent.h"
 
@@ -38,6 +40,10 @@ string PEvent::name() const
 
 /*
  * $Log: PEvent.cc,v $
+ * Revision 1.2  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.1  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_idiv.cc,v 1.1 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: vvm_idiv.cc,v 1.2 2001/07/25 03:10:50 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "vvm_func.h"
 # include  "vvm_gates.h"
@@ -141,6 +143,10 @@ void vvm_idiv::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_idiv.cc,v $
+ * Revision 1.2  2001/07/25 03:10:50  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.1  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *

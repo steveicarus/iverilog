@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.11 2000/11/22 21:18:42 steve Exp $"
+#ident "$Id: synth.cc,v 1.12 2001/07/25 03:10:49 steve Exp $"
 #endif
+
+# include "config.h"
 
 # include  "functor.h"
 # include  "netlist.h"
@@ -161,6 +163,10 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.12  2001/07/25 03:10:49  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.11  2000/11/22 21:18:42  steve
  *  synthesize the rvalue of <= statements.
  *

@@ -17,8 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.4 2001/01/20 02:15:50 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.5 2001/07/25 03:10:48 steve Exp $"
 #endif
+
+# include "config.h"
+
+# include  <iostream>
 
 # include  "PDelays.h"
 # include  "PExpr.h"
@@ -122,6 +126,10 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.5  2001/07/25 03:10:48  steve
+ *  Create a config.h.in file to hold all the config
+ *  junk, and support gcc 3.0. (Stephan Boettcher)
+ *
  * Revision 1.4  2001/01/20 02:15:50  steve
  *  apologize for not supporting non-constant delays.
  *
