@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.261 2002/09/12 15:49:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.262 2002/09/16 00:30:33 steve Exp $"
 #endif
 
 /*
@@ -1214,9 +1214,16 @@ class NetProc : public LineInfo {
 	// process. Most process types are not.
       virtual bool is_asynchronous();
 
+	// Return true if this represents the root of a synchronous
+	// process. Most process types are not.
+      virtual bool is_synchronous();
+
 	// synthesize as asynchronous logic, and return true.
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetNet*nex_map, NetNet*nex_out);
+
+      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			      const NetNet*nex_map, NetNet*nex_out);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1530,6 +1537,9 @@ class NetCondit  : public NetProc {
       bool synth_async(Design*des, NetScope*scope,
 		       const NetNet*nex_map, NetNet*nex_out);
 
+      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+		      const NetNet*nex_map, NetNet*nex_out);
+
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1735,10 +1745,17 @@ class NetEvWait  : public NetProc {
 	// process. This method checks.
       virtual bool is_asynchronous();
 
+	// It is possible that this is the root of a synchronous
+	// process? This method checks.
+      virtual bool is_synchronous();
+
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetNet*nex_map, NetNet*nex_out);
+
+      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			      const NetNet*nex_map, NetNet*nex_out);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2116,12 +2133,19 @@ class NetProcTop  : public LineInfo, public Attrib {
       NetScope*scope();
       const NetScope*scope() const;
 
-	/* Return true of this process represents combinational logic. */
+	/* Return true if this process represents combinational logic. */
       bool is_asynchronous();
 
 	/* Create asynchronous logic from this thread and return true,
 	   or return false if that cannot be done. */
       bool synth_async(Design*des);
+
+	/* Return true if this process represents synchronous logic. */
+      bool is_synchronous();
+
+	/* Create synchronous logic from this thread and return true,
+	   or return false if that cannot be done. */
+      bool synth_sync(Design*des);
 
       void dump(ostream&, unsigned ind) const;
       bool emit(struct target_t*tgt) const;
@@ -3027,6 +3051,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.262  2002/09/16 00:30:33  steve
+ *  Add to synth2 support for synthesis of
+ *  synchronous logic. This includes DFF enables
+ *  modeled by if/then/else.
+ *
  * Revision 1.261  2002/09/12 15:49:43  steve
  *  Add support for binary nand operator.
  *

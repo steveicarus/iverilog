@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.8 2002/08/18 22:07:16 steve Exp $"
+#ident "$Id: synth2.cc,v 1.9 2002/09/16 00:30:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,19 @@
 # include  "netlist.h"
 # include  "compiler.h"
 # include  <assert.h>
+
+bool NetProc::synth_async(Design*des, NetScope*scope,
+			  const NetNet*nex_map, NetNet*nex_out)
+{
+      return false;
+}
+
+bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			 const NetNet*nex_map, NetNet*nex_out)
+{
+	/* Synthesize the input to the DFF. */
+      return synth_async(des, scope, nex_map, nex_out);
+}
 
 static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
 {
@@ -241,12 +254,6 @@ bool NetEvWait::synth_async(Design*des, NetScope*scope,
       return statement_->synth_async(des, scope, nex_map, nex_out);
 }
 
-bool NetProc::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
-{
-      return false;
-}
-
 bool NetProcTop::synth_async(Design*des)
 {
       NexusSet nex_set;
@@ -260,6 +267,92 @@ bool NetProcTop::synth_async(Design*des)
       bool flag = statement_->synth_async(des, scope(), nex_out, nex_out);
 
       delete nex_out;
+      return flag;
+}
+
+bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			   const NetNet*nex_map, NetNet*nex_out)
+{
+	/* If this is an if/then/else, then it is likely a
+	   combinational if, and I should synthesize it that way. */
+      if (if_ && else_) {
+	    return synth_async(des, scope, nex_map, nex_out);
+      }
+
+      assert(if_);
+      assert(!else_);
+
+	/* Synthesize the input to the DFF. */
+      bool flag = if_->synth_async(des, scope, nex_map, nex_out);
+      if (flag == false)
+	    return flag;
+
+      assert(expr_);
+
+	/* Synthesize the enable expression. */
+      NetNet*ce = expr_->synthesize(des);
+      assert(ce->pin_count() == 1);
+
+      connect(ff->pin_Enable(), ce->pin(0));
+
+      return true;
+}
+
+bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			   const NetNet*nex_map, NetNet*nex_out)
+{
+	/* Synthesize the input to the DFF. */
+      bool flag = statement_->synth_sync(des, scope, ff, nex_map, nex_out);
+
+      assert(nevents_ == 1);
+      NetEvent*ev = events_[0];
+
+      assert(ev->nprobe() == 1);
+      NetEvProbe*pclk = ev->probe(0);
+
+      assert(pclk->pin_count() == 1);
+
+      connect(ff->pin_Clock(), pclk->pin(0));
+      if (pclk->edge() == NetEvProbe::NEGEDGE)
+	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
+
+      return flag;
+}
+
+bool NetProcTop::synth_sync(Design*des)
+{
+      NexusSet nex_set;
+      statement_->nex_output(nex_set);
+
+      NetFF*ff = new NetFF(scope(), scope()->local_hsymbol().c_str(),
+			   nex_set.count());
+      des->add_node(ff);
+      ff->attribute("LPM_FFType", verinum("DFF"));
+
+	/* The D inputs to the DFF device will receive the output from
+	   the statments of the process. */
+      NetNet*nex_d = new NetNet(scope(), scope()->local_hsymbol().c_str(),
+				NetNet::WIRE, nex_set.count());
+      nex_d->local_flag(true);
+      for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
+	    connect(nex_d->pin(idx), ff->pin_Data(idx));
+      }
+
+	/* The Q outputs of the DFF will connect to the actual outputs
+	   of the process. Thus, the DFF will be between the outputs
+	   of the process and the outputs of the substatement. */
+      NetNet*nex_q = new NetNet(scope(), "tmpq", NetNet::WIRE,
+				nex_set.count());
+      for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
+	    connect(nex_set[idx], nex_q->pin(idx));
+	    connect(nex_q->pin(idx), ff->pin_Q(idx));
+      }
+
+	/* Synthesize the input to the DFF. */
+      bool flag = statement_->synth_sync(des, scope(), ff, nex_q, nex_d);
+
+      delete nex_q;
+
       return flag;
 }
 
@@ -280,6 +373,13 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 {
       if (top->attribute("ivl_synthesis_off").as_ulong() != 0)
 	    return;
+
+      if (top->is_synchronous()) do {
+	    bool flag = top->synth_sync(des);
+	    assert(flag);
+	    des->delete_process(top);
+	    return;
+      } while (0);
 
       if (! top->is_asynchronous()) {
 	    bool synth_error_flag = false;
@@ -324,6 +424,11 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.9  2002/09/16 00:30:33  steve
+ *  Add to synth2 support for synthesis of
+ *  synchronous logic. This includes DFF enables
+ *  modeled by if/then/else.
+ *
  * Revision 1.8  2002/08/18 22:07:16  steve
  *  Detect temporaries in sequential block synthesis.
  *

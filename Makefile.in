@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.133 2002/08/12 00:27:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.134 2002/09/16 00:30:33 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -126,7 +126,7 @@ net_design.o net_event.o net_expr.o net_force.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_udp.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
-set_width.o \
+set_width.o sync.o \
 verinum.o verireal.o target.o targets.o \
 Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
 PExpr.o PGate.o \
