@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.126 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.127 2004/06/01 01:04:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -780,8 +780,8 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
-	    *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lsig == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
@@ -2432,6 +2432,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.127  2004/06/01 01:04:57  steve
+ *  Fix synthesis method for logical and/or
+ *
  * Revision 1.126  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

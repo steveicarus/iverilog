@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.55 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.56 2004/06/01 01:04:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -436,7 +436,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 	    connect(lsig->pin(0), olog->pin(1));
 
 	    assert(rsig->pin_count() == 1);
-	    connect(lsig->pin(0), olog->pin(2));
+	    connect(rsig->pin(0), olog->pin(2));
       }
 
 
@@ -828,6 +828,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.56  2004/06/01 01:04:57  steve
+ *  Fix synthesis method for logical and/or
+ *
  * Revision 1.55  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *
