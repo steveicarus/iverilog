@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.29 2001/10/10 04:48:12 steve Exp $
+ *  $Id: opcodes.txt,v 1.30 2001/10/16 01:26:55 steve Exp $
  */
 
 
@@ -144,6 +144,13 @@ scope. The label identifies the scope in question, and the threads are
 the threads that are currently within that scope.
 
 
+* %div <bit-l>, <bit-r>, <wid>
+
+This instruction arithmetically divides the <bit-l> vector by the
+<bit-r> vector, and leaves the result in the <bit-l> vector. IF any of
+the bits in either vector are x or z, the entire result is x.
+
+
 * %fork <code-label>, <scope-label>
 
 This instruction is similar to %jmp, except that it creates a new
@@ -256,11 +263,11 @@ destination bit. This function does not do any bounds checking.
 
 * %mod <bit-l>, <bit-r>, <wid>
 
-
 This instruction calculates the modulus %r of the left operand, and
 replaces the left operand with the result. The <wid> gives the width
 of the left and the right vectors, and the left vector is completely
 replaced with the result.
+
 
 * %mov <dst>, <src>, <wid>
 

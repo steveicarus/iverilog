@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.34 2001/08/26 22:59:32 steve Exp $"
+#ident "$Id: codes.h,v 1.35 2001/10/16 01:26:54 steve Exp $"
 #endif
 
 
@@ -49,6 +49,7 @@ extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
+extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
@@ -140,6 +141,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.35  2001/10/16 01:26:54  steve
+ *  Add %div support (Anthony Bybell)
+ *
  * Revision 1.34  2001/08/26 22:59:32  steve
  *  Add the assign/x0 and set/x opcodes.
  *

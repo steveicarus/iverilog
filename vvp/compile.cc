@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.106 2001/10/14 03:41:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.107 2001/10/16 01:26:54 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -92,6 +92,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1573,6 +1574,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.107  2001/10/16 01:26:54  steve
+ *  Add %div support (Anthony Bybell)
+ *
  * Revision 1.106  2001/10/14 03:41:58  steve
  *  Handle mode-42 functor init.
  *

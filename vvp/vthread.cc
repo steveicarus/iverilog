@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.57 2001/10/14 17:36:19 steve Exp $"
+#ident "$Id: vthread.cc,v 1.58 2001/10/16 01:26:55 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -616,6 +616,148 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_DIV(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      if(cp->number <= 8*sizeof(unsigned long)) {
+	    unsigned idx1 = cp->bit_idx1;
+	    unsigned idx2 = cp->bit_idx2;
+	    unsigned long lv = 0, rv = 0;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  unsigned lb = thr_get_bit(thr, idx1);
+		  unsigned rb = thr_get_bit(thr, idx2);
+
+		  if ((lb | rb) & 2)
+			goto x_out;
+
+		  lv |= lb << idx;
+		  rv |= rb << idx;
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+
+	    lv /= rv;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+		  lv >>= 1;
+	    }
+
+	    return true;
+
+      } else {
+
+	    int len=cp->number;
+	    unsigned char *a, *b, *z, *t;
+	    a = new unsigned char[len+1];
+	    b = new unsigned char[len+1];
+	    z = new unsigned char[len+1];
+	    t = new unsigned char[len+1];
+
+	    unsigned char carry;
+	    unsigned char temp;
+
+	    int mxa = -1, mxz = -1;
+	    int i;
+	    int current, copylen;
+
+	    unsigned idx1 = cp->bit_idx1;
+	    unsigned idx2 = cp->bit_idx2;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  unsigned lb = thr_get_bit(thr, idx1);
+		  unsigned rb = thr_get_bit(thr, idx2);
+
+		  if ((lb | rb) & 2) {
+			delete []t;
+			delete []z;
+			delete []b;
+			delete []a;
+			goto x_out;
+		  }
+
+		  z[idx]=lb;
+		  a[idx]=1-rb;	// for 2s complement add..
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+	    z[len]=0;
+	    a[len]=1;
+
+	    for(i=0;i<len+1;i++) {
+		  b[i]=0;
+	    }
+
+	    for(i=len-1;i>=0;i--) {
+		  if(!a[i]) {
+	                mxa=i;
+			break;
+		  }
+	    }
+         
+	    for(i=len-1;i>=0;i--) {
+		  if(z[i]) {
+	                mxz=i;
+			break;
+		  }
+	    }
+
+	    if((mxa>mxz)||(mxa==-1)) {
+		  if(mxa==-1) {
+			fprintf(stderr, "Division By Zero error, exiting.\n");
+			exit(255);
+		  }
+	                 
+		  goto tally;
+	    }
+
+	    copylen = mxa + 2;
+	    current = mxz - mxa; 
+         
+	    while(current > -1) {
+		  carry = 1;
+		  for(i=0;i<copylen;i++) {
+	                temp = z[i+current] + a[i] + carry;
+	                t[i] = (temp&1);
+	                carry = (temp>>1);
+		  }
+	                 
+		  if(carry) {
+	                for(i=0;i<copylen;i++) {
+			      z[i+current] = t[i];
+			}
+	                b[current] = 1;
+		  }
+       	  
+		  current--;
+	    }
+
+      tally:
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		    // n.b., z[] has the remainder...
+		  thr_put_bit(thr, cp->bit_idx1+idx, b[idx]);
+	    }
+
+	    delete []t;
+	    delete []z;
+	    delete []b;
+	    delete []a;
+	    return true;
+      }
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+
+      return true;
+}
+
 /*
  * This terminates the current thread. If there is a parent who is
  * waiting for me to die, then I schedule it. At any rate, I mark
@@ -859,8 +1001,8 @@ bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 bool of_MOD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
-      assert(cp->number <= 8*sizeof(unsigned long));
 
+if(cp->number <= 8*sizeof(unsigned long)) {
       unsigned idx1 = cp->bit_idx1;
       unsigned idx2 = cp->bit_idx2;
       unsigned long lv = 0, rv = 0;
@@ -888,6 +1030,107 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
       }
 
       return true;
+
+} else {
+
+	int len=cp->number;
+      	unsigned char *a, *z, *t;
+      	a = new unsigned char[len+1];
+      	z = new unsigned char[len+1];
+      	t = new unsigned char[len+1];
+
+	unsigned char carry;
+	unsigned char temp;
+
+	int mxa = -1, mxz = -1;
+	int i;
+	int current, copylen;
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb | rb) & 2) {
+      		delete []t;
+      		delete []z;
+      		delete []a;
+		goto x_out;
+		}
+
+	    z[idx]=lb;
+	    a[idx]=1-rb;	// for 2s complement add..
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+      z[len]=0;
+      a[len]=1;
+
+	for(i=len-1;i>=0;i--)
+	        {
+	        if(!a[i])
+	                {
+	                mxa=i; break;
+	                }
+	        }
+         
+	for(i=len-1;i>=0;i--)
+	        {
+	        if(z[i])
+	                {
+	                mxz=i; break;
+	                }
+	        }
+
+	if((mxa>mxz)||(mxa==-1))
+	        {
+	        if(mxa==-1)
+	                {
+			fprintf(stderr, "Division By Zero error, exiting.\n");
+			exit(255);
+	                }
+	                 
+	        goto tally;
+	        }
+
+	copylen = mxa + 2;
+	current = mxz - mxa; 
+         
+	while(current > -1)
+	        {
+	        carry = 1;
+	        for(i=0;i<copylen;i++)
+	                {
+	                temp = z[i+current] + a[i] + carry;
+	                t[i] = (temp&1);
+	                carry = (temp>>1);
+	                }  
+	                 
+	        if(carry)
+	                {
+	                for(i=0;i<copylen;i++)
+	                        {
+	                        z[i+current] = t[i];
+	                        }
+       	         	}
+       	  
+       	 	current--;
+       	 	}
+
+tally:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx1+idx, z[idx]);
+      }
+
+      delete []t;
+      delete []z;
+      delete []a;
+      return true;
+}
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
@@ -1416,6 +1659,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.58  2001/10/16 01:26:55  steve
+ *  Add %div support (Anthony Bybell)
+ *
  * Revision 1.57  2001/10/14 17:36:19  steve
  *  Forgot to propagate carry.
  *
