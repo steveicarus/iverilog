@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.6 1999/04/22 04:56:58 steve Exp $"
+#ident "$Id: vvm.h,v 1.7 1999/05/03 01:51:29 steve Exp $"
 #endif
 
 # include  <vector>
@@ -104,6 +104,11 @@ extern ostream& operator << (ostream&os, const vvm_bits_t&str);
 template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 
     public:
+      vvm_bitset_t()
+	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		  bits_[idx] = Vz;
+	    }
+
       vvm_bit_t operator[] (unsigned idx) const { return bits_[idx]; }
       vvm_bit_t&operator[] (unsigned idx) { return bits_[idx]; }
 
@@ -263,6 +268,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.7  1999/05/03 01:51:29  steve
+ *  Restore support for wait event control.
+ *
  * Revision 1.6  1999/04/22 04:56:58  steve
  *  Add to vvm proceedural memory references.
  *

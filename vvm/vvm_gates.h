@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.9 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.10 1999/05/03 01:51:29 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -399,7 +399,7 @@ template <unsigned WIDTH> class vvm_pevent {
 
     private:
       vvm_sync*target_;
-      vvm_bit_t value_[WIDTH];
+      vvm_bitset_t<WIDTH> value_;
       EDGE edge_;
 
     private: // not implemented
@@ -409,6 +409,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.10  1999/05/03 01:51:29  steve
+ *  Restore support for wait event control.
+ *
  * Revision 1.9  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.

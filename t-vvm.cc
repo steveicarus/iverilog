@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.19 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.20 1999/05/03 01:51:29 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -615,6 +615,7 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 	    mangle(gate->name()) << "(&" << pevent << ", ";
       switch (gate->type()) {
 	  case NetNEvent::POSEDGE:
+	  case NetNEvent::POSITIVE:
 	    os << "vvm_pevent<" << gate->pin_count() << ">::POSEDGE";
 	    break;
 	  case NetNEvent::NEGEDGE:
@@ -623,8 +624,6 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 	  case NetNEvent::ANYEDGE:
 	    os << "vvm_pevent<" << gate->pin_count() << ">::ANYEDGE";
 	    break;
-	  default:
-	    assert(0);
       }
       os << ");" << endl;
 }
@@ -859,14 +858,13 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
       thread_step_ += 1;
       os << "        step_ = &step_" << thread_step_ << "_;" << endl;
 
-#if 0
 	/* POSITIVE is for the wait construct, and needs to be handled
 	   specially. The structure of the generated code is:
 
 	     if (event.get()==V1) {
 	         return true;
 	     } else {
-	         event.wait(vvm_pevent::POSEDGE, this);
+	         event.wait(this);
 		 return false;
 	     }
 
@@ -880,49 +878,32 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 	   POSEDGE is replaced with the correct type for the desired
 	   edge. */
 
-      if (proc->edge() == NetPEvent::POSITIVE) {
-	    os << "        if (" << mangle(proc->name()) <<
-		  ".get()==V1) {" << endl;
+      svector<const NetNEvent*>*list = proc->back_list();
+      if ((list->count()==1) && ((*list)[0]->type() == NetNEvent::POSITIVE)) {
+	    os << "        if (" << mangle((*list)[0]->name()) <<
+		  ".get()[0]==V1) {" << endl;
 	    os << "           return true;" << endl;
 	    os << "        } else {" << endl;
 	    os << "           " << mangle(proc->name()) <<
-		  ".wait(vvm_pevent::POSEDGE, this);" << endl;
+		  ".wait(this);" << endl;
 	    os << "           return false;" << endl;
 	    os << "        }" << endl;
-
       } else {
-	    os << "        " << mangle(proc->name()) << ".wait(vvm_pevent::";
-	    switch (proc->edge()) {
-		case NetPEvent::ANYEDGE:
-		  os << "ANYEDGE";
-		  break;
-		case NetPEvent::POSITIVE:
-		case NetPEvent::POSEDGE:
-		  os << "POSEDGE";
-		  break;
-		case NetPEvent::NEGEDGE:
-		  os << "NEGEDGE";
-		  break;
-	    }
-	    os << ", this);" << endl;
-	    os << "           return false;" << endl;
+	      /* The canonical wait for an edge puts the thread into
+		 the correct wait object, then returns false from the
+		 thread to suspend execution. When things are ready to
+		 proceed, the correct vvm_pevent will send a wakeup to
+		 start the next basic block. */
+	    os << "        " << mangle(proc->name()) << ".wait(this);" << endl;
+	    os << "        return false;" << endl;
       }
+
       os << "      }" << endl;
       os << "      bool step_" << thread_step_ << "_()" << endl;
       os << "      {" << endl;
-#else
-	/* The canonical wait for an edge puts the thread into the
-	   correct wait object, then returns false from the thread to
-	   suspend execution. When things are ready to proceed, the
-	   correct vvm_pevent will send a wakeup to start the next
-	   basic block. */
-      os << "        " << mangle(proc->name()) << ".wait(this);" << endl;
-      os << "        return false;" << endl;
-      os << "      }" << endl;
-      os << "      bool step_" << thread_step_ << "_()" << endl;
-      os << "      {" << endl;
-#endif
+
       proc->emit_proc_recurse(os, this);
+      delete list;
 }
 
 /*
@@ -965,6 +946,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.20  1999/05/03 01:51:29  steve
+ *  Restore support for wait event control.
+ *
  * Revision 1.19  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.
