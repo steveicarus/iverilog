@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.6.20020817
+Version: 0.6.20020828
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20020817.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20020828.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -20,7 +20,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20020817
+%setup -n verilog-20020828
 
 %build
 ./configure --prefix=/usr
@@ -49,10 +49,8 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/fpga.tgt
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %attr(-,root,root) /usr/lib/libvpi.a
-%attr(-,root,root) /usr/lib/libvpip.a
 %attr(-,root,root) /usr/lib/libveriuser.a
 %attr(-,root,root) /usr/include/ivl_target.h
-%attr(-,root,root) /usr/include/vpi_priv.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
 %attr(-,root,root) /usr/include/veriuser.h
