@@ -15,11 +15,12 @@ GENERATE XNF OUTPUT -- THE SHORT STORY
 The easiest way to compile for XNF output is with the "verilog"
 command (man verilog) and the -X switch:
 
-	% verilog -fpart=4010e -X prog.v
+	% verilog -fpart=4010e -fncf=prog.ncf -X prog.v
 
-This generates from the prog.v Verilog source file the prog.xnf
-output. The verilog program arranges to call the preprocessor and the
-ivl compiler with all the correct switches for generating XNF.
+This generates from the prog.v Verilog source file the prog.xnf output
+and the prog.ncf netlist constraints file. The verilog program
+arranges to call the preprocessor and the ivl compiler with all the
+correct switches for generating XNF.
 
 XNF PADS IN VERILOG SOURCE
 
@@ -109,6 +110,19 @@ generated. The ``synth'' function matches certain behavioral constructs
 to structural components, and the xnfio function generates pads and
 fills the IOBs.
 
+SUPPORTED FLAGS
+
+    -fpart=<part>
+        Specify the type of part to target. This string is written
+        literally into the PART, record of the XNF, and may also be
+        used to control synthesis and placement.
+
+    -fncf=<path>
+        Cause the code generator to write into <path> the netlist
+        constraints needed for controlling placement and timing. This
+        switch is required if pin assignments are assigned in the
+        Verilog source.
+
 THE SYNTH FUNCTION
 
 This function does synthesis transformations on the entered design,
@@ -162,6 +176,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.8  1999/11/06 04:51:42  steve
+  Support writing some XNF things into an NCF file.
+
  Revision 1.7  1999/11/03 05:18:18  steve
   XNF synthesis now uses the synth functor.
 
