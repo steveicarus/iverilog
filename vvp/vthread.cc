@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.113 2003/07/21 02:39:15 steve Exp $"
+#ident "$Id: vthread.cc,v 1.114 2003/08/01 00:58:03 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -226,6 +226,10 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
       thr->bits   = (unsigned long*)malloc(4 * sizeof(unsigned long));
+      thr->bits[0] = THR_BITS_INIT;
+      thr->bits[1] = THR_BITS_INIT;
+      thr->bits[2] = THR_BITS_INIT;
+      thr->bits[3] = THR_BITS_INIT;
       thr->nbits  = 4 * (CPU_WORD_BITS/2);
       thr->child  = 0;
       thr->parent = 0;
@@ -2756,6 +2760,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.114  2003/08/01 00:58:03  steve
+ *  Initialize allocated memory.
+ *
  * Revision 1.113  2003/07/21 02:39:15  steve
  *  Overflow of unsigned when calculating unsigned long value.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.cc,v 1.13 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: codes.cc,v 1.14 2003/08/01 00:58:03 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -85,6 +85,8 @@ vvp_code_t codespace_allocate(void)
       current_within_chunk += 1;
       count_opcodes += 1;
 
+      memset(res, 0, sizeof(*res));
+
       return res;
 }
 
@@ -95,6 +97,9 @@ vvp_code_t codespace_null(void)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.14  2003/08/01 00:58:03  steve
+ *  Initialize allocated memory.
+ *
  * Revision 1.13  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *
