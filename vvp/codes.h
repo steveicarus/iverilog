@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.37 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: codes.h,v 1.38 2002/03/18 00:19:34 steve Exp $"
 #endif
 
 
@@ -93,6 +93,8 @@ extern bool of_XORR(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
+extern bool of_CALL_UFUNC(vthread_t thr, vvp_code_t code);
+
 /*
  * This is the format of a machine code instruction.
  */
@@ -113,6 +115,7 @@ struct vvp_code_s {
 	    unsigned short bit_idx[2];
 	    vvp_ipoint_t iptr2;
 	    vvp_cpoint_t cptr2;
+	    struct ufunc_core*ufunc_core_ptr;
       };
 };
 
@@ -148,6 +151,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.38  2002/03/18 00:19:34  steve
+ *  Add the .ufunc statement.
+ *
  * Revision 1.37  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.31 2002/03/01 05:42:50 steve Exp $"
+#ident "$Id: lexor.lex,v 1.32 2002/03/18 00:19:34 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -87,6 +87,7 @@
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".thread"   { return K_THREAD; }
+".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
 ".udp"         { return K_UDP; }
@@ -158,6 +159,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.32  2002/03/18 00:19:34  steve
+ *  Add the .ufunc statement.
+ *
  * Revision 1.31  2002/03/01 05:42:50  steve
  *  out-of-memory asserts.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.40 2002/01/03 04:19:02 steve Exp $"
+#ident "$Id: compile.h,v 1.41 2002/03/18 00:19:34 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -118,6 +118,22 @@ extern void compile_shiftr(char*label, long width,
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
+/*
+ * This function schedules a lookup of an indexed label. The ref
+ * points to the vvp_ipoint_t that receives the result. The result may
+ * be assigned later, if the symbol is defined later in the source
+ * file, so the memory that ref points to must persist.
+ */
+extern void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx);
+
+/*
+ * This function schedules a lookup of the labeled instruction. The
+ * code points to a code structure that points to the instruction
+ * field that receives the result, and the label is the name to
+ * lookup. The lookup will free the label text when it is done.
+ */
+extern void code_label_lookup(struct vvp_code_s *code, char *label);
+
 /* 
  * The `compile_udp_def' function creates a UDP.  The `table' is a
  * NULL terminated array of char*, as assembled by `compile_udp_table'.  
@@ -151,6 +167,13 @@ extern void compile_memory_port(char *label, char *memid,
 
 extern void compile_memory_init(char *memid, unsigned idx, unsigned char val);
 
+/*
+ * Compile the .ufunc statement.
+ */
+extern void compile_ufunc(char*label, char*code, unsigned wid,
+			  unsigned argc, struct symb_s*argv,
+			  unsigned portc, struct symb_s*portv,
+			  unsigned retc, struct symb_s*retv);
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -225,6 +248,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.41  2002/03/18 00:19:34  steve
+ *  Add the .ufunc statement.
+ *
  * Revision 1.40  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
  *

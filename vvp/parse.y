@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.43 2002/01/03 04:19:02 steve Exp $"
+#ident "$Id: parse.y,v 1.44 2002/03/18 00:19:34 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,7 +60,7 @@ extern FILE*yyin;
 %token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_GE K_CMP_GT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
-%token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD
+%token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_FORCE 
@@ -158,6 +158,17 @@ statement
 
 	| mem_init_stmt
 
+
+  /* The .ufunc functor is for implementing user defined functions, or
+     other thread code that is automatically invoked if any of the
+     bits in the symbols list change. */
+
+	| T_LABEL K_UFUNC T_SYMBOL ',' T_NUMBER ',' symbols
+	  '(' symbols ')' symbols ';'
+		{ compile_ufunc($1, $3, $5,
+				$7.cnt, $7.vect,
+				$9.cnt, $9.vect,
+				$11.cnt, $11.vect); }
 
   /* Resolver statements are very much like functors. They are
      compiled to functors of a different mode. */
@@ -538,6 +549,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.44  2002/03/18 00:19:34  steve
+ *  Add the .ufunc statement.
+ *
  * Revision 1.43  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
  *

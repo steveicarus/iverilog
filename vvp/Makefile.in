@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.35 2002/02/03 01:01:51 steve Exp $"
+#ident "$Id: Makefile.in,v 1.36 2002/03/18 00:19:34 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -66,8 +66,8 @@ vpi_priv.o vpi_scope.o vpi_signal.o vpi_tasks.o vpi_time.o vpi_memory.o \
 vpi_vthr_vector.o vpip_to_dec.o vvp_vpi.o
 
 O = main.o parse.o parse_misc.o lexor.o arith.o bufif.o compile.o debug.o \
-functor.o fvectors.o npmos.o resolv.o symbols.o codes.o vthread.o schedule.o \
-tables.o udp.o memory.o force.o event.o logic.o delay.o $V
+functor.o fvectors.o npmos.o resolv.o symbols.o ufunc.o codes.o vthread.o \
+schedule.o tables.o udp.o memory.o force.o event.o logic.o delay.o $V
 
 vvp: $O 
 	$(CXX) $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.39 2002/01/03 04:19:01 steve Exp $
+ *  $Id: README.txt,v 1.40 2002/03/18 00:19:34 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -474,6 +474,13 @@ statements:
 The shifter has a width that defines the number of outputs and the
 number of data inputs. The first <wid> symbols in the <symbols_list>
 gives the input data. The remaining hold the shift value, lsb first.
+
+
+STRUCTURAL FUNCTION CALLS:
+
+The .ufunc statement defines a call to a user defined function.
+
+	<label> .ufunc ;
 
 
 THREAD STATEMENTS:

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.121 2002/03/08 05:41:45 steve Exp $"
+#ident "$Id: compile.cc,v 1.122 2002/03/18 00:19:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -325,7 +325,6 @@ bool functor_gen_resolv_list_s::resolve(bool mes)
       return false;
 }
 
-inline static 
 void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx)
 {
       struct functor_gen_resolv_list_s*res = 
@@ -418,7 +417,6 @@ bool code_label_resolv_list_s::resolve(bool mes)
       return false;
 }
 
-inline static
 void code_label_lookup(struct vvp_code_s *code, char *label)
 {
       struct code_label_resolv_list_s *res
@@ -578,8 +576,8 @@ void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
       fprintf(stderr, "              : Value is %u, trying to set %u\n",
 	      oval, val);
 
-      debug_print(p);
 #if defined(WITH_DEBUG)
+      debug_print(p);
       breakpoint();
 #else
       fprintf(stderr, "              : I'm driving functor 0x%x\n", out);
@@ -1389,6 +1387,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.122  2002/03/18 00:19:34  steve
+ *  Add the .ufunc statement.
+ *
  * Revision 1.121  2002/03/08 05:41:45  steve
  *  Debug code for write to constants.
  *
