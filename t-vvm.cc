@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.104 2000/02/24 01:57:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.105 2000/02/29 05:02:30 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1803,6 +1803,8 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
       defn << "      /* " << net->get_line() << ": case (" <<
 	    *net->expr() << ") */" << endl;
 
+      defn << "      do {" << endl;
+
       string expr = emit_proc_rval(defn, 6, net->expr());
 
       unsigned default_idx = net->nitems();
@@ -1818,24 +1820,20 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 
 	    string guard = emit_proc_rval(defn, 6, net->expr(idx));
 
-	    if (prev_flag)
-		  defn << "      } else";
-	    else
-		  defn << "      ";
-	    defn << "if (V1 == " << test_func << "(" <<
+	    defn << "      if (V1 == " << test_func << "(" <<
 		  guard << "," << expr << ")[0]) {" << endl;
 	    if (net->stat(idx))
 		  net->stat(idx)->emit_proc(os, this);
-
-	    prev_flag = true;
+	    defn << "      break; }" << endl;
       }
 
       if ((default_idx < net->nitems()) && net->stat(default_idx)) {
-	    defn << "      } else {" << endl;
 	    net->stat(default_idx)->emit_proc(os, this);
       }
 
-      defn << "      }" << endl;
+      defn << "      /* " << net->get_line() << ": end case (" <<
+	    *net->expr() << ") */" << endl;
+      defn << "      } while(0);" << endl;
 }
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
@@ -2171,6 +2169,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.105  2000/02/29 05:02:30  steve
+ *  Handle scope of complex guards when writing case in functions.
+ *
  * Revision 1.104  2000/02/24 01:57:10  steve
  *  I no longer need to declare string and number tables early.
  *
