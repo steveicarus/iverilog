@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.1 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: part.cc,v 1.2 2004/12/29 23:44:39 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -48,6 +48,7 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 		  res.set_bit(idx, BIT4_X);
       }
 
+      vvp_send_vec4(port.ptr()->out, res);
 }
 
 void compile_part_select(char*label, char*source,
@@ -66,6 +67,9 @@ void compile_part_select(char*label, char*source,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.2  2004/12/29 23:44:39  steve
+ *  Fix missing output propagation of part node.
+ *
  * Revision 1.1  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
