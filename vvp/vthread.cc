@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.64 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.65 2001/12/31 00:01:16 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -420,8 +420,11 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
-      unsigned sig1 = thr_get_bit(thr, idx1 + cp->number - 1);
-      unsigned sig2 = thr_get_bit(thr, idx2 + cp->number - 1);
+      unsigned end1 = (idx1 < 4)? idx1 : idx1 + cp->number - 1;
+      unsigned end2 = (idx2 < 4)? idx2 : idx2 + cp->number - 1;
+
+      unsigned sig1 = thr_get_bit(thr, end1);
+      unsigned sig2 = thr_get_bit(thr, end2);
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lv = thr_get_bit(thr, idx1);
@@ -453,6 +456,27 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 	    lt = 1;
       else if ((sig1 == 0) && (sig2 == 1))
 	    lt = 0;
+
+	/* Correct the lt bit to account for the sign of the parameters. */
+      if (lt < 2) {
+	    sig1 = thr_get_bit(thr, end1);
+	    sig2 = thr_get_bit(thr, end2);
+
+	      /* If both numbers are negative, then switch the
+		 direction of the lt. */
+	    if ((sig1 == 1) && (sig2 == 1) && (eq != 0))
+		  lt ^= 1;
+
+	      /* If the first is negative and the last positive, then
+		 a < b for certain. */
+	    if ((sig1 == 1) && (sig2 == 0))
+		  lt = 1;
+
+	      /* If the first is positive and the last negative, then
+		 a > b for certain. */
+	    if ((sig1 == 0) && (sig2 == 1))
+		  lt = 0;
+      }
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -1672,6 +1696,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.65  2001/12/31 00:01:16  steve
+ *  Account for negatives in cmp/s
+ *
  * Revision 1.64  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *
