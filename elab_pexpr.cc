@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.3 2000/03/12 18:22:11 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.4 2000/06/01 02:31:39 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -81,6 +81,11 @@ NetExpr*PENumber::elaborate_pexpr(Design*des, NetScope*sc) const
 }
 
 
+NetEConst* PEString::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      return elaborate_expr(des, scope);
+}
+
 NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 {
       NetExpr*ip = expr_->elaborate_pexpr(des, scope);
@@ -106,6 +111,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.4  2000/06/01 02:31:39  steve
+ *  Parameters can be strings.
+ *
  * Revision 1.3  2000/03/12 18:22:11  steve
  *  Binary and unary operators in parameter expressions.
  *

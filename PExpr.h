@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.38 2000/05/16 04:05:15 steve Exp $"
+#ident "$Id: PExpr.h,v 1.39 2000/06/01 02:31:39 steve Exp $"
 #endif
 
 # include  <string>
@@ -235,6 +235,7 @@ class PEString : public PExpr {
       string value() const;
       virtual void dump(ostream&) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -379,6 +380,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.39  2000/06/01 02:31:39  steve
+ *  Parameters can be strings.
+ *
  * Revision 1.38  2000/05/16 04:05:15  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used
