@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.7 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: schedule.cc,v 1.8 2001/05/05 23:51:49 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -27,6 +27,20 @@
 # include  <malloc.h>
 # include  <assert.h>
 
+/*
+ * The event queue is arranged as a skip list, with the simulation
+ * time the key to the list. The simulation time is stored in each
+ * event as the delta time from the previous event so that there is no
+ * limit to the time values that are supported.
+ *
+ * The list is started by the ``list'' variable below. This points to
+ * the very next event to be executed.  Each event, in turn, points to
+ * the next item in the event queue with the ->next member.
+ *
+ * The ->last member points to the last event in the current
+ * time. That is, all the events to and including the ->last event are
+ * zero delay from the current event.
+ */
 struct event_s {
       unsigned delay;
 
@@ -96,10 +110,18 @@ bool schedule_finished(void)
       return !schedule_runnable;
 }
 
+/*
+ * This function does all the hard work of putting an event into the
+ * event queue. The event delay is taken from the event structure
+ * itself, and the structure is placed in the right place in the
+ * queue.
+ */
 static void schedule_event_(struct event_s*cur)
 {
       cur->last = cur;
 
+	/* If the list is completely empty, then start the list with
+	   this the only event. */
       if (list == 0) {
 	    list = cur;
 	    cur->next = 0;
@@ -108,13 +130,21 @@ static void schedule_event_(struct event_s*cur)
 
       struct event_s*idx = list;
       if (cur->delay < idx->delay) {
+	      /* If this new event is earlier then even the first
+		 event, then insert it in front. Adjust the delay of
+		 the next event, and set the start to me. */
 	    idx->delay -= cur->delay;
 	    cur->next = idx;
 	    list = cur;
 
       } else {
-	    struct event_s*prev = idx;
 
+	      /* Look for the first event after the cur
+		 event. Decrease the cur->delay as I go, and use the
+		 skip member to accellerate the search. When I'm done,
+		 prev will point to the even immediately before where
+		 this event goes. */
+	    struct event_s*prev = idx;
 	    while (cur->delay > idx->delay) {
 		  cur->delay -= idx->delay;
 		  prev = idx->last;
@@ -128,14 +158,14 @@ static void schedule_event_(struct event_s*cur)
 
 	    if (cur->delay < idx->delay) {
 		  idx->delay -= cur->delay;
-		  cur->last = cur;
+		    //cur->last = cur;
 		  cur->next = idx;
 		  prev->next = cur;
 
 	    } else {
 		  assert(cur->delay == idx->delay);
 		  cur->delay = 0;
-		  cur->last = cur;
+		    //cur->last = cur;
 		  cur->next = idx->last->next;
 		  idx->last->next = cur;
 		  idx->last = cur;
@@ -205,13 +235,14 @@ void schedule_simulate(void)
 	    struct event_s*cur = list;
 	    list = cur->next;
 	    if (cur->last != cur) {
+		  assert(list);
 		  assert(list->delay == 0);
 		  list->last = cur->last;
 
-	    } else {
-		  schedule_time += cur->delay;
-		    //printf("TIME: %u\n", schedule_time);
 	    }
+
+	    schedule_time += cur->delay;
+	      //printf("TIME: %u\n", schedule_time);
 
 	    switch (cur->type) {
 		case TYPE_THREAD:
@@ -240,6 +271,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.8  2001/05/05 23:51:49  steve
+ *  Forward the simulation time for every event.
+ *
  * Revision 1.7  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
