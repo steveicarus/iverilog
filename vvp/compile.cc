@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.185 2005/01/30 05:06:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.186 2005/02/12 03:27:18 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -707,6 +707,47 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 	      // scheduler distribute the constant value has the
 	      // additional advantage that the constant is not
 	      // propagated until the network is fully linked.
+	    schedule_set_vector(ifdx, tmp);
+
+	    free(label);
+	    return;
+      }
+
+	/* Is this a vvp_vector8_t constant value? */
+      if ((strncmp(label, "C8<", 3) == 0)
+	  && ((tp = strchr(label,'>')))
+	  && (tp[1] == 0)
+	  && (strspn(label+3, "01234567xz") == (tp-label-3))) {
+
+	    size_t vsize = tp-label-3;
+	    assert(vsize%3 == 0);
+	    vsize /= 3;
+
+	    vvp_vector8_t tmp (vsize);
+
+	    for (unsigned idx = 0 ;  idx < vsize ;  idx += 1) {
+		  vvp_bit4_t bit = BIT4_Z;
+		  unsigned dr0 = label[3+idx*3+0] - '0';
+		  unsigned dr1 = label[3+idx*3+1] - '0';
+
+		  switch (label[3+idx*3+2]) {
+		      case '0':
+			bit = BIT4_0;
+			break;
+		      case '1':
+			bit = BIT4_1;
+			break;
+		      case 'x':
+			bit = BIT4_X;
+			break;
+		      case 'z':
+			bit = BIT4_Z;
+			break;
+		  }
+
+		  tmp.set_bit(vsize-idx-1, vvp_scaler_t(bit, dr0, dr1));
+	    }
+
 	    schedule_set_vector(ifdx, tmp);
 
 	    free(label);
@@ -1577,6 +1618,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.186  2005/02/12 03:27:18  steve
+ *  Support C8 constants.
+ *
  * Revision 1.185  2005/01/30 05:06:49  steve
  *  Get .arith/sub working.
  *
