@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.4 2000/08/20 04:13:57 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.5 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -235,6 +235,11 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
       return des->des_->get_flag(key).c_str();
 }
 
+extern "C" const char*ivl_get_root_name(ivl_design_t des)
+{
+      return des->des_->find_root_scope()->name().c_str();
+}
+
 extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
 {
       switch (net->dev_->type()) {
@@ -247,8 +252,27 @@ extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
       return IVL_AND;
 }
 
+extern "C" unsigned ivl_get_logic_pins(ivl_net_logic_t net)
+{
+      return net->dev_->pin_count();
+}
+
+extern "C" ivl_nexus_t ivl_get_logic_pin(ivl_net_logic_t net, unsigned pin)
+{
+      return (ivl_nexus_t) (net->dev_->pin(pin).nexus());
+}
+
+extern "C" const char* ivl_get_nexus_name(ivl_nexus_t net)
+{
+      const Nexus*nex = (const Nexus*)net;
+      return nex->name();
+}
+
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.5  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.4  2000/08/20 04:13:57  steve
  *  Add ivl_target support for logic gates, and
  *  make the interface more accessible.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.156 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.157 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 /*
@@ -230,7 +230,7 @@ class Nexus {
       explicit Nexus();
       ~Nexus();
 
-      string name() const;
+      const char* name() const;
       verinum::V get_init() const;
 
       Link*first_nlink();
@@ -240,6 +240,8 @@ class Nexus {
       Link*list_;
       void unlink(Link*);
       void relink(Link*);
+
+      mutable char* name_; /* Cache the calculated name for the Nexus. */
 
     private: // not implemented
       Nexus(const Nexus&);
@@ -2586,6 +2588,8 @@ class Design {
       NetScope* make_root_scope(const string&name);
       NetScope* find_root_scope();
 
+      const NetScope* find_root_scope() const;
+
 
 	/* Attempt to set the precision to the specified value. If the
 	   precision is already more precise, the keep the precise
@@ -2722,6 +2726,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.157  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.156  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

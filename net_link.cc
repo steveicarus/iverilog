@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.2 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: net_link.cc,v 1.3 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -198,12 +198,15 @@ unsigned Link::get_inst() const
 
 Nexus::Nexus()
 {
+      name_ = 0;
       list_ = 0;
 }
 
 Nexus::~Nexus()
 {
       assert(list_ == 0);
+      if (name_)
+	    delete[]name_;
 }
 
 verinum::V Nexus::get_init() const
@@ -223,6 +226,11 @@ verinum::V Nexus::get_init() const
 
 void Nexus::unlink(Link*that)
 {
+      if (name_) {
+	    delete[] name_;
+	    name_ = 0;
+      }
+
       assert(that);
       if (list_ == that) {
 	    list_ = that->next_;
@@ -244,6 +252,11 @@ void Nexus::unlink(Link*that)
 
 void Nexus::relink(Link*that)
 {
+      if (name_) {
+	    delete[] name_;
+	    name_ = 0;
+      }
+
       assert(that->nexus_ == 0);
       assert(that->next_ == 0);
       that->next_ = list_;
@@ -261,8 +274,11 @@ const Link* Nexus::first_nlink() const
       return list_;
 }
 
-string Nexus::name() const
+const char* Nexus::name() const
 {
+      if (name_)
+	    return name_;
+
       const NetNet*sig = 0;
       unsigned pin = 0;
       for (const Link*cur = first_nlink()
@@ -314,11 +330,16 @@ string Nexus::name() const
 	    tmp << "<" << pin << ">";
       tmp << ends;
 
-      return tmp.str();
+      name_ = new char[strlen(tmp.str()) + 1];
+      strcpy(name_, tmp.str());
+      return name_;
 }
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.3  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.2  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

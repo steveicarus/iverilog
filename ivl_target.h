@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.4 2000/08/20 04:13:57 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.5 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -64,6 +64,7 @@ typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
+typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 
@@ -80,13 +81,30 @@ typedef struct ivl_scope_s    *ivl_scope_t;
    of the output file. */
 extern const char* ivl_get_flag(ivl_design_t, const char*key);
 
+extern const char* ivl_get_root_name(ivl_design_t net);
 
-/* Given an ivl_net_logic_t cookie, get the type of the gate. */
+/* LOGIC
+ * These types and functions support manipulation of logic gates. The
+ * ivl_logit_t enumeration identifies the various kinds of gates that
+ * the ivl_net_logic_t can represent. The various functions then
+ * provide access to the various bits of information for a given logic
+ * device.
+ */
+
 typedef enum ivl_logic_e { IVL_AND, IVL_BUF, IVL_BUFIF0, IVL_BUFIF1,
 			   IVL_NAND, IVL_NOR, IVL_NOT, IVL_NOTIF0,
 			   IVL_NOTIF1, IVL_OR, IVL_XNOR, IVL_XOR } ivl_logic_t;
 
 extern ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net);
+extern ivl_nexus_t ivl_get_logic_pin(ivl_net_logic_t net, unsigned pin);
+extern unsigned    ivl_get_logic_pins(ivl_net_logic_t net);
+
+/* NEXUS
+ * connections of signals and nodes is handled by single-bit
+ * nexus. These functions manage the ivl_nexus_t object.
+ */
+
+const char* ivl_get_nexus_name(ivl_nexus_t net);
 
 
 /* TARGET MODULE ENTRY POINTS
@@ -180,6 +198,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.5  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.4  2000/08/20 04:13:57  steve
  *  Add ivl_target support for logic gates, and
  *  make the interface more accessible.

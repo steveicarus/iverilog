@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.4 2000/08/20 04:13:57 steve Exp $"
+#ident "$Id: stub.c,v 1.5 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 /*
@@ -45,13 +45,13 @@ int target_start_design(ivl_design_t des)
 	    return -2;
       }
 
-      fprintf(out, "STUB: start_design\n");
+      fprintf(out, "module %s;\n", ivl_get_root_name(des));
       return 0;
 }
 
 void target_end_design(ivl_design_t des)
 {
-      fprintf(out, "STUB: end_design\n");
+      fprintf(out, "endmodule\n");
       fclose(out);
 }
 
@@ -75,17 +75,28 @@ int target_net_event(const char*name, ivl_net_event_t net)
 
 int target_net_logic(const char*name, ivl_net_logic_t net)
 {
+      unsigned npins, idx;
+
       switch (ivl_get_logic_type(net)) {
 	  case IVL_AND:
-	    fprintf(out, "STUB: %s: AND gate\n", name);
+	    fprintf(out, "      and %s (%s", name,
+		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
 	    break;
 	  case IVL_OR:
-	    fprintf(out, "STUB: %s: OR gate\n", name);
+	    fprintf(out, "      or %s (%s", name,
+		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
 	    break;
 	  default:
 	    fprintf(out, "STUB: %s: unsupported gate\n", name);
 	    return -1;
       }
+
+      npins = ivl_get_logic_pins(net);
+      for (idx = 1 ;  idx < npins ;  idx += 1)
+	    fprintf(out, ", %s",
+		    ivl_get_nexus_name(ivl_get_logic_pin(net,idx)));
+
+      fprintf(out, ");\n");
 
       return 0;
 }
@@ -103,6 +114,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.5  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.4  2000/08/20 04:13:57  steve
  *  Add ivl_target support for logic gates, and
  *  make the interface more accessible.

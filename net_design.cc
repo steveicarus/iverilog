@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.14 2000/08/12 17:59:48 steve Exp $"
+#ident "$Id: net_design.cc,v 1.15 2000/08/26 00:54:03 steve Exp $"
 #endif
 
 /*
@@ -95,6 +95,12 @@ NetScope* Design::make_root_scope(const string&root)
 }
 
 NetScope* Design::find_root_scope()
+{
+      assert(root_scope_);
+      return root_scope_;
+}
+
+const NetScope* Design::find_root_scope() const
 {
       assert(root_scope_);
       return root_scope_;
@@ -483,6 +489,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.15  2000/08/26 00:54:03  steve
+ *  Get at gate information for ivl_target interface.
+ *
  * Revision 1.14  2000/08/12 17:59:48  steve
  *  Limit signal scope search at module boundaries.
  *
