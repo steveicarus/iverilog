@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.64 2002/07/01 00:52:47 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.65 2002/07/12 18:10:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1252,6 +1252,12 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       tmp = draw_eval_expr(cond);
       clr_vector(tmp);
 
+      if ((tmp.base >= 4) && (tmp.wid > 1)) {
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n",
+		    tmp.base, tmp.base, tmp.wid);
+	    tmp.wid = 1;
+      }
+
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
@@ -1720,6 +1726,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.65  2002/07/12 18:10:45  steve
+ *  Use all bits of ?: condit expression.
+ *
  * Revision 1.64  2002/07/01 00:52:47  steve
  *  Carry can propagate to the otp in addi.
  *
