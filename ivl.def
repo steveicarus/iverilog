@@ -123,6 +123,7 @@ ivl_scope_tname
 ivl_signal_attr
 ivl_signal_attr_cnt
 ivl_signal_attr_val
+ivl_signal_integer
 ivl_signal_pin
 ivl_signal_pins
 ivl_signal_port
