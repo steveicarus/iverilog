@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.18 2001/01/02 04:21:14 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.19 2001/01/04 04:28:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -318,7 +318,67 @@ NetEConst* NetEBDiv::eval_tree()
 NetEConst* NetEBLogic::eval_tree()
 {
       eval_sub_tree_();
-      return 0;
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
+
+      verinum::V lv = verinum::V0;
+      verinum::V rv = verinum::V0;
+
+      verinum v = lc->value();
+      for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
+	    if (v.get(idx) == verinum::V1)
+		  lv = verinum::V1;
+
+      if (lv == verinum::V0)
+	    for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
+		  if (v.get(idx) != verinum::V0)
+			lv = verinum::Vx;
+
+      v = rc->value();
+      for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
+	    if (v.get(idx) == verinum::V1)
+		  rv = verinum::V1;
+
+      if (lv == verinum::V0)
+	    for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
+		  if (v.get(idx) != verinum::V0)
+			rv = verinum::Vx;
+
+      verinum::V res;
+      switch (op_) {
+	  case 'a': { // Logical AND (&&)
+		if ((lv == verinum::V0) || (rv == verinum::V0))
+		      res = verinum::V0;
+
+		else if ((lv == verinum::V1) && (rv == verinum::V1))
+		      res = verinum::V1;
+
+		else
+		      res = verinum::Vx;
+
+		break;
+	  }
+
+	  case 'o': { // Logical OR (||)
+		if ((lv == verinum::V1) || (rv == verinum::V1))
+		      res = verinum::V1;
+
+		else if ((lv == verinum::V0) && (rv == verinum::V0))
+		      res = verinum::V0;
+
+		else
+		      res = verinum::Vx;
+
+		break;
+	  }
+
+	  default:
+	    return 0;
+      }
+
+      return new NetEConst(verinum(res, 1));
 }
 
 NetEConst* NetEBMult::eval_tree()
@@ -701,6 +761,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.19  2001/01/04 04:28:42  steve
+ *  Evaluate constant logical && and ||.
+ *
  * Revision 1.18  2001/01/02 04:21:14  steve
  *  Support a bunch of unary operators in parameter expressions.
  *
