@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.9 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.10 2001/10/09 02:01:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -324,6 +324,9 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 void PTask::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::TASK);
+
+      if (statement_)
+	    statement_->elaborate_scope(des, scope);
 }
 
 
@@ -455,6 +458,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.10  2001/10/09 02:01:04  steve
+ *  Tasks can have sub-scopes.
+ *
  * Revision 1.9  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
