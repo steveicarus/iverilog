@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.2 2004/12/15 17:11:13 steve Exp $"
+#ident "$Id: statement.c,v 1.3 2004/12/18 18:55:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,6 +109,59 @@ static void show_stmt_release(ivl_statement_t net, unsigned ind)
 
       fprintf(out, "%*sTotal l-value width: %u bits\n",
 	      ind+4, "", lwid);
+}
+
+/*
+ * A trigger statement is the "-> name;" syntax in verilog, where a
+ * trigger signal is sent to a named event. The trigger statement is
+ * actually a very simple object.
+ */
+static void show_stmt_trigger(ivl_statement_t net, unsigned ind)
+{
+      unsigned cnt = ivl_stmt_nevent(net);
+      unsigned idx;
+
+      fprintf(out, "%*s->", ind, "");
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_event_t event = ivl_stmt_events(net, idx);
+	    fprintf(out, " %s", ivl_event_basename(event));
+      }
+
+	/* The compiler should make exactly one target event, so if we
+	   find more or less, then print some error text. */
+      if (cnt != 1) {
+	    fprintf(out, " /* ERROR: Expect one target event, got %u */", cnt);
+      }
+
+      fprintf(out, ";\n");
+}
+
+/*
+ * The wait statement contains simply an array of events to wait on,
+ * and a sub-statement to execute when an event triggers.
+ */
+void show_stmt_wait(ivl_statement_t net, unsigned ind)
+{
+      unsigned idx;
+      const char*comma = "";
+      fprintf(out, "%*s@(", ind, "");
+
+      for (idx = 0 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
+	    ivl_event_t evnt = ivl_stmt_events(net, idx);
+
+	    if (evnt == 0)
+		  fprintf(out, "%s/*ERROR*/", comma);
+	    else
+		  fprintf(out, "%s%s.%s", comma,
+			  ivl_scope_name(ivl_event_scope(evnt)),
+			  ivl_event_basename(evnt));
+
+	    comma = ", ";
+      }
+
+      fprintf(out, ")\n");
+      show_statement(ivl_stmt_sub_stmt(net), ind+4);
 }
 
 void show_statement(ivl_statement_t net, unsigned ind)
@@ -252,32 +305,16 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	  }
 
 	  case IVL_ST_TRIGGER:
-	    fprintf(out, "%*s-> ...\n", ind, "");
+	    show_stmt_trigger(net, ind);
 	    break;
 
 	  case IVL_ST_UTASK:
 	    fprintf(out, "%*scall task ...\n", ind, "");
 	    break;
 
-	  case IVL_ST_WAIT: {
-		const char*comma = "";
-		fprintf(out, "%*s@(", ind, "");
-
-		for (idx = 0 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
-		      ivl_event_t evnt = ivl_stmt_events(net, idx);
-
-		      if (evnt == 0)
-			    fprintf(out, "%s/*ERROR*/", comma);
-		      else
-			    fprintf(out, "%s%s", comma, ivl_event_name(evnt));
-
-		      comma = ", ";
-		}
-
-		fprintf(out, ")\n");
-		show_statement(ivl_stmt_sub_stmt(net), ind+4);
-		break;
-	  }
+	  case IVL_ST_WAIT:
+	    show_stmt_wait(net, ind);
+	    break;
 
 	  case IVL_ST_WHILE:
 	    fprintf(out, "%*swhile\n", ind, "");

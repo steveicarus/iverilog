@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.92 2004/12/12 18:15:06 steve Exp $"
+#ident "$Id: stub.c,v 1.93 2004/12/18 18:55:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -443,7 +443,7 @@ static void show_event(ivl_event_t net)
 {
       unsigned idx;
       fprintf(out, "  event %s (%u pos, %u neg, %u any);\n",
-	      ivl_event_name(net), ivl_event_npos(net),
+	      ivl_event_basename(net), ivl_event_npos(net),
 	      ivl_event_nneg(net), ivl_event_nany(net));
 
       for (idx = 0 ;  idx < ivl_event_nany(net) ;  idx += 1) {
@@ -762,6 +762,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.93  2004/12/18 18:55:08  steve
+ *  Better detail on event trigger and wait statements.
+ *
  * Revision 1.92  2004/12/12 18:15:06  steve
  *  Arrange statement dumping in new source files.
  *
