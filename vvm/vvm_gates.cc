@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.17 2000/07/08 22:39:32 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.18 2000/07/11 23:08:33 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -256,8 +256,9 @@ vvm_bufz::~vvm_bufz()
 {
 }
 
-void vvm_bufz::init_I(unsigned, vpip_bit_t)
+void vvm_bufz::init_I(unsigned, vpip_bit_t val)
 {
+      output(val);
 }
 
 void vvm_bufz::take_value(unsigned, vpip_bit_t val)
@@ -354,6 +355,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.18  2000/07/11 23:08:33  steve
+ *  proper init method for bufz devices.
+ *
  * Revision 1.17  2000/07/08 22:39:32  steve
  *  pass zero-delay values immediately.
  *
