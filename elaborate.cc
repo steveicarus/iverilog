@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.111 1999/10/07 05:25:33 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.112 1999/10/08 17:27:23 steve Exp $"
 #endif
 
 /*
@@ -40,6 +40,7 @@ string Design::local_symbol(const string&path)
       return path + "." + res.str();
 }
 
+#if 0
 static void do_assign(Design*des, const string&path,
 		      NetNet*lval, NetNet*rval)
 {
@@ -82,7 +83,7 @@ static void do_assign(Design*des, const string&path,
 	    des->add_node(cur);
       }
 }
-
+#endif
 
   // Urff, I don't like this global variable. I *will* figure out a
   // way to get rid of it. But, for now the PGModule::elaborate method
@@ -240,9 +241,9 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       assert(lval && rval);
 
-      if (lval->pin_count() != rval->pin_count()) {
-	    cerr << get_line() << ": error: lval width (" <<
-		  lval->pin_count() << ") != rval width (" <<
+      if (lval->pin_count() > rval->pin_count()) {
+	    cerr << get_line() << ": sorry: lval width (" <<
+		  lval->pin_count() << ") < rval width (" <<
 		  rval->pin_count() << ")." << endl;
 	    delete lval;
 	    delete rval;
@@ -250,7 +251,13 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	    return;
       }
 
-      do_assign(des, path, lval, rval);
+      for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1)
+	    connect(lval->pin(idx), rval->pin(idx));
+
+      if (lval->local_flag())
+	    delete lval;
+
+	//do_assign(des, path, lval, rval);
 
 }
 
@@ -763,17 +770,24 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	      // object. Connect DataA and DataB to the parameters,
 	      // and connect the output signal to the Result.
 	  case '+': {
-		assert(lsig->pin_count() == rsig->pin_count());
 		string name = des->local_symbol(path);
 		unsigned width = lsig->pin_count();
+		if (rsig->pin_count() > lsig->pin_count())
+		      width = rsig->pin_count();
+
+		  // Make the adder as wide as the widest operand
 		osig = new NetNet(des->local_symbol(path),
 				  NetNet::WIRE, width);
 		NetAddSub*adder = new NetAddSub(name, width);
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+
+		  // Connect the adder to the various parts.
+		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 		      connect(lsig->pin(idx), adder->pin_DataA(idx));
+		for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
 		      connect(rsig->pin(idx), adder->pin_DataB(idx));
+		for (unsigned idx = 0 ;  idx < osig->pin_count() ; idx += 1)
 		      connect(osig->pin(idx), adder->pin_Result(idx));
-		}
+
 		gate = adder;
 		des->add_signal(osig);
 		gate->rise_time(rise);
@@ -2556,6 +2570,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.112  1999/10/08 17:27:23  steve
+ *  Accept adder parameters with different widths,
+ *  and simplify continuous assign construction.
+ *
  * Revision 1.111  1999/10/07 05:25:33  steve
  *  Add non-const bit select in l-value of assignment.
  *
