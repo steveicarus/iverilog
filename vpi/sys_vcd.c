@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.13 2000/11/01 06:05:44 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.14 2001/01/01 08:10:35 steve Exp $"
 #endif
 
 /*
@@ -333,6 +333,7 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		case vpiModule:
 		case vpiNamedBegin:
 		case vpiTask:
+		case vpiFunction:
 		  sublist = vpi_iterate(vpiInternalScope, item);
 		  if (sublist && (depth > 0)) {
 			vcd_info_post_process();
@@ -341,7 +342,8 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		  break;
 
 		default:
-		  vpi_printf("ERROR: $dumpvars: Unsupported parameter type\n");
+		  vpi_printf("ERROR: $dumpvars: Unsupported parameter "
+			     "type (%d)\n", vpi_get(vpiType, item));
 	    }
 
       }
@@ -430,6 +432,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.14  2001/01/01 08:10:35  steve
+ *  Handle function scopes in dumpvars scn (PR#95)
+ *
  * Revision 1.13  2000/11/01 06:05:44  steve
  *  VCD scans tasks (PR#35)
  *
