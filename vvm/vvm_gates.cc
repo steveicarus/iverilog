@@ -23,7 +23,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.cc,v 1.2 1999/11/24 04:38:49 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.3 1999/12/02 04:54:11 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -103,9 +103,52 @@ vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
       return not(compute_xor(inp,count));
 }
 
+void compute_mux(vpip_bit_t*out, unsigned wid,
+		 const vpip_bit_t*sel, unsigned swid,
+		 const vpip_bit_t*dat, unsigned size)
+{
+      unsigned tmp = 0;
+      for (unsigned idx = 0 ;  idx < swid ;  idx += 1)
+	    switch (sel[idx]) {
+		case V0:
+		  break;
+		case V1:
+		  tmp |= (1<<idx);
+		  break;
+		default:
+		  tmp = size;
+		  break;
+	    }
+
+      if (tmp >= size) {
+
+	    if (swid > 1) {
+		  for (unsigned idx = 0; idx < wid ;  idx += 1)
+			out[idx] = Vx;
+	    } else {
+		  const unsigned b0 = 0;
+		  const unsigned b1 = wid;
+		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+			if (dat[idx+b0] == dat[idx+b1])
+			      out[idx] = dat[idx+b0];
+			else
+			      out[idx] = Vx;
+		  }
+	    }
+
+      } else {
+	    unsigned b = tmp * wid;
+	    for (unsigned idx = 0; idx < wid ;  idx += 1)
+		  out[idx] = dat[idx+b];
+      }
+}
+
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.3  1999/12/02 04:54:11  steve
+ *  Handle mux sel of X, if inputs are equal.
+ *
  * Revision 1.2  1999/11/24 04:38:49  steve
  *  LT and GT fixes from Eric Aardoom.
  *

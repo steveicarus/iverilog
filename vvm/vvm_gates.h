@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.28 1999/11/25 01:34:04 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.29 1999/12/02 04:54:11 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -31,6 +31,10 @@ extern vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_or(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count);
+
+extern void compute_mux(vpip_bit_t*out, unsigned wid,
+			const vpip_bit_t*sel, unsigned swid,
+			const vpip_bit_t*dat, unsigned size);
 
 /*
  * A vvm gate is constructed with an input width and an output
@@ -403,9 +407,11 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 
     public:
       explicit vvm_mux()
-	    { sel_val_ = SIZE;
-	      for (unsigned idx = 0;idx < WIDTH; idx += 1)
-		    out_[idx] = 0;
+	    { unsigned idx;
+	      for (idx = 0 ;  idx < WIDTH ;  idx += 1) out_[idx] = 0;
+	      for (idx = 0 ;  idx < WIDTH ;  idx += 1) output_[idx] = Vx;
+	      for (idx = 0 ;  idx < SELWID;  idx += 1) sel_[idx] = Vx;
+	      for (idx = 0 ;  idx < WIDTH*SIZE;  idx += 1) input_[idx] = Vx;
 	    }
 
       void init_Sel(unsigned idx, vpip_bit_t val)
@@ -423,11 +429,7 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
       void set_Data(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val) return;
 	      input_[idx] = val;
-	      unsigned sel = idx / WIDTH;
-	      if (sel != sel_val_) return;
-	      unsigned off = idx % WIDTH;
-	      vvm_event*ev = new vvm_out_event(sim, val, out_[off]);
-	      sim->active_event(ev);
+	      evaluate_(sim);
 	    }
 
       void config_rout(unsigned idx, vvm_out_event::action_t o)
@@ -436,39 +438,21 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
     private:
       vpip_bit_t sel_[SELWID];
       vpip_bit_t input_[WIDTH * SIZE];
+      vpip_bit_t output_[WIDTH];
+
       vvm_out_event::action_t out_[WIDTH];
 
-      unsigned sel_val_;
       void evaluate_(vvm_simulation*sim)
-	    { unsigned tmp = 0;
-	      for (unsigned idx = 0 ;  idx < SELWID ;  idx += 1)
-		    switch (sel_[idx]) {
-			case V0:
-			  break;
-			case V1:
-			  tmp |= (1<<idx);
-			  break;
-			default:
-			  tmp = SIZE;
-			  break;
-		    }
-	      if (tmp > SIZE) tmp = SIZE;
-	      if (tmp == sel_val_) return;
-	      sel_val_ = tmp;
-	      if (sel_val_ == SIZE) {
-		    for (unsigned idx = 0; idx < WIDTH ;  idx += 1) {
-			  vvm_event*ev = new vvm_out_event(sim, Vx, out_[idx]);
-			  sim->active_event(ev);
-		    }
-	      } else {
-		    unsigned b = sel_val_ * WIDTH;
-		    for (unsigned idx = 0; idx < WIDTH ;  idx += 1) {
+	    { vpip_bit_t tmp[WIDTH];
+	      compute_mux(tmp, WIDTH, sel_, SELWID, input_, SIZE);
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    if (tmp[idx] != output_[idx]) {
+			  output_[idx] = tmp[idx];
 			  vvm_event*ev = new vvm_out_event(sim,
-							   input_[idx+b],
+							   output_[idx],
 							   out_[idx]);
 			  sim->active_event(ev);
 		    }
-	      }
 	    }
 };
 
@@ -913,6 +897,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.29  1999/12/02 04:54:11  steve
+ *  Handle mux sel of X, if inputs are equal.
+ *
  * Revision 1.28  1999/11/25 01:34:04  steve
  *  Reduce more gate templates to use vvm_1bit_out (Eric Aardoom)
  *
