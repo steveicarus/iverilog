@@ -28,7 +28,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.24 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.25 2005/03/05 05:43:03 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -245,6 +245,14 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 	   first byte of the word. */
       unsigned width = memory_word_width(rfp->mem->mem);
       unsigned word_addr = rfp->index.value;
+
+	/* Addresses are converted to canonical form by offsetting the
+	   address by the lowest index. */
+      unsigned addr_off = memory_left_range(rfp->mem->mem, 0);
+      if (memory_right_range(rfp->mem->mem, 0) < addr_off)
+	    addr_off = memory_right_range(rfp->mem->mem, 0);
+
+      word_addr -= addr_off;
 
 	/* Build up the word value from whatever format the user
 	   supplies. */
@@ -606,6 +614,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.25  2005/03/05 05:43:03  steve
+ *  Get base address from word ranges that VPI user passed.
+ *
  * Revision 1.24  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
