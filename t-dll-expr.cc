@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.5 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.6 2000/10/28 17:55:03 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -53,6 +53,17 @@ void dll_target::expr_binary(const NetEBinary*net)
       expr_->u_.binary_.op_ = net->op();
       expr_->u_.binary_.lef_ = left;
       expr_->u_.binary_.rig_ = rght;
+}
+
+void dll_target::expr_concat(const NetEConcat*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = new struct ivl_expr_s;
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_CONCAT;
+      expr_->width_= net->expr_width();
 }
 
 void dll_target::expr_const(const NetEConst*net)
@@ -122,6 +133,9 @@ void dll_target::expr_signal(const NetESignal*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.6  2000/10/28 17:55:03  steve
+ *  stub for the concat operator.
+ *
  * Revision 1.5  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.15 2000/10/21 16:49:45 steve Exp $"
+#ident "$Id: t-dll.h,v 1.16 2000/10/28 17:55:03 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -79,6 +79,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       struct ivl_expr_s*expr_;
       void expr_binary(const NetEBinary*);
+      void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
       void expr_sfunc(const NetESFunc*);
       void expr_signal(const NetESignal*);
@@ -310,6 +311,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.16  2000/10/28 17:55:03  steve
+ *  stub for the concat operator.
+ *
  * Revision 1.15  2000/10/21 16:49:45  steve
  *  Reduce the target entry points to the target_design.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.23 2000/10/25 05:41:24 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.24 2000/10/28 17:55:03 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -135,6 +135,7 @@ typedef struct ivl_statement_s*ivl_statement_t;
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_BINARY,
+      IVL_EX_CONCAT,
       IVL_EX_NUMBER,
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
@@ -523,6 +524,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.24  2000/10/28 17:55:03  steve
+ *  stub for the concat operator.
+ *
  * Revision 1.23  2000/10/25 05:41:24  steve
  *  Get target signal from nexus_ptr.
  *

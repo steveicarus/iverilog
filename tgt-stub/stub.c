@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.21 2000/10/25 05:41:24 steve Exp $"
+#ident "$Id: stub.c,v 1.22 2000/10/28 17:55:03 steve Exp $"
 #endif
 
 /*
@@ -35,20 +35,31 @@ static FILE*out;
 static void show_expression(ivl_expr_t net, unsigned ind)
 {
       const ivl_expr_type_t code = ivl_expr_type(net);
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
 
       switch (code) {
 
+	  case IVL_EX_BINARY:
+	    fprintf(out, "%*s<\"%c\" width=%u, %s>\n", ind, "",
+		    ivl_expr_opcode(net), width, sign);
+	    show_expression(ivl_expr_oper1(net), ind+3);
+	    show_expression(ivl_expr_oper2(net), ind+3);
+	    break;
+
+	  case IVL_EX_CONCAT:
+	    fprintf(out, "%*s<concat width=%u, %s>\n", ind, "", width, sign);
+	    break;
+
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(net);
-		unsigned width = ivl_expr_width(net);
 		unsigned idx;
 
 		fprintf(out, "%*s<number=%u'b", ind, "", width);
 		for (idx = width ;  idx > 0 ;  idx -= 1)
 		      fprintf(out, "%c", bits[idx-1]);
 
-		fprintf(out, ", %s>\n", ivl_expr_signed(net)? "signed"
-			: "unsigned");
+		fprintf(out, ", %s>\n", sign);
 		break;
 	  }
 
@@ -63,8 +74,8 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    fprintf(out, "%*s<signal=%s, width=%u>\n", ind, "",
-		    ivl_expr_name(net), ivl_expr_width(net));
+	    fprintf(out, "%*s<signal=%s, width=%u, %s>\n", ind, "",
+		    ivl_expr_name(net), width, sign);
 	    break;
 
 	  default:
@@ -325,6 +336,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.22  2000/10/28 17:55:03  steve
+ *  stub for the concat operator.
+ *
  * Revision 1.21  2000/10/25 05:41:24  steve
  *  Get target signal from nexus_ptr.
  *
