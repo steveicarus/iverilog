@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.174 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.175 2001/11/06 04:32:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1996,6 +1996,11 @@ NetEBShift::~NetEBShift()
 {
 }
 
+bool NetEBShift::has_width() const
+{
+      return left_->has_width();
+}
+
 NetEBShift* NetEBShift::dup_expr() const
 {
       NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
@@ -2411,6 +2416,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.175  2001/11/06 04:32:37  steve
+ *  shift expressions can have definite widths.
+ *
  * Revision 1.174  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.220 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: netlist.h,v 1.221 2001/11/06 04:32:37 steve Exp $"
 #endif
 
 /*
@@ -2225,6 +2225,11 @@ class NetEBShift : public NetEBinary {
       ~NetEBShift();
 
       virtual bool set_width(unsigned w);
+
+	// A shift expression only needs the left expression to have a
+	// definite with to give the expression a definite width.
+      virtual bool has_width() const;
+
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree();
 
@@ -2851,6 +2856,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.221  2001/11/06 04:32:37  steve
+ *  shift expressions can have definite widths.
+ *
  * Revision 1.220  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *
