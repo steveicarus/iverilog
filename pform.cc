@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.92 2002/04/15 00:04:23 steve Exp $"
+#ident "$Id: pform.cc,v 1.93 2002/04/18 18:38:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -97,17 +97,21 @@ static hname_t hier_name(const char*tail)
 void pform_set_timescale(int unit, int prec,
 			 const char*file, unsigned lineno)
 {
+      bool first_flag = true;
+
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
 
-      if (pform_timescale_file)
+      if (pform_timescale_file) {
 	    free(pform_timescale_file);
+	    first_flag = false;
+      }
 
       pform_timescale_file = strdup(file);
       pform_timescale_line = lineno;
 
-      if (warn_timescale && (pform_modules.size() > 0)) {
+      if (warn_timescale && first_flag && (pform_modules.size() > 0)) {
 	    cerr << file << ":" << lineno << ": warning: "
 		 << "Some modules have no timescale. This may cause"
 		 << endl;
@@ -1229,6 +1233,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.93  2002/04/18 18:38:37  steve
+ *  Fix first_file test for timescale warning.
+ *
  * Revision 1.92  2002/04/15 00:04:23  steve
  *  Timescale warnings.
  *
