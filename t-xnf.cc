@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.8 1999/08/18 04:00:02 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.9 1999/08/25 22:22:08 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -71,6 +71,7 @@ class target_xnf  : public target_t {
       void end_design(ostream&os, const Design*);
       void signal(ostream&os, const NetNet*);
       void logic(ostream&os, const NetLogic*);
+      void bufz(ostream&os, const NetBUFZ*);
       void udp(ostream&os,  const NetUDP*);
 
     private:
@@ -313,6 +314,21 @@ void target_xnf::logic(ostream&os, const NetLogic*net)
       os << "END" << endl;
 }
 
+void target_xnf::bufz(ostream&os, const NetBUFZ*net)
+{
+      static int warned_once=0;
+      if (!warned_once) {
+	    cerr << "Warning: BUFZ object found for xnf output."
+		  " Try -Fnobufz." << endl;
+	    warned_once=1;
+      }
+      os << "SYM, " << mangle(net->name()) << ", BUF, LIBVER=2.0.0" << endl;
+      assert(net->pin_count() == 2);
+      draw_pin(os, "O", net->pin(0));
+      draw_pin(os, "I", net->pin(1));
+      os << "END" << endl;
+}
+
 void target_xnf::udp(ostream&os, const NetUDP*net)
 {
       string lca = net->attribute("XNF-LCA");
@@ -333,6 +349,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.9  1999/08/25 22:22:08  steve
+ *  handle bufz in XNF backend.
+ *
  * Revision 1.8  1999/08/18 04:00:02  steve
  *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
  *
