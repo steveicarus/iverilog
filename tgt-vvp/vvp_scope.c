@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.45 2001/08/10 00:40:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.46 2001/09/14 04:15:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -239,6 +239,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_NE:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
 		  sprintf(result, "L_%s", vvp_mangle_id(ivl_lpm_name(lpm)));
 		  return result;
@@ -275,7 +277,7 @@ static const char* draw_net_input(ivl_nexus_t nex)
 
 	/* If this nexus already has a label, then its input is
 	   already figured out. Just return the existing label. */
-      const char*nex_private = (const char*)ivl_nexus_get_private(nex);
+      char*nex_private = (char*)ivl_nexus_get_private(nex);
       if (nex_private)
 	    return nex_private;
 
@@ -365,42 +367,11 @@ static const char* draw_net_input(ivl_nexus_t nex)
  */
 static void draw_input_from_net(ivl_nexus_t nex)
 {
-#if 0
-      unsigned idx;
-      ivl_signal_t sig = 0;
-      unsigned sig_pin = 0;
-
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_signal_t tmp = ivl_nexus_ptr_sig(ptr);
-
-	    if (tmp == 0)
-		  continue;
-
-	    if (sig == 0) {
-		  sig = tmp;
-		  sig_pin = ivl_nexus_ptr_pin(ptr);
-		  continue;
-	    }
-
-	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(sig)) < 0) {
-		  sig = tmp;
-		  sig_pin = ivl_nexus_ptr_pin(ptr);
-		  continue;
-	    }
-
-      }
-
-      assert(sig);
-      fprintf(vvp_out, "V_%s[%u]", 
-	      vvp_mangle_id(ivl_signal_name(sig)), sig_pin);
-#else
       const char*nex_private = (const char*)ivl_nexus_get_private(nex);
       if (nex_private == 0)
 	    nex_private = draw_net_input(nex);
       assert(nex_private);
       fprintf(vvp_out, "%s", nex_private);
-#endif
 }
 
 /*
@@ -957,6 +928,101 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
+/*
+ * Draw == and != gates. This is done as XNOR functors to compare each
+ * pair of bits. The result is combined with a wide and, or a NAND if
+ * this is a NE.
+ */
+static void draw_lpm_eq(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned idx;
+
+      const char*and = ivl_lpm_type(net) == IVL_LPM_CMP_NE? "NAND" : "AND";
+
+      ivl_nexus_t nex;
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    fprintf(vvp_out, "L_%s/L0C%u .functor XNOR, ",
+		    vvp_mangle_id(ivl_lpm_name(net)), idx);
+
+	    nex = ivl_lpm_data(net, idx);
+	    draw_input_from_net(nex);
+
+	    fprintf(vvp_out, ", ");
+
+	    nex = ivl_lpm_datab(net, idx);
+	    draw_input_from_net(nex);
+
+	    fprintf(vvp_out, ", C<0>, C<0>;\n");
+      }
+
+      if (width <= 4) {
+	    fprintf(vvp_out, "L_%s .functor %s",
+		    vvp_mangle_id(ivl_lpm_name(net)), and);
+
+	    for (idx = 0 ;  idx < width ;  idx += 1)
+		  fprintf(vvp_out, ", L_%s/L0C%u",
+			  vvp_mangle_id(ivl_lpm_name(net)), idx);
+
+	    for (idx = width ;  idx < 4 ;  idx += 1)
+		  fprintf(vvp_out, ", C<1>");
+
+	    fprintf(vvp_out, ";\n");
+
+      } else {
+	    unsigned lwidth = width;
+	    unsigned level = 1;
+	    unsigned cnt;
+
+	    unsigned bit;
+	    unsigned first;
+	    unsigned last;
+
+	    cnt = (lwidth + 3) / 4;
+
+	    while (cnt > 1) {
+		  for (idx = 0 ;  idx < cnt ;  idx += 1) {
+			first = idx*4;
+			last = first + 4;
+			if (last > lwidth)
+			      last = lwidth;
+
+			fprintf(vvp_out, "L_%s/L%uC%u .functor AND",
+				vvp_mangle_id(ivl_lpm_name(net)),
+				level, idx);
+
+			for (bit = first ;  bit < last ;  bit += 1)
+			      fprintf(vvp_out, ", L_%s/L%uC%u",
+				      vvp_mangle_id(ivl_lpm_name(net)),
+				      level-1, bit);
+
+			for (bit = last ;  bit < (idx*4+4) ;  bit += 1)
+			      fprintf(vvp_out, ", C<1>");
+
+			fprintf(vvp_out, ";\n");
+		  }
+
+		  lwidth = cnt;
+		  level += 1;
+		  cnt = (lwidth + 3) / 4;
+	    }
+
+	    fprintf(vvp_out, "L_%s .functor %s",
+		    vvp_mangle_id(ivl_lpm_name(net)), and);
+
+	    for (idx = 0 ;  idx < lwidth ;  idx += 1)
+		  fprintf(vvp_out, ", L_%s/L%uC%u",
+			  vvp_mangle_id(ivl_lpm_name(net)),
+			  level-1, idx);
+
+	    for (idx = lwidth ;  idx < 4 ;  idx += 1)
+		  fprintf(vvp_out, ", C<1>");
+
+	    fprintf(vvp_out, ";\n");
+      }
+}
+
 static void draw_lpm_mux(ivl_lpm_t net)
 {
       ivl_nexus_t s;
@@ -1023,6 +1089,11 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	    draw_lpm_add(net);
+	    return;
+
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_NE:
+	    draw_lpm_eq(net);
 	    return;
 
 	  case IVL_LPM_CMP_GE:
@@ -1128,6 +1199,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.46  2001/09/14 04:15:46  steve
+ *  Generate code for identity comparators.
+ *
  * Revision 1.45  2001/08/10 00:40:45  steve
  *  tgt-vvp generates code that skips nets as inputs.
  *
