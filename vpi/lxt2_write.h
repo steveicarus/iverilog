@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Tony Bybell.
+ * Copyright (c) 2003-2004 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,12 @@
 #include <inttypes.h>
 #include <zlib.h>
 
+#if defined _MSC_VER || defined __MINGW32__
+#define fseeko fseek
+#define ftello ftell
+#endif
+
+
 #define LXT2_WR_HDRID (0x1380)
 #define LXT2_WR_VERSION (0x0001)
 
@@ -50,7 +56,11 @@ typedef uint64_t lxttime_t;
 
 
 #ifndef _MSC_VER
-        #define LXT2_WR_LLD "%lld"
+	#ifdef __MINGW32__
+		#define LXT2_WR_LLD "%I64d"
+	#else
+        	#define LXT2_WR_LLD "%lld"
+	#endif
         #define LXT2_WR_LLDESC(x) x##LL
         #define LXT2_WR_ULLDESC(x) x##ULL
 #else
@@ -94,7 +104,7 @@ enum LXT2_WR_Encodings {
 
 	LXT2_WR_ENC_BLACKOUT,
 
-	LXT2_WR_DICT_START,
+	LXT2_WR_DICT_START
 	};
 
 /*
@@ -137,10 +147,10 @@ unsigned int num_map_entries;
 lxt2_wr_ds_Tree *mapdict_head;
 lxt2_wr_ds_Tree *mapdict_curr;
 
-unsigned int position;
-unsigned int zfacname_predec_size, zfacname_size, zfacgeometry_size;
-unsigned int zpackcount, zpackcount_cumulative;
-unsigned int current_chunk, current_chunkz;
+off_t position;
+off_t zfacname_predec_size, zfacname_size, zfacgeometry_size;
+off_t zpackcount, zpackcount_cumulative;
+off_t current_chunk, current_chunkz;
 
 struct lxt2_wr_symbol *sym[LXT2_WR_SYMPRIME];
 struct lxt2_wr_symbol **sorted_facs;
@@ -150,7 +160,7 @@ int numfacbytes;
 int longestname;
 
 int numsections, numblock;
-unsigned int facname_offset, facgeometry_offset;
+off_t facname_offset, facgeometry_offset;
 
 lxttime_t mintime, maxtime;
 unsigned int timegranule;
@@ -184,6 +194,11 @@ char initial_value;
 char zmode[4];				/* fills in with "wb0".."wb9" */
 unsigned int gzbufpnt;
 unsigned char gzdest[LXT2_WR_GZWRITE_BUFFER + 4];	/* enough for zlib buffering */
+
+char *lxtname;
+off_t break_size;
+off_t break_header_size;
+unsigned int break_number;
 };
 
 
@@ -242,6 +257,9 @@ struct lxt2_wr_trace *	lxt2_wr_init(const char *name);
 void 			lxt2_wr_flush(struct lxt2_wr_trace *lt);
 void 			lxt2_wr_close(struct lxt2_wr_trace *lt);
 
+			/* for dealing with very large traces, split into multiple files approximately "siz" in length */
+void 			lxt2_wr_set_break_size(struct lxt2_wr_trace *lt, off_t siz);
+
 			/* 0 = no compression, 9 = best compression, 4 = default */
 void			lxt2_wr_set_compression_depth(struct lxt2_wr_trace *lt, unsigned int depth);
 
@@ -261,7 +279,7 @@ struct lxt2_wr_symbol *	lxt2_wr_symbol_add(struct lxt2_wr_trace *lt, const char 
 struct lxt2_wr_symbol *	lxt2_wr_symbol_alias(struct lxt2_wr_trace *lt, const char *existing_name, const char *alias, int msb, int lsb);
 void			lxt2_wr_symbol_bracket_stripping(struct lxt2_wr_trace *lt, int doit);
 
-			/* each granule is LXT2_WR_GRANULE_SIZE (32 or 64) timesteps, default is 8 per section */
+			/* each granule is LXT2_WR_GRANULE_SIZE (32 or 64) timesteps, default is 256 per section */
 void 			lxt2_wr_set_maxgranule(struct lxt2_wr_trace *lt, unsigned int maxgranule);
 
 			/* time ops */

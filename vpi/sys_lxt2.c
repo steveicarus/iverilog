@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.5 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_lxt2.c,v 1.6 2004/02/06 18:23:30 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -48,6 +48,7 @@ static enum lxm_optimum_mode_e {
       LXM_SPEED = 2
 } lxm_optimum_mode = LXM_SPEED;
 
+static off_t lxt2_file_size_limit = 0x40000000UL;
 
 /*
  * The lxt_scope head and current pointers are used to keep a scope
@@ -424,6 +425,7 @@ static void open_dumpfile(const char*path)
 	    lxt2_wr_set_initial_value(dump_file, 'x');
 	    lxt2_wr_set_compression_depth(dump_file, 4);
 	    lxt2_wr_set_partial_on(dump_file, 1);
+	    lxt2_wr_set_break_size(dump_file, lxt2_file_size_limit);
 
             atexit((void(*)(void))close_dumpfile);
       }
@@ -815,6 +817,9 @@ void sys_lxt2_register()
 
 /*
  * $Log: sys_lxt2.c,v $
+ * Revision 1.6  2004/02/06 18:23:30  steve
+ *  Add support for lxt2 break size
+ *
  * Revision 1.5  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

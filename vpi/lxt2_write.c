@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Tony Bybell.
+ * Copyright (c) 2003-2004 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -645,8 +645,8 @@ if((lt)&&(lt->numfacs))
 		lt->zfacname_predec_size = lt->zpackcount;
 	
 		gzflush_buffered(lt, 1);
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 		lt->zfacname_size = lt->position - lt->zfacname_size;
 
 		lt->zhandle = gzdopen(dup(fileno(lt->handle)), "wb9");
@@ -671,11 +671,12 @@ if((lt)&&(lt->numfacs))
 			}
 
 		gzflush_buffered(lt, 1);
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
+		lt->break_header_size = lt->position;			/* in case we need to emit multiple lxt2s with same header */
 		lt->zfacgeometry_size = lt->position - lt->facgeometry_offset;
 
-		fseek(lt->handle, lt->facname_offset + 12, SEEK_SET);
+		fseeko(lt->handle, lt->facname_offset + 12, SEEK_SET);
 		lxt2_wr_emit_u32(lt, lt->zfacname_size);		/* backpatch sizes... */
 		lxt2_wr_emit_u32(lt, lt->zfacname_predec_size);
 		lxt2_wr_emit_u32(lt, lt->zfacgeometry_size);
@@ -695,13 +696,15 @@ struct lxt2_wr_trace *lxt2_wr_init(const char *name)
 {
 struct lxt2_wr_trace *lt=(struct lxt2_wr_trace *)calloc(1, sizeof(struct lxt2_wr_trace));
 
-if(!(lt->handle=fopen(name, "wb")))
+if((!name)||(!(lt->handle=fopen(name, "wb"))))
 	{
 	free(lt);
 	lt=NULL;
 	}
 	else
 	{
+	lt->lxtname = strdup(name);
+
 	lxt2_wr_emit_u16(lt, LXT2_WR_HDRID);
 	lxt2_wr_emit_u16(lt, LXT2_WR_VERSION);
 	lxt2_wr_emit_u8 (lt, LXT2_WR_GRANULE_SIZE);	/* currently 32 or 64 */
@@ -712,6 +715,18 @@ if(!(lt->handle=fopen(name, "wb")))
 	}
 
 return(lt);
+}
+
+
+/*
+ * setting break size
+ */
+void lxt2_wr_set_break_size(struct lxt2_wr_trace *lt, off_t siz)
+{
+if(lt)
+	{
+	lt->break_size = siz;
+	}
 }
 
 
@@ -938,6 +953,72 @@ return(lxt2_wr_set_time64(lt, lt->maxtime + timeval));
 }
 
 
+/*
+ * file size limiting/header cloning...
+ */
+static void lxt2_wr_emit_do_breakfile(struct lxt2_wr_trace *lt)
+{
+unsigned int len = strlen(lt->lxtname);
+int i;
+char *tname = malloc(len + 30);
+FILE *f2, *clone;
+off_t cnt, seg;
+char buf[32768];
+
+for(i=len;i>0;i--)
+	{
+	if(lt->lxtname[i]=='.') break;
+	}
+
+if(!i)
+	{
+	sprintf(tname, "%s_%03d.lxt", lt->lxtname, ++lt->break_number);
+	}
+	else
+	{
+	memcpy(tname, lt->lxtname, i);
+	sprintf(tname+i, "_%03d.lxt", ++lt->break_number);
+	}
+
+f2 = fopen(tname, "wb");
+if(!f2)	/* if error, keep writing to same output file...sorry */
+	{
+	free(tname);
+	return;
+	}
+
+clone = fopen(lt->lxtname, "rb");
+if(!clone)
+	{ /* this should never happen */
+	fclose(f2);
+	unlink(tname);
+	free(tname);
+	return;
+	}
+
+/* clone original header */
+for(cnt = 0; cnt < lt->break_header_size; cnt += sizeof(buf))
+	{
+	seg = lt->break_header_size - cnt;
+	if(seg > sizeof(buf))
+		{
+		seg = sizeof(buf);
+		}
+
+	fread(buf, seg, 1, clone);
+	fwrite(buf, seg, 1, f2);
+	}
+
+fclose(clone);
+fclose(lt->handle);
+lt->handle = f2;
+free(tname);
+}
+
+
+/*
+ * emit granule
+ */
 void lxt2_wr_flush_granule(struct lxt2_wr_trace *lt, int do_finalize)
 {
 unsigned int idx_nbytes, map_nbytes, i, j;
@@ -945,7 +1026,8 @@ struct lxt2_wr_symbol *s;
 unsigned int partial_iter;
 unsigned int iter, iter_hi;
 unsigned char using_partial, using_partial_zip=0;
-unsigned int current_iter_pos=0;
+off_t current_iter_pos=0;
+int early_flush;
 
 if(lt->flush_valid)
 	{
@@ -969,11 +1051,25 @@ if((using_partial=(lt->partial)&&(lt->numfacs>lt->partial_iter)))
 	partial_iter = lt->numfacs;
 	}
 
-
 if(!lt->timegranule)
 	{
-	fseek(lt->handle, 0L, SEEK_END);
-	lt->current_chunk=lt->position = ftell(lt->handle);
+	int attempt_break_state = 2;
+
+	do	{
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->current_chunk=lt->position = ftello(lt->handle);
+
+		if((lt->break_size)&&(attempt_break_state==2)&&(lt->position >= lt->break_size)&&(lt->position != lt->break_header_size))
+			{
+			lxt2_wr_emit_do_breakfile(lt);
+			attempt_break_state--;
+			}
+			else
+			{
+			attempt_break_state = 0;
+			}
+		} while(attempt_break_state);
+
 	/* fprintf(stderr, "First chunk position is %d (0x%08x)\n", lt->current_chunk, lt->current_chunk); */
 	lxt2_wr_emit_u32(lt, 0);	/* size of this section (uncompressed) */
 	lxt2_wr_emit_u32(lt, 0);	/* size of this section (compressed)   */
@@ -1060,8 +1156,8 @@ if(using_partial)
 
 	if(using_partial_zip)
 		{
-		fseek(lt->handle, 0L, SEEK_END);
-		current_iter_pos = ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		current_iter_pos = ftello(lt->handle);
 		lxt2_wr_emit_u32(lt, 0);		/* size of this section (compressed)   */
 		lxt2_wr_emit_u32(lt, partial_length+9);	/* size of this section (uncompressed) */
 		lxt2_wr_emit_u32(lt, iter);		/* begin iter of section               */
@@ -1130,14 +1226,14 @@ for(j=iter;j<iter_hi;j++)
 
 if(using_partial_zip)
 	{
-	unsigned int clen;
+	off_t clen;
 
 	gzflush_buffered(lt, 1);
-	fseek(lt->handle, 0L, SEEK_END);
-	lt->position=ftell(lt->handle);
+	fseeko(lt->handle, 0L, SEEK_END);
+	lt->position=ftello(lt->handle);
 
 	clen = lt->position - current_iter_pos - 12;
-	fseek(lt->handle, current_iter_pos, SEEK_SET);
+	fseeko(lt->handle, current_iter_pos, SEEK_SET);
 
 	lt->zpackcount_cumulative+=lt->zpackcount;
 
@@ -1152,16 +1248,26 @@ if(using_partial_zip)
 
 lt->timepos = 0;
 lt->timegranule++;
-if((lt->timegranule>=lt->maxgranule)||(do_finalize))
+
+if(lt->break_size)
 	{
-	unsigned int unclen, clen;
+	early_flush = (ftello(lt->handle) >= lt->break_size);
+	}
+	else
+	{
+	early_flush = 0;
+	}
+
+if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
+	{
+	off_t unclen, clen;
 	lxt2_wr_ds_Tree *dt, *dt2;
 	lxt2_wr_dslxt_Tree *ds, *ds2;
 
 	if(using_partial_zip)
 		{
-		fseek(lt->handle, 0L, SEEK_END);
-		current_iter_pos = ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		current_iter_pos = ftello(lt->handle);
 		lxt2_wr_emit_u32(lt, 0);		/* size of this section (compressed)   */
 		lxt2_wr_emit_u32(lt, 0);		/* size of this section (uncompressed) */
 		lxt2_wr_emit_u32(lt, ~0);		/* control section		       */
@@ -1233,14 +1339,14 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 
 	if(using_partial_zip)
 		{
-		unsigned int clen;
+		off_t clen;
 	
 		gzflush_buffered(lt, 1);
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 	
 		clen = lt->position - current_iter_pos - 12;
-		fseek(lt->handle, current_iter_pos, SEEK_SET);
+		fseeko(lt->handle, current_iter_pos, SEEK_SET);
 
 		lt->zpackcount_cumulative+=lt->zpackcount;
 		lxt2_wr_emit_u32(lt, clen);
@@ -1251,8 +1357,8 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 		gzflush_buffered(lt, 1);
 		}
 
-        fseek(lt->handle, 0L, SEEK_END);
-        lt->position=ftell(lt->handle);
+        fseeko(lt->handle, 0L, SEEK_END);
+        lt->position=ftello(lt->handle);
 	/* fprintf(stderr, "file position after dumping dict: %d 0x%08x\n", lt->position, lt->position); */
 
 	unclen = lt->zpackcount;
@@ -1260,7 +1366,7 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 
 	/* fprintf(stderr, "%d/%d un/compressed bytes in section\n", unclen, clen); */
 
-	fseek(lt->handle, lt->current_chunk, SEEK_SET);
+	fseeko(lt->handle, lt->current_chunk, SEEK_SET);
 	if(using_partial_zip)
 		{
 		lxt2_wr_emit_u32(lt, lt->zpackcount_cumulative);
@@ -1434,7 +1540,7 @@ if(len>32) len=32;
 
 len--;
 
-for(i=0;i<len;i++)
+for(i=0;i<=len;i++)
 	{
 	*(p++) = '0' | ((value & (1<<(len-i)))!=0);
 	}
