@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.10 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.11 2000/11/22 21:18:42 steve Exp $"
 #endif
 
 /*
@@ -133,9 +133,16 @@ start
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn)
 {
+      assert(asn);
+
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
       NetNet*ce = cexp? cexp->synthesize(des) : 0;
+
+      if (d == 0) {
+	    cerr << asn->get_line() << ": internal error: "
+		 << " not a simple signal? " << *asn->rval() << endl;
+      }
 
       assert(d);
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.10 2000/05/13 20:55:47 steve Exp $"
+#ident "$Id: synth.cc,v 1.11 2000/11/22 21:18:42 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -42,6 +42,7 @@ class do_expr  : public proc_match_t {
       Design*des_;
 
       virtual int assign(NetAssign*);
+      virtual int assign_nb(NetAssignNB*);
       virtual int event_wait(NetEvWait*);
 	//virtual int assign_mem(NetAssignMem*);
       virtual int condit(NetCondit*);
@@ -49,6 +50,21 @@ class do_expr  : public proc_match_t {
 
 
 int do_expr::assign(NetAssign*stmt)
+{
+      if (dynamic_cast<NetESignal*>(stmt->rval()))
+	    return 0;
+
+      NetNet*tmp = stmt->rval()->synthesize(des_);
+      if (tmp == 0)
+	    return 0;
+
+      NetESignal*tmpe = new NetESignal(tmp);
+      stmt->set_rval(tmpe);
+
+      return 0;
+}
+
+int do_expr::assign_nb(NetAssignNB*stmt)
 {
       if (dynamic_cast<NetESignal*>(stmt->rval()))
 	    return 0;
@@ -145,6 +161,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.11  2000/11/22 21:18:42  steve
+ *  synthesize the rvalue of <= statements.
+ *
  * Revision 1.10  2000/05/13 20:55:47  steve
  *  Use yacc based synthesizer.
  *
