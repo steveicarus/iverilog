@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.116 2003/07/05 20:42:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.117 2003/07/26 04:06:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -328,6 +328,13 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
       nex->ptrs_[top-1].l.sig= net;
 }
 
+/*
+ * Add the pin of the logic object to the nexus, and return the nexus
+ * pointer used for the pin.
+ *
+ * NOTE: This pointer is only valid until another pin is added to the
+ * nexus.
+ */
 static ivl_nexus_ptr_t nexus_log_add(ivl_nexus_t nex,
 				     ivl_net_logic_t net,
 				     unsigned pin)
@@ -640,10 +647,6 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->pins_[0] = (ivl_nexus_t) net->pin(0).nexus()->t_cookie();
       ivl_nexus_ptr_t out_ptr = nexus_log_add(obj->pins_[0], obj, 0);
 
-      assert(net->pin(1).nexus()->t_cookie());
-      obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
-      nexus_log_add(obj->pins_[1], obj, 1);
-
 
       switch (net->pin(0).drive0()) {
 	  case Link::HIGHZ:
@@ -680,6 +683,10 @@ bool dll_target::bufz(const NetBUFZ*net)
 	    out_ptr->drive1 = IVL_DR_SUPPLY;
 	    break;
       }
+
+      assert(net->pin(1).nexus()->t_cookie());
+      obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
+      nexus_log_add(obj->pins_[1], obj, 1);
 
 	/* Attach the logic device to the scope that contains it. */
 
@@ -2136,6 +2143,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.117  2003/07/26 04:06:58  steve
+ *  Watch out for moving nexus_ptr while adding pins to nexus.
+ *
  * Revision 1.116  2003/07/05 20:42:08  steve
  *  Fix some enumeration warnings.
  *
