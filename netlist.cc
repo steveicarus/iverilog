@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.153 2001/01/06 06:31:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.154 2001/01/18 03:16:35 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1141,8 +1141,9 @@ const Link& NetMult::pin_Sum(unsigned idx) const
  *    2+N -- Result[N]
  */
 
-NetMux::NetMux(const string&n, unsigned wi, unsigned si, unsigned sw)
-: NetNode(n, 2+wi+sw+wi*si), width_(wi), size_(si), swidth_(sw)
+NetMux::NetMux(NetScope*s, const string&n,
+	       unsigned wi, unsigned si, unsigned sw)
+: NetNode(s, n, 2+wi+sw+wi*si), width_(wi), size_(si), swidth_(sw)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr",  0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock", 0);
@@ -2472,6 +2473,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.154  2001/01/18 03:16:35  steve
+ *  NetMux needs a scope. (PR#115)
+ *
  * Revision 1.153  2001/01/06 06:31:58  steve
  *  declaration initialization for time variables.
  *

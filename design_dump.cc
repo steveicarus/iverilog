@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.109 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.110 2001/01/18 03:16:35 steve Exp $"
 #endif
 
 /*
@@ -213,7 +213,8 @@ void NetMult::dump_node(ostream&o, unsigned ind) const
 
 void NetMux::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Multiplexer (NetMux): " << name() << endl;
+      o << setw(ind) << "" << "Multiplexer (NetMux): " << name()
+	<< " scope=" << scope()->name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -999,6 +1000,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.110  2001/01/18 03:16:35  steve
+ *  NetMux needs a scope. (PR#115)
+ *
  * Revision 1.109  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

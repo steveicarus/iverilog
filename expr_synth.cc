@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.18 2000/11/29 23:16:18 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.19 2001/01/18 03:16:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -425,7 +425,7 @@ NetNet* NetETernary::synthesize(Design *des)
       osig->local_flag(true);
 
       string oname = des->local_symbol(path);
-      NetMux *mux = new NetMux(oname, width, 2, 1);
+      NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(tsig->pin(idx), mux->pin_Data(idx, 1));
 	    connect(fsig->pin(idx), mux->pin_Data(idx, 0));
@@ -444,6 +444,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.19  2001/01/18 03:16:35  steve
+ *  NetMux needs a scope. (PR#115)
+ *
  * Revision 1.18  2000/11/29 23:16:18  steve
  *  Do not delete synthesized signals used in expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.194 2001/01/16 02:44:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.195 2001/01/18 03:16:35 steve Exp $"
 #endif
 
 /*
@@ -726,7 +726,8 @@ class NetMult  : public NetNode {
 class NetMux  : public NetNode {
 
     public:
-      NetMux(const string&n, unsigned width, unsigned size, unsigned selw);
+      NetMux(NetScope*scope, const string&n,
+	     unsigned width, unsigned size, unsigned selw);
       ~NetMux();
 
       unsigned width() const;
@@ -2851,6 +2852,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.195  2001/01/18 03:16:35  steve
+ *  NetMux needs a scope. (PR#115)
+ *
  * Revision 1.194  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

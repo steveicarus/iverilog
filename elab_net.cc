@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.58 2001/01/16 04:51:52 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.59 2001/01/18 03:16:35 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1627,7 +1627,7 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	   The inputs are the 0 (false) connected to fal_sig and 1
 	   (true) connected to tru_sig.  */
 
-      NetMux*mux = new NetMux(des->local_symbol(path), dwidth, 2, 1);
+      NetMux*mux = new NetMux(scope, des->local_symbol(path), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
       for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
@@ -1797,6 +1797,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.59  2001/01/18 03:16:35  steve
+ *  NetMux needs a scope. (PR#115)
+ *
  * Revision 1.58  2001/01/16 04:51:52  steve
  *  Fix out-of-bound pins for comparator (PR#108)
  *
