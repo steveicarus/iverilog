@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 2002/06/23 20:10:51 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 2002/07/14 23:32:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -75,7 +75,7 @@ cfparse.h cfparse.c: cfparse.y
 
 
 main.o: main.c globals.h
-	$(CC) $(CFLAGS) -c -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' -DEXEEXT='"@EXEEXT@"' $(srcdir)/main.c
+	$(CC) $(CFLAGS) -c -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 
 build_string.o: build_string.c globals.h
 lexor.o: lexor.c parse.h globals.h

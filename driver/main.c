@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.42 2002/07/14 23:11:35 steve Exp $"
+#ident "$Id: main.c,v 1.43 2002/07/14 23:32:31 steve Exp $"
 
 # include "config.h"
 
@@ -84,7 +84,7 @@ extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
 const char*mtm  = 0;
-const char*opath = "a.out" EXEEXT;
+const char*opath = "a.out";
 const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
@@ -746,6 +746,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.43  2002/07/14 23:32:31  steve
+ *  No longer need the .exe on generated files.
+ *
  * Revision 1.42  2002/07/14 23:11:35  steve
  *  Do temp file creation by hand.
  *
