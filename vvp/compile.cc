@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.25 2001/04/01 06:40:45 steve Exp $"
+#ident "$Id: compile.cc,v 1.26 2001/04/01 07:22:08 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -83,6 +83,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
@@ -707,6 +708,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.26  2001/04/01 07:22:08  steve
+ *  Implement the less-then and %or instructions.
+ *
  * Revision 1.25  2001/04/01 06:40:45  steve
  *  Support empty statements for hanging labels.
  *

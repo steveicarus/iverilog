@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.18 2001/04/01 06:12:14 steve Exp $"
+#ident "$Id: vthread.cc,v 1.19 2001/04/01 07:22:08 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -212,7 +212,7 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 {
       unsigned eq = 1;
       unsigned eeq = 1;
-      unsigned lt = 2;
+      unsigned lt = 0;
 
       unsigned idx1 = cp->bit_idx1;
       unsigned idx2 = cp->bit_idx2;
@@ -221,8 +221,13 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 	    unsigned lv = thr_get_bit(thr, idx1);
 	    unsigned rv = thr_get_bit(thr, idx2);
 
-	    if (lv != rv)
+	    if (lv > rv) {
+		  lt = 0;
 		  eeq = 0;
+	    } else if (lv < rv) {
+		  lt = 1;
+		  eeq = 0;
+	    }
 	    if (eq != 2) {
 		  if ((lv == 0) && (rv != 0))
 			eq = 0;
@@ -235,6 +240,9 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
       }
+
+      if (eq == 2)
+	    lt = 2;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -410,6 +418,36 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_OR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb == 1) || (rb == 1)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else if ((lb == 0) && (rb == 0)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else {
+		  thr_put_bit(thr, idx1, 2);
+	    }
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
+}
+
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
@@ -442,6 +480,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.19  2001/04/01 07:22:08  steve
+ *  Implement the less-then and %or instructions.
+ *
  * Revision 1.18  2001/04/01 06:12:14  steve
  *  Add the bitwise %and instruction.
  *
