@@ -1,16 +1,92 @@
+		THE ICARUS VERILOG COMPILATION SYSTEM 
+				5/7/99		
 
-THE ICARUS VERILOG COMPILATION SYSTEM
 
-This tool includes a parser that parses Verilog (plus extensions) and
+1.0 What is ICARUS Verilog(IVL)?
+
+Icarus Verilog is intended to compile ALL of the Verilog HDL as described
+in the IEEE-1364 standard. Of course, it's not quite there yet. I do
+handle a mix of structural and behavioral constructs.
+ 
+IVL is not aimed at being a simulator in the traditional sense, but a
+compiler that generates code employed by back-end tools. These back-
+end tools currently include a simulator written in C++ called VVM 
+and an XNF (Xilinx Netlist Format) generator. See "vvm.txt" and
+"xnf.txt" for further details on the back-end processors.
+
+2.0 How IVL Works
+
+This tool includes a parser which read in Verilog (plus extensions) and
 generates an internal netlist. The netlist is passed to various
 processing steps that transform the design to more optimal/practical
 forms, then passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
 switches.
 
-INVOKING ivl
+2.1 Parse
 
-The vl command is the compiler driver, that invokes the parser,
+The verilog compiler starts by parsing the verilog source file. The
+output of the parse in a list of Module objects in PFORM. The pform
+(see pform.h) is mostly a direct reflection of the compilation
+unit. There may be dangling references, and it is not yet clear which
+module is the root.
+
+2.2 Elaboration
+
+This phase takes the pform and generates a netlist. The driver selects
+(by user request or lucky guess) the root module to elaborate,
+resolves references and expands the instantiations to form the design
+netlist.
+
+The elaborate() function performs the elaboration.
+
+2.3 Optimization
+
+This is actually a collection of processing steps that perform
+optimizations that do not depend on the target technology. Examples of
+some useful transformations would be,
+
+	- eliminate null effect circuitry,
+	- combinational reduction
+	- Constant propagation
+
+The actual functions performed are specified on the command line by
+the -F flags (See below).
+
+2.4 Code Generation
+
+This step takes the design netlist and uses it to drive the code
+generator. (See target.h.) This may require transforming the
+design to suit the technology.
+
+The emit() method of the Design class performs this step. It runs
+through the design elements, calling target functions as need arises
+to generate actual output.
+
+The target code generator to used is given by the -t flag on the
+command line.
+
+3.0 Building/Installing IVL
+
+Unpack the tar-ball and cd into the verilog-######### directory.
+
+./configure
+make
+cd vvm
+make
+
+Now install the files in an appropriate place. (The makefiles by
+default install in /usr/local unless you specify a different prefix
+with the --prefix=<path> flag to the configure command.) Do this as
+root.
+
+make install
+cd vvm
+make install
+
+4.0 Running IVL
+
+The ivl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator.
 
 Usage: ivl <options>... file
@@ -23,7 +99,7 @@ Usage: ivl <options>... file
 	variety of processing steps. The steps will be applied in
 	order, with the output of one uses as the input to the next.
 
-	The function is specified by name. Use the "vl -h" command to
+	The function is specified by name. Use the "ivl -h" command to
 	get a list of configured function names.
 
 -f <assign>
@@ -34,12 +110,12 @@ Usage: ivl <options>... file
 
 	The useful keys are defined by the functions and the target in
 	use. These assignments are specifically useful for passing
-	target specific information to the target backend, or
+	target specific information to the target back-end, or
 	options/parameters to optimization functions, if any are defined.
 
 -N <file>
 	Dump the elaborated netlist to the named file. The netlist is
-	the fully elaborated netlist, after all the function modules
+	the folly elaborated netlist, after all the function modules
 	are applied and right before the output generator is
 	called. This is an aid for debugging the compiler, and the
 	output generator in particular.
@@ -56,13 +132,13 @@ Usage: ivl <options>... file
 	the compiler.
 
 -s <module>
-	Normally, vl will elaborate the only top-level module in the
-	source file. If there are multiple modules, use this option to
-	select the module to be used as the top-level module.
+	Normally, ivl will elaborate the only module in the source
+	file. If there are multiple modules, use this option to select
+	the module to be used as the top-level module.
 
 -t <name>
 	Select the output format for the compiled result. Use the
-	"vl -h" command to get a list of configured targets.
+	"ivl -h" command to get a list of configured targets.
 
 ATTRIBUTES
 
@@ -96,47 +172,51 @@ between processing steps. Processing steps that are aware of others
 may place attributes on netlist objects to communicate information to
 later steps.
 
-HOW IT WORKS -- STAGES OF PROCESSING
+4.1 EXAMPLES
 
-* Parse
+Example: Compiling "hello.vl"
 
-The verilog compiler starts by parsing the verilog source file. The
-output of the parse in a list of Module objects in PFORM. The pform
-(see pform.h) is mostly a direct reflection of the compilation
-unit. There may be dangling references, and it is not yet clear which
-module is the root.
+------------------------ hello.vl ----------------------------
+module main();
+ 
+initial 
+  begin
+    $display("Hi there");
+    $finish ;
+  end
 
-* Elaboration
+endmodule
 
-This phase takes the pform and generates a netlist. The driver selects
-(by user request or lucky guess) the root module to elaborate,
-resolves references and expands the instantiations to form the design
-netlist.
+--------------------------------------------------------------
 
-The elaborate() function performs the elaboration.
+Insure that "ivl" is on your search path, and the library 
+libvvm.a is available.
 
-* Optimization
+For csh - 
 
-This is actually a collection of processing steps that perform
-optimizations that do not depend on the target technology. Examples of
-some useful transformations would be,
+setenv PATH /usr/local/bin:$PATH
+setenv LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 
-	- eliminate null effect circuitry,
-	- combinational reduction
-	- Constant propogation
+ivl -t vvm -o hello.cc hello.vl
+g++ hello.cc -o hello -lvvm
 
-The actual functions performed are specified on the command line by
-the -F flags.
+To run the program
 
-* Code Generation
+./hello
 
-This step takes the design netlist and uses it to drive the code
-generator. (See target.h.) This may require transforming the
-design to suit the technology.
 
-The emit() method of the Design class performs this step. It runs
-through the design elements, calling target functions as need arises
-to generate actual output.
+5.0 Unsupported Constructs
 
-The target code generator to used is given by the -t flag on the
-command line.
+IVL is in development - as such it still only supports a subset
+of verilog.  Below is a description of some of the currently unsupported
+verilog features.
+
+Event Control - ??
+
+Lvalue bit ranges - Example: regvalue [7:3] = 5'b0;
+
+Non-blocking Assignment - Example: regvalue <= 5'b0;
+
+Complex delay expressions - ??
+
+Tasks/functions
