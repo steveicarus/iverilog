@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.39 1999/12/16 01:20:17 steve Exp $"
+#ident "$Id: lexor.lex,v 1.40 1999/12/31 03:24:30 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -97,6 +97,7 @@ W [ \t\b\f\r]+
 "~^" { return K_NXOR; }
 "^~" { return K_NXOR; }
 "~&" { return K_NAND; }
+"->" { return K_TRIGGER; }
 
 
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.77 1999/12/30 19:06:14 steve Exp $"
+#ident "$Id: parse.y,v 1.78 1999/12/31 03:24:31 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -74,7 +74,7 @@ extern void lex_end_table();
 %token <number> NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
-%token K_LOR K_LAND K_NAND K_NOR K_NXOR
+%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
@@ -127,7 +127,7 @@ extern void lex_end_table();
 %type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
 %type <expr>  delay_value
-%type <exprs> delay delay_opt delay_value_list
+%type <exprs> delay1 delay3 delay3_opt
 %type <exprs> expression_list
 %type <exprs> assign assign_list
 
@@ -275,20 +275,43 @@ defparam_assign_list
 	| defparam_assign_list ',' defparam_assign
 	;
 
-delay
+delay1
 	: '#' delay_value
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
 		  (*tmp)[0] = $2;
 		  $$ = tmp;
 		}
-	| '#' '(' delay_value_list ')'
-		{ $$ = $3;
+	;
+
+delay3
+	: '#' delay_value
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $2;
+		  $$ = tmp;
+		}
+	| '#' '(' delay_value ')'
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $3;
+		  $$ = tmp;
+		}
+	| '#' '(' delay_value ',' delay_value ')'
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
+		  (*tmp)[0] = $3;
+		  (*tmp)[1] = $5;
+		  $$ = tmp;
+		}
+	| '#' '(' delay_value ',' delay_value ',' delay_value ')'
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(3);
+		  (*tmp)[0] = $3;
+		  (*tmp)[1] = $5;
+		  (*tmp)[1] = $7;
+		  $$ = tmp;
 		}
 	;
 
-delay_opt
-	: delay { $$ = $1; }
-	|       { $$ = 0; }
+delay3_opt
+	: delay3 { $$ = $1; }
+	|        { $$ = 0; }
 	;
 
 delay_value
@@ -310,18 +333,11 @@ delay_value
 		  $$ = tmp;
 		  delete $1;
 		}
-	;
-
-delay_value_list
-	: expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	| delay_value_list ',' expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
-		  delete $1;
-		  $$ = tmp;
+	| '(' expression ':' expression ':' expression ')'
+		{ yyerror(@2, "sorry: (min:typ:max) not supported.");
+		  $$ = $4;
+		  delete $2;
+		  delete $6;
 		}
 	;
 
@@ -694,12 +710,6 @@ expr_primary
 		}
 	| '(' expression ')'
 		{ $$ = $2; }
-	| '(' expression ':' expression ':' expression ')'
-		{ yyerror(@2, "sorry: (min:typ:max) not supported.");
-		  $$ = $4;
-		  delete $2;
-		  delete $6;
-		}
 	| '{' expression_list '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
 		  tmp->set_file(@2.text);
@@ -1051,7 +1061,7 @@ module_item
 		  }
 		  delete $3;
 		}
-	| K_trireg charge_strength_opt range_opt delay_opt list_of_variables ';'
+	| K_trireg charge_strength_opt range_opt delay3_opt list_of_variables ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
 		  delete $3;
 		}
@@ -1070,14 +1080,14 @@ module_item
 		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
-	| gatetype delay_opt gate_instance_list ';'
+	| gatetype delay3_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
 		}
-	| IDENTIFIER delay_opt gate_instance_list ';'
+	| IDENTIFIER delay3_opt gate_instance_list ';'
 		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
 		}
-	| K_assign drive_strength_opt delay_opt assign_list ';'
+	| K_assign drive_strength_opt delay3_opt assign_list ';'
 		{ pform_make_pgassign_list($4, $3, @1.text, @1.first_line); }
 	| K_assign error '=' expression ';'
 	| K_always statement
@@ -1141,7 +1151,7 @@ net_decl_assign
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
 		}
-	| delay IDENTIFIER '=' expression
+	| delay1 IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($2);
 		  PGAssign*tmp = pform_make_pgassign(id, $4, $1);
 		  tmp->set_file(@2.text);
@@ -1504,6 +1514,10 @@ statement
 		{ yyerror(@1, "sorry: procedural force assign not supported.");
 		  $$ = 0;
 		}
+	| K_TRIGGER IDENTIFIER ';'
+		{ yyerror(@1, "sorry: event trigger not supported.");
+		  $$ = 0;
+		}
 	| K_forever statement
 		{ PForever*tmp = new PForever($2);
 		  tmp->set_file(@1.text);
@@ -1624,10 +1638,9 @@ statement
 		{ $$ = 0;
 		  yyerror(@3, "error: Error in while loop condition.");
 		}
-	| delay statement_opt
+	| delay1 statement_opt
 		{ PExpr*del = (*$1)[0];
-		  if ($1->count() != 1)
-			yyerror(@1, "sorry: delay lists not supported here.");
+		  assert($1->count() == 1);
 		  PDelayStatement*tmp = new PDelayStatement(del, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1655,19 +1668,17 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| lpvalue '=' delay expression ';'
-		{ PExpr*del = (*$3)[0];
-		  if ($3->count() != 1)
-			yyerror(@1, "sorry: Delay lists not supported here.");
+	| lpvalue '=' delay1 expression ';'
+		{ assert($3->count() == 1);
+		  PExpr*del = (*$3)[0];
 		  PAssign*tmp = new PAssign($1,del,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| lpvalue K_LE delay expression ';'
-		{ PExpr*del = (*$3)[0];
-		  if ($3->count() != 1)
-			yyerror(@1, "sorry: Delay lists not supported here.");
+	| lpvalue K_LE delay1 expression ';'
+		{ assert($3->count() == 1);
+		  PExpr*del = (*$3)[0];
 		  PAssignNB*tmp = new PAssignNB($1,del,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1679,9 +1690,25 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
+	| lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
+		{ PAssign*tmp = new PAssign($1,$7,$8);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  yyerror(@3, "sorry: repeat event control not supported.");
+		  delete $5;
+		  $$ = tmp;
+		}
 	| lpvalue K_LE event_control expression ';'
 		{ yyerror(@1, "sorry: Event controls not supported here.");
 		  PAssignNB*tmp = new PAssignNB($1,$4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
+		{ yyerror(@1, "sorry: Event controls not supported here.");
+		  delete $5;
+		  PAssignNB*tmp = new PAssignNB($1,$8);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
