@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.26 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.27 2001/10/20 00:11:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -152,13 +152,28 @@ NetEConst* NetEBComp::eval_eqeq_()
       const verinum&lv = l->value();
       const verinum&rv = r->value();
 
-      if (lv.len() < rv.len())
-	    return 0;
+      unsigned s_len = lv.len();
+      if (rv.len() < s_len) s_len = rv.len();
 
       verinum result(verinum::V1, 1);
-      for (unsigned idx = 0 ; idx < lv.len(); idx += 1) {
+      for (unsigned idx = 0 ; idx < s_len; idx += 1) {
 	    if (lv[idx] != rv[idx])
 		  result = verinum::V0;
+      }
+
+      // If one operand was wider than the other, check that the
+      // remaining bits are all zero
+      if (lv.len() > s_len) {
+	    for (unsigned idx = s_len; idx < lv.len(); idx += 1) {
+		  if (lv[idx] != 0)
+			result = verinum::V0;
+	    }
+      }
+      if (rv.len() > s_len) {
+	    for (unsigned idx = s_len; idx < rv.len(); idx += 1) {
+		  if (rv[idx] != 0)
+			result = verinum::V0;
+	    }
       }
 
       return new NetEConst(result);
@@ -998,6 +1013,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.27  2001/10/20 00:11:24  steve
+ *  Evaluate constant == when operands differ in width.
+ *
  * Revision 1.26  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
