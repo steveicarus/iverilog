@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.5 2001/03/29 05:16:25 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.6 2001/03/31 02:00:44 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -145,6 +145,27 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
       return lv;
 }
 
+static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
+{
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      struct vector_info lv;
+      struct vector_info rv;
+
+      assert(ivl_expr_width(le) == wid);
+      assert(ivl_expr_width(re) == wid);
+
+      lv = draw_eval_expr_wid(le, wid);
+      rv = draw_eval_expr_wid(re, wid);
+
+      fprintf(vvp_out, "    %%add %u, %u, %u;\n", lv.base, rv.base, wid);
+
+      clr_vector(rv);
+
+      return lv;
+}
+
 static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info rv;
@@ -158,11 +179,51 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	    rv = draw_binary_expr_eq(exp);
 	    break;
 
+	  case '+':
+	    rv = draw_binary_expr_plus(exp, wid);
+	    break;
+
 	  default:
+	    fprintf(stderr, "vvp.tgt error: unsupported binary (%c)\n",
+		    ivl_expr_opcode(exp));
 	    assert(0);
       }
 
       return rv;
+}
+
+static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
+{
+      unsigned idx, off;
+      struct vector_info res;
+
+      assert(wid >= ivl_expr_width(exp));
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      idx = ivl_expr_parms(exp);
+      off = 0;
+      while (idx > 0) {
+	    ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
+	    unsigned awid = ivl_expr_width(arg);
+
+	    struct vector_info avec = draw_eval_expr_wid(arg, awid);
+
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base+off,
+		    avec.base, avec.wid);
+	    clr_vector(avec);
+
+	    idx -= 1;
+	    off += awid;
+      }
+
+      if (off < wid) {
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    res.base+off, wid-off);
+      }
+
+      return res;
 }
 
 /*
@@ -299,8 +360,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
       struct vector_info res;
 
       switch (ivl_expr_type(exp)) {
-	  case IVL_EX_NONE:
 	  default:
+	    fprintf(stderr, "vvp error: unhandled expr type: %u\n",
+		    ivl_expr_type(exp));
+	  case IVL_EX_NONE:
 	    assert(0);
 	    res.base = 0;
 	    res.wid = 0;
@@ -308,6 +371,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 
 	  case IVL_EX_BINARY:
 	    res = draw_binary_expr(exp, wid);
+	    break;
+
+	  case IVL_EX_CONCAT:
+	    res = draw_concat_expr(exp, wid);
 	    break;
 
 	  case IVL_EX_NUMBER:
@@ -333,6 +400,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.6  2001/03/31 02:00:44  steve
+ *  Generate code for + and concat expressions.
+ *
  * Revision 1.5  2001/03/29 05:16:25  steve
  *  Handle truncation/padding of numbers.
  *
