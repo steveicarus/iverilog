@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.80 2003/06/13 19:10:46 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.81 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -690,6 +690,21 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
 void Module::dump(ostream&out) const
 {
+      if (attributes.begin() != attributes.end()) {
+	    out << "(* ";
+	    for (map<string,PExpr*>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end() ; idx++ ) {
+		    if (idx != attributes.begin()) {
+			out << " , ";
+		    }
+		    out << (*idx).first;
+		    if ((*idx).second) {
+			out << " = " << *(*idx).second;
+		    }
+	    }
+	    out << " *)  ";
+      }
+
       out << "module " << name_ << ";" << endl;
 
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
@@ -863,6 +878,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.81  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.80  2003/06/13 19:10:46  steve
  *  Properly manage real variables in subscopes.
  *

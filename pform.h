@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.71 2003/06/13 00:27:09 steve Exp $"
+#ident "$Id: pform.h,v 1.72 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -117,7 +117,8 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const char*, const char*file, unsigned lineno);
+extern void pform_startmodule(const char*, const char*file, unsigned lineno,
+			      svector<named_pexpr_t*>*attr);
 extern void pform_module_set_ports(svector<Module::port_t*>*);
 
 /* This function is used to support the port definition in a
@@ -281,6 +282,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.72  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.71  2003/06/13 00:27:09  steve
  *  Task/functions can have signed ports.
  *

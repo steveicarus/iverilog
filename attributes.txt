@@ -39,6 +39,17 @@ warning.)
     used, for example, to mark embedded test bench code.
 
 
+* Attributes for modules
+
+(* ivl_synthesis_cell *)
+
+    [XXX implementation is started but not complete]
+    If this value is attached to a module during synthesis, that
+    module will be considered a target architecture primitive, and
+    its interior will not be synthesized further.  The module can
+    therefore hold a model for simulation purposes.
+
+
 * Attributes for signals (wire/reg/integer/tri/etc.)
 
 [ none defined yet ]

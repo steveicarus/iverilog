@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.31 2003/06/13 19:10:45 steve Exp $"
+#ident "$Id: Module.h,v 1.32 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include  <list>
@@ -109,6 +109,8 @@ class Module : public LineInfo {
 	/* Keep a table of datum variables declared in the module. */
       map<hname_t,PData*>datum;
 
+      map<string,PExpr*> attributes;
+
 	/* These are the timescale for this module. The default is
 	   set by the `timescale directive. */
       int time_unit, time_precision;
@@ -163,6 +165,10 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.32  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.31  2003/06/13 19:10:45  steve
  *  Properly manage real variables in subscopes.
  *

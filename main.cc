@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.67 2003/04/24 05:25:27 steve Exp $"
+#ident "$Id: main.cc,v 1.68 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -632,6 +632,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.68  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.67  2003/04/24 05:25:27  steve
  *  Dump design even on errors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.141 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.142 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -697,6 +697,10 @@ void NetScope::dump(ostream&o) const
       }
       o << endl;
 
+      for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
+	    o << "    (* " << attr_key(idx) << " = "
+	      << attr_value(idx) << " *)" << endl;
+
       o << "    timescale = 10e" << time_unit() << " / 10e"
 	<< time_precision() << endl;
 
@@ -1043,6 +1047,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.142  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.141  2003/06/18 03:55:18  steve
  *  Add arithmetic shift operators.
  *

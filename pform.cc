@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.115 2003/06/13 19:10:46 steve Exp $"
+#ident "$Id: pform.cc,v 1.116 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -198,7 +198,8 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const char*name, const char*file, unsigned lineno)
+void pform_startmodule(const char*name, const char*file, unsigned lineno,
+		       svector<named_pexpr_t*>*attr)
 {
       assert( pform_cur_module == 0 );
 
@@ -218,6 +219,12 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno)
 		 << " inherited from another file." << endl;
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
 		 << ": ...: The inherited timescale is here." << endl;
+      }
+      if (attr) {
+	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		      named_pexpr_t*tmp = (*attr)[idx];
+		      pform_cur_module->attributes[tmp->name] = tmp->parm;
+	      }
       }
 }
 
@@ -1470,6 +1477,10 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.116  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.115  2003/06/13 19:10:46  steve
  *  Properly manage real variables in subscopes.
  *

@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.290 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.291 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 /*
@@ -2968,7 +2968,7 @@ class NetEBitSel  : public NetExpr {
  * design. The scope doesn't represent any executable hardware, but is
  * just a handle that netlist processors can use to grab at the design.
  */
-class NetScope {
+class NetScope : public Attrib {
 
     public:
       enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
@@ -3306,6 +3306,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.291  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.290  2003/06/18 03:55:18  steve
  *  Add arithmetic shift operators.
  *
@@ -3337,207 +3341,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *
  * Revision 1.282  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
- *
- * Revision 1.281  2003/03/15 04:46:29  steve
- *  Better organize the NetESFunc return type guesses.
- *
- * Revision 1.280  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.279  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.278  2003/03/03 02:22:41  steve
- *  Scope names stored only as basename.
- *
- * Revision 1.277  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.276  2003/02/07 02:47:57  steve
- *  NetEBDiv handles real value constant expressions.
- *
- * Revision 1.275  2003/02/06 17:50:23  steve
- *  Real constants have no defined vector width
- *
- * Revision 1.274  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.273  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.272  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.271  2002/12/07 02:49:24  steve
- *  Named event triggers can take hierarchical names.
- *
- * Revision 1.270  2002/12/05 02:14:33  steve
- *  Support bit select in constant expressions.
- *
- * Revision 1.269  2002/11/09 01:40:19  steve
- *  Postpone parameter width check to evaluation.
- *
- * Revision 1.268  2002/11/02 03:27:52  steve
- *  Allow named events to be referenced by
- *  hierarchical names.
- *
- * Revision 1.267  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.266  2002/10/21 01:42:08  steve
- *  Synthesizer support for synchronous begin-end blocks.
- *
- * Revision 1.265  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.264  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.263  2002/09/26 01:13:14  steve
- *  Synthesize async set/reset is certain cases.
- *
- * Revision 1.262  2002/09/16 00:30:33  steve
- *  Add to synth2 support for synthesis of
- *  synchronous logic. This includes DFF enables
- *  modeled by if/then/else.
- *
- * Revision 1.261  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.260  2002/08/19 00:06:12  steve
- *  Allow release to handle removal of target net.
- *
- * Revision 1.259  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.258  2002/08/16 05:18:27  steve
- *  Fix intermix of node functors and node delete.
- *
- * Revision 1.257  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.256  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.255  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.254  2002/07/29 00:00:28  steve
- *  Asynchronous synthesis of sequential blocks.
- *
- * Revision 1.253  2002/07/24 16:24:45  steve
- *  Rewrite find_similar_event to support doing
- *  all event matching and replacement in one
- *  shot, saving time in the scans.
- *
- * Revision 1.252  2002/07/07 22:32:15  steve
- *  Asynchronous synthesis of case statements.
- *
- * Revision 1.251  2002/07/03 05:35:00  steve
- *  Fix scope search for events.
- *
- * Revision 1.250  2002/07/02 03:02:57  steve
- *  Change the signal to a net when assignments go away.
- *
- * Revision 1.249  2002/07/01 00:54:21  steve
- *  synth_asych of if/else requires redirecting the target
- *  if sub-statements. Use NetNet objects to manage the
- *  situation.
- *
- * Revision 1.248  2002/06/30 02:21:32  steve
- *  Add structure for asynchronous logic synthesis.
- *
- * Revision 1.247  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.246  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.245  2002/06/23 18:22:43  steve
- *  spelling error.
- *
- * Revision 1.244  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.243  2002/06/19 04:20:03  steve
- *  Remove NetTmp and add NetSubnet class.
- *
- * Revision 1.242  2002/06/08 23:42:46  steve
- *  Add NetRamDq synthsesis from memory l-values.
- *
- * Revision 1.241  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.240  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.239  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.238  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.237  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.236  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
- *
- * Revision 1.235  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- *
- * Revision 1.234  2002/04/21 17:43:13  steve
- *  implement nex_input for behavioral statements.
- *
- * Revision 1.233  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.232  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.231  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.230  2002/01/22 01:40:04  steve
- *  Precalculate constant results of memory index expressions.
- *
- * Revision 1.229  2002/01/19 19:02:08  steve
- *  Pass back target errors processing conditionals.
  */
 #endif

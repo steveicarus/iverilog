@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.23 2003/06/16 00:34:08 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.24 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -40,6 +40,7 @@
 # include  "PWire.h"
 # include  "Statement.h"
 # include  "netlist.h"
+# include  "util.h"
 # include  <typeinfo>
 # include  <assert.h>
 
@@ -153,6 +154,16 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    if (val == 0) continue;
 	    scope->defparams[(*cur).first] = val;
       }
+
+	// Evaluate the attributes. Evaluate them in the scope of the
+	// module that the attribute is attached to. Is this correct?
+      unsigned nattr;
+      attrib_list_t*attr = evaluate_attributes(attributes, nattr, des, scope);
+
+      for (unsigned idx = 0 ;  idx < nattr ;  idx += 1)
+	    scope->attribute(attr[idx].key, attr[idx].val);
+
+      delete[]attr;
 
 
 	// Tasks introduce new scopes, so scan the tasks in this
@@ -538,6 +549,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.24  2003/06/20 00:53:19  steve
+ *  Module attributes from the parser
+ *  through to elaborated form.
+ *
  * Revision 1.23  2003/06/16 00:34:08  steve
  *  Functions can have sub-scope.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.180 2003/06/19 18:54:49 steve Exp $"
+#ident "$Id: parse.y,v 1.181 2003/06/20 00:53:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1420,7 +1420,7 @@ assign_list
      items, and finally an end marker. */
 
 module  : attribute_list_opt module_start IDENTIFIER
-		{ pform_startmodule($3, @2.text, @2.first_line); }
+		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
 	  list_of_ports_opt ';'
 		{ pform_module_set_ports($5); }
 	  module_item_list_opt
