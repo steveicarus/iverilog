@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.3 2001/12/29 23:59:06 steve Exp $"
+#ident "$Id: event.cc,v 1.4 2002/01/24 04:17:46 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -54,7 +54,7 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 	    bool edge_p = true;
 
 	      /* If there is an edge detect lookup table, then use the
-		 out input and new input to detect whether this is the
+		 old input and new input to detect whether this is the
 		 requested edge. If there is no edge table, then any
 		 set is a match. */
 	    if (edge) {
@@ -148,6 +148,9 @@ void compile_event(char*label, char*type,
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.4  2002/01/24 04:17:46  steve
+ *  Spelling in comment.
+ *
  * Revision 1.3  2001/12/29 23:59:06  steve
  *  push events through event/or lists.
  *
