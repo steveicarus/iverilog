@@ -21,11 +21,12 @@ extern FILE*yyin;
 };
 
 
-%token K_FUNCTOR K_THREAD K_VAR
+%token K_FUNCTOR K_THREAD K_VAR K_vpi_call
 
 %token <text> T_INSTR
 %token <text> T_LABEL
 %token <numb> T_NUMBER
+%token <text> T_STRING
 %token <text> T_SYMBOL
 
 %type <textv> symbols
@@ -68,6 +69,15 @@ statement
 	|         T_INSTR operands_opt ';'
 		{ compile_code(0, $1, $2);
 		}
+
+  /* %vpi_call statements are instructions that have unusual operand
+     requirements so are handled by their own rules. */
+
+	| T_LABEL K_vpi_call T_STRING ';'
+		{ compile_vpi_call($1, $3); }
+
+	|         K_vpi_call T_STRING ';'
+		{ compile_vpi_call(0, $2); }
 
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. */

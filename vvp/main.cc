@@ -17,16 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: main.cc,v 1.2 2001/03/16 01:44:34 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "schedule.h"
+# include  "vpi_priv.h"
 # include  <stdio.h>
 # include  <getopt.h>
 
+
+const char*module_path = ".";
+unsigned module_cnt = 0;
+const char*module_tab[64];
 
 int main(int argc, char*argv[])
 {
@@ -35,9 +40,15 @@ int main(int argc, char*argv[])
       const char*dump_path = 0;
       const char*design_path = 0;
 
-      while ((opt = getopt(argc, argv, "D:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "D:M:m:")) != EOF) switch (opt) {
 	  case 'D':
 	    dump_path = optarg;
+	    break;
+	  case 'M':
+	    module_path = optarg;
+	    break;
+	  case 'm':
+	    module_tab[module_cnt++] = optarg;
 	    break;
 	  default:
 	    flag_errors += 1;
@@ -54,6 +65,7 @@ int main(int argc, char*argv[])
       design_path = argv[optind];
 
       compile_init();
+      vpip_load_modules(module_cnt, module_tab, module_path);
       compile_design(design_path);
       compile_cleanup();
 
@@ -69,6 +81,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.2  2001/03/16 01:44:34  steve
+ *  Add structures for VPI support, and all the %vpi_call
+ *  instruction. Get linking of VPI modules to work.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

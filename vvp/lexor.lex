@@ -13,6 +13,13 @@
       yylval.text = strdup(yytext);
       return T_LABEL; }
 
+  /* String tokens are parsed here. Return as the token value the
+     contents of the string without the enclosing quotes. */
+\"[^\"]*\" {
+      yytext[strlen(yytext)-1] = 0;
+      yylval.text = strdup(yytext+1);
+      return T_STRING; }
+
 
   /* These are some keywords that are recognized. */
 ".functor" { return K_FUNCTOR; }
@@ -21,7 +28,12 @@
 
 
   /* instructions start with a % character. The compiler decides what
-     kind of instruction this really is. */
+     kind of instruction this really is. The few exceptions (that have
+     exceptional parameter requirements) are listed first. */
+
+"%vpi_call" {
+      return K_vpi_call; }
+
 "%"[.$_/a-zA-Z0-9]+ {
       yylval.text = strdup(yytext);
       return T_INSTR; }

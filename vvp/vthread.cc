@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.3 2001/03/11 23:06:49 steve Exp $"
+#ident "$Id: vthread.cc,v 1.4 2001/03/16 01:44:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "codes.h"
 # include  "schedule.h"
 # include  "functor.h"
+# include  "vpi_priv.h"
 # include  <assert.h>
 
 struct vthread_s {
@@ -53,6 +54,7 @@ void vthread_run(vthread_t thr)
 	    vvp_code_t cp = codespace_index(thr->pc);
 	    thr->pc += 1;
 
+	    assert(cp->opcode);
 	    bool rc = (cp->opcode)(thr, cp);
 	    if (rc == false)
 		  return;
@@ -110,8 +112,19 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
+{
+      printf("thread %p: %%vpi_call\n", thr);
+      vpip_execute_vpi_call(cp->handle);
+      return true;
+}
+
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.4  2001/03/16 01:44:34  steve
+ *  Add structures for VPI support, and all the %vpi_call
+ *  instruction. Get linking of VPI modules to work.
+ *
  * Revision 1.3  2001/03/11 23:06:49  steve
  *  Compact the vvp_code_s structure.
  *

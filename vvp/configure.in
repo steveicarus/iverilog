@@ -10,4 +10,45 @@ AC_PROG_INSTALL
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
 
+# --
+# Look for a dl library to use. First look for the standard dlopen
+# functions, and failing that look for the HP specific shl_load function.
+
+AC_CHECK_HEADERS(dlfcn.h dl.h, break)
+
+DLLIB=''
+AC_CHECK_LIB(dl,dlopen,[DLLIB=-ldl])
+if test -z "$DLLIB" ; then
+AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
+fi
+AC_SUBST(DLLIB)
+
+
+# The -rdynamic flag is used by iverilog when compiling the target,
+# to know how to export symbols of the main program to loadable modules
+# that are brought in by -ldl. VPI support requires this.
+AC_MSG_CHECKING("for -rdynamic compiler flag")
+
+rdynamic=-rdynamic
+case "${host}" in
+
+    *-*-netbsd*)
+	rdynamic="-Wl,--export-dynamic"
+	;;
+
+    *-*-solaris*)
+	rdynamic=""
+	;;
+
+    *-*-cygwin*)
+	rdynamic=""
+	;;
+
+    *-*-hpux*)
+	rdynamic="-E"
+	;;
+esac
+AC_SUBST(rdynamic)
+AC_MSG_RESULT($rdynamic)
+
 AC_OUTPUT(Makefile)

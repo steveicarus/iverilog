@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.1 2001/03/14 19:26:58 steve Exp $
+ *  $Id: vpi.txt,v 1.2 2001/03/16 01:44:34 steve Exp $
  */
 
 
@@ -47,16 +47,43 @@ access to the system task call by calling back the VPI requesting the
 handle. It uses the handle, in turn, to get hold of the operands for
 the task.
 
-In VPI Land, there is a vpiHandle for each system task call. However,
-since only one is accessible at a time, there is no need for more then
-the one that is active. Therefore, vvp will construct the vpiHande for
-the task call at the time the call is made.
-
 All that vvp needs to know about a system task call is the handle of
-the system task (created by the vpi_register_systf function) and the
-arguments of the actual call. The arguments are tricky because the
-list has no bound, even though each particular call in the Verilog
-source has a specific set of parameters.
+the system task definitions (created by the vpi_register_systf
+function) and the arguments of the actual call. The arguments are
+tricky because the list has no bound, even though each particular call
+in the Verilog source has a specific set of parameters.
+
+Since each call takes a fixed number of parameters, the input source
+can include in the statement the list of arguments. The argument list
+will not fit in a single generated instruction, but a vpiHandle that
+refers to a vpiSysTfCall does. Therefore, the compiler can take the
+long argument list and form a vpiSysTaskCall object. The generated
+instruction then only needs to be a %vpi_call with the single parameter
+that is the vpiHandle for the call.
+
+
+SYSTEM FUNCTION CALLS
+
+System function calls are similar to system tasks. The only
+differences are that all the arguments are input only, and there is a
+single magic output that is the return value. The same %vpi_call can
+even be used to call a function.
+
+System functions, like system tasks, can only be called from thread
+code. However, they can appear in expressions, even when that
+expression is entirely structural. The desired effect is achieved by
+writing a wrapper thread that calls the function when inputs change,
+and that writes the output into the containing expression.
+
+
+SYSTEM TASK/FUNCTION ARGUMENTS
+
+The arguments to each system task or call are not stored in the
+instruction op-code, but in the vpiSysTfCall object that the compiler
+creates and that the %vpi_call instruction ultimately refers to. All
+the arguments must be some sort of object that can be represented by a
+vpiHandle at compile time.
+
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

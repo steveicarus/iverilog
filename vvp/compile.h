@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: compile.h,v 1.3 2001/03/16 01:44:34 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -77,6 +77,7 @@ struct comp_operands_s {
 typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
+extern void compile_vpi_call(char*label, char*name);
 
 /*
  * The parser uses this function to declare a thread. The start_sym is
@@ -97,6 +98,10 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.3  2001/03/16 01:44:34  steve
+ *  Add structures for VPI support, and all the %vpi_call
+ *  instruction. Get linking of VPI modules to work.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

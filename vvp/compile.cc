@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.3 2001/03/11 23:06:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.4 2001/03/16 01:44:34 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -25,6 +25,7 @@
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
+# include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "parse_misc.h"
 # include  <malloc.h>
@@ -297,6 +298,30 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       free(mnem);
 }
 
+void compile_vpi_call(char*label, char*name)
+{
+      vvp_cpoint_t ptr = codespace_allocate();
+
+	/* First, I can give the label a value that is the current
+	   codespace pointer. Don't need the text of the label after
+	   this is done. */
+      if (label) {
+	    sym_set_value(sym_codespace, label, ptr);
+	    free(label);
+      }
+
+	/* Create an instruction in the code space. */
+      vvp_code_t code = codespace_index(ptr);
+      code->opcode = &of_VPI_CALL;
+
+	/* Create a vpiHandle that bundles the call information, and
+	   store that handle in the instruction. */
+      code->handle = vpip_build_vpi_call(name);
+
+	/* Done with the lexor-allocated name string. */
+      free(name);
+}
+
 /*
  * When the parser finds a thread statement, I create a new thread
  * with the start address referenced by the program symbol passed to
@@ -391,6 +416,10 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.4  2001/03/16 01:44:34  steve
+ *  Add structures for VPI support, and all the %vpi_call
+ *  instruction. Get linking of VPI modules to work.
+ *
  * Revision 1.3  2001/03/11 23:06:49  steve
  *  Compact the vvp_code_s structure.
  *
