@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.12 2002/01/09 03:15:23 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.13 2002/04/07 00:46:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -91,13 +91,12 @@ static s_vpi_vlog_info vpi_vlog_info;
 
 int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
-    if (vlog_info_p != 0)
-    {
-		*vlog_info_p = vpi_vlog_info;
-        return 1;
+    if (vlog_info_p != 0) {
+	  *vlog_info_p = vpi_vlog_info;
+	  return 1;
+    } else {
+	  return 0;
     }
-    else
-        return 0;
 }
 
 void vpi_set_vlog_info(int argc, char** argv)
@@ -191,6 +190,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.13  2002/04/07 00:46:21  steve
+ *  minor cleanup of formatting.
+ *
  * Revision 1.12  2002/01/09 03:15:23  steve
  *  Add vpi_get_vlog_info support.
  *
