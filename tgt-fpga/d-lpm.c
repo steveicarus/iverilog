@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.1 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.2 2003/08/07 05:18:04 steve Exp $"
 #endif
 
 /*
@@ -47,7 +47,10 @@ static edif_cell_t lpm_cell_buf(void)
       edif_cell_portconfig(tmp, 0, "Result", IVL_SIP_OUTPUT);
       edif_cell_portconfig(tmp, 1, "Data",   IVL_SIP_INPUT);
 
-      edif_cell_pstring(tmp,  "LPM_TYPE",  "LPM_OR");
+	/* A buffer is an inverted inverter. */
+      edif_cell_port_pstring(tmp, 0, "LPM_Polarity", "INVERT");
+
+      edif_cell_pstring(tmp,  "LPM_TYPE",  "LPM_INV");
       edif_cell_pinteger(tmp, "LPM_Width", 1);
       edif_cell_pinteger(tmp, "LPM_Size",  1);
       return tmp;
@@ -68,6 +71,99 @@ static edif_cell_t lpm_cell_inv(void)
       edif_cell_pinteger(tmp, "LPM_Width", 1);
       edif_cell_pinteger(tmp, "LPM_Size",  1);
       return tmp;
+}
+
+static edif_cell_t lpm_cell_bufif0(void)
+{
+      static edif_cell_t tmp = 0;
+
+      if (tmp != 0)
+	    return tmp;
+
+      tmp = edif_xcell_create(xlib, "BUFIF1", 3);
+      edif_cell_portconfig(tmp, 0, "TriData",  IVL_SIP_OUTPUT);
+      edif_cell_portconfig(tmp, 1, "Data",     IVL_SIP_INPUT);
+      edif_cell_portconfig(tmp, 2, "EnableDT", IVL_SIP_INPUT);
+
+      edif_cell_port_pstring(tmp, 2, "LPM_Polarity", "INVERT");
+
+      edif_cell_pstring(tmp,  "LPM_TYPE",  "LPM_BUSTRI");
+      edif_cell_pinteger(tmp, "LPM_Width", 1);
+      return tmp;
+}
+
+static edif_cell_t lpm_cell_bufif1(void)
+{
+      static edif_cell_t tmp = 0;
+
+      if (tmp != 0)
+	    return tmp;
+
+      tmp = edif_xcell_create(xlib, "BUFIF1", 3);
+      edif_cell_portconfig(tmp, 0, "TriData",  IVL_SIP_OUTPUT);
+      edif_cell_portconfig(tmp, 1, "Data",     IVL_SIP_INPUT);
+      edif_cell_portconfig(tmp, 2, "EnableDT", IVL_SIP_INPUT);
+
+      edif_cell_pstring(tmp,  "LPM_TYPE",  "LPM_BUSTRI");
+      edif_cell_pinteger(tmp, "LPM_Width", 1);
+      return tmp;
+}
+
+static edif_cell_t lpm_cell_or(unsigned siz)
+{
+      unsigned idx;
+      edif_cell_t cell;
+      char name[32];
+
+      sprintf(name, "or%u", siz);
+
+      cell = edif_xlibrary_findcell(xlib, name);
+      if (cell != 0)
+	    return cell;
+
+      cell = edif_xcell_create(xlib, strdup(name), siz+1);
+
+      edif_cell_portconfig(cell, 0, "Result0", IVL_SIP_OUTPUT);
+
+      for (idx = 0 ;  idx < siz ;  idx += 1) {
+	    sprintf(name, "Data%ux0", idx);
+	    edif_cell_portconfig(cell, idx+1, strdup(name), IVL_SIP_INPUT);
+      }
+
+      edif_cell_pstring(cell,  "LPM_TYPE",  "LPM_OR");
+      edif_cell_pinteger(cell, "LPM_Width", 1);
+      edif_cell_pinteger(cell, "LPM_Size",  siz);
+
+      return cell;
+}
+
+static edif_cell_t lpm_cell_nor(unsigned siz)
+{
+      unsigned idx;
+      edif_cell_t cell;
+      char name[32];
+
+      sprintf(name, "nor%u", siz);
+
+      cell = edif_xlibrary_findcell(xlib, name);
+      if (cell != 0)
+	    return cell;
+
+      cell = edif_xcell_create(xlib, strdup(name), siz+1);
+
+      edif_cell_portconfig(cell, 0, "Result0", IVL_SIP_OUTPUT);
+      edif_cell_port_pstring(cell, 0, "LPM_Polarity", "INVERT");
+
+      for (idx = 0 ;  idx < siz ;  idx += 1) {
+	    sprintf(name, "Data%ux0", idx);
+	    edif_cell_portconfig(cell, idx+1, strdup(name), IVL_SIP_INPUT);
+      }
+
+      edif_cell_pstring(cell,  "LPM_TYPE",  "LPM_OR");
+      edif_cell_pinteger(cell, "LPM_Width", 1);
+      edif_cell_pinteger(cell, "LPM_Size",  siz);
+
+      return cell;
 }
 
 static void lpm_show_header(ivl_design_t des)
@@ -142,6 +238,27 @@ static void lpm_show_footer(ivl_design_t des)
       edif_print(xnf, edf);
 }
 
+static void hookup_logic_gate(ivl_net_logic_t net, edif_cell_t cell)
+{
+      unsigned pin, idx;
+
+      edif_joint_t jnt;
+      edif_cellref_t ref = edif_cellref_create(edf, cell);
+
+      jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+      pin = edif_cell_port_byname(cell, "Result0");
+      edif_add_to_joint(jnt, ref, pin);
+
+      for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+	    char name[32];
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, idx));
+	    sprintf(name, "Data%ux0", idx-1);
+	    pin = edif_cell_port_byname(cell, name);
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+}
+
 static void lpm_logic(ivl_net_logic_t net)
 {
       edif_cell_t cell;
@@ -163,6 +280,36 @@ static void lpm_logic(ivl_net_logic_t net)
 	    edif_add_to_joint(jnt, ref, 1);
 	    break;
 
+	  case IVL_LO_BUFIF0:
+	    assert(ivl_logic_pins(net) == 3);
+	    cell = lpm_cell_bufif0();
+	    ref = edif_cellref_create(edf, cell);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+	    edif_add_to_joint(jnt, ref, 0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
+	    edif_add_to_joint(jnt, ref, 1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
+	    edif_add_to_joint(jnt, ref, 2);
+	    break;
+
+	  case IVL_LO_BUFIF1:
+	    assert(ivl_logic_pins(net) == 3);
+	    cell = lpm_cell_bufif1();
+	    ref = edif_cellref_create(edf, cell);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+	    edif_add_to_joint(jnt, ref, 0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
+	    edif_add_to_joint(jnt, ref, 1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
+	    edif_add_to_joint(jnt, ref, 2);
+	    break;
+
 	  case IVL_LO_NOT:
 	    assert(ivl_logic_pins(net) == 2);
 	    cell = lpm_cell_inv();
@@ -173,6 +320,16 @@ static void lpm_logic(ivl_net_logic_t net)
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
 	    edif_add_to_joint(jnt, ref, 1);
+	    break;
+
+	  case IVL_LO_OR:
+	    cell = lpm_cell_or(ivl_logic_pins(net)-1);
+	    hookup_logic_gate(net, cell);
+	    break;
+
+	  case IVL_LO_NOR:
+	    cell = lpm_cell_nor(ivl_logic_pins(net)-1);
+	    hookup_logic_gate(net, cell);
 	    break;
 
 	  default:
@@ -365,6 +522,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.2  2003/08/07 05:18:04  steve
+ *  Add support for OR/NOR/bufif0/bufif1.
+ *
  * Revision 1.1  2003/08/07 04:04:01  steve
  *  Add an LPM device type.
  *

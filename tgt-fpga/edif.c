@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.6 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: edif.c,v 1.7 2003/08/07 05:18:04 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -74,6 +74,7 @@ struct edif_xlibrary_s {
 struct __cell_port {
       const char*name;
       const char*ename;
+      struct cellref_property_*property;
       ivl_signal_port_t dir;
 };
 
@@ -265,6 +266,7 @@ edif_cell_t edif_xcell_create(edif_xlibrary_t xlib, const char*name,
       for (idx = 0 ;  idx < nports ;  idx += 1) {
 	    cell->ports[idx].name = "?";
 	    cell->ports[idx].dir = IVL_SIP_NONE;
+	    cell->ports[idx].property = 0;
       }
 
       cell->next = xlib->cells;
@@ -280,6 +282,17 @@ void edif_cell_portconfig(edif_cell_t cell, unsigned idx,
 
       cell->ports[idx].name = name;
       cell->ports[idx].dir  = dir;
+}
+
+void edif_cell_port_pstring(edif_cell_t cell, unsigned idx,
+			    const char*name, const char*value)
+{
+      struct cellref_property_*prp = malloc(sizeof(struct cellref_property_));
+      prp->name  = name;
+      prp->ptype = PRP_STRING;
+      prp->value_.str = value;
+      prp->next  = cell->ports[idx].property;
+      cell->ports[idx].property = prp;
 }
 
 unsigned edif_cell_port_byname(edif_cell_t cell, const char*name)
@@ -386,6 +399,22 @@ void edif_add_to_joint(edif_joint_t jnt, edif_cellref_t cell, unsigned port)
       jnt->links = jc;
 }
 
+static void fprint_property(FILE*fd, const struct cellref_property_*prp)
+{
+      fprintf(fd, "(property %s ", prp->name);
+      switch (prp->ptype) {
+	  case PRP_NONE:
+	    break;
+	  case PRP_STRING:
+	    fprintf(fd, "(string \"%s\")", prp->value_.str);
+	    break;
+	  case PRP_INTEGER:
+	    fprintf(fd, "(integer %ld)", prp->value_.num);
+	    break;
+      }
+      fprintf(fd, ")");
+}
+
 /*
  * This function takes all the data structures that have been
  * assembled by the code generator, and writes them into an EDIF
@@ -441,26 +470,18 @@ void edif_print(FILE*fd, edif_t edf)
 			    default:
 			      break;
 			}
+
+			for (prp = pp->property ;  prp ;  prp=prp->next) {
+			      fprintf(fd, " ");
+			      fprint_property(fd, prp);
+			}
+
 			fprintf(fd, ")");
 		  }
 
 		  for (prp = cell->property ;  prp ;  prp = prp->next) {
-			fprintf(fd, "\n                (property %s",
-				prp->name);
-
-			switch (prp->ptype) {
-			    case PRP_NONE:
-			      assert(0);
-			    case PRP_STRING:
-			      fprintf(fd, " (string \"%s\")",
-				      prp->value_.str);
-			      break;
-			    case PRP_INTEGER:
-			      fprintf(fd, " (integer %ld)",
-				      prp->value_.num);
-			      break;
-			}
-			fprintf(fd, ")");
+			fprintf(fd, "\n                ");
+			fprint_property(fd, prp);
 		  }
 		  fprintf(fd, ")))\n");
 	    }
@@ -520,19 +541,10 @@ void edif_print(FILE*fd, edif_t edf)
 		    "(cellRef %s (libraryRef %s)))",
 		    ref->u, ref->cell->name, ref->cell->xlib->name);
 
-	    for (prp = ref->property ;  prp ;  prp = prp->next)
-		  switch (prp->ptype) {
-		      case PRP_STRING:
-			fprintf(fd, " (property %s (string \"%s\"))",
-				prp->name, prp->value_.str);
-			break;
-		      case PRP_INTEGER:
-			fprintf(fd, " (property %s (integer %ld))",
-				prp->name, prp->value_.num);
-			break;
-		      case PRP_NONE:
-			assert(0);
-		  }
+	    for (prp = ref->property ;  prp ;  prp = prp->next) {
+		  fprintf(fd, " ");
+		  fprint_property(fd, prp);
+	    }
 
 	    fprintf(fd, ")\n");
       }
@@ -580,18 +592,9 @@ void edif_print(FILE*fd, edif_t edf)
       fprintf(fd, "      (cellRef %s (libraryRef DESIGN))\n", edf->name);
 
       for (prp = edf->property ;  prp ;  prp = prp->next) {
-	    switch (prp->ptype) {
-		case PRP_STRING:
-		  fprintf(fd, "       (property %s (string \"%s\"))\n",
-			  prp->name, prp->value_.str);
-		  break;
-		case PRP_INTEGER:
-		  fprintf(fd, "       (property %s (integer %ld))\n",
-			  prp->name, prp->value_.num);
-		  break;
-		case PRP_NONE:
-		  assert(0);
-	    }
+	    fprintf(fd, "       ");
+	    fprint_property(fd, prp);
+	    fprintf(fd, "\n");
       }
 
       fprintf(fd, "    )\n");
@@ -604,6 +607,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.7  2003/08/07 05:18:04  steve
+ *  Add support for OR/NOR/bufif0/bufif1.
+ *
  * Revision 1.6  2003/08/07 04:04:01  steve
  *  Add an LPM device type.
  *

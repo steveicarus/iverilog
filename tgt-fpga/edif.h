@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.5 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: edif.h,v 1.6 2003/08/07 05:18:04 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -172,6 +172,10 @@ extern edif_cell_t edif_xcell_create(edif_xlibrary_t, const char*name,
 extern void edif_cell_portconfig(edif_cell_t cell, unsigned idx,
 				 const char*name, ivl_signal_port_t dir);
 
+/* Attach a property to a cell port. */
+extern void edif_cell_port_pstring(edif_cell_t cell, unsigned idx,
+				   const char*name, const char*value);
+
 /* Cells may have properties attached to them. These properties are
    included in the library declaration for the cell, instead of the
    cell instances. */
@@ -225,6 +229,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.6  2003/08/07 05:18:04  steve
+ *  Add support for OR/NOR/bufif0/bufif1.
+ *
  * Revision 1.5  2003/08/07 04:04:01  steve
  *  Add an LPM device type.
  *
