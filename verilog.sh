@@ -18,6 +18,7 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 # Added support for the -t flag, for odd-ball target types. <steve@icarus.com>
+# Added support for functors, especially for the XNF target. <steve@icarus.com>
 
 # Setup variables
 execPath=@bindir@
@@ -33,6 +34,8 @@ VPIModulePath=@libdir@/ivl:.
 
 target="vvm"
 targetSuffix=""
+functors=""
+flags=""
 
 # If VPI module path aren't set up, warn at least
 if test -z "${VPI_MODULE_PATH}" ; then
@@ -41,7 +44,7 @@ if test -z "${VPI_MODULE_PATH}" ; then
 fi
 
 # Try to extract given parameters
-parameter=`getopt D:I:Xxo:s:t: "$@"` 
+parameter=`getopt D:I:Xxf:o:s:t: "$@"` 
 eval set -- "${parameter}" 
 while true ; do 
 
@@ -49,6 +52,7 @@ while true ; do
       -D) extDefines="${extDefines} -D$2" ; shift 2 ;;
       -I) extIncPath="${extIncPath} -I $2" ; shift 2 ;;
       -X) target="xnf" ; shift ;;
+      -f) flags="$flags -f$2" ; shift 2 ;;
       -o) outputFile=$2 ; shift 2 ;;
       -s) topModule="-s $2 " ; shift 2 ;;
       -t) target="$2" ; shift 2 ;;
@@ -68,9 +72,11 @@ if test -z "${verilogFile}" ; then
     exit 1;
 fi
 
-# Shoose a target file suffix based on the target type.
+# Choose a target file suffix based on the target type.
 case "$target" in
  vvm) targetSuffix="" ;;
+ xnf) targetSuffix=".xnf"
+      functors="-Fxnfsyn -Fsigfold -Fxnfio" ;;
    *) targetSuffix=".$target" ;;
 esac
 
@@ -92,7 +98,7 @@ fi
 
 
 # Compile preprocessed verilog file
-${execIVL} -t ${target} -o ${tmpCCFile} ${topModule} ${tmpPPFile}
+${execIVL} -t ${target} -o ${tmpCCFile} ${topModule} ${functors} ${flags} ${tmpPPFile}
 if test $? -ne  0 ; then
     echo "Verilog compilation failed. Terminating compilation."
     rm -f ${tmpCCFile}
