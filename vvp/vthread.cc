@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.87 2002/09/20 03:59:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.88 2002/09/21 04:55:00 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -72,7 +72,7 @@
  *
  *       A --> C(zombie) --> X --> B
  *
- * If A then executes 2 %joins, it will read C and X (when it ends)
+ * If A then executes 2 %joins, it will reap C and X (when it ends)
  * leaving B in purgatory. What's worse, A will block on the schedules
  * of X and C instead of C and B, possibly creating incorrect timing.
  *
@@ -103,6 +103,7 @@ struct vthread_s {
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
+      unsigned fork_count        :8;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
 	/* This points to my parent, if I have one. */
@@ -213,7 +214,7 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
       thr->nbits  = 4 * (CPU_WORD_BITS/2);
       thr->child  = 0;
       thr->parent = 0;
-      thr->wait_next   = 0;
+      thr->wait_next = 0;
 
 	/* If the target scope never held a thread, then create a
 	   header cell for it. This is a stub to make circular lists
@@ -241,6 +242,7 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
       thr->i_have_ended = 0;
       thr->waiting_for_event = 0;
       thr->is_scheduled = 0;
+      thr->fork_count   = 0;
 
       thr_put_bit(thr, 0, 0);
       thr_put_bit(thr, 1, 1);
@@ -261,10 +263,14 @@ static void vthread_reap(vthread_t thr)
       free(thr->bits);
       thr->bits = 0;
 
-      if (thr->child)
+      if (thr->child) {
+	    assert(thr->child->parent == thr);
 	    thr->child->parent = thr->parent;
-      if (thr->parent)
+      }
+      if (thr->parent) {
+	    assert(thr->parent->child == thr);
 	    thr->parent->child = thr->child;
+      }
 
       thr->child = 0;
       thr->parent = 0;
@@ -277,8 +283,10 @@ static void vthread_reap(vthread_t thr)
 	/* If this thread is not scheduled, then is it safe to delete
 	   it now. Otherwise, let the schedule event (which will
 	   execute the thread at of_ZOMBIE) delete the object. */
-      if (thr->is_scheduled == 0)
+      if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
+	    assert(thr->fork_count == 0);
 	    delete thr;
+      }
 }
 
 void vthread_mark_scheduled(vthread_t thr)
@@ -752,6 +760,60 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+static bool do_disable(vthread_t thr, vthread_t match)
+{
+      bool flag = false;
+
+	/* Pull the target thread out of its scope. */
+      thr->scope_next->scope_prev = thr->scope_prev;
+      thr->scope_prev->scope_next = thr->scope_next;
+
+	/* Turn the thread off by setting is program counter to
+	   zero and setting an OFF bit. */
+      thr->pc = 0;
+      thr->i_have_ended = 1;
+
+	/* Turn off all the children of the thread. Simulate a %join
+	   for as many times as needed to clear the results of all the
+	   %forks that this thread has done. */
+      while (thr->fork_count > 0) {
+
+	    vthread_t tmp = thr->child;
+	    assert(tmp);
+	    assert(tmp->parent == thr);
+	    tmp->schedule_parent_on_end = 0;
+	    if (do_disable(tmp, match))
+		  flag = true;
+
+	    thr->fork_count -= 1;
+
+	    vthread_reap(tmp);
+      }
+
+
+      if (thr->schedule_parent_on_end) {
+	      /* If a parent is waiting in a %join, wake it up. */
+	    assert(thr->parent);
+	    assert(thr->parent->fork_count > 0);
+	    assert(thr->waiting_for_event == 0);
+
+	    thr->parent->fork_count -= 1;
+	    schedule_vthread(thr->parent, 0, true);
+	    vthread_reap(thr);
+
+      } else if (thr->parent) {
+	      /* If the parent is yet to %join me, let its %join
+		 do the reaping. */
+	      //assert(tmp->is_scheduled == 0);
+
+      } else {
+	      /* No parent at all. Goodby. */
+	    vthread_reap(thr);
+      }
+
+      return flag || (thr == match);
+}
+
 /*
  * Implement the %disable instruction by scanning the target scope for
  * all the target threads. Kill the target threads and wake up a
@@ -770,63 +832,14 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       while (head->scope_next != head) {
 	    vthread_t tmp = head->scope_next;
 
-	      /* Pull the target thread out of the scope. */
-	    tmp->scope_next->scope_prev = tmp->scope_prev;
-	    tmp->scope_prev->scope_next = tmp->scope_next;
-
 	      /* If I am disabling myself, that remember that fact so
 		 that I can finish this statement differently. */
 	    if (tmp == thr)
 		  disabled_myself_flag = true;
 
-	      /* Turn the thread off by setting is program counter to
-		 zero and setting an OFF bit. */
-	    tmp->pc = 0;
-	    tmp->i_have_ended = 1;
 
-	      /* Turn off all the children of the thread. */
-	    vthread_t child = tmp->child;
-	    while (child) {
-
-		    /* XXXX Don't know how to disable waiting children. */
-		  assert(child->waiting_for_event == 0);
-
-		  child->pc = 0;
-		  child->i_have_ended = 1;
-
-		  vthread_t next = child->child;
-		  vthread_reap(child);
-		  child = next;
-	    }
-
-
-	    if (tmp->schedule_parent_on_end) {
-		    /* If a parent is waiting in a %join, wake it up. */
-		  assert(tmp->parent);
-		  assert(tmp->waiting_for_event == 0);
-		  schedule_vthread(tmp->parent, 0, true);
-		  vthread_reap(tmp);
-
-	    } else if (tmp->parent) {
-		    /* If the parent is yet to %join me, let its %join
-		       do the reaping. */
-		    //assert(tmp->is_scheduled == 0);
-
-	    } else if (tmp->waiting_for_event) {
-
-		    /* If the thread is waiting for an event, then
-		       temporarily mark it as scheduled, so that the
-		       reap detaches it from everything, but does not
-		       delete it. The %zombie function will then
-		       delete the thread when the event trips. */
-		  tmp->is_scheduled = 1;
-		  vthread_reap(tmp);
-		  tmp->is_scheduled = 0;
-
-	    } else {
-		    /* No parent at all. Goodby. */
-		  vthread_reap(tmp);
-	    }
+	    if (do_disable(tmp, thr))
+		  disabled_myself_flag = true;
       }
 
       return ! disabled_myself_flag;
@@ -1167,7 +1180,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 bool of_END(vthread_t thr, vvp_code_t)
 {
       assert(! thr->waiting_for_event);
-
+      assert( thr->fork_count == 0 );
       thr->i_have_ended = 1;
       thr->pc = 0;
 
@@ -1176,6 +1189,9 @@ bool of_END(vthread_t thr, vvp_code_t)
 	   %join for the parent. */
       if (thr->schedule_parent_on_end) {
 	    assert(thr->parent);
+	    assert(thr->parent->fork_count > 0);
+
+	    thr->parent->fork_count -= 1;
 	    schedule_vthread(thr->parent, 0, true);
 	    vthread_reap(thr);
 	    return false;
@@ -1217,6 +1233,9 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 	    assert(child->child->parent == thr);
 	    child->child->parent = child;
       }
+
+      thr->fork_count += 1;
+
       schedule_vthread(child, 0, true);
       return true;
 }
@@ -1348,8 +1367,12 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
       assert(thr->child);
       assert(thr->child->parent == thr);
 
+      assert(thr->fork_count > 0);
+
+
 	/* If the child has already ended, reap it now. */
       if (thr->child->i_have_ended) {
+	    thr->fork_count -= 1;
 	    vthread_reap(thr->child);
 	    return true;
       }
@@ -2401,6 +2424,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.88  2002/09/21 04:55:00  steve
+ *  Fix disable in arbitrary fork/join situations.
+ *
  * Revision 1.87  2002/09/20 03:59:34  steve
  *  disable threads with children.
  *
