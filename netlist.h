@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.280 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.281 2003/03/15 04:46:29 steve Exp $"
 #endif
 
 /*
@@ -2663,7 +2663,8 @@ class NetEScope  : public NetExpr {
 class NetESFunc  : public NetExpr {
 
     public:
-      NetESFunc(const char*name, unsigned width, unsigned nprms);
+      NetESFunc(const char*name, NetExpr::TYPE t,
+		unsigned width, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;
@@ -2683,6 +2684,7 @@ class NetESFunc  : public NetExpr {
 
     private:
       const char* name_;
+      TYPE type_;
       unsigned nparms_;
       NetExpr**parms_;
 
@@ -3235,6 +3237,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.281  2003/03/15 04:46:29  steve
+ *  Better organize the NetESFunc return type guesses.
+ *
  * Revision 1.280  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

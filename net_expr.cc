@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.14 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.15 2003/03/15 04:46:29 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -350,8 +350,9 @@ bool NetESelect::set_width(unsigned w)
 	    return false;
 }
 
-NetESFunc::NetESFunc(const char*n, unsigned width, unsigned np)
-: name_(0)
+NetESFunc::NetESFunc(const char*n, NetExpr::TYPE t,
+		     unsigned width, unsigned np)
+: name_(0), type_(t)
 {
       name_ = lex_strings.add(n);
       expr_width(width);
@@ -402,14 +403,14 @@ NetExpr* NetESFunc::parm(unsigned idx)
 
 NetExpr::TYPE NetESFunc::expr_type() const
 {
-      if (strcmp(name_,"$realtime") == 0)
-	    return ET_REAL;
-
-      return ET_VECTOR;
+      return type_;
 }
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.15  2003/03/15 04:46:29  steve
+ *  Better organize the NetESFunc return type guesses.
+ *
  * Revision 1.14  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

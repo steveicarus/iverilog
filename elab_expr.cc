@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.71 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.72 2003/03/15 04:46:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,30 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
+
+/*
+ * This table describes all the return values of various system
+ * functions. This table is used to elaborate expressions that are
+ * system function calls.
+ */
+struct sfunc_return_type {
+      const char*   name;
+      NetExpr::TYPE type;
+      unsigned      wid;
+      int           signed_flag;
+};
+
+static const struct sfunc_return_type sfunc_table[] = {
+      { "$realtime",   NetExpr::ET_REAL,    0, 0 },
+      { "$bitstoreal", NetExpr::ET_REAL,    0, 0 },
+      { "$itor",       NetExpr::ET_REAL,    0, 0 },
+      { "$realtobits", NetExpr::ET_VECTOR, 64, 0 },
+      { "$time",       NetExpr::ET_VECTOR, 64, 0 },
+      { "$stime",      NetExpr::ET_VECTOR, 32, 0 },
+      { "$simtime",    NetExpr::ET_VECTOR, 64, 0 },
+      { 0,             NetExpr::ET_VECTOR, 32, 0 }
+};
+
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
 {
@@ -211,16 +235,15 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    return sub;
       }
 
-      unsigned wid = 32;
+	/* Get the return type of the system function by looking it up
+	   in the sfunc_table. */
+      unsigned sfunc_idx;
+      for (sfunc_idx = 0 ;  sfunc_table[sfunc_idx].name ;  sfunc_idx += 1)
+	    if (strcmp(path_.peek_name(0), sfunc_table[sfunc_idx].name) == 0)
+		  break;
 
-      if (strcmp(path_.peek_name(0), "$realtobits") == 0)
-	    wid = 64;
-      if (strcmp(path_.peek_name(0), "$simtime") == 0)
-	    wid = 64;
-      if (strcmp(path_.peek_name(0), "$stime") == 0)
-	    wid = 32;
-      if (strcmp(path_.peek_name(0), "$time") == 0)
-	    wid = 64;
+      NetExpr::TYPE sfunc_type = sfunc_table[sfunc_idx].type;
+      unsigned wid = sfunc_table[sfunc_idx].wid;
 
 
 	/* How many parameters are there? The Verilog language allows
@@ -235,7 +258,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
-      NetESFunc*fun = new NetESFunc(path_.peek_name(0), wid, nparms);
+      NetESFunc*fun = new NetESFunc(path_.peek_name(0), sfunc_type,
+				    wid, nparms);
 
 	/* Now run through the expected parameters. If we find that
 	   there are missing parameters, print an error message.
@@ -914,6 +938,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.72  2003/03/15 04:46:28  steve
+ *  Better organize the NetESFunc return type guesses.
+ *
  * Revision 1.71  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

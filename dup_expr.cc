@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.11 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.12 2003/03/15 04:46:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,7 +53,7 @@ NetESelect* NetESelect::dup_expr() const
 
 NetESFunc* NetESFunc::dup_expr() const
 {
-      NetESFunc*tmp = new NetESFunc(name_, expr_width(), nparms());
+      NetESFunc*tmp = new NetESFunc(name_, type_, expr_width(), nparms());
       assert(tmp);
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    assert(tmp->parm(idx));
@@ -109,6 +109,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.12  2003/03/15 04:46:28  steve
+ *  Better organize the NetESFunc return type guesses.
+ *
  * Revision 1.11  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *
