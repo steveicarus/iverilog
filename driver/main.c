@@ -17,8 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.4 2000/10/28 17:28:16 steve Exp $"
+#ident "$Id: main.c,v 1.5 2000/11/30 02:50:54 steve Exp $"
 #endif
+
+const char HELP[] =
+"Usage: iverilog [-ESv] [-c <path>] [-Dmacro[=defn]] 
+                [-f flag=value] [-I<dir>] [-m module]
+                [-o <output>] [-s top_module] [-t<type>]
+                [-W class] source_file(s)
+See man page for details.";
+
+#define MAXSIZE 4096
 
 #include <stdio.h>
 #include <unistd.h>
@@ -55,13 +64,19 @@ char warning_flags[16] = "";
 char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
+char*command_filename = 0;
 
 char*f_list = 0;
 
 int synth_flag = 0;
 int verbose_flag = 0;
+int command_file = 0;
+int inside_c_comment = 0;
 
-char tmp[4096];
+FILE *fp;
+
+char line[MAXSIZE];
+char tmp[MAXSIZE];
 
 /*
  * This is the default target type. It looks up the bits that are
@@ -89,6 +104,7 @@ static int t_default(char*cmd, unsigned ncmd)
 
       if (verbose_flag)
 	    printf("translate: %s\n", cmd);
+
 
       rc = system(cmd);
       if (rc != 0) {
@@ -250,7 +266,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:C:D:Ef:I:m:N::o:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -259,6 +275,10 @@ int main(int argc, char **argv)
 		case 'C':
 		  config_path = optarg;
 		  break;
+ 		case 'c':
+		  command_filename = malloc(strlen(optarg)+1);
+ 		  strcat(command_filename, optarg);
+ 		  break;
 		case 'D':
 		  if (def_list == 0) {
 			def_list = malloc(strlen(" -D")+strlen(optarg)+1);
@@ -288,6 +308,11 @@ int main(int argc, char **argv)
 			strcat(f_list, optarg);
 		  }
 		  break;
+
+ 		case 'h':
+ 		  fprintf(stderr, "%s\n", HELP);
+ 		  return 1;
+
 		case 'I':
 		  if (inc_list == 0) {
 			inc_list = malloc(strlen(" -I")+strlen(optarg)+1);
@@ -357,13 +382,15 @@ int main(int argc, char **argv)
 	    }
       }
 
-      if (optind == argc) {
+      if ((optind == argc) && !command_filename) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
+ 	    fprintf(stderr, "%s\n", HELP);
 	    return 1;
       }
 
 	/* Load the iverilog.conf file to get our substitution
 	   strings. */
+
       { char path[1024];
         FILE*fd;
 	if (config_path) {
@@ -398,15 +425,56 @@ int main(int argc, char **argv)
 	    ncmd += strlen(def_list);
       }
 
-	/* Add all the verilog source files to the preprocess command line. */
+	/* If user supplied a command file, retain its contents -- this
+           process supersedes command line source files. */
 
-      for (idx = optind ;  idx < argc ;  idx += 1) {
-	    sprintf(tmp, " %s", argv[idx]);
+      if (command_filename != 0) {
+	    if (( fp = fopen(command_filename, "r")) == NULL ) {
+		  fprintf(stderr, "%s: Can't open %s\n",
+			  argv[0], command_filename);
+		  return 1;
+
+	    } else {
+		    /* Process file and skip over commented-out lines.
+		       Skips over c-like comment as well as '//' or
+		       '#' lines. */
+
+		  sprintf(tmp, "");
+		  while (fgets(line, MAXSIZE, fp) != NULL) {
+			if ( strstr(line, "*/") != NULL ) {
+			      inside_c_comment = 0;
+			      continue;
+			}
+
+			if (inside_c_comment || (strstr(line, "/*") != NULL)) {
+			      inside_c_comment = 1;
+			      continue;
+			}
+
+			if ( (line[0] != '/' || line[1] != '/')
+			     && line[0] != '#' ) {
+			      strcat  (tmp, " ");
+			      strncat (tmp, line, (strlen(line)-1));
+			}
+		  }
+		  fclose(fp);
+	    }
 	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
 	    strcpy(cmd+ncmd, tmp);
 	    ncmd += strlen(tmp);
-      }
 
+      } else {
+
+	      /* Add all verilog source files to the preprocess
+		 command line. */
+
+	    for (idx = optind ;  idx < argc ;  idx += 1) {
+		  sprintf(tmp, " %s", argv[idx]);
+		  cmd = realloc(cmd, ncmd+strlen(tmp)+1);
+		  strcpy(cmd+ncmd, tmp);
+		  ncmd += strlen(tmp);
+	    }
+      }
 
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
@@ -450,6 +518,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.5  2000/11/30 02:50:54  steve
+ *  Add command file (-c) support from Nadim Shaikli.
+ *
  * Revision 1.4  2000/10/28 17:28:16  steve
  *  Split vpip for everybody.
  *
