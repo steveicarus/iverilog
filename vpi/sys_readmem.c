@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.11 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.12 2003/04/23 04:57:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,7 +32,8 @@
 static int check_integer_constant(char*name, vpiHandle handle)
 {
     if (vpi_get(vpiType, handle) != vpiConstant){
-	vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	vpi_printf("ERROR: %s parameter must be a constant (vpiType=%d)\n",
+		   name, vpi_get(vpiType, handle));
 	return 0;
     }
 
@@ -104,8 +105,10 @@ static int sys_readmem_calltf(char*name)
 	    return 0;
       }
 
-      if (vpi_get(vpiType, item) != vpiConstant) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+      if ((vpi_get(vpiType, item) != vpiConstant)
+	  && (vpi_get(vpiType, item) != vpiParameter)) {
+	    vpi_printf("ERROR: %s file name must be a constant (vpiType=%d)\n",
+		       name, vpi_get(vpiType, item));
 	    vpi_free_object(argv);
 	    return 0;
       }
@@ -541,6 +544,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.12  2003/04/23 04:57:41  steve
+ *  Accept string parameters for file name argument.
+ *
  * Revision 1.11  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *
