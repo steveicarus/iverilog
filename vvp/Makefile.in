@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.9 2001/03/22 21:26:53 steve Exp $"
+#ident "$Id: Makefile.in,v 1.10 2001/03/22 22:37:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -86,8 +86,16 @@ lexor.cc: $(srcdir)/lexor.lex
 	flex -s -olexor.cc $(srcdir)/lexor.lex
 
 
-install:
+install: all installdirs $(bindir)/vvp
+
+$(bindir)/vvp: ./vvp
+	$(INSTALL_PROGRAM) ./vvp $(bindir)/vvp
+
+installdirs: $(srcdir)/mkinstalldirs
+	$(srcdir)/mkinstalldirs $(bindir)
+
 
 uninstall:
+	rm -f $(bindir)/vvp
 
 -include $(patsubst %.o, dep/%.d, $O)
