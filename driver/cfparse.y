@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.7 2002/05/28 20:40:37 steve Exp $"
+#ident "$Id: cfparse.y,v 1.8 2002/06/23 20:10:51 steve Exp $"
 #endif
 
 
@@ -78,9 +78,11 @@ item
      of a source file. Add the file to the file list. */
 
 	: TOK_STRING
-		{ translate_file_name($1);
-		  process_file_name($1);
+		{ char*tmp = substitutions($1);
+		  translate_file_name(tmp);
+		  process_file_name(tmp);
 		  free($1);
+		  free(tmp);
 		}
 
   /* The -a flag is completely ignored. */
@@ -91,11 +93,13 @@ item
      as an ordinary source file. */
 
         | TOK_Dv TOK_STRING
-		{ translate_file_name($2);
-		  process_file_name($2);
+		{ char*tmp = substitutions($2);
+		  translate_file_name(tmp);
+		  process_file_name(tmp);
 		  fprintf(stderr, "%s:%u: Ignoring -v in front of %s\n",
 			  @1.text, @1.first_line, $2);
 		  free($2);
+		  free(tmp);
 		}
 
   /* This rule matches "-y <path>" sequences. This does the same thing
@@ -103,18 +107,24 @@ item
      directory list. */
 
         | TOK_Dy TOK_STRING
-		{ process_library_switch($2);
+		{ char*tmp = substitutions($2);
+		  process_library_switch(tmp);
 		  free($2);
+		  free(tmp);
 		}
 
         | TOK_LIBDIR TOK_PLUSARG
-		{ process_library_switch($2);
+		{ char*tmp = substitutions($2);
+		  process_library_switch(tmp);
 		  free($2);
+		  free(tmp);
 		}
 
         | TOK_LIBDIR_NOCASE TOK_PLUSARG
-		{ process_library_nocase_switch($2);
+		{ char*tmp = substitutions($2);
+		  process_library_nocase_switch(tmp);
 		  free($2);
+		  free(tmp);
 		}
 
 	| TOK_DEFINE TOK_PLUSARG
@@ -161,8 +171,10 @@ inc_args
 	;
 
 inc_arg : TOK_PLUSARG
-		{ process_include_dir($1);
+		{ char*tmp = substitutions($1);
+		  process_include_dir(tmp);
 		  free($1);
+		  free(tmp);
 		}
 	;
 

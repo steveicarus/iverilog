@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/05/28 20:46:51 $" Version "$Date: 2002/05/28 20:46:51 $"
+.TH iverilog 1 "$Date: 2002/06/23 20:10:51 $" Version "$Date: 2002/06/23 20:10:51 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -187,7 +187,7 @@ mostly by EDIF format output.
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
 switch. All the warning types (other then \fBall\fP) can also be
-prefixed with \fBno-\fP to turn of that warning. This is most useful
+prefixed with \fBno-\fP to turn off that warning. This is most useful
 after a \fB-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
@@ -217,13 +217,16 @@ well as # comments, if the # starts the line.
 .TP 8
 .I "file name"
 A simple file name or file path is taken to be the name of a Verilog
-source file. The path starts with the first non-white-space character.
+source file. The path starts with the first non-white-space
+character. Variables are substitued in file names.
 
 .TP 8
 .B -y\ \fIlibdir\fP
 A \fB-y\fP token prefixes a library directory in the command file,
 exactly like it does on the command line. The parameter to the \fB-y\fP
 flag may be on the same line or the next non-comment line.
+
+Variables in the \fIlibdir\fP are substituted.
 
 .TP 8
 .B +incdir+\fIincludedir\fP
@@ -232,6 +235,8 @@ for include files in much the same way that \fB-I\fP flags work on the
 command line. The difference is that multiple \fI+includedir\fP
 directories are valid parameters to a single \fB+incdir+\fP token,
 although you may also have multiple \fB+incdir+\fP lines.
+
+Variables in the \fIincludedir\fP are substituted.
 
 .TP 8
 .B +libext+\fIext\fP
@@ -268,6 +273,18 @@ become munged.
 .B +tolower-filename\fP
 This is similar to the \fB+toupper-filename\fP hack described above.
 
+.SH "VARIABLES IN COMMAND FILES"
+
+In certain cases, iverilog supports variables in command files. These
+are strings of the form "$(\fIvarname\fP)", where \fIvarname\fP is the
+name of the environment variable to read. The entire string is
+replaced with the contents of that variable. Variables are only
+substitued in contexts that explicitly support them, including file
+and directory strings.
+
+Variable values come from the operating system environment, and not
+from preprocessor defines elsewhere in the file or the command line.
+
 .SH EXAMPLES 
 These examples assume that you have a Verilog source file called hello.v in
 the current directory
@@ -299,7 +316,7 @@ vvp(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2000 Stephen Williams
+Copyright \(co  2002 Stephen Williams
 
 This document can be freely redistributed according to the terms of the 
 GNU General Public License version 2.0
