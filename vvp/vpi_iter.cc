@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_iter.cc,v 1.6 2003/02/17 00:58:38 steve Exp $"
+#ident "$Id: vpi_iter.cc,v 1.7 2003/02/25 01:17:28 steve Exp $"
 #endif
 
 /*
@@ -73,6 +73,20 @@ vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
  */
 vpiHandle vpi_scan(vpiHandle ref)
 {
+      if (ref == 0) {
+	    vpi_printf("ERROR: NULL handle passed to vpi_scan.\n");
+	    assert(0);
+	    return 0;
+      }
+
+      if (ref->vpi_type->type_code != vpiIterator) {
+	    vpi_printf("ERROR: vpi_scan argument is "
+		       "inappropriate vpiType code %d\n",
+		       ref->vpi_type->type_code);
+	    assert(0);
+	    return 0;
+      }
+
       struct __vpiIterator*hp = (struct __vpiIterator*)ref;
       assert(ref);
       assert(ref->vpi_type->type_code == vpiIterator);
@@ -90,6 +104,9 @@ vpiHandle vpi_scan(vpiHandle ref)
 
 /*
  * $Log: vpi_iter.cc,v $
+ * Revision 1.7  2003/02/25 01:17:28  steve
+ *  Some error messages around asserts.
+ *
  * Revision 1.6  2003/02/17 00:58:38  steve
  *  Strict correctness of vpi_free_object results.
  *
