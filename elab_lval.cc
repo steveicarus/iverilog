@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.6 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.7 2000/12/01 02:55:37 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -265,14 +265,31 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	      /* If the bit/part select is constant, then make the
 		 NetAssign_ only as wide as it needs to be and connect
 		 only to the selected bits of the reg. */
-	    unsigned wid = (msb >= lsb)? (msb-lsb+1) : (lsb-msb+1);
-	    assert(wid <= reg->pin_count());
+	    unsigned loff = reg->sb_to_idx(lsb);
+	    unsigned moff = reg->sb_to_idx(msb);
+	    unsigned wid = moff - loff + 1;
 
 	    lv = new NetAssign_(des->local_symbol(scope->name()), wid);
-	    unsigned off = reg->sb_to_idx(lsb);
-	    assert((off+wid) <= reg->pin_count());
+
+	    if (moff < loff) {
+		  cerr << get_line() << ": error: part select "
+		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		       << " is reversed." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (wid > reg->pin_count()) {
+		  cerr << get_line() << ": error: part select "
+		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		       << " is out of range." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    assert(moff < reg->pin_count());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx+off));
+		  connect(lv->pin(idx), reg->pin(idx+loff));
 
       }
 
@@ -284,6 +301,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.7  2000/12/01 02:55:37  steve
+ *  Detect part select errors on l-values.
+ *
  * Revision 1.6  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

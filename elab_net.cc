@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.54 2000/11/04 05:06:04 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.55 2000/12/01 02:55:37 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1234,6 +1234,15 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    } else {
 		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 					  lidx-midx+1);
+
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": error: "
+			     << "part select out of range for "
+			     << sig->name() << "." << endl;
+			des->errors += 1;
+			return sig;
+		  }
+
 		  assert(tmp->pin_count() <= sig->pin_count());
 		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
@@ -1749,6 +1758,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.55  2000/12/01 02:55:37  steve
+ *  Detect part select errors on l-values.
+ *
  * Revision 1.54  2000/11/04 05:06:04  steve
  *  pad different width inputs to muxes. (PR#14)
  *
