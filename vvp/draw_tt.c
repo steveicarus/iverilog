@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.2 2001/03/25 19:37:26 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.3 2001/03/25 20:45:09 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -156,6 +156,11 @@ static void draw_OR(void)
       printf("};\n");
 }
 
+/*
+ * The hex_digits table is not a functor truth table per say, but a
+ * map of a 4-vbit value to a hex digit. The table handles the display
+ * of x, X, z, Z, etc.
+ */
 static void draw_hex_table()
 {
       unsigned idx;
@@ -202,6 +207,52 @@ static void draw_hex_table()
       printf("};\n");
 }
 
+static void draw_oct_table()
+{
+      unsigned idx;
+
+      printf("extern const char oct_digits[64] = {\n");
+      for (idx = 0 ;  idx < 64 ;  idx += 1) {
+	    unsigned cnt_z = 0, cnt_x = 0;
+	    unsigned bv = 0, bdx;
+
+	    for (bdx = 0 ;  bdx < 3 ;  bdx += 1) {
+		  switch ((idx >> (bdx * 2)) & 3) {
+		      case 0:
+			break;
+		      case 1:
+			bv |= 1<<bdx;
+			break;
+		      case 2:
+			cnt_x += 1;
+			break;
+		      case 3:
+			cnt_z += 1;
+			break;
+		  }
+	    }
+
+	    if (cnt_z == 3)
+		  printf(" 'z',");
+
+	    else if (cnt_x == 3)
+		  printf(" 'x',");
+
+	    else if ((cnt_z > 0) && (cnt_x == 0))
+		  printf(" 'Z',");
+
+	    else if (cnt_x > 0)
+		  printf(" 'X',");
+
+	    else
+		  printf(" '%c',", "01234567"[bv]);
+
+	    if (((idx+1) % 8) == 0)
+		  printf("\n");
+      }
+      printf("};\n");
+}
+
 main()
 {
       printf("# include  \"functor.h\"\n");
@@ -210,11 +261,15 @@ main()
       draw_NOT();
       draw_OR();
       draw_hex_table();
+      draw_oct_table();
       return 0;
 }
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.3  2001/03/25 20:45:09  steve
+ *  Add vpiOctStrVal access to signals.
+ *
  * Revision 1.2  2001/03/25 19:37:26  steve
  *  Calculate NOR and NOT tables, and also the hex_digits table.
  *

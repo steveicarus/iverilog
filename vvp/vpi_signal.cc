@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.4 2001/03/25 19:38:05 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.5 2001/03/25 20:45:10 steve Exp $"
 #endif
 
 /*
@@ -30,7 +30,20 @@
 # include  <malloc.h>
 # include  <assert.h>
 
+/*
+ * Hex digits that represent 4-value bits of Verilog are not as
+ * trivially obvious to display as if the bits were the usual 2-value
+ * bits. So, although it is possible to write a function that
+ * generates a correct character for 4*4-value bits, it is easier to
+ * just perform the lookup in a table. This only takes 256 bytes,
+ * which is not many executable instructions:-)
+ *
+ * The table is calculated as compile time, therefore, by the
+ * draw_tt.c program.
+ */
 extern const char hex_digits[256];
+
+extern const char oct_digits[256];
 
 /*
  * implement vpi_get for vpiReg objects.
@@ -132,6 +145,32 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 
+	  case vpiOctStrVal: {
+		unsigned hval, hwid;
+		hwid = (wid + 2) / 3;
+		buf[hwid] = 0;
+		hval = 0;
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		      functor_t fp = functor_index(fptr);
+		      hval = hval | ((fp->oval&3) << 2*(idx % 3));
+
+		      if (idx%3 == 2) {
+			    hwid -= 1;
+			    buf[hwid] = oct_digits[hval];
+			    hval = 0;
+		      }
+		}
+
+		if (hwid > 0) {
+		      hwid -= 1;
+		      buf[hwid] = oct_digits[hval];
+		      hval = 0;
+		}
+		vp->value.str = buf;
+		break;
+	  }
+
 	  default:
 	      /* XXXX Not implemented yet. */
 	    assert(0);
@@ -221,6 +260,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.5  2001/03/25 20:45:10  steve
+ *  Add vpiOctStrVal access to signals.
+ *
  * Revision 1.4  2001/03/25 19:38:05  steve
  *  Support making hex strings.
  *
