@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.53 2002/04/14 19:02:34 steve Exp $"
+#ident "$Id: stub.c,v 1.54 2002/04/22 02:40:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -358,7 +358,8 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	  }
 
 	  case IVL_ST_WHILE:
-	    fprintf(out, "%*swhile (<?>)\n", ind, "");
+	    fprintf(out, "%*swhile\n", ind, "");
+	    show_expression(ivl_stmt_cond_expr(net), ind+4);
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
 	    break;
 
@@ -615,6 +616,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.54  2002/04/22 02:40:32  steve
+ *  Dump the while loop expression.
+ *
  * Revision 1.53  2002/04/14 19:02:34  steve
  *  Ternary expressions can be signed.
  *
