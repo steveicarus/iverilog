@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.6 1999/09/29 01:41:18 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.7 1999/10/10 14:57:38 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -163,7 +163,7 @@ static void get_value_bits(vpiHandle ref, s_vpi_value*vp)
 {
       static char buff[1024];
       char*cp;
-      unsigned width, bytes;
+      unsigned width;
       unsigned val;
       assert(ref->val.bits);
       width = ref->val.bits->get_width();
@@ -209,17 +209,45 @@ static void get_value_bits(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiOctStrVal:
-	    bytes = width%3;
-	    if (bytes) {
-		  *cp++ = '?';
+	    if (width%3) {
+		  unsigned x = 0;
+		  unsigned z = 0;
+		  unsigned v = 0;
+		  for (unsigned i = 0 ;  i < width%3 ;  i += 1) {
+			v *= 2;
+			switch (ref->val.bits->get_bit(width-i-1)) {
+			    case V0:
+			      break;
+			    case V1:
+			      v += 1;
+			      break;
+			    case Vx:
+			      x += 1;
+			      break;
+			    case Vz:
+			      z += 1;
+			      break;
+			}
+		  }
+		  if (x == width%3)
+			*cp++ = 'x';
+		  else if (x > 0)
+			*cp++ = 'X';
+		  else if (z == width%3)
+			*cp++ = 'z';
+		  else if (z > 0)
+			*cp++ = 'Z';
+		  else
+			*cp++ = "01234567"[v];
 	    }
-	    for (unsigned idx = bytes ;  idx < width ;  idx += 3) {
+
+	    for (unsigned idx = width%3 ;  idx < width ;  idx += 3) {
 		  unsigned x = 0;
 		  unsigned z = 0;
 		  unsigned v = 0;
 		  for (unsigned i = idx ;  i < idx+3 ;  i += 1) {
 			v *= 2;
-			switch (ref->val.bits->get_bit(width-idx-i-1)) {
+			switch (ref->val.bits->get_bit(width-i-1)) {
 			    case V0:
 			      break;
 			    case V1:
@@ -503,6 +531,9 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.7  1999/10/10 14:57:38  steve
+ *  Handle display of odd octal/hex widths (Eric Ardoom)
+ *
  * Revision 1.6  1999/09/29 01:41:18  steve
  *  Support the $write system task, and have the
  *  vpi_scan function free iterators as needed.
