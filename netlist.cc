@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.182 2002/04/14 18:41:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.183 2002/04/14 19:02:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2311,6 +2311,7 @@ NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
       expr_width(true_val_->expr_width());
+      cast_signed(c->has_sign() && t->has_sign() && f->has_sign());
 }
 
 NetETernary::~NetETernary()
@@ -2427,6 +2428,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.183  2002/04/14 19:02:34  steve
+ *  Ternary expressions can be signed.
+ *
  * Revision 1.182  2002/04/14 18:41:34  steve
  *  Support signed integer division.
  *

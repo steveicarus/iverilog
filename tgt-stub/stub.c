@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.52 2002/04/14 02:44:53 steve Exp $"
+#ident "$Id: stub.c,v 1.53 2002/04/14 19:02:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -82,6 +82,14 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_EX_SIGNAL:
 	    fprintf(out, "%*s<signal=%s, width=%u, %s>\n", ind, "",
 		    ivl_expr_name(net), width, sign);
+	    break;
+
+	  case IVL_EX_TERNARY:
+	    fprintf(out, "%*s<ternary  width=%u, %s>\n", ind, "",
+		    width, sign);
+	    show_expression(ivl_expr_oper1(net), ind+4);
+	    show_expression(ivl_expr_oper2(net), ind+4);
+	    show_expression(ivl_expr_oper3(net), ind+4);
 	    break;
 
 	  case IVL_EX_UNARY:
@@ -607,6 +615,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.53  2002/04/14 19:02:34  steve
+ *  Ternary expressions can be signed.
+ *
  * Revision 1.52  2002/04/14 02:44:53  steve
  *  Show unary subexpressions.
  *
