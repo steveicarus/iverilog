@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.66 2001/05/22 02:14:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.67 2001/05/22 04:08:16 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -335,7 +335,7 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       assert(argc <= 4);
 
-      obj->ival = 0x33;
+      obj->ival = 0xaa;
       obj->oval = 2;
       obj->odrive0 = 6;
       obj->odrive1 = 6;
@@ -1206,6 +1206,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.67  2001/05/22 04:08:16  steve
+ *  Get the initial inputs to functors set at xxxx.
+ *
  * Revision 1.66  2001/05/22 02:14:47  steve
  *  Update the mingw build to not require cygwin files.
  *
