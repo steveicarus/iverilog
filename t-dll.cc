@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.61 2001/09/08 01:23:21 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.62 2001/09/09 16:49:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -882,9 +882,14 @@ void dll_target::lpm_compare(const NetCompare*net)
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else if (net->pin_ANEB().is_linked()) {
-	    const Nexus*nex = net->pin_AEB().nexus();
+	    const Nexus*nex = net->pin_ANEB().nexus();
 	    obj->type = IVL_LPM_CMP_NE;
 
+	    if (! nex->t_cookie()) {
+		  cerr << "internal error: COMPARE_NE device " <<
+			net->name()<<" ANEB pin nexus has no cookie."<<endl;
+		  assert(0);
+	    }
 	    assert(nex->t_cookie());
 	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
@@ -1527,6 +1532,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.62  2001/09/09 16:49:04  steve
+ *  Connect right ANEB pin when doing NE comparator.
+ *
  * Revision 1.61  2001/09/08 01:23:21  steve
  *  No code for unlinked constants.
  *
