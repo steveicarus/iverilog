@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.18 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: udp.cc,v 1.19 2003/03/18 01:32:33 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -281,6 +281,11 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 	  n1x = 1; // 1 not allowed
 	  edge = EDGE_0;
 	  break;
+	case 'q':
+	  n0  = 1; // 0 not allowed
+	  n1x = 1; // 1 not allowed
+	  edge = EDGE_0 | EDGE_1;
+	  break;
 	case 'M':
 	  n0  = 1; // 0 not allowed
 	  n1x = 1; // 1 not allowed
@@ -350,6 +355,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.19  2003/03/18 01:32:33  steve
+ *  Add the q edge flag.
+ *
  * Revision 1.18  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
