@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.10 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.11 2000/09/24 02:21:53 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -79,7 +79,9 @@ typedef struct ivl_statement_s*ivl_statement_t;
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_NUMBER,
-      IVL_EX_STRING
+      IVL_EX_SIGNAL,
+      IVL_EX_STRING,
+      IVL_EX_SUBSIG,
 } ivl_expr_type_t;
 
 typedef enum ivl_logic_e {
@@ -140,8 +142,9 @@ extern const char* ivl_get_root_name(ivl_design_t net);
  */
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
+extern const char* ivl_expr_name(ivl_expr_t net);
 extern const char* ivl_expr_string(ivl_expr_t net);
-
+extern unsigned    ivl_expr_width(ivl_expr_t net);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -324,6 +327,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.11  2000/09/24 02:21:53  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.10  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *

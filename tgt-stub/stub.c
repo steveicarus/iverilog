@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.9 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: stub.c,v 1.10 2000/09/24 02:21:53 steve Exp $"
 #endif
 
 /*
@@ -113,13 +113,29 @@ int target_net_signal(const char*name, ivl_net_signal_t net)
       return 0;
 }
 
+static void show_expression(ivl_expr_t net, unsigned ind)
+{
+      const ivl_expr_type_t code = ivl_expr_type(net);
+
+      switch (code) {
+	  case IVL_EX_STRING:
+	    fprintf(out, "%*s<string=%s, width=%u>\n", ind, "",
+		    ivl_expr_string(net), ivl_expr_width(net));
+	    break;
+	  default:
+	    fprintf(out, "%*s<signal=%s, width=%u>\n", ind, "",
+		    ivl_expr_name(net), ivl_expr_width(net));
+	    break;
+      }
+}
+
 static void show_statement(ivl_statement_t net, unsigned ind)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
 
       switch (code) {
 	  case IVL_ST_ASSIGN:
-	    fprintf(out, "%*s? = ?;\n", ind, "");
+	    fprintf(out, "%*sASSIGN: ? = ?\n", ind, "");
 	    break;
 
 	  case IVL_ST_BLOCK: {
@@ -161,9 +177,14 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    fprintf(out, "%*s/* noop */;\n", ind, "");
 	    break;
 
-	  case IVL_ST_STASK:
-	    fprintf(out, "%*s%s(...);\n", ind, "", ivl_stmt_name(net));
-	    break;
+	  case IVL_ST_STASK: {
+		unsigned idx;
+		fprintf(out, "%*sCall %s(%u parameters);\n", ind, "",
+			ivl_stmt_name(net), ivl_stmt_parm_count(net));
+		for (idx = 0 ;  idx < ivl_stmt_parm_count(net) ;  idx += 1)
+		      show_expression(ivl_stmt_parm(net, idx), ind+4);
+		break;
+	  }
 
 	  case IVL_ST_WAIT:
 	    fprintf(out, "%*s@(...)\n", ind, "");
@@ -184,20 +205,23 @@ int target_process(ivl_process_t net)
 {
       switch (ivl_get_process_type(net)) {
 	  case IVL_PR_INITIAL:
-	    fprintf(out, "      initial\n");
+	    fprintf(out, "initial\n");
 	    break;
 	  case IVL_PR_ALWAYS:
-	    fprintf(out, "      always\n");
+	    fprintf(out, "always\n");
 	    break;
       }
 
-      show_statement(ivl_get_process_stmt(net), 8);
+      show_statement(ivl_get_process_stmt(net), 4);
 
       return 0;
 }
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.10  2000/09/24 02:21:53  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.9  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *

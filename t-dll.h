@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.4 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: t-dll.h,v 1.5 2000/09/24 02:21:53 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -77,20 +77,34 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_while(const NetWhile*);
 
       struct ivl_expr_s*expr_;
-      void expr_const(const NetEConst*net);
+      void expr_const(const NetEConst*);
+      void expr_signal(const NetESignal*);
 };
 
 /*
  * These are various private declarations used by the t-dll target.
  */
 
+/*
+ * The ivl_expr_t is an opaque reference to one of these
+ * structures. This structure holds all the information we need about
+ * an expression node, including its type, the expression width, and
+ * type specific properties.
+ */
 struct ivl_expr_s {
       ivl_expr_type_t type_;
+      unsigned width_;
 
       union {
 	    struct {
 		  char*value_;
 	    } string_;
+
+	    struct {
+		  char*name_;
+		  ivl_expr_t msb_;
+		  ivl_expr_t lsb_;
+	    } subsig_;
       } u_;
 };
 
@@ -154,6 +168,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.5  2000/09/24 02:21:53  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.4  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.1 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: verilog.c,v 1.2 2000/09/24 02:21:54 steve Exp $"
 #endif
 
 /*
@@ -119,8 +119,13 @@ static void show_expression(ivl_expr_t net)
 	    return;
 
       switch (ivl_expr_type(net)) {
+
 	  case IVL_EX_STRING:
 	    fprintf(out, "\"%s\"", ivl_expr_string(net));
+	    break;
+
+	  case IVL_EX_SIGNAL:
+	    fprintf(out, "%s", ivl_expr_name(net));
 	    break;
 
 	  default:
@@ -225,6 +230,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.2  2000/09/24 02:21:54  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.1  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *

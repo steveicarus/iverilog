@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.4 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.5 2000/09/24 02:21:53 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -26,6 +26,8 @@
 
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
 {
+      if (net == 0)
+	    return IVL_EX_NONE;
       return net->type_;
 }
 
@@ -39,10 +41,22 @@ extern "C" const char*ivl_get_root_name(ivl_design_t des)
       return ((const Design*)des)->find_root_scope()->name().c_str();
 }
 
+extern "C" const char* ivl_expr_name(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_SIGNAL);
+      return net->u_.subsig_.name_;
+}
+
 extern "C" const char* ivl_expr_string(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_STRING);
       return net->u_.string_.value_;
+}
+
+extern "C" unsigned ivl_expr_width(ivl_expr_t net)
+{
+      assert(net);
+      return net->width_;
 }
 
 extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
@@ -186,6 +200,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.5  2000/09/24 02:21:53  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.4  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *

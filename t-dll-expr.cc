@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.1 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.2 2000/09/24 02:21:53 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -34,16 +34,33 @@ void dll_target::expr_const(const NetEConst*net)
 
       if (net->value().is_string()) {
 	    expr_->type_ = IVL_EX_STRING;
+	    expr_->width_= net->expr_width();
 	    expr_->u_.string_.value_ =strdup(net->value().as_string().c_str());
 
       } else {
 	    expr_->type_ = IVL_EX_NUMBER;
+	    expr_->width_= net->expr_width();
 
       }
 }
 
+void dll_target::expr_signal(const NetESignal*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_SIGNAL;
+      expr_->width_= net->expr_width();
+      expr_->u_.subsig_.name_ = strdup(net->name().c_str());
+}
+
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.2  2000/09/24 02:21:53  steve
+ *  Add support for signal expressions.
+ *
  * Revision 1.1  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *
