@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.65 2001/12/31 00:01:16 steve Exp $"
+#ident "$Id: vthread.cc,v 1.66 2002/01/26 02:08:07 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -275,6 +275,7 @@ void vthread_run(vthread_t thr)
 	    vvp_code_t cp = codespace_index(thr->pc);
 	    thr->pc += 1;
 
+	    assert(cp);
 	    assert(cp->opcode);
 
 	      /* Run the opcode implementation. If the execution of
@@ -1490,10 +1491,31 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * Implement the %set/x instruction:
+ *
+ *      %set/x <functor>, <bit>, <idx>
+ *
+ * The single bit goes into the indexed functor. Abort the instruction
+ * if the index is <0.
+ */
 bool of_SET_X(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
-      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[cp->bit_idx[1]&3]);
+      long idx = thr->index[cp->bit_idx[1]&3];
+
+	/* If idx < 0, then the index value is probably generated from
+	   an undefined value. At any rate, this is defined to have no
+	   effect so quit now. */
+      if (idx < 0) {
+	    return true;
+      }
+
+	/* Form the functor pointer from the base pointer and the
+	   index from the index register. */
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
+
+	/* Set the value. */
       functor_set(itmp, bit_val, strong_values[bit_val], true);
 
       return true;
@@ -1696,6 +1718,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.66  2002/01/26 02:08:07  steve
+ *  Handle x in l-value of set/x
+ *
  * Revision 1.65  2001/12/31 00:01:16  steve
  *  Account for negatives in cmp/s
  *

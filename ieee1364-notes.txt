@@ -318,8 +318,32 @@ the right length, and will therefore flag instances u5 and u6 as
 errors. The IEEE1364 standard should be more specific one way or the
 other.
 
-$Id: ieee1364-notes.txt,v 1.8 2001/08/01 05:17:31 steve Exp $
+* UNKNOWN VALUES IN L-VALUE BIT SELECTS
+
+Consider this example:
+
+	reg [7:0] vec;
+	wire [4:0] idx = <expr>;
+	[...]
+	vec[idx] = 1;
+
+So long as the value of idx is a valid bit select address, the
+behavior of this assignment is obvious. However, there is no explicit
+word in the standard as to what happens if the value is out of
+range. The standard clearly states the value of an expression when the
+bit-select or part select is out of range (the value is x) but does
+not address the behavior when the expression is an l-value.
+
+Icarus Verilog will take the position that bit select expressions in
+the l-value will select oblivion if it is out of range. That is, if
+idx has a value that is not a valid bit select of vec, then the
+assignment will have no effect.
+
+$Id: ieee1364-notes.txt,v 1.9 2002/01/26 02:08:07 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.9  2002/01/26 02:08:07  steve
+ Handle x in l-value of set/x
+
 Revision 1.8  2001/08/01 05:17:31  steve
  Accept empty port lists to module instantiation.
 

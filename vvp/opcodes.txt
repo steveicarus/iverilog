@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.31 2001/11/01 03:00:19 steve Exp $
+ *  $Id: opcodes.txt,v 1.32 2002/01/26 02:08:07 steve Exp $
  */
 
 
@@ -378,6 +378,10 @@ sets only a single bit.
 This sets the bit of a variable functor, the address calculated by
 using the index register <idx> (0, 1, 2 or 3) to index the functor
 address of <var-label>.
+
+If the index value in index register <idx> is <0 (for example if
+%ix/get converted an unknown value into the register) then the set is
+not performed.
 
 
 * %shiftl/i0 <bit>, <wid>
