@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 2001/11/17 17:57:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2002/11/05 02:14:41 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -74,7 +74,7 @@ distclean: clean
 install: all installdirs $(libdir)/ivl/null.tgt
 
 $(libdir)/ivl/null.tgt: ./null.tgt
-	$(INSTALL_DATA) ./null.tgt $(libdir)/ivl/null.tgt
+	$(INSTALL_PROGRAM) ./null.tgt $(libdir)/ivl/null.tgt
 
 
 installdirs: ../mkinstalldirs

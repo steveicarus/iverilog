@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.11 2002/09/27 16:33:34 steve Exp $"
+#ident "$Id: Makefile.in,v 1.12 2002/11/05 02:14:41 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -78,7 +78,7 @@ check: all
 install: all installdirs $(libdir)/ivl/vvp.tgt
 
 $(libdir)/ivl/vvp.tgt: ./vvp.tgt
-	$(INSTALL_DATA) ./vvp.tgt $(libdir)/ivl/vvp.tgt
+	$(INSTALL_PROGRAM) ./vvp.tgt $(libdir)/ivl/vvp.tgt
 
 
 installdirs: ../mkinstalldirs
