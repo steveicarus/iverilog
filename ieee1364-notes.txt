@@ -192,13 +192,17 @@ to resolve this conflict, and the IEEE1364-2000 DRAFT does not improve
 the situation.
 
 Practice suggests that a repeat followed by an event control should be
-interpreted as a procedural_timing_control_statement in preference to
-to loop_statement interpretation, but the standard does not say this.
+interpreted as a loop head, and this is what Icarus Verilog does, as
+well as all the other major Verilog tools, but the standard does not
+say this.
 
 
 
-$Id: ieee1364-notes.txt,v 1.4 2001/01/01 19:12:35 steve Exp $
+$Id: ieee1364-notes.txt,v 1.5 2001/01/02 17:28:08 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.5  2001/01/02 17:28:08  steve
+ Resolve repeat ambiguity in favor of loop.
+
 Revision 1.4  2001/01/01 19:12:35  steve
  repeat loops ambiguity.
 
