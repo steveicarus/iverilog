@@ -133,6 +133,10 @@ case "${host}" in
 	rdynamic="-Wl,--export-dynamic"
 	;;
 
+    *-*-openbsd*)
+	rdynamic="-Wl,--export-dynamic"
+	;;
+
     *-*-solaris*)
 	rdynamic=""
 	;;
