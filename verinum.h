@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.13 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: verinum.h,v 1.14 2001/01/02 03:23:40 steve Exp $"
 #endif
 
 # include  <string>
@@ -100,6 +100,9 @@ class ostream;
 extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
 
+extern verinum::V operator | (verinum::V l, verinum::V r);
+extern verinum::V operator & (verinum::V l, verinum::V r);
+
 extern verinum::V operator == (const verinum&left, const verinum&right);
 extern verinum::V operator <= (const verinum&left, const verinum&right);
 extern verinum operator + (const verinum&left, const verinum&right);
@@ -111,6 +114,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.14  2001/01/02 03:23:40  steve
+ *  Evaluate constant &, | and unary ~.
+ *
  * Revision 1.13  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *

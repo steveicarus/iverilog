@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.188 2000/12/16 19:03:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.189 2001/01/02 03:23:40 steve Exp $"
 #endif
 
 /*
@@ -2141,6 +2141,7 @@ class NetEBBits : public NetEBinary {
 
       virtual bool set_width(unsigned w);
       virtual NetEBBits* dup_expr() const;
+      virtual NetEConst* eval_tree();
 
       virtual NetNet* synthesize(Design*);
 };
@@ -2432,6 +2433,7 @@ class NetEUBits : public NetEUnary {
 
       virtual NetNet* synthesize(Design*);
 
+      virtual NetEConst* eval_tree();
 };
 
 class NetEUReduce : public NetEUnary {
@@ -2838,6 +2840,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.189  2001/01/02 03:23:40  steve
+ *  Evaluate constant &, | and unary ~.
+ *
  * Revision 1.188  2000/12/16 19:03:30  steve
  *  Evaluate <= and ?: in parameter expressions (PR#81)
  *

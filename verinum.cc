@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.21 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: verinum.cc,v 1.22 2001/01/02 03:23:40 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -548,8 +548,37 @@ verinum operator * (const verinum&left, const verinum&right)
       return result;
 }
 
+verinum::V operator | (verinum::V l, verinum::V r)
+{
+      if (l == verinum::V1)
+	    return verinum::V1;
+      if (r == verinum::V1)
+	    return verinum::V1;
+      if (l != verinum::V0)
+	    return verinum::Vx;
+      if (r != verinum::V0)
+	    return verinum::Vx;
+      return verinum::V0;
+}
+
+verinum::V operator & (verinum::V l, verinum::V r)
+{
+      if (l == verinum::V0)
+	    return verinum::V0;
+      if (r == verinum::V0)
+	    return verinum::V0;
+      if (l != verinum::V1)
+	    return verinum::Vx;
+      if (r != verinum::V1)
+	    return verinum::Vx;
+      return verinum::V1;
+}
+
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.22  2001/01/02 03:23:40  steve
+ *  Evaluate constant &, | and unary ~.
+ *
  * Revision 1.21  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *
@@ -585,38 +614,5 @@ verinum operator * (const verinum&left, const verinum&right)
  *
  * Revision 1.10  1999/10/10 23:29:37  steve
  *  Support evaluating + operator at compile time.
- *
- * Revision 1.9  1999/07/20 05:12:22  steve
- *  Implement the set method.
- *
- * Revision 1.8  1999/05/13 04:02:09  steve
- *  More precise handling of verinum bit lengths.
- *
- * Revision 1.7  1999/05/09 01:38:33  steve
- *  Add implementation of integer to verunum constructor.
- *
- * Revision 1.6  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.5  1998/11/11 00:01:51  steve
- *  Check net ranges in declarations.
- *
- * Revision 1.4  1998/11/09 19:03:26  steve
- *  Oops, forgot return from operator<<
- *
- * Revision 1.3  1998/11/09 18:55:35  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:04:48  steve
- *  Properly dump 0 length numbers.
- *
- * Revision 1.1  1998/11/03 23:29:07  steve
- *  Introduce verilog to CVS.
- *
  */
 

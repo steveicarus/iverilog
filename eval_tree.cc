@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.16 2001/01/01 21:49:33 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.17 2001/01/02 03:23:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -70,6 +70,72 @@ NetEConst* NetEBAdd::eval_tree()
       }
 
       return new NetEConst(val);
+}
+
+NetEConst* NetEBBits::eval_tree()
+{
+      eval_sub_tree_();
+
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
+
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      unsigned lwid = lc->expr_width();
+      if (lwid == 0) lwid = lval.len();
+
+      unsigned rwid = rc->expr_width();
+      if (rwid == 0) rwid = rval.len();
+
+      unsigned wid = expr_width();
+      if (wid == 0)
+	    wid = (rwid > lwid)? rwid : lwid;
+
+      verinum res (verinum::V0, wid);
+
+      if (lwid > wid)
+	    lwid = wid;
+      if (rwid > wid)
+	    rwid = wid;
+
+      switch (op()) {
+
+	  case '|': {
+		unsigned cnt = lwid;
+		if (cnt > wid)  cnt = wid;
+		if (cnt > rwid) cnt = rwid;
+		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		      res.set(idx, lval.get(idx) | rval.get(idx));
+
+		if (lwid < rwid)
+		      for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
+			    res.set(idx, lval.get(idx));
+
+		if (rwid < lwid)
+		      for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
+			    res.set(idx, rval.get(idx));
+
+		break;
+	  }
+
+	  case '&': {
+		unsigned cnt = lwid;
+		if (cnt > wid)  cnt = wid;
+		if (cnt > rwid) cnt = rwid;
+		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		      res.set(idx, lval.get(idx) & rval.get(idx));
+
+		break;
+	  }
+
+	  default:
+	    return 0;
+      }
+
+      return new NetEConst(res);
 }
 
 NetEConst* NetEBComp::eval_eqeq_()
@@ -521,8 +587,15 @@ NetExpr* NetETernary::eval_tree()
 
 NetEConst* NetEUnary::eval_tree()
 {
-      NetExpr*oper = expr_->eval_tree();
-      NetEConst*rval = dynamic_cast<NetEConst*>(oper);
+      NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
+      if (rval == 0) {
+	    NetExpr*oper = expr_->eval_tree();
+	    if (oper == 0) return 0;
+
+	    delete expr_;
+	    expr_ = oper;
+	    rval = dynamic_cast<NetEConst*>(oper);
+      }
 
       if (rval == 0)
 	    return 0;
@@ -555,14 +628,40 @@ NetEConst* NetEUnary::eval_tree()
 		return new NetEConst(out);
 	  }
 
+	  case '~': {
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		      switch (val.get(idx)) {
+			  case verinum::V0:
+			    val.set(idx, verinum::V1);
+			    break;
+			  case verinum::V1:
+			    val.set(idx, verinum::V0);
+			    break;
+			  default:
+			    val.set(idx, verinum::Vx);
+		      }
+
+		return new NetEConst(val);
+	  }
+
 	  default:
 	    delete rval;
 	    return 0;
       }
 }
 
+
+NetEConst* NetEUBits::eval_tree()
+{
+      return NetEUnary::eval_tree();
+}
+
+
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.17  2001/01/02 03:23:40  steve
+ *  Evaluate constant &, | and unary ~.
+ *
  * Revision 1.16  2001/01/01 21:49:33  steve
  *  Fix shift and ternary operators in parameter expressions (PR#86)
  *
