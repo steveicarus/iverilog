@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: functor.cc,v 1.3 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -74,7 +74,7 @@ void functor_init(void)
  * if we overrun a chunk or an index, we need to allocate the needed
  * bits first.
  */
-vvp_ipoint_t functor_allocate(void)
+static vvp_ipoint_t functor_allocate_(void)
 {
       vvp_ipoint_t idx = functor_count;
 
@@ -94,6 +94,20 @@ vvp_ipoint_t functor_allocate(void)
       vvp_ipoint_t res = functor_count;
       functor_count += 1;
       return res * 4;
+}
+
+vvp_ipoint_t functor_allocate(unsigned wid)
+{
+      assert(wid > 0);
+      vvp_ipoint_t res = functor_allocate_();
+
+      wid -= 1;
+      while (wid > 0) {
+	    functor_allocate_();
+	    wid -= 1;
+      }
+
+      return res;
 }
 
 /*
@@ -205,6 +219,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.3  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.3 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: codes.h,v 1.4 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 
@@ -38,6 +38,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
+extern bool of_JMP(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
@@ -85,6 +86,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.4  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.3  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.

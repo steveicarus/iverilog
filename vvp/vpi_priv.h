@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.3 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.4 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
+# include  "pointers.h"
 
 /*
  * This header file contains the internal definitions that the vvp
@@ -87,6 +88,24 @@ struct __vpiScope {
 };
 extern vpiHandle vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
+
+/*
+ * Signals include the variable types (reg, integer, time) and are
+ * distinguished by the vpiType code. They also have a parent scope,
+ * a declared name and declaration indices.
+ */
+struct __vpiSignal {
+      struct __vpiHandle base;
+      vpiHandle scope;
+	/* The name of this reg/net object */
+      char*name;
+	/* The indices that define the width and access offset. */
+      int msb, lsb;
+	/* The represented value is here. */
+      vvp_ipoint_t bits;
+};
+extern vpiHandle vpip_make_reg(char*name, int msb, int lsb,
+			       vvp_ipoint_t base);
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -163,6 +182,9 @@ extern void scope_cleanup(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.4  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.3  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.5 2001/03/19 01:55:38 steve Exp $"
+#ident "$Id: vthread.cc,v 1.6 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -94,6 +94,12 @@ bool of_END(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+bool of_JMP(vthread_t thr, vvp_code_t cp)
+{
+      thr->pc = cp->cptr;
+      return true;
+}
+
 bool of_NOOP(vthread_t thr, vvp_code_t cp)
 {
       return true;
@@ -125,6 +131,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.6  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.5  2001/03/19 01:55:38  steve
  *  Add support for the vpiReset sim control.
  *

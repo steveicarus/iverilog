@@ -21,6 +21,11 @@ future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
 
+* %jmp <code-label>
+
+The %jmp instruction performs an unconditional branch to a given
+location. The parameter is the label of the destination instruction.
+
 * %load <bit>, <functor-label>
 
 This instruction loads a value from the given functor output into the

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.8 2001/03/20 02:48:40 steve Exp $"
+#ident "$Id: parse.y,v 1.9 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -38,8 +38,11 @@ extern FILE*yyin;
 %union {
       char*text;
       long numb;
-      struct textv_s textv;
+
       comp_operands_t opa;
+
+      struct symb_s  symb;
+      struct symbv_s symbv;
 
       struct argv_s argv;
       vpiHandle vpi;
@@ -54,7 +57,8 @@ extern FILE*yyin;
 %token <text> T_STRING
 %token <text> T_SYMBOL
 
-%type <textv> symbols
+%type <symb>  symbol
+%type <symbv> symbols
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 
@@ -81,8 +85,8 @@ statement
      label and a type name, and may have operands. */
 
 	: T_LABEL K_FUNCTOR T_SYMBOL ',' T_NUMBER ',' symbols ';'
-		{ struct textv_s obj = $7;
-		  compile_functor($1, $3, $5, obj.cnt, obj.text);
+		{ struct symbv_s obj = $7;
+		  compile_functor($1, $3, $5, obj.cnt, obj.vect);
 		}
 	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
 		{ compile_functor($1, $3, $5, 0, 0); }
@@ -125,8 +129,8 @@ statement
      creates a functor with the same name that acts as the output of
      the variable in the netlist. */
 
-	| T_LABEL K_VAR ';'
-		{ compile_variable($1); }
+	| T_LABEL K_VAR T_STRING ',' T_NUMBER ',' T_NUMBER ';'
+		{ compile_variable($1, $3, $5, $7); }
 
   /* Oh and by the way, empty statements are OK as well. */
 
@@ -162,12 +166,12 @@ operands
 	;
 
 operand
-	: T_SYMBOL
+	: symbol
 		{ comp_operands_t opa = (comp_operands_t)
 			calloc(1, sizeof(struct comp_operands_s));
 		  opa->argc = 1;
-		  opa->argv[0].ltype = L_TEXT;
-		  opa->argv[0].text = $1;
+		  opa->argv[0].ltype = L_SYMB;
+		  opa->argv[0].symb = $1;
 		  $$ = opa;
 		}
 	| T_NUMBER
@@ -218,16 +222,32 @@ argument
 
   /* functor operands can only be a list of symbols. */
 symbols
-	: T_SYMBOL
-		{ struct textv_s obj;
-		  textv_init(&obj);
-		  textv_add(&obj, $1);
+	: symbol
+		{ struct symbv_s obj;
+		  symbv_init(&obj);
+		  symbv_add(&obj, $1);
 		  $$ = obj;
 		}
-	| symbols ',' T_SYMBOL
-		{ struct textv_s obj = $1;
-		  textv_add(&obj, $3);
+	| symbols ',' symbol
+		{ struct symbv_s obj = $1;
+		  symbv_add(&obj, $3);
 		  $$ = obj;
+		}
+	;
+
+
+  /* In some cases, simple pointer arithmetic is allowed. In
+     particular, functor vectors can be indexed with the [] syntax,
+     with values from 0 up. */
+
+symbol
+	: T_SYMBOL
+		{ $$.text = $1;
+		  $$.idx = 0;
+		}
+	| T_SYMBOL '[' T_NUMBER ']'
+		{ $$.text = $1;
+		  $$.idx = $3;
 		}
 	;
 
@@ -245,6 +265,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.9  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.8  2001/03/20 02:48:40  steve
  *  Copyright notices.
  *

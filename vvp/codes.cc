@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.2 2001/03/11 23:06:49 steve Exp $"
+#ident "$Id: codes.cc,v 1.3 2001/03/20 06:16:23 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -103,6 +103,9 @@ void codespace_dump(FILE*fd)
 	    } else if (cop->opcode == &of_END) {
 		  fprintf(fd, "%%end\n");
 
+	    } else if (cop->opcode == &of_JMP) {
+		  fprintf(fd, "%%jmp 0x%u\n", cop->cptr);
+
 	    } else if (cop->opcode == &of_SET) {
 		  fprintf(fd, "%%set 0x%lu, %u\n",
 			  cop->iptr, cop->bit_idx1);
@@ -116,6 +119,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.3  2001/03/20 06:16:23  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.2  2001/03/11 23:06:49  steve
  *  Compact the vvp_code_s structure.
  *

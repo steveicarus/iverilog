@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: functor.h,v 1.3 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -72,8 +72,11 @@ extern void functor_init(void);
  * This function allocates a functor and returns the vvp_ipoint_t
  * address for it. Every call to functor_allocate is guaranteed to
  * return a different vvp_ipoint_t address. The ipoint port bits are 0.
+ *
+ * If the wid is >1, a bunch of contiguous functors is created, and
+ * the return value is the address of the first in the vector.
  */
-extern vvp_ipoint_t functor_allocate(void);
+extern vvp_ipoint_t functor_allocate(unsigned wid);
 
 /*
  * functor_set sets the addressed input to the specified value, and
@@ -108,6 +111,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.3  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.5 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: compile.h,v 1.6 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  <stdio.h>
+# include  "parse_misc.h"
 # include  "vpi_user.h"
 
 /*
@@ -49,7 +50,7 @@ extern void compile_cleanup(void);
  * to existing functors to manage the linking.
  */
 extern void compile_functor(char*label, char*type, unsigned init,
-			    unsigned argc, char**argv);
+			    unsigned argc, struct symb_s*argv);
 
 
 /*
@@ -62,7 +63,7 @@ extern void compile_functor(char*label, char*type, unsigned init,
  */
 
 #define OPERAND_MAX 3
-enum ltype_e { L_NUMB, L_TEXT };
+enum ltype_e { L_NUMB, L_SYMB };
 
 struct comp_operands_s {
       unsigned argc;
@@ -70,7 +71,7 @@ struct comp_operands_s {
 	    enum ltype_e ltype;
 	    union {
 		  unsigned long numb;
-		  char*text;
+		  struct symb_s symb;
 	    };
       } argv[OPERAND_MAX];
 };
@@ -95,9 +96,9 @@ extern void compile_scope_recall(char*sym);
 extern void compile_thread(char*start_sym);
 
 /*
- * This function is called to create a var bit with the given name.
+ * This function is called to create a var vector with the given name.
  */
-extern void compile_variable(char*label);
+extern void compile_variable(char*label, char*name, int msb, int lsb);
 
 /*
  * This is a diagnostic aid. Dump all the compiler tables to the file
@@ -107,6 +108,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.6  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.5  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

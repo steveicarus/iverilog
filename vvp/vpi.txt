@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.4 2001/03/18 04:35:18 steve Exp $
+ *  $Id: vpi.txt,v 1.5 2001/03/20 06:16:24 steve Exp $
  */
 
 
@@ -125,6 +125,21 @@ this:
 In this case, the <symbol> is the label of a previous scope directive,
 and is used to identify the scope to be resumed. A scope resume
 directive cannot have a label.
+
+
+VARIABLES
+
+Reg vectors (scalers are vectors of length 1) are created by .var
+statements in the source. The .var statement includes the declared
+name of the variable, and the indices of the MSB and LSB of the
+vector. The vpiHandle is then created with this information, and the
+vpi_ipoint_t pointer to the LSB functor of the variable. VPI programs
+access the vector through the vpiHandle and related functions. The VPI
+code gets access to the declared indices.
+
+The VPI interface to variable (vpiReg objects) uses the MSB and LSB
+values that the user defined to describe the dimensions of the
+object.
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

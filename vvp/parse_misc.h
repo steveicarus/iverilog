@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.2 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.3 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 
@@ -43,13 +43,18 @@ extern void yyerror(const char*msg);
 extern const char*yypath;
 extern unsigned yyline;
 
-struct textv_s {
-      unsigned cnt;
-      char**text;
+struct symb_s {
+      char*text;
+      unsigned idx;
 };
 
-extern void textv_init(struct textv_s*obj);
-extern void textv_add(struct textv_s*obj, char*item);
+struct symbv_s {
+      unsigned cnt;
+      struct symb_s*vect;
+};
+
+extern void symbv_init(struct symbv_s*obj);
+extern void symbv_add(struct symbv_s*obj, struct symb_s item);
 
 
 
@@ -63,6 +68,9 @@ extern void argv_add(struct argv_s*obj, vpiHandle);
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.3  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.2  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

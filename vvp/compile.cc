@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.6 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: compile.cc,v 1.7 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -66,6 +66,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,  OA_BIT2} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,  OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,  OA_NONE} },
+      { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,  OA_NONE} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,  OA_NONE} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
@@ -100,7 +101,9 @@ static symbol_table_t sym_functors = 0;
 struct resolv_list_s {
       struct resolv_list_s*next;
       vvp_ipoint_t port;
+
       char*source;
+      unsigned idx;
 };
 
 static struct resolv_list_s*resolv_list = 0;
@@ -129,9 +132,9 @@ void compile_init(void)
  * functor. Also resolve the inputs to the functor.
  */
 void compile_functor(char*label, char*type, unsigned init,
-		     unsigned argc, char**argv)
+		     unsigned argc, struct symb_s*argv)
 {
-      vvp_ipoint_t fdx = functor_allocate();
+      vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
       { symbol_value_t val;
@@ -151,22 +154,24 @@ void compile_functor(char*label, char*type, unsigned init,
 	   the link yet. Save the reference to be resolved later. */
 
       for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    symbol_value_t val = sym_get_value(sym_functors, argv[idx]);
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
 	    vvp_ipoint_t tmp = val.num;
 
 	    if (tmp) {
+		  tmp = ipoint_index(tmp, argv[idx].idx);
 		  functor_t fport = functor_index(tmp);
 		  obj->port[idx] = fport->out;
 		  fport->out = ipoint_make(fdx, idx);
 
-		  free(argv[idx]);
+		  free(argv[idx].text);
 
 	    } else {
 		  struct resolv_list_s*res = (struct resolv_list_s*)
 			calloc(1, sizeof(struct resolv_list_s));
 
 		  res->port = ipoint_make(fdx, idx);
-		  res->source = argv[idx];
+		  res->source = argv[idx].text;
+		  res->idx  = argv[idx].idx;
 		  res->next = resolv_list;
 		  resolv_list = res;
 	    }
@@ -260,35 +265,36 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  break;
 
 		case OA_CODE_PTR:
-		  if (opa->argv[idx].ltype != L_TEXT) {
+		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;
 		  }
 
-		  tmp = sym_get_value(sym_codespace, opa->argv[idx].text);
+		  assert(opa->argv[idx].symb.idx == 0);
+		  tmp = sym_get_value(sym_codespace, opa->argv[idx].symb.text);
 		  code->cptr = tmp.num;
 		  if (code->cptr == 0) {
 			yyerror("functor undefined");
 			break;
 		  }
 
-		  free(opa->argv[idx].text);
+		  free(opa->argv[idx].symb.text);
 		  break;
 
 		case OA_FUNC_PTR:
-		  if (opa->argv[idx].ltype != L_TEXT) {
+		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;
 		  }
 
-		  tmp = sym_get_value(sym_functors, opa->argv[idx].text);
-		  code->iptr = tmp.num;
-		  if (code->iptr == 0) {
+		  tmp = sym_get_value(sym_functors, opa->argv[idx].symb.text);
+		  if (tmp.num == 0) {
 			yyerror("functor undefined");
 			break;
 		  }
+		  code->iptr = ipoint_index(tmp.num, opa->argv[idx].symb.idx);
 
-		  free(opa->argv[idx].text);
+		  free(opa->argv[idx].symb.text);
 		  break;
 
 		case OA_NUMBER:
@@ -357,19 +363,24 @@ void compile_thread(char*start_sym)
  * A variable is a special functor, so we allocate that functor and
  * write the label into the symbol table.
  */
-void compile_variable(char*label)
+void compile_variable(char*label, char*name, int msb, int lsb)
 {
-      vvp_ipoint_t fdx = functor_allocate();
+      unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
+      vvp_ipoint_t fdx = functor_allocate(wid);
       symbol_value_t val;
       val.num = fdx;
       sym_set_value(sym_functors, label, val);
 
-      functor_t obj = functor_index(fdx);
-      obj->table = ft_var;
-      obj->ival  = 0x22;
-      obj->oval  = 0x02;
-
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    functor_t obj = functor_index(ipoint_index(fdx,idx));
+	    obj->table = ft_var;
+	    obj->ival  = 0x22;
+	    obj->oval  = 0x02;
+      }
       free(label);
+
+	/* Make the vpiHandle for the reg. */
+      vpip_make_reg(name, msb, lsb, fdx);
 }
 
 /*
@@ -398,6 +409,8 @@ void compile_cleanup(void)
 	    if (tmp != 0) {
 		    /* The symbol is defined, link the functor input
 		       to the resolved output. */
+
+		  tmp = ipoint_index(tmp, res->idx);
 		  functor_t fport = functor_index(tmp);
 		  obj->port[idx] = fport->out;
 		  fport->out = res->port;
@@ -434,6 +447,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.7  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.6  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

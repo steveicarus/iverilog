@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.2 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.3 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -32,16 +32,17 @@ void yyerror(const char*msg)
       fprintf(stderr, "%s:%u: %s\n", yypath, yyline, msg);
 }
 
-void textv_init(struct textv_s*obj)
+void symbv_init(struct symbv_s*obj)
 {
       obj->cnt = 0;
-      obj->text = 0;
+      obj->vect = 0;
 }
 
-void textv_add(struct textv_s*obj, char*item)
+void symbv_add(struct symbv_s*obj, struct symb_s item)
 {
-      obj->text = (char**)realloc(obj->text, (obj->cnt+1) * sizeof(char*));
-      obj->text[obj->cnt] = item;
+      obj->vect = (struct symb_s*)
+	    realloc(obj->vect, (obj->cnt+1) * sizeof(struct symb_s));
+      obj->vect[obj->cnt] = item;
       obj->cnt += 1;
 }
 
@@ -61,6 +62,9 @@ void argv_add(struct argv_s*obj, vpiHandle item)
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.3  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.2  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.3 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: main.cc,v 1.4 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -80,6 +80,7 @@ int main(int argc, char*argv[])
       if (dump_path) {
 	    FILE*fd = fopen(dump_path, "w");
 	    compile_dump(fd);
+	    fclose(fd);
       }
 
       schedule_simulate();
@@ -89,6 +90,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.4  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.3  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.4 2001/03/14 19:26:15 steve Exp $
+ *  $Id: README.txt,v 1.5 2001/03/20 06:16:23 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -52,7 +52,13 @@ keyword.
 
 Symbols are references to labels. It is not necessary for a label to
 be declared before its use in a symbol, but it must be declared
-eventually.
+eventually. When symbols refer to functors, the symbol represents the
+vvp_ipoint_t pointer to the output. (Inputs cannot, and need not, be
+references symbolically.)
+
+If the functor is part of a vector, then the symbol is the
+vvp_ipoint_t for the first functor. The [] operator can then be used
+to reference a functor other then the first in the vector.
 
 
 FUNCTOR STATEMENTS:
@@ -81,20 +87,30 @@ combining up to four inputs down to one output.
 
 VARIABLE STATEMENTS:
 
-A variable is a bit that can be written by behavioral code (so has no
-structural input) and propagates its output to a functor. The general
-syntax of a variable is:
+A variable is a bit vector that can be written by behavioral code (so
+has no structural input) and propagates its output to a functor. The
+general syntax of a variable is:
 
-	<label> .var
+	<label> .var "name", <msb>, <lsb>;
+
+The "name" is the declared base name of the original variable, for the
+sake of VPI code that might access it. The variable is placed in the
+current scope. The variable also has a width, defined by the indices
+for the mst significant and lest significant bits. If the indices are
+equal (normally 0) the vector has width of one. If the width is greater
+then one, a contiguous array of functors is created and the value of
+the label is the address of the least significant bit.
 
 A variable does not take inputs, since its value is set behaviorally
-by assignment events. It does have an output, though, and its output
-is propagated into the net of functors in the usual way.
+by assignment events. It does have output, though, and its output is
+propagated into the net of functors in the usual way.
 
-Therefore, the .var statement implicitly also creates a .functor of
-the same name as the variable. It is in fact the functor that
-behavioral code reads when the value of the variable (or net) is read
-by behavioral code.
+Therefore, the .var statement implicitly also creates .functors
+addressed by the label of the variable. It is in fact the functors
+that behavioral code reads when the value of the variable (or net) is
+read by behavioral code. If the .var represents a vector of .functors,
+the index of the LSB is always, from the perspective of vvp, ZERO. The
+<msb>,<lsb> details are there only for the benefit of VPI support.
 
 The variable .functor implicitly has three inputs. The first is the
 value that gets set by assignments or procedural continuous
@@ -102,6 +118,9 @@ assignments. The second is a forced value that can be connected to a
 force expression (as a functor) when a value is being forced. And the
 third input selects the source to use. The default is to select the
 assignment input.
+
+The variable statement also creates a VPI object of the appropriate
+type. See the vpi.txt file for details about that object.
 
 Note that nets in a design do not necessarily have a specific functor
 or object allocated to them. Nets are just something that behavioral

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: pointers.h,v 1.2 2001/03/20 06:16:24 steve Exp $"
 #endif
 
 /*
@@ -58,6 +58,15 @@ inline vvp_ipoint_t ipoint_make(vvp_ipoint_t func, unsigned port)
 }
 
 /*
+ * This implements pointer arithmetic for vvp_point_t pointers. Add
+ * the given index to the functor part of the pointer.
+ */
+inline vvp_ipoint_t ipoint_index(vvp_ipoint_t base, unsigned idx)
+{
+      return base + (idx<<2);
+}
+
+/*
  * This function returns the port index of a functor given a complete
  * vvp_ipoint_t pointer.
  */
@@ -70,6 +79,9 @@ typedef unsigned vvp_cpoint_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.2  2001/03/20 06:16:24  steve
+ *  Add support for variable vectors.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *
