@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.27 2004/05/19 03:30:46 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.28 2004/06/30 03:00:36 steve Exp $"
 #endif
 
 /*
@@ -328,6 +328,10 @@ static struct __vpiUserSystf* vpip_find_systf(const char*name)
  * %vpi_call statement is encountered. Create here a vpiHandle that
  * describes the call, and return it. The %vpi_call instruction will
  * store this handle for when it is executed.
+ *
+ * If this is called to make a function, then the vwid will be a
+ * non-zero value that represents the width or type of the result. The
+ * vbit is also a non-zero value, the address in thread space of the result.
  */
 vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 			      unsigned argc, vpiHandle*argv)
@@ -480,6 +484,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.28  2004/06/30 03:00:36  steve
+ *  Some explination of vpi_func arguments.
+ *
  * Revision 1.27  2004/05/19 03:30:46  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

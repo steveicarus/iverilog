@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.57 2004/05/19 03:26:24 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.58 2004/06/30 03:00:36 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -319,7 +319,7 @@ extern unsigned vpip_module_path_cnt;
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object
  * and returns the handle. The compiler uses this function when it
- * encounters a %vpi_call statement.
+ * encounters a %vpi_call or %vpi_func statement.
  *
  * The %vpi_call instruction has as its only parameter the handle that
  * is returned by the vpip_build_vpi_call. This includes all the
@@ -329,7 +329,7 @@ extern unsigned vpip_module_path_cnt;
  *
  * The vbit and vwid fields are used if this turns out to be a system
  * function. In that case, the vbit and vwid are used to address the
- * vector is thread bit space where the result is supposed to go.
+ * vector in thread bit space where the result is supposed to go.
  *
  * Note that the argv array is saved in the handle, and should should
  * not be released by the caller.
@@ -418,6 +418,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.58  2004/06/30 03:00:36  steve
+ *  Some explination of vpi_func arguments.
+ *
  * Revision 1.57  2004/05/19 03:26:24  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *
