@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.89 2002/01/26 05:28:28 steve Exp $"
+#ident "$Id: pform.cc,v 1.90 2002/01/31 04:10:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -807,14 +807,33 @@ void pform_set_port_type(const char*nm, NetNet::PortType pt,
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, pt);
+	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT);
 	    cur->set_file(file);
 	    cur->set_lineno(lineno);
 	    pform_cur_module->add_wire(cur);
       }
 
-      if (! cur->set_port_type(pt))
-	    VLerror("error setting port direction.");
+      switch (cur->get_port_type()) {
+	  case NetNet::PIMPLICIT:
+	    if (! cur->set_port_type(pt))
+		  VLerror("error setting port direction.");
+	    break;
+
+	  case NetNet::NOT_A_PORT:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " is not in the port list."
+		 << endl;
+	    error_count += 1;
+	    break;
+
+	  default:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " already has a port declaration."
+		 << endl;
+	    error_count += 1;
+	    break;
+      }
+
 }
 
 /*
@@ -1160,6 +1179,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.90  2002/01/31 04:10:15  steve
+ *  Detect duplicate port declarations.
+ *
  * Revision 1.89  2002/01/26 05:28:28  steve
  *  Detect scalar/vector declarion mismatch.
  *
