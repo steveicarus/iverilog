@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.73 2002/08/28 18:38:07 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.74 2002/09/01 01:42:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1323,6 +1323,8 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       tmp = draw_eval_expr_wid(false_ex, wid);
       fprintf(vvp_out, "    %%blend  %u, %u, %u;\n", res.base, tmp.base, wid);
       fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
+      if (tmp.base >= 8)
+	    clr_vector(tmp);
 
 	/* This is the true case. Just evaluate the true expression. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
@@ -1330,7 +1332,8 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       tmp = draw_eval_expr_wid(true_ex, wid);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
       fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
-      clr_vector(tmp);
+      if (tmp.base >= 8)
+	    clr_vector(tmp);
 
 
 	/* This is the false case. Just evaluate the false expression. */
@@ -1338,7 +1341,8 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
       tmp = draw_eval_expr_wid(false_ex, wid);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
-      clr_vector(tmp);
+      if (tmp.base >= 8)
+	    clr_vector(tmp);
 
 	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
@@ -1791,6 +1795,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.74  2002/09/01 01:42:34  steve
+ *  Fix leaking vthread bits in ?: eval.
+ *
  * Revision 1.73  2002/08/28 18:38:07  steve
  *  Add the %subi instruction, and use it where possible.
  *
