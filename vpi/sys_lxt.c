@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.18 2003/02/21 01:36:25 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.19 2003/04/27 02:22:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,11 +145,14 @@ struct vcd_info {
       vpiHandle cb;
       struct t_vpi_time time;
       struct lt_symbol *sym;
-      struct vcd_info*next;
+      struct vcd_info  *next;
+      struct vcd_info  *dmp_next;
+      int scheduled;
 };
 
 
 static struct vcd_info*vcd_list = 0;
+static struct vcd_info*vcd_dmp_list = 0;
 static unsigned long vcd_cur_time = 0;
 static int dump_is_off = 0;
 
@@ -217,23 +220,45 @@ static void vcd_checkpoint_x()
 	    show_this_item_x(cur);
 }
 
-static int variable_cb(p_cb_data cause)
+static int variable_cb_2(p_cb_data cause)
 {
+      struct vcd_info* info = vcd_dmp_list;
       unsigned long now = cause->time->low;
-      struct vcd_info*info = (struct vcd_info*)cause->user_data;
-
-      if (dump_is_off)
-	    return 0;
-
-      if (dump_header_pending())
-	    return 0;
-
-      if (now != vcd_cur_time) {
+ 
+      if (now != vcd_cur_time) {  
             lt_set_time(dump_file, now);
 	    vcd_cur_time = now;
       }
 
-      show_this_item(info);
+      do {
+           show_this_item(info);
+           info->scheduled = 0;
+      } while ((info = info->dmp_next) != 0);
+
+      vcd_dmp_list = 0;
+
+      return 0;
+}
+
+static int variable_cb_1(p_cb_data cause)
+{
+      struct t_cb_data cb;
+      struct vcd_info*info = (struct vcd_info*)cause->user_data;
+
+      if (dump_is_off) 		 return 0;
+      if (dump_header_pending()) return 0;
+      if (info->scheduled)       return 0;
+
+      if (!vcd_dmp_list) {
+          cb = *cause;
+          cb.reason = cbReadOnlySynch;
+          cb.cb_rtn = variable_cb_2;
+          vpi_register_cb(&cb);
+      } 
+
+      info->scheduled = 1;
+      info->dmp_next  = vcd_dmp_list;
+      vcd_dmp_list    = info;
 
       return 0;
 }
@@ -498,13 +523,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info->time.type = vpiSimTime;
 		  info->item  = item;
 		  info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiSize, item)-1, 0, LT_SYM_F_BITS);
+		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
 		  cb.user_data = (char*)info;
 		  cb.value     = NULL;
 		  cb.obj       = item;
 		  cb.reason    = cbValueChange;
-		  cb.cb_rtn    = variable_cb;
+		  cb.cb_rtn    = variable_cb_1;
 
 		  info->next  = vcd_list;
 		  vcd_list    = info;
@@ -535,13 +561,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    info->time.type = vpiSimTime;
 	    info->item  = item;
 	    info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiSize, item)-1, 0, LT_SYM_F_DOUBLE);
+	    info->scheduled = 0;
 
 	    cb.time      = &info->time;
 	    cb.user_data = (char*)info;
 	    cb.value     = NULL;
 	    cb.obj       = item;
 	    cb.reason    = cbValueChange;
-	    cb.cb_rtn    = variable_cb;
+	    cb.cb_rtn    = variable_cb_1;
 
 	    info->next  = vcd_list;
 	    vcd_list    = info;
@@ -766,6 +793,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.19  2003/04/27 02:22:27  steve
+ *  Capture VCD dump value in the rosync time period.
+ *
  * Revision 1.18  2003/02/21 01:36:25  steve
  *  Move dumpon/dumpoff around to the right times.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.42 2003/02/12 05:28:01 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.43 2003/04/27 02:22:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,7 +56,9 @@ struct vcd_info {
       vpiHandle cb;
       struct t_vpi_time time;
       const char*ident;
-      struct vcd_info*next;
+      struct vcd_info* next;
+      struct vcd_info* dmp_next;
+      int scheduled;
 };
 
 
@@ -78,7 +80,8 @@ static void gen_new_vcd_id(void)
       }
 }
 
-static struct vcd_info*vcd_list = 0;
+static struct vcd_info *vcd_list = 0;
+static struct vcd_info *vcd_dmp_list = 0;
 unsigned long vcd_cur_time = 0;
 static int dump_is_off = 0;
 
@@ -172,23 +175,45 @@ static void vcd_checkpoint_x()
 	    show_this_item_x(cur);
 }
 
-static int variable_cb(p_cb_data cause)
+static int variable_cb_2(p_cb_data cause)
 {
+      struct vcd_info* info = vcd_dmp_list;
       unsigned long now = cause->time->low;
-      struct vcd_info*info = (struct vcd_info*)cause->user_data;
-
-      if (dump_is_off)
-	    return 0;
-
-      if (dump_header_pending())
-	    return 0;
 
       if (now != vcd_cur_time) {
 	    fprintf(dump_file, "#%lu\n", now);
 	    vcd_cur_time = now;
       }
 
-      show_this_item(info);
+      do {
+           show_this_item(info);
+           info->scheduled = 0;
+      } while ((info = info->dmp_next) != 0);
+
+      vcd_dmp_list = 0;
+
+      return 0;
+}
+
+static int variable_cb_1(p_cb_data cause)
+{
+      struct t_cb_data cb;
+      struct vcd_info*info = (struct vcd_info*)cause->user_data;
+
+      if (dump_is_off) 		 return 0;
+      if (dump_header_pending()) return 0;
+      if (info->scheduled)       return 0;
+
+      if (!vcd_dmp_list) {
+          cb = *cause;
+          cb.reason = cbReadOnlySynch;
+          cb.cb_rtn = variable_cb_2;
+          vpi_register_cb(&cb);
+      } 
+
+      info->scheduled = 1;
+      info->dmp_next  = vcd_dmp_list;
+      vcd_dmp_list    = info;
 
       return 0;
 }
@@ -475,15 +500,18 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info->time.type = vpiSimTime;
 		  info->item  = item;
 		  info->ident = ident;
+		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
 		  cb.user_data = (char*)info;
 		  cb.value     = NULL;
 		  cb.obj       = item;
 		  cb.reason    = cbValueChange;
-		  cb.cb_rtn    = variable_cb;
+		  cb.cb_rtn    = variable_cb_1;
 
-		  info->next  = vcd_list;
+
+		  info->next      = vcd_list;
+		  info->dmp_next  = 0;
 		  vcd_list    = info;
 
 		  info->cb    = vpi_register_cb(&cb);
@@ -512,18 +540,21 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    info->time.type = vpiSimTime;
 	    info->item  = item;
 	    info->ident = ident;
+	    info->scheduled = 0;
 
 	    cb.time      = &info->time;
 	    cb.user_data = (char*)info;
 	    cb.value     = NULL;
 	    cb.obj       = item;
 	    cb.reason    = cbValueChange;
-	    cb.cb_rtn    = variable_cb;
+	    cb.cb_rtn    = variable_cb_1;
 
 	    info->next  = vcd_list;
+	    info->dmp_next  = 0;
 	    vcd_list    = info;
 
 	    info->cb    = vpi_register_cb(&cb);
+
 	    break;
 
 	  case vpiModule:      type = "module";      if(0){
@@ -762,6 +793,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.43  2003/04/27 02:22:28  steve
+ *  Capture VCD dump value in the rosync time period.
+ *
  * Revision 1.42  2003/02/12 05:28:01  steve
  *  Set dumpoff of real variables to NaN.
  *
