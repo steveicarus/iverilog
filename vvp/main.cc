@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.36 2003/05/15 16:51:09 steve Exp $"
+#ident "$Id: main.cc,v 1.37 2003/06/13 19:51:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -80,7 +80,7 @@ static void my_getrusage(struct rusage *a)
 #     endif
 }
 
-static void print_rusage(FILE *f, struct rusage *a, struct rusage *b)
+static void print_rusage(struct rusage *a, struct rusage *b)
 {
       double delta = a->ru_utime.tv_sec
 	    +        a->ru_utime.tv_usec/1E6
@@ -92,7 +92,7 @@ static void print_rusage(FILE *f, struct rusage *a, struct rusage *b)
 	    -        b->ru_stime.tv_usec/1E6
 	    ;
 
-      fprintf(f,
+      vpi_mcd_printf(1,
 	      " ... %G seconds,"
 	      " %.1f/%.1f/%.1f KBytes size/rss/shared\n",
 	      delta,
@@ -106,7 +106,7 @@ static void print_rusage(FILE *f, struct rusage *a, struct rusage *b)
 // Provide dummies
 struct rusage { int x; };
 inline static void my_getrusage(struct rusage *) { }
-inline static void print_rusage(FILE *, struct rusage *, struct rusage *){};
+inline static void print_rusage(struct rusage *, struct rusage *){};
 
 #endif // ! defined(HAVE_SYS_RESOURCE_H)
 
@@ -201,14 +201,12 @@ int main(int argc, char*argv[])
 	    }
       }
 
+      vpi_mcd_init(logfile);
+
       if (verbose_flag) {
 	    my_getrusage(cycles+0);
-	    fprintf(stderr, "Compiling VVP ...\n");
-	    if (logfile && logfile != stderr)
-		  fprintf(logfile, "Compiling VVP ...\n");
+	    vpi_mcd_printf(1, "Compiling VVP ...\n");
       }
-
-      vpi_mcd_init(logfile);
 
       vvp_vpi_init();
 
@@ -224,41 +222,34 @@ int main(int argc, char*argv[])
 	    return rc;
 
       if (verbose_flag) {
-	    fprintf(stderr, "Compile cleanup...\n");
+	    vpi_mcd_printf(1, "Compile cleanup...\n");
       }
 
       compile_cleanup();
 
       if (compile_errors > 0) {
-	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
+	    vpi_mcd_printf(1, "%s: Program not runnable, %u errors.\n",
 		    design_path, compile_errors);
-	    if (logfile && logfile != stderr)
-		  fprintf(logfile, "%s: Program not runnable, %u errors.\n",
-			  design_path, compile_errors);
 	    return compile_errors;
       }
 
       if (verbose_flag) {
-	    fprintf(stderr, " ... %8lu functors\n", count_functors);
-	    fprintf(stderr, "           %8lu table\n",  count_functors_table);
-	    fprintf(stderr, "           %8lu bufif\n",  count_functors_bufif);
-	    fprintf(stderr, "           %8lu resolv\n", count_functors_resolv);
-	    fprintf(stderr, "           %8lu variable\n", count_functors_var);
-	    fprintf(stderr, " ... %8lu opcodes (%lu bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu functors\n", count_functors);
+	    vpi_mcd_printf(1, "           %8lu table\n",  count_functors_table);
+	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
+	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
+	    vpi_mcd_printf(1, "           %8lu variable\n", count_functors_var);
+	    vpi_mcd_printf(1, " ... %8lu opcodes (%lu bytes)\n",
 		    count_opcodes, (unsigned long)size_opcodes);
-	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
-	    fprintf(stderr, " ... %8lu memories\n", count_vpi_memories);
-	    fprintf(stderr, " ... %8lu scopes\n",   count_vpi_scopes);
+	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
+	    vpi_mcd_printf(1, " ... %8lu memories\n", count_vpi_memories);
+	    vpi_mcd_printf(1, " ... %8lu scopes\n",   count_vpi_scopes);
       }
 
       if (verbose_flag) {
 	    my_getrusage(cycles+1);
-	    print_rusage(stderr, cycles+1, cycles+0);
-	    fprintf(stderr, "Running ...\n");
-	    if (logfile && logfile != stderr) {
-		  print_rusage(logfile, cycles+1, cycles+0);
-		  fprintf(logfile, "Running ...\n");
-	    }
+	    print_rusage(cycles+1, cycles+0);
+	    vpi_mcd_printf(1, "Running ...\n");
       }
        
 
@@ -266,19 +257,17 @@ int main(int argc, char*argv[])
 
       if (verbose_flag) {
 	    my_getrusage(cycles+2);
-	    print_rusage(stderr, cycles+2, cycles+1);
-	    if (logfile && logfile != stderr)
-		  print_rusage(logfile, cycles+2, cycles+1);
+	    print_rusage(cycles+2, cycles+1);
 
-	    fprintf(stderr, "Event counts: (event pool = %lu)\n",
+	    vpi_mcd_printf(1, "Event counts: (event pool = %lu)\n",
 		    count_event_pool);
-	    fprintf(stderr, "    %8lu thread schedule events\n",
+	    vpi_mcd_printf(1, "    %8lu thread schedule events\n",
 		    count_thread_events);
-	    fprintf(stderr, "    %8lu propagation events\n",
+	    vpi_mcd_printf(1, "    %8lu propagation events\n",
 		    count_prop_events);
-	    fprintf(stderr, "    %8lu assign events\n",
+	    vpi_mcd_printf(1, "    %8lu assign events\n",
 		    count_assign_events);
-	    fprintf(stderr, "    %8lu other events\n",
+	    vpi_mcd_printf(1, "    %8lu other events\n",
 		    count_gen_events);
       }
 
@@ -287,6 +276,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.37  2003/06/13 19:51:08  steve
+ *  Include verbose messages in log output.
+ *
  * Revision 1.36  2003/05/15 16:51:09  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log
