@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.42 2000/07/15 05:13:43 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.43 2000/08/01 22:44:26 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1300,7 +1300,20 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 				    NetNet::IMPLICIT, lwidth);
 	    net->local_flag(true);
 
-	    verinum num(verinum::V0, net->pin_count());
+	      /* when expanding a constant to fit into the net, extend
+		 the Vx or Vz values if they are in the sign position,
+		 otherwise extend the number with 0 bits. */
+	    verinum::V top_v = verinum::V0;
+	    switch (value_->get(value_->len()-1)) {
+		case verinum::Vx:
+		  top_v = verinum::Vx;
+		  break;
+		case verinum::Vz:
+		  top_v = verinum::Vz;
+		  break;
+	    }
+
+	    verinum num(top_v, net->pin_count());
 	    unsigned idx;
 	    for (idx = 0 ;  idx < num.len() && idx < value_->len(); idx += 1)
 		  num.set(idx, value_->get(idx));
@@ -1619,6 +1632,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.43  2000/08/01 22:44:26  steve
+ *  Extend x or z that is top bit of a constant.
+ *
  * Revision 1.42  2000/07/15 05:13:43  steve
  *  Detect muxing Vz as a bufufN.
  *
