@@ -1,18 +1,13 @@
 i pkginfo=./pkginfo
 d none bin 0755 bin bin
 f none bin/iverilog 0755 bin bin
+f none bin/iverilog-vpi 0755 bin bin
 f none bin/vvp 0755 bin bin
 d none include 0755 bin bin
+f none include/acc_user.h 0644 bin bin
 f none include/ivl_target.h 0644 bin bin
-f none include/vpi_priv.h 0644 bin bin
+f none include/veriuser.h 0644 bin bin
 f none include/vpi_user.h 0644 bin bin
-f none include/vvm.h 0644 bin bin
-f none include/vvm_calltf.h 0644 bin bin
-f none include/vvm_func.h 0644 bin bin
-f none include/vvm_gates.h 0644 bin bin
-f none include/vvm_nexus.h 0644 bin bin
-f none include/vvm_signal.h 0644 bin bin
-f none include/vvm_thread.h 0644 bin bin
 d none lib 0755 bin bin
 d none lib/ivl 0755 bin bin
 f none lib/ivl/fpga.tgt 0644 bin bin
@@ -22,10 +17,10 @@ f none lib/ivl/ivlpp 0755 bin bin
 f none lib/ivl/null.tgt 0644 bin bin
 f none lib/ivl/system.vpi 0644 bin bin
 f none lib/ivl/vvp.tgt 0644 bin bin
+f none lib/libveriuser.a 0644 bin bin
 f none lib/libvpi.a 0644 bin bin
-f none lib/libvpip.a 0644 bin bin
-f none lib/libvvm.a 0644 bin bin
 d none man 0755 bin bin
 d none man/man1 0755 bin bin
 f none man/man1/iverilog.1 0644 bin bin
+f none man/man1/iverilog-vpi.1 0644 bin bin
 f none man/man1/vvp.1 0644 bin bin
