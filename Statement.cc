@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.7 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: Statement.cc,v 1.8 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -27,16 +27,33 @@ Statement::~Statement()
 {
 }
 
-PAssign::~PAssign()
+PAssign_::PAssign_(PExpr*lval, PExpr*ex)
+: lval_(lval), rval_(ex)
+{
+}
+
+PAssign_::~PAssign_()
 {
       delete lval_;
-      delete expr_;
+      delete rval_;
+}
+
+PAssign::PAssign(PExpr*lval, PExpr*ex)
+: PAssign_(lval, ex)
+{
+}
+
+PAssign::~PAssign()
+{
+}
+
+PAssignNB::PAssignNB(PExpr*lval, PExpr*ex)
+: PAssign_(lval, ex)
+{
 }
 
 PAssignNB::~PAssignNB()
 {
-      delete lval_;
-      delete rval_;
 }
 
 PBlock::PBlock(BL_TYPE t, const list<Statement*>&st)
@@ -100,6 +117,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.8  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.7  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.25 1999/06/12 20:35:27 steve Exp $"
+#ident "$Id: pform.cc,v 1.26 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -192,7 +192,7 @@ void pform_make_udp(string*name, list<string>*parms,
 	      // XXXX
 	    assert(id->name() == pins[0]->name);
 
-	    const PENumber*np = dynamic_cast<const PENumber*>(pa->get_expr());
+	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
 	    assert(np);
 
 	    init = np->value()[0];
@@ -590,6 +590,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.26  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.25  1999/06/12 20:35:27  steve
  *  parse more verilog.
  *

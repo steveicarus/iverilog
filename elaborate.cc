@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.42 1999/06/13 16:30:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.43 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 /*
@@ -996,88 +996,28 @@ NetProc* Statement::elaborate(Design*des, const string&path) const
 NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
 				    Design*des, const string&path) const
 {
-      NetExpr*rval = expr_->elaborate_expr(des, path);
-      if (rval == 0) {
+      NetExpr*rv = rval()->elaborate_expr(des, path);
+      if (rv == 0) {
 	    cerr << get_line() << ": " << "failed to elaborate expression."
 		 << endl;
 	    return 0;
       }
-      assert(rval);
+      assert(rv);
 
       NetExpr*idx = ix->elaborate_expr(des, path);
       assert(idx);
 
-      NetAssignMem*am = new NetAssignMem(mem, idx, rval);
+      NetAssignMem*am = new NetAssignMem(mem, idx, rv);
       am->set_line(*this);
       return am;
 }
 
-NetProc* PAssign::elaborate(Design*des, const string&path) const
-{
-      const PEIdent*id = dynamic_cast<const PEIdent*>(lval_);
-      assert(id);
-
-	/* Catch the case where the lvalue is a reference to a memory
-	   item. These are handled differently. */
-      if (NetMemory*mem = des->find_memory(path+"."+id->name()))
-	    return assign_to_memory_(mem, id->msb_, des, path);
-
-
-      if (id->lsb_ || id->msb_) {
-	    cerr << get_line() << ": Sorry, cannot elaborate part/bit"
-		  " selects in l-value." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      NetNet*reg = des->find_signal(path+"."+id->name());
-
-      if (reg == 0) {
-	    cerr << get_line() << ": Could not match signal: " <<
-		  id->name() << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-      assert(reg);
-
-      if (reg->type() != NetNet::REG) {
-	    cerr << get_line() << ": " << *lval() << " is not a register."
-		 << endl;
-	    return 0;
-      }
-      assert(reg->type() == NetNet::REG);
-      assert(expr_);
-
-      NetExpr*rval = expr_->elaborate_expr(des, path);
-      if (rval == 0) {
-	    cerr << get_line() << ": failed to elaborate expression."
-		 << endl;
-	    return 0;
-      }
-      assert(rval);
-
-      NetAssign*cur = new NetAssign("@assign", des, reg, rval);
-      for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
-	    connect(cur->pin(idx), reg->pin(idx));
-
-      cur->set_line(*this);
-      des->add_node(cur);
-
-      return cur;
-}
-
-/*
- * The l-value of a procedural assignment is a very much constrained
- * expression. To wit, only identifiers, bit selects and part selects
- * are allowed. I therefore can elaborate the l-value by hand, without
- * the help of recursive elaboration.
- *
- * (For now, this does not yet support concatenation in the l-value.)
- */
-NetProc* PAssignNB::elaborate(Design*des, const string&path) const
+NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
+				 unsigned&msb, unsigned&lsb,
+				 NetExpr*&mux) const
 {
 	/* Get the l-value, and assume that it is an identifier. */
-      const PEIdent*id = dynamic_cast<const PEIdent*>(lval_);
+      const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
       assert(id);
 
 	/* Get the signal referenced by the identifier, and make sure
@@ -1097,22 +1037,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(reg->type() == NetNet::REG);
-      assert(rval_);
 
-	/* Elaborate the r-value expression. This generates a
-	   procedural expression that I attach to the assignment. */
-      NetExpr*rval = rval_->elaborate_expr(des, path);
-      if (rval == 0) {
-	    cerr << get_line() << ": " << "failed to elaborate expression."
-		 << endl;
-	    return 0;
-      }
-      assert(rval);
-
-	/* Notice and handle bit selects of the signal. This is done
-	   by making a mux expression to attach to the assignment
-	   node. */
-      NetAssignNB*cur;
       if (id->msb_ && id->lsb_) {
 	    verinum*vl = id->lsb_->eval_const(des, path);
 	    if (vl == 0) {
@@ -1129,11 +1054,9 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 		  return 0;
 	    }
 
-	    unsigned wid = vm->as_ulong()-vl->as_ulong()+1;
-	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rval);
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx+vl->as_ulong()));
-
+	    msb = vm->as_ulong();
+	    lsb = vl->as_ulong();
+	    mux = 0;
 
       } else if (id->msb_) {
 	    assert(id->lsb_ == 0);
@@ -1141,24 +1064,121 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    if (v == 0) {
 		  NetExpr*m = id->msb_->elaborate_expr(des, path);
 		  assert(m);
-		  cur = new NetAssignNB(des->local_symbol(path), des,
-					reg->pin_count(), m, rval);
-
-		  for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
-			connect(cur->pin(idx), reg->pin(idx));
+		  msb = 0;
+		  lsb = 0;
+		  mux = m;
 
 	    } else {
 
-		  cur = new NetAssignNB(des->local_symbol(path), des, 1, rval);
-		  connect(cur->pin(0), reg->pin(v->as_ulong()));
+		  msb = v->as_ulong();
+		  lsb = v->as_ulong();
+		  mux = 0;
 	    }
 
       } else {
-	    cur = new NetAssignNB(des->local_symbol(path), des,
-				  reg->pin_count(), rval);
+	    assert(id->msb_ == 0);
+	    assert(id->lsb_ == 0);
+	    msb = reg->pin_count() - 1;
+	    lsb = 0;
+	    mux = 0;
+      }
 
-	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx));
+      return reg;
+}
+
+NetProc* PAssign::elaborate(Design*des, const string&path) const
+{
+	/* Catch the case where the lvalue is a reference to a memory
+	   item. These are handled differently. */
+      do {
+	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
+	    if (id == 0) break;
+
+	    if (NetMemory*mem = des->find_memory(path+"."+id->name()))
+		  return assign_to_memory_(mem, id->msb_, des, path);
+
+      } while(0);
+
+      unsigned lsb, msb;
+      NetExpr*mux;
+      NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
+      if (reg == 0) return 0;
+
+      assert(rval());
+
+      NetExpr*rv = rval()->elaborate_expr(des, path);
+      if (rv == 0) {
+	    cerr << get_line() << ": failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
+      assert(rv);
+
+      NetAssign*cur;
+      if (mux == 0) {
+	    unsigned wid = msb - lsb + 1;
+	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx+lsb));
+
+      } else {
+	    assert(reg->pin_count() == 1);
+	    cerr << get_line() << ": Sorry, l-value bit select expression"
+		  " must be constant." << endl;
+	    delete reg;
+	    delete rv;
+	    return 0;
+#if 0
+	    cur = new NetAssign(des->local_symbol(path), des, 1, mux, rv);
+	    connect(cur->pin(0), reg->pin(0));
+#endif
+      }
+
+
+      cur->set_line(*this);
+      des->add_node(cur);
+
+      return cur;
+}
+
+/*
+ * The l-value of a procedural assignment is a very much constrained
+ * expression. To wit, only identifiers, bit selects and part selects
+ * are allowed. I therefore can elaborate the l-value by hand, without
+ * the help of recursive elaboration.
+ *
+ * (For now, this does not yet support concatenation in the l-value.)
+ */
+NetProc* PAssignNB::elaborate(Design*des, const string&path) const
+{
+      unsigned lsb, msb;
+      NetExpr*mux;
+      NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
+      if (reg == 0) return 0;
+
+      assert(rval());
+
+	/* Elaborate the r-value expression. This generates a
+	   procedural expression that I attach to the assignment. */
+      NetExpr*rv = rval()->elaborate_expr(des, path);
+      if (rv == 0) {
+	    cerr << get_line() << ": " << "failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
+      assert(rv);
+
+      NetAssignNB*cur;
+      if (mux == 0) {
+	    unsigned wid = msb - lsb + 1;
+	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx+lsb));
+
+      } else {
+	    assert(reg->pin_count() == 1);
+	    cur = new NetAssignNB(des->local_symbol(path), des, 1, mux, rv);
+	    connect(cur->pin(0), reg->pin(0));
       }
 
 
@@ -1372,7 +1392,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(sig);
-      NetAssign*init = new NetAssign("@for-assign", des, sig,
+      NetAssign*init = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr1_->elaborate_expr(des, path));
       for (unsigned idx = 0 ;  idx < init->pin_count() ;  idx += 1)
 	    connect(init->pin(idx), sig->pin(idx));
@@ -1385,7 +1405,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       sig = des->find_signal(path+"."+id2->name());
       assert(sig);
-      NetAssign*step = new NetAssign("@for-assign", des, sig,
+      NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr2_->elaborate_expr(des, path));
       for (unsigned idx = 0 ;  idx < step->pin_count() ;  idx += 1)
 	    connect(step->pin(idx), sig->pin(idx));
@@ -1507,6 +1527,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.43  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.42  1999/06/13 16:30:06  steve
  *  Unify the NetAssign constructors a bit.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.36 1999/06/13 16:30:06 steve Exp $"
+#ident "$Id: netlist.cc,v 1.37 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -285,10 +285,10 @@ NetAssign_::~NetAssign_()
 {
 }
 
-NetAssign::NetAssign(const string&n, Design*des, NetNet*lv, NetExpr*rv)
-: NetAssign_(n, lv->pin_count()), rval_(rv)
+NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
+: NetAssign_(n, w), rval_(rv)
 {
-      bool flag = rval_->set_width(lv->pin_count());
+      bool flag = rval_->set_width(w);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
 		  " conflicts with l-value bit width." << endl;
@@ -1202,6 +1202,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.37  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.36  1999/06/13 16:30:06  steve
  *  Unify the NetAssign constructors a bit.
  *

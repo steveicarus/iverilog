@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.39 1999/06/13 17:30:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.40 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 /*
@@ -576,7 +576,7 @@ class NetAssign_ : public NetProc, public NetNode, public LineInfo {
 
 class NetAssign  : public NetAssign_ {
     public:
-      explicit NetAssign(const string&, Design*des, NetNet*lv, NetExpr*rv);
+      explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
       ~NetAssign();
 
       const NetExpr*rval() const { return rval_; }
@@ -1252,6 +1252,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.40  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.39  1999/06/13 17:30:23  steve
  *  More unary operators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.9 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: Statement.h,v 1.10 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 # include  <string>
@@ -76,44 +76,48 @@ class Statement : public LineInfo {
  * type. The rvalue is an expression. The lvalue needs to be figured
  * out by the parser as much as possible.
  */
-class PAssign  : public Statement {
-
+class PAssign_  : public Statement {
     public:
-      explicit PAssign(PExpr*lval, PExpr*ex)
-      : lval_(lval), expr_(ex) { }
-
-      ~PAssign();
-
-      const PExpr* lval() const { return lval_; }
-      const PExpr* get_expr() const { return expr_; }
-
-      virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
-
-    private:
-      PExpr* lval_;
-      PExpr* expr_;
-
-      NetProc*assign_to_memory_(class NetMemory*, PExpr*,
-				Design*des, const string&path) const;
-};
-
-class PAssignNB  : public Statement {
-
-    public:
-      explicit PAssignNB(PExpr*lval, PExpr*ex)
-      : lval_(lval), rval_(ex) { }
-      ~PAssignNB();
+      explicit PAssign_(PExpr*lval, PExpr*ex);
+      virtual ~PAssign_() =0;
 
       const PExpr* lval() const { return lval_; }
       const PExpr* rval() const { return rval_; }
 
-      virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+    protected:
+      NetNet*elaborate_lval(Design*, const string&path,
+			    unsigned&lsb, unsigned&msb,
+			    NetExpr*&mux) const;
 
     private:
       PExpr* lval_;
       PExpr* rval_;
+};
+
+class PAssign  : public PAssign_ {
+
+    public:
+      explicit PAssign(PExpr*lval, PExpr*ex);
+      ~PAssign();
+
+      virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+
+    private:
+      NetProc*assign_to_memory_(class NetMemory*, PExpr*,
+				Design*des, const string&path) const;
+};
+
+class PAssignNB  : public PAssign_ {
+
+    public:
+      explicit PAssignNB(PExpr*lval, PExpr*ex);
+      ~PAssignNB();
+
+      virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+
+    private:
 };
 
 /*
@@ -297,6 +301,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.10  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.9  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

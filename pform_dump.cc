@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.19 1999/06/10 04:03:53 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.20 1999/06/13 23:51:16 steve Exp $"
 #endif
 
 /*
@@ -262,14 +262,14 @@ void Statement::dump(ostream&out, unsigned ind) const
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval_ << " = " << *expr_ << ";";
+      out << *lval() << " = " << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval_ << " <= " << *rval_ << ";";
+      out << *lval() << " <= " << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
@@ -480,6 +480,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.20  1999/06/13 23:51:16  steve
+ *  l-value part select for procedural assignments.
+ *
  * Revision 1.19  1999/06/10 04:03:53  steve
  *  Add support for the Ternary operator,
  *  Add support for repeat concatenation,
