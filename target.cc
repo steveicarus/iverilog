@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.46 2000/09/02 20:54:21 steve Exp $"
+#ident "$Id: target.cc,v 1.47 2000/09/03 17:57:53 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -129,7 +129,7 @@ void target_t::lpm_ram_dq(const NetRamDq*)
 void target_t::net_assign(const NetAssign_*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled assignment node." << endl;
+	    "Unhandled assignment (NetAssign_) node." << endl;
 }
 
 void target_t::net_case_cmp(const NetCaseCmp*)
@@ -388,6 +388,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.47  2000/09/03 17:57:53  steve
+ *  Slightly more helpful warning.
+ *
  * Revision 1.46  2000/09/02 20:54:21  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *
