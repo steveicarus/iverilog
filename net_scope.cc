@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.1 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.2 2000/04/09 17:04:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -39,6 +39,7 @@ NetScope::NetScope(const string&n)
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 : type_(t), name_(n), up_(up), sib_(0), sub_(0)
 {
+      events_ = 0;
       sib_ = up_->sub_;
       up_->sub_ = this;
 }
@@ -153,6 +154,9 @@ const NetScope* NetScope::parent() const
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.2  2000/04/09 17:04:56  steve
+ *  uninitialized event_ list.
+ *
  * Revision 1.1  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *
