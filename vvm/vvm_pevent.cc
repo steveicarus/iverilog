@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_pevent.cc,v 1.8 2000/04/12 16:08:46 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.9 2000/04/15 02:25:32 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -25,7 +25,7 @@
 # include  "vvm_thread.h"
 
 vvm_sync::vvm_sync()
-: hold_(0)
+: hold_(0), tgt_(0), ntgt_(0)
 {
 }
 
@@ -45,9 +45,30 @@ void vvm_sync::wakeup()
 	    assert(tmp->sync_back_ == this);
 	    tmp->sync_back_ = 0;
 	    tmp->thread_yield();
+
+	    for (unsigned idx = 0 ;  idx < ntgt_ ;  idx += 1)
+		  tgt_[idx]->wakeup();
       }
 }
 
+void vvm_sync::chain_sync(vvm_sync*src)
+{
+      if (src->ntgt_ == 0) {
+	    src->tgt_ = new vvm_sync*[1];
+	    src->tgt_[0] = this;
+	    src->ntgt_ = 1;
+
+      } else {
+	    vvm_sync**tmp = new vvm_sync*[src->ntgt_+1];
+	    for (unsigned idx = 0 ;  idx < src->ntgt_ ;  idx += 1)
+		  tmp[idx] = src->tgt_[idx];
+
+	    tmp[src->ntgt_] = this;
+	    src->ntgt_ += 1;
+	    delete [] src->tgt_;
+	    src->tgt_ = tmp;
+      }
+}
 
 vvm_posedge::vvm_posedge(vvm_sync*tgt)
 : sync_(tgt)
@@ -136,6 +157,9 @@ void vvm_anyedge::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.9  2000/04/15 02:25:32  steve
+ *  Support chained events.
+ *
  * Revision 1.8  2000/04/12 16:08:46  steve
  *  Backwards sense of assert test.
  *

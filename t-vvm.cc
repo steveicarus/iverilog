@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.135 2000/04/14 23:31:53 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.136 2000/04/15 02:25:32 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -150,6 +150,8 @@ class target_vvm : public target_t {
 
       map<verinum,unsigned,less_verinum>number_constants;
       unsigned number_counter;
+
+      unsigned selector_counter;
 };
 
 
@@ -745,6 +747,7 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       string_counter = 1;
       number_counter = 1;
       nexus_wire_counter = 1;
+      selector_counter = 0;
 
       init_code << "static void design_init()" << endl;
       init_code << "{" << endl;
@@ -2418,13 +2421,34 @@ bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
       defn << "      thr->step_ = &" << thread_class_ << "_step_"
 	   << out_step << "_;" << endl;
 
-      for (unsigned idx = 0 ;  idx < wait->nevents() ;  idx+= 1) {
-	    const NetEvent*ev = wait->event(idx);
-	    assert(ev);
-	    string ename = mangle(ev->full_name());
-	    defn << "      " << ename << ".wait(thr); // "
-		 << wait->get_line() << ": @" << ev->full_name()
-		 << "..." << endl;
+      if (wait->nevents() == 1) {
+		  const NetEvent*ev = wait->event(0);
+		  assert(ev);
+		  string ename = mangle(ev->full_name());
+		  defn << "      " << ename << ".wait(thr); // "
+		       << wait->get_line() << ": @" << ev->full_name()
+		       << "..." << endl;
+
+      } else {
+	      /* If there are many events to wait for, generate a
+		 selector that is a vvm_sync that I chain to the
+		 source vvm_sync objects. Then, wait on the selector
+		 object instead. */
+	    unsigned id = selector_counter++;
+	    os << "static vvm_sync selector_" << id << ";" << endl;
+
+	    for (unsigned idx = 0 ;  idx < wait->nevents() ;  idx+= 1) {
+		  const NetEvent*ev = wait->event(idx);
+		  assert(ev);
+		  string ename = mangle(ev->full_name());
+		  init_code << "      selector_" << id
+			    << ".chain_sync(&" << ename << "); // "
+			    << wait->get_line() << ": @" << ev->full_name()
+			    << "..." << endl;
+	    }
+
+	    defn << "      selector_" << id << ".wait(thr);"
+		 << endl;
       }
 
       defn << "      return false;" << endl;
@@ -2541,6 +2565,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.136  2000/04/15 02:25:32  steve
+ *  Support chained events.
+ *
  * Revision 1.135  2000/04/14 23:31:53  steve
  *  No more class derivation from vvm_thread.
  *

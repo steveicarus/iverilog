@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.56 2000/04/10 05:26:07 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.57 2000/04/15 02:25:32 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -795,7 +795,15 @@ class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_nexus::drive_t {
  * Threads use the vvm_sync to wait for something to happen. This
  * class cooperates with the various event source classes that receive
  * events and trigger the associated vvm_sync object.
+ *
+ * CHAINING
+ * A thread can only wait on one vvm_sync object. To get the effect of
+ * waiting on many vvm_sync objects, vvm_sync objects can be
+ * chained. That is, a vvm_sync object can be configured to receive
+ * triggers from other vvm_sync objects. That is the job of the
+ * chain_sync() method.
  */
+
 class vvm_sync {
 
     public:
@@ -804,8 +812,14 @@ class vvm_sync {
       void wait(vvm_thread*);
       void wakeup();
 
+	// Receive triggers from the specified source.
+      void chain_sync(vvm_sync*src);
+
     private:
       vvm_thread*hold_;
+
+      vvm_sync**tgt_;
+      unsigned ntgt_;
 
     private: // not implemented
       vvm_sync(const vvm_sync&);
@@ -873,6 +887,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.57  2000/04/15 02:25:32  steve
+ *  Support chained events.
+ *
  * Revision 1.56  2000/04/10 05:26:07  steve
  *  All events now use the NetEvent class.
  *
