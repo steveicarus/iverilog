@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.69 2002/04/23 05:06:31 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.70 2002/04/23 05:18:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1304,7 +1304,7 @@ static void draw_lpm_mux_bitwide(ivl_lpm_t net)
       fprintf(vvp_out, "L_%s/0/2/0, ", vvp_mangle_id(ivl_lpm_name(net)));
 
 
-      if ((2 << (sel-1)) < size) {
+      if ((2 << (sel-1))/2 < size) {
 	    fprintf(vvp_out, "L_%s/0/2/%u, ",
 		    vvp_mangle_id(ivl_lpm_name(net)),
 		    (2 << (sel-1))/2);
@@ -1572,6 +1572,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.70  2002/04/23 05:18:05  steve
+ *  Tail size was wrong.
+ *
  * Revision 1.69  2002/04/23 05:06:31  steve
  *  Handle bitsel muxes of odd shaped outputs.
  *
