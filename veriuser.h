@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.14 2002/06/07 02:58:58 steve Exp $"
+#ident "$Id: veriuser.h,v 1.15 2002/06/07 16:21:12 steve Exp $"
 #endif
 
 /*
@@ -116,6 +116,13 @@ extern int tf_getp(int pnum);
 
 extern int tf_nump(void);
 
+/* IEEE1364 NOTE: tf_putlongp is listed as returning in in the header
+   file shown in the standard, but as returning void in the detailed
+   description of the function. So I call it void. Same for tf_putp. */
+extern void tf_putlongp(int pnum, int lowvalue, int highvalue);
+
+extern void tf_putp(int pnum, int value);
+
 extern void tf_warning(const char*, ...)
       __attribute__((format (printf,1,2)));
 
@@ -123,6 +130,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.15  2002/06/07 16:21:12  steve
+ *  Add tf_putlongp and tf_putp.
+ *
  * Revision 1.14  2002/06/07 02:58:58  steve
  *  Add a bunch of acc/tf functions. (mruff)
  *
