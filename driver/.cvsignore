@@ -1,3 +1,4 @@
+a.out
 Makefile
 parse.c
 parse.h
@@ -7,4 +8,5 @@ cfparse.c
 cfparse.h
 cfparse.output
 cflexor.c
+foo.*
 iverilog
