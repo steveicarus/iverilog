@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_misc.h,v 1.5 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.6 2002/11/03 20:36:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -38,6 +38,11 @@ struct vlltype {
       const char*text;
 };
 # define YYLTYPE vlltype
+
+  /* This for compatibility with new and older bison versions. */
+#ifndef yylloc
+# define yylloc VLlloc
+#endif
 extern YYLTYPE yylloc;
 
 /*
@@ -53,6 +58,9 @@ extern unsigned error_count, warn_count;
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.6  2002/11/03 20:36:53  steve
+ *  Support old/new bison yylloc.
+ *
  * Revision 1.5  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *
