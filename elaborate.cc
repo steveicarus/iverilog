@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.187 2000/09/07 00:06:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.188 2000/09/07 01:29:44 steve Exp $"
 #endif
 
 /*
@@ -105,15 +105,33 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	      /* If the right hand net is the same type as the left
 		 side net (i.e. WIRE/WIRE) then it is enough to just
 		 connect them together. Otherwise, put a bufz between
-		 them to carry strengths from the rval */
+		 them to carry strengths from the rval.
 
-	    if (rid->type() == lval->type())
-		  for (unsigned idx = 0 ;  idx < lval->pin_count(); idx += 1) {
+		 While we are at it, handle the case where the r-value
+		 is not as wide as th l-value by padding with a
+		 constant-0. */
+
+	    unsigned cnt = lval->pin_count();
+	    if (rid->pin_count() < cnt)
+		  cnt = rid->pin_count();
+
+	    if (rid->type() == lval->type()) {
+		  unsigned idx;
+		  for (idx = 0 ;  idx < cnt; idx += 1)
 			connect(lval->pin(idx), rid->pin(idx));
+
+		  if (cnt < lval->pin_count()) {
+			verinum tmpv (0UL, lval->pin_count()-cnt);
+			NetConst*tmp = new NetConst(des->local_symbol(path),
+						    tmpv);
+			des->add_node(tmp);
+			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
+			      connect(lval->pin(idx), tmp->pin(idx-cnt));
 		  }
 
-	    else
-		  for (unsigned idx = 0 ; idx < lval->pin_count();  idx += 1) {
+	    } else {
+		  unsigned idx;
+		  for (idx = 0 ; idx < cnt ;  idx += 1) {
 			NetBUFZ*dev = new NetBUFZ(des->local_symbol(path));
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
@@ -121,6 +139,18 @@ void PGAssign::elaborate(Design*des, const string&path) const
 			dev->pin(0).drive1(drive1);
 			des->add_node(dev);
 		  }
+
+		  if (cnt < lval->pin_count()) {
+			NetConst*dev = new NetConst(des->local_symbol(path),
+						    verinum::V0);
+			
+			des->add_node(dev);
+			dev->pin(0).drive0(drive0);
+			dev->pin(0).drive1(drive1);
+			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
+			      connect(lval->pin(idx), dev->pin(0));
+		  }
+	    }
 
 	    return;
       }
@@ -2400,6 +2430,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.188  2000/09/07 01:29:44  steve
+ *  Fix bit padding of assign signal-to-signal
+ *
  * Revision 1.187  2000/09/07 00:06:53  steve
  *  encapsulate access to the l-value expected width.
  *
