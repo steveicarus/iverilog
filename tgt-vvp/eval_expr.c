@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.46 2001/09/29 01:53:22 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.47 2001/09/29 04:37:44 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1119,6 +1119,30 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    }
 	    break;
 
+	  case '-':
+	      /* Unary minus is implemented by generating the 2's
+		 complement of the number. That is the 1's complement
+		 (bitwise invert) with a 1 added in. Note that the
+		 %sub subtracts -1 (1111...) to get %add of +1. */
+	    res = draw_eval_expr_wid(sub, wid);
+	    switch (res.base) {
+		case 0:
+		  res.base = 0;
+		  break;
+		case 1:
+		  res.base = 1;
+		  break;
+		case 2:
+		case 3:
+		  res.base = 2;
+		  break;
+		default:
+		  fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
+		  fprintf(vvp_out, "    %%sub %u, 1, %u;\n",res.base,res.wid);
+		  break;
+	    }
+	    break;
+
 	  case '!':
 	  case 'N':
 	  case 'A':
@@ -1228,6 +1252,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.47  2001/09/29 04:37:44  steve
+ *  Generate code for unary minus (PR#272)
+ *
  * Revision 1.46  2001/09/29 01:53:22  steve
  *  Fix the size of unsized constant operants to compare (PR#274)
  *
