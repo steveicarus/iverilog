@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.4 2001/12/30 21:31:38 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.5 2002/01/10 01:54:04 steve Exp $"
 #endif
 
 /*
@@ -164,25 +164,31 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 
 static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
-      assert(rfp->wid % 8 == 0);
-      assert(rfp->wid/8 < sizeof buf);
+    char*cp = buf;
+    char tmp = 0;
 
-      unsigned bytes = rfp->wid/8;
+    assert(rfp->wid/8 < int(sizeof(buf)-1));
 
-      for (unsigned idx = 0 ;  idx < bytes ;  idx += 1) {
-	    unsigned base = rfp->wid - 8 - idx * 8;
+    for(int bitnr=rfp->wid-1; bitnr>=0; bitnr--){
+	tmp <<= 1;
 
-	    int val = 0;
-	    for (unsigned bit = 0 ;  bit < 8 ;  bit += 1) {
-		  unsigned tmp = get_bit(rfp, base+bit);
-		  if (tmp == 1)
-			val |= 1 << bit;
-	    }
+	switch(get_bit(rfp, bitnr)){
+	  case 0:
+	      break;
+	  case 1:
+	      tmp |= 1;
+	      break;
+	  default:
+	      break;
+	}
 
-	    buf[idx] = val? val : ' ';
-      }
-
-      buf[bytes] = 0;
+	if ((bitnr&7)==0){
+	    *cp++ = tmp? tmp : ' ';
+	    tmp = 0;
+	}
+    }
+    *cp++ = 0;
+    return;
 }
 
 /*
@@ -379,6 +385,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.5  2002/01/10 01:54:04  steve
+ *  odd width thread vectors as strings.
+ *
  * Revision 1.4  2001/12/30 21:31:38  steve
  *  Support vpiStringVal in vhtread vectors.
  *
