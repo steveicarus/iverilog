@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.23 2000/11/18 04:53:04 steve Exp $"
+#ident "$Id: functor.cc,v 1.24 2000/11/19 20:48:30 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -88,14 +88,22 @@ void NetScope::run_functor(Design*des, functor_t*fun)
 	    fun->event(des, tmp);
       }
 
-	// apply to signals
+	// apply to signals. Each iteration, allow for the possibility
+	// that the current signal deletes itself.
       if (signals_) {
+	    unsigned count = 0;
 	    NetNet*cur = signals_->sig_next_;
 	    do {
+		  count += 1;
+		  cur = cur->sig_next_;
+	    } while (cur != signals_->sig_next_);
+
+	    cur = signals_->sig_next_;
+	    for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
 		  NetNet*tmp = cur->sig_next_;
 		  fun->signal(des, cur);
 		  cur = tmp;
-	    } while (signals_ && (cur != signals_->sig_next_));
+	    }
       }
 }
 
@@ -274,6 +282,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.24  2000/11/19 20:48:30  steve
+ *  Fix cases where signal iteration might die early.
+ *
  * Revision 1.23  2000/11/18 04:53:04  steve
  *  Watch out in functor, it may delete the last signal.
  *
