@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.11 1999/10/31 04:11:27 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.12 1999/12/31 17:38:37 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -43,14 +43,14 @@ NetNet* PExpr::elaborate_net(Design*des, const string&path, unsigned,
 			     unsigned long,
 			     unsigned long) const
 {
-      cerr << "Don't know how to elaborate `" << *this
-	   << "' as gates." << endl;
+      cerr << get_line() << ": error: Unable to elaborate `"
+	   << *this << "' as gates." << endl;
       return 0;
 }
 
 NetNet* PExpr::elaborate_lnet(Design*des, const string&path) const
 {
-      cerr << get_line() << ": expression not valid in assign l-value: "
+      cerr << get_line() << ": error: expression not valid in assign l-value: "
 	   << *this << endl;
       return 0;
 }
@@ -128,6 +128,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.12  1999/12/31 17:38:37  steve
+ *  Standardize some of the error messages.
+ *
  * Revision 1.11  1999/10/31 04:11:27  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name
