@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.13 2003/03/05 03:45:01 steve Exp $"
+#ident "$Id: verireal.cc,v 1.14 2003/03/07 06:10:13 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "verireal.h"
 # include  "verinum.h"
+# include  <stdlib.h>
 # include  <ctype.h>
 # include  <iostream>
 # include  <math.h>
@@ -36,58 +37,18 @@ verireal::verireal()
 
 verireal::verireal(const char*txt)
 {
-      unsigned long long mant = 0;
-      bool sign = false;
-      signed int exp10 = 0;
+      char*tmp = new char[strlen(txt)+1];
+      char*cp = tmp;
+      for (unsigned idx = 0 ;  txt[idx] ;  idx += 1) {
+	    if (txt[idx] == '_')
+		  continue;
 
-      const char*ptr = txt;
-      for (  ; *ptr ;  ptr += 1) {
-	    if (*ptr == '.') break;
-	    if (*ptr == 'e') break;
-	    if (*ptr == 'E') break;
-	    if (*ptr == '_') continue;
-
-	    assert(isdigit(*ptr));
-
-	    mant *= 10;
-	    mant += *ptr - '0';
+	    *cp++ = txt[idx];
       }
+      cp[0] = 0;
 
-      if (*ptr == '.') {
-	    ptr += 1;
-	    for ( ; *ptr ; ptr += 1) {
-		  if (*ptr == 'e') break;
-		  if (*ptr == 'E') break;
-		  if (*ptr == '_') continue;
-
-		  assert(isdigit(*ptr));
-
-		  mant *= 10;
-		  mant += *ptr - '0';
-		  exp10 -= 1;
-	    }
-      }
-
-      if ((*ptr == 'e') || (*ptr == 'E')) {
-	    ptr += 1;
-	    long tmp = 0;
-	    bool sflag = false;
-	    if (*ptr == '+') {ptr += 1; sflag = false;}
-	    if (*ptr == '-') {ptr += 1; sflag = true;}
-
-	    for ( ; *ptr ;  ptr += 1) {
-		  if (*ptr == '_') continue;
-		  assert(isdigit(*ptr));
-		  tmp *= 10;
-		  tmp += *ptr - '0';
-	    }
-
-	    exp10 += sflag? -tmp : +tmp;
-      }
-
-      assert(*ptr == 0);
-
-      value_ = pow(10.0,exp10) * mant * (sign? -1.0 : 1.0);
+      value_ = strtod(tmp, 0);
+      delete[]tmp;
 }
 
 verireal::verireal(long val)
@@ -164,6 +125,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.14  2003/03/07 06:10:13  steve
+ *  Use strtod to convert text to doubles.
+ *
  * Revision 1.13  2003/03/05 03:45:01  steve
  *  Restore verireal constructor to match vvp processing of reals.
  *
