@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.11 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: eval.cc,v 1.12 1999/11/30 04:48:17 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -119,14 +119,32 @@ verinum* PENumber::eval_const(const Design*, const string&) const
       return new verinum(value());
 }
 
-verinum* PETernary::eval_const(const Design*, const string&) const
+verinum* PETernary::eval_const(const Design*des, const string&path) const
 {
-      assert(0);
+      verinum*test = expr_->eval_const(des, path);
+      if (test == 0)
+	    return 0;
+
+      verinum::V bit = test->get(0);
+      delete test;
+      switch (bit) {
+	  case verinum::V0:
+	    return fal_->eval_const(des, path);
+	  case verinum::V1:
+	    return tru_->eval_const(des, path);
+	  default:
+	    return 0;
+	      // XXXX It is possible to handle this case if both fal_
+	      // and tru_ are constant. Someday...
+      }
 }
 
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.12  1999/11/30 04:48:17  steve
+ *  Handle evaluation of ternary during elaboration.
+ *
  * Revision 1.11  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.
