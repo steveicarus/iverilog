@@ -47,7 +47,7 @@ format, which is actually run by the "vvp" command.
 The "iverilog" and "vvp" commands are the only commands that users
 use to invoke Icarus Verilog. What the compiler actually does is
 controlled by command line switches. In our little example, we asked
-for the comiler to compile the source program to the default vvp form,
+the compiler to compile the source program to the default vvp form,
 which is in turn executed by the vvp program.
 
 
