@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cflexor.lex,v 1.2 2001/11/12 18:47:32 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.3 2001/11/13 03:30:26 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -38,12 +38,11 @@ YYLTYPE yylloc;
 
 static int comment_enter;
 
-static int plus_incdir(void);
-
 %}
 
 %x CCOMMENT
 %x LCOMMENT
+%x PLUS_ARGS
 
 %%
 
@@ -66,11 +65,33 @@ static int plus_incdir(void);
   /* Skip line ends, but also count the line. */
 \n { yylloc.first_line += 1; }
 
-"+incdir+".* { return plus_incdir(); }
+
+"+define+" { BEGIN(PLUS_ARGS); return TOK_DEFINE; }
+
+"+incdir+" { BEGIN(PLUS_ARGS); return TOK_INCDIR; }
 
   /* If it is not any known plus-flag, return the generic form. */
-"+"[^\n \t\b\r]* { cflval.text = strdup(yytext);
-                   return TOK_PLUSARG; } 
+"+"[^\n \t\b\f\r+]* {
+      cflval.text = strdup(yytext);
+      BEGIN(PLUS_ARGS);
+      return TOK_PLUSWORD; }
+
+  /* Once in PLUS_ARGS mode, words are delimited by +
+     characters. White space and line end terminate PLUS_ARGS mode,
+     but + terminates only the word. */
+<PLUS_ARGS>[^\n \t\b\f\r+]* {
+      cflval.text = strdup(yytext);
+      return TOK_PLUSARG; }
+
+  /* Within plusargs, this is a delimiter. */
+<PLUS_ARGS>"+" { }
+
+  /* White space end plus_args mode. */
+<PLUS_ARGS>[ \t\b\f\r] { BEGIN(0); }
+
+<PLUS_ARGS>\n {
+      yylloc.first_line += 1;
+      BEGIN(0); }
 
   /* Notice the -a flag. */
 "-a" { return TOK_Da; }
@@ -81,6 +102,9 @@ static int plus_incdir(void);
   /* Notice the -y flag. */
 "-y" { return TOK_Dy; }
 
+  /* This rule matches paths and strings that may be file names. This
+     is a little bit tricky, as we don't want to mistake a comment for
+     a string word. */
 "/"[^\*\/].* { cflval.text = strdup(yytext);
                return TOK_STRING; } 
 
@@ -91,12 +115,6 @@ static int plus_incdir(void);
 . { return yytext[0]; }
 
 %%
-
-static int plus_incdir(void)
-{
-      cflval.text = strdup(yytext + strlen("+incdir+"));
-      return TOK_INCDIR;
-}
 
 int yywrap()
 {

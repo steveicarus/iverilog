@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.28 2001/11/12 18:47:32 steve Exp $"
+#ident "$Id: main.c,v 1.29 2001/11/13 03:30:26 steve Exp $"
 
 # include "config.h"
 
@@ -299,6 +299,21 @@ void process_include_dir(const char *name)
       }
 }
 
+void process_define(const char*name)
+{
+      if (def_list == 0) {
+	    def_list = malloc(strlen(" -D")+strlen(name)+1);
+	    strcpy(def_list, " -D");
+	    strcat(def_list, name);
+      } else {
+	    def_list = realloc(def_list, strlen(def_list)
+			       + strlen(" -D")
+			       + strlen(name) + 1);
+	    strcat(def_list, " -D");
+	    strcat(def_list, name);
+      }
+}
+
 void process_file_name(const char*name)
 {
       if (src_list) {
@@ -372,17 +387,7 @@ int main(int argc, char **argv)
  		  strcpy(command_filename, optarg);
  		  break;
 		case 'D':
-		  if (def_list == 0) {
-			def_list = malloc(strlen(" -D")+strlen(optarg)+1);
-			strcpy(def_list, " -D");
-			strcat(def_list, optarg);
-		  } else {
-			def_list = realloc(def_list, strlen(def_list)
-					   + strlen(" -D")
-					   + strlen(optarg) + 1);
-			strcat(def_list, " -D");
-			strcat(def_list, optarg);
-		  }
+		  process_define(optarg);
 		  break;
 		case 'E':
 		  e_flag = 1;
@@ -600,6 +605,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.29  2001/11/13 03:30:26  steve
+ *  The +incdir+ plusarg can take multiple directores,
+ *  and add initial support for +define+ in the command file.
+ *
  * Revision 1.28  2001/11/12 18:47:32  steve
  *  Support +incdir in command files, and ignore other
  *  +args flags. Also ignore -a and -v flags.

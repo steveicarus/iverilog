@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.8 2001/11/12 18:47:32 steve Exp $"
+#ident "$Id: globals.h,v 1.9 2001/11/13 03:30:26 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -60,6 +60,9 @@ extern void process_library_switch(const char*name);
   /* Add a new include file search directory */
 extern void process_include_dir(const char*name);
 
+  /* Add a new -D define. */
+extern void process_define(const char*name);
+
   /* -v */
 extern int verbose_flag;
 
@@ -74,6 +77,10 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.9  2001/11/13 03:30:26  steve
+ *  The +incdir+ plusarg can take multiple directores,
+ *  and add initial support for +define+ in the command file.
+ *
  * Revision 1.8  2001/11/12 18:47:32  steve
  *  Support +incdir in command files, and ignore other
  *  +args flags. Also ignore -a and -v flags.
