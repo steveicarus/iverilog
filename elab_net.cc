@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.135 2004/09/24 04:25:19 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.136 2004/10/04 00:25:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -499,6 +499,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
 
 	    lsig = lexp->synthesize(des);
+	    cerr << get_line() << ": internal error: "
+		  "Cannot elaborate net for " << *lexp << endl;
 	    assert(lsig);
 	    delete lexp;
 	    lexp = 0;
@@ -2509,6 +2511,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.136  2004/10/04 00:25:46  steve
+ *  Error message to match assertion.
+ *
  * Revision 1.135  2004/09/24 04:25:19  steve
  *  Detect and prevent implicit declaration of hierarchical names.
  *
