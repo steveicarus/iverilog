@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.4 2001/08/16 03:29:31 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.5 2001/10/15 02:55:03 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -54,7 +54,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    num_bits = 8 * sizeof(unsigned long);
 
 	    buf_obj[num_bits] = 0;
-	    for (int i = 1; i <= num_bits; i++) {
+	    for (unsigned i = 1; i <= num_bits; i++) {
 	      buf_obj[num_bits-i] = x  & 1 ? '1' : '0';
 	      x = x >> 1;
 	    }
@@ -113,6 +113,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.5  2001/10/15 02:55:03  steve
+ *  sign warning.
+ *
  * Revision 1.4  2001/08/16 03:29:31  steve
  *  Support various other string formats for time.
  *
