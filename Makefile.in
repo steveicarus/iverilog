@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.105 2001/10/14 19:54:05 steve Exp $"
+#ident "$Id: Makefile.in,v 1.106 2001/10/19 23:15:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -144,13 +144,15 @@ vpithunk.o: vpithunk.c
 
 
 ifeq (@WIN32@,yes)
+# Under Windows (mingw) I need to make the ivl.exe in two steps.
+# The first step makes an ivl.exe that dlltool can use to make an
+# export and import library, and the last link makes a, ivl.exe
+# that really exports the things that the import library imports.
 ivl@EXEEXT@: $O ivl.def
-	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@	
+	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@	
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
-#	$(CXX) -o ivl@EXEEXT@ -Wl,--base-file,ivl.base ivl.exp $O $(dllib)
-#	dlltool --dllname ivl@EXEEXT@ --base-file ivl.base \
-#		--output-exp ivl.exp --def ivl.def
+	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@	
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(CXXFLAGS) $(rdynamic) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
