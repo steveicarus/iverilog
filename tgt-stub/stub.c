@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.78 2003/05/13 01:56:15 steve Exp $"
+#ident "$Id: stub.c,v 1.79 2003/05/14 05:26:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -395,6 +395,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
+	  case IVL_ST_CASER:
 	  case IVL_ST_CASE: {
 		unsigned cnt = ivl_stmt_case_count(net);
 		unsigned idx;
@@ -852,6 +853,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.79  2003/05/14 05:26:41  steve
+ *  Support real expressions in case statements.
+ *
  * Revision 1.78  2003/05/13 01:56:15  steve
  *  Allow primitives to hvae unconnected input ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.98 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.99 2003/05/14 05:26:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1540,6 +1540,7 @@ extern "C" unsigned ivl_stmt_case_count(ivl_statement_t net)
 {
       switch (net->type_) {
 	  case IVL_ST_CASE:
+	  case IVL_ST_CASER:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
 	    return net->u_.case_.ncase;
@@ -1553,6 +1554,7 @@ extern "C" ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
 	  case IVL_ST_CASE:
+	  case IVL_ST_CASER:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
 	    assert(idx < net->u_.case_.ncase);
@@ -1568,6 +1570,7 @@ extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
 	  case IVL_ST_CASE:
+	  case IVL_ST_CASER:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
 	    assert(idx < net->u_.case_.ncase);
@@ -1586,6 +1589,7 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	    return net->u_.condit_.cond_;
 
 	  case IVL_ST_CASE:
+	  case IVL_ST_CASER:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
 	    return net->u_.case_.cond;
@@ -1833,6 +1837,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.99  2003/05/14 05:26:41  steve
+ *  Support real expressions in case statements.
+ *
  * Revision 1.98  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.117 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.118 2003/05/14 05:26:41 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -283,30 +283,31 @@ typedef enum ivl_signal_type_e {
 
 /* This is the type code for ivl_statement_t objects. */
 typedef enum ivl_statement_type_e {
-      IVL_ST_NONE   = 0,
-      IVL_ST_NOOP   = 1,
-      IVL_ST_ASSIGN,
-      IVL_ST_ASSIGN_NB,
-      IVL_ST_BLOCK,
-      IVL_ST_CASE,
-      IVL_ST_CASEX,
-      IVL_ST_CASEZ,
-      IVL_ST_CASSIGN,
-      IVL_ST_CONDIT,
-      IVL_ST_DEASSIGN,
-      IVL_ST_DELAY,
-      IVL_ST_DELAYX,
-      IVL_ST_DISABLE,
-      IVL_ST_FORCE,
-      IVL_ST_FOREVER,
-      IVL_ST_FORK,
-      IVL_ST_RELEASE,
-      IVL_ST_REPEAT,
-      IVL_ST_STASK,
-      IVL_ST_TRIGGER,
-      IVL_ST_UTASK,
-      IVL_ST_WAIT,
-      IVL_ST_WHILE
+      IVL_ST_NONE    = 0,
+      IVL_ST_NOOP    = 1,
+      IVL_ST_ASSIGN    = 2,
+      IVL_ST_ASSIGN_NB = 3,
+      IVL_ST_BLOCK   = 4,
+      IVL_ST_CASE    = 5,
+      IVL_ST_CASER   = 24, /* Case statement with real expressions. */
+      IVL_ST_CASEX   = 6,
+      IVL_ST_CASEZ   = 7,
+      IVL_ST_CASSIGN = 8,
+      IVL_ST_CONDIT  = 9,
+      IVL_ST_DEASSIGN = 10,
+      IVL_ST_DELAY   = 11,
+      IVL_ST_DELAYX  = 12,
+      IVL_ST_DISABLE = 13,
+      IVL_ST_FORCE   = 14,
+      IVL_ST_FOREVER = 15,
+      IVL_ST_FORK    = 16,
+      IVL_ST_RELEASE = 17,
+      IVL_ST_REPEAT  = 18,
+      IVL_ST_STASK   = 19,
+      IVL_ST_TRIGGER = 20,
+      IVL_ST_UTASK   = 21,
+      IVL_ST_WAIT    = 22,
+      IVL_ST_WHILE   = 23
 } ivl_statement_type_t;
 
 /* This is the type of a variable, and also used as the type for an
@@ -1134,11 +1135,11 @@ extern ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_UTASK IVL_ST_DISABLE */
 extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
-  /* IVL_ST_CASE */
+  /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern unsigned ivl_stmt_case_count(ivl_statement_t net);
-  /* IVL_ST_CASE */
+  /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
-  /* IVL_ST_CASE */
+  /* IVL_ST_CASE,IVL_ST_CASER,IVL_ST_CASEX,IVL_ST_CASEZ */
 extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT IVL_ST_CASE IVL_ST_REPEAT IVL_ST_WHILE */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
@@ -1214,6 +1215,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.118  2003/05/14 05:26:41  steve
+ *  Support real expressions in case statements.
+ *
  * Revision 1.117  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

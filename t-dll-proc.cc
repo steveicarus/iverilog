@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.58 2003/05/07 19:56:20 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.59 2003/05/14 05:26:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -355,6 +355,11 @@ void dll_target::proc_case(const NetCase*net)
       net->expr()->expr_scan(this);
       stmt_cur_->u_.case_.cond = expr_;
       expr_ = 0;
+
+	/* If the condition expression is a real valued expression,
+	   then change the case statement to a CASER statement. */
+      if (stmt_cur_->u_.case_.cond->value_ == IVL_VT_REAL)
+	    stmt_cur_->type_ = IVL_ST_CASER;
 
       unsigned ncase = net->nitems();
       stmt_cur_->u_.case_.ncase = ncase;
@@ -829,6 +834,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.59  2003/05/14 05:26:41  steve
+ *  Support real expressions in case statements.
+ *
  * Revision 1.58  2003/05/07 19:56:20  steve
  *  Improve internal error message.
  *

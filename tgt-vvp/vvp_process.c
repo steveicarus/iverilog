@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.84 2003/03/25 02:15:48 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.85 2003/05/14 05:26:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -799,6 +799,79 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       return 0;
 }
 
+static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
+{
+      ivl_expr_t exp = ivl_stmt_cond_expr(net);
+      int cond = draw_eval_real(exp);
+      unsigned count = ivl_stmt_case_count(net);
+
+      unsigned local_base = local_count;
+
+      unsigned idx, default_case;
+
+      local_count += count + 1;
+
+
+	/* First draw the branch table.  All the non-default cases
+	   generate a branch out of here, to the code that implements
+	   the case. The default will fall through all the tests. */
+      default_case = count;
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_expr_t cex = ivl_stmt_case_expr(net, idx);
+	    int cvec;
+
+	    if (cex == 0) {
+		  default_case = idx;
+		  continue;
+	    }
+
+	    cvec = draw_eval_real(cex);
+
+	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", cond, cvec);
+	    fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+		    thread_count, local_base+idx);
+
+	      /* Done with the guard expression value. */
+	    clr_word(cvec);
+      }
+
+	/* Done with the case expression. */
+      clr_word(cond);
+
+	/* Emit code for the case default. The above jump table will
+	   fall through to this statement. */
+      if (default_case < count) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
+	    show_statement(cst, sscope);
+      }
+
+	/* Jump to the out of the case. */
+      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+	      local_base+count);
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, idx);
+
+	    if (idx == default_case)
+		  continue;
+
+	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
+	    clear_expression_lookaside();
+	    show_statement(cst, sscope);
+
+	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+		    local_base+count);
+
+      }
+
+
+	/* The out of the case. */
+      fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
+
+      return 0;
+}
+
 static int show_stmt_cassign(ivl_statement_t net)
 {
       ivl_lval_t lval;
@@ -1269,6 +1342,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_stmt_case(net, sscope);
 	    break;
 
+	  case IVL_ST_CASER:
+	    rc += show_stmt_case_r(net, sscope);
+	    break;
+
 	  case IVL_ST_CASSIGN:
 	    rc += show_stmt_cassign(net);
 	    break;
@@ -1431,6 +1508,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.85  2003/05/14 05:26:41  steve
+ *  Support real expressions in case statements.
+ *
  * Revision 1.84  2003/03/25 02:15:48  steve
  *  Use hash code for scope labels.
  *
