@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_rconst.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: eval_rconst.cc,v 1.6 2003/02/01 23:37:34 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "PExpr.h"
+# include  "verireal.h"
 
 verireal* PExpr::eval_rconst(const Design*, const NetScope*) const
 {
@@ -70,6 +71,25 @@ verireal* PEBinary::eval_rconst(const Design*des, const NetScope*scope) const
 
 verireal* PEIdent::eval_rconst(const Design*des, const NetScope*scope) const
 {
+      assert(scope);
+      const NetExpr*expr = des->find_parameter(scope, path_);
+      if (expr == 0)
+	    return 0;
+
+	/* Is this a real valued parameter? If so, then evaluate it
+	   as a real expression and return the resulting verireal. */
+      if (expr->expr_type() == NetExpr::ET_REAL) {
+	    const NetECReal*ereal = dynamic_cast<const NetECReal*>(expr);
+	    if (ereal == 0) {
+		  cerr << get_line() << ": internal error: "
+		       << "Unable to evaluate real constant expression "
+		       << "(parameter=" << path_ << "): " << *expr << endl;
+		  return 0;
+	    }
+
+	    return new verireal(ereal->value());
+      }
+
       verinum* val = eval_const(des, scope);
       if (val == 0)
 	    return 0;
@@ -81,6 +101,9 @@ verireal* PEIdent::eval_rconst(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval_rconst.cc,v $
+ * Revision 1.6  2003/02/01 23:37:34  steve
+ *  Allow parameter expressions to be type real.
+ *
  * Revision 1.5  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

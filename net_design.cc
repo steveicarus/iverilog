@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.33 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: net_design.cc,v 1.34 2003/02/01 23:37:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -353,27 +353,51 @@ void NetScope::evaluate_parameters(Design*des)
 	      /* Evaluate the parameter expression, if necessary. */
 	    expr = (*cur).second.expr;
 	    assert(expr);
-	    if (! dynamic_cast<const NetEConst*>(expr)) {
 
-		    // Try to evaluate the expression.
-		  NetExpr*nexpr = expr->eval_tree();
-		  if (nexpr == 0) {
+	    switch (expr->expr_type()) {
+		case NetExpr::ET_REAL:
+		  if (! dynamic_cast<const NetECReal*>(expr)) {
 			cerr << (*cur).second.expr->get_line()
 			     << ": internal error: "
-			      "unable to evaluate parameter value: " <<
+			      "unable to evaluate real parameter values: " <<
 			      *expr << endl;
 			des->errors += 1;
 			continue;
 		  }
+		  break;
 
-		    // The evaluate worked, replace the old expression with
-		    // this constant value.
-		  assert(nexpr);
-		  delete expr;
-		  (*cur).second.expr = nexpr;
+		case NetExpr::ET_VECTOR:
+		  if (! dynamic_cast<const NetEConst*>(expr)) {
 
-		    // Set the signedness flag.
-		  (*cur).second.expr->cast_signed( (*cur).second.signed_flag );
+			  // Try to evaluate the expression.
+			NetExpr*nexpr = expr->eval_tree();
+			if (nexpr == 0) {
+			      cerr << (*cur).second.expr->get_line()
+				   << ": internal error: "
+				    "unable to evaluate parameter value: " <<
+				    *expr << endl;
+			      des->errors += 1;
+			      continue;
+			}
+
+			  // The evaluate worked, replace the old
+			  // expression with this constant value.
+			assert(nexpr);
+			delete expr;
+			(*cur).second.expr = nexpr;
+
+			  // Set the signedness flag.
+			(*cur).second.expr
+			      ->cast_signed( (*cur).second.signed_flag );
+		  }
+		  break;
+
+		default:
+		  cerr << (*cur).second.expr->get_line()
+		       << ": internal error: "
+		       << "unhandled expression type?" << endl;
+		  des->errors += 1;
+		  continue;
 	    }
 
 	      /* If the parameter has range information, then make
@@ -625,6 +649,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.34  2003/02/01 23:37:34  steve
+ *  Allow parameter expressions to be type real.
+ *
  * Revision 1.33  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *
