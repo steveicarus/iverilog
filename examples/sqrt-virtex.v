@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt-virtex.v,v 1.2 2002/11/13 01:49:43 steve Exp $"
+ *   $Id: sqrt-virtex.v,v 1.3 2003/07/05 20:22:18 steve Exp $"
  */
 
 /*
@@ -361,7 +361,7 @@ module chip_root(clk, rdy, reset, x, y);
    sqrt32 dut(.clk(clk_int), .reset(reset), .rdy(rdy), .x(x), .y(y));
 
    /* Assign the clk to GCLK0, which is on pin P39. */
-   $attribute(clk, "PAD", "39");
+   $attribute(clk, "PAD", "P39");
 
    // We don't care where the remaining pins go, so set the pin number
    // to 0. This tells the implementation tools that we want a PAD,
