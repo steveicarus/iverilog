@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.26 2001/01/15 00:47:02 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.27 2001/01/15 22:08:32 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -289,11 +289,32 @@ void dll_target::logic(const NetLogic*net)
 	  case NetLogic::NAND:
 	    obj->type_ = IVL_LO_NAND;
 	    break;
+	  case NetLogic::NMOS:
+	    obj->type_ = IVL_LO_NMOS;
+	    break;
 	  case NetLogic::NOR:
 	    obj->type_ = IVL_LO_NOR;
 	    break;
+	  case NetLogic::NOT:
+	    obj->type_ = IVL_LO_NOT;
+	    break;
+	  case NetLogic::NOTIF0:
+	    obj->type_ = IVL_LO_NOTIF0;
+	    break;
+	  case NetLogic::NOTIF1:
+	    obj->type_ = IVL_LO_NOTIF1;
+	    break;
 	  case NetLogic::OR:
 	    obj->type_ = IVL_LO_OR;
+	    break;
+	  case NetLogic::RNMOS:
+	    obj->type_ = IVL_LO_RNMOS;
+	    break;
+	  case NetLogic::RPMOS:
+	    obj->type_ = IVL_LO_RPMOS;
+	    break;
+	  case NetLogic::PMOS:
+	    obj->type_ = IVL_LO_PMOS;
 	    break;
 	  case NetLogic::XNOR:
 	    obj->type_ = IVL_LO_XNOR;
@@ -664,6 +685,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.27  2001/01/15 22:08:32  steve
+ *  Add missing NetLogic gate types to ::logic method.
+ *
  * Revision 1.26  2001/01/15 00:47:02  steve
  *  Pass scope type information to the target module.
  *
