@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.99 2005/01/22 17:36:59 steve Exp $"
+#ident "$Id: stub.c,v 1.100 2005/01/24 05:05:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,6 +56,29 @@ unsigned width_of_nexus(ivl_nexus_t nex)
  * the various object functions is called. This can be used to
  * understand the behavior of the core as it uses a target module.
  */
+
+void show_ternary_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+
+      fprintf(out, "%*s<ternary  width=%u, %s>\n", ind, "", width, sign);
+      show_expression(ivl_expr_oper1(net), ind+4);
+      show_expression(ivl_expr_oper2(net), ind+4);
+      show_expression(ivl_expr_oper3(net), ind+4);
+
+      if (ivl_expr_width(ivl_expr_oper2(net)) != width) {
+	    fprintf(out, "ERROR: Width of TRUE expressions is %u, not %u\n",
+		    ivl_expr_width(ivl_expr_oper2(net)), width);
+	    stub_errors += 1;
+      }
+
+      if (ivl_expr_width(ivl_expr_oper3(net)) != width) {
+	    fprintf(out, "ERROR: Width of FALSE expressions is %u, not %u\n",
+		    ivl_expr_width(ivl_expr_oper3(net)), width);
+	    stub_errors += 1;
+      }
+}
 
 void show_expression(ivl_expr_t net, unsigned ind)
 {
@@ -159,11 +182,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    fprintf(out, "%*s<ternary  width=%u, %s>\n", ind, "",
-		    width, sign);
-	    show_expression(ivl_expr_oper1(net), ind+4);
-	    show_expression(ivl_expr_oper2(net), ind+4);
-	    show_expression(ivl_expr_oper3(net), ind+4);
+	    show_ternary_expression(net, ind);
 	    break;
 
 	  case IVL_EX_UNARY:
@@ -924,6 +943,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.100  2005/01/24 05:05:25  steve
+ *  Check widths of ternary expressions.
+ *
  * Revision 1.99  2005/01/22 17:36:59  steve
  *  stub dump signed flags of magnitude compare.
  *
