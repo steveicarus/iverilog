@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.56 2004/06/17 14:47:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.57 2004/08/30 17:42:53 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -120,7 +120,7 @@ $(vpidir)/system.vpi: ./system.vpi
 	$(STRIP) $(strip_dynamic) $(vpidir)/system.vpi
 
 $(libdir)/ivl/system.sft: system.sft
-	$(INSTALL_DATA) system.sft $(libdir)/ivl/system.sft
+	$(INSTALL_DATA) $< $@
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(vpidir)
