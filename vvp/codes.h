@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.11 2001/04/01 04:34:28 steve Exp $"
+#ident "$Id: codes.h,v 1.12 2001/04/01 06:12:13 steve Exp $"
 #endif
 
 
@@ -36,6 +36,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * access to the thread context.
  */
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
+extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
@@ -51,10 +52,10 @@ extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
-extern bool of_SET(vthread_t thr, vvp_code_t code);
-extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
+extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
+extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 
 /*
  * This is the format of a machine code instruction.
@@ -99,6 +100,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.12  2001/04/01 06:12:13  steve
+ *  Add the bitwise %and instruction.
+ *
  * Revision 1.11  2001/04/01 04:34:28  steve
  *  Implement %cmp/x and %cmp/z instructions.
  *

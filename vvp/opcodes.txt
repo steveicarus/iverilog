@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.8 2001/03/31 01:59:59 steve Exp $
+ *  $Id: opcodes.txt,v 1.9 2001/04/01 06:12:14 steve Exp $
  */
 
 
@@ -19,6 +19,17 @@ This instruction adds the right vector into the left vector, the
 vectors having the width <wid>. If any of the bits of either vector
 are x or z, the result is x. Otherwise, the result is the arithmetic
 sum.
+
+* %and <bit-l>, <bit-r>, <wid>
+
+Perform the bitwise AND of the two vectors, and store the result in
+the left vector. Each bit is calculated independent of other bits. AND
+means the following:
+
+	0 and ? --> 0
+	? and 0 --> 0
+	1 and 1 --> 1
+	otherwise   x
 
 * %assign <var-label>, <delay>, <bit>
 

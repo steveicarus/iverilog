@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.17 2001/04/01 04:34:28 steve Exp $"
+#ident "$Id: vthread.cc,v 1.18 2001/04/01 06:12:14 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -129,6 +129,36 @@ void vthread_schedule_list(vthread_t thr)
 	    thr = thr->next;
 	    schedule_vthread(tmp, 0);
       }
+}
+
+bool of_AND(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb == 0) || (rb == 0)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else if ((lb == 1) && (rb == 1)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else {
+		  thr_put_bit(thr, idx1, 2);
+	    }
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
 }
 
 bool of_ADD(vthread_t thr, vvp_code_t cp)
@@ -412,6 +442,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.18  2001/04/01 06:12:14  steve
+ *  Add the bitwise %and instruction.
+ *
  * Revision 1.17  2001/04/01 04:34:28  steve
  *  Implement %cmp/x and %cmp/z instructions.
  *
