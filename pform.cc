@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.46 1999/09/30 01:22:37 steve Exp $"
+#ident "$Id: pform.cc,v 1.47 1999/11/23 01:04:57 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -693,7 +693,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 		map<string,PUdp*>&prim)
 {
       vl_file = path;
-      vl_input = fopen(path, "r");
+      if (strcmp(path, "-") == 0)
+	    vl_input = stdin;
+      else
+	    vl_input = fopen(path, "r");
       if (vl_input == 0) {
 	    cerr << "Unable to open " <<vl_file << "." << endl;
 	    return 11;
@@ -714,6 +717,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.47  1999/11/23 01:04:57  steve
+ *  A file name of - means standard input.
+ *
  * Revision 1.46  1999/09/30 01:22:37  steve
  *  Handle declaration of integers (including scope) in functions.
  *
