@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.24 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.25 2001/08/05 02:49:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,6 +86,17 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetScope*scope = lsig->scope();
       assert(scope);
       string path = des->local_symbol(scope->name());
+
+      if (lsig->pin_count() != rsig->pin_count()) {
+	    cerr << get_line() << ": internal error: bitwise (" << op_
+		 << ") widths do not match: " << lsig->pin_count()
+		 << " != " << rsig->pin_count() << endl;
+	    cerr << get_line() << ":               : width="
+		 << lsig->pin_count() << ": " << *left_ << endl;
+	    cerr << get_line() << ":               : width="
+		 << rsig->pin_count() << ": " << *right_ << endl;
+	    return 0;
+      }
 
       assert(lsig->pin_count() == rsig->pin_count());
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT,
@@ -445,13 +456,62 @@ NetNet* NetETernary::synthesize(Design *des)
       return osig;
 }
 
+/*
+ * When synthesizing a signal expressoin, it is usually fine to simply
+ * return the NetNet that it refers to. If this is a part select,
+ * though, a bit more work needs to be done. Return a temporary that
+ * represents the connections to the selected bits.
+ *
+ * For example, if there is a reg foo, like so:
+ *     reg [5:0] foo;
+ * and this expression node represents a part select foo[3:2], then
+ * create a temporary like so:
+ *
+ *                     foo
+ *                    +---+
+ *                    | 5 |
+ *                    +---+
+ *         tmp        | 4 |
+ *        +---+       +---+
+ *        | 1 | <---> | 3 |
+ *        +---+       +---+
+ *        | 0 | <---> | 2 |
+ *        +---+       +---+
+ *                    | 1 |
+ *                    +---+
+ *                    | 0 |
+ *                    +---+
+ * The temporary is marked as a temporary and returned to the
+ * caller. This causes the caller to get only the selected part of the
+ * signal, and when it hooks up to tmp, it hooks up to the right parts
+ * of foo.
+ */
 NetNet* NetESignal::synthesize(Design*des)
 {
-      return net_;
+      if ((lsi_ == 0) && (msi_ == (net_->pin_count() - 1)))
+	    return net_;
+
+      assert(msi_ >= lsi_);
+      unsigned wid = msi_ - lsi_ + 1;
+
+      NetScope*scope = net_->scope();
+      assert(scope);
+
+      string name = scope->name() + "." + scope->local_symbol();
+      NetNet*tmp = new NetNet(scope, name, NetNet::NetNet::WIRE, wid);
+      tmp->local_flag(true);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+	    connect(tmp->pin(idx), net_->pin(idx+lsi_));
+
+      return tmp;
 }
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.25  2001/08/05 02:49:07  steve
+ *  Properly synthesize part selects.
+ *
  * Revision 1.24  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
