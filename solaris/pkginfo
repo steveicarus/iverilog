@@ -1,7 +1,7 @@
 PKG="IVLver"
 NAME="verilog"
 ARCH="sparc"
-VERSION="0.3"
+VERSION="0.5"
 CATEGORY="application"
 VENDOR="Icarus.com"
 EMAIL="steve@icarus.com"
