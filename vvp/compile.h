@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.9 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: compile.h,v 1.10 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -112,6 +112,9 @@ extern void compile_thread(char*start_sym);
  */
 extern void compile_variable(char*label, char*name, int msb, int lsb);
 
+extern void compile_net(char*label, char*name, int msb, int lsb,
+			unsigned argc, struct symb_s*argv);
+
 /*
  * This is a diagnostic aid. Dump all the compiler tables to the file
  * descriptor in a readable form.
@@ -120,6 +123,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.10  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.9  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

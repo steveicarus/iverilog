@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.5 2001/03/22 05:28:16 steve Exp $"
+#ident "$Id: functor.cc,v 1.6 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -184,7 +184,7 @@ void functor_propagate(vvp_ipoint_t ptr)
       while (idx) {
 	    functor_t idxp = functor_index(idx);
 	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
-	    printf("    set %lx to %u\n", idx, oval);
+	      //printf("    set %lx to %u\n", idx, oval);
 	    functor_set(idx, oval);
 	    idx = next;
       }
@@ -226,6 +226,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.6  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.5  2001/03/22 05:28:16  steve
  *  no longer need out message.
  *

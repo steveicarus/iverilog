@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.2 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.3 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 /*
@@ -141,6 +141,16 @@ static const struct __vpirt vpip_reg_rt = {
       0
 };
 
+static const struct __vpirt vpip_net_rt = {
+      vpiNet,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      0,
+      0
+};
+
 /*
  * Construct a vpiReg object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
@@ -162,7 +172,30 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 
 /*
+ * Construct a vpiReg object. Give the object specified dimensions,
+ * and point to the specified functor for the lsb.
+ */
+vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
+{
+      struct __vpiSignal*obj = (struct __vpiSignal*)
+	    malloc(sizeof(struct __vpiSignal));
+      obj->base.vpi_type = &vpip_net_rt;
+      obj->name = name;
+      obj->msb = msb;
+      obj->lsb = lsb;
+      obj->bits = base;
+
+      obj->scope = vpip_peek_current_scope();
+
+      return &obj->base;
+}
+
+
+/*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.3  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.2  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *

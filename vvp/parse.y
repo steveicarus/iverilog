@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.11 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: parse.y,v 1.12 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -49,7 +49,7 @@ extern FILE*yyin;
 };
 
 
-%token K_FUNCTOR K_SCOPE K_THREAD K_VAR K_vpi_call
+%token K_FUNCTOR K_NET K_SCOPE K_THREAD K_VAR K_vpi_call
 %token K_vpi_module
 
 %token <text> T_INSTR
@@ -146,6 +146,12 @@ statement
 
 	| T_LABEL K_VAR T_STRING ',' T_NUMBER ',' T_NUMBER ';'
 		{ compile_variable($1, $3, $5, $7); }
+
+  /* Net statements are similar to .var statements, except that they
+     declare nets, and they have an input list. */
+
+	| T_LABEL K_NET T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+		{ compile_net($1, $3, $5, $7, $9.cnt, $9.vect); }
 
   /* Oh and by the way, empty statements are OK as well. */
 
@@ -289,6 +295,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.12  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.11  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

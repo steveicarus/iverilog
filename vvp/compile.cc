@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.12 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.13 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -441,6 +441,48 @@ void compile_variable(char*label, char*name, int msb, int lsb)
       free(label);
 }
 
+void compile_net(char*label, char*name, int msb, int lsb,
+		 unsigned argc, struct symb_s*argv)
+{
+      unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      symbol_value_t val;
+      val.num = fdx;
+      sym_set_value(sym_functors, label, val);
+
+	/* Allocate all the functors for the net itself. */
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    functor_t obj = functor_index(ipoint_index(fdx,idx));
+	    obj->table = ft_var;
+	    obj->ival  = 0x22;
+	    obj->oval  = 0x02;
+      }
+
+      assert(argc == wid);
+
+	/* Connect port[0] of each of the net functors to the output
+	   of the addressed object. */
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    val = sym_get_value(sym_functors, argv[idx].text);
+	    assert(val.num);
+
+	    functor_t src = functor_index(ipoint_index(val.num,
+						       argv[idx].idx));
+	    obj->port[0] = src->out;
+	    src->out = ptr;
+      }
+
+	/* Make the vpiHandle for the reg. */
+      vpiHandle obj = vpip_make_net(name, msb, lsb, fdx);
+      compile_vpi_symbol(label, obj);
+
+      free(label);
+      free(argv);
+}
+
 /*
  * When parsing is otherwise complete, this function is called to do
  * the final stuff. Clean up deferred linking here.
@@ -524,6 +566,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.13  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.12  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

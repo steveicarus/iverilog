@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.6 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: lexor.lex,v 1.7 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -49,6 +49,7 @@
 
   /* These are some keywords that are recognized. */
 ".functor" { return K_FUNCTOR; }
+".net"     { return K_NET; }
 ".scope"   { return K_SCOPE; }
 ".thread"  { return K_THREAD; }
 ".var"     { return K_VAR; }
@@ -103,6 +104,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.7  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.6  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

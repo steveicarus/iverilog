@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.6 2001/03/23 02:40:23 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.7 2001/03/25 00:35:35 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -106,6 +106,8 @@ struct __vpiSignal {
 };
 extern vpiHandle vpip_make_reg(char*name, int msb, int lsb,
 			       vvp_ipoint_t base);
+extern vpiHandle vpip_make_net(char*name, int msb, int lsb,
+			       vvp_ipoint_t base);
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -180,6 +182,9 @@ extern void vpip_execute_vpi_call(vpiHandle obj);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.7  2001/03/25 00:35:35  steve
+ *  Add the .net statement.
+ *
  * Revision 1.6  2001/03/23 02:40:23  steve
  *  Add the :module header statement.
  *
