@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.4 2003/02/07 02:46:16 steve Exp $"
+#ident "$Id: eval_real.c,v 1.5 2003/03/08 01:04:01 steve Exp $"
 #endif
 
 /*
@@ -144,11 +144,13 @@ static int draw_realnum_real(ivl_expr_t exp)
       fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%f\n",
 	      res, mant, vexp, ivl_expr_dvalue(exp));
 
-	/* Capture the residual bits, if there are any. */
+	/* Capture the residual bits, if there are any. Note that an
+	   IEEE754 mantissa has 52 bits, 31 of which were accounted
+	   for already. */
       fract -= floor(fract);
-      fract = ldexp(fract, 32);
+      fract = ldexp(fract, 22);
       mant = fract;
-      expo -= 32;
+      expo -= 22;
 
       vexp = expo + 0x1000;
       assert(vexp >= 0);
@@ -276,6 +278,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.5  2003/03/08 01:04:01  steve
+ *  Excess precision breaks some targets.
+ *
  * Revision 1.4  2003/02/07 02:46:16  steve
  *  Handle real value subtract and comparisons.
  *
