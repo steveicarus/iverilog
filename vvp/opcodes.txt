@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.38 2002/08/27 05:39:57 steve Exp $
+ *  $Id: opcodes.txt,v 1.39 2002/08/28 17:15:06 steve Exp $
  */
 
 
@@ -311,6 +311,13 @@ This instruction loads a value from a memory bit into the specified
 thread register bit. The memory bit is addressed by index register 3.
 Bit address zero is the LSB of the first memory word.  This
 instruction loads only a single bit.
+
+
+* %load/nx <bit>, <vpi-label>, <idx>
+
+This instruction load a value from a .net object bit. Since .net
+objects don't really exist (they are only named indirection into the
+netlist) this instruction indexes into the .net list of bits.
 
 
 * %load/x <bit>, <functor-label>, <idx>

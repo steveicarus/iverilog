@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.47 2002/08/22 03:38:40 steve Exp $"
+#ident "$Id: codes.h,v 1.48 2002/08/28 17:15:06 steve Exp $"
 #endif
 
 
@@ -73,6 +73,7 @@ extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_X(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
@@ -153,6 +154,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.48  2002/08/28 17:15:06  steve
+ *  Add the %load/nx opcode to index vpi nets.
+ *
  * Revision 1.47  2002/08/22 03:38:40  steve
  *  Fix behavioral eval of x?a:b expressions.
  *

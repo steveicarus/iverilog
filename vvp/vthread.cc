@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.82 2002/08/27 05:39:57 steve Exp $"
+#ident "$Id: vthread.cc,v 1.83 2002/08/28 17:15:06 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1353,6 +1353,25 @@ bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * Load net/indexed.
+ */
+bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+      assert(cp->bit_idx[1] <  4);
+      assert(cp->handle->vpi_type->type_code == vpiNet);
+
+      struct __vpiSignal*sig =
+	    reinterpret_cast<struct __vpiSignal*>(cp->handle);
+
+      unsigned idx = thr->index[cp->bit_idx[1]];
+
+      vvp_ipoint_t ptr = vvp_fvector_get(sig->bits, idx);
+      thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
+      return true;
+}
+
 bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2248,6 +2267,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.83  2002/08/28 17:15:06  steve
+ *  Add the %load/nx opcode to index vpi nets.
+ *
  * Revision 1.82  2002/08/27 05:39:57  steve
  *  Fix l-value indexing of memories and vectors so that
  *  an unknown (x) index causes so cell to be addresses.

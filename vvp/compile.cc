@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.138 2002/08/22 03:38:40 steve Exp $"
+#ident "$Id: compile.cc,v 1.139 2002/08/28 17:15:06 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -69,6 +69,8 @@ enum operand_e {
       OA_FUNC_PTR2,
        /* The operand is a pointer to a memory */
       OA_MEM_PTR,
+	/* The operand is a VPI handle */
+      OA_VPI_PTR,
 };
 
 struct opcode_table_s {
@@ -116,6 +118,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
+      { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1256,6 +1259,17 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  free(opa->argv[idx].symb.text);
 		  break;
 
+		case OA_VPI_PTR:
+		    /* The operand is a functor. Resolve the label to
+		       a functor pointer, or postpone the resolution
+		       if it is not defined yet. */
+		  if (opa->argv[idx].ltype != L_SYMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  compile_vpi_lookup(&code->handle, opa->argv[idx].symb.text);
+		  break;
 	    }
       }
 
@@ -1434,6 +1448,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.139  2002/08/28 17:15:06  steve
+ *  Add the %load/nx opcode to index vpi nets.
+ *
  * Revision 1.138  2002/08/22 03:38:40  steve
  *  Fix behavioral eval of x?a:b expressions.
  *
