@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.26 2003/05/23 04:04:02 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.27 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 
@@ -187,6 +187,7 @@ typedef struct t_vpi_value {
 #define vpiName       2
 #define vpiFullName   3
 #define vpiSize       4
+#define vpiDefName    9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12
 #define vpiConstType 43
@@ -396,6 +397,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.27  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.26  2003/05/23 04:04:02  steve
  *  Add vpi_fopen and vpi_get_file.
  *

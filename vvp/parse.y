@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.53 2003/04/11 05:15:39 steve Exp $"
+#ident "$Id: parse.y,v 1.54 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -303,13 +303,36 @@ statement
 
 
   /* Scope statements come in two forms. There are the scope
-     declaration and the scope recall. */
+     declaration and the scope recall. The declarations create the
+     scope, with their association with a parent. The label of the
+     scope declaration is associated with the new scope.
+
+     The symbol is module, function task, fork or begin. It is the
+     general class of the scope.
+
+     The strings are the instance name and type name of the
+     module. For example, if it is instance U of module foo, the
+     instance name is "U" and the type name is "foo".
+
+     The final symbol is the label of the parent scope. If there is no
+     parent scope, then this is a root scope. */
+
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING ';'
+		{ compile_scope_decl($1, $3, $5, $6, 0); }
+
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5, $6, $8); }
+
+  /* XXXX Legacy declaration has no type name. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ';'
-		{ compile_scope_decl($1, $3, $5, 0); }
+		{ compile_scope_decl($1, $3, $5, "", 0); }
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, $7); }
+		{ compile_scope_decl($1, $3, $5, "", $7); }
+
+  /* Scope recall has no label of its own, but refers by label to a
+     declared scope. */
 
 	|         K_SCOPE T_SYMBOL ';'
 		{ compile_scope_recall($2); }
@@ -584,6 +607,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.54  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.53  2003/04/11 05:15:39  steve
  *  Add signed versions of .cmp/gt/ge
  *

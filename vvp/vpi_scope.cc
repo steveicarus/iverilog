@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.30 2003/05/27 16:22:10 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.31 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -87,7 +87,7 @@ static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
-      char *rbuf = need_result_buf(strlen(ref->name) + 1, RBUF_STR);
+      char *rbuf;
 
       assert(handle_is_scope(obj));
 
@@ -102,7 +102,13 @@ static char* scope_get_str(int code, vpiHandle obj)
 	  }
 
 	  case vpiName:
+	    rbuf = need_result_buf(strlen(ref->name) + 1, RBUF_STR);
 	    strcpy(rbuf, ref->name);
+	    return rbuf;
+
+	  case vpiDefName:
+	    rbuf = need_result_buf(strlen(ref->tname) + 1, RBUF_STR);
+	    strcpy(rbuf, ref->tname);
 	    return rbuf;
 
 	  default:
@@ -367,7 +373,8 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  * and within the addressed parent. The label is used as a key in the
  * symbol table and the name is used to construct the actual object.
  */
-void compile_scope_decl(char*label, char*type, char*name, char*parent)
+void
+compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
 {
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
@@ -396,6 +403,7 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
       assert(scope->base.vpi_type);
 
       scope->name = vpip_name_string(name);
+      scope->tname = vpip_name_string(tname);
       scope->intern = 0;
       scope->nintern = 0;
       scope->threads = 0;
@@ -465,6 +473,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.31  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.30  2003/05/27 16:22:10  steve
  *  PLI get time units/precision.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.93 2003/05/13 01:56:15 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.94 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1558,8 +1558,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s, \"%s\"",
-	      net, type, vvp_mangle_name(ivl_scope_basename(net)));
+      fprintf(vvp_out, "S_%p .scope %s, \"%s\" \"%s\"",
+	      net, type, vvp_mangle_name(ivl_scope_basename(net)),
+	      ivl_scope_tname(net));
 
       if (parent) {
 	    fprintf(vvp_out, ", S_%p;\n", parent);
@@ -1647,6 +1648,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.94  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.93  2003/05/13 01:56:15  steve
  *  Allow primitives to hvae unconnected input ports.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.51 2003/04/11 05:15:39 steve Exp $"
+#ident "$Id: compile.h,v 1.52 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -243,7 +243,7 @@ extern void compile_codelabel(char*label);
  * The parser uses these functions to compile .scope statements.
  * The implementations of these live in the vpi_scope.cc file.
  */
-extern void compile_scope_decl(char*typ, char*lab, char*nam, char*par);
+extern void compile_scope_decl(char*typ, char*lab, char*nam,char*tnam,char*par);
 extern void compile_scope_recall(char*sym);
 
 /*
@@ -264,6 +264,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.52  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.51  2003/04/11 05:15:39  steve
  *  Add signed versions of .cmp/gt/ge
  *

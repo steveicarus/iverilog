@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.13 2003/05/24 03:02:04 steve Exp $"
+#ident "$Id: acc_user.h,v 1.14 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 /*
@@ -196,6 +196,7 @@ extern char* acc_fetch_fullname(handle obj);
 extern int   acc_fetch_location(p_location loc, handle obj);
 
 extern char* acc_fetch_name(handle obj);
+extern char* acc_fetch_defname(handle obj);
 
 extern double acc_fetch_paramval(handle obj);
 
@@ -244,6 +245,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.14  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.13  2003/05/24 03:02:04  steve
  *  Add implementation of acc_handle_by_name.
  *

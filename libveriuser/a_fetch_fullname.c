@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_fullname.c,v 1.4 2003/03/13 05:07:46 steve Exp $"
+#ident "$Id: a_fetch_fullname.c,v 1.5 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -37,8 +37,16 @@ char* acc_fetch_name(handle object)
       return __acc_newstring(vpi_get_str(vpiName, object));
 }
 
+char* acc_fetch_defname(handle object)
+{
+      return __acc_newstring(vpi_get_str(vpiDefName, object));
+}
+
 /*
  * $Log: a_fetch_fullname.c,v $
+ * Revision 1.5  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.4  2003/03/13 05:07:46  steve
  *  Declaration warnings.
  *

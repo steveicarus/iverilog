@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.54 2003/05/02 04:29:57 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.55 2003/05/29 02:21:45 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -143,6 +143,7 @@ struct __vpiScope {
       struct __vpiScope *scope;
 	/* The scope has a name. */
       const char*name;
+      const char*tname;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
       struct __vpiSystemTime scoped_realtime;
@@ -417,6 +418,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.55  2003/05/29 02:21:45  steve
+ *  Implement acc_fetch_defname and its infrastructure in vvp.
+ *
  * Revision 1.54  2003/05/02 04:29:57  steve
  *  Add put_value with transport delay.
  *
