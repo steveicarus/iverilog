@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.19 2000/03/20 16:57:22 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.20 2000/03/29 04:06:28 steve Exp $"
 #endif
 
 
@@ -62,6 +62,7 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope) const
       }
 
       NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
+      return tmp;
 }
 
 /*
@@ -449,6 +450,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.20  2000/03/29 04:06:28  steve
+ *  Forgot to return elaborate result (Dan Nelsen)
+ *
  * Revision 1.19  2000/03/20 16:57:22  steve
  *  select correct bit when reg has non-zero lsb.
  *
