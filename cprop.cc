@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cprop.cc,v 1.4 1999/12/17 06:18:15 steve Exp $"
+#ident "$Id: cprop.cc,v 1.5 1999/12/30 04:19:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -72,8 +72,146 @@ static verinum::V driven_value(const NetObj::Link&lnk)
 
 struct cprop_functor  : public functor_t {
 
+      unsigned count;
+
+      virtual void lpm_add_sub(Design*des, NetAddSub*obj);
+      virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
 };
+
+void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
+{
+	// For now, only additions are handled.
+      if (obj->attribute("LPM_Direction") != "ADD")
+	    return;
+
+	// If the low bit on the A side is 0, then eliminate it from
+	// the adder, and pass the B side directly to the
+	// result. Don't reduce the adder smaller then a 1-bit
+	// adder. These will be eliminated later.
+      while ((obj->width() > 1)
+	  && all_drivers_constant(obj->pin_DataA(0))
+	  && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
+
+	    NetAddSub*tmp = 0;
+	    tmp = new NetAddSub(obj->name(), obj->width()-1);
+	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
+	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
+	      //connect(tmp->pin_Clock(), obj->pin_Clock());
+	      //connect(tmp->pin_Cin(), obj->pin_Cin());
+	    connect(tmp->pin_Cout(), obj->pin_Cout());
+	      //connect(tmp->pin_Overflow(), obj->pin_Overflow());
+	    for (unsigned idx = 0 ;  idx < tmp->width() ;  idx += 1) {
+		  connect(tmp->pin_DataA(idx), obj->pin_DataA(idx+1));
+		  connect(tmp->pin_DataB(idx), obj->pin_DataB(idx+1));
+		  connect(tmp->pin_Result(idx), obj->pin_Result(idx+1));
+	    }
+	    connect(obj->pin_Result(0), obj->pin_DataB(0));
+	    delete obj;
+	    des->add_node(tmp);
+	    obj = tmp;
+	    count += 1;
+      }
+
+	// Now do the same thing on the B side.
+      while ((obj->width() > 1)
+	  && all_drivers_constant(obj->pin_DataB(0))
+	  && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
+
+	    NetAddSub*tmp = 0;
+	    tmp = new NetAddSub(obj->name(), obj->width()-1);
+	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
+	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
+	      //connect(tmp->pin_Clock(), obj->pin_Clock());
+	      //connect(tmp->pin_Cin(), obj->pin_Cin());
+	    connect(tmp->pin_Cout(), obj->pin_Cout());
+	      //connect(tmp->pin_Overflow(), obj->pin_Overflow());
+	    for (unsigned idx = 0 ;  idx < tmp->width() ;  idx += 1) {
+		  connect(tmp->pin_DataA(idx), obj->pin_DataA(idx+1));
+		  connect(tmp->pin_DataB(idx), obj->pin_DataB(idx+1));
+		  connect(tmp->pin_Result(idx), obj->pin_Result(idx+1));
+	    }
+	    connect(obj->pin_Result(0), obj->pin_DataA(0));
+	    delete obj;
+	    des->add_node(tmp);
+	    obj = tmp;
+	    count += 1;
+      }
+
+	// If the adder is only 1 bit wide, then replace it with the
+	// simple logic gate.
+      if (obj->width() == 1) {
+	    NetLogic*tmp;
+	    if (obj->pin_Cout().is_linked()) {
+		  tmp = new NetLogic(des->local_symbol(obj->name()), 3,
+						       NetLogic::AND);
+		  connect(tmp->pin(0), obj->pin_Cout());
+		  connect(tmp->pin(1), obj->pin_DataA(0));
+		  connect(tmp->pin(2), obj->pin_DataB(0));
+		  des->add_node(tmp);
+	    }
+	    tmp = new NetLogic(obj->name(), 3, NetLogic::XOR);
+	    connect(tmp->pin(0), obj->pin_Result(0));
+	    connect(tmp->pin(1), obj->pin_DataA(0));
+	    connect(tmp->pin(2), obj->pin_DataB(0));
+	    delete obj;
+	    des->add_node(tmp);
+	    count += 1;
+	    return;
+      }
+
+}
+
+void cprop_functor::lpm_ff(Design*des, NetFF*obj)
+{
+	// Look for and count unlinked FF outputs. Note that if the
+	// Data and Q pins are connected together, they can be removed
+	// from the circuit.
+      unsigned unlinked_count = 0;
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+	    if (connected(obj->pin_Data(idx), obj->pin_Q(idx))) {
+		  obj->pin_Data(idx).unlink();
+		  obj->pin_Q(idx).unlink();
+	    }
+	    if (! obj->pin_Q(idx).is_linked())
+		  unlinked_count += 1;
+      }
+
+	// If the entire FF is unlinked, remove the whole thing.
+      if (unlinked_count == obj->width()) {
+	    delete obj;
+	    count += 1;
+	    return;
+      }
+
+	// If some of the FFs are unconnected, make a new FF array
+	// that does not include the useless FF devices.
+      if (unlinked_count > 0) {
+	    NetFF*tmp = new NetFF(obj->name(), obj->width()-unlinked_count);
+	    connect(tmp->pin_Clock(), obj->pin_Clock());
+	    connect(tmp->pin_Enable(), obj->pin_Enable());
+	    connect(tmp->pin_Aload(), obj->pin_Aload());
+	    connect(tmp->pin_Aset(), obj->pin_Aset());
+	    connect(tmp->pin_Aclr(), obj->pin_Aclr());
+	    connect(tmp->pin_Sload(), obj->pin_Sload());
+	    connect(tmp->pin_Sset(), obj->pin_Sset());
+	    connect(tmp->pin_Sclr(), obj->pin_Sclr());
+
+	    unsigned tidx = 0;
+	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1)
+		  if (obj->pin_Q(idx).is_linked()) {
+			connect(tmp->pin_Data(tidx), obj->pin_Data(idx));
+			connect(tmp->pin_Q(tidx), obj->pin_Q(idx));
+			tidx += 1;
+		  }
+
+	    assert(tidx == obj->width() - unlinked_count);
+	    delete obj;
+	    des->add_node(tmp);
+	    count += 1;
+	    return;
+      }
+}
 
 void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 {
@@ -89,6 +227,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		  if (driven_value(obj->pin(idx)) == verinum::V0) {
 			connect(obj->pin(0), obj->pin(idx));
 			delete obj;
+			count += 1;
 			return;
 		  }
 	    }
@@ -106,6 +245,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		  if (driven_value(obj->pin(idx)) != verinum::V1) {
 			connect(obj->pin(0), obj->pin(idx));
 			delete obj;
+			count += 1;
 			return;
 		  }
 	    }
@@ -114,6 +254,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 	      // input as the output value and remove the gate.
 	    connect(obj->pin(0), obj->pin(1));
 	    delete obj;
+	    count += 1;
 	    return;
 
 	  default:
@@ -163,8 +304,13 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 
 void cprop(Design*des)
 {
+	// Continually propogate constants until a scan finds nothing
+	// to do.
       cprop_functor prop;
-      des->functor(&prop);
+      do {
+	    prop.count = 0;
+	    des->functor(&prop);
+      } while (prop.count > 0);
 
       cprop_dc_functor dc;
       des->functor(&dc);
@@ -172,6 +318,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.5  1999/12/30 04:19:12  steve
+ *  Propogate constant 0 in low bits of adders.
+ *
  * Revision 1.4  1999/12/17 06:18:15  steve
  *  Rewrite the cprop functor to use the functor_t interface.
  *

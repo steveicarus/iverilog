@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.101 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.102 1999/12/30 04:19:12 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -145,7 +145,7 @@ bool NetObj::Link::is_linked(const NetObj&that) const
 bool NetObj::Link::is_linked(const NetObj::Link&that) const
 {
       for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
-	    if (idx == &that)
+	    if (idx->is_equal(that))
 		  return true;
 
       return false;
@@ -2764,6 +2764,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.102  1999/12/30 04:19:12  steve
+ *  Propogate constant 0 in low bits of adders.
+ *
  * Revision 1.101  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.7 1999/12/17 06:18:16 steve Exp $"
+#ident "$Id: functor.cc,v 1.8 1999/12/30 04:19:12 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -32,6 +32,10 @@ void functor_t::signal(class Design*, class NetNet*)
 }
 
 void functor_t::process(class Design*, class NetProcTop*)
+{
+}
+
+void functor_t::lpm_add_sub(class Design*, class NetAddSub*)
 {
 }
 
@@ -81,6 +85,11 @@ void Design::functor(functor_t*fun)
 
 void NetNode::functor_node(Design*, functor_t*)
 {
+}
+
+void NetAddSub::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_add_sub(des, this);
 }
 
 void NetConst::functor_node(Design*des, functor_t*fun)
@@ -149,6 +158,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.8  1999/12/30 04:19:12  steve
+ *  Propogate constant 0 in low bits of adders.
+ *
  * Revision 1.7  1999/12/17 06:18:16  steve
  *  Rewrite the cprop functor to use the functor_t interface.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.5 1999/12/17 06:18:16 steve Exp $"
+#ident "$Id: functor.h,v 1.6 1999/12/30 04:19:12 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,9 @@ struct functor_t {
 
 	/* This method is called for each process in the design. */
       virtual void process(class Design*des, class NetProcTop*);
+
+	/* This method is called for each structural adder. */
+      virtual void lpm_add_sub(class Design*des, class NetAddSub*);
 
 	/* This method is called for each structural constant. */
       virtual void lpm_const(class Design*des, class NetConst*);
@@ -64,6 +67,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.6  1999/12/30 04:19:12  steve
+ *  Propogate constant 0 in low bits of adders.
+ *
  * Revision 1.5  1999/12/17 06:18:16  steve
  *  Rewrite the cprop functor to use the functor_t interface.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.104 1999/12/17 06:18:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.105 1999/12/30 04:19:12 steve Exp $"
 #endif
 
 /*
@@ -328,6 +328,7 @@ class NetAddSub  : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 };
 
 /*
@@ -2080,6 +2081,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.105  1999/12/30 04:19:12  steve
+ *  Propogate constant 0 in low bits of adders.
+ *
  * Revision 1.104  1999/12/17 06:18:16  steve
  *  Rewrite the cprop functor to use the functor_t interface.
  *
