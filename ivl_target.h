@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.139 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.140 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -807,6 +807,17 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * magnitude compare, the signedness does matter. In any case, the
  * result of the compare is always unsigned.
  *
+ * - Mux Device (IVL_LPM_MUX)
+ * The MUX device has a q output, a select input, and a number of data
+ * inputs. The ivl_lpm_q output and the ivl_lpm_data inputs all have
+ * the width from the ivl_lpm_width() method. The Select input, from
+ * ivl_lpm_select, has the width ivl_lpm_selects().
+ *
+ * The ivl_lpm_data() method returns the inputs of the MUX device. The
+ * ivl_lpm_size() method returns the number of data inputs there
+ * are. All the data inputs have the same width, the width of the
+ * ivl_lpm_q output.
+ *
  * - Reduction operators (IVL_LPM_RE_*)
  * These devices have one input, a vector, and generate a single bit
  * result. The width from the ivl_lpm_width is the width of the input
@@ -843,11 +854,11 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_RAM IVL_LPM_SUB */
+     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
-  /* IVL_LPM_MUX IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
+  /* IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
   /* IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
@@ -1489,6 +1500,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.140  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.139  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

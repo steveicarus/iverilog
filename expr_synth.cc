@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.62 2005/01/28 05:39:33 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.63 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -789,7 +789,7 @@ NetNet* NetETernary::synthesize(Design *des)
 
       perm_string path = csig->scope()->local_symbol();
 
-      assert(csig->pin_count() == 1);
+      assert(csig->vector_width() == 1);
 
       unsigned width=expr_width();
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
@@ -799,18 +799,16 @@ NetNet* NetETernary::synthesize(Design *des)
       tsig = pad_to_width(des, tsig, width);
       fsig = pad_to_width(des, fsig, width);
 
-      assert(width <= tsig->pin_count());
-      assert(width <= fsig->pin_count());
+      assert(width <= tsig->vector_width());
+      assert(width <= fsig->vector_width());
 
       perm_string oname = csig->scope()->local_symbol();
-      NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
-      for (unsigned idx = 0 ;  idx < width;  idx += 1) {
-	    connect(tsig->pin(idx), mux->pin_Data(idx, 1));
-	    connect(fsig->pin(idx), mux->pin_Data(idx, 0));
-	    connect(osig->pin(idx), mux->pin_Result(idx));
-      }
+      NetMux *mux = new NetMux(csig->scope(), oname, width, 2, width);
+      connect(tsig->pin(0), mux->pin_Data(1));
+      connect(fsig->pin(0), mux->pin_Data(0));
+      connect(osig->pin(0), mux->pin_Result());
+      connect(csig->pin(0), mux->pin_Sel());
       des->add_node(mux);
-      connect(csig->pin(0), mux->pin_Sel(0));
 
       return osig;
 }
@@ -852,6 +850,11 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.63  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.62  2005/01/28 05:39:33  steve
  *  Simplified NetMult and IVL_LPM_MULT.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.40 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: synth2.cc,v 1.41 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -188,6 +188,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
 {
       DEBUG_SYNTH2_ENTRY("NetCase")
+#if 0
       unsigned cur;
 
       NetNet*esig = expr_->synthesize(des);
@@ -216,7 +217,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	   elided. */
       map<unsigned long,unsigned long>guard2sel;
       cur = 0;
-      for (unsigned idx = 0 ;  idx < (1U<<esig->pin_count()) ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < (1U<<esig->vector_width()) ;  idx += 1) {
 	    if ((idx & ~sel_mask) == sel_ref) {
 		  guard2sel[idx] = cur;
 		  cur += 1;
@@ -312,6 +313,11 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
       DEBUG_SYNTH2_EXIT("NetCase", true)
       return true;
+#else
+      cerr << get_line() << ": sorry: forgot how to implement "
+	   << "NetCase::synth_async" << endl;
+      return false;
+#endif
 }
 
 bool NetCondit::synth_async(Design*des, NetScope*scope,
@@ -360,18 +366,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      nex_out->pin_count(), 2, 1);
+			      nex_out->vector_width(), 2, 1);
 
-      connect(mux->pin_Sel(0), ssig->pin(0));
-
-      for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
-	    connect(mux->pin_Data(idx, 1), asig->pin(idx));
-
-      for (unsigned idx = 0 ;  idx < bsig->pin_count() ;  idx += 1)
-	    connect(mux->pin_Data(idx, 0), bsig->pin(idx));
-
-      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-	    connect(nex_out->pin(idx), mux->pin_Result(idx));
+      connect(mux->pin_Sel(),   ssig->pin(0));
+      connect(mux->pin_Data(1), asig->pin(0));
+      connect(mux->pin_Data(0), bsig->pin(0));
+      connect(nex_out->pin(0), mux->pin_Result());
 
       des->add_node(mux);
 
@@ -985,6 +985,11 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.41  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.40  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

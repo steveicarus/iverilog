@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.150 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.151 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1408,7 +1408,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
         if (sig_width > max_width_by_sel)
 	      sig_width = max_width_by_sel;
       }
-
+#if 0
       NetMux*mux = new NetMux(scope, scope->local_symbol(), 1,
 			      sig_width, sel->pin_count());
 
@@ -1438,6 +1438,12 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       des->add_node(mux);
       out->local_flag(true);
       return out;
+#else
+      cerr << get_line() << ": sorry: Forgot how to implement"
+	   << " NetMux in  elaborate_net_bitmux_." << endl;
+      des->errors += 1;
+      return 0;
+#endif
 }
 
 NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
@@ -2172,9 +2178,9 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   largest condition. Normally they should be the same size,
 	   but if we do not get a size from the context, or the
 	   expressions resist, we need to cope. */
-      unsigned iwidth = tru_sig->pin_count();
+      unsigned iwidth = tru_sig->vector_width();
       if (fal_sig->pin_count() > iwidth)
-	    iwidth = fal_sig->pin_count();
+	    iwidth = fal_sig->vector_width();
 
 
 	/* If the width is not passed from the context, then take the
@@ -2185,23 +2191,23 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	/* If the expression has width, then generate a boolean result
 	   by connecting an OR gate to calculate the truth value of
 	   the result. In the end, the result needs to be a single bit. */
-      if (expr_sig->pin_count() > 1) {
-	    NetLogic*log = new NetLogic(scope, scope->local_symbol(),
-					expr_sig->pin_count()+1,
-					NetLogic::OR, 1);
-	    for (unsigned idx = 0;  idx < expr_sig->pin_count(); idx += 1)
-		  connect(log->pin(idx+1), expr_sig->pin(idx));
+      if (expr_sig->vector_width() > 1) {
+	    NetUReduce*log = new NetUReduce(scope, scope->local_symbol(),
+					    NetUReduce::OR,
+					    expr_sig->vector_width());
+	    log->set_line(*this);
+	    des->add_node(log);
+	    connect(log->pin(1), expr_sig->pin(0));
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
-	    connect(tmp->pin(0), log->pin(0));
-	    des->add_node(log);
+	    connect(log->pin(0), tmp->pin(0));
 
 	    expr_sig = tmp;
       }
 
-      assert(expr_sig->pin_count() == 1);
+      assert(expr_sig->vector_width() == 1);
 
 	/* This is the width of the LPM_MUX device that I'm about to
 	   create. It may be smaller then the desired output, but I'll
@@ -2217,10 +2223,10 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 			      NetNet::WIRE, width);
       sig->local_flag(true);
 
-      if (fal_sig->pin_count() < dwidth)
+      if (fal_sig->vector_width() < dwidth)
 	    fal_sig = pad_to_width(des, fal_sig, dwidth);
 
-      if (tru_sig->pin_count() < dwidth)
+      if (tru_sig->vector_width() < dwidth)
 	    tru_sig = pad_to_width(des, tru_sig, dwidth);
 
 
@@ -2232,13 +2238,11 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   (true) connected to tru_sig.  */
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(), dwidth, 2, 1);
-      connect(mux->pin_Sel(0), expr_sig->pin(0));
+      connect(mux->pin_Sel(), expr_sig->pin(0));
 
 	/* Connect the data inputs. */
-      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
-	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
-      }
+      connect(mux->pin_Data(0), fal_sig->pin(0));
+      connect(mux->pin_Data(1), tru_sig->pin(0));
 
 	/* If there are non-zero output delays, then create bufz
 	   devices to carry the propagation delays. Otherwise, just
@@ -2246,38 +2250,27 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       if (rise || fall || decay) {
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, dwidth);
-	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 
-		  NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), 1);
-		  tmpz->rise_time(rise);
-		  tmpz->fall_time(fall);
-		  tmpz->decay_time(decay);
-		  tmpz->pin(0).drive0(drive0);
-		  tmpz->pin(0).drive1(drive1);
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), dwidth);
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
 
-		  connect(mux->pin_Result(idx), tmp->pin(idx));
-		  connect(tmp->pin(idx), tmpz->pin(1));
-		  connect(sig->pin(idx), tmpz->pin(0));
+	    connect(mux->pin_Result(), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(sig->pin(0), tmpz->pin(0));
 
-		  des->add_node(tmpz);
-	    }
+	    des->add_node(tmpz);
 
       } else {
-	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-		  connect(mux->pin_Result(idx), sig->pin(idx));
-	    }
+	    connect(mux->pin_Result(), sig->pin(0));
       }
 
 	/* If the MUX device result is too narrow to fill out the
-	   desired result, pad with zeros by creating a NetConst device. */
-
-      if (dwidth < width) {
-	    verinum vpad (verinum::V0, width-dwidth);
-	    NetConst*pad = new NetConst(scope, scope->local_symbol(), vpad);
-	    des->add_node(pad);
-	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
-		  connect(sig->pin(idx), pad->pin(idx-dwidth));
-      }
+	   desired result, pad with zeros... */
+      assert(dwidth == width);
 
       des->add_node(mux);
 
@@ -2469,6 +2462,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.151  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.150  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.117 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.118 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -755,6 +755,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.arith.b;
 
+	  case IVL_LPM_MUX:
+	    assert(idx < net->u_.mux.size);
+	    return net->u_.mux.d[idx];
+
 	  case IVL_LPM_RE_AND:
 	  case IVL_LPM_RE_OR:
 	  case IVL_LPM_RE_XOR:
@@ -824,10 +828,6 @@ extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 {
       assert(net);
       switch (net->type) {
-	  case IVL_LPM_MUX:
-	    assert(sdx < net->u_.mux.size);
-	    assert(idx < net->u_.mux.width);
-	    return net->u_.mux.d[sdx*net->u_.mux.width + idx];
 
 	  case IVL_LPM_UFUNC: {
 		sdx += 1; /* skip the output port. */
@@ -919,11 +919,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 		  return net->u_.ff.q.pins[idx];
 
 	  case IVL_LPM_MUX:
-	    assert(idx < net->u_.mux.width);
-	    if (net->u_.mux.width == 1)
-		  return net->u_.mux.q.pin;
-	    else
-		  return net->u_.mux.q.pins[idx];
+	    assert(idx == 0);
+	    return net->u_.mux.q;
 
 	  case IVL_LPM_RE_AND:
 	  case IVL_LPM_RE_OR:
@@ -978,11 +975,8 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 		  return net->u_.ff.s.pins[idx];
 
 	  case IVL_LPM_MUX:
-	    assert(idx < net->u_.mux.swid);
-	    if (net->u_.mux.swid == 1)
-		  return net->u_.mux.s.pin;
-	    else
-		  return net->u_.mux.s.pins[idx];
+	    assert(idx == 0);
+	    return net->u_.mux.s;
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
@@ -1998,6 +1992,11 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.118  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.117  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

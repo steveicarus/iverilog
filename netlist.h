@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.333 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.334 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 /*
@@ -864,19 +864,13 @@ class NetMux  : public NetNode {
       unsigned size() const;
       unsigned sel_width() const;
 
-      Link& pin_Aclr();
-      Link& pin_Clock();
+      Link& pin_Result();
+      Link& pin_Data(unsigned si);
+      Link& pin_Sel();
 
-      Link& pin_Result(unsigned);
-      Link& pin_Data(unsigned wi, unsigned si);
-      Link& pin_Sel(unsigned);
-
-      const Link& pin_Aclr() const;
-      const Link& pin_Clock() const;
-
-      const Link& pin_Result(unsigned) const;
-      const Link& pin_Data(unsigned, unsigned) const;
-      const Link& pin_Sel(unsigned) const;
+      const Link& pin_Result() const;
+      const Link& pin_Data(unsigned) const;
+      const Link& pin_Sel() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -3426,6 +3420,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.334  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.333  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

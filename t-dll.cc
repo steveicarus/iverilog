@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.139 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.140 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1800,57 +1800,29 @@ void dll_target::lpm_mux(const NetMux*net)
       const Nexus*nex;
 
 	/* Connect the output bits. */
-      if (obj->u_.mux.width == 1) {
-	    nex = net->pin_Result(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.mux.q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.mux.q.pin, obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
-
-      } else {
-	    obj->u_.mux.q.pins = new ivl_nexus_t [obj->u_.mux.width];
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.mux.width ;  idx += 1) {
-		  nex = net->pin_Result(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.mux.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
-	    }
-      }
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
+      obj->u_.mux.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.mux.q, obj, 0,
+		    IVL_DR_STRONG, IVL_DR_STRONG);
 
 	/* Connect the select bits. */
-      if (obj->u_.mux.swid == 1) {
-	    nex = net->pin_Sel(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.mux.s.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.mux.s.pin, obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
+      nex = net->pin_Sel().nexus();
+      assert(nex->t_cookie());
+      obj->u_.mux.s = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.mux.s, obj, 0,
+		    IVL_DR_HiZ, IVL_DR_HiZ);
 
-      } else {
-	    obj->u_.mux.s.pins = new ivl_nexus_t [obj->u_.mux.swid];
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.mux.swid ;  idx += 1) {
-		  nex = net->pin_Sel(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.mux.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.mux.s.pins[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-      }
-
-      unsigned width = obj->u_.mux.width;
       unsigned selects = obj->u_.mux.size;
 
-      obj->u_.mux.d = new ivl_nexus_t [width * selects];
+      obj->u_.mux.d = new ivl_nexus_t [selects];
 
-      for (unsigned sdx = 0 ;  sdx < selects ;  sdx += 1)
-	    for (unsigned ddx = 0 ;  ddx < width ;  ddx += 1) {
-		  nex = net->pin_Data(ddx, sdx).nexus();
-		  ivl_nexus_t tmp = (ivl_nexus_t) nex->t_cookie();
-		  obj->u_.mux.d[sdx*width + ddx] = tmp;
-		  nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
+      for (unsigned sdx = 0 ;  sdx < selects ;  sdx += 1) {
+	    nex = net->pin_Data(sdx).nexus();
+	    ivl_nexus_t tmp = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.mux.d[sdx] = tmp;
+	    nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      }
 
 }
 
@@ -2257,6 +2229,11 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.140  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.139  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

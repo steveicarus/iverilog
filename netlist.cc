@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.236 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.237 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1274,33 +1274,24 @@ const Link& NetMult::pin_DataB() const
 /*
  * The NetMux class represents an LPM_MUX device. The pinout is assigned
  * like so:
- *    0   -- Aclr (optional)
- *    1   -- Clock (optional)
- *    2   -- Result[0]
- *    2+N -- Result[N]
+ *    0   -- Result
+ *    1   -- Sel
+ *    2+N -- Data[N]  (N is the size of the mux)
  */
 
 NetMux::NetMux(NetScope*s, perm_string n,
 	       unsigned wi, unsigned si, unsigned sw)
-: NetNode(s, n, 2+wi+sw+wi*si),
+: NetNode(s, n, 2+si),
   width_(wi), size_(si), swidth_(sw)
 {
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(perm_string::literal("Aclr"),  0);
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("Clock"), 0);
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Q"),  0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("Sel"), 0);
 
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin_Result(idx).set_dir(Link::OUTPUT);
-	    pin_Result(idx).set_name(perm_string::literal("Result"), idx);
-
-	    for (unsigned jdx = 0 ;  jdx < size_ ;  jdx += 1) {
-		  pin_Data(idx,jdx).set_dir(Link::INPUT);
-		  pin_Data(idx,jdx).set_name(perm_string::literal("Data"), jdx*width_+idx);
-	    }
-      }
-
-      for (unsigned idx = 0 ;  idx < swidth_ ;  idx += 1) {
-	    pin_Sel(idx).set_dir(Link::INPUT);
-	    pin_Sel(idx).set_name(perm_string::literal("Sel"), idx);
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
+	    pin_Data(idx).set_dir(Link::INPUT);
+	    pin_Data(idx).set_name(perm_string::literal("D"), idx);
       }
 }
 
@@ -1323,62 +1314,36 @@ unsigned NetMux::sel_width() const
       return swidth_;
 }
 
-Link& NetMux::pin_Aclr()
+Link& NetMux::pin_Result()
 {
       return pin(0);
 }
 
-const Link& NetMux::pin_Aclr() const
+const Link& NetMux::pin_Result() const
 {
       return pin(0);
 }
 
-Link& NetMux::pin_Clock()
+Link& NetMux::pin_Sel()
 {
       return pin(1);
 }
 
-const Link& NetMux::pin_Clock() const
+const Link& NetMux::pin_Sel() const
 {
       return pin(1);
 }
 
-Link& NetMux::pin_Result(unsigned w)
+Link& NetMux::pin_Data(unsigned s)
 {
-      assert(w < width_);
-      return pin(2+w);
-}
-
-const Link& NetMux::pin_Result(unsigned w) const
-{
-      assert(w < width_);
-      return pin(2+w);
-}
-
-Link& NetMux::pin_Sel(unsigned w)
-{
-      assert(w < swidth_);
-      return pin(2+width_+w);
-}
-
-const Link& NetMux::pin_Sel(unsigned w) const
-{
-      assert(w < swidth_);
-      return pin(2+width_+w);
-}
-
-Link& NetMux::pin_Data(unsigned w, unsigned s)
-{
-      assert(w < width_);
       assert(s < size_);
-      return pin(2+width_+swidth_+s*width_+w);
+      return pin(2+s);
 }
 
-const Link& NetMux::pin_Data(unsigned w, unsigned s) const
+const Link& NetMux::pin_Data(unsigned s) const
 {
-      assert(w < width_);
       assert(s < size_);
-      return pin(2+width_+swidth_+s*width_+w);
+      return pin(2+s);
 }
 
 
@@ -2293,6 +2258,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.237  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.236  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

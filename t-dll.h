@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.120 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: t-dll.h,v 1.121 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -318,14 +318,7 @@ struct ivl_lpm_s {
 		  unsigned size;
 		  unsigned swid;
 		  ivl_nexus_t*d;
-		  union {
-			ivl_nexus_t*pins;
-			ivl_nexus_t pin;
-		  } q;
-		  union {
-			ivl_nexus_t*pins;
-			ivl_nexus_t pin;
-		  } s;
+		  ivl_nexus_t q, s;
 	    } mux;
 
 	    struct ivl_lpm_shift_s {
@@ -694,6 +687,11 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.121  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.120  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

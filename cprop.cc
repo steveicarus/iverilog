@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-20035 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.49 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: cprop.cc,v 1.50 2005/02/12 06:25:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -779,29 +779,52 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	   NetMux with an array of BUFIF1 devices, with the enable
 	   connected to the select input. */
       bool flag = true;
-      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! obj->pin_Data(idx, 0).nexus()->drivers_constant()) {
-		  flag = false;
-		  break;
-	    }
 
-	    if (obj->pin_Data(idx, 0).nexus()->driven_value() != verinum::Vz) {
-		  flag = false;
-		  break;
-	    }
+      if (! obj->pin_Data(0).nexus()->drivers_constant()) {
+	    flag = false;
+      }
+
+      if (flag && obj->pin_Data(0).nexus()->driven_value() != verinum::Vz) {
+	    flag = false;
       }
 
       if (flag) {
 	    NetScope*scope = obj->scope();
-	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      scope->local_symbol(),
-					      3, NetLogic::BUFIF1, 1);
+	    NetLogic*tmp = new NetLogic(obj->scope(),
+					scope->local_symbol(),
+					3, NetLogic::BUFIF1, obj->width());
 
-		  connect(obj->pin_Result(idx), tmp->pin(0));
-		  connect(obj->pin_Data(idx,1), tmp->pin(1));
-		  connect(obj->pin_Sel(0), tmp->pin(2));
-		  des->add_node(tmp);
+	    des->add_node(tmp);
+
+	    connect(obj->pin_Result(), tmp->pin(0));
+	    connect(obj->pin_Data(1),  tmp->pin(1));
+
+	    if (obj->width() == 1) {
+		    /* Special case that the expression is 1 bit
+		       wide. Connect the select directly to the
+		       enable. */
+		  connect(obj->pin_Sel(), tmp->pin(2));
+
+	    } else {
+		    /* General case that the expression is arbitrarily
+		       wide. Replicate the enable signal (which we
+		       assume is 1 bit wide) to match the expression,
+		       and connect the enable vector to the enable
+		       input of the gate. */
+		  NetReplicate*rtmp = new NetReplicate(scope,
+						       scope->local_symbol(),
+						       obj->width(),
+						       obj->width());
+		  des->add_node(rtmp);
+
+
+		  connect(obj->pin_Sel(), rtmp->pin(1));
+		  connect(tmp->pin(2), rtmp->pin(0));
+
+		  NetNet*rsig = new NetNet(scope, scope->local_symbol(),
+					   NetNet::WIRE, obj->width());
+		  rsig->local_flag(true);
+		  connect(tmp->pin(2), rsig->pin(0));
 	    }
 
 	    count += 1;
@@ -809,33 +832,29 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    return;
       }
 
+
 	/* If instead the second input is all constant Vz, replace the
 	   NetMux with an array of BUFIF0 devices. */
       flag = true;
-      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
-		  flag = false;
-		  break;
-	    }
+      if (! obj->pin_Data(1).nexus()->drivers_constant()) {
+	    flag = false;
+      }
 
-	    if (obj->pin_Data(idx, 1).nexus()->driven_value() != verinum::Vz) {
-		  flag = false;
-		  break;
-	    }
+      if (flag && obj->pin_Data(1).nexus()->driven_value() != verinum::Vz) {
+	    flag = false;
       }
 
       if (flag) {
 	    NetScope*scope = obj->scope();
-	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      scope->local_symbol(),
-					      3, NetLogic::BUFIF0, 1);
 
-		  connect(obj->pin_Result(idx), tmp->pin(0));
-		  connect(obj->pin_Data(idx,0), tmp->pin(1));
-		  connect(obj->pin_Sel(0), tmp->pin(2));
-		  des->add_node(tmp);
-	    }
+	    NetLogic*tmp = new NetLogic(obj->scope(),
+					scope->local_symbol(),
+					3, NetLogic::BUFIF0, obj->width());
+
+	    connect(obj->pin_Result(), tmp->pin(0));
+	    connect(obj->pin_Data(0),  tmp->pin(1));
+	    connect(obj->pin_Sel(),    tmp->pin(2));
+	    des->add_node(tmp);
 
 	    count += 1;
 	    delete obj;
@@ -961,6 +980,11 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.50  2005/02/12 06:25:40  steve
+ *  Restructure NetMux devices to pass vectors.
+ *  Generate NetMux devices from ternary expressions,
+ *  Reduce NetMux devices to bufif when appropriate.
+ *
  * Revision 1.49  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *
