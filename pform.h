@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.48 2001/10/21 00:42:48 steve Exp $"
+#ident "$Id: pform.h,v 1.49 2001/10/21 01:55:25 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -115,7 +115,8 @@ extern void pform_endmodule(const char*);
 
 extern void pform_make_udp(const char*name, list<string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
-			   Statement*init);
+			   Statement*init,
+			   const char*file, unsigned lineno);
 
 /*
  * Enter/exit name scopes.
@@ -200,6 +201,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.49  2001/10/21 01:55:25  steve
+ *  Error messages for missing UDP port declarations.
+ *
  * Revision 1.48  2001/10/21 00:42:48  steve
  *  Module types in pform are char* instead of string.
  *

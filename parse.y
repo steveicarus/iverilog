@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.130 2001/10/14 02:03:51 steve Exp $"
+#ident "$Id: parse.y,v 1.131 2001/10/21 01:55:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2567,7 +2567,8 @@ udp_primitive
 	    udp_init_opt
 	    udp_body
 	  K_endprimitive
-		{ pform_make_udp($2, $4, $7, $9, $8);
+		{ pform_make_udp($2, $4, $7, $9, $8,
+				 @2.text, @2.first_line);
 		  delete[]$2;
 		}
 	;

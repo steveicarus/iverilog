@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.81 2001/10/21 00:42:48 steve Exp $"
+#ident "$Id: pform.cc,v 1.82 2001/10/21 01:55:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -188,8 +188,10 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
 
 void pform_make_udp(const char*name, list<string>*parms,
 		    svector<PWire*>*decl, list<string>*table,
-		    Statement*init_expr)
+		    Statement*init_expr,
+		    const char*file, unsigned lineno)
 {
+      unsigned local_errors = 0;
       assert(parms->size() > 0);
 
 	/* Put the declarations into a map, so that I can check them
@@ -220,27 +222,91 @@ void pform_make_udp(const char*name, list<string>*parms,
 
 
 	/* Put the parameters into a vector of wire descriptions. Look
-	   in the map for the definitions of the name. */
+	   in the map for the definitions of the name. In this loop,
+	   the parms list in the list of ports in the port list of the
+	   UDP declaration, and the defs map maps that name to a
+	   PWire* created by an input or output declaration. */
       svector<PWire*> pins (parms->size());
+      svector<string> pin_names (parms->size());
       { list<string>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 0
 		   ; cur != parms->end()
 		   ; idx++, cur++) {
 	      pins[idx] = defs[*cur];
+	      pin_names[idx] = *cur;
 	}
       }
 
 	/* Check that the output is an output and the inputs are
 	   inputs. I can also make sure that only the single output is
-	   declared a register, if anything. */
+	   declared a register, if anything. The possible errors are:
+
+	      -- an input port (not the first) is missing an input
+	         declaration.
+
+	      -- An input port is declared output.
+
+	*/
       assert(pins.count() > 0);
-      assert(pins[0]);
-      assert(pins[0]->get_port_type() == NetNet::POUTPUT);
+      do {
+	    if (pins[0] == 0) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Output port of primitive " << name
+		       << " missing output declaration." << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "Try: output " << pin_names[0] << ";"
+		       << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  break;
+	    }
+	    if (pins[0]->get_port_type() != NetNet::POUTPUT) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "The first port of a primitive"
+		       << " must be an output." << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "Try: output " << pin_names[0] << ";"
+		       << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  break;;
+	    }
+      } while (0);
+
       for (unsigned idx = 1 ;  idx < pins.count() ;  idx += 1) {
-	    assert(pins[idx]);
-	    assert(pins[idx]->get_port_type() == NetNet::PINPUT);
+	    if (pins[idx] == 0) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Port " << (idx+1)
+		       << " of primitive " << name << " missing"
+		       << " input declaration." << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "Try: input " << pin_names[idx] << ";"
+		       << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  continue;
+	    }
+	    if (pins[idx]->get_port_type() != NetNet::PINPUT) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Port " << (idx+1)
+		       << " of primitive " << name << " in an input port"
+		       << " with an output declaration." << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "Try: input " << pin_names[idx] << ";"
+		       << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  continue;
+	    }
 	    assert(pins[idx]->get_wire_type() != NetNet::REG);
+      }
+      if (local_errors > 0) {
+	    delete parms;
+	    delete decl;
+	    delete table;
+	    delete init_expr;
+	    return;
       }
 
 	/* Interpret and check the table entry strings, to make sure
@@ -318,6 +384,7 @@ void pform_make_udp(const char*name, list<string>*parms,
 
 	    pform_primitives[name] = udp;
       }
+
 
 	/* Delete the excess tables and lists from the parser. */
       delete parms;
@@ -1030,6 +1097,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.82  2001/10/21 01:55:24  steve
+ *  Error messages for missing UDP port declarations.
+ *
  * Revision 1.81  2001/10/21 00:42:48  steve
  *  Module types in pform are char* instead of string.
  *
