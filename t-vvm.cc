@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.120 2000/03/22 04:26:40 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.121 2000/03/23 03:24:39 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2097,6 +2097,16 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
  */
 void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 {
+	/* Handle the special case of a system task without any
+	   parameters. we don't need a parameter array for this. */
+
+      if (net->nparms() == 0) {
+	    defn << "      vpip_calltask(\"" << net->name()
+		 << "\", 0, 0);" << endl;
+	    defn << "      if (vpip_finished()) return false;" << endl;
+	    return;
+      }
+
       string ptmp = make_temp();
 
       defn << "      vpiHandle " << ptmp << "[" << net->nparms() <<
@@ -2297,6 +2307,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.121  2000/03/23 03:24:39  steve
+ *  Do not create 0 length parameters to system tasks.
+ *
  * Revision 1.120  2000/03/22 04:26:40  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
