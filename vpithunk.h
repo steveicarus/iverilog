@@ -44,6 +44,7 @@ typedef struct {
 				     p_vpi_time when, int flags);
   int (*vpi_free_object)(vpiHandle ref);
   int (*vpi_get_vlog_info)(p_vpi_vlog_info vlog_info_p);
+  int (*vpi_chk_error)(p_vpi_error_info info);
 } vpi_thunk, *p_vpi_thunk;
 
 DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.13 2002/07/17 05:13:43 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.14 2002/07/19 01:57:26 steve Exp $"
 #endif
 
 
@@ -278,11 +278,14 @@ extern int vpi_remove_cb(vpiHandle ref);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-extern void vpi_sim_control(int operation, ...);
+extern void vpi_control(int operation, ...);
 #define vpiStop 1
 #define vpiFinish 2
 #define vpiReset  3
 #define vpiSetInteractiveScope 4
+
+/* vpi_sim_control is the incorrect name for vpi_control. */
+extern void vpi_sim_control(int operation, ...);
 
 extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
@@ -321,6 +324,34 @@ extern int vpi_free_object(vpiHandle ref);
 extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 
+/*
+ * Support for handling errors.
+ */
+typedef struct t_vpi_error_info {
+      int state;
+      int level;
+      char*message;
+      char*product;
+      char*code;
+      char*file;
+      int  line;
+} s_vpi_error_info, *p_vpi_error_info;
+
+/* error_info states */
+# define  vpiCompile  1
+# define  vpiPLI      2
+# define  vpiRun      3
+
+/* error_info levels */
+# define  vpiNotice    1
+# define  vpiWarning   2
+# define  vpiError     3
+# define  vpiSystem    4
+# define  vpiInternal  5
+
+extern int vpi_chk_error(p_vpi_error_info info);
+
+
 /* This is the table of startup routines included in each module. */
 extern DLLEXPORT void (*vlog_startup_routines[])();
 
@@ -328,6 +359,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.14  2002/07/19 01:57:26  steve
+ *  Add vpi_chk_error and vpi_control functions.
+ *
  * Revision 1.13  2002/07/17 05:13:43  steve
  *  Implementation of vpi_handle_by_name, and
  *  add the vpiVariables iterator.

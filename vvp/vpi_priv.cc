@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.21 2002/07/19 01:12:50 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.22 2002/07/19 01:57:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -32,6 +32,9 @@
 # include  <stdlib.h>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
+
+static s_vpi_vlog_info  vpi_vlog_info;
+static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
 
 /*
  * The vpip_string function creates a constant string from the pass
@@ -64,6 +67,22 @@ const char *vpip_string(const char*str)
 
       strcpy(res, str);
       return res;
+}
+
+int vpi_chk_error(p_vpi_error_info info)
+{
+      if (vpip_last_error.state = 0)
+	    return 0;
+
+      info->state = vpip_last_error.state;
+      info->level = vpip_last_error.level;
+      info->message = vpip_last_error.message;
+      info->product = vpi_vlog_info.product;
+      info->code = "";
+      info->file = 0;
+      info->line = 0;
+
+      return info->level;
 }
 
 /*
@@ -130,8 +149,6 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
       vp->high = 0;
       vp->low = schedule_simtime();
 }
-
-static s_vpi_vlog_info vpi_vlog_info;
 
 int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
@@ -346,6 +363,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.22  2002/07/19 01:57:26  steve
+ *  Add vpi_chk_error and vpi_control functions.
+ *
  * Revision 1.21  2002/07/19 01:12:50  steve
  *  vpi_iterate returns 0 on error.
  *

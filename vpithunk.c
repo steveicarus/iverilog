@@ -138,6 +138,14 @@ extern void vpi_sim_control(int operation, ...)
   va_end(ap);			/* bad - never hit */
 }
 
+extern void vpi_control(int operation, ...)
+{
+  va_list ap;
+  va_start(ap, operation);
+  VPITV_CALL(vpi_sim_vcontrol,(operation,ap));
+  va_end(ap);			/* bad - never hit */
+}
+
 extern vpiHandle  vpi_handle(int type, vpiHandle ref)
 {
   VPIT_CALL(vpi_handle, 0, (type, ref));
@@ -193,4 +201,9 @@ extern int vpi_free_object(vpiHandle ref)
 extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
   VPIT_CALL(vpi_get_vlog_info, 0, (vlog_info_p));
+}
+
+extern int vpi_chk_error(p_vpi_error_info info)
+{
+  VPIT_CALL(vpi_chk_error, 0, (info));
 }
