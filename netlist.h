@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.129 2000/04/23 21:15:07 steve Exp $"
+#ident "$Id: netlist.h,v 1.130 2000/04/23 21:17:31 steve Exp $"
 #endif
 
 /*
@@ -824,13 +824,18 @@ class NetConst  : public NetNode {
 /*
  * This class represents all manner of logic gates. Pin 0 is OUTPUT and
  * all the remaining pins are INPUT. The BUFIF[01] gates have the
- * additional restriction that pin 1 is the enable.
+ * more specific pinout as follows:
+ *
+ *     bufif<N>
+ *       0  -- output
+ *       1  -- input data
+ *       2  -- enable
  */
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NOR, NOT, OR, XNOR,
-		  XOR };
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NOR, NOT, NOTIF0,
+		  NOTIF1, OR, XNOR, XOR };
 
       explicit NetLogic(const string&n, unsigned pins, TYPE t);
 
@@ -2441,6 +2446,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.130  2000/04/23 21:17:31  steve
+ *  Better comments about bufif devices.
+ *
  * Revision 1.129  2000/04/23 21:15:07  steve
  *  Emit code for the bufif devices.
  *
