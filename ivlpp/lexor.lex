@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.32 2002/04/04 05:26:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.33 2002/09/11 19:42:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -170,7 +170,7 @@ W [ \t\b\f]+
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-`define{W}[a-zA-Z_][a-zA-Z0-9_]*{W}? { yy_push_state(PPDEFINE); def_start(); }
+`define{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}? { yy_push_state(PPDEFINE); def_start(); }
 
 <PPDEFINE>.* {
       do_define();
@@ -194,7 +194,7 @@ W [ \t\b\f]+
       yy_pop_state();
   }
 
-`undef{W}[a-zA-Z_][a-zA-Z0-9_]*{W}?.* { def_undefine(); }
+`undef{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}?.* { def_undefine(); }
 
 
   /* Detect conditional compilation directives, and parse them. If I
@@ -206,7 +206,7 @@ W [ \t\b\f]+
      condition that stacks on top of the IFDEF_FALSE so that output is
      not accidentally turned on within nested ifdefs. */
 
-^{W}?`ifdef{W}[a-zA-Z_][a-zA-Z0-9_]* {
+^{W}?`ifdef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
       char*name = strchr(yytext, '`');
       assert(name);
       name += 6;
@@ -219,7 +219,7 @@ W [ \t\b\f]+
       }
   }
 
-^{W}?`ifndef{W}[a-zA-Z_][a-zA-Z0-9_]* {
+^{W}?`ifndef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
       char*name = strchr(yytext, '`');
       assert(name);
       name += 7;
@@ -247,7 +247,7 @@ W [ \t\b\f]+
   }
 
   /* This pattern notices macros and arranges for them to be replaced. */
-`[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
+`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
 
   /* Any text that is not a directive just gets passed through to the
      output. Very easy. */
