@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 2000/10/03 16:15:35 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 2000/10/04 02:01:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -44,6 +44,7 @@ INSTALL_DATA = @INSTALL_DATA@
 CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
+STRIP = @STRIP@
 
 all: system.vpi
 
@@ -76,7 +77,8 @@ install: all installdirs $(libdir)/ivl/system.vpi \
 	$(includedir)/vpi_user.h
 
 $(libdir)/ivl/system.vpi: ./system.vpi
-	$(INSTALL_DATA) ./system.vpi $(libdir)/ivl/system.vpi
+	$(INSTALL_PROGRAM) ./system.vpi $(libdir)/ivl/system.vpi
+	$(STRIP) $(libdir)/ivl/system.vpi
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
