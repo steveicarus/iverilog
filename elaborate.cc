@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.48 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.49 1999/06/24 04:45:29 steve Exp $"
 #endif
 
 /*
@@ -629,17 +629,20 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	    des->add_node(gate);
 	    break;
 
-	  case '|': // OR
-	    assert(lsig->pin_count() == 1);
-	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::OR);
-	    connect(gate->pin(1), lsig->pin(0));
-	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	  case '|': // Bitwise OR
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
 	    osig->local_flag(true);
-	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::OR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  des->add_node(gate);
+	    }
 	    des->add_signal(osig);
-	    des->add_node(gate);
 	    break;
 
 	  case 'e': // ==
@@ -1638,6 +1641,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.49  1999/06/24 04:45:29  steve
+ *  Elaborate wide structoral bitwise OR.
+ *
  * Revision 1.48  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,
