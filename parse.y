@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.113 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: parse.y,v 1.114 2000/12/16 17:16:08 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1037,7 +1037,7 @@ lavalue
 		{ PEIdent*tmp = new PEIdent($1);
 		  PExpr*sel = $3;
 		  if (! pform_expression_is_constant(sel)) {
-			yyerror(@2, "eror: Bit select in lvalue must "
+			yyerror(@2, "error: Bit select in lvalue must "
 			        "contain a constant expression.");
 			delete sel;
 		  } else {
