@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.30 2002/02/15 05:20:58 steve Exp $"
+#ident "$Id: lexor.lex,v 1.31 2002/03/09 06:37:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -43,6 +43,7 @@ static void def_start();
 static void def_finish();
 static void def_undefine();
 static void do_define();
+static int  def_is_done();
 static int  is_defined(const char*name);
 
 static void include_filename();
@@ -168,15 +169,21 @@ W [ \t\b\f]+
 
 `define{W}[a-zA-Z_][a-zA-Z0-9_]*{W}? { yy_push_state(PPDEFINE); def_start(); }
 
-<PPDEFINE>.* { do_define(); }
-
-<PPDEFINE>(\n|"\r\n"|"\n\r") {
-      def_finish();
-      istack->lineno += 1;
-      fputc('\n', yyout);
-      yy_pop_state();
+<PPDEFINE>.* {
+      do_define();
   }
 
+<PPDEFINE>(\n|"\r\n"|"\n\r") {
+      if (def_is_done()) {
+	    def_finish();
+	    istack->lineno += 1;
+	    yy_pop_state();
+      }
+      fputc('\n', yyout);
+  }
+
+  /* If the define is terminated by an EOF, then finish the define
+     whether there was a continuation or not. */
 <PPDEFINE><<EOF>> {
       def_finish();
       istack->lineno += 1;
@@ -371,33 +378,98 @@ void define_macro(const char*name, const char*value, int keyword)
       }
 }
 
+/*
+ * The do_define function accumulates the defined value in these
+ * variables. When the define is over, the def_finish() function
+ * executes the define and clears this text. The define_continue_flag
+ * is set if do_define detects that the definition is to be continued
+ * on the next line.
+ */
+static char* define_text = 0;
+static size_t define_cnt = 0;
+
+static int define_continue_flag = 0;
+
+/*
+ * Collect the definition. Normally, this returns 0. If there is a
+ * continuation, then return 1 and this function may be called again
+ * to collect another line of the definition.
+ */
 static void do_define()
 {
+      char *cp;
+
+      define_continue_flag = 0;
+
 	/* FIXME: This strips trailing line comments out of the
 	   definition. It's not adequate as the "//" may have been
 	   quoted or commented, but it'll do for now. */
-      char *cp;
       if(cp = strstr(yytext, "//"))
 	    *cp = 0;
 
 	/* Trim trailing white space. */
       cp = yytext + strlen(yytext);
       while (cp > yytext) {
-	    cp -= 1;
-	    if (!isspace(*cp))
+	    if (!isspace(cp[-1]))
 		  break;
 
+	    cp -= 1;
 	    *cp = 0;
       }
 
-      define_macro(def_name, yytext, 0);
-      def_name[0] = 0;
+	/* Detect the continuation sequence. If I find it, remove it
+	   and the white space that preceeds it, then replace all that
+	   with a single newline. */
+      if ((cp > yytext) && (cp[-1] == '\\')) {
+
+	    cp -= 1;
+	    cp[0] = 0;
+	    while ((cp > yytext) && isspace(cp[-1])) {
+		  cp -= 1;
+		  *cp = 0;
+	    }
+
+	    *cp++ = '\n';
+	    *cp = 0;
+	    define_continue_flag = 1;
+      }
+
+	/* Accumulate this text into the define_text string. */
+      define_text = realloc(define_text, define_cnt + (cp-yytext) + 1);
+      strcpy(define_text+define_cnt, yytext);
+      define_cnt += cp-yytext;
 }
 
+/*
+ * Return true if the definition text is done. This is the opposite of
+ * the define_continue_flag.
+ */
+static int def_is_done()
+{
+      return define_continue_flag? 0 : 1;
+}
+
+/*
+ * After some number of calls to do_define, this function is called to
+ * assigned value to the parsed name. If there is no value, then
+ * assign the string "1"
+ */
 static void def_finish()
 {
-      if (def_name[0])
-	    define_macro(def_name, "1", 0);
+      define_continue_flag = 0;
+
+      if (def_name[0]) {
+	    if (define_text) {
+		  define_macro(def_name, define_text, 0);
+		  free(define_text);
+		  define_text = 0;
+		  define_cnt = 0;
+
+	    } else {
+		  define_macro(def_name, "1", 0);
+	    }
+	    def_name[0] = 0;
+      }
 }
 
 static void def_undefine()
