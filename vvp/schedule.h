@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.14 2003/02/21 03:40:35 steve Exp $"
+#ident "$Id: schedule.h,v 1.15 2003/02/22 02:52:06 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -90,6 +90,7 @@ extern vvp_time64_t schedule_simtime(void);
 extern void schedule_finish(int rc);
 extern void schedule_stop(int rc);
 extern bool schedule_finished(void);
+extern bool schedule_stopped(void);
 
 /*
  * The scheduler calls this function to process stop events. When this
@@ -108,6 +109,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.15  2003/02/22 02:52:06  steve
+ *  Check for stopped flag in certain strategic points.
+ *
  * Revision 1.14  2003/02/21 03:40:35  steve
  *  Add vpiStop and interactive mode.
  *

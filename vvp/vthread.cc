@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.101 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.102 2003/02/22 02:52:06 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1420,28 +1420,48 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 bool of_JMP(vthread_t thr, vvp_code_t cp)
 {
       thr->pc = cp->cptr;
-      return true;
+
+	/* Normally, this returns true so that the processor just
+	   keeps going to the next instruction. However, if there was
+	   a $stop or vpiStop, returning false here can break the
+	   simulation out of a hung loop. */
+      return ! schedule_stopped();
 }
 
 bool of_JMP0(vthread_t thr, vvp_code_t cp)
 {
       if (thr_get_bit(thr, cp->bit_idx[0]) == 0)
 	    thr->pc = cp->cptr;
-      return true;
+
+	/* Normally, this returns true so that the processor just
+	   keeps going to the next instruction. However, if there was
+	   a $stop or vpiStop, returning false here can break the
+	   simulation out of a hung loop. */
+      return ! schedule_stopped();
 }
 
 bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
 {
       if (thr_get_bit(thr, cp->bit_idx[0]) != 1)
 	    thr->pc = cp->cptr;
-      return true;
+
+	/* Normally, this returns true so that the processor just
+	   keeps going to the next instruction. However, if there was
+	   a $stop or vpiStop, returning false here can break the
+	   simulation out of a hung loop. */
+      return ! schedule_stopped();
 }
 
 bool of_JMP1(vthread_t thr, vvp_code_t cp)
 {
       if (thr_get_bit(thr, cp->bit_idx[0]) == 1)
 	    thr->pc = cp->cptr;
-      return true;
+
+	/* Normally, this returns true so that the processor just
+	   keeps going to the next instruction. However, if there was
+	   a $stop or vpiStop, returning false here can break the
+	   simulation out of a hung loop. */
+      return ! schedule_stopped();
 }
 
 /*
@@ -2481,7 +2501,7 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
 	// printf("thread %p: %%vpi_call\n", thr);
       vpip_execute_vpi_call(thr, cp->handle);
-      return schedule_finished()? false : true;
+      return (schedule_finished() || schedule_stopped())? false : true;
 }
 
 /*
@@ -2616,6 +2636,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.102  2003/02/22 02:52:06  steve
+ *  Check for stopped flag in certain strategic points.
+ *
  * Revision 1.101  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

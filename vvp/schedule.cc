@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.23 2003/02/21 03:40:35 steve Exp $"
+#ident "$Id: schedule.cc,v 1.24 2003/02/22 02:52:06 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -135,7 +135,7 @@ static struct event_s* synch_list = 0;
  * simulation.
  */
 static bool schedule_runnable = true;
-static bool schedule_stopped  = false;
+static bool schedule_stopped_flag  = false;
 
 void schedule_finish(int)
 {
@@ -144,12 +144,17 @@ void schedule_finish(int)
 
 void schedule_stop(int)
 {
-      schedule_stopped = true;
+      schedule_stopped_flag = true;
 }
 
 bool schedule_finished(void)
 {
       return !schedule_runnable;
+}
+
+bool schedule_stopped(void)
+{
+      return schedule_stopped_flag;
 }
 
 /*
@@ -158,7 +163,7 @@ bool schedule_finished(void)
  */
 static void signals_handler(int)
 {
-      schedule_stopped = true;
+      schedule_stopped_flag = true;
 }
 
 static void signals_capture(void)
@@ -365,8 +370,8 @@ void schedule_simulate(void)
 
       while (schedule_runnable && sched_list) {
 
-	    if (schedule_stopped) {
-		  schedule_stopped = false;
+	    if (schedule_stopped_flag) {
+		  schedule_stopped_flag = false;
 		  stop_handler(0);
 		  continue;
 	    }
@@ -474,6 +479,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.24  2003/02/22 02:52:06  steve
+ *  Check for stopped flag in certain strategic points.
+ *
  * Revision 1.23  2003/02/21 03:40:35  steve
  *  Add vpiStop and interactive mode.
  *
