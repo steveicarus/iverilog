@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.29 2001/06/30 23:03:17 steve Exp $"
+#ident "$Id: compile.h,v 1.30 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -84,6 +84,8 @@ extern void compile_arith_sub(char*label, long width,
 extern void compile_cmp_ge(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_shiftl(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 
 
@@ -200,6 +202,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.30  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.29  2001/06/30 23:03:17  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

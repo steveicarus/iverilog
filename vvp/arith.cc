@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.7 2001/06/29 01:21:48 steve Exp $"
+#ident "$Id: arith.cc,v 1.8 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -319,8 +319,84 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
       }
 }
 
+vvp_shiftl::vvp_shiftl(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+      amount_ = 0;
+}
+
+void vvp_shiftl::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      amount_ = 0;
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_, idx);
+	    functor_t fp = functor_index(ptr);
+
+	    unsigned val = (fp->ival >> 2) & 0x03;
+	    switch (val) {
+		case 0:
+		  break;
+		case 1:
+		  amount_ |= 1 << idx;
+		  break;
+		default:
+		  output_x_(push);
+		  return;
+	    }
+      }
+
+      if (amount_ >= wid_) {
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+		  vvp_ipoint_t optr = ipoint_index(base_, idx);
+		  functor_t ofp = functor_index(optr);
+		  if (ofp->oval != 0) {
+			ofp->oval = 0;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+
+      } else {
+	    vvp_ipoint_t optr, iptr;
+	    functor_t ofp, ifp;
+
+	    for (unsigned idx = 0 ;  idx < amount_ ;  idx += 1) {
+		  optr = ipoint_index(base_, idx);
+		  ofp = functor_index(optr);
+		  if (ofp->oval != 0) {
+			ofp->oval = 0;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+
+	    for (unsigned idx = amount_ ;  idx < wid_ ;  idx += 1) {
+		  optr = ipoint_index(base_, idx);
+		  ofp = functor_index(optr);
+		  iptr = ipoint_index(base_, idx - amount_);
+		  ifp = functor_index(iptr);
+
+		  if (ofp->oval != (ifp->ival&3)) {
+			ofp->oval = ifp->ival&3;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+
+      }
+}
+
 /*
  * $Log: arith.cc,v $
+ * Revision 1.8  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.7  2001/06/29 01:21:48  steve
  *  Relax limit on width of structural sum.
  *

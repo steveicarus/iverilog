@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.24 2001/06/30 23:03:17 steve Exp $"
+#ident "$Id: lexor.lex,v 1.25 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -78,6 +78,7 @@
 ".net/s"    { return K_NET_S; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
+".shift/l"  { return K_SHIFTL; }
 ".thread"   { return K_THREAD; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
@@ -146,6 +147,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.25  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.24  2001/06/30 23:03:17  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

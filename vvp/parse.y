@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.33 2001/06/30 23:03:17 steve Exp $"
+#ident "$Id: parse.y,v 1.34 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -56,7 +56,7 @@ extern FILE*yyin;
 
 %token K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM K_CMP_GE K_CMP_GT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
-%token K_RESOLV K_SCOPE K_THREAD
+%token K_RESOLV K_SCOPE K_SHIFTL K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_vpi_call K_vpi_func K_disable K_fork
@@ -184,6 +184,12 @@ statement
 	| T_LABEL K_CMP_GT T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, obj.cnt, obj.vect);
+		}
+
+
+	| T_LABEL K_SHIFTL T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_shiftl($1, $3, obj.cnt, obj.vect);
 		}
 
 
@@ -478,6 +484,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.34  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.33  2001/06/30 23:03:17  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

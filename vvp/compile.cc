@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.83 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: compile.cc,v 1.84 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -562,6 +562,50 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
 
       connect_arith_inputs(fdx, wid, cmp, argc, argv);
 
+}
+
+void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc < (wid+1)) {
+	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_shiftl*dev = new vvp_shiftl(fdx, wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    obj->ival = 0xaa;
+	    obj->oval = 2;
+	    obj->odrive0 = 6;
+	    obj->odrive1 = 6;
+	    obj->mode = M42;
+	    obj->obj  = dev;
+#if defined(WITH_DEBUG)
+	    obj->breakpoint = 0;
+#endif
+
+	    struct symb_s tmp_argv[3];
+	    unsigned tmp_argc = 1;
+	    tmp_argv[0] = argv[idx];
+	    if ((wid+idx) < argc) {
+		  tmp_argv[1] = argv[wid+idx];
+		  tmp_argc += 1;
+	    }
+
+	    inputs_connect(ptr, tmp_argc, tmp_argv);
+      }
+
+      free(argv);
 }
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
@@ -1455,6 +1499,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.84  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.83  2001/06/30 23:03:16  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

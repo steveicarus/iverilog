@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.5 2001/06/29 01:20:20 steve Exp $"
+#ident "$Id: arith.h,v 1.6 2001/07/06 04:46:44 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -110,8 +110,27 @@ class vvp_cmp_gt  : public vvp_arith_ {
       vvp_cmp_gt(const vvp_cmp_gt&);
       vvp_cmp_gt& operator= (const vvp_cmp_gt&);
 };
+
+class vvp_shiftl  : public vvp_arith_ {
+
+    public:
+      explicit vvp_shiftl(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private:
+      unsigned amount_;
+
+    private: // not implemented
+      vvp_shiftl(const vvp_shiftl&);
+      vvp_shiftl& operator= (const vvp_shiftl&);
+};
+
 /*
  * $Log: arith.h,v $
+ * Revision 1.6  2001/07/06 04:46:44  steve
+ *  Add structural left shift (.shift/l)
+ *
  * Revision 1.5  2001/06/29 01:20:20  steve
  *  Relax limit on width of structural sum.
  *
