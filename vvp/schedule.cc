@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.29 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: schedule.cc,v 1.30 2005/01/29 17:53:25 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -401,18 +401,6 @@ void functor_s::schedule(vvp_time64_t delay, bool nba_flag)
 #endif
 }
 
-#if 0
-void schedule_assign(vvp_ipoint_t fun, unsigned char val, vvp_time64_t delay)
-{
-      struct event_s*cur = new event_s;
-
-      cur->fun = fun;
-      cur->val = val;
-      cur->type= TYPE_ASSIGN;
-
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
-}
-#endif
 
 void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    vvp_vector4_t bit,
@@ -422,6 +410,14 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       cur->ptr = ptr;
       cur->val = bit;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
 void schedule_generic(vvp_gen_event_t obj, unsigned char val,
@@ -562,6 +558,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.30  2005/01/29 17:53:25  steve
+ *  Use scheduler to initialize constant functor inputs.
+ *
  * Revision 1.29  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.17 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: schedule.h,v 1.18 2005/01/29 17:53:25 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -40,11 +40,21 @@ extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 
 /*
  * Create an assignment event. The val passed here will be assigned to
- * the specified input when the delay times out.
+ * the specified input when the delay times out. This is scheduled
+ * like a non-blocking assignment. This is in fact mostly used to
+ * implement the non-blocking assignment.
  */
 extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   vvp_vector4_t val,
 				   vvp_time64_t  delay);
+
+/*
+ * This is very similar to schedule_assign_vector, but generates an
+ * even in the active queue. It is used at link time to set an initial
+ * value (a compile time constant) to the input of a functor. This
+ * creates an event in the active queue.
+ */
+extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
 
 
 /*
@@ -110,6 +120,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.18  2005/01/29 17:53:25  steve
+ *  Use scheduler to initialize constant functor inputs.
+ *
  * Revision 1.17  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.183 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.184 2005/01/29 17:53:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -700,7 +700,15 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 		  tmp.set_bit(v4size-idx-1, bit);
 	    }
 
-	    vvp_send_vec4(ifdx, tmp);
+	      // Inputs that are constants are schedule to execute as
+	      // soon at the simulation starts. In Verilog, constants
+	      // start propagating when the simulation starts, just
+	      // like any other signal value. But letting the
+	      // scheduler distribute the constant value has the
+	      // additional advantage that the constant is not
+	      // propagated until the network is fully linked.
+	    schedule_set_vector(ifdx, tmp);
+
 	    free(label);
 	    return;
       }
@@ -1577,6 +1585,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.184  2005/01/29 17:53:25  steve
+ *  Use scheduler to initialize constant functor inputs.
+ *
  * Revision 1.183  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *
