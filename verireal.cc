@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.3 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: verireal.cc,v 1.4 2001/07/07 20:20:10 steve Exp $"
 #endif
 
 # include  "verireal.h"
@@ -119,10 +119,14 @@ long verireal::as_long(int shift) const
 ostream& operator<< (ostream&out, const verireal&v)
 {
       out << (v.sign_? "-" : "+") << v.mant_ << "e" << v.exp10_;
+      return out;
 }
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.4  2001/07/07 20:20:10  steve
+ *  Pass parameters to system functions.
+ *
  * Revision 1.3  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *

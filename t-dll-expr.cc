@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.13 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.14 2001/07/07 20:20:10 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -158,12 +158,26 @@ void dll_target::expr_sfunc(const NetESFunc*net)
 {
       assert(expr_ == 0);
 
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
+      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr);
 
-      expr_->type_ = IVL_EX_SFUNC;
-      expr_->width_= net->expr_width();
-      expr_->u_.sfunc_.name_ = strdup(net->name());
+      expr->type_ = IVL_EX_SFUNC;
+      expr->width_= net->expr_width();
+      expr->u_.sfunc_.name_ = strdup(net->name());
+
+      unsigned cnt = net->nparms();
+      expr->u_.sfunc_.parms = cnt;
+      expr->u_.sfunc_.parm = new ivl_expr_t[cnt];
+
+	/* make up the parameter expressions. */
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
+	    net->parm(idx)->expr_scan(this);
+	    assert(expr_);
+	    expr->u_.sfunc_.parm[idx] = expr_;
+	    expr_ = 0;
+      }
+
+      expr_ = expr;
 }
 
 void dll_target::expr_ternary(const NetETernary*net)
@@ -254,6 +268,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.14  2001/07/07 20:20:10  steve
+ *  Pass parameters to system functions.
+ *
  * Revision 1.13  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *

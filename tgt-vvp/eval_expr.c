@@ -17,10 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.34 2001/06/30 21:07:26 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.35 2001/07/07 20:20:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
+# include  <string.h>
+# include  <malloc.h>
 # include  <assert.h>
 
 struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid);
@@ -810,16 +812,131 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 {
+      unsigned idx;
+      struct vector_info *vec = 0x0;
+      unsigned int vecs= 0;
+      unsigned int veci= 0;
+
+      unsigned parm_count = ivl_expr_parms(exp);
       struct vector_info res;
 
-	/* XXXX no parameters, for now. */
-      assert(ivl_expr_parms(exp) == 0);
+      fprintf(stderr, "XXXX %s(%u)\n", ivl_expr_name(exp), parm_count);
+
+	/* If the function has no parameters, then use this short-form
+	   to draw the statement. */
+      if (parm_count == 0) {
+	    res.base = allocate_vector(wid);
+	    res.wid  = wid;
+	    fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
+		    ivl_expr_name(exp), res.base, res.wid);
+	    return res;
+
+      }
+
+	/* Evaluate any expressions that need to be evaluated by the
+	   run-time before passed to the system task. The results are
+	   stored in the vec array. */
+      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
+	    ivl_expr_t expr = ivl_expr_parm(exp, idx);
+	    
+	    switch (ivl_expr_type(expr)) {
+		case IVL_EX_NONE:
+		case IVL_EX_NUMBER:
+		case IVL_EX_SIGNAL:
+		case IVL_EX_STRING:
+		case IVL_EX_SCOPE:
+		case IVL_EX_SFUNC:
+		  continue;
+		case IVL_EX_MEMORY:
+		  if (!ivl_expr_oper1(expr)) {
+			continue;
+		  }
+		default:
+		  break;
+	    }
+
+	    vec = (struct vector_info *)
+		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
+	    vec[vecs] = draw_eval_expr(expr);
+	    vecs++;
+      }
+
+	/* Start the complicated expression. */
 
       res.base = allocate_vector(wid);
       res.wid  = wid;
-
-      fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
+      fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u",
 	      ivl_expr_name(exp), res.base, res.wid);
+
+	/* Now draw all the parameters to the function. */
+      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
+	    ivl_expr_t expr = ivl_expr_parm(exp, idx);
+
+	    switch (ivl_expr_type(expr)) {
+		case IVL_EX_NONE:
+		  fprintf(vvp_out, ", \" \"");
+		  continue;
+
+		case IVL_EX_NUMBER: {
+		      unsigned bit, wid = ivl_expr_width(expr);
+		      const char*bits = ivl_expr_bits(expr);
+
+		      fprintf(vvp_out, ", %u'b", wid);
+		      for (bit = wid ;  bit > 0 ;  bit -= 1)
+			    fputc(bits[bit-1], vvp_out);
+		      continue;
+		}
+
+		case IVL_EX_SIGNAL:
+		  fprintf(vvp_out, ", V_%s", 
+			  vvp_mangle_id(ivl_expr_name(expr)));
+		  continue;
+
+		case IVL_EX_STRING:
+		  fprintf(vvp_out, ", \"%s\"", 
+			  ivl_expr_string(expr));
+		  continue;
+
+		case IVL_EX_SCOPE:
+		  fprintf(vvp_out, ", S_%s",
+			  vvp_mangle_id(ivl_scope_name(ivl_expr_scope(expr))));
+		  continue;
+
+		case IVL_EX_SFUNC:
+		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
+			fprintf(vvp_out, ", $time");
+		  else
+			fprintf(vvp_out, ", ?");
+		  continue;
+		  
+		case IVL_EX_MEMORY:
+		  if (!ivl_expr_oper1(expr)) {
+			fprintf(vvp_out, ", M_%s", 
+				vvp_mangle_id(ivl_expr_name(expr)));
+			continue;
+		  }
+		  break;
+
+		default:
+		  break;
+	    }
+	    
+	    fprintf(vvp_out, ", T<%u,%u>", 
+		    vec[veci].base, 
+		    vec[veci].wid);
+	    veci++;
+      }
+      
+      assert(veci == vecs);
+
+      if (vecs) {
+	    for (idx = 0; idx < vecs; idx++)
+		  clr_vector(vec[idx]);
+	    free(vec);
+      }
+
+      fprintf(vvp_out, ";\n");
+
 
       return res;
 }
@@ -1009,6 +1126,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.35  2001/07/07 20:20:10  steve
+ *  Pass parameters to system functions.
+ *
  * Revision 1.34  2001/06/30 21:07:26  steve
  *  Support non-const right shift (unsigned).
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.54 2001/07/07 03:01:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.55 2001/07/07 20:20:10 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -294,6 +294,10 @@ extern "C" ivl_expr_t ivl_expr_parm(ivl_expr_t net, unsigned idx)
 	    assert(idx < net->u_.concat_.parms);
 	    return net->u_.concat_.parm[idx];
 
+	  case IVL_EX_SFUNC:
+	    assert(idx < net->u_.sfunc_.parms);
+	    return net->u_.sfunc_.parm[idx];
+
 	  case IVL_EX_UFUNC:
 	    assert(idx < net->u_.ufunc_.parms);
 	    return net->u_.ufunc_.parm[idx];
@@ -313,7 +317,7 @@ extern "C" unsigned ivl_expr_parms(ivl_expr_t net)
 	    return net->u_.concat_.parms;
 
 	  case IVL_EX_SFUNC:
-	    return 0; /* XXXX not supported yet. */
+	    return net->u_.sfunc_.parms;
 
 	  case IVL_EX_UFUNC:
 	    return net->u_.ufunc_.parms;
@@ -1253,6 +1257,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.55  2001/07/07 20:20:10  steve
+ *  Pass parameters to system functions.
+ *
  * Revision 1.54  2001/07/07 03:01:37  steve
  *  Detect and make available to t-dll the right shift.
  *
