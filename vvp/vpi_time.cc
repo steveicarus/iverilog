@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.1 2001/03/31 19:00:44 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.2 2001/04/03 03:46:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
+# include  <stdio.h>
 # include  <assert.h>
 
 static struct __vpiSystemTime {
@@ -31,6 +32,7 @@ static struct __vpiSystemTime {
 
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
+      static char buf_obj[128];
       assert(ref == &time_handle.base);
 
       switch (vp->format) {
@@ -43,6 +45,14 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->format = vpiTimeVal;
 	    break;
 
+	  case vpiDecStrVal:
+	    sprintf(buf_obj, "%lu", schedule_simtime());
+	    vp->value.str = buf_obj;
+	    break;
+
+	  default:
+	    fprintf(stderr, "vpi_time: unknown format: %d\n", vp->format);
+	    assert(0);
       }
 }
 
@@ -65,6 +75,10 @@ vpiHandle vpip_sim_time(void)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.2  2001/04/03 03:46:14  steve
+ *  VPI access time as a decimal string, and
+ *  stub vpi access to the scopes.
+ *
  * Revision 1.1  2001/03/31 19:00:44  steve
  *  Add VPI support for the simulation time.
  *

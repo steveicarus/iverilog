@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.2 2001/03/19 01:55:38 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.3 2001/04/03 03:46:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -43,7 +43,12 @@ static int vpip_get_global(int property)
 {
       switch (property) {
 
+	  case vpiTimePrecision:
+	    fprintf(stderr, "vpi warning: vpiTimePrecision not supported\n");
+	    return 0;
+
 	  default:
+	    fprintf(stderr, "vpi error: bad global property: %d\n", property);
 	    assert(0);
 	    return -1;
       }
@@ -71,9 +76,13 @@ char* vpi_get_str(int property, vpiHandle ref)
       return (ref->vpi_type->vpi_get_str_)(property, ref);
 }
 
-void vpi_get_time(vpiHandle obj, s_vpi_time*t)
+void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
-      assert(0);
+	// XXXX Cheat. Ignore timescale for the scope.
+
+      vp->type = vpiSimTime;
+      vp->high = 0;
+      vp->low = schedule_simtime();
 }
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
@@ -161,6 +170,10 @@ void vpi_sim_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.3  2001/04/03 03:46:14  steve
+ *  VPI access time as a decimal string, and
+ *  stub vpi access to the scopes.
+ *
  * Revision 1.2  2001/03/19 01:55:38  steve
  *  Add support for the vpiReset sim control.
  *

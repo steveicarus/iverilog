@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.2 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.3 2001/04/03 03:46:14 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -25,6 +25,49 @@
 # include  "symbols.h"
 # include  <malloc.h>
 # include  <assert.h>
+
+static char* scope_get_str(int code, vpiHandle obj)
+{
+      struct __vpiScope*ref = (struct __vpiScope*)obj;
+
+
+      assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiTask));
+
+      switch (code) {
+	  case vpiFullName:
+	    return ref->name;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+static vpiHandle module_iter(int code, vpiHandle obj)
+{
+      struct __vpiScope*ref = (struct __vpiScope*)obj;
+      assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiTask)
+	     || (obj->vpi_type->type_code == vpiFunction));
+
+      switch (code) {
+	  case vpiInternalScope:
+	    return 0;
+      }
+      return 0;
+}
+
+static const struct __vpirt vpip_scope_rt = {
+      vpiModule,
+      0,
+      scope_get_str,
+      0,
+      0,
+      0,
+      module_iter
+};
 
 static struct __vpiScope*current_scope = 0;
 
@@ -53,6 +96,7 @@ void compile_scope_decl(char*label, char*name, char*parent)
 {
       struct __vpiScope*scope = (struct __vpiScope*)
 	    malloc(sizeof(struct __vpiScope));
+      scope->base.vpi_type = &vpip_scope_rt;
       scope->name = name;
       scope->intern = 0;
       scope->nintern = 0;
@@ -90,6 +134,10 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.3  2001/04/03 03:46:14  steve
+ *  VPI access time as a decimal string, and
+ *  stub vpi access to the scopes.
+ *
  * Revision 1.2  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *
