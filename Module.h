@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.6 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: Module.h,v 1.7 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 # include  <list>
@@ -41,11 +41,23 @@ class Design;
  */
 
 class Module {
-    public:
-      explicit Module(const string&name, unsigned nports)
-      : ports(nports), name_(name) { }
 
-      svector<PWire*> ports;
+	/* The module ports are in general a vector of port_t
+	   objects. Each port has a name and an ordered list of
+	   wires. The name is the means that the outside uses to
+	   access the port, the wires are the internal connections to
+	   the port. */
+    public:
+      struct port_t {
+	    string name;
+	    svector<PWire*>wires;
+
+	    port_t(int c=0) : wires(c) { }
+      };
+
+    public:
+      explicit Module(const string&name, const svector<port_t*>*);
+
 
 	/* The module has parameters that are evaluated when the
 	   module is elaborated. During parsing, I put the parameters
@@ -59,6 +71,10 @@ class Module {
       void add_behavior(PProcess*behave);
       void add_task(const string&name, PTask*def);
       void add_function(const string&name, PFunction*def);
+
+      unsigned port_count() const;
+      const PWire* get_port(unsigned idx) const;
+      unsigned find_port(const string&) const;
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
@@ -74,6 +90,7 @@ class Module {
     private:
       const string name_;
 
+      svector<port_t*> ports_;
       list<PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
@@ -88,6 +105,10 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.7  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.6  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *

@@ -17,11 +17,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.4 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: Module.cc,v 1.5 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 # include  "Module.h"
 # include  "PWire.h"
+
+Module::Module(const string&name, const svector<Module::port_t*>*pp)
+: name_(name)
+{
+      if (pp) {
+	    ports_ = *pp;
+	    for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
+		  port_t*cur = ports_[idx];
+		  for (unsigned jdx = 0 ;  jdx < cur->wires.count() ; jdx += 1)
+			add_wire(cur->wires[jdx]);
+	    }
+      }
+}
 
 void Module::add_gate(PGate*gate)
 {
@@ -48,6 +61,29 @@ void Module::add_behavior(PProcess*b)
       behaviors_.push_back(b);
 }
 
+unsigned Module::port_count() const
+{
+      return ports_.count();
+}
+
+const PWire* Module::get_port(unsigned idx) const
+{
+      assert(idx < ports_.count());
+      assert(ports_[idx]->wires.count() == 1);
+      return ports_[idx]->wires[0];
+}
+
+unsigned Module::find_port(const string&name) const
+{
+      assert(name != "");
+      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1)
+	    if (ports_[idx]->name == name)
+		  return idx;
+
+      return ports_.count();
+}
+
+
 PWire* Module::get_wire(const string&name)
 {
       for (list<PWire*>::iterator cur = wires_.begin()
@@ -64,6 +100,10 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.5  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.4  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *

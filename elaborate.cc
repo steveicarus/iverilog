@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.65 1999/08/01 21:48:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.66 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 /*
@@ -34,8 +34,6 @@
 
 string Design::local_symbol(const string&path)
 {
-      string result = "_L";
-
       strstream res;
       res << "_L" << (lcounter_++) << ends;
       return path + "." + res.str();
@@ -395,11 +393,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
  */
 void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
-      string my_name;
-      if (get_name() == "")
-	    my_name = des->local_symbol(path);
-      else
-	    my_name = path + "." + get_name();
+      assert(get_name() != "");
+      const string my_name = path + "." + get_name();
 
       const svector<PExpr*>*pins;
 
@@ -408,7 +403,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// ports. If this is simply positional binding in the first
 	// place, then get the binding from the base class.
       if (pins_) {
-	    unsigned nexp = rmod->ports.count();
+	    unsigned nexp = rmod->port_count();
 	    svector<PExpr*>*exp = new svector<PExpr*>(nexp);
 
 	      // Scan the bindings, matching them with port names.
@@ -416,14 +411,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 		    // Given a binding, look at the module port names
 		    // for the position that matches the binding name.
-		  unsigned pidx = 0;
-		  while (pidx < nexp) {
-			if (pins_[idx].name == rmod->ports[pidx]->name())
-			      break;
+		  unsigned pidx = rmod->find_port(pins_[idx].name);
 
-			pidx += 1;
-		  }
-
+		    // If the port name doesn't exist, the find_port
+		    // method will return the port count. Detect that
+		    // as an error.
 		  if (pidx == nexp) {
 			cerr << get_line() << ": port ``" <<
 			      pins_[idx].name << "'' is not a port of "
@@ -432,6 +424,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 			continue;
 		  }
 
+		    // If I already bound something to this port, then
+		    // the (*exp) array will already have a pointer
+		    // value where I want to place this expression.
 		  if ((*exp)[pidx]) {
 			cerr << get_line() << ": port ``" <<
 			      pins_[idx].name << "'' already bound." <<
@@ -440,7 +435,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 			continue;
 		  }
 
-		    // OK, od the binding by placing the expression in
+		    // OK, do the binding by placing the expression in
 		    // the right place.
 		  (*exp)[pidx] = pins_[idx].parm;
 	    }
@@ -449,9 +444,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
       } else {
 
-	    if (pin_count() != rmod->ports.count()) {
+	    if (pin_count() != rmod->port_count()) {
 		  cerr << get_line() << ": Wrong number "
-			"of parameters. Expecting " << rmod->ports.count() <<
+			"of parameters. Expecting " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
@@ -460,7 +455,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	      // No named bindings, just use the positional list I
 	      // already have.
-	    assert(pin_count() == rmod->ports.count());
+	    assert(pin_count() == rmod->port_count());
 	    pins = get_pins();
       }
 
@@ -486,14 +481,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    }
 
 	    assert(sig);
-	    NetNet*prt = des->find_signal(my_name, rmod->ports[idx]->name());
+	    const PWire*pport = rmod->get_port(idx);
+	    NetNet*prt = des->find_signal(my_name, pport->name());
 	    assert(prt);
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths.
 	    if (prt->pin_count() != sig->pin_count()) {
 		  cerr << get_line() << ": Port " <<
-			rmod->ports[idx]->name() << " of " << type_ <<
+			pport->name() << " of " << type_ <<
 			" expects " << prt->pin_count() << " pins, got " <<
 			sig->pin_count() << " from " << sig->name() << endl;
 		  des->errors += 1;
@@ -2045,6 +2041,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.66  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.65  1999/08/01 21:48:11  steve
  *  set width of procedural r-values when then
  *  l-value is a memory word.

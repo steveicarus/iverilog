@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.26 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: pform.h,v 1.27 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -95,7 +95,7 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const string&, svector<PWire*>*ports);
+extern void pform_startmodule(const string&, svector<Module::port_t*>*);
 extern void pform_endmodule(const string&);
 
 extern void pform_make_udp(const char*name, list<string>*parms,
@@ -167,6 +167,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.27  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.26  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.36 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: pform.cc,v 1.37 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -94,18 +94,11 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const string&name, svector<PWire*>*ports)
+void pform_startmodule(const string&name, svector<Module::port_t*>*ports)
 {
       assert( pform_cur_module == 0 );
-      pform_cur_module = new Module(name, ports? ports->count() : 0);
-
-      if (ports) {
-	    for (unsigned idx = 0 ;  idx < ports->count() ;  idx += 1) {
-		  pform_cur_module->add_wire((*ports)[idx]);
-		  pform_cur_module->ports[idx] = (*ports)[idx];
-	    }
-	    delete ports;
-      }
+      pform_cur_module = new Module(name, ports);
+      delete ports;
 }
 
 void pform_endmodule(const string&name)
@@ -662,6 +655,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.37  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.36  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

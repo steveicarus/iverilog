@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.21 1999/07/18 05:52:46 steve Exp $"
+#ident "$Id: main.cc,v 1.22 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -209,7 +209,7 @@ int main(int argc, char*argv[])
 		       ; mod != modules.end()
 		       ; mod ++ ) {
 		  Module*cur = (*mod).second;
-		  if (cur->ports.count() == 0)
+		  if (cur->port_count() == 0)
 			if (start_module == "") {
 			      start_module = cur->get_name();
 		        } else {
@@ -272,6 +272,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.22  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.21  1999/07/18 05:52:46  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.

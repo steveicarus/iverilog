@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.56 1999/08/01 23:25:51 steve Exp $"
+#ident "$Id: parse.y,v 1.57 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -39,6 +39,9 @@ extern void lex_end_table();
 
       lgate*gate;
       svector<lgate>*gates;
+
+      Module::port_t *mport;
+      svector<Module::port_t*>*mports;
 
       portname_t*portname;
       svector<portname_t*>*portnames;
@@ -106,8 +109,9 @@ extern void lex_end_table();
 %type <text> net_decl_assign
 %type <strings> net_decl_assigns
 
-%type <wire> port
-%type <wires> list_of_ports list_of_ports_opt
+%type <mport> port port_reference port_reference_list
+%type <mports> list_of_ports list_of_ports_opt
+
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> function_item function_item_list
 
@@ -801,12 +805,14 @@ identifier
 
 list_of_ports
 	: port
-		{ svector<PWire*>*tmp = new svector<PWire*>(1);
+		{ svector<Module::port_t*>*tmp
+			  = new svector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_ports ',' port
-		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, $3);
+		{ svector<Module::port_t*>*tmp
+			= new svector<Module::port_t*>(*$1, $3);
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -1118,38 +1124,99 @@ parameter_assign_list
 	| parameter_assign_list ',' parameter_assign
 	;
 
+  /* The port (of a module) is a fairle complex item. Each port is
+     handled as a Module::port_t object. A simple port reference has a
+     name and a PWire object, but more complex constructs are possible
+     where the name can be attached to a list of PWire objects.
+
+     The port_reference returns a Module::port_t, and so does the
+     port_reference_list. The port_reference_list may have built up a
+     list of PWires in the port_t object, but it is still a single
+     Module::port_t object.
+
+     The port rule below takes the built up Module::port_t object and
+     tweaks its name as needed. */
+
 port
+	: port_reference
+		{ $$ = $1; }
+	| PORTNAME '(' port_reference ')'
+		{ Module::port_t*tmp = $3;
+		  tmp->name = $1;
+		  $$ = tmp;
+		}
+	| '{' port_reference_list '}'
+		{ Module::port_t*tmp = $2;
+		  tmp->name = "";
+		  $$ = tmp;
+		}
+	| PORTNAME '(' '{' port_reference_list '}' ')'
+		{ Module::port_t*tmp = $4;
+		  tmp->name = $1;
+		  $$ = tmp;
+		}
+	;
+
+port_reference
 	: IDENTIFIER
-		{ $$ = new PWire($1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
-		  $$->set_file(@1.text);
-		  $$->set_lineno(@1.first_line);
+		{ Module::port_t*ptmp = new Module::port_t(1);
+		  PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
+					 NetNet::PIMPLICIT);
+		  wtmp->set_file(@1.text);
+		  wtmp->set_lineno(@1.first_line);
+		  ptmp->name = $1;
+		  ptmp->wires[0] = wtmp;
 		  delete $1;
+		  $$ = ptmp;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ PWire*tmp = new PWire($1, NetNet::IMPLICIT,
-					NetNet::PIMPLICIT);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		{ PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
+					 NetNet::PIMPLICIT);
+		  wtmp->set_file(@1.text);
+		  wtmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
 			yyerror(@3, "msb expression of port bit select "
 			        "must be constant.");
 		  }
 		  if (!pform_expression_is_constant($5)) {
-			yyerror(@3, "lsb expression of port bit select "
+			yyerror(@5, "lsb expression of port bit select "
 			        "must be constant.");
 		  }
-		  tmp->set_range($3, $5);
+		  wtmp->set_range($3, $5);
+		  Module::port_t*ptmp = new Module::port_t(1);
+		  ptmp->name = $1;
+		  ptmp->wires[0] = wtmp;
 		  delete $1;
-		  $$ = tmp;
+		  $$ = ptmp;
 		}
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "invalid port bit select");
-		  $$ = new PWire($1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
-		  $$->set_file(@1.text);
-		  $$->set_lineno(@1.first_line);
+		  Module::port_t*ptmp = new Module::port_t(1);
+		  PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
+					 NetNet::PIMPLICIT);
+		  wtmp->set_file(@1.text);
+		  wtmp->set_lineno(@1.first_line);
+		  ptmp->name = $1;
+		  ptmp->wires[0] = wtmp;
 		  delete $1;
+		  $$ = ptmp;
 		}
 	;
+
+port_reference_list
+	: port_reference
+		{ $$ = $1; }
+	| port_reference_list ',' port_reference
+		{ Module::port_t*tmp = $1;
+		  tmp->wires = svector<PWire*>(tmp->wires, $3->wires);
+		  delete $3;
+		  $$ = tmp;
+		}
+	;
+
+  /* The port_name rule is used with a module is being *instantiated*,
+     and not when it is being declared. See the port rule if you are
+     looking for the ports of a module declaration. */
 
 port_name
 	: PORTNAME '(' expression ')'

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.32 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.33 1999/08/03 04:14:49 steve Exp $"
 #endif
 
 /*
@@ -494,6 +494,31 @@ void Module::dump(ostream&out) const
 {
       out << "module " << name_ << ";" << endl;
 
+      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
+	    port_t*cur = ports_[idx];
+	    switch (cur->wires[0]->get_port_type()) {
+		case NetNet::PINPUT:
+		  out << "    input ." << cur->name << "(";
+		  break;
+		case NetNet::POUTPUT:
+		  out << "    input ." << cur->name << "(";
+		  break;
+		case NetNet::PINOUT:
+		  out << "    input ." << cur->name << "(";
+		  break;
+		default:
+		  out << "    XXXX ." << cur->name << "(";
+		  break;
+	    }
+
+	    out << cur->wires[0]->name();
+	    for (unsigned wdx = 1 ;  wdx < cur->wires.count() ;  wdx += 1) {
+		  out << ", " << cur->wires[wdx]->name();
+	    }
+
+	    out << ")" << endl;
+      }
+
       typedef map<string,PExpr*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
@@ -594,6 +619,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.33  1999/08/03 04:14:49  steve
+ *  Parse into pform arbitrarily complex module
+ *  port declarations.
+ *
  * Revision 1.32  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial
