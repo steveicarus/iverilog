@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.149 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.150 2000/05/20 02:26:23 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -37,6 +37,97 @@ struct less_verinum {
       bool operator() (const verinum&left, const verinum&right)
 	    { return left.is_before(right); }
 };
+
+/*
+ * The generated code puts constants in behavioral expressions into a
+ * bit number table. Every place in the code where a vvm_bits_t is
+ * created, it references an offset and size into this table. the
+ * table is collected as numbers are encountered, overlapping values
+ * as much as possible so that the number of output bits is reduced.
+ */
+class NumberTable {
+
+    public:
+      NumberTable();
+      ~NumberTable();
+
+      unsigned position(const verinum&val);
+      unsigned count() const { return nbits_; }
+      verinum::V bit(unsigned idx) const { return bits_[idx]; }
+
+    private:
+      verinum::V*bits_;
+      unsigned nbits_;
+};
+
+NumberTable::NumberTable()
+{
+      bits_ = 0;
+      nbits_ = 0;
+}
+
+NumberTable::~NumberTable()
+{
+      if (bits_) delete[]bits_;
+}
+
+unsigned NumberTable::position(const verinum&val)
+{
+      if (bits_ == 0) {
+	    nbits_ = val.len();
+	    bits_ = new verinum::V[val.len()];
+	    for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+		  bits_[idx] = val.get(idx);
+
+	    return 0;
+      }
+
+	/* Look for a complete match. If I find one, then return the
+	   index of the start and all done. */
+      for (unsigned idx = 0 ;  (idx+val.len()) < nbits_ ;  idx += 1) {
+
+	    bool match_flag = true;
+	    for (unsigned bit = 0 ;  bit < val.len() ;  bit += 1)
+		  if (bits_[idx+bit] != val.get(bit)) {
+			match_flag = false;
+			break;
+		  }
+
+	    if (match_flag)
+		  return idx;
+      }
+
+      unsigned tail_match = 0;
+      for (unsigned idx = 1; (idx < val.len()) && (idx < nbits_) ; idx += 1) {
+
+	    bool match_flag = true;
+	    for (unsigned bit = 0 ;  bit < idx ;  bit += 1)
+		  if (bits_[nbits_-idx+bit] != val.get(bit)) {
+			match_flag = false;
+			break;
+		  }
+
+	    if (match_flag)
+		  tail_match = idx;
+      }
+
+      unsigned ntmp = nbits_+val.len()-tail_match;
+      verinum::V*tmp = new verinum::V[ntmp];
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+	    tmp[idx] = bits_[idx];
+
+      for (unsigned idx = nbits_ ;  idx < ntmp ;  idx += 1)
+	    tmp[idx] = val.get(idx-nbits_+tail_match);
+
+      unsigned rc = nbits_ - tail_match;
+
+      delete[]bits_;
+      bits_ = tmp;
+      nbits_ = ntmp;
+
+      return rc;
+}
+
 
 static string make_temp()
 {
@@ -109,6 +200,9 @@ class target_vvm : public target_t {
 
       void start_process(ostream&os, const NetProcTop*);
       void end_process(ostream&os, const NetProcTop*);
+
+
+      NumberTable bits_table;
 
     private:
       void emit_init_value_(const Link&lnk, verinum::V val);
@@ -323,6 +417,11 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 {
       string tname = make_temp();
 
+      unsigned number_off = tgt_->bits_table.position(expr->value());
+      os_ << "      vvm_bitset_t " << tname << "(bits_table+"
+	  << number_off << ", " << expr->expr_width() << ");" << endl;
+
+#if 0
       os_ << "      vpip_bit_t " << tname<<"_bits["
 	  << expr->expr_width() << "];" << endl;
       for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
@@ -346,7 +445,7 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 
       os_ << "      vvm_bitset_t " << tname << "(" << tname
 	  << "_bits, " << expr->expr_width() << ");" << endl;
-
+#endif
       result = tname;
 }
 
@@ -911,6 +1010,34 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       if (signal_bit_counter > 0)
 	    os << "static vpip_bit_t signal_bit_table[" <<
 		  signal_bit_counter << "];" << endl;
+
+      if (bits_table.count() > 0) {
+	    os << "static vpip_bit_t bits_table[" << bits_table.count()
+	       << "] = {";
+
+	    for (unsigned idx = 0 ;  idx < bits_table.count() ;  idx += 1) {
+		  if (idx%16 == 0) os << endl;
+		  switch (bits_table.bit(idx)) {
+		      case verinum::V0:
+			os << " St0,";
+			break;
+		      case verinum::V1:
+			os << " St1,";
+			break;
+		      case verinum::Vx:
+			os << " StX,";
+			break;
+		      case verinum::Vz:
+			os << " HiZ,";
+			break;
+		      default:
+			os << "    ,";
+			break;
+		  }
+	    }
+
+	    os << endl << "};" << endl;
+      }
 
       defn.close();
 
@@ -2648,9 +2775,22 @@ bool target_vvm::proc_release(ostream&os, const NetRelease*dev)
 
 void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 {
-      string expr = emit_proc_rval(defn, this, net->expr());
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
+
+	/* Emit the index expression value and convert it into a
+	   native number. If the expression is a constant, then do it
+	   directly. Otherwise, generate the code to do it. */
+      string expr;
+      if (const NetEConst*val = dynamic_cast<const NetEConst*>(net->expr())) {
+	    char tmp[64];
+	    sprintf(tmp, "%lu", val->value().as_ulong());
+	    expr = tmp;
+
+      } else {
+	    expr = emit_proc_rval(defn, this, net->expr());
+	    expr = expr + ".as_unsigned()";
+      }
 
 	/* Declare a variable to use as a loop index. */
       os << "static unsigned " << thread_class_ << "_step_"
@@ -2666,7 +2806,7 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 
 
       defn << "      " << thread_class_ << "_step_"
-	   << top_step << "_idx_ = " << expr << ".as_unsigned();" << endl;
+	   << top_step << "_idx_ = " << expr << ";" << endl;
       defn << "      thr->step_ = &" << thread_class_ << "_step_"
 	   << top_step << "_;" << endl;
       defn << "      return true;" << endl;
@@ -2885,8 +3025,8 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
 void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 {
       thread_step_ += 1;
-      defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
-	    thread_step_ << "_;" << endl;
+      defn << "      thr->step_ = &" << thread_class_ << "_step_"
+	   << thread_step_ << "_;" << endl;
       defn << "      thr->thread_yield(" << proc->delay() << ");" << endl;
       defn << "      return false;" << endl;
       defn << "}" << endl;
@@ -2894,8 +3034,8 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
       os << "static bool " << thread_class_ << "_step_"
 	 << thread_step_ << "_(vvm_thread*thr);" << endl;
 
-      defn << "bool " << thread_class_ << "_step_" << thread_step_ <<
-	    "_(vvm_thread*thr) {" << endl;
+      defn << "static bool " << thread_class_ << "_step_" << thread_step_
+	   << "_(vvm_thread*thr) {" << endl;
 
       proc->emit_proc_recurse(os, this);
 }
@@ -2923,6 +3063,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.150  2000/05/20 02:26:23  steve
+ *  Combine constants into a bit table.
+ *
  * Revision 1.149  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *
