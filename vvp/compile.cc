@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.51 2001/05/02 01:57:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.52 2001/05/02 04:05:17 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -287,8 +287,7 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
  * functor, and map the name to the vvp_ipoint_t address for the
  * functor. Also resolve the inputs to the functor.
  */
-void compile_functor(char*label, char*type, unsigned init,
-		     unsigned argc, struct symb_s*argv)
+void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
@@ -297,7 +296,7 @@ void compile_functor(char*label, char*type, unsigned init,
 
       assert(argc <= 4);
 
-      obj->ival = init;
+      obj->ival = 0x33;
       obj->oval = 2;
       obj->mode = 0;
 
@@ -1065,6 +1064,11 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.52  2001/05/02 04:05:17  steve
+ *  Remove the init parameter of functors, and instead use
+ *  the special C<?> symbols to initialize inputs. This is
+ *  clearer and more regular.
+ *
  * Revision 1.51  2001/05/02 01:57:25  steve
  *  Support behavioral subtraction.
  *

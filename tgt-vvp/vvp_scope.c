@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.22 2001/04/30 00:00:27 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.23 2001/05/02 04:05:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -241,7 +241,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
 	    unsigned pdx;
       const char*ltype = "?";
-      unsigned init_val = 0;
+      char identity_val = '0';
 
 
       switch (ivl_logic_type(lptr)) {
@@ -264,7 +264,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_AND:
 	    ltype = "AND";
-	    init_val = 0x55;
+	    identity_val = '1';
 	    break;
 
 	  case IVL_LO_BUF:
@@ -281,6 +281,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_NAND:
 	    ltype = "NAND";
+	    identity_val = '1';
 	    break;
 
 	  case IVL_LO_NOR:
@@ -312,18 +313,16 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
       assert(ivl_logic_pins(lptr) <= 5);
 
-      for (pdx = 1 ; pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-	    unsigned mask = 3 << (pdx - 1);
-	    init_val = (init_val & ~mask) | (2 << (pdx - 1));
-      }
-
-      fprintf(vvp_out, "L_%s .functor %s, 0x%x",
-	      ivl_logic_name(lptr), ltype, init_val);
+      fprintf(vvp_out, "L_%s .functor %s", ivl_logic_name(lptr), ltype);
 
       for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
 	    fprintf(vvp_out, ", ");
 	    draw_nexus_input(nex);
+      }
+
+      for ( ;  pdx < 5 ;  pdx += 1) {
+	    fprintf(vvp_out, ", C<%c>", identity_val);
       }
 
       fprintf(vvp_out, ";\n");
@@ -424,15 +423,14 @@ static void draw_lpm_mux(ivl_lpm_t net)
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
 	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
-	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, 0x6a",
+	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
 		    ivl_lpm_name(net), idx);
-	    fprintf(vvp_out, ", ");
 	    draw_nexus_input(a);
 	    fprintf(vvp_out, ", ");
 	    draw_nexus_input(b);
 	    fprintf(vvp_out, ", ");
 	    draw_nexus_input(s);
-	    fprintf(vvp_out, ";\n");
+	    fprintf(vvp_out, ", C<1>;\n");
       }
 
 }
@@ -511,6 +509,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.23  2001/05/02 04:05:16  steve
+ *  Remove the init parameter of functors, and instead use
+ *  the special C<?> symbols to initialize inputs. This is
+ *  clearer and more regular.
+ *
  * Revision 1.22  2001/04/30 00:00:27  steve
  *  detect multiple drivers on nexa.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.23 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: parse.y,v 1.24 2001/05/02 04:05:17 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -107,12 +107,13 @@ statement
   /* Functor statements define functors. The functor must have a
      label and a type name, and may have operands. */
 
-	: T_LABEL K_FUNCTOR T_SYMBOL ',' T_NUMBER ',' symbols ';'
-		{ struct symbv_s obj = $7;
-		  compile_functor($1, $3, $5, obj.cnt, obj.vect);
+	: T_LABEL K_FUNCTOR T_SYMBOL ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_functor($1, $3, obj.cnt, obj.vect);
 		}
+
 	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
-		{ compile_functor($1, $3, $5, 0, 0); }
+		{ compile_functor($1, $3, 0, 0); }
 
 
   /* UDP statements define or instantiate UDPs.  Definitions take a 
@@ -425,6 +426,11 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.24  2001/05/02 04:05:17  steve
+ *  Remove the init parameter of functors, and instead use
+ *  the special C<?> symbols to initialize inputs. This is
+ *  clearer and more regular.
+ *
  * Revision 1.23  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *

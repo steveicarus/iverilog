@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.21 2001/05/01 01:09:39 steve Exp $
+ *  $Id: README.txt,v 1.22 2001/05/02 04:05:17 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -87,23 +87,19 @@ label is required for functors.
 
 The general syntax of a functor is:
 
-	<label> .functor <type>, <init> [, symbol_list]
+	<label> .functor <type>, symbol_list ;
 
-The symbol list is 0-4 names of labels of other functors. These
-connect inputs of the functor of the statement to the output of other
-functors. The type is the label of a .ftype statement elsewhere in the
-program. The references .ftype describes the behavoir of the
-functor.
+The symbol list is 4 names of labels of other functors. These connect
+inputs of the functor of the statement to the output of other
+functors. If the input is unconnected, use a C<?> symbol instead. The
+type selects the truth lookup table to use for the functor
+implementation. Most of the core gate types have built in tables.
 
-The <init> value is the 8-bit initial value of the 4 input ports. The
-LSB is port 0, and the MSB port 3. If there are any constant inputs,
-then the constantat the input becomes the initial value of the
-corresponding input, replacing the value given in the <init>
-position. Also, the output of the functor is calculated at compile
-time given the init and constant input values. If the output is
-different from "x", then a propagation event is schedule for the
-functor so that when the simulation starts, the non-x value gets
-propagated.
+The initial values of all the inputs and the output is x. Any other
+value is passed around as run-time behavior. If the inputs have C<?>
+symbols, then the inputs are initialized to the specified bit value,
+and if this causes the output to be something other then x, a
+propagation event is created to be executed at the start of run time.
 
 Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of

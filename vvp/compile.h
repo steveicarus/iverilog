@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.19 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: compile.h,v 1.20 2001/05/02 04:05:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -58,7 +58,7 @@ extern void compile_load_vpi_module(char*name);
  * of the functor. The compile should match those port parameters up
  * to existing functors to manage the linking.
  */
-extern void compile_functor(char*label, char*type, unsigned init,
+extern void compile_functor(char*label, char*type,
 			    unsigned argc, struct symb_s*argv);
 
 
@@ -174,6 +174,11 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.20  2001/05/02 04:05:17  steve
+ *  Remove the init parameter of functors, and instead use
+ *  the special C<?> symbols to initialize inputs. This is
+ *  clearer and more regular.
+ *
  * Revision 1.19  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
