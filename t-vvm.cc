@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.169 2000/08/20 17:49:04 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.170 2000/09/02 20:54:21 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -166,7 +166,6 @@ class target_vvm : public target_t {
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
               void udp_sequ_(ostream&os, const NetUDP*);
-      virtual void net_assign_nb(const NetAssignNB*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
@@ -1970,10 +1969,6 @@ void target_vvm::udp_sequ_(ostream&os, const NetUDP*gate)
 
 }
 
-void target_vvm::net_assign_nb(const NetAssignNB*net)
-{
-}
-
 void target_vvm::net_case_cmp(const NetCaseCmp*gate)
 {
       string mname = mangle(gate->name());
@@ -2157,7 +2152,7 @@ void target_vvm::proc_assign(const NetAssign*net)
 
 	    const verinum value = rc->value();
 
-	    if (net->bmux()) {
+	    if (net->l_val(0)->bmux()) {
 
 		    // This is a bit select. Assign the low bit of the
 		    // constant to the selected bit of the lval.
@@ -2166,14 +2161,14 @@ void target_vvm::proc_assign(const NetAssign*net)
 						 Link::STRONG,
 						 Link::STRONG);
 
-		  string bval = emit_proc_rval(this, net->bmux());
+		  string bval = emit_proc_rval(this, net->l_val(0)->bmux());
 
 		  defn << "      switch (" << bval
 		       << ".as_unsigned()) {" << endl;
 
-		  for (unsigned idx = 0; idx < net->pin_count(); idx += 1) {
+		  for (unsigned idx = 0; idx < net->l_val(0)->pin_count(); idx += 1) {
 
-			string nexus = net->pin(idx).nexus()->name();
+			string nexus = net->l_val(0)->pin(idx).nexus()->name();
 			unsigned ncode = nexus_wire_map[nexus];
 
 			defn << "      case " << idx << ":" << endl;
@@ -2188,8 +2183,8 @@ void target_vvm::proc_assign(const NetAssign*net)
 		  return;
 	    }
 
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  string nexus = net->pin(idx).nexus()->name();
+	    for (unsigned idx = 0 ;  idx < net->l_val(0)->pin_count() ;  idx += 1) {
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  verinum::V val = idx < value.len() 
@@ -2219,12 +2214,12 @@ void target_vvm::proc_assign(const NetAssign*net)
 
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
-	    if (net->pin_count() > rs->pin_count()) {
+	    if (net->l_val(0)->pin_count() > rs->pin_count()) {
 		  rval = emit_proc_rval(this, net->rval());
 
 	    } else {
-		  assert((net->pin_count() <= rs->pin_count())
-			 || (net->bmux() && (rs->pin_count() >= 1)));
+		  assert((net->l_val(0)->pin_count() <= rs->pin_count())
+			 || (net->l_val(0)->bmux() && (rs->pin_count() >= 1)));
 		  rval = mangle(rs->name()) + ".bits";
 	    }
 
@@ -2242,17 +2237,17 @@ void target_vvm::proc_assign(const NetAssign*net)
 	   l-value. Otherwise, generate code for a complete
 	   assignment. */
 
-      if (net->bmux()) {
+      if (net->l_val(0)->bmux()) {
 
 	      // This is a bit select. Assign the low bit of the rval
 	      // to the selected bit of the lval.
-	    string bval = emit_proc_rval(this, net->bmux());
+	    string bval = emit_proc_rval(this, net->l_val(0)->bmux());
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < net->l_val(0)->pin_count() ;  idx += 1) {
 
-		  string nexus = net->pin(idx).nexus()->name();
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2266,19 +2261,19 @@ void target_vvm::proc_assign(const NetAssign*net)
 	    defn << "      }" << endl;
 
       } else {
-	    unsigned min_count = net->pin_count();
+	    unsigned min_count = net->l_val(0)->pin_count();
 	    if (net->rval()->expr_width() < min_count)
 		  min_count = net->rval()->expr_width();
 
 	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
-		  string nexus = net->pin(idx).nexus()->name();
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
 		       << rval << "[" << idx << "]);" << endl;
 	    }
 
-	    for (unsigned idx = min_count; idx < net->pin_count(); idx += 1) {
-		  string nexus = net->pin(idx).nexus()->name();
+	    for (unsigned idx = min_count; idx < net->l_val(0)->pin_count(); idx += 1) {
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      nexus_wire_table["<<ncode<<"]"
 		       << ".reg_assign(St0);" << endl;
@@ -2319,9 +2314,9 @@ void target_vvm::proc_assign_mem(const NetAssignMem*amem)
 void target_vvm::proc_assign_nb(const NetAssignNB*net)
 {
       string rval = emit_proc_rval(this, net->rval());
-      const unsigned long delay = net->rise_time();
+      const unsigned long delay = net->l_val(0)->rise_time();
 
-      if (net->bmux()) {
+      if (net->l_val(0)->bmux()) {
 	      /* If the l-value has a bit select, set the output bit
 		 to only the desired bit. Evaluate the index and use
 		 that to drive a switch statement.
@@ -2330,11 +2325,11 @@ void target_vvm::proc_assign_nb(const NetAssignNB*net)
 		 better generating a demux device and doing the assign
 		 to the device input. Food for thought. */
 
-	    string bval = emit_proc_rval(this, net->bmux());
+	    string bval = emit_proc_rval(this, net->l_val(0)->bmux());
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  string nexus = net->pin(idx).nexus()->name();
+	    for (unsigned idx = 0 ;  idx < net->l_val(0)->pin_count() ;  idx += 1) {
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2347,8 +2342,8 @@ void target_vvm::proc_assign_nb(const NetAssignNB*net)
 	    defn << "      }" << endl;
 
       } else {
-	    for (unsigned idx = 0 ; idx < net->pin_count() ;  idx += 1) {
-		  string nexus = net->pin(idx).nexus()->name();
+	    for (unsigned idx = 0 ; idx < net->l_val(0)->pin_count() ;  idx += 1) {
+		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      vvm_delayed_assign(nexus_wire_table["
 		       << ncode << "], " << rval << "[" << idx << "], "
@@ -3117,6 +3112,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.170  2000/09/02 20:54:21  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.169  2000/08/20 17:49:04  steve
  *  Clean up warnings and portability issues.
  *

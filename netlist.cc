@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.134 2000/08/27 15:51:50 steve Exp $"
+#ident "$Id: netlist.cc,v 1.135 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1370,111 +1370,6 @@ const Link& NetRamDq::pin_Q(unsigned idx) const
       return pin(3+awidth_+width()+idx);
 }
 
-/*
- * NetAssign
- */
-
-NetAssign_::NetAssign_(const string&n, unsigned w)
-: NetNode(n, w), rval_(0), bmux_(0)
-{
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::OUTPUT);
-	    pin(idx).set_name("P", idx);
-      }
-
-}
-
-NetAssign_::~NetAssign_()
-{
-      if (rval_) delete rval_;
-      if (bmux_) delete bmux_;
-}
-
-void NetAssign_::set_rval(NetExpr*r)
-{
-      if (rval_) delete rval_;
-      rval_ = r;
-}
-
-void NetAssign_::set_bmux(NetExpr*r)
-{
-      assert(bmux_ == 0);
-      bmux_ = r;
-}
-
-NetExpr* NetAssign_::rval()
-{
-      return rval_;
-}
-
-const NetExpr* NetAssign_::rval() const
-{
-      return rval_;
-}
-
-const NetExpr* NetAssign_::bmux() const
-{
-      return bmux_;
-}
-
-NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssign_(n, w)
-{
-      set_rval(rv);
-}
-
-NetAssign::NetAssign(const string&n, Design*des, unsigned w,
-		     NetExpr*mu, NetExpr*rv)
-: NetAssign_(n, w)
-{
-      bool flag = rv->set_width(1);
-      if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
-	    des->errors += 1;
-      }
-
-      set_rval(rv);
-      set_bmux(mu);
-}
-
-NetAssign::~NetAssign()
-{
-}
-
-NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssign_(n, w)
-{
-      if (rv->expr_width() < w) {
-	    cerr << rv->get_line() << ": Expression bit width (" <<
-		  rv->expr_width() << ") conflicts with l-value "
-		  "bit width (" << w << ")." << endl;
-	    des->errors += 1;
-      }
-
-      set_rval(rv);
-}
-
-NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
-			 NetExpr*mu, NetExpr*rv)
-: NetAssign_(n, w)
-{
-      bool flag = rv->set_width(1);
-      if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
-	    des->errors += 1;
-      }
-
-      set_rval(rv);
-      set_bmux(mu);
-}
-
-NetAssignNB::~NetAssignNB()
-{
-}
-
-
 NetAssignMem_::NetAssignMem_(NetMemory*m, NetExpr*i, NetExpr*r)
 : mem_(m), index_(i), rval_(r)
 {
@@ -2467,6 +2362,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.135  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.134  2000/08/27 15:51:50  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

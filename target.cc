@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.45 2000/08/27 15:51:51 steve Exp $"
+#ident "$Id: target.cc,v 1.46 2000/09/02 20:54:21 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -126,14 +126,10 @@ void target_t::lpm_ram_dq(const NetRamDq*)
 	    "Unhandled NetRamDq." << endl;
 }
 
-void target_t::net_assign(const NetAssign*)
-{
-}
-
-void target_t::net_assign_nb(const NetAssignNB*)
+void target_t::net_assign(const NetAssign_*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled non-blocking assignment node." << endl;
+	    "Unhandled assignment node." << endl;
 }
 
 void target_t::net_case_cmp(const NetCaseCmp*)
@@ -392,6 +388,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.46  2000/09/02 20:54:21  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.45  2000/08/27 15:51:51  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

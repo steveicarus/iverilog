@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.183 2000/08/18 04:38:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.184 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 /*
@@ -745,7 +745,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	/* Get the l-value, and assume that it is an identifier. */
       const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 
-	/* If the l-value is not a register, then make a structural
+	/* If the l-value is not a reg, then make a structural
 	   elaboration. Make a synthetic register that connects to the
 	   generated circuit and return that as the l-value. */
       if (id == 0) {
@@ -778,7 +778,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 
       if ((reg->type() != NetNet::REG) && (reg->type() != NetNet::INTEGER)) {
 	    cerr << get_line() << ": error: " << *lval() <<
-		  " is not a register." << endl;
+		  " is not a reg." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -946,20 +946,18 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    n = des->local_symbol(path);
 	    NetAssign*a1 = new NetAssign(n, des, wid, rv);
 	    a1->set_line(*this);
-	    des->add_node(a1);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(a1->pin(idx), tmp->pin(idx));
+		  connect(a1->l_val(0)->pin(idx), tmp->pin(idx));
 
 	      /* Generate an assignment of the temporary to the r-value... */
 	    n = des->local_symbol(path);
 	    NetESignal*sig = new NetESignal(tmp);
 	    NetAssign*a2 = new NetAssign(n, des, wid, sig);
 	    a2->set_line(*this);
-	    des->add_node(a2);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(a2->pin(idx), reg->pin(idx));
+		  connect(a2->l_val(0)->pin(idx), reg->pin(idx));
 
 	      /* Generate the delay statement with the final
 		 assignment attached to it. If this is an event delay,
@@ -1006,7 +1004,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    unsigned off = reg->sb_to_idx(lsb);
 	    assert((off+wid) <= reg->pin_count());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx+off));
+		  connect(cur->l_val(0)->pin(idx), reg->pin(idx+off));
 
       } else {
 
@@ -1014,12 +1012,11 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    cur = new NetAssign(des->local_symbol(path), des,
 				reg->pin_count(), mux, rv);
 	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx));
+		  connect(cur->l_val(0)->pin(idx), reg->pin(idx));
       }
 
 
       cur->set_line(*this);
-      des->add_node(cur);
 
       return cur;
 }
@@ -1105,7 +1102,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
 	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
+		  connect(cur->l_val(0)->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
 
       } else {
 
@@ -1117,20 +1114,19 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    cur = new NetAssignNB(des->local_symbol(path), des,
 				  reg->pin_count(), mux, rv);
 	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx));
+		  connect(cur->l_val(0)->pin(idx), reg->pin(idx));
       }
 
 
       unsigned long rise_time, fall_time, decay_time;
       delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
-      cur->rise_time(rise_time);
-      cur->fall_time(fall_time);
-      cur->decay_time(decay_time);
+      cur->l_val(0)->rise_time(rise_time);
+      cur->l_val(0)->fall_time(fall_time);
+      cur->l_val(0)->decay_time(decay_time);
 
 
 	/* All done with this node. mark its line number and check it in. */
       cur->set_line(*this);
-      des->add_node(cur);
       return cur;
 }
 
@@ -1445,8 +1441,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    NetExpr*rv = parms_[idx]->elaborate_expr(des, scope);
 	    NetAssign*pr = new NetAssign("@", des, port->pin_count(), rv);
 	    for (unsigned pi = 0 ;  pi < port->pin_count() ;  pi += 1)
-		  connect(port->pin(pi), pr->pin(pi));
-	    des->add_node(pr);
+		  connect(port->pin(pi), pr->l_val(0)->pin(pi));
 	    block->append(pr);
       }
 
@@ -1535,9 +1530,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign("@", des, val->pin_count(), pexp);
 	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
-		  connect(val->pin(pi), ass->pin(pi));
+		  connect(val->pin(pi), ass->l_val(0)->pin(pi));
 
-	    des->add_node(ass);
 	    block->append(ass);
       }
 
@@ -2009,8 +2003,8 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       assert(sig);
       NetAssign*init = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr1_->elaborate_expr(des, scope));
-      for (unsigned idx = 0 ;  idx < init->pin_count() ;  idx += 1)
-	    connect(init->pin(idx), sig->pin(idx));
+      for (unsigned idx = 0 ;  idx < init->l_val(0)->pin_count() ;  idx += 1)
+	    connect(init->l_val(0)->pin(idx), sig->pin(idx));
 
       top->append(init);
 
@@ -2032,8 +2026,8 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       assert(sig);
       NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr2_->elaborate_expr(des, scope));
-      for (unsigned idx = 0 ;  idx < step->pin_count() ;  idx += 1)
-	    connect(step->pin(idx), sig->pin(idx));
+      for (unsigned idx = 0 ;  idx < step->l_val(0)->pin_count() ;  idx += 1)
+	    connect(step->l_val(0)->pin(idx), sig->pin(idx));
 
       body->append(step);
 
@@ -2384,6 +2378,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.184  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.183  2000/08/18 04:38:57  steve
  *  Proper error messages when port direction is missing.
  *

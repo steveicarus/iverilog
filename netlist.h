@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.158 2000/08/27 15:51:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.159 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 /*
@@ -1108,46 +1108,75 @@ class NetProc : public LineInfo {
 };
 
 /*
- * This is a procedural assignment. The lval is a register, and the
- * assignment happens when the code is executed by the design. The
- * node part of the NetAssign has as many pins as the width of the
- * lvalue object and represents the elaborated lvalue. Thus, this
- * appears as a procedural statement AND a structural node. The
- * LineInfo is the location of the assignment statement in the source.
+ * Procedural assignment is broken into a suite of classes. These
+ * classes represent the various aspects of the assignment statement
+ * in behavioral code. (The continuous assignment is *not*
+ * represented here.)
+ *
+ * The NetAssignBase carries the common aspects of an assignment,
+ * including the r-value. This class has no cares of blocking vs
+ * non-blocking, however it carries nearly all the other properties
+ * of the assignment statement. It is abstract because it does not
+ * differentiate the virtual behaviors.
+ *
+ * The NetAssign and NetAssignNB classes are the concrete classes that
+ * give the assignment its final, precise meaning. These classes fill
+ * in the NetProc behaviors.
+ *
+ * The l-value of the assignment is a collection of NetAssign_
+ * objects. These are nodes that connect to the structural netlist
+ * where the assignment has its effect. The NetAssign_ class is not to
+ * be derived from.
  *
  * NOTE: The elaborator will make an effort to match the width of the
- * r-value to the with of the assign node, but targets and functions
+ * r-value to the with of the l-value, but targets and functions
  * should know that this is not a guarantee.
  */
 
-class NetAssign_ : public NetProc, public NetNode {
+class NetAssign_ : public NetNode {
 
     public:
-
-	// This is the (procedural) value that is to be assigned when
-	// the assignment is executed.
-      NetExpr*rval();
-      const NetExpr*rval() const;
+      NetAssign_(const string&n, unsigned w);
+      ~NetAssign_();
 
 	// If this expression exists, then only a single bit is to be
 	// set from the rval, and the value of this expression selects
 	// the pin that gets the value.
       const NetExpr*bmux() const;
 
-      void set_rval(NetExpr*);
-
-    protected:
-      NetAssign_(const string&n, unsigned w);
-      virtual ~NetAssign_() =0;
 
       void set_bmux(NetExpr*);
 
+      virtual bool emit_node(struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
     private:
-      NetExpr*rval_;
       NetExpr*bmux_;
 };
 
-class NetAssign  : public NetAssign_ {
+class NetAssignBase : public NetProc {
+
+    public:
+      NetAssignBase(NetAssign_*lv, NetExpr*rv);
+      virtual ~NetAssignBase() =0;
+
+	// This is the (procedural) value that is to be assigned when
+	// the assignment is executed.
+      NetExpr*rval();
+      const NetExpr*rval() const;
+
+      void set_rval(NetExpr*);
+
+      NetAssign_* l_val(unsigned);
+      const NetAssign_* l_val(unsigned) const;
+
+    private:
+      NetAssign_*lval_;
+      NetExpr   *rval_;
+};
+
+class NetAssign : public NetAssignBase {
+
     public:
       explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
       explicit NetAssign(const string&, Design*des, unsigned w,
@@ -1155,18 +1184,13 @@ class NetAssign  : public NetAssign_ {
       ~NetAssign();
 
       virtual bool emit_proc(struct target_t*) const;
-      virtual bool emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
 };
 
-/*
- * ... and this is a non-blocking version of above.
- */
-class NetAssignNB  : public NetAssign_ {
+class NetAssignNB  : public NetAssignBase {
     public:
       explicit NetAssignNB(const string&, Design*des, unsigned w, NetExpr*rv);
       explicit NetAssignNB(const string&, Design*des, unsigned w,
@@ -1175,10 +1199,8 @@ class NetAssignNB  : public NetAssign_ {
 
 
       virtual bool emit_proc(struct target_t*) const;
-      virtual bool emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
 };
@@ -2726,6 +2748,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.159  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.158  2000/08/27 15:51:50  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.8 2000/08/01 02:48:42 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.9 2000/09/02 20:54:21 steve Exp $"
 #endif
 
 /*
@@ -38,7 +38,7 @@
 struct syn_token_t {
       int token;
 
-      NetAssign_*assign;
+      NetAssignBase*assign;
       NetAssignMem_*assign_mem;
       NetProcTop*top;
       NetEvWait*evwait;
@@ -54,10 +54,10 @@ static void yyerror(const char*);
 static Design*des_;
 
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssign_*asn);
+			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn);
 static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignMem_*asn);
-static void make_initializer(Design*des, NetProcTop*top, NetAssign_*asn);
+static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn);
 
 %}
 
@@ -131,7 +131,7 @@ start
 
   /* Various actions. */
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssign_*asn)
+			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn)
 {
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
@@ -139,11 +139,11 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       assert(d);
 
-      NetFF*ff = new NetFF(asn->name(), asn->pin_count());
+      NetFF*ff = new NetFF(asn->l_val(0)->name(), asn->l_val(0)->pin_count());
 
       for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
 	    connect(ff->pin_Data(idx), d->pin(idx));
-	    connect(ff->pin_Q(idx), asn->pin(idx));
+	    connect(ff->pin_Q(idx), asn->l_val(0)->pin(idx));
       }
 
       connect(ff->pin_Clock(), pclk->pin(0));
@@ -198,16 +198,16 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
  * the initial value for the link and get rid of the assignment
  * process.
  */
-static void make_initializer(Design*des, NetProcTop*top, NetAssign_*asn)
+static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
 {
       NetESignal*rsig = dynamic_cast<NetESignal*> (asn->rval());
       assert(rsig);
 
-      for (unsigned idx = 0 ;  idx < asn->pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < asn->l_val(0)->pin_count() ;  idx += 1) {
 
 	    verinum::V bit = driven_value(rsig->pin(idx));
 
-	    Nexus*nex = asn->pin(idx).nexus();
+	    Nexus*nex = asn->l_val(0)->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink()
 		       ;  cur ;  cur = cur->next_nlink()) {
 
@@ -237,7 +237,7 @@ struct tokenize : public proc_match_t {
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
-	    cur->token = dev->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
 	    cur->assign = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
@@ -249,7 +249,7 @@ struct tokenize : public proc_match_t {
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
-	    cur->token = dev->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
 	    cur->assign = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.44 2000/08/27 15:51:51 steve Exp $"
+#ident "$Id: target.h,v 1.45 2000/09/02 20:54:21 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -87,8 +87,7 @@ struct target_t {
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
-      virtual void net_assign(const NetAssign*);
-      virtual void net_assign_nb(const NetAssignNB*);
+      virtual void net_assign(const NetAssign_*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
@@ -160,6 +159,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.45  2000/09/02 20:54:21  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.44  2000/08/27 15:51:51  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.94 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.95 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 /*
@@ -217,23 +217,12 @@ void NetMux::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetAssign::dump_node(ostream&o, unsigned ind) const
+void NetAssign_::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Procedural assign (NetAssign): " << name();
+      o << setw(ind) << "" << "Procedural assign (NetAssign_): " << name();
       if (bmux())
 	    o << "[" << *bmux() << "]";
-      o << " = " << *rval() << endl;
-      dump_node_pins(o, ind+4);
-}
-
-void NetAssignNB::dump_node(ostream&o, unsigned ind) const
-{
-      if (bmux())
-	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
-	      << name() << "[" << *bmux() << "] <= " << *rval() << endl;
-      else
-	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
-	      << name() << " <= " << *rval() << endl;
+      o << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -438,16 +427,16 @@ void NetAssign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
 
-      if (bmux()) {
-	    o << name() << "[" << *bmux() << "] = ";
-	    if (rise_time())
-		  o << "#" << rise_time() << " ";
+      if (l_val(0)->bmux()) {
+	    o << l_val(0)->name() << "[" << *l_val(0)->bmux() << "] = ";
+	    if (l_val(0)->rise_time())
+		  o << "#" << l_val(0)->rise_time() << " ";
 	    o << *rval() << ";" << endl;
 
       } else {
-	    o << name() << " = ";
-	    if (rise_time())
-		  o << "#" << rise_time() << " ";
+	    o << l_val(0)->name() << " = ";
+	    if (l_val(0)->rise_time())
+		  o << "#" << l_val(0)->rise_time() << " ";
 	    o << *rval() << ";" << endl;
       }
 }
@@ -456,16 +445,16 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
 
-      if (bmux()) {
-	    o << name() << "[" << *bmux() << "] <= ";
-	    if (rise_time())
-		  o << "#" << rise_time() << " ";
+      if (l_val(0)->bmux()) {
+	    o << l_val(0)->name() << "[" << *l_val(0)->bmux() << "] <= ";
+	    if (l_val(0)->rise_time())
+		  o << "#" << l_val(0)->rise_time() << " ";
 	    o << *rval() << ";" << endl;
 
       } else {
-	    o << name() << " <= ";
-	    if (rise_time())
-		  o << "#" << rise_time() << " ";
+	    o << l_val(0)->name() << " <= ";
+	    if (l_val(0)->rise_time())
+		  o << "#" << l_val(0)->rise_time() << " ";
 	    o << *rval() << ";" << endl;
       }
 }
@@ -978,6 +967,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.95  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.94  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during

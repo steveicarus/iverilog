@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.51 2000/08/14 04:39:56 steve Exp $"
+#ident "$Id: emit.cc,v 1.52 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 /*
@@ -59,15 +59,9 @@ bool NetAddSub::emit_node(struct target_t*tgt) const
       return true;
 }
 
-bool NetAssign::emit_node(struct target_t*tgt) const
+bool NetAssign_::emit_node(struct target_t*tgt) const
 {
       tgt->net_assign(this);
-      return true;
-}
-
-bool NetAssignNB::emit_node(struct target_t*tgt) const
-{
-      tgt->net_assign_nb(this);
       return true;
 }
 
@@ -481,6 +475,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.52  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.51  2000/08/14 04:39:56  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.44 2000/08/18 04:38:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.45 2000/09/02 20:54:20 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1178,7 +1178,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    verinum*mval = msb_->eval_const(des, path);
 	    if (mval == 0) {
 		  cerr << get_line() << ": index of " << text_ <<
-			" needs to be constant in this context." <<
+			" needs to be constant in l-value of assignment." <<
 			endl;
 		  des->errors += 1;
 		  return 0;
@@ -1286,7 +1286,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    verinum*mval = msb_->eval_const(des, path);
 	    if (mval == 0) {
 		  cerr << get_line() << ": index of " << text_ <<
-			" needs to be constant in this context." <<
+			" needs to be constant in port context." <<
 			endl;
 		  des->errors += 1;
 		  return 0;
@@ -1662,6 +1662,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.45  2000/09/02 20:54:20  steve
+ *  Rearrange NetAssign to make NetAssign_ separate.
+ *
  * Revision 1.44  2000/08/18 04:38:57  steve
  *  Proper error messages when port direction is missing.
  *
