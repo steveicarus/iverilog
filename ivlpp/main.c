@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.4 1999/11/29 17:02:21 steve Exp $"
+#ident "$Id: main.c,v 1.5 2000/06/30 15:49:44 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -51,6 +51,8 @@ char**include_dir = 0;
 unsigned include_cnt = 0;
 
 int line_direct_flag = 0;
+
+unsigned error_count = 0;
 
 int main(int argc, char*argv[])
 {
@@ -138,11 +140,17 @@ int main(int argc, char*argv[])
       }
 
       reset_lexor(out, argv+optind);
-      return yyparse();
+
+      if (yyparse()) return -1;
+
+      return error_count;
 }
 
 /*
  * $Log: main.c,v $
+ * Revision 1.5  2000/06/30 15:49:44  steve
+ *  Handle errors from parser slightly differently.
+ *
  * Revision 1.4  1999/11/29 17:02:21  steve
  *  include getopt if present.
  *

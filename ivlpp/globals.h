@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: globals.h,v 1.2 1999/09/05 22:33:18 steve Exp $"
+#ident "$Id: globals.h,v 1.3 2000/06/30 15:49:44 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -35,11 +35,16 @@ extern unsigned include_cnt;
 /* This flag is true if #line directives are to be generated. */
 extern int line_direct_flag;
 
+extern unsigned error_count;
+
 /* This is the entry to the parser. */
 extern int yyparse();
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.3  2000/06/30 15:49:44  steve
+ *  Handle errors from parser slightly differently.
+ *
  * Revision 1.2  1999/09/05 22:33:18  steve
  *  Take multiple source files on the command line.
  *
