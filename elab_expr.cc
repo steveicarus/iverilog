@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.55 2002/04/25 05:04:31 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.56 2002/04/27 02:38:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -401,10 +401,57 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  tmp = new NetEParam(des, scope, path_);
 
 	    if (msb_ && lsb_) {
-		  cerr << get_line() << ": error: part select of "
-		       << "parameter " << path_ << " in " << scope->name()
-		       << " is illegal." << endl;
-		  des->errors += 1;
+		    /* If the parameter has a part select, we support
+		       it by pulling the right bits out and making a
+		       sized unsigned constant. This code assumes the
+		       lsb of a parameter is 0 and the msb is the
+		       width of the parameter. */
+
+		  verinum*lsn = lsb_->eval_const(des, scope);
+		  verinum*msn = msb_->eval_const(des, scope);
+		  if ((lsn == 0) || (msn == 0)) {
+			cerr << get_line() << ": error: "
+			      "Part select expresions must be "
+			      "constant expressions." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  long lsb = lsn->as_long();
+		  long msb = msn->as_long();
+		  if ((lsb < 0) || (msb < lsb)) {
+			cerr << get_line() << ": error: invalid part "
+			     << "select: " << path_
+			     << "["<<msb<<":"<<lsb<<"]" << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  NetEConst*le = dynamic_cast<NetEConst*>(tmp);
+		  assert(le);
+
+		  verinum result (verinum::V0, msb-lsb+1, true);
+		  verinum exl = le->value();
+
+		    /* Pull the bits from the parameter, one at a
+		       time. If the bit is within the range, simply
+		       copy it to the result. If the bit is outside
+		       the range, we sign extend signed unsized
+		       numbers, zero extend unsigned unsigned numbers,
+		       and X extend sized numbers. */
+		  for (long idx = lsb ;  idx <= msb ;  idx += 1) {
+			if (idx < exl.len())
+			      result.set(idx-lsb, exl.get(idx));
+		        else if (exl.has_len())
+			      result.set(idx-lsb, verinum::Vx);
+		        else if (exl.has_sign())
+			      result.set(idx-lsb, exl.get(exl.len()-1));
+		        else
+			      result.set(idx-lsb, verinum::V0);
+		  }
+
+		  delete tmp;
+		  tmp = new NetEConst(result);
 
 	    } else if (msb_) {
 		    /* Handle the case where a parameter has a bit
@@ -785,6 +832,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.56  2002/04/27 02:38:04  steve
+ *  Support selecting bits from parameters.
+ *
  * Revision 1.55  2002/04/25 05:04:31  steve
  *  Evaluate constant bit select of constants.
  *
@@ -807,23 +857,5 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
  *
  * Revision 1.49  2002/01/11 05:25:45  steve
  *  The stime system function is 32bits.
- *
- * Revision 1.48  2001/12/31 00:08:14  steve
- *  Support $signed cast of expressions.
- *
- * Revision 1.47  2001/12/29 20:41:30  steve
- *  Allow escaped $ in identifiers.
- *
- * Revision 1.46  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.45  2001/11/19 02:54:12  steve
- *  Handle division and modulus by zero while
- *  evaluating run-time constants.
- *
- * Revision 1.44  2001/11/19 01:54:14  steve
- *  Port close cropping behavior from mcrgb
- *  Move window array reset to libmc.
  */
 

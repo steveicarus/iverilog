@@ -386,8 +386,25 @@ changes in inputs until the thread that changed the inputs yields
 execution.
 
 
-$Id: ieee1364-notes.txt,v 1.10 2002/03/31 01:54:13 steve Exp $
+* BIT AND PART SELECTS OF PARAMTERS
+
+Bit and part selects are supposed to only be supported on vector nets
+and variables (wires, regs, etc.) However, it is common for Verilog
+compilers to also support bit and part select on parameters. Icarus
+Verilog also chooses to support bit and part selects on parameter
+names, but we need to define what that means.
+
+A bit or a part select on a parameter expression returns an unsigned
+value with a defined size. The parameter value is considered be a
+constant vector of bits foo[X:0]. That is, zero based. The bit and
+part selects operate from that assumption.
+
+
+$Id: ieee1364-notes.txt,v 1.11 2002/04/27 02:38:04 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.11  2002/04/27 02:38:04  steve
+ Support selecting bits from parameters.
+
 Revision 1.10  2002/03/31 01:54:13  steve
  Notes about scheduling
 
