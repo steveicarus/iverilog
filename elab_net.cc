@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.15 2000/01/02 19:39:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.16 2000/01/02 21:45:31 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -460,6 +460,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
       NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
 
+      if (lsig->pin_count() > lwidth)
+	    lwidth = lsig->pin_count();
+
 	/* Handle the special case of a constant shift amount. There
 	   is no reason in this case to create a gate at all, just
 	   connect the lsig to the osig with the bit positions
@@ -501,26 +504,41 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	    return osig;
       }
 
+	// Calculate the number of useful bits for the shift amount,
+	// and elaborate the right_ expression as the shift amount.
       unsigned dwid = 0;
-      while ((1 << dwid) < lsig->pin_count())
+      while ((1 << dwid) < lwidth)
 	    dwid += 1;
 
       NetNet*rsig = right_->elaborate_net(des, path, dwid, 0, 0, 0);
       if (rsig == 0) return 0;
 
+	// Make the shift device itself, and the output
+	// NetNet. Connect the Result output pins to the osig signal
       NetCLShift*gate = new NetCLShift(des->local_symbol(path),
-				       lsig->pin_count(),
-				       rsig->pin_count());
+				       lwidth, rsig->pin_count());
 
-      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
-			       lsig->pin_count());
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
+			       NetNet::WIRE, lwidth);
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < lwidth ;  idx += 1)
 	    connect(osig->pin(idx), gate->pin_Result(idx));
+
+	// Connect the lsig (the left expression) to the Data input,
+	// and pad it if necessary with constant zeros.
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
 	    connect(lsig->pin(idx), gate->pin_Data(idx));
+
+      if (lsig->pin_count() < lwidth) {
+	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(zero);
+	    for (unsigned idx = lsig->pin_count() ; idx < lwidth ;  idx += 1)
+		  connect(zero->pin(0), gate->pin_Data(idx));
       }
 
+	// Connect the rsig (the shift amount expression) to the
+	// Distance input.
       for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 	    connect(rsig->pin(idx), gate->pin_Distance(idx));
 
@@ -1039,7 +1057,25 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    gate->decay_time(decay);
 	    break;
 
-	  case 'X': // Reduction XNOR
+	  case 'A': // Reduction NAND (~&)
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::NAND);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+
+	  case 'X': // Reduction XNOR (~^)
 	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
@@ -1069,6 +1105,10 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.16  2000/01/02 21:45:31  steve
+ *  Add structural reduction NAND,
+ *  Fix size coercion of structural shifts.
+ *
  * Revision 1.15  2000/01/02 19:39:03  steve
  *  Structural reduction XNOR.
  *
