@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.19 2001/03/30 04:55:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.20 2001/03/31 01:59:59 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -65,6 +65,7 @@ struct opcode_table_s {
 };
 
 const static struct opcode_table_s opcode_table[] = {
+      { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -687,6 +688,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.20  2001/03/31 01:59:59  steve
+ *  Add the ADD instrunction.
+ *
  * Revision 1.19  2001/03/30 04:55:22  steve
  *  Add fork and join instructions.
  *

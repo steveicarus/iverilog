@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.7 2001/03/30 04:55:22 steve Exp $
+ *  $Id: opcodes.txt,v 1.8 2001/03/31 01:59:59 steve Exp $
  */
 
 
@@ -13,6 +13,12 @@ operands. In no case are there more then 3 operands. This chapter
 describes the specific behavior of each opcode, in hopefully enough
 detail that its complete effect can be predicted.
 
+* %add <bit-l>, <bit-r>, <wid>
+
+This instruction adds the right vector into the left vector, the
+vectors having the width <wid>. If any of the bits of either vector
+are x or z, the result is x. Otherwise, the result is the arithmetic
+sum.
 
 * %assign <var-label>, <delay>, <bit>
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.8 2001/03/30 04:55:22 steve Exp $"
+#ident "$Id: codes.h,v 1.9 2001/03/31 01:59:58 steve Exp $"
 #endif
 
 
@@ -35,6 +35,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * implementation lives in the vthread.cc file so that they have
  * access to the thread context.
  */
+extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
@@ -95,6 +96,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.9  2001/03/31 01:59:58  steve
+ *  Add the ADD instrunction.
+ *
  * Revision 1.8  2001/03/30 04:55:22  steve
  *  Add fork and join instructions.
  *

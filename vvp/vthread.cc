@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.14 2001/03/30 04:55:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.15 2001/03/31 01:59:59 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -129,6 +129,46 @@ void vthread_schedule_list(vthread_t thr)
 	    thr = thr->next;
 	    schedule_vthread(tmp, 0);
       }
+}
+
+bool of_ADD(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      assert(cp->number <= 8*sizeof(unsigned long));
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+      unsigned long lv = 0, rv = 0;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb | rb) & 2)
+		  goto x_out;
+
+	    lv |= lb << idx;
+	    rv |= rb << idx;
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      lv += rv;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+	    lv >>= 1;
+      }
+
+      return true;
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+
+      return true;
 }
 
 bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
@@ -315,6 +355,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.15  2001/03/31 01:59:59  steve
+ *  Add the ADD instrunction.
+ *
  * Revision 1.14  2001/03/30 04:55:22  steve
  *  Add fork and join instructions.
  *
