@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.160 2003/04/23 03:09:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.161 2003/05/23 03:44:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1254,6 +1254,10 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
+		  // Make sure we dont overflow the short index
+		  assert(opa->argv[idx].numb
+			 < (1<<(8*sizeof(code->bit_idx[0]))));
+
 		  code->bit_idx[0] = opa->argv[idx].numb;
 		  break;
 
@@ -1262,6 +1266,10 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			yyerror("operand format");
 			break;
 		  }
+
+		  // Make sure we dont overflow the short index
+		  assert(opa->argv[idx].numb
+			 < (1<<(8*sizeof(code->bit_idx[1]))));
 
 		  code->bit_idx[1] = opa->argv[idx].numb;
 		  break;
@@ -1541,6 +1549,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.161  2003/05/23 03:44:34  steve
+ *  Assert that parameters fix into opcode.
+ *
  * Revision 1.160  2003/04/23 03:09:25  steve
  *  VPI Access to named events.
  *
