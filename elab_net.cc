@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.104 2003/01/17 05:48:35 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.105 2003/01/19 00:35:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1458,6 +1458,14 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+
+	    if (parms_[idx] == 0) {
+		  cerr << get_line() << ": error: Empty expressions "
+		       << "not allowed in concatenations." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
 	    nets[idx] = parms_[idx]->elaborate_lnet(des, scope,
 						    implicit_net_ok);
 	    if (nets[idx] == 0)
@@ -2276,6 +2284,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.105  2003/01/19 00:35:39  steve
+ *  Detect null arguments to concatenation operator.
+ *
  * Revision 1.104  2003/01/17 05:48:35  steve
  *  Remove useless variable.
  *

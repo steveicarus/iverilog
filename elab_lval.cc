@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.23 2002/11/21 23:27:51 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.24 2003/01/19 00:35:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -103,6 +103,14 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
       NetAssign_*res = 0;
 
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+
+	    if (parms_[idx] == 0) {
+		  cerr << get_line() << ": error: Empty expressions "
+		       << "not allowed in concatenations." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope);
 
 	      /* If the l-value doesn't elaborate, the error was
@@ -329,6 +337,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.24  2003/01/19 00:35:39  steve
+ *  Detect null arguments to concatenation operator.
+ *
  * Revision 1.23  2002/11/21 23:27:51  steve
  *  Precalculate indices to l-value arrays.
  *
