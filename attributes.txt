@@ -1,0 +1,49 @@
+
+ATTRIBUTES TO CONTROL SYNTHESIS
+
+The following is a summary of Verilog attributes that Icarus Verilog
+understands within Verilog source files to control synthesis
+behavior. This section documents generic synthesis attributes. For
+target specific attributes, see target specific documentation.
+
+These attributes only effect the behavior of the synthesizer. For
+example, the ivl_combinational will not generate an error message
+if the Verilog is being compiled for simulation. (It may generate a
+warning.)
+
+
+* Attributes for "always" and "initial" statements
+
+(* ivl_combinational *)
+
+    This attribute tells the compiler that the statement models
+    combinational logic. If the compiler finds that it cannot make
+    combinational logic out of a marked always statement, it will
+    report an error.
+
+    This attribute can be used to prevent accidentally inferring
+    latches or flip-flops where the user intended combinational
+    logic.
+
+(* ivl_synthesis_on *)
+
+    This attribute tells the compiler that the marked always statement
+    is synthesizeable. The compiler will attempt to synthesize the
+    code in the marked "always" statement. If it cannot in any way
+    synthesize it, then it will report an error.
+
+(* ivl_synthesis_off *)
+
+    If this value is attached to an "always" statement, then the
+    compiler will *not* synthesize the "always" statment. This can be
+    used, for example, to mark embedded test bench code.
+
+
+* Attributes for signals (wire/reg/integer/tri/etc.)
+
+[ none defined yet ]
+
+
+* Other Attributes
+
+[ none defined yet ]
