@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.33 2001/07/01 23:43:58 steve Exp $
+ *  $Id: README.txt,v 1.34 2001/07/04 22:59:04 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -466,6 +466,18 @@ Whereas the arithmetic statements create an array of functor outputs,
 there is only one useful functor output for the comparators. That
 functor output is 1 of the comparison is true, 0 if false, and x
 otherwise.
+
+
+STRUCTURAL SHIFTER STATEMENTS:
+
+Variable shifts in structural context are implemented with .shift
+statements:
+
+	<label> .shift/sl <wid>, <symbols_list>;
+
+The shifter has a width that defines the number of outputs and the
+number of data inputs. The first <wid> symbols in the <symbols_list>
+gives the input data. The remaining hold the shift value, lsb first.
 
 
 THREAD STATEMENTS:
