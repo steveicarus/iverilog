@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.10 2001/09/29 20:55:42 steve Exp $"
+#ident "$Id: memory.cc,v 1.11 2001/10/14 01:36:12 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -217,17 +217,21 @@ void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val)
 // Utilities
 
 inline static 
+vvp_memory_bits_t get_word_ix(vvp_memory_t mem, unsigned idx)
+{
+  return mem->bits + idx*mem->fwidth;
+}
+
+inline static 
 vvp_memory_bits_t get_word(vvp_memory_t mem, int addr)
 {
-  // Compute the word index into the bits array.
-  
   assert(mem->a_idxs==1);
   unsigned waddr = addr - mem->a_idx[0].first;
   
   if (waddr >= mem->size)
     return 0x0;
   
-  return mem->bits + waddr*mem->fwidth;
+  return get_word_ix(mem, waddr);
 }
 
 inline static
@@ -289,11 +293,9 @@ bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
   else
     addr->cur_addr &=~ (1<<abit);
 
-  bool r = addr->cur_addr != old;
-  if (r)
-    addr->cur_bits = get_word(addr->mem, addr->cur_addr);
+  addr->cur_bits = get_word(addr->mem, addr->cur_addr);
 
-  return r;
+  return addr->cur_addr != old;
 }
 
 static
@@ -309,15 +311,14 @@ void update_addr(vvp_memory_port_t addr)
 }
 
 inline static
-void update_data(vvp_memory_port_t data, 
-		 vvp_memory_bits_t bits)
+void update_data(vvp_memory_port_t data)
 {
   assert(data);
   for (unsigned i=0; i < data->nbits; i++)
     {
       vvp_ipoint_t dx = ipoint_index(data->ix, i);
       functor_t df = functor_index(dx);
-      unsigned char out = get_bit(bits, i + data->bitoff);
+      unsigned char out = get_bit(data->cur_bits, i + data->bitoff);
       if (out != df->oval)
 	{
 	  df->oval = out;
@@ -327,13 +328,16 @@ void update_data(vvp_memory_port_t data,
 }
 
 static
-void update_data_ports(vvp_memory_t mem, int addr, int bit, 
+void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit, 
 		       unsigned char val)
 {
+  if (!bits)
+    return;
+
   vvp_memory_port_t a = mem->addr_root;
   while (a)
     {
-      if (addr == a->cur_addr)
+      if (bits == a->cur_bits)
 	{
 	  unsigned i = bit - a->bitoff;
 	  if (i < a->nbits)
@@ -354,6 +358,9 @@ void update_data_ports(vvp_memory_t mem, int addr, int bit,
 static inline
 void write_event(vvp_memory_port_t p)
 {
+  if (!p->cur_bits)
+    return;
+
   unsigned we = functor_get_input(p->ix + p->naddr + 1);
   if (!we)
     return;
@@ -370,7 +377,7 @@ void write_event(vvp_memory_port_t p)
 	      set_bit(p->cur_bits, i + p->bitoff, 2);
 	      val = 2;
 	    }
-	  update_data_ports(p->mem, p->cur_addr, i + p->bitoff, val);
+	  update_data_ports(p->mem, p->cur_bits, i + p->bitoff, val);
 	}
     }
 }
@@ -380,7 +387,7 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, functor_t f, bool push)
   if (i < ix+naddr)
     {
       if (update_addr_bit(this, i))
-	update_data(this, cur_bits);
+	update_data(this);
     }
 
   // An event at ix+naddr always sets the value 0, and triggeres a write.
@@ -406,7 +413,10 @@ void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
   if (!set_bit(mem->bits, idx, val))
     return;
 
-  update_data_ports(mem, idx/(4*mem->fwidth), idx%(4*mem->fwidth), val);
+  unsigned widx = idx/(4*mem->fwidth);
+  unsigned bidx = idx%(4*mem->fwidth);
+
+  update_data_ports(mem, get_word_ix(mem, widx), bidx, val);
 }
 
 // %load/mem
