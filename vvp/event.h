@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.h,v 1.2 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: event.h,v 1.3 2002/07/17 18:30:01 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -65,6 +65,7 @@ const event_functor_s::edge_t vvp_edge_none = 0;
 struct named_event_functor_s  : public waitable_hooks_s, public functor_s {
 
     public:
+      explicit named_event_functor_s();
       ~named_event_functor_s();
       void set(vvp_ipoint_t ipt, bool push, unsigned val, unsigned str =0);
 
@@ -79,6 +80,9 @@ struct callback_functor_s *vvp_fvector_make_callback
 
 /*
  * $Log: event.h,v $
+ * Revision 1.3  2002/07/17 18:30:01  steve
+ *  Fix uninitialized thread pointer in named event.
+ *
  * Revision 1.2  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *

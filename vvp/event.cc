@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.8 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: event.cc,v 1.9 2002/07/17 18:30:01 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -88,6 +88,11 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		    //schedule_assign(out, 0, 0);
 	    }
       }
+}
+
+named_event_functor_s::named_event_functor_s()
+{
+      threads = 0;
 }
 
 named_event_functor_s::~named_event_functor_s()
@@ -184,6 +189,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.9  2002/07/17 18:30:01  steve
+ *  Fix uninitialized thread pointer in named event.
+ *
  * Revision 1.8  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *
