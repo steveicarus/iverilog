@@ -307,8 +307,10 @@ Williams. The proper notices are in the head of each file. However,
 I have received aid in the form of fixes, Verilog guidance, and
 especially testing from many people, including (in alphabetical order):
 
+	Eric Aardoom <eric_aardoom@yahoo.com>
 	Ed Carter <r47652@email.sps.mot.com>
 	Larry Doolittle <LRDoolittle@lbl.gov>
+	Guy Hutchison <ghutchis@pacbell.net>
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
 	Peter Monta <pmonta@halibut.imedia.com>

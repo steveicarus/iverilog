@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.55 1999/10/01 03:58:37 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.56 1999/10/01 15:26:28 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -316,8 +316,20 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	    os_ << "vvm_unop_and(" << result << ");"
 		<< endl;
 	    break;
+	  case '^':
+	    os_ << "vvm_unop_xor(" << result << ");"
+		<< endl;
+	    break;
 	  case '!':
 	    os_ << "vvm_unop_lnot(" << result << ");"
+		<< endl;
+	    break;
+	  case '-':
+	    os_ << "vvm_unop_uminus(" << result << ");"
+		<< endl;
+	    break;
+	  case 'X':
+	    os_ << "vvm_unop_xnor(" << result << ");"
 		<< endl;
 	    break;
 	  default:
@@ -1669,6 +1681,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.56  1999/10/01 15:26:28  steve
+ *  Add some vvm operators from Eric Aardoom.
+ *
  * Revision 1.55  1999/10/01 03:58:37  steve
  *  More resilient assignment to memory location.
  *

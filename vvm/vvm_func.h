@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.12 1999/09/29 22:57:26 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.13 1999/10/01 15:26:29 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -83,6 +83,44 @@ vvm_bitset_t<1> vvm_unop_lnot(const vvm_bitset_t<WIDTH>&r)
 {
       vvm_bitset_t<1> res = vvm_unop_or(r);
       return vvm_unop_not(res);
+}
+
+/*
+ * The unary XOR is the reduction XOR. It returns a single bit.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_xor(const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<1> res;
+      res[0] = V0;
+
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+	    if (r[idx] == V1)
+		  res[0] = not(res[0]);
+      }
+
+      return res;
+}
+
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_xnor(const vvm_bitset_t<WIDTH>&r)
+{
+     return not(vvm_unop_xor(r));
+}
+
+//
+// simple-minded unary minus operator (two's complement)
+//
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_unop_uminus(const vvm_bitset_t<WIDTH>&l)
+{
+      vvm_bitset_t<WIDTH> res;
+      res = vvm_unop_not(l);
+      vvm_bit_t carry = V1;
+      for (int i = 0; i < WIDTH; i++)
+	    res[i] = add_with_carry(res[i], V0, carry);
+
+      return res;
 }
 
 /*
@@ -161,6 +199,40 @@ vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    result[idx] = l[idx] ^ r[idx];
+
+      return result;
+}
+
+/*
+ * the binary 'l' operator is a logic left-shift by the number of positions
+ * indicated by argument r. r is an unsigned integer, which is represented
+ * internally as a 32-bit bitvector.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
+				  const vvm_bitset_t<32>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      vvm_u32 s = r.as_unsigned();
+      for (unsigned idx = 0; idx < WIDTH; idx++)
+	    result[idx] = (idx < s) ? V0 : l[idx-s];
+ 
+      return result;
+}
+
+/*
+ * The binary 'r' operator is a logic right-shift by the number of positions
+ * indicated by argument r. r is an unsigned integer, which is represented
+ * internally by a 32-bit bitvector.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_shiftr(const vvm_bitset_t<WIDTH>&l,
+				  const vvm_bitset_t<32>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      vvm_u32 s = r.as_unsigned();
+      for (unsigned idx = 0; idx < WIDTH; idx++)
+	    result[idx] = (idx < (WIDTH-s)) ? l[idx+s] : V0;
 
       return result;
 }
@@ -529,6 +601,9 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.13  1999/10/01 15:26:29  steve
+ *  Add some vvm operators from Eric Aardoom.
+ *
  * Revision 1.12  1999/09/29 22:57:26  steve
  *  LT supports different width objects.
  *
