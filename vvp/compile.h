@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.67 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: compile.h,v 1.68 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -86,7 +86,7 @@ extern void compile_vpi_time_precision(long pre);
  * to existing functors to manage the linking.
  */
 extern void compile_functor(char*label, char*type,
-			    vvp_delay_t delay, unsigned ostr0,
+			    vvp_delay_t*delay, unsigned ostr0,
 			    unsigned ostr1,
 			    unsigned argc, struct symb_s*argv);
 
@@ -202,7 +202,7 @@ extern void compile_udp_def(int sequ, char*label, char *name,
 			    unsigned nin, unsigned init, char **table);
 
 extern void compile_udp_functor(char*label, char*type,
-				vvp_delay_t delay,
+				vvp_delay_t*delay,
 				unsigned argc, struct symb_s*argv);
 
 extern char **compile_udp_table(char **table, char *row);
@@ -310,6 +310,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.68  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.67  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

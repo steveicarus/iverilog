@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.27 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: udp.cc,v 1.28 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -172,10 +172,14 @@ void vvp_udp_s::compile_table(char**tab)
       assert(nrows1 == nlevels1_);
 }
 
-vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def)
+vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net,
+				   vvp_udp_s*def,
+				   vvp_delay_t*del)
 : vvp_wide_fun_core(net, def->port_count())
 {
       def_ = def;
+      delay_ = del;
+      cur_out_ = BIT4_X;
 	// Assume initially that all the inputs are 1'bx
       current_.mask0 = 0;
       current_.mask1 = 0;
@@ -212,10 +216,16 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
 	    break;
       }
 
+      vvp_bit4_t out_bit = def_->test_levels(current_);
       vvp_vector4_t out (1);
-      out.set_bit(0, def_->test_levels(current_));
+      out.set_bit(0, out_bit);
 
-      propagate_vec4(out);
+      if (delay_)
+	    propagate_vec4(out, delay_->get_delay(cur_out_, out_bit));
+      else
+	    propagate_vec4(out);
+
+      cur_out_ = out_bit;
 }
 
 
@@ -225,7 +235,7 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
  * netlist. The definition should be parsed already.
  */
 void compile_udp_functor(char*label, char*type,
-			 vvp_delay_t delay,
+			 vvp_delay_t*delay,
 			 unsigned argc, struct symb_s*argv)
 {
       struct vvp_udp_s *def = udp_find(type);
@@ -233,7 +243,7 @@ void compile_udp_functor(char*label, char*type,
       free(type);
 
       vvp_net_t*ptr = new vvp_net_t;
-      vvp_udp_fun_core*core = new vvp_udp_fun_core(ptr, def);
+      vvp_udp_fun_core*core = new vvp_udp_fun_core(ptr, def, delay);
       ptr->fun = core;
       define_functor_symbol(label, ptr);
       free(label);
@@ -244,6 +254,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.28  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.27  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

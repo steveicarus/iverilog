@@ -16,9 +16,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.20 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.21 2005/04/03 05:45:51 steve Exp $"
 
 # include  "vvp_net.h"
+# include  "schedule.h"
 # include  <stdio.h>
 # include  <typeinfo>
 # include  <assert.h>
@@ -785,7 +786,6 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 
 vvp_wide_fun_core::vvp_wide_fun_core(vvp_net_t*net, unsigned nports)
 {
-      delay_ = 0;
       ptr_ = net;
       nports_ = nports;
       port_values_ = new vvp_vector4_t [nports_];
@@ -796,15 +796,11 @@ vvp_wide_fun_core::~vvp_wide_fun_core()
       delete[]port_values_;
 }
 
-void vvp_wide_fun_core::set_output_delay(vvp_time64_t delay)
+void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
+				       vvp_time64_t delay)
 {
-      delay_ = delay;
-}
-
-void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit)
-{
-      if (delay_)
-	    schedule_assign_vector(ptr_->out, bit, delay_);
+      if (delay)
+	    schedule_assign_vector(ptr_->out, bit, delay);
       else
 	    vvp_send_vec4(ptr_->out, bit);
 }
@@ -1242,6 +1238,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.21  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.20  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

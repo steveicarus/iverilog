@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.19 2005/02/12 22:50:52 steve Exp $"
+#ident "$Id: logic.cc,v 1.20 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -225,7 +225,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
  */
 
 void compile_functor(char*label, char*type,
-		     vvp_delay_t delay, unsigned ostr0, unsigned ostr1,
+		     vvp_delay_t*delay, unsigned ostr0, unsigned ostr1,
 		     unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t* obj = 0;
@@ -314,6 +314,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.20  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.19  2005/02/12 22:50:52  steve
  *  Implement the vvp_fun_muxz functor.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pointers.h,v 1.10 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: pointers.h,v 1.11 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 /*
@@ -102,13 +102,14 @@ typedef struct vthread_s*vthread_t;
 
 typedef struct vvp_fvector_s *vvp_fvector_t;
 
-/* delay object */
-
-typedef struct vvp_delay_s *vvp_delay_t;
-
+/* Forward declarations. */
+class vvp_delay_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.11  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.10  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *

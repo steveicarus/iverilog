@@ -1,7 +1,7 @@
-#ifndef __delay_H                                      /* -*- c++ -*- */
+#ifndef __delay_H
 #define __delay_H
 /*
- * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
+ * Copyright 2005 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,112 +19,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.4 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: delay.h,v 1.5 2005/04/03 05:45:51 steve Exp $"
 #endif
 
-#include "pointers.h"
+/*
+ */
+
+# include  "vvp_net.h"
 
 /*
-**  vvp_delay_t del;
-**
-**  del = vvp_delay_new(n, dels);
-**         make a delay from n delay specs in array dels.
-**         n = 0, 1, 2, 3, 6, 12.
-**
-**  unsigned vvp_delay_get(del, from, to);
-**         tells the delay for the edge (from->to).
-**
-**  del = NULL;
-**         new delay with zero delay.
-**
-**  del = new vvp_delay_s(delay);
-**         new delay with one spec for all edges.
-**
-**  del = new vvp_delay_2_s(delay, delay);
-**         new delay with two specs for rise and fall delays.
-**
-**  del = new vvp_delay_3_s(delay);
-**         new delay with three specs for rise, fall, and highz delays.
-**
-**  del = new vvp_delay_6_s(delay, del...);
-**         new delay with six specs for all 01z edge delays.
-**
-**  del = new vvp_delay_12_s(delay, del...);
-**         new delay with twelve specs for all edge delays.
-**
-**  void vvp_delsy_delete(del);
-**         delete a delay.
-**
-**  del = vvp_delay_add(del1, del2);
-**         add the delay spaces.  del1 and del2 are deleted.
-**
-**  del = vvp_delay_set(tgt, src, mask);
-**         set then non-masked edges of delay tgt from src.
-**         tgt and src are deleted.
-*/
+ * Instances of this object are functions that calculate the delay for
+ * the transition from the source vvp_bit4_t value to the destination
+ * value.
+ */
+class vvp_delay_t {
 
-struct vvp_delay_s {
-      vvp_delay_s(unsigned);
-      unsigned delay(unsigned char idx) { return del[tab[idx]]; }
-      unsigned size() { return tab[14]+1; }
-    protected:
-      vvp_delay_s(const unsigned char *t);
-    private:
-      unsigned char tab[16];
     public:
-      unsigned del[1];
+      vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall);
+      vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall, vvp_time64_t decay);
+      ~vvp_delay_t();
+
+      vvp_time64_t get_delay(vvp_bit4_t from, vvp_bit4_t to);
+
+    private:
+      vvp_time64_t rise_, fall_, decay_;
+      vvp_time64_t min_delay_;
 };
-
-struct vvp_delay_2_s : public vvp_delay_s {
-      vvp_delay_2_s(unsigned, unsigned);
-      unsigned dell[4-1];
-};
-
-struct vvp_delay_3_s : public vvp_delay_s  {
-      vvp_delay_3_s(unsigned, unsigned, unsigned);
-      unsigned dell[6-1];
-};
-
-struct vvp_delay_12_s : public vvp_delay_s {
-      vvp_delay_12_s(unsigned, unsigned, unsigned,
-		     unsigned, unsigned, unsigned,
-		     unsigned, unsigned, unsigned,
-		     unsigned, unsigned, unsigned);
-      unsigned dell[12-1];
-};
-
-struct vvp_delay_6_s : public vvp_delay_12_s  {
-      vvp_delay_6_s(unsigned, unsigned, unsigned,
-		    unsigned, unsigned, unsigned);
-};
-
-inline static
-unsigned vvp_delay_get(vvp_delay_t del, unsigned char oval, unsigned char nval)
-{
-      unsigned char idx = nval | (oval << 2);
-      return del->delay(idx);
-}
-
-vvp_delay_t vvp_delay_new(unsigned n, unsigned *dels);
-void vvp_delay_delete(vvp_delay_t);
-vvp_delay_t vvp_delay_add(vvp_delay_t, vvp_delay_t);
-vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src,
-			  unsigned mask = 0);
 
 /*
-** $Log: delay.h,v $
-** Revision 1.4  2004/10/04 01:10:59  steve
-**  Clean up spurious trailing white space.
-**
-** Revision 1.3  2002/08/12 01:35:08  steve
-**  conditional ident string using autoconfig.
-**
-** Revision 1.2  2001/12/06 03:31:24  steve
-**  Support functor delays for gates and UDP devices.
-**  (Stephan Boettcher)
-**
-** Revision 1.1  2001/11/10 18:07:11  steve
-**  Runtime support for functor delays. (Stephan Boettcher)
-**
-*/
+ * $Log: delay.h,v $
+ * Revision 1.5  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
+ */
 #endif // __delay_H

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.70 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: parse.y,v 1.71 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -53,7 +53,7 @@ extern FILE*yyin;
       struct argv_s argv;
       vpiHandle vpi;
 
-      vvp_delay_t cdelay;
+      vvp_delay_t*cdelay;
 };
 
 
@@ -653,11 +653,11 @@ delay
 	: /* empty */
 		{ $$ = 0; }
 	| '(' T_NUMBER ')'
-		{ $$ = new vvp_delay_2_s($2, $2); }
+		{ $$ = new vvp_delay_t($2, $2); }
 	| '(' T_NUMBER ',' T_NUMBER ')'
-		{ $$ = new vvp_delay_2_s($2, $4); }
+		{ $$ = new vvp_delay_t($2, $4); }
 	| '(' T_NUMBER ',' T_NUMBER ',' T_NUMBER ')'
-		{ $$ = new vvp_delay_3_s($2, $4, $6); }
+		{ $$ = new vvp_delay_t($2, $4, $6); }
 	;
 
 %%
@@ -679,6 +679,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.71  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.70  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

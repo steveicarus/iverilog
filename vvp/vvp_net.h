@@ -18,9 +18,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.20 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.21 2005/04/03 05:45:51 steve Exp $"
 
 # include  <stdio.h>
+# include  "config.h"
 # include  <assert.h>
 
 
@@ -36,6 +37,8 @@ class  vvp_net_fun_t;
 class  vvp_fun_concat;
 class  vvp_fun_drive;
 class  vvp_fun_part;
+
+class  vvp_delay_t;
 
 /*
  * This is the set of Verilog 4-value bit values. Scalars have this
@@ -632,10 +635,8 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
       vvp_wide_fun_core(vvp_net_t*net, unsigned nports);
       virtual ~vvp_wide_fun_core();
 
-      void set_output_delay(vvp_time64_t delay);
-
     protected:
-      void propagate_vec4(const vvp_vector4_t&bit);
+      void propagate_vec4(const vvp_vector4_t&bit, vvp_time64_t delay =0);
       unsigned port_count() const;
       vvp_vector4_t& value(unsigned);
 
@@ -648,8 +649,6 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
       void dispatch_vec4_from_input_(unsigned port, vvp_vector4_t bit);
 
     private:
-	// Propagation delay, if any, for the output from the device.
-      vvp_time64_t delay_;
 	// Back-point to the vvp_net_t that points to me.
       vvp_net_t*ptr_;
 	// Structure to track the input values from the input functors.
@@ -679,6 +678,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.21  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.20  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

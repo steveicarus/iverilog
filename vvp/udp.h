@@ -22,10 +22,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.15 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: udp.h,v 1.16 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 # include  <vvp_net.h>
+# include  <delay.h>
 
 /*
  * The vvp_udp_s instance represents a *definition* of a
@@ -97,13 +98,15 @@ struct vvp_udp_s *udp_find(const char *label);
 class vvp_udp_fun_core  : public vvp_wide_fun_core {
 
     public:
-      vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def);
+      vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def, vvp_delay_t*del);
       ~vvp_udp_fun_core();
 
       void recv_vec4_from_inputs(unsigned);
 
     private:
       vvp_udp_s*def_;
+      vvp_delay_t*delay_;
+      vvp_bit4_t cur_out_;
       udp_levels_table current_;
 };
 
@@ -111,6 +114,9 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core {
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.16  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.15  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

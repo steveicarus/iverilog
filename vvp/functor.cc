@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.45 2005/03/06 17:25:03 steve Exp $"
+#ident "$Id: functor.cc,v 1.46 2005/04/03 05:45:51 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -113,7 +113,7 @@ void functor_define(vvp_ipoint_t point, functor_t obj)
       functor_list[index1][index2] = obj;
 }
 
-
+#if 0
 functor_s::functor_s()
 {
       delay = 0;
@@ -131,6 +131,7 @@ functor_s::functor_s()
       cstr = StX;
       inhibit = 0;
 }
+#endif
 
 functor_s::~functor_s()
 {
@@ -224,6 +225,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.46  2005/04/03 05:45:51  steve
+ *  Rework the vvp_delay_t class.
+ *
  * Revision 1.45  2005/03/06 17:25:03  steve
  *  Remove dead code from scheduler.
  *
