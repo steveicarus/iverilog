@@ -17,11 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_nex_output.cc,v 1.1 2002/06/30 02:21:32 steve Exp $"
-#endif
-
-#if !defined(WINNT)
-#ident "$Id: net_nex_output.cc,v 1.1 2002/06/30 02:21:32 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.2 2002/07/01 00:54:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,23 +36,38 @@ void NetProc::nex_output(NexusSet&out)
 	   << endl;
 }
 
-void NetAssign::nex_output(NexusSet&out)
+void NetAssignBase::nex_output(NexusSet&out)
 {
-      cerr << get_line()
-	   << ": internal error: NetProc::nex_output not implemented"
-	   << endl;
+      NetNet*lsig = lval_->sig();
+      assert(lsig);
+      assert(lval_->more == 0);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+	    out.add(lsig->pin(idx).nexus());
+
 }
 
 void NetCondit::nex_output(NexusSet&out)
 {
-      cerr << get_line()
-	   << ": internal error: NetProc::nex_output not implemented"
-	   << endl;
+      if (if_ != 0)
+	    if_->nex_output(out);
+      if (else_ != 0)
+	    else_->nex_output(out);
 }
 
+void NetEvWait::nex_output(NexusSet&out)
+{
+      assert(statement_);
+      statement_->nex_output(out);
+}
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.2  2002/07/01 00:54:21  steve
+ *  synth_asych of if/else requires redirecting the target
+ *  if sub-statements. Use NetNet objects to manage the
+ *  situation.
+ *
  * Revision 1.1  2002/06/30 02:21:32  steve
  *  Add structure for asynchronous logic synthesis.
  *

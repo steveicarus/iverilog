@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.248 2002/06/30 02:21:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.249 2002/07/01 00:54:21 steve Exp $"
 #endif
 
 /*
@@ -1204,7 +1204,8 @@ class NetProc : public LineInfo {
       virtual bool is_asynchronous();
 
 	// synthesize as asynchronous logic, and return true.
-      virtual bool synth_async(Design*, NetScope*scope);
+      virtual bool synth_async(Design*des, NetScope*scope,
+			       const NetNet*nex_map, NetNet*nex_out);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1312,12 +1313,15 @@ class NetAssignBase : public NetProc {
       const NetExpr* get_delay() const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&o);
+
 
 	// This returns the total width of the accumulated l-value. It
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
 
-      bool synth_async(Design*des, NetScope*scope);
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -1335,8 +1339,6 @@ class NetAssign : public NetAssignBase {
       ~NetAssign();
 
       bool is_asynchronous();
-
-      void nex_output(NexusSet&o);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -1503,7 +1505,8 @@ class NetCondit  : public NetProc {
       virtual void nex_output(NexusSet&o);
 
       bool is_asynchronous();
-      bool synth_async(Design*des, NetScope*scope);
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -1626,6 +1629,8 @@ class NetEvent : public LineInfo {
       NetScope* scope();
       const NetScope* scope() const;
 
+      void nex_output(NexusSet&);
+
 	// Locate the first event that matches my behavior and
 	// monitors the same signals.
       NetEvent* find_similar_event();
@@ -1708,7 +1713,10 @@ class NetEvWait  : public NetProc {
 	// process. This method checks.
       virtual bool is_asynchronous();
 
-      virtual bool synth_async(Design*des, NetScope*scope);
+      virtual void nex_output(NexusSet&out);
+
+      virtual bool synth_async(Design*des, NetScope*scope,
+			       const NetNet*nex_map, NetNet*nex_out);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2985,6 +2993,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.249  2002/07/01 00:54:21  steve
+ *  synth_asych of if/else requires redirecting the target
+ *  if sub-statements. Use NetNet objects to manage the
+ *  situation.
+ *
  * Revision 1.248  2002/06/30 02:21:32  steve
  *  Add structure for asynchronous logic synthesis.
  *
