@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.31 2000/12/10 22:01:35 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.32 2001/01/02 04:21:13 steve Exp $"
 #endif
 
 
@@ -511,7 +511,7 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 	    break;
 	  case '!': // Logical NOT
 	  case '&': // Reduction AND
-	  case '|': // Reduction or
+	  case '|': // Reduction OR
 	  case '^': // Reduction XOR
 	  case 'A': // Reduction NAND (~&)
 	  case 'N': // Reduction NOR (~|)
@@ -529,6 +529,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.32  2001/01/02 04:21:13  steve
+ *  Support a bunch of unary operators in parameter expressions.
+ *
  * Revision 1.31  2000/12/10 22:01:35  steve
  *  Support decimal constants in behavioral delays.
  *

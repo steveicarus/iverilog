@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.17 2001/01/02 03:23:40 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.18 2001/01/02 04:21:14 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -585,18 +585,23 @@ NetExpr* NetETernary::eval_tree()
       return rc;
 }
 
+void NetEUnary::eval_expr_()
+{
+      if (dynamic_cast<NetEConst*>(expr_))
+	    return;
+
+      NetExpr*oper = expr_->eval_tree();
+      if (oper == 0)
+	    return;
+
+      delete expr_;
+      expr_ = oper;
+}
+
 NetEConst* NetEUnary::eval_tree()
 {
+      eval_expr_();
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
-      if (rval == 0) {
-	    NetExpr*oper = expr_->eval_tree();
-	    if (oper == 0) return 0;
-
-	    delete expr_;
-	    expr_ = oper;
-	    rval = dynamic_cast<NetEConst*>(oper);
-      }
-
       if (rval == 0)
 	    return 0;
 
@@ -604,31 +609,11 @@ NetEConst* NetEUnary::eval_tree()
 
       switch (op_) {
 
-	  case '!': {
-		  /* Evaluate the unary logical not by first scanning
-		     the operand value for V1 and Vx bits. If we find
-		     any V1 bits we know that the value is TRUE, so
-		     the result of ! is V0. If there are no V1 bits
-		     but there are some Vx/Vz bits, the result is
-		     unknown. Otherwise, the result is V1. */
-		unsigned v1 = 0, vx = 0;
-		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
-		      switch (val.get(idx)) {
-			  case verinum::V0:
-			    break;
-			  case verinum::V1:
-			    v1 += 1;
-			    break;
-			  default:
-			    vx += 1;
-			    break;
-		      }
-		}
-		verinum out(v1? verinum::V0 : (vx? verinum::Vx : verinum::V1));
-		return new NetEConst(out);
-	  }
 
 	  case '~': {
+		  /* Bitwise not is even simpler then logical
+		     not. Just invert all the bits of the operand and
+		     make the new value with the same dimensions. */
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
 		      switch (val.get(idx)) {
 			  case verinum::V0:
@@ -656,9 +641,69 @@ NetEConst* NetEUBits::eval_tree()
       return NetEUnary::eval_tree();
 }
 
+NetEConst* NetEUReduce::eval_tree()
+{
+      eval_expr_();
+      NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
+      if (rval == 0)
+	    return 0;
+
+      verinum val = rval->value();
+      verinum::V res;
+
+      switch (op_) {
+
+	  case '!': {
+		  /* Evaluate the unary logical not by first scanning
+		     the operand value for V1 and Vx bits. If we find
+		     any V1 bits we know that the value is TRUE, so
+		     the result of ! is V0. If there are no V1 bits
+		     but there are some Vx/Vz bits, the result is
+		     unknown. Otherwise, the result is V1. */
+		unsigned v1 = 0, vx = 0;
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+		      switch (val.get(idx)) {
+			  case verinum::V0:
+			    break;
+			  case verinum::V1:
+			    v1 += 1;
+			    break;
+			  default:
+			    vx += 1;
+			    break;
+		      }
+		}
+
+		res = v1? verinum::V0 : (vx? verinum::Vx : verinum::V1);
+	  }
+
+	  case '&': {
+		res = verinum::V1;
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		      res = res & val.get(idx);
+		break;
+	  }
+
+	  case '|': {
+		res = verinum::V0;
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		      res = res | val.get(idx);
+		break;
+	  }
+
+	  default:
+	    return 0;
+      }
+
+      return new NetEConst(verinum(res, 1));
+}
+
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.18  2001/01/02 04:21:14  steve
+ *  Support a bunch of unary operators in parameter expressions.
+ *
  * Revision 1.17  2001/01/02 03:23:40  steve
  *  Evaluate constant &, | and unary ~.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.189 2001/01/02 03:23:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.190 2001/01/02 04:21:14 steve Exp $"
 #endif
 
 /*
@@ -2423,6 +2423,8 @@ class NetEUnary  : public NetExpr {
     protected:
       char op_;
       NetExpr* expr_;
+
+      void eval_expr_();
 };
 
 class NetEUBits : public NetEUnary {
@@ -2443,6 +2445,7 @@ class NetEUReduce : public NetEUnary {
       ~NetEUReduce();
 
       virtual NetNet* synthesize(Design*);
+      virtual NetEConst* eval_tree();
 
 };
 
@@ -2840,6 +2843,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.190  2001/01/02 04:21:14  steve
+ *  Support a bunch of unary operators in parameter expressions.
+ *
  * Revision 1.189  2001/01/02 03:23:40  steve
  *  Evaluate constant &, | and unary ~.
  *

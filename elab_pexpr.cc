@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.6 2000/12/16 19:03:30 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.7 2001/01/02 04:21:13 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -168,12 +168,25 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    tmp = new NetEUBits(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+	  case '!': // Logical NOT
+	  case '&': // Reduction AND
+	  case '|': // Reduction OR
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    tmp = new NetEUReduce(op_, ip);
+	    tmp->set_line(*this);
+	    break;
       }
       return tmp;
 }
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.7  2001/01/02 04:21:13  steve
+ *  Support a bunch of unary operators in parameter expressions.
+ *
  * Revision 1.6  2000/12/16 19:03:30  steve
  *  Evaluate <= and ?: in parameter expressions (PR#81)
  *
