@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.183 2003/08/26 16:26:01 steve Exp $"
+#ident "$Id: parse.y,v 1.184 2003/08/31 21:14:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -149,7 +149,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
 %token K_wor K_xnor K_xor
-%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth K_Ssetuphold
+%token K_Shold K_Speriod K_Srecovery K_Srecrem K_Ssetup K_Swidth K_Ssetuphold
 
 %token KK_attribute
 
@@ -2193,6 +2193,11 @@ specify_item
 		{ delete $7;
 		}
 	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' expression spec_notifier_opt ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
+	| K_Srecrem '(' spec_reference_event ',' spec_reference_event
 	  ',' expression ',' expression spec_notifier_opt ')' ';'
 		{ delete $7;
 		  delete $9;

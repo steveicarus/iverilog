@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.84 2003/08/28 04:11:18 steve Exp $"
+#ident "$Id: lexor.lex,v 1.85 2003/08/31 21:14:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -224,6 +224,8 @@ W [ \t\b\f\r]+
 	    return K_Speriod;
       if (strcmp(yytext,"$recovery") == 0)
 	    return K_Srecovery;
+      if (strcmp(yytext,"$recrem") == 0)
+	    return K_Srecrem;
       if (strcmp(yytext,"$setup") == 0)
 	    return K_Ssetup;
       if (strcmp(yytext,"$width") == 0)
