@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.60 2000/04/23 21:15:07 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.61 2000/05/08 05:27:32 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -828,7 +828,7 @@ class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_nexus::drive_t {
       explicit vvm_bufz();
       ~vvm_bufz();
 
-      void init(unsigned idx, vpip_bit_t val);
+      void init_I(unsigned idx, vpip_bit_t val);
 
     private:
       void take_value(unsigned, vpip_bit_t val);
@@ -930,6 +930,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.61  2000/05/08 05:27:32  steve
+ *  Restore vvm_bufz to working condition.
+ *
  * Revision 1.60  2000/04/23 21:15:07  steve
  *  Emit code for the bufif devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.13 2000/04/23 21:15:07 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.14 2000/05/08 05:27:32 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -221,7 +221,7 @@ vvm_bufz::~vvm_bufz()
 {
 }
 
-void vvm_bufz::init(unsigned, vpip_bit_t)
+void vvm_bufz::init_I(unsigned, vpip_bit_t)
 {
 }
 
@@ -319,6 +319,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.14  2000/05/08 05:27:32  steve
+ *  Restore vvm_bufz to working condition.
+ *
  * Revision 1.13  2000/04/23 21:15:07  steve
  *  Emit code for the bufif devices.
  *
