@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.21 2001/07/30 02:44:05 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.22 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -108,17 +108,14 @@ struct __vpiSignal {
 	/* Flags */
       unsigned signed_flag  : 1;
 	/* The represented value is here. */
-      vvp_ipoint_t bits;
-	/* Call these items on a callback event. */
-      struct __vpiCallback*callbacks;
-	/* Keep in a binary tree, ordered by bits member. */
-      struct __vpiSignal* by_bits[2];
+      vvp_fvector_t bits;
+        /* This is the callback event finctor object */
+      struct vvp_cb_fobj_s *callback;
 };
 extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
-			       vvp_ipoint_t base);
+			       vvp_fvector_t vec);
 extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
-			       vvp_ipoint_t base);
-extern struct __vpiSignal*vpip_sig_from_ptr(vvp_ipoint_t ptr);
+			       vvp_fvector_t vec);
 
 /*
  * Callback handles are created when the VPI function registers a
@@ -137,8 +134,6 @@ struct __vpiCallback {
 
       struct __vpiCallback*next;
 };
-
-extern void vpip_trip_functor_callbacks(vvp_ipoint_t ptr);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -263,6 +258,10 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.22  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.21  2001/07/30 02:44:05  steve
  *  Cleanup defines and types for mingw compile.
  *

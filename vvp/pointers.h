@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.4 2001/04/26 03:10:55 steve Exp $"
+#ident "$Id: pointers.h,v 1.5 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 /*
@@ -100,8 +100,17 @@ typedef struct vvp_event_s *vvp_event_t;
 
 typedef struct vthread_s*vthread_t;
 
+
+/* vector of functors */
+
+typedef struct vvp_fvector_s *vvp_fvector_t;
+
 /*
  * $Log: pointers.h,v $
+ * Revision 1.5  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.4  2001/04/26 03:10:55  steve
  *  Redo and simplify UDP behavior.
  *

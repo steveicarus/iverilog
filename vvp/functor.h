@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.29 2001/07/28 03:12:39 steve Exp $"
+#ident "$Id: functor.h,v 1.30 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 # include  "pointers.h"
-
 
 /*
  *
@@ -140,9 +139,6 @@ struct functor_s {
       unsigned odrive1    : 3;
 	/* Strength form of the output value. */
       unsigned ostr       : 8;
-	/* set this flag if there might be a waiting callback. 
-	   union member sig must be valid */
-      unsigned callback   : 1; 
 #if defined(WITH_DEBUG)
 	/* True if this functor triggers a breakpoint. */
       unsigned breakpoint : 1;
@@ -152,8 +148,6 @@ struct functor_s {
       unsigned mode       : 2;
       union {
  	    unsigned char old_ival; // mode 3
-	    /* Which signal are we representing */
-	    struct __vpiSignal *sig;
       };
 };
 
@@ -283,6 +277,28 @@ inline unsigned functor_oval(vvp_ipoint_t fptr)
       return fp->oval & 3;
 }
 
+/*
+ * Vectors of functors
+ */
+
+extern unsigned vvp_fvector_size(vvp_fvector_t v);
+extern vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i);
+extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
+extern vvp_fvector_t vvp_fvector_new(unsigned size);
+extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
+
+/*
+ * M42 functor type for callback events
+ */
+
+struct vvp_cb_fobj_s: public vvp_fobj_s {
+      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
+      struct __vpiCallback *cb_handle;
+      unsigned permanent : 1;
+};
+
+struct vvp_cb_fobj_s *vvp_fvector_make_callback(vvp_fvector_t vec,
+						const unsigned char *edge = 0);
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
@@ -300,6 +316,10 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.30  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.29  2001/07/28 03:12:39  steve
  *  Support C<su0> and C<su1> special symbols.
  *

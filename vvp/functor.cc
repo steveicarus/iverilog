@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.25 2001/07/30 03:53:01 steve Exp $"
+#ident "$Id: functor.cc,v 1.26 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -295,15 +295,10 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, unsigned str, bool push)
             if (!fp->obj) {
 		  ptr = fp->out;
 		  fp = functor_index(ptr);
+		  assert(fp->mode == M42);
 	    }
-	    assert(fp->mode == M42);
 	    fp->obj->set(ptr, fp, push);
 	    break;
-      }
-
-      if (fp->callback) {
-	    fp->callback = 0;
-	    vpip_trip_functor_callbacks(ptr);
       }
 
 #if defined(WITH_DEBUG)
@@ -375,6 +370,10 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.26  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.25  2001/07/30 03:53:01  steve
  *  Initialize initial functor tables.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.4 2001/07/13 03:02:34 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.5 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 /*
@@ -30,9 +30,10 @@
 # include  <vpi_user.h>
 # include  "vpi_priv.h"
 # include  "schedule.h"
+# include  "functor.h"
 # include  <stdio.h>
 # include  <assert.h>
-
+# include  <malloc.h>
 
 const struct __vpirt callback_rt = {
       vpiCallback,
@@ -63,22 +64,65 @@ inline static struct __vpiCallback* new_vpi_callback()
       return obj;
 }
 
-#if 1
-
 inline static void free_vpi_callback(struct __vpiCallback* obj)
 {
       obj->next = free_callback_root;
       free_callback_root = obj;
 }
 
-#else
+/*
+ * A signal get equipped with an M42 event functor to trigger 
+ * callbacks.
+ */
 
-inline static void free_vpi_callback(struct __vpiCallback* obj)
+struct vvp_cb_fobj_s *vvp_fvector_make_callback(vvp_fvector_t vec,
+						const unsigned char *edge)
 {
-      delete obj;
-}
+      struct vvp_cb_fobj_s *obj = new vvp_cb_fobj_s;
+      unsigned nvec = vvp_fvector_size(vec);
+      unsigned nfun = (nvec+3)/4;
 
+      if (edge)
+	    nfun ++ ;
+      else if (nfun > 1  &&  4*nfun == nvec)
+	    nfun ++;
+      
+      vvp_ipoint_t fdx = functor_allocate(nfun);
+      unsigned vi = 0;
+      for (unsigned i = 0; i<nfun; i++) {
+	    vvp_ipoint_t ipt = ipoint_index(fdx, i);
+	    functor_t fu = functor_index(ipt);
+	    fu->ival = 0xaa;
+	    fu->oval = 2;
+	    fu->odrive0 = 6;
+	    fu->odrive0 = 6;
+	    fu->out  = 0;
+#if defined(WITH_DEBUG)
+	    fu->breakpoint = 0;
 #endif
+	    if (i == nfun-1) {
+		  fu->mode = M42;
+		  fu->obj = obj;
+	    } else {
+		  fu->mode = edge ? 1 : 2;
+		  fu->event = (struct vvp_event_s*) 
+			malloc(sizeof (struct vvp_event_s));
+		  fu->event->threads = 0;
+		  fu->event->ival = fu->ival;
+		  fu->event->vvp_edge_tab = edge;
+		  fu->out = ipoint_input_index(ipoint_index(fdx, nfun-1), 3);
+	    }
+	    for (unsigned j=0; j<4 && vi < nvec; j++, vi++) {
+		  vvp_ipoint_t vipt = vvp_fvector_get(vec, vi);
+		  functor_t vfu = functor_index(vipt);
+		  fu->port[j] = vfu->out;
+		  vfu->out = ipoint_input_index(ipt, j);
+	    }
+      }
+      obj->permanent = 0;
+      obj->cb_handle = 0;
+      return obj;
+}
 
 /*
  * A value change callback is tripped when a bit of a signal
@@ -99,20 +143,13 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	     || (data->obj->vpi_type->type_code == vpiNet));
       struct __vpiSignal*sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	/* Attach the callback to the signal who's value I'm waiting for. */
-      obj->next = sig->callbacks;
-      sig->callbacks = obj;
-
-      unsigned wid = (sig->msb >= sig->lsb)
-	    ? sig->msb - sig->lsb + 1
-	    : sig->lsb - sig->msb + 1;
-
-	/* Make sure the functors are tickled to trigger a callback. */
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(sig->bits, idx);
-	    functor_t fun = functor_index(ptr);
-	    fun->callback |= 1;
+      if (!sig->callback) {
+	    sig->callback = vvp_fvector_make_callback(sig->bits);
+	    assert(sig->callback);
       }
+      
+      obj->next = sig->callback->cb_handle;
+      sig->callback->cb_handle = obj;
 
       return obj;
 }
@@ -186,42 +223,32 @@ int vpi_remove_cb(vpiHandle ref)
       assert(ref->vpi_type);
       assert(ref->vpi_type->type_code == vpiCallback);
 
-      struct __vpiCallback*obj = reinterpret_cast<__vpiCallback*>(ref);
-
       fprintf(stderr, "vpi error: vpi_remove_cb not supported\n");
 
       return 0;
 }
 
 /*
- * A functor callback trips when a functor is set by the functor_set
- * function. This only happens when a propagated value passes
- * through. This causes a callback only if the callback flag in the
- * functor is set.
- *
- * When I get to this point, I locate the signal is associated with
- * this functor and call all the callbacks on its callback list. The
- * callbacks are deleted as I go.
+ * A callback event happened.
  */
-void vpip_trip_functor_callbacks(vvp_ipoint_t ptr)
+
+void vvp_cb_fobj_s::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      struct __vpiSignal*sig = vpip_sig_from_ptr(ptr);
-      assert(sig);
-
-      struct __vpiCallback*callbacks = sig->callbacks;
-      sig->callbacks = 0;
-
-      while (callbacks) {
-	    struct __vpiCallback*cur = callbacks;
-	    callbacks = cur->next;
-
+      struct __vpiCallback *next = cb_handle;
+      if (!permanent)
+	    cb_handle = 0;
+      while (next) {
+	    struct __vpiCallback * cur = next;
+	    next = cur->next;
 	    cur->cb_data.time->type = vpiSimTime;
 	    cur->cb_data.time->low = schedule_simtime();
 	    cur->cb_data.time->high = 0;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    free_vpi_callback(cur);
+	    if (!permanent)
+		  free_vpi_callback(cur);
       }
 }
+
 
 void vpip_trip_monitor_callbacks(void)
 {
@@ -230,6 +257,10 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.5  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.4  2001/07/13 03:02:34  steve
  *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
  *

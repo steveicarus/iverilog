@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.21 2001/07/24 01:34:56 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.22 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 /*
@@ -109,7 +109,7 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       unsigned count_x = 0, count_z = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t fptr = ipoint_index(rfp->bits, wid-idx-1);
+	    vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, wid-idx-1);
 	    val *= 2;
 	    switch (functor_oval(fptr)) {
 		case 0:
@@ -183,7 +183,7 @@ static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    unsigned bdx;
 
 	    for (bdx = 8 ;  bdx > 0 ;  bdx -= 1) {
-		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx-8+bdx-1);
+		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx-8+bdx-1);
 		  tmp <<= 1;
 		  switch (functor_oval(fptr)) {
 		      case 0:
@@ -222,7 +222,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    assert(wid <= 8 * sizeof vp->value.integer);
 	    vp->value.integer = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
 		  switch (functor_oval(fptr)) {
 		      case 0:
 			break;
@@ -239,7 +239,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiBinStrVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
 		  buf[wid-idx-1] = "01xz"[functor_oval(fptr)];
 	    }
 	    buf[wid] = 0;
@@ -252,7 +252,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
 		      hval = hval | (functor_oval(fptr) << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
@@ -287,7 +287,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
 		      hval = hval | (functor_oval(fptr) << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
@@ -369,7 +369,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      functor_set(ipoint_index(rfp->bits,idx), val&1,
+		      functor_set(vvp_fvector_get(rfp->bits,idx), val&1,
 				  (val&1)? St1 : St0, true);
 		      val >>= 1;
 		}
@@ -379,16 +379,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  functor_set(rfp->bits, 0, St0, true);
+		  functor_set(vvp_fvector_get(rfp->bits,0), 0, St0, true);
 		  break;
 		case vpi1:
-		  functor_set(rfp->bits, 1, St1, true);
+		  functor_set(vvp_fvector_get(rfp->bits,0), 1, St1, true);
 		  break;
 		case vpiX:
-		  functor_set(rfp->bits, 2, StX, true);
+		  functor_set(vvp_fvector_get(rfp->bits,0), 2, StX, true);
 		  break;
 		case vpiZ:
-		  functor_set(rfp->bits, 3, HiZ, true);
+		  functor_set(vvp_fvector_get(rfp->bits,0), 3, HiZ, true);
 		  break;
 		default:
 		  assert(0);
@@ -404,19 +404,19 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		      int bit = (aval&1) | ((bval<<1)&2);
 		      switch (bit) {
 			  case 0: /* zero */
-			    functor_set(ipoint_index(rfp->bits,idx),
+			    functor_set(vvp_fvector_get(rfp->bits,idx),
 					0, St0, true);
 			    break;
 			  case 1: /* one */
-			    functor_set(ipoint_index(rfp->bits,idx),
+			    functor_set(vvp_fvector_get(rfp->bits,idx),
 					1, St1, true);
 			    break;
 			  case 2: /* z */
-			    functor_set(ipoint_index(rfp->bits,idx),
+			    functor_set(vvp_fvector_get(rfp->bits,idx),
 					3, HiZ, true);
 			    break;
 			  case 3: /* x */
-			    functor_set(ipoint_index(rfp->bits,idx),
+			    functor_set(vvp_fvector_get(rfp->bits,idx),
 					2, StX, true);
 			    break;
 		      }
@@ -432,12 +432,6 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
       }
 
       return ref;
-}
-
-struct __vpiSignal* vpip_sig_from_ptr(vvp_ipoint_t ptr)
-{
-      functor_t fu = functor_index(ptr);
-      return fu->sig;
 }
 
 static const struct __vpirt vpip_reg_rt = {
@@ -464,9 +458,9 @@ static const struct __vpirt vpip_net_rt = {
  * Construct a vpiReg object. It's like a net, except for the type.
  */
 vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
-			vvp_ipoint_t base)
+			vvp_fvector_t vec)
 {
-      vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, base);
+      vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
       obj->vpi_type = &vpip_reg_rt;
       return obj;
 }
@@ -476,7 +470,7 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
  * and point to the specified functor for the lsb.
  */
 vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
-			vvp_ipoint_t base)
+			vvp_fvector_t vec)
 {
       struct __vpiSignal*obj = (struct __vpiSignal*)
 	    malloc(sizeof(struct __vpiSignal));
@@ -485,26 +479,21 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
-      obj->bits = base;
-      obj->callbacks = 0;
+      obj->bits = vec;
+      obj->callback = 0;
 
       obj->scope = vpip_peek_current_scope();
 
-      unsigned wid = (obj->msb > obj->lsb)
-	    ? obj->msb - obj->lsb + 1
-	    : obj->lsb - obj->msb + 1;
-      for (unsigned i=0; i<wid; i++) {
-	    vvp_ipoint_t ii = ipoint_index(obj->bits, i);
-	    functor_t fu = functor_index(ii);
-	    fu->sig = obj;
-      }
-	    
       return &obj->base;
 }
 
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.22  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.21  2001/07/24 01:34:56  steve
  *  Implement string value for signals.
  *

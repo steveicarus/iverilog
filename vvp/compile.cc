@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.92 2001/07/30 03:53:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.93 2001/08/08 01:05:06 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -182,7 +182,7 @@ static void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
       struct resolv_list_s*res = (struct resolv_list_s*)
 	    calloc(1, sizeof(struct resolv_list_s));
 
-      res->port    = ptr;
+      res->port   = ptr;
       res->source = lab;
       res->idx    = idx;
       res->next   = resolv_list;
@@ -247,11 +247,17 @@ void compile_vpi_time_precision(long pre)
  *  Add a functor to the symbol table
  */
 
-static void define_functor_symbol(char*label, vvp_ipoint_t fdx)
+static void define_fvector_symbol(char*label, vvp_fvector_t v)
 {
-  symbol_value_t val;
-  val.num = fdx;
-  sym_set_value(sym_functors, label, val);
+      symbol_value_t val;
+      val.ptr = v;
+      sym_set_value(sym_functors, label, val);
+}
+
+static void define_functor_symbol(char*label, vvp_ipoint_t ipt, unsigned wid)
+{
+      vvp_fvector_t v = vvp_fvector_continuous_new(wid, ipt);
+      define_fvector_symbol(label, v);
 }
 
 /* 
@@ -328,10 +334,10 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    }
 
 	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    vvp_ipoint_t tmp = val.num;
+	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
 
-	    if (tmp) {
-		  tmp = ipoint_index(tmp, argv[idx].idx);
+	    if (vec) {
+		  vvp_ipoint_t tmp = vvp_fvector_get(vec, argv[idx].idx);
 		  functor_t fport = functor_index(tmp);
 		  iobj->port[ipoint_port(ifdx)] = fport->out;
 		  fport->out = ifdx;
@@ -352,7 +358,7 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, 1);
 
       assert(argc <= 4);
 
@@ -431,7 +437,7 @@ static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
       unsigned opcount = argc / wid;
 
       struct symb_s tmp_argv[4];
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+      for (int idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
 
@@ -459,7 +465,7 @@ void compile_arith_mult(char*label, long wid,
 {
       assert( wid > 0 );
 
-      if (argc != 2*wid) {
+      if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
@@ -467,7 +473,7 @@ void compile_arith_mult(char*label, long wid,
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_arith_mult*arith = new vvp_arith_mult(fdx, wid);
 
@@ -494,7 +500,7 @@ void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_arith_sub*arith = new vvp_arith_sub(fdx, wid);
 
@@ -521,19 +527,18 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_arith_sum*arith = new vvp_arith_sum(fdx, wid);
 
       connect_arith_inputs(fdx, wid, arith, argc, argv);
-
 }
 
 void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if (argc != 2*wid) {
+      if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
@@ -541,19 +546,18 @@ void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_cmp_ge*cmp = new vvp_cmp_ge(fdx, wid);
 
       connect_arith_inputs(fdx, wid, cmp, argc, argv);
-
 }
 
 void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if (argc != 2*wid) {
+      if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
@@ -561,22 +565,21 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_cmp_gt*cmp = new vvp_cmp_gt(fdx, wid);
 
       connect_arith_inputs(fdx, wid, cmp, argc, argv);
-
 }
 
 static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
 				 long wid, unsigned argc, struct symb_s*argv)
 {
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+      for (int idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    if ((wid+idx) >= argc)
+	    if ((wid+idx) >= (long)argc)
 		  obj->ival = 0x02;
 	    else
 		  obj->ival = 0x0a;
@@ -593,7 +596,7 @@ static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
 	    struct symb_s tmp_argv[3];
 	    unsigned tmp_argc = 1;
 	    tmp_argv[0] = argv[idx];
-	    if ((wid+idx) < argc) {
+	    if ((wid+idx) < (long)argc) {
 		  tmp_argv[1] = argv[wid+idx];
 		  tmp_argc += 1;
 	    }
@@ -611,14 +614,14 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if (argc < (wid+1)) {
+      if ((long)argc < (wid+1)) {
 	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
 	    return;
       }
 
-      if (argc > (wid*2)) {
+      if ((long)argc > (wid*2)) {
 	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
@@ -626,7 +629,7 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_shiftl*dev = new vvp_shiftl(fdx, wid);
 
@@ -639,14 +642,14 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if (argc < (wid+1)) {
+      if ((long)argc < (wid+1)) {
 	    fprintf(stderr, "%s; .shift/r has too few symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
 	    return;
       }
 
-      if (argc > (wid*2)) {
+      if ((long)argc > (wid*2)) {
 	    fprintf(stderr, "%s; .shift/r has too many symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
@@ -654,7 +657,7 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, wid);
 
       vvp_shiftr*dev = new vvp_shiftr(fdx, wid);
 
@@ -668,7 +671,7 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, 1);
 
       assert(argc <= 4);
 
@@ -742,7 +745,7 @@ void compile_udp_functor(char*label, char*type,
   vvp_ipoint_t fdx = functor_allocate(nfun);
   functor_t obj = functor_index(fdx);
 
-  define_functor_symbol(label, fdx);
+  define_functor_symbol(label, fdx, nfun);
   free(label);  
 
   for (unsigned idx = 0;  idx < argc;  idx += 4) 
@@ -794,8 +797,8 @@ void compile_memory_port(char *label, char *memid,
   free(memid);
   assert(mem);
 
-  // These is not a Verilog bit range. 
-  // These is a data port bit range. 
+  // This is not a Verilog bit range. 
+  // This is a data port bit range. 
   assert (lsb >= 0  &&  lsb<=msb);
   assert (msb < memory_data_width(mem));
   unsigned nbits = msb-lsb+1;
@@ -812,7 +815,7 @@ void compile_memory_port(char *label, char *memid,
       
   vvp_ipoint_t ix = functor_allocate(nfun);
 
-  define_functor_symbol(label, ix);
+  define_functor_symbol(label, ix, nfun);
   free(label);
 
   inputs_connect(ix, argc, argv);
@@ -843,7 +846,7 @@ void compile_event(char*label, char*type,
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, 1);
 
       assert(argc <= 4);
 
@@ -891,7 +894,7 @@ void compile_named_event(char*label, char*name)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, 1);
 
       obj->ival = 0xaa;
       obj->oval = 2;
@@ -916,7 +919,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, fdx, 1);
 
       obj->ival = 0xaa;
       obj->oval = 2;
@@ -937,17 +940,15 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 
       for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
 	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    vvp_ipoint_t tmp = val.num;
-
-	    assert(tmp);
-
-	    tmp = ipoint_index(tmp, argv[idx].idx);
-
+	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
+	    assert(vec);
+	    vvp_ipoint_t tmp = vvp_fvector_get(vec, argv[idx].idx);
+	    
 	    functor_t fport = functor_index(tmp);
 	    assert(fport);
 	    assert(fport->out == 0);
 	    fport->out = fdx;
-
+	    
 	    free(argv[idx].text);
 
       }
@@ -988,7 +989,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       assert(op);
 
 	/* Build up the code from the information about the opcode and
-	   the information from the comiler. */
+	   the information from the compiler. */
       vvp_code_t code = codespace_index(ptr);
       code->opcode = op->opcode;
 
@@ -1059,19 +1060,19 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  tmp = sym_get_value(sym_functors, opa->argv[idx].symb.text);
-		  if (tmp.num == 0) {
+		  if (tmp.ptr == 0) {
 			struct cresolv_list_s*res = new struct cresolv_list_s;
 			res->cp  = code;
 			res->lab = opa->argv[idx].symb.text;
 			res->idx = opa->argv[idx].symb.idx;
 			res->next = cresolv_flist;
 			cresolv_flist = res;
-			break;
+		  } else {
+			vvp_fvector_t v = (vvp_fvector_t) tmp.ptr;
+			code->iptr = 
+			      vvp_fvector_get(v, opa->argv[idx].symb.idx);
+			free(opa->argv[idx].symb.text);
 		  }
-
-		  code->iptr = ipoint_index(tmp.num, opa->argv[idx].symb.idx);
-
-		  free(opa->argv[idx].symb.text);
 		  break;
 
 		case OA_NUMBER:
@@ -1316,7 +1317,8 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       vvp_ipoint_t fdx = functor_allocate(wid);
 
-      define_functor_symbol(label, fdx);
+      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
+      define_fvector_symbol(label, vec);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    functor_t obj = functor_index(ipoint_index(fdx,idx));
@@ -1332,7 +1334,7 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       }
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, fdx);
+      vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, vec);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1345,7 +1347,8 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       vvp_ipoint_t fdx = functor_allocate(wid);
 
-      define_functor_symbol(label, fdx);
+      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
+      define_fvector_symbol(label, vec);
 
 	/* Allocate all the functors for the net itself. */
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -1415,10 +1418,10 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 	    }
 
 	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    if (val.num) {
-
-		  functor_t src = functor_index(ipoint_index(val.num,
-							     argv[idx].idx));
+	    if (val.ptr) {
+		  vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
+		  functor_t src =
+			functor_index(vvp_fvector_get(vec, argv[idx].idx));
 		  obj->port[0] = src->out;
 		  src->out = ptr;
 
@@ -1430,7 +1433,7 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       }
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, fdx);
+      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, vec);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1459,13 +1462,13 @@ void compile_cleanup(void)
 	      /* Try again to look up the symbol that was not defined
 		 the first time around. */
 	    symbol_value_t val = sym_get_value(sym_functors, res->source);
-	    vvp_ipoint_t tmp = val.num;
+	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
 
-	    if (tmp != 0) {
+	    if (vec != 0) {
 		    /* The symbol is defined, link the functor input
 		       to the resolved output. */
 
-		  tmp = ipoint_index(tmp, res->idx);
+		  vvp_ipoint_t tmp = vvp_fvector_get(vec, res->idx);
 		  functor_t fport = functor_index(tmp);
 		  obj->port[idx] = fport->out;
 		  fport->out = res->port;
@@ -1518,10 +1521,10 @@ void compile_cleanup(void)
 	    tmp_clist = res->next;
 
 	    symbol_value_t val = sym_get_value(sym_functors, res->lab);
-	    vvp_ipoint_t tmp = val.num;
+	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
 
-	    if (tmp != 0) {
-		  res->cp->iptr = ipoint_index(tmp, res->idx);
+	    if (vec != 0) {
+		  res->cp->iptr = vvp_fvector_get(vec, res->idx);
 		  free(res->lab);
 		  
 	    } else {
@@ -1556,17 +1559,24 @@ void compile_cleanup(void)
  *
  * debug_lookup_functor
  *    Use a name to locate a functor address. This only gets the LSB
- *    of a vector, but it is enough to locate the object.
+ *    of a vector, but it is enough to locate the object, or, is it?
  */
 vvp_ipoint_t debug_lookup_functor(const char*name)
 {
       symbol_value_t val = sym_get_value(sym_functors, name);
-      return val.num;
+      vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
+      if (!vec)
+	    return 0;
+      return vvp_fvector_get(vec, 0);
 }
 
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.93  2001/08/08 01:05:06  steve
+ *  Initial implementation of vvp_fvectors.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.92  2001/07/30 03:53:01  steve
  *  Initialize initial functor tables.
  *
