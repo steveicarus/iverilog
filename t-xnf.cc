@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.30 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.31 2000/06/28 18:38:54 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -155,51 +155,7 @@ string target_xnf::mangle(const string&name)
  */
 string target_xnf::choose_sig_name(const Link*lnk)
 {
-      assert(lnk->is_linked());
-      const NetNet*sig = 0;
-      unsigned pin = 0;
-
-      const Nexus*nex = lnk->nexus();
-      for (const Link*cur = nex->first_nlink()
-		 ;  cur ;  cur = cur->next_nlink()) {
-
-	    const NetNet*cursig = dynamic_cast<const NetNet*>(cur->get_obj());
-	    if (cursig == 0)
-		  continue;
-
-	    if (sig == 0) {
-		  sig = cursig;
-		  pin = cur->get_pin();
-		  continue;
-	    }
-
-	    if ((cursig->pin_count() == 1) && (sig->pin_count() > 1))
-		  continue;
-
-	    if ((cursig->pin_count() > 1) && (sig->pin_count() == 1)) {
-		  sig = cursig;
-		  pin = cur->get_pin();
-		  continue;
-	    }
-
-	    if (cursig->local_flag() && !sig->local_flag())
-		  continue;
-
-	    if (cursig->name() < sig->name())
-		  continue;
-
-	    sig = cursig;
-	    pin = cur->get_pin();
-      }
-
-      assert(sig);
-      ostrstream tmp;
-      tmp << mangle(sig->name());
-      if (sig->pin_count() > 1)
-	    tmp << "<" << pin << ">";
-      tmp << ends;
-
-      return tmp.str();
+      return mangle( lnk->nexus()->name() );
 }
 
 void target_xnf::draw_pin(ostream&os, const string&name,
@@ -922,6 +878,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.31  2000/06/28 18:38:54  steve
+ *  Use nexus type to get nexus name.
+ *
  * Revision 1.30  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.
