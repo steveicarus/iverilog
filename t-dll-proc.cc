@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.1 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.2 2000/09/19 04:15:27 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -181,9 +181,25 @@ bool dll_target::proc_delay(const NetPDelay*net)
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = tmp;
       bool flag = net->emit_proc_recurse(this);
+
+	/* If the recurse doesn't turn this new item into something,
+	   then either it failed or there is no statement
+	   there. Either way, draw a no-op into the statement. */
+      if (stmt_cur_->type_ == IVL_ST_NONE) {
+	    stmt_cur_->type_ = IVL_ST_NOOP;
+      }
+
       stmt_cur_ = save_cur_;
 
       return flag;
+}
+
+void dll_target::proc_stask(const NetSTask*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_STASK;
 }
 
 bool dll_target::proc_wait(const NetEvWait*net)
@@ -198,6 +214,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = stmt_cur_->u_.wait_.stmt_;
       bool flag = net->emit_recurse(this);
+      stmt_cur_ = save_cur_;
 
       return flag;
 }
@@ -225,6 +242,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.2  2000/09/19 04:15:27  steve
+ *  Introduce the means to get statement types.
+ *
  * Revision 1.1  2000/09/18 01:24:32  steve
  *  Get the structure for ivl_statement_t worked out.
  *

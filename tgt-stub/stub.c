@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.7 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: stub.c,v 1.8 2000/09/19 04:15:27 steve Exp $"
 #endif
 
 /*
@@ -78,11 +78,11 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
       unsigned npins, idx;
 
       switch (ivl_get_logic_type(net)) {
-	  case IVL_AND:
+	  case IVL_LO_AND:
 	    fprintf(out, "      and %s (%s", name,
 		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
 	    break;
-	  case IVL_OR:
+	  case IVL_LO_OR:
 	    fprintf(out, "      or %s (%s", name,
 		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
 	    break;
@@ -113,6 +113,73 @@ int target_net_signal(const char*name, ivl_net_signal_t net)
       return 0;
 }
 
+static void show_statement(ivl_statement_t net, unsigned ind)
+{
+      const ivl_statement_type_t code = ivl_statement_type(net);
+
+      switch (code) {
+	  case IVL_ST_ASSIGN:
+	    fprintf(out, "%*s? = ?;\n", ind, "");
+	    break;
+
+	  case IVL_ST_BLOCK: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		unsigned idx;
+		fprintf(out, "%*sbegin\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*send\n", ind, "");
+		break;
+	  }
+
+	  case IVL_ST_CONDIT: {
+		ivl_statement_t t = ivl_stmt_cond_true(net);
+		ivl_statement_t f = ivl_stmt_cond_false(net);
+
+		fprintf(out, "%*sif (...)\n", ind, "");
+		if (t)
+		      show_statement(t, ind+4);
+		else
+		      fprintf(out, "%*s;\n", ind+4, "");
+
+		if (f) {
+		      fprintf(out, "%*selse\n", ind, "");
+		      show_statement(f, ind+4);
+		}
+
+		break;
+	  }
+
+	  case IVL_ST_DELAY:
+	    fprintf(out, "%*s#%lu\n", ind, "", ivl_stmt_delay_val(net));
+	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
+	    break;
+
+	  case IVL_ST_NOOP:
+	    fprintf(out, "%*s/* noop */;\n", ind, "");
+	    break;
+
+	  case IVL_ST_STASK:
+	    fprintf(out, "%*s$?(...);\n", ind, "");
+	    break;
+
+	  case IVL_ST_WAIT:
+	    fprintf(out, "%*s@(...)\n", ind, "");
+	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
+	    break;
+
+	  case IVL_ST_WHILE:
+	    fprintf(out, "%*swhile (<?>)\n", ind, "");
+	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
+	    break;
+
+	  default:
+	    fprintf(out, "%*sunknown statement type (%u)\n", ind, "", code);
+      }
+}
+
 int target_process(ivl_process_t net)
 {
       switch (ivl_get_process_type(net)) {
@@ -124,12 +191,16 @@ int target_process(ivl_process_t net)
 	    break;
       }
 
-      fprintf(out, "        STUB: process\n");
+      show_statement(ivl_get_process_stmt(net), 8);
+
       return 0;
 }
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.8  2000/09/19 04:15:27  steve
+ *  Introduce the means to get statement types.
+ *
  * Revision 1.7  2000/09/18 01:24:32  steve
  *  Get the structure for ivl_statement_t worked out.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.1 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: t-dll.h,v 1.2 2000/09/19 04:15:27 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -72,6 +72,7 @@ struct dll_target  : public target_t {
       bool proc_block(const NetBlock*);
       void proc_condit(const NetCondit*);
       bool proc_delay(const NetPDelay*);
+      void proc_stask(const NetSTask*);
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
 };
@@ -100,18 +101,6 @@ struct ivl_process_s {
  * is defined by the ivl_statement_type_t enumeration. Given the type,
  * certain information about the statement may be available.
  */
-typedef enum ivl_statement_type_e {
-      IVL_ST_NONE   = 0,
-      IVL_ST_NOOP   = 1,
-      IVL_ST_ASSIGN,
-      IVL_ST_BLOCK,
-      IVL_ST_CONDIT,
-      IVL_ST_DELAY,
-      IVL_ST_DELAYX,
-      IVL_ST_WAIT,
-      IVL_ST_WHILE
-} ivl_statement_type_t;
-
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       union {
@@ -148,6 +137,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.2  2000/09/19 04:15:27  steve
+ *  Introduce the means to get statement types.
+ *
  * Revision 1.1  2000/09/18 01:24:32  steve
  *  Get the structure for ivl_statement_t worked out.
  *

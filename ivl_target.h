@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.7 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.8 2000/09/19 04:15:27 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -40,7 +40,7 @@ _BEGIN_DECL
  * behavior.
  *
  * The interface is divided into two parts: the entry points within
- * the core that are called by the module, and then entry points in
+ * the core that are called by the module, and the entry points in
  * the module that are called by the core. It is the latter that
  * causes the module to be invoked in the first place, but most of the
  * interesting information about the design is accessed through the
@@ -70,6 +70,46 @@ typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_statement_s*ivl_statement_t;
 
+/*
+ * These are types that are defined as enumerations. These have
+ * explicit values so that the binary API is a bit more resilient to
+ * changes and additions to the enumerations.
+ */
+
+typedef enum ivl_logic_e {
+      IVL_LO_NONE = 0,
+      IVL_LO_AND,
+      IVL_LO_BUF,
+      IVL_LO_BUFIF0,
+      IVL_LO_BUFIF1,
+      IVL_LO_NAND,
+      IVL_LO_NOR,
+      IVL_LO_NOT,
+      IVL_LO_NOTIF0,
+      IVL_LO_NOTIF1,
+      IVL_LO_OR,
+      IVL_LO_XNOR,
+      IVL_LO_XOR
+} ivl_logic_t;
+
+typedef enum ivl_process_type_e {
+      IVL_PR_INITIAL = 0,
+      IVL_PR_ALWAYS  = 1
+} ivl_process_type_t;
+
+typedef enum ivl_statement_type_e {
+      IVL_ST_NONE   = 0,
+      IVL_ST_NOOP   = 1,
+      IVL_ST_ASSIGN,
+      IVL_ST_BLOCK,
+      IVL_ST_CONDIT,
+      IVL_ST_DELAY,
+      IVL_ST_DELAYX,
+      IVL_ST_STASK,
+      IVL_ST_WAIT,
+      IVL_ST_WHILE
+} ivl_statement_type_t;
+
 
 /* This function returns the string value of the named flag. The key
    is used to select the flag. If the key does not exist or the flag
@@ -88,15 +128,10 @@ extern const char* ivl_get_root_name(ivl_design_t net);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
- * ivl_logit_t enumeration identifies the various kinds of gates that
+ * ivl_logic_t enumeration identifies the various kinds of gates that
  * the ivl_net_logic_t can represent. The various functions then
- * provide access to the various bits of information for a given logic
- * device.
+ * provide access to the bits of information for a given logic device.
  */
-
-typedef enum ivl_logic_e { IVL_AND, IVL_BUF, IVL_BUFIF0, IVL_BUFIF1,
-			   IVL_NAND, IVL_NOR, IVL_NOT, IVL_NOTIF0,
-			   IVL_NOTIF1, IVL_OR, IVL_XNOR, IVL_XOR } ivl_logic_t;
 
 extern ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_get_logic_pin(ivl_net_logic_t net, unsigned pin);
@@ -108,7 +143,6 @@ extern unsigned    ivl_get_logic_pins(ivl_net_logic_t net);
  */
 
 extern const char* ivl_get_nexus_name(ivl_nexus_t net);
-
 
 extern unsigned  ivl_get_signal_pins(ivl_net_signal_t net);
 
@@ -122,21 +156,52 @@ extern unsigned  ivl_get_signal_pins(ivl_net_signal_t net);
  * The ivl_get_process_type function gets the type of the process,
  * an "inital" or "always" statement.
  *
- * The ivl_get_process_stmt functin gets the statement that forms the
+ * The ivl_get_process_stmt function gets the statement that forms the
  * process. See the statement related functions for how to manipulate
  * statements.
  */
-typedef enum ivl_process_type {
-      IVL_PR_INITIAL = 0,
-      IVL_PR_ALWAYS  = 1
-} ivl_process_type_t;
-
 extern ivl_process_type_t ivl_get_process_type(ivl_process_t net);
 
 extern ivl_statement_t ivl_get_process_stmt(ivl_process_t net);
 
+/*
+ * These functions manage statements of various type. This includes
+ * all the different kinds of statements (as enumerated in
+ * ivl_statement_type_t) that might occur in behavioral code.
+ *
+ * The ivl_statement_type() function returns the type code for the
+ * statement. This is the major type, and implies which of the later
+ * functions are applicable to the statemnt.
+ */
+extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
+
+/*
+ * The following functions retrieve specific single values from the
+ * statement. These values are the bits of data and parameters that
+ * make up the statement. Many of these functions apply to more then
+ * one type of statement, so the comment in front of them tells which
+ * statement types can be passed to the function.
+ */
+
+  /* IVL_ST_BLOCK */
+extern unsigned ivl_stmt_block_count(ivl_statement_t net);
+  /* IVL_ST_BLOCK */
+extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
+  /* IVL_ST_CONDIT */
+extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
+extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
+  /* IVL_ST_DELAY */
+extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
+  /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
+extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
+
 
 /* TARGET MODULE ENTRY POINTS
+ *
+ * These are not functions in the API but functions that the target
+ * module supplies. They are presented as typedefs of functions (which
+ * are used internally) but the target module makes them work by
+ * exporting them.
  *
  * The module entry points generally take a cookie and possibly a name
  * as parameters. They use the cookie to get the required detailed
@@ -236,6 +301,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.8  2000/09/19 04:15:27  steve
+ *  Introduce the means to get statement types.
+ *
  * Revision 1.7  2000/09/18 01:24:32  steve
  *  Get the structure for ivl_statement_t worked out.
  *
