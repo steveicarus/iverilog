@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.54 2001/12/30 21:32:03 steve Exp $"
+#ident "$Id: PExpr.h,v 1.55 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include  <string>
@@ -443,7 +443,8 @@ class PETernary : public PExpr {
 
 /*
  * This class represents a parsed call to a function, including calls
- * to system functions.
+ * to system functions. The parameters in the parms list are the
+ * expressions that are passed as input to the ports of the function.
  */
 class PECallFunction : public PExpr {
     public:
@@ -452,17 +453,29 @@ class PECallFunction : public PExpr {
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
+				    unsigned width,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
 
     private:
       hname_t path_;
       svector<PExpr *> parms_;
 
+      bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
+
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope) const;
 };
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.55  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.54  2001/12/30 21:32:03  steve
  *  Support elaborate_net for PEString objects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.65 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: emit.cc,v 1.66 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -126,6 +126,11 @@ bool NetRamDq::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ram_dq(this);
       return true;
+}
+
+bool NetUserFunc::emit_node(struct target_t*tgt) const
+{
+      return tgt->net_function(this);
 }
 
 bool NetBUFZ::emit_node(struct target_t*tgt) const
@@ -482,6 +487,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.66  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.65  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.56 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: target.h,v 1.57 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -91,6 +91,7 @@ struct target_t {
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
       virtual bool net_force(const NetForce*);
+      virtual bool net_function(const NetUserFunc*);
       virtual void net_probe(const NetEvProbe*);
 
 	/* Output a process (called for each process). It is up to the
@@ -163,6 +164,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.57  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.56  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

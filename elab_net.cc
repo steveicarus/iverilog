@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.86 2002/01/23 05:23:17 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.87 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -971,6 +971,95 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 }
 
 /*
+ * This method elaborates a call to a function in the context of a
+ * continuous assignment.
+ */
+NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope, unsigned,
+				      unsigned long,
+				      unsigned long,
+				      unsigned long,
+				      Link::strength_t,
+				      Link::strength_t) const
+{
+      unsigned errors = 0;
+      unsigned func_pins = 0;
+
+	/* Look up the function definition. */
+      NetFuncDef*def = des->find_function(scope, path_);
+      if (def == 0) {
+	    cerr << get_line() << ": error: No function " << path_ <<
+		  " in this context (" << scope->name() << ")." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      assert(def);
+
+      NetScope*dscope = def->scope();
+      assert(dscope);
+
+	/* check the validity of the parameters. */
+      if (! check_call_matches_definition_(des, dscope))
+	    return 0;
+
+	/* Elaborate all the parameters of the function call,
+	   and collect the resulting NetNet objects. All the
+	   parameters take on the size of the target port. */
+
+      svector<NetNet*> eparms (def->port_count()-1);
+      for (unsigned idx = 0 ;  idx < eparms.count() ;  idx += 1) {
+	    const NetNet* port_reg = def->port(idx+1);
+	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope,
+						    port_reg->pin_count(),
+						    0, 0, 0,
+						    Link::STRONG,
+						    Link::STRONG);
+	    if (tmp == 0) {
+		  cerr << get_line() << ": error: Unable to elaborate "
+		       << "port " << idx << " of call to " << path_ <<
+			"." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
+	    func_pins += tmp->pin_count();
+	    eparms[idx] = tmp;
+      }
+
+      if (errors > 0)
+	    return 0;
+
+
+      NetUserFunc*net = new NetUserFunc(scope,
+					scope->local_hsymbol().c_str(),
+					dscope);
+      des->add_node(net);
+
+	/* Create an output signal and connect it to the output pins
+	   of the function net. */
+      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+			       NetNet::WIRE,
+			       def->port(0)->pin_count());
+      osig->local_flag(true);
+
+      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
+	    connect(net->port_pin(0, idx), osig->pin(idx));
+
+	/* Connect the parameter pins to the parameter expressions. */
+      for (unsigned idx = 0 ; idx < eparms.count() ; idx += 1) {
+	    const NetNet* port = def->port(idx+1);
+	    NetNet*cur = eparms[idx];
+
+	    NetNet*tmp = pad_to_width(des, cur, port->pin_count());
+
+	    for (unsigned pin = 0 ;  pin < port->pin_count() ;  pin += 1)
+		  connect(net->port_pin(idx+1, pin), tmp->pin(pin));
+      }
+
+      return osig;
+}
+
+
+/*
  * The concatenation operator, as a net, is a wide signal that is
  * connected to all the pins of the elaborated expression nets.
  */
@@ -1481,7 +1570,6 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       return sig;
 }
 
-
 /*
  * Elaborate a number as a NetConst object.
  */
@@ -1974,6 +2062,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.87  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.86  2002/01/23 05:23:17  steve
  *  No implicit declaration in assign l-values.
  *

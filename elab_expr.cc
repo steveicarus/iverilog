@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.50 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.51 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -258,30 +258,14 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       NetScope*dscope = def->scope();
       assert(dscope);
 
-	/* How many parameters have I got? Normally the size of the
-	   list is correct, but there is the special case of a list of
-	   1 nil pointer. This is how the parser tells me of no
-	   parameter. In other words, ``func()'' is 1 nil parameter. */
+      if (! check_call_matches_definition_(des, dscope))
+	    return 0;
 
       unsigned parms_count = parms_.count();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 
-      if (dscope->type() != NetScope::FUNC) {
-	    cerr << get_line() << ": error: Attempt to call scope "
-		 << dscope->name() << " as a function." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      if ((parms_count+1) != dscope->func_def()->port_count()) {
-	    cerr << get_line() << ": error: Function " << dscope->name()
-		 << " expects " << (dscope->func_def()->port_count()-1)
-		 << " parameters, you passed " << parms_count << "."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      
 
       svector<NetExpr*> parms (parms_count);
 
@@ -690,6 +674,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.51  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.50  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

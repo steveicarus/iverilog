@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.75 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.76 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -674,6 +674,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx < net->u_.shift.width);
 	    return net->u_.shift.q[idx];
 
+	  case IVL_LPM_UFUNC:
+	    assert(idx < net->u_.ufunc.port_wid[0]);
+	    return net->u_.ufunc.pins[idx];
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -768,6 +772,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.width;
+	  case IVL_LPM_UFUNC:
+	    return net->u_.ufunc.port_wid[0];
 	  default:
 	    assert(0);
 	    return 0;
@@ -1452,6 +1458,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.76  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.75  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

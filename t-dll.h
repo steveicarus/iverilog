@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.75 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: t-dll.h,v 1.76 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -82,6 +82,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void net_assign(const NetAssign_*);
       bool net_cassign(const NetCAssign*);
       bool net_force(const NetForce*);
+      bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
 
@@ -301,6 +302,13 @@ struct ivl_lpm_s {
 		  unsigned short width;
 		  ivl_nexus_t*q, *a, *b;
 	    } arith;
+
+	    struct ivl_lpm_ufunc_s {
+		  ivl_scope_t def;
+		  unsigned short ports;
+		  unsigned short*port_wid;
+		  ivl_nexus_t*pins;
+	    } ufunc;
       } u_;
 };
 
@@ -591,6 +599,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.76  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.75  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the
@@ -616,86 +627,5 @@ struct ivl_statement_s {
  *
  * Revision 1.68  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
- *
- * Revision 1.67  2001/10/30 02:52:07  steve
- *  Stubs for assign/deassign for t-dll.
- *
- * Revision 1.66  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.65  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.64  2001/09/16 22:19:42  steve
- *  Support attributes to logic gates.
- *
- * Revision 1.63  2001/09/01 01:57:31  steve
- *  Make constants available through the design root
- *
- * Revision 1.62  2001/08/31 22:58:40  steve
- *  Support DFF CE inputs.
- *
- * Revision 1.61  2001/08/28 04:07:41  steve
- *  Add some ivl_target convenience functions.
- *
- * Revision 1.60  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.59  2001/08/10 00:40:45  steve
- *  tgt-vvp generates code that skips nets as inputs.
- *
- * Revision 1.58  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.57  2001/07/27 02:41:56  steve
- *  Fix binding of dangling function ports. do not elide them.
- *
- * Revision 1.56  2001/07/22 00:17:50  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.55  2001/07/19 04:55:06  steve
- *  Support calculated delays in vvp.tgt.
- *
- * Revision 1.54  2001/07/07 20:20:10  steve
- *  Pass parameters to system functions.
- *
- * Revision 1.53  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.52  2001/06/30 23:03:16  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.51  2001/06/30 21:07:26  steve
- *  Support non-const right shift (unsigned).
- *
- * Revision 1.50  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.49  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.48  2001/06/16 02:41:42  steve
- *  Generate code to support memory access in continuous
- *  assignment statements. (Stephan Boettcher)
- *
- * Revision 1.47  2001/06/15 04:14:19  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.46  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.45  2001/05/20 15:09:39  steve
- *  Mingw32 support (Venkat Iyer)
  */
 #endif

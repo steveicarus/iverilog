@@ -1,0 +1,39 @@
+
+Icarus Verilog LOADABLE TARGET API (ivl_target)
+
+  Copyright 2002 Stephen Williams <steve@icarus.com>
+  $Id: ivl_target.txt,v 1.1 2002/03/09 02:10:22 steve Exp $
+
+
+The ivl_target API is the interface available to modules that the
+Icarus Verilog compiler loads to act as a code generator. The API
+provides an interface to the elaborated, possibly synthesized, design
+for code generators that are intended to write netlist files or
+executable programs.
+
+The functions and types of the API are summarized in the ivl_target.h
+header file. This ducument describes how the functions and types of
+the API are used to access and interpret the netlist of the design.
+
+
+LPM DEVICES
+
+All LPM devices support a small set of common LPM functions, as
+described in the ivl_target header file.
+
+* IVL_LPM_UFUNC
+
+This LPM represents a user defined function. It is a way to connect
+behavioral code into a structural network. The UFUNC device has a
+vector output and a set of inputs.
+
+The output vector is accessible through the ivl_lpm_q, and the output
+has the width defined by ivl_lpm_width. This similar to most every
+other LPM device with outputs.
+
+
+
+$Log: ivl_target.txt,v $
+Revision 1.1  2002/03/09 02:10:22  steve
+ Add the NetUserFunc netlist node.
+

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.121 2001/12/31 00:03:05 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.122 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -349,6 +349,14 @@ void NetRamDq::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
 	<< name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetUserFunc::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << def_->name() << "(";
+      o << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -972,6 +980,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.122  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.121  2001/12/31 00:03:05  steve
  *  Include s indicator in dump of signed numbers.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.79 2002/01/23 04:54:37 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.80 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -785,6 +785,59 @@ bool dll_target::net_cassign(const NetCAssign*)
 
 bool dll_target::net_force(const NetForce*net)
 {
+      return true;
+}
+
+/*
+ * An IVL_LPM_UFUNC represents a node in a combinational expression
+ * that calls a user defined function. I create an LPM object that has
+ * the right connections, and refers to the ivl_scope_t of the
+ * definition.
+ */
+bool dll_target::net_function(const NetUserFunc*net)
+{
+      struct ivl_lpm_s*obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_UFUNC;
+      obj->name  = strdup(net->name());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+	/* Get the definition of the function and save it. */
+      const NetScope*def = net->def();
+      assert(def);
+
+      obj->u_.ufunc.def = lookup_scope_(def);
+
+	/* Save information about the ports in the ivl_lpm_s
+	   structure. Note that port 0 is the return value. */
+      obj->u_.ufunc.ports = net->port_count();
+      obj->u_.ufunc.port_wid = new unsigned short[net->port_count()];
+      for (unsigned idx = 0 ;  idx < obj->u_.ufunc.ports ;  idx += 1)
+	    obj->u_.ufunc.port_wid[idx] = net->port_width(idx);
+
+	/* Now collect all the pins and connect them to the nexa of
+	   the net. The output pins have strong drive, and the
+	   remaining input pins are HiZ. */
+
+      unsigned pin_count = net->pin_count();
+      obj->u_.ufunc.pins = new ivl_nexus_t[pin_count];
+
+      for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1) {
+	    const Nexus*nex = net->pin(idx).nexus();
+	    assert(nex->t_cookie());
+	    ivl_nexus_t nn = (ivl_nexus_t)nex->t_cookie();
+	    assert(nn);
+
+	    obj->u_.ufunc.pins[idx] = nn;
+	    ivl_drive_t drive = idx < obj->u_.ufunc.port_wid[0]
+		  ? IVL_DR_STRONG
+		  : IVL_DR_HiZ;
+	    nexus_lpm_add(obj->u_.ufunc.pins[idx], obj, idx, drive, drive);
+      }
+
+	/* All done. Add this LPM to the scope. */
+      scope_add_lpm(obj->scope, obj);
+
       return true;
 }
 
@@ -1876,6 +1929,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.80  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.79  2002/01/23 04:54:37  steve
  *  Load modules with RTLD_LAZY
  *
@@ -1906,114 +1962,5 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
  *
  * Revision 1.70  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
- *
- * Revision 1.69  2001/10/30 02:52:07  steve
- *  Stubs for assign/deassign for t-dll.
- *
- * Revision 1.68  2001/10/22 02:05:21  steve
- *  Handle activating tasks in another root.
- *
- * Revision 1.67  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.66  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.65  2001/10/11 00:13:19  steve
- *  Initialize attributes for bufz devices.
- *
- * Revision 1.64  2001/09/16 22:19:42  steve
- *  Support attributes to logic gates.
- *
- * Revision 1.63  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.62  2001/09/09 16:49:04  steve
- *  Connect right ANEB pin when doing NE comparator.
- *
- * Revision 1.61  2001/09/08 01:23:21  steve
- *  No code for unlinked constants.
- *
- * Revision 1.60  2001/09/01 01:57:31  steve
- *  Make constants available through the design root
- *
- * Revision 1.59  2001/08/31 22:58:39  steve
- *  Support DFF CE inputs.
- *
- * Revision 1.58  2001/08/28 04:07:41  steve
- *  Add some ivl_target convenience functions.
- *
- * Revision 1.57  2001/08/10 00:40:45  steve
- *  tgt-vvp generates code that skips nets as inputs.
- *
- * Revision 1.56  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.55  2001/07/22 00:17:49  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.54  2001/07/07 03:01:37  steve
- *  Detect and make available to t-dll the right shift.
- *
- * Revision 1.53  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.52  2001/06/30 23:03:16  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.51  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.50  2001/06/18 03:25:20  steve
- *  RAM_DQ pins are inputs, so connect HiZ to the nexus.
- *
- * Revision 1.49  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.48  2001/06/16 02:41:42  steve
- *  Generate code to support memory access in continuous
- *  assignment statements. (Stephan Boettcher)
- *
- * Revision 1.47  2001/06/15 05:01:09  steve
- *  support LE and LT comparators.
- *
- * Revision 1.46  2001/06/15 04:14:19  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.45  2001/06/07 04:20:10  steve
- *  Account for carry out on add devices.
- *
- * Revision 1.44  2001/06/07 03:09:37  steve
- *  support subtraction in tgt-vvp.
- *
- * Revision 1.43  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.42  2001/05/20 15:09:39  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.41  2001/05/12 03:18:45  steve
- *  Make sure LPM devices have drives on outputs.
- *
- * Revision 1.40  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.39  2001/05/03 01:52:45  steve
- *  dll build of many probes forgot to index the probe.
- *
- * Revision 1.38  2001/04/29 23:17:38  steve
- *  Carry drive strengths in the ivl_nexus_ptr_t, and
- *  handle constant devices in targets.'
- *
- * Revision 1.37  2001/04/29 20:19:10  steve
- *  Add pullup and pulldown devices.
- *
- * Revision 1.36  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
  */
 

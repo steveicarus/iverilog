@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2002 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.59 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: target.cc,v 1.60 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -155,6 +155,13 @@ bool target_t::net_force(const NetForce*dev)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetForce node." << endl;
+      return false;
+}
+
+bool target_t::net_function(const NetUserFunc*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetUserFunc node." << endl;
       return false;
 }
 
@@ -390,6 +397,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.60  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.59  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

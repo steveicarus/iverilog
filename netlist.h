@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.231 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.232 2002/03/09 02:10:22 steve Exp $"
 #endif
 
 /*
@@ -52,6 +52,7 @@ class NetProcTop;
 class NetScope;
 class NetExpr;
 class NetESignal;
+class NetFuncDef;
 
 
 struct target;
@@ -817,6 +818,29 @@ class NetRamDq  : public NetNode {
       NetRamDq*next_;
       unsigned awidth_;
 
+};
+
+/*
+ * This node represents the call of a user defined function in a
+ * structural context.
+ */
+class NetUserFunc  : public NetNode {
+
+    public:
+      NetUserFunc(NetScope*s, const char*n, NetScope*def);
+      ~NetUserFunc();
+
+      unsigned port_count() const;
+      unsigned port_width(unsigned port) const;
+      Link& port_pin(unsigned port, unsigned idx);
+
+      const NetScope* def() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      NetScope*def_;
 };
 
 /* =========
@@ -1734,10 +1758,15 @@ class NetForever : public NetProc {
 };
 
 /*
- * A funciton definition is elaborated just like a task, though by now
+ * A function definition is elaborated just like a task, though by now
  * it is certain that the first parameter (a phantom parameter) is the
  * output and all the remaining parameters are the inputs. This makes
- * for easy code generation in targets that support behavioral descriptions.
+ * for easy code generation in targets that support behavioral
+ * descriptions.
+ *
+ * The NetNet array that is passed in as a parameter is the set of
+ * signals that make up its parameter list. These are all internal to
+ * the scope of the function.
  */
 class NetFuncDef {
 
@@ -2891,6 +2920,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.232  2002/03/09 02:10:22  steve
+ *  Add the NetUserFunc netlist node.
+ *
  * Revision 1.231  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the
@@ -2901,255 +2933,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *
  * Revision 1.229  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
- *
- * Revision 1.228  2001/12/31 00:08:14  steve
- *  Support $signed cast of expressions.
- *
- * Revision 1.227  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.226  2001/11/29 01:58:18  steve
- *  Handle part selects in l-values of DFF devices.
- *
- * Revision 1.225  2001/11/19 04:26:46  steve
- *  Unary reduction operators are all 1-bit results.
- *
- * Revision 1.224  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
- *
- * Revision 1.223  2001/11/09 03:43:26  steve
- *  Spelling errors.
- *
- * Revision 1.222  2001/11/08 05:15:51  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.221  2001/11/06 04:32:37  steve
- *  shift expressions can have definite widths.
- *
- * Revision 1.220  2001/10/31 05:24:52  steve
- *  ivl_target support for assign/deassign.
- *
- * Revision 1.219  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.218  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.217  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.216  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.215  2001/10/07 03:38:08  steve
- *  parameter names do not have defined size.
- *
- * Revision 1.214  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.213  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.212  2001/07/22 00:17:49  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.211  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.210  2001/07/01 00:27:34  steve
- *  Make NetFF constructor take const char* for the name.
- *
- * Revision 1.209  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.208  2001/06/15 04:14:18  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.207  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.206  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.205  2001/04/29 20:19:10  steve
- *  Add pullup and pulldown devices.
- *
- * Revision 1.204  2001/04/24 02:23:58  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.203  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.202  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.201  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.200  2001/03/29 02:52:01  steve
- *  Add const probe method to NetEvent.
- *
- * Revision 1.199  2001/02/15 06:59:36  steve
- *  FreeBSD port has a maintainer now.
- *
- * Revision 1.198  2001/02/10 21:20:38  steve
- *  Binary operators with operands of indefinite width
- *  has itself an indefinite width.
- *
- * Revision 1.197  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- *
- * Revision 1.196  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.195  2001/01/18 03:16:35  steve
- *  NetMux needs a scope. (PR#115)
- *
- * Revision 1.194  2001/01/16 02:44:18  steve
- *  Use the iosfwd header if available.
- *
- * Revision 1.193  2001/01/06 06:31:58  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.192  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.191  2001/01/04 16:49:50  steve
- *  Evaluate constant === and !== expressions.
- *
- * Revision 1.190  2001/01/02 04:21:14  steve
- *  Support a bunch of unary operators in parameter expressions.
- *
- * Revision 1.189  2001/01/02 03:23:40  steve
- *  Evaluate constant &, | and unary ~.
- *
- * Revision 1.188  2000/12/16 19:03:30  steve
- *  Evaluate <= and ?: in parameter expressions (PR#81)
- *
- * Revision 1.187  2000/12/16 01:45:48  steve
- *  Detect recursive instantiations (PR#2)
- *
- * Revision 1.186  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.185  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.184  2000/12/04 17:37:04  steve
- *  Add Attrib class for holding NetObj attributes.
- *
- * Revision 1.183  2000/12/02 05:08:04  steve
- *  Spelling error in comment.
- *
- * Revision 1.182  2000/11/29 05:24:00  steve
- *  synthesis for unary reduction ! and N operators.
- *
- * Revision 1.181  2000/11/29 02:09:53  steve
- *  Add support for || synthesis (PR#53)
- *
- * Revision 1.180  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.179  2000/11/11 01:52:09  steve
- *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
- *  change set to correct behavior of bufif0 and bufif1
- *  (Tim Leight)
- *
- *  Also includes fix for PR#27
- *
- * Revision 1.178  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.177  2000/11/04 06:36:24  steve
- *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
- *
- * Revision 1.176  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.175  2000/10/28 00:51:42  steve
- *  Add scope to threads in vvm, pass that scope
- *  to vpi sysTaskFunc objects, and add vpi calls
- *  to access that information.
- *
- *  $display displays scope in %m (PR#1)
- *
- * Revision 1.174  2000/10/18 20:04:39  steve
- *  Add ivl_lval_t and support for assignment l-values.
- *
- * Revision 1.173  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.172  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.171  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.170  2000/10/04 16:30:39  steve
- *  Use char8 instead of string to store name.
- *
- * Revision 1.169  2000/09/29 04:43:09  steve
- *  Cnstant evaluation of NE.
- *
- * Revision 1.168  2000/09/26 05:05:58  steve
- *  Detect indefinite widths where definite widths are required.
- *
- * Revision 1.167  2000/09/26 01:35:42  steve
- *  Remove the obsolete NetEIdent class.
- *
- * Revision 1.166  2000/09/24 17:41:13  steve
- *  fix null pointer when elaborating undefined task.
- *
- * Revision 1.165  2000/09/24 15:44:44  steve
- *  Move some NetNet method out of the header file.
- *
- * Revision 1.164  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.163  2000/09/17 21:26:15  steve
- *  Add support for modulus (Eric Aardoom)
- *
- * Revision 1.162  2000/09/10 02:18:16  steve
- *  elaborate complex l-values
- *
- * Revision 1.161  2000/09/07 00:06:53  steve
- *  encapsulate access to the l-value expected width.
- *
- * Revision 1.160  2000/09/02 23:40:13  steve
- *  Pull NetAssign_ creation out of constructors.
- *
- * Revision 1.159  2000/09/02 20:54:20  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
- * Revision 1.158  2000/08/27 15:51:50  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.157  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.156  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.155  2000/08/09 03:43:45  steve
- *  Move all file manipulation out of target class.
  */
 #endif
