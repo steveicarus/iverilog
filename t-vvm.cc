@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.53 1999/09/30 21:26:59 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.54 1999/10/01 03:15:00 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -83,6 +83,10 @@ class target_vvm : public target_t {
 	// This is the name of the thread (process or task) that is
 	// being generated.
       string thread_class_;
+
+	// Method definitions go into this file.
+      char*defn_name;
+      ofstream defn;
 
       char*delayed_name;
       ofstream delayed;
@@ -517,6 +521,9 @@ static string emit_parm_rval(ostream&os, const NetExpr*expr)
 
 void target_vvm::start_design(ostream&os, const Design*mod)
 {
+      defn_name = tempnam(0, "ivldf");
+      defn.open(defn_name, ios::in | ios::out | ios::trunc);
+
       delayed_name = tempnam(0, "ivlde");
       delayed.open(delayed_name, ios::in | ios::out | ios::trunc);
 
@@ -547,6 +554,16 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 
 void target_vvm::end_design(ostream&os, const Design*mod)
 {
+      defn.close();
+      os << "// **** Definition code" << endl;
+      { ifstream rdefn (defn_name);
+        os << rdefn.rdbuf();
+      }
+      unlink(defn_name);
+      free(defn_name);
+      defn_name = 0;
+      os << "// **** end definition code" << endl;
+
       delayed.close();
       os << "// **** Delayed code" << endl;
       { ifstream rdelayed (delayed_name);
@@ -667,13 +684,16 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       os << "      vvm_thread*back_;" << endl;
       os << "      bool (" << name << "::*step_)();" << endl;
       os << "      vvm_thread*callee_;" << endl;
-      os << "      bool step_0_() {" << endl;
-      def->proc()->emit_proc(os, this);
-      os << "        sim_->thread_active(back_);" << endl;
-      os << "        return false;" << endl;
-      os << "      }" << endl;
-      os << "};" << endl;
+      os << "      bool step_0_();" << endl;
 
+
+      defn << "bool " << thread_class_ << "::step_0_() {" << endl;
+      def->proc()->emit_proc(os, this);
+      defn << "      sim_->thread_active(back_);" << endl;
+      defn << "      return false;" << endl;
+      defn << "}" << endl;
+
+      os << "};" << endl;
       thread_class_ = save_thread_class;
 }
 
@@ -692,11 +712,11 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       os << "// Function " << def->name() << endl;
       os << "static void " << name << "(vvm_simulation*);" << endl;
 
-      delayed << "// Function " << def->name() << endl;
-      delayed << "static void " << name << "(vvm_simulation*sim_)" << endl;
-      delayed << "{" << endl;
-      def->proc()->emit_proc(delayed, this);
-      delayed << "}" << endl;
+      defn << "// Function " << def->name() << endl;
+      defn << "static void " << name << "(vvm_simulation*sim_)" << endl;
+      defn << "{" << endl;
+      def->proc()->emit_proc(os, this);
+      defn << "}" << endl;
 }
 
 /*
@@ -1094,7 +1114,9 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
       os << "    private:" << endl;
       os << "      bool (" << thread_class_ << "::*step_)();" << endl;
       os << "      vvm_thread*callee_;" << endl;
-      os << "      bool step_0_() {" << endl;
+      os << "      bool step_0_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_0_() {" << endl;
 }
 
 /*
@@ -1104,9 +1126,9 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
  */
 void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
-      string rval = emit_proc_rval(os, 8, net->rval());
+      string rval = emit_proc_rval(defn, 8, net->rval());
 
-      os << "        // " << net->get_line() << ": " << endl;
+      defn << "      // " << net->get_line() << ": " << endl;
 
 	/* Not only is the lvalue signal assigned to, send the bits to
 	   all the other pins that are connected to this signal. */
@@ -1137,7 +1159,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			continue;
 
 		  written[cur->name()] = true;
-		  os << "        " << mangle(cur->name()) <<
+		  defn << "      " << mangle(cur->name()) <<
 			".set(sim_, " << pin << ", " <<
 			rval << "[" << idx << "]);" << endl;
 	    }
@@ -1146,27 +1168,27 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
-      string index = emit_proc_rval(os, 8, amem->index());
-      string rval = emit_proc_rval(os, 8, amem->rval());
+      string index = emit_proc_rval(defn, 8, amem->index());
+      string rval = emit_proc_rval(defn, 8, amem->rval());
       const NetMemory*mem = amem->memory();
 
-      os << "        /* " << amem->get_line() << " */" << endl;
-      os << "        " << mangle(mem->name())
+      defn << "      /* " << amem->get_line() << " */" << endl;
+      defn << "      " << mangle(mem->name())
 	 << "[" << index << ".as_unsigned()] = " << rval << ";" << endl;
 }
 
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 {
-      string rval = emit_proc_rval(os, 8, net->rval());
+      string rval = emit_proc_rval(defn, 8, net->rval());
 
       if (net->bmux()) {
-	    string bval = emit_proc_rval(os, 8, net->bmux());
-	    os << "        sim_->insert_event(" << net->rise_time()
+	    string bval = emit_proc_rval(defn, 8, net->bmux());
+	    defn << "      sim_->insert_event(" << net->rise_time()
 	       << ", new " << mangle(net->name()) << "(sim_, " << rval
 	       << ", " << bval << ".as_unsigned()));" << endl;
 
       } else {
-	    os << "        sim_->insert_event(" << net->rise_time()
+	    defn << "      sim_->insert_event(" << net->rise_time()
 	       << ", new " << mangle(net->name()) << "(sim_, " << rval
 	       << "));" << endl;
       }
@@ -1212,19 +1234,17 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 	    break;
       }
 
-      os << "        /* case (" << *net->expr() << ") */" << endl;
-      string expr = emit_proc_rval(os, 8, net->expr());
+      defn << "      /* case (" << *net->expr() << ") */" << endl;
+      string expr = emit_proc_rval(defn, 8, net->expr());
 
-      ostrstream sc;
       unsigned exit_step = thread_step_ + 1;
       thread_step_ += 1;
 
       unsigned default_idx = net->nitems();
 
-	/* Handle the case statement like a computed goto, where the
-	   result of the case statements is the next state to go
-	   to. Once that is done, return true so that statement is
-	   executed. */
+	/* This iteration generates all the comparisons with the case
+	   expression. If a comparison matches, the next step is set
+	   and return true branches to that step. */
       for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
 	    if (net->expr(idx) == 0) {
 		  assert(default_idx == net->nitems());
@@ -1232,93 +1252,126 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 		  continue;
 	    }
 	    assert(net->expr(idx));
-	    os << "        /* " << *net->expr(idx) << " : */" << endl;
-	    string guard = emit_proc_rval(os, 8, net->expr(idx));
 
 	    thread_step_ += 1;
 
-	    os << "        if (V1 == " << test_func << "(" << guard << ","
-	       << expr << ")[0]) {" << endl;
-	    os << "            step_ = &" << thread_class_ <<
-		  "::step_" << thread_step_ << "_;" << endl;
-	    os << "            return true;" << endl;
-	    os << "        }" << endl;
+	    defn << "      /* " << *net->expr(idx) << " */" << endl;
+	    string guard = emit_proc_rval(defn, 8, net->expr(idx));
 
-	    sc << "      bool step_" << thread_step_ << "_()" << endl;
-	    sc << "      {" << endl;
-	    if (net->stat(idx))
-		  net->stat(idx)->emit_proc(sc, this);
-	    sc << "        step_ = &" << thread_class_ << "::step_" <<
-		  exit_step << "_;" << endl;
-	    sc << "        return true;" << endl;
-	    sc << "      }" << endl;
+	    defn << "      if (V1 == " << test_func << "(" << guard << ","
+	       << expr << ")[0]) {" << endl;
+	    defn << "          step_ = &" << thread_class_ <<
+		  "::step_" << thread_step_ << "_;" << endl;
+	    defn << "          return true;" << endl;
+	    defn << "      }" << endl;
       }
 
+	/* If none of the above tests pass, then branch to the default
+	   step (or the exit step if there is no default.) */
       if (default_idx < net->nitems()) {
 	    thread_step_ += 1;
 
-	    os << "        /* default : */" << endl;
-	    os << "        step_ = &step_" << thread_step_ << "_;" << endl;
-
-	    sc << "      bool step_" << thread_step_ << "_()" << endl;
-	    sc << "      {" << endl;
-	    if (net->stat(default_idx))
-		  net->stat(default_idx)->emit_proc(sc, this);
-	    sc << "        step_ = &" << thread_class_ << "::step_" <<
-		  exit_step << "_;" << endl;
-	    sc << "        return true;" << endl;
-	    sc << "      }" << endl;
+	    defn << "      /* default : */" << endl;
+	    defn << "      step_ = &" << thread_class_ << "::step_" <<
+		  thread_step_ << "_;" << endl;
 
       } else {
-	    os << "        /* no default ... fall out of case. */" << endl;
-	    os << "        step_ = &" << thread_class_ << "::step_" <<
+	    defn << "      /* no default ... fall out of case. */" << endl;
+	    defn << "      step_ = &" << thread_class_ << "::step_" <<
 		  exit_step << "_;" << endl;
       }
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      sc << ends;
-      os << "        /* endcase */" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
-      os << sc.str();
-      os << "      bool step_" << exit_step << "_()" << endl;
-      os << "      {" << endl;
+	/* Run through the cases again, this time generating the case
+	   steps. Note that I already know which item is the default,
+	   so I just assert that this iteration agrees. */
+      unsigned step_num = exit_step;
+      for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
+	    if (net->expr(idx) == 0) {
+		  assert(default_idx == idx);
+		  continue;
+	    }
+	    assert(net->expr(idx));
+
+	    step_num += 1;
+
+	    os << "      bool step_" << step_num << "_();" << endl;
+
+	    defn << "bool " << thread_class_ << "::step_" << step_num
+		 << "_() {" << endl;
+	    if (net->stat(idx))
+		  net->stat(idx)->emit_proc(os, this);
+	    defn << "      step_ = &" << thread_class_ << "::step_" <<
+		  exit_step << "_;" << endl;
+	    defn << "      return true;" << endl;
+	    defn << "}" << endl;
+      }
+
+	/* If there is a default case, generate the default step. */
+      if (default_idx < net->nitems()) {
+	    step_num += 1;
+
+	    os << "      bool step_" << step_num << "_();" << endl;
+
+	    defn << "bool " << thread_class_ << "::step_" << step_num
+		 << "_() {" << endl;
+	    if (net->stat(default_idx))
+		  net->stat(default_idx)->emit_proc(os, this);
+	    defn << "      step_ = &" << thread_class_ << "::step_" <<
+		  exit_step << "_;" << endl;
+	    defn << "      return true;" << endl;
+	    defn << "}" << endl;
+      }
+
+	/* Finally, start the exit step. */
+      os << "      bool step_" << exit_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << exit_step <<
+	    "_() {" << endl;
 }
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
-      string expr = emit_proc_rval(os, 8, net->expr());
+      string expr = emit_proc_rval(defn, 8, net->expr());
 
       unsigned if_step   = ++thread_step_;
       unsigned else_step = ++thread_step_;
       unsigned out_step  = ++thread_step_;
 
-      os << "        if (" << expr << "[0] == V1)" << endl;
-      os << "          step_ = &" << thread_class_ << "::step_" <<
+      defn << "      if (" << expr << "[0] == V1)" << endl;
+      defn << "        step_ = &" << thread_class_ << "::step_" <<
 	    if_step << "_;" << endl;
-      os << "        else" << endl;
-      os << "          step_ = &" << thread_class_ << "::step_" <<
+      defn << "      else" << endl;
+      defn << "        step_ = &" << thread_class_ << "::step_" <<
 	    else_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      };" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << if_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << if_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << if_step <<
+	    "_() {" << endl;
       net->emit_recurse_if(os, this);
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << else_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << else_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << else_step <<
+	    "_() {" << endl;
       net->emit_recurse_else(os, this);
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << out_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << out_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << out_step <<
+	    "_() {" << endl;
 }
 
 /*
@@ -1330,55 +1383,60 @@ void target_vvm::proc_forever(ostream&os, const NetForever*net)
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
 
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    top_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
-      os << "      bool step_" << top_step << "_()" << endl;
-      os << "      {" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
+      os << "      bool step_" << top_step << "_();" << endl;
+      defn << "bool " << thread_class_ << "::step_" << top_step <<
+	    "_() {" << endl;
       net->emit_recurse(os, this);
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    top_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << out_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << out_step << "_();" << endl;
+      defn << "bool " << thread_class_ << "::step_" << out_step <<
+	    "_() {" << endl;
 }
 
 void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 {
-      string expr = emit_proc_rval(os, 8, net->expr());
+      string expr = emit_proc_rval(defn, 8, net->expr());
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
 
-      os << "        step_" << top_step << "_idx_ = " << expr <<
+      defn << "      step_" << top_step << "_idx_ = " << expr <<
 	    ".as_unsigned();" << endl;
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    top_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
       os << "      unsigned step_" << top_step << "_idx_;" << endl;
+      os << "      bool step_" << top_step << "_();" << endl;
 
-      os << "      bool step_" << top_step << "_()" << endl;
-      os << "      {" << endl;
-      os << "        if (step_" << top_step << "_idx_ == 0) {" << endl;
-      os << "          step_ = &" << thread_class_ << "::step_" <<
+      defn << "bool " << thread_class_ << "::step_" << top_step <<
+	    "_() {" << endl;
+      defn << "      if (step_" << top_step << "_idx_ == 0) {" << endl;
+      defn << "        step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
-      os << "          return true;" << endl;
-      os << "        }" << endl;
-      os << "        step_" << top_step << "_idx_ -= 1;" << endl;
+      defn << "        return true;" << endl;
+      defn << "      }" << endl;
+      defn << "      step_" << top_step << "_idx_ -= 1;" << endl;
 
       net->emit_recurse(os,this);
 
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    top_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << out_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << out_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << out_step <<
+	    "_() {" << endl;
 }
 
 /*
@@ -1390,25 +1448,25 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 {
       string ptmp = make_temp();
 
-      os << "        vpiHandle " << ptmp << "[" << net->nparms() <<
+      defn << "      vpiHandle " << ptmp << "[" << net->nparms() <<
 	    "];" << endl;
       for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
 	    string val;
 	    if (net->parm(idx)) {
-		  val = emit_parm_rval(os, net->parm(idx));
+		  val = emit_parm_rval(defn, net->parm(idx));
 
 	    } else {
 		  val = make_temp();
-		  os << "        struct __vpiHandle " << val << ";" << endl;
-		  os << "        vvm_make_vpi_parm(&" << val << ");" << endl;
+		  defn << "      struct __vpiHandle " << val << ";" << endl;
+		  defn << "      vvm_make_vpi_parm(&" << val << ");" << endl;
 		  val = string("&") + val;
 	    }
 
-	    os << "        " << ptmp << "[" << idx << "] = " << val << ";"
+	    defn << "      " << ptmp << "[" << idx << "] = " << val << ";"
 	       << endl;
       }
 
-      os << "        vvm_calltask(sim_, \"" << net->name() << "\", " <<
+      defn << "      vvm_calltask(sim_, \"" << net->name() << "\", " <<
 	    net->nparms() << ", " << ptmp << ");" << endl;
 
 }
@@ -1417,14 +1475,16 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
 {
       unsigned out_step = ++thread_step_;
       const string name = mangle(net->name());
-      os << "        callee_ = new " << name << "(sim_, this);" << endl;
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      callee_ = new " << name << "(sim_, this);" << endl;
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
-      os << "        return false;" << endl;
-      os << "      }" << endl;
-      os << "      bool step_" << out_step << "_()" << endl;
-      os << "      {" << endl;
-      os << "        delete callee_;" << endl;
+      defn << "      return false;" << endl;
+      defn << "}" << endl;
+
+      os << "      bool step_" << out_step << "_();" << endl;
+      defn << "bool " << thread_class_ << "::step_" << out_step <<
+	    "_() {" << endl;
+      defn << "      delete callee_;" << endl;
 }
 
 /*
@@ -1445,36 +1505,41 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
       unsigned head_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
 
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    head_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      // " << net->expr()->get_line() <<
+      os << "      bool step_" << head_step << "_();" << endl;
+
+      defn << "// " << net->expr()->get_line() <<
 	    ": top of while condition." << endl;
-      os << "      bool step_" << head_step << "_()" << endl;
-      os << "      {" << endl;
+      defn << "bool " << thread_class_ << "::step_" << head_step <<
+	    "_() {" << endl;
 
-      string expr = emit_proc_rval(os, 8, net->expr());
-      os << "        // " << net->expr()->get_line() <<
+      string expr = emit_proc_rval(defn, 8, net->expr());
+
+      defn << "// " << net->expr()->get_line() <<
 	    ": test while condition." << endl;
-      os << "        if (" << expr << "[0] != V1) {" << endl;
-      os << "            step_ = &" << thread_class_ << "::step_" <<
+      defn << "      if (" << expr << "[0] != V1) {" << endl;
+      defn << "          step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
-      os << "            return true;" << endl;
-      os << "        }" << endl;
+      defn << "          return true;" << endl;
+      defn << "      }" << endl;
 
       net->emit_proc_recurse(os, this);
 
-      os << "        // " << net->expr()->get_line() <<
+      defn << "// " << net->expr()->get_line() <<
 	    ": end of while loop." << endl;
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    head_step << "_;" << endl;
-      os << "        return true;" << endl;
-      os << "      }" << endl;
+      defn << "      return true;" << endl;
+      defn << "}" << endl;
 
-      os << "      bool step_" << out_step << "_()" << endl;
-      os << "      {" << endl;
+      os << "      bool step_" << out_step << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << out_step <<
+	    "_() {" << endl;
 }
 
 /*
@@ -1484,7 +1549,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
 void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 {
       thread_step_ += 1;
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    thread_step_ << "_;" << endl;
 
 	/* POSITIVE is for the wait construct, and needs to be handled
@@ -1509,27 +1574,30 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 
       svector<const NetNEvent*>*list = proc->back_list();
       if ((list->count()==1) && ((*list)[0]->type() == NetNEvent::POSITIVE)) {
-	    os << "        if (" << mangle((*list)[0]->name()) <<
+	    defn << "      if (" << mangle((*list)[0]->name()) <<
 		  ".get()[0]==V1) {" << endl;
-	    os << "           return true;" << endl;
-	    os << "        } else {" << endl;
-	    os << "           " << mangle(proc->name()) <<
+	    defn << "         return true;" << endl;
+	    defn << "      } else {" << endl;
+	    defn << "         " << mangle(proc->name()) <<
 		  ".wait(this);" << endl;
-	    os << "           return false;" << endl;
-	    os << "        }" << endl;
+	    defn << "         return false;" << endl;
+	    defn << "      }" << endl;
       } else {
 	      /* The canonical wait for an edge puts the thread into
 		 the correct wait object, then returns false from the
 		 thread to suspend execution. When things are ready to
 		 proceed, the correct vvm_pevent will send a wakeup to
 		 start the next basic block. */
-	    os << "        " << mangle(proc->name()) << ".wait(this);" << endl;
-	    os << "        return false;" << endl;
+	    defn << "      " << mangle(proc->name()) << ".wait(this);" << endl;
+	    defn << "      return false;" << endl;
       }
 
-      os << "      }" << endl;
-      os << "      bool step_" << thread_step_ << "_()" << endl;
-      os << "      {" << endl;
+      defn << "}" << endl;
+
+      os << "      bool step_" << thread_step_ << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << thread_step_ <<
+	    "_() {" << endl;
 
       proc->emit_proc_recurse(os, this);
       delete list;
@@ -1541,14 +1609,17 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 {
       thread_step_ += 1;
-      os << "        step_ = &" << thread_class_ << "::step_" <<
+      defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    thread_step_ << "_;" << endl;
-      os << "        sim_->thread_delay(" << proc->delay() << ", this);"
+      defn << "      sim_->thread_delay(" << proc->delay() << ", this);"
 	 << endl;
-      os << "        return false;" << endl;
-      os << "      }" << endl;
-      os << "      bool step_" << thread_step_ << "_()" << endl;
-      os << "      {" << endl;
+      defn << "      return false;" << endl;
+      defn << "}" << endl;
+
+      os << "      bool step_" << thread_step_ << "_();" << endl;
+
+      defn << "bool " << thread_class_ << "::step_" << thread_step_ <<
+	    "_() {" << endl;
 
       proc->emit_proc_recurse(os, this);
 }
@@ -1556,15 +1627,15 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 void target_vvm::end_process(ostream&os, const NetProcTop*proc)
 {
       if (proc->type() == NetProcTop::KALWAYS) {
-	    os << "        step_ = &" << thread_class_ << "::step_0_;"
+	    defn << "      step_ = &" << thread_class_ << "::step_0_;"
 	       << endl;
-	    os << "        return true;" << endl;
+	    defn << "      return true;" << endl;
       } else {
-	    os << "        step_ = 0;" << endl;
-	    os << "        return false;" << endl;
+	    defn << "      step_ = 0;" << endl;
+	    defn << "      return false;" << endl;
       }
 
-      os << "      }" << endl;
+      defn << "}" << endl;
       os << "};" << endl;
 }
 
@@ -1577,6 +1648,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.54  1999/10/01 03:15:00  steve
+ *  Rewrite vvm output to separateclass declarations
+ *  from method definitions. This is required to allow
+ *  for mutual referencing, for example by tasks.
+ *
  * Revision 1.53  1999/09/30 21:26:59  steve
  *  Remember to declare the calee_ member.
  *
@@ -1693,82 +1769,5 @@ extern const struct target tgt_vvm = {
  *  Add to vvm the binary ^ and unary & operators.
  *
  *  Dump events a bit more completely.
- *
- * Revision 1.18  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.17  1999/04/25 22:52:32  steve
- *  Generate SubSignal refrences in vvm.
- *
- * Revision 1.16  1999/04/22 04:56:58  steve
- *  Add to vvm proceedural memory references.
- *
- * Revision 1.15  1999/04/19 01:59:37  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.14  1999/03/15 02:43:32  steve
- *  Support more operators, especially logical.
- *
- * Revision 1.13  1999/02/22 03:01:12  steve
- *  Handle default case.
- *
- * Revision 1.12  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.11  1999/02/08 03:55:55  steve
- *  Do not generate code for signals,
- *  instead use the NetESignal node to
- *  generate gate-like signal devices.
- *
- * Revision 1.10  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.9  1999/01/01 01:46:01  steve
- *  Add startup after initialization.
- *
- * Revision 1.8  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.7  1998/12/17 23:54:58  steve
- *  VVM support for small sequential UDP objects.
- *
- * Revision 1.6  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.5  1998/11/10 00:48:31  steve
- *  Add support it vvm target for level-sensitive
- *  triggers (i.e. the Verilog wait).
- *  Fix display of $time is format strings.
- *
- * Revision 1.4  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.3  1998/11/07 19:17:10  steve
- *  Calculate expression widths at elaboration time.
- *
- * Revision 1.2  1998/11/07 17:05:06  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:05  steve
- *  Introduce verilog to CVS.
- *
  */
 
