@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.57 2001/08/10 00:40:45 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.58 2001/08/28 04:07:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -349,6 +349,7 @@ bool dll_target::start_design(const Design*des)
       des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
       des_.root_->child_ = 0;
       des_.root_->sibling_ = 0;
+      des_.root_->parent = 0;
       des_.root_->nsigs_ = 0;
       des_.root_->sigs_ = 0;
       des_.root_->nlog_ = 0;
@@ -1275,6 +1276,7 @@ void dll_target::scope(const NetScope*net)
 	    scope->name_ = strdup(net->name().c_str());
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
+	    scope->parent = find_scope(des_.root_, net->parent());
 	    scope->nsigs_ = 0;
 	    scope->sigs_ = 0;
 	    scope->nlog_ = 0;
@@ -1309,11 +1311,10 @@ void dll_target::scope(const NetScope*net)
 		  break;
 	    }
 
-	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
-	    assert(parent != 0);
+	    assert(scope->parent != 0);
 
-	    scope->sibling_= parent->child_;
-	    parent->child_ = scope;
+	    scope->sibling_= scope->parent->child_;
+	    scope->parent->child_ = scope;
       }
 }
 
@@ -1485,6 +1486,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.58  2001/08/28 04:07:41  steve
+ *  Add some ivl_target convenience functions.
+ *
  * Revision 1.57  2001/08/10 00:40:45  steve
  *  tgt-vvp generates code that skips nets as inputs.
  *

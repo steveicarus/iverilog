@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.63 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.64 2001/08/28 04:07:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -418,6 +418,12 @@ extern "C" const char* ivl_logic_basename(ivl_net_logic_t net)
       return basename(net->scope_, net->name_);
 }
 
+extern "C" ivl_scope_t ivl_logic_scope(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->scope_;
+}
+
 extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
 {
       return net->type_;
@@ -474,6 +480,11 @@ extern "C" const char* ivl_udp_name(ivl_udp_t net)
 {
       assert(net->name);
       return net->name;
+}
+
+extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
+{
+      return basename(net->scope, net->name);
 }
 
 
@@ -612,6 +623,12 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(0);
 	    return 0;
       }
+}
+
+extern "C" ivl_scope_t ivl_lpm_scope(ivl_lpm_t net)
+{
+      assert(net);
+      return net->scope;
 }
 
 extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
@@ -860,6 +877,16 @@ extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
       return net->stmt_;
 }
 
+extern "C" const char* ivl_scope_basename(ivl_scope_t net)
+{
+      assert(net);
+
+      if (net->parent == 0)
+	    return net->name_;
+
+      return basename(net->parent, net->name_);
+}
+
 extern "C" int ivl_scope_children(ivl_scope_t net,
 				  ivl_scope_f func,
 				  void*cd)
@@ -934,6 +961,12 @@ extern "C" ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx)
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
       return net->name_;
+}
+
+extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
+{
+      assert(net);
+      return net->parent;
 }
 
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
@@ -1318,6 +1351,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.64  2001/08/28 04:07:18  steve
+ *  Add some ivl_target convenience functions.
+ *
  * Revision 1.63  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

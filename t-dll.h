@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.60 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: t-dll.h,v 1.61 2001/08/28 04:07:41 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -428,7 +428,7 @@ struct ivl_process_s {
  * there.
  */
 struct ivl_scope_s {
-      ivl_scope_t child_, sibling_;
+      ivl_scope_t child_, sibling_, parent;
 
       char* name_;
       const char* tname_;
@@ -562,6 +562,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.61  2001/08/28 04:07:41  steve
+ *  Add some ivl_target convenience functions.
+ *
  * Revision 1.60  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

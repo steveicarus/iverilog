@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.77 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.78 2001/08/28 04:07:17 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -456,12 +456,16 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * ivl_logic_basename
  *    This is the name of the gate without the scope part.
  *
+ * ivl_logic_scope
+ *    This is the scope that directly contains the logic device.
+ *
  * ivl_logic_pins
  * ivl_logic_pin
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
 extern const char* ivl_logic_basename(ivl_net_logic_t net);
+extern ivl_scope_t ivl_logic_scope(ivl_net_logic_t net);
 extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
@@ -487,7 +491,13 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * These are the functions that apply to all LPM devices:
  *
  * ivl_lpm_name
- *    Return the name of the device.
+ * ivl_lpm_basename
+ *    Return the name of the device. The name is the name of the
+ *    device with the scope part, and the basename is without the scope.
+ *
+ * ivl_lpm_scope
+ *    LPM devices exist within a scope. Return the scope that contains
+ *    this device.
  *
  * ivl_lpm_type
  *    Return the ivl_lpm_type_t of the secific LPM device.
@@ -524,6 +534,8 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    per bit for a MUX.
  */
 extern const char*    ivl_lpm_name(ivl_lpm_t net);
+extern const char*    ivl_lpm_basename(ivl_lpm_t net);
+extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
 extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
@@ -720,8 +732,15 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    represented by ivl_logic_t.
  *
  * ivl_scope_name
+ * ivl_scope_basename
  *    Every scope has a hierarchical name. This name is also a prefix
- *    of all the names of objects contained within the scope.
+ *    of all the names of objects contained within the scope. The
+ *    ivl_scope_basename is the name of the scope without the included
+ *    hierarchy. 
+ *
+ * ivl_scope_parent
+ *    If this is a non-root scope, then the parent is the scope that
+ *    contains this scope. Otherwise, the parent is nil.
  *
  * ivl_scope_port
  * ivl_scope_ports
@@ -760,6 +779,8 @@ extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern unsigned     ivl_scope_mems(ivl_scope_t net);
 extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
+extern const char*  ivl_scope_basename(ivl_scope_t net);
+extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
@@ -923,6 +944,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.78  2001/08/28 04:07:17  steve
+ *  Add some ivl_target convenience functions.
+ *
  * Revision 1.77  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster
