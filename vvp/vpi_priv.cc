@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.13 2002/04/07 00:46:21 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.14 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -38,8 +38,8 @@ struct __vpiSysTaskCall*vpip_cur_task = 0;
 
 int vpi_free_object(vpiHandle ref)
 {
-      free(ref);
-      return 0;
+      assert(ref->vpi_type->vpi_free_object_);
+      return ref->vpi_type->vpi_free_object_(ref);
 }
 
 static int vpip_get_global(int property)
@@ -190,6 +190,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.14  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.13  2002/04/07 00:46:21  steve
  *  minor cleanup of formatting.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_iter.cc,v 1.2 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vpi_iter.cc,v 1.3 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 /*
@@ -28,17 +28,32 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+static int iterator_free_object(vpiHandle ref)
+{
+      struct __vpiIterator*hp = (struct __vpiIterator*)ref;
+      assert(ref->vpi_type->type_code == vpiIterator);
+
+      if (hp->free_args_flag)
+	    free(hp->args);
+
+      free(hp);
+      return 0;
+}
+
 static const struct __vpirt vpip_iterator_rt = {
       vpiIterator,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
+      0, // vpi_get_
+      0, // vpi_get_str_
+      0, // vpi_get_value_
+      0, // vpi_put_value_
+      0, // handle_
+      0, // iterate_
+      0, // index_
+      &iterator_free_object
 };
 
-vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args)
+vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
+			     bool free_args_flag)
 {
       struct __vpiIterator*res = (struct __vpiIterator*)
 	    calloc(1, sizeof(struct __vpiIterator));
@@ -46,6 +61,8 @@ vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args)
       res->args = args;
       res->nargs = nargs;
       res->next  = 0;
+
+      res->free_args_flag = free_args_flag;
 
       return &(res->base);
 }
@@ -72,6 +89,9 @@ vpiHandle vpi_scan(vpiHandle ref)
 
 /*
  * $Log: vpi_iter.cc,v $
+ * Revision 1.3  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.2  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

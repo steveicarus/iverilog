@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.5 2002/02/06 04:48:34 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.6 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -119,6 +119,12 @@ static vpiHandle memory_scan(vpiHandle ref, int)
       return &rfp->word.base;
 }
 
+static int mem_iter_free_object(vpiHandle ref)
+{
+      free(ref);
+      return 0;
+}
+
 static const struct __vpirt vpip_mem_iter_rt = {
       vpiIterator,
       0,
@@ -128,6 +134,7 @@ static const struct __vpirt vpip_mem_iter_rt = {
       0,
       0,
       memory_scan,
+      &mem_iter_free_object
 };
 
 static vpiHandle memory_iterate(int code, vpiHandle ref)
@@ -363,6 +370,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.6  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.5  2002/02/06 04:48:34  steve
  *  get bin or hex string values of memory words.
  *

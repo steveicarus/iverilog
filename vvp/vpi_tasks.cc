@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.11 2002/04/07 02:34:10 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.12 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 /*
@@ -82,7 +82,7 @@ static vpiHandle systask_iter(int type, vpiHandle ref)
       if (rfp->nargs == 0)
 	    return 0;
 
-      return vpip_make_iterator(rfp->nargs, rfp->args);
+      return vpip_make_iterator(rfp->nargs, rfp->args, false);
 }
 
 static const struct __vpirt vpip_systask_rt = {
@@ -335,6 +335,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.12  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.11  2002/04/07 02:34:10  steve
  *  Set vpip_cur_task while calling compileft
  *

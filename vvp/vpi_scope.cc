@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.12 2002/01/06 17:50:50 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.13 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -35,7 +35,8 @@ static unsigned   vpip_root_table_cnt = 0;
 
 vpiHandle vpip_make_root_iterator(void)
 {
-      return vpip_make_iterator(vpip_root_table_cnt, vpip_root_table_ptr);
+      return vpip_make_iterator(vpip_root_table_cnt,
+				vpip_root_table_ptr, false);
 }
 
 static char* scope_get_str(int code, vpiHandle obj)
@@ -90,6 +91,12 @@ static vpiHandle scope_get_handle(int code, vpiHandle obj)
       return 0;
 }
 
+/*
+ * This function implements the vpi_iterate method for vpiModule and
+ * similar objects. The vpi_iterate allows the user to iterate over
+ * things that are contained in the scope object, by generating an
+ * iterator for the requested set of items.
+ */
 static vpiHandle module_iter(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
@@ -101,7 +108,28 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 
       switch (code) {
 	  case vpiInternalScope:
-	    return vpip_make_iterator(ref->nintern, ref->intern);
+	    return vpip_make_iterator(ref->nintern, ref->intern, false);
+
+	      /* Generate and iterator for all the modules contained
+		 in this scope. */
+	  case vpiModule:
+	      { unsigned mcnt = 0, ncnt = 0;
+	        vpiHandle*args;
+	        for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+		      if (ref->intern[idx]->vpi_type->type_code == vpiModule)
+			    mcnt += 1;
+
+		if (mcnt == 0)
+		      return 0;
+
+		args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
+		for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+		      if (ref->intern[idx]->vpi_type->type_code == vpiModule)
+			    args[ncnt++] = ref->intern[idx];
+		assert(ncnt == mcnt);
+
+		return vpip_make_iterator(mcnt, args, true);
+	      }
       }
       return 0;
 }
@@ -343,6 +371,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.13  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.12  2002/01/06 17:50:50  steve
  *  Support scope for functors. (Stephan Boettcher)
  *

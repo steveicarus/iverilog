@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.31 2002/04/20 04:33:23 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.32 2002/05/03 15:44:11 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -61,20 +61,32 @@ struct __vpirt {
       vpiHandle (*handle_)(int, vpiHandle);
       vpiHandle (*iterate_)(int, vpiHandle);
       vpiHandle (*index_)(vpiHandle, int);
+
+	/* This implements the vpi_free_object method. */
+      int (*vpi_free_object_)(vpiHandle);
 };
 
 /*
  * The vpiHandle for an iterator has this structure. The definition of
  * the methods lives in vpi_iter.c
+ *
+ * The args and nargs members point to the array of vpiHandle objects
+ * that are to be iterated over. The next member is the index of the
+ * next item to be returned by a vpi_scan.
+ *
+ * The free_args_flag member is true if when this iterator object is
+ * released it must also free the args array.
  */
 struct __vpiIterator {
       struct __vpiHandle base;
       vpiHandle *args;
       unsigned  nargs;
       unsigned  next;
+      bool free_args_flag;
 };
 
-extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
+extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
+				    bool free_args_flag);
 
 /*
  * Scopes are created by .scope statements in the source.
@@ -272,6 +284,9 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.32  2002/05/03 15:44:11  steve
+ *  Add vpiModule iterator to vpiScope objects.
+ *
  * Revision 1.31  2002/04/20 04:33:23  steve
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.
