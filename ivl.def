@@ -61,6 +61,9 @@ ivl_nexus_name
 ivl_nexus_ptrs
 ivl_nexus_ptr
 
+ivl_nexus_ptr_con
+ivl_nexus_ptr_drive0
+ivl_nexus_ptr_drive1
 ivl_nexus_ptr_pin
 ivl_nexus_ptr_lpm
 ivl_nexus_ptr_log
