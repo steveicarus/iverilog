@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.1 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.2 2001/03/25 19:37:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -42,6 +42,72 @@ static void draw_AND(void)
 				    val = 0;
 			      else if ((i0 == 1) && (i1 == 1) && 
 				       (i2 == 1) && (i3 == 1))
+				    val = 1;
+			      else
+				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_NOR(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_NOR[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if ((i0 == 1) || (i1 == 1) || 
+				  (i2 == 1) || (i3 == 1))
+				    val = 0;
+			      else if ((i0 == 0) && (i1 == 0) && 
+				       (i2 == 0) && (i3 == 0))
+				    val = 1;
+			      else
+				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_NOT(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_NOT[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i0 == 1)
+				    val = 0;
+			      else if (i0 == 0)
 				    val = 1;
 			      else
 				    val = 2;
@@ -90,16 +156,68 @@ static void draw_OR(void)
       printf("};\n");
 }
 
+static void draw_hex_table()
+{
+      unsigned idx;
+
+      printf("extern const char hex_digits[256] = {\n");
+      for (idx = 0 ;  idx < 256 ;  idx += 1) {
+	    unsigned cnt_z = 0, cnt_x = 0;
+	    unsigned bv = 0, bdx;
+
+	    for (bdx = 0 ;  bdx < 4 ;  bdx += 1) {
+		  switch ((idx >> (bdx * 2)) & 3) {
+		      case 0:
+			break;
+		      case 1:
+			bv |= 1<<bdx;
+			break;
+		      case 2:
+			cnt_x += 1;
+			break;
+		      case 3:
+			cnt_z += 1;
+			break;
+		  }
+	    }
+
+	    if (cnt_z == 4)
+		  printf(" 'z',");
+
+	    else if (cnt_x == 4)
+		  printf(" 'x',");
+
+	    else if ((cnt_z > 0) && (cnt_x == 0))
+		  printf(" 'Z',");
+
+	    else if (cnt_x > 0)
+		  printf(" 'X',");
+
+	    else
+		  printf(" '%c',", "0123456789abcdef"[bv]);
+
+	    if (((idx+1) % 8) == 0)
+		  printf("\n");
+      }
+      printf("};\n");
+}
+
 main()
 {
       printf("# include  \"functor.h\"\n");
       draw_AND();
+      draw_NOR();
+      draw_NOT();
       draw_OR();
+      draw_hex_table();
       return 0;
 }
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.2  2001/03/25 19:37:26  steve
+ *  Calculate NOR and NOT tables, and also the hex_digits table.
+ *
  * Revision 1.1  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *
