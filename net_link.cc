@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.11 2002/08/18 22:07:16 steve Exp $"
+#ident "$Id: net_link.cc,v 1.12 2002/10/21 01:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -484,8 +484,24 @@ bool NexusSet::contains(const NexusSet&that) const
       return true;
 }
 
+bool NexusSet::intersect(const NexusSet&that) const
+{
+      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1) {
+	    unsigned where = bsearch_(that[idx]);
+	    if (where == nitems_)
+		  continue;
+	    if (items_[where] == that[idx])
+		  return true;
+      }
+
+      return false;
+}
+
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.12  2002/10/21 01:42:08  steve
+ *  Synthesizer support for synchronous begin-end blocks.
+ *
  * Revision 1.11  2002/08/18 22:07:16  steve
  *  Detect temporaries in sequential block synthesis.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.15 2002/10/20 19:19:37 steve Exp $"
+#ident "$Id: synth2.cc,v 1.16 2002/10/21 01:42:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -292,6 +292,103 @@ bool NetProcTop::synth_async(Design*des)
       return flag;
 }
 
+/*
+ * This method is called when a block is encountered near the surface
+ * of a synchronous always statement. For example, this code will be
+ * invoked for input like this:
+ *
+ *     always @(posedge clk...) begin
+ *           <statement1>
+ *           <statement2>
+ *           ...
+ *     end
+ *
+ * This needs to be split into a DFF bank for each statement, because
+ * the statements may each infer different reset and enable signals.
+ */
+bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+			   const NetNet*nex_map, NetNet*nex_out,
+			   const svector<NetEvProbe*>&events_in)
+{
+      if (last_ == 0)
+	    return true;
+
+      bool flag = true;
+
+      NetProc*cur = last_;
+      unsigned offset = 0;
+      do {
+	    cur = cur->next_;
+
+	      /* Create a temporary nex_map for the substatement. */
+	    NexusSet tmp_set;
+	    cur->nex_output(tmp_set);
+	    NetNet*tmp_map = new NetNet(scope, "tmp1", NetNet::WIRE,
+					tmp_set.count());
+	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
+		  connect(tmp_set[idx], tmp_map->pin(idx));
+
+	      /* Create also a temporary net_out to collect the
+		 output. */
+	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
+					tmp_set.count());
+
+	      /* Create a new DFF to handle this part of the begin-end
+		 block. Connect this NetFF to the associated pins of
+		 the existing wide NetFF device. */
+	    NetFF*ff2 = new NetFF(scope, scope->local_hsymbol().c_str(),
+				  tmp_out->pin_count());
+	    des->add_node(ff2);
+
+	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
+		  connect(ff->pin_Data(idx+offset), ff2->pin_Data(idx));
+		  connect(ff->pin_Q(idx+offset), ff2->pin_Q(idx));
+	    }
+	    if (ff->pin_Aclr().is_linked())
+		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
+	    if (ff->pin_Aset().is_linked())
+		  connect(ff->pin_Aset(),  ff2->pin_Aset());
+	    if (ff->pin_Clock().is_linked())
+		  connect(ff->pin_Clock(), ff2->pin_Clock());
+	    if (ff->pin_Enable().is_linked())
+		  connect(ff->pin_Enable(),ff2->pin_Enable());
+
+	      /* Now go on with the synchronous synthesis for this
+		 subset of the statement. */
+	    bool ok_flag = cur->synth_sync(des, scope, ff2, tmp_map,
+					   tmp_out, events_in);
+	    flag = flag && ok_flag;
+
+	    if (ok_flag == false)
+		  continue;
+
+	      /* Use the nex_map to link up the output from the
+		 substatement to the output of the block as a whole. */
+	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
+		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
+	    }
+
+	    delete tmp_map;
+	    delete tmp_out;
+	    offset += ff2->width();
+
+      } while (cur != last_);
+
+	/* Done. The large NetFF is no longer needed, as it has been
+	   taken up by the smaller NetFF devices. */
+      assert(offset == ff->width());
+      delete ff;
+
+      return flag;
+}
+
+/*
+ * This method handles the case where I find a conditional near the
+ * surface of a synchronous thread. This conditional can be a CE or an
+ * asynchronous set/reset, depending on whether the pin of the
+ * expression is connected to an event, or not.
+ */
 bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
@@ -558,6 +655,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.16  2002/10/21 01:42:09  steve
+ *  Synthesizer support for synchronous begin-end blocks.
+ *
  * Revision 1.15  2002/10/20 19:19:37  steve
  *  Handle conditional error cases better.
  *

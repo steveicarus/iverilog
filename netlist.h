@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.265 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.266 2002/10/21 01:42:08 steve Exp $"
 #endif
 
 /*
@@ -296,6 +296,9 @@ class NexusSet {
 
 	// Return true if this set contains every nexus in that set.
       bool contains(const NexusSet&that) const;
+
+	// Return true if this set contains any nexus in that set.
+      bool intersect(const NexusSet&that) const;
 
     private:
       Nexus**items_;
@@ -1410,6 +1413,10 @@ class NetBlock  : public NetProc {
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
 		       const NetNet*nex_map, NetNet*nex_out);
+
+      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+		      const NetNet*nex_map, NetNet*nex_out,
+		      const svector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
 	// the begin-end block sequentially. It is typically of use
@@ -3070,6 +3077,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.266  2002/10/21 01:42:08  steve
+ *  Synthesizer support for synchronous begin-end blocks.
+ *
  * Revision 1.265  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.
