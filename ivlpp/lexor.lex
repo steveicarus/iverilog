@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.2 1999/07/03 20:03:47 steve Exp $"
+#ident "$Id: lexor.lex,v 1.3 1999/07/07 01:07:57 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -44,7 +44,14 @@ static int yywrap();
 
 struct include_stack_t {
       char* path;
+
+        /* If the current input is the the file, this member is set. */
       FILE*file;
+
+        /* If we are reparsing a macro expansion, file is 0 and this
+	   member points to the string is progress */
+      const char*str;
+
       unsigned lineno;
       YY_BUFFER_STATE yybs;
 
@@ -53,6 +60,17 @@ struct include_stack_t {
 
 static struct include_stack_t*istack  = 0;
 static struct include_stack_t*standby = 0;
+
+#define YY_INPUT(buf,result,max_size) do { \
+    if (istack->file) { \
+        size_t rc = fread(buf, 1, max_size, istack->file); \
+        if (rc == 0) result = YY_NULL; \
+        else result = rc; \
+    } else { \
+        if (*istack->str == 0) result = YY_NULL; \
+        else { buf[0] = *istack->str++; result = 1; } \
+    } \
+} while(0)
 
 %}
 
@@ -125,10 +143,16 @@ static void def_match()
 		  cur = cur->right;
       }
 
-      if (cur)
-	    fprintf(yyout, "%s", cur->value);
-      else
-	    fprintf(yyout, "%s", yytext);
+      if (cur) {
+	    struct include_stack_t*isp
+		  = calloc(1, sizeof(struct include_stack_t));
+	    isp->str = cur->value;
+	    isp->next = istack;
+	    istack = isp;
+	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
+
+      } else {
+      }
 }
 
 static char def_name[256];
@@ -247,7 +271,7 @@ static void do_include()
       standby = 0;
       yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
-      if (line_direct_flag)
+      if (line_direct_flag && istack->path)
 	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
 }
 
@@ -257,8 +281,16 @@ static int yywrap()
       istack = isp->next;
 
       yy_delete_buffer(YY_CURRENT_BUFFER);
-      fclose(isp->file);
-      free(isp->path);
+      if (isp->file) {
+	    fclose(isp->file);
+	    free(isp->path);
+      } else {
+	      /* If I am printing line directives and I just finished
+		 macro substitution, I should terminate the line and
+		 arrange for a new directive to be printed. */
+	    if (line_direct_flag && istack->path)
+		  fprintf(yyout, "\n");
+      }
       free(isp);
 
       if (istack == 0)
@@ -266,7 +298,7 @@ static int yywrap()
 
       yy_switch_to_buffer(istack->yybs);
 
-      if (line_direct_flag)
+      if (line_direct_flag && istack->path)
 	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
       return 0;
 }
@@ -281,6 +313,7 @@ void reset_lexor(FILE*out, const char*path)
       struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
       isp->path = strdup(path);
       isp->file = fopen(path, "r");
+      isp->str  = 0;
       if (isp->file == 0) {
 	    perror(path);
 	    exit(1);
