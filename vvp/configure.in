@@ -44,6 +44,7 @@ AC_CHECK_SIZEOF(unsigned)
 # exist.
 AC_CHECK_LIB(termcap, tputs)
 AC_CHECK_LIB(readline, readline)
+AC_CHECK_LIB(history, add_history)
 AC_CHECK_HEADERS(readline/readline.h readline/history.h)
 
 # --
