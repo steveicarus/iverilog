@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.47 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.48 2001/10/09 02:28:44 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -586,13 +586,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  case IVL_LO_PMOS:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type PMOS");
-	    ltype = "?";
+	    ltype = "PMOS";
 	    break;
 
 	  case IVL_LO_NMOS:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NMOS\n");
-	    ltype = "?";
+	    ltype = "NMOS";
 	    break;
 
 	  case IVL_LO_RPMOS:
@@ -1202,6 +1200,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.48  2001/10/09 02:28:44  steve
+ *  handle nmos and pmos devices.
+ *
  * Revision 1.47  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *
