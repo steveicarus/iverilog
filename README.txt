@@ -1,14 +1,14 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM 
-			   September 18, 1999		
+			   September 17, 2000	
 
 
 1.0 What is ICARUS Verilog?
 
-Icarus Verilog is intended to compile ALL of the Verilog HDL as described
-in the IEEE-1364 standard. Of course, it's not quite there yet. It does
-currently handle a mix of structural and behavioral constructs. For a
-view of the current state of Icarus Verilog, see its home page at
-<http://www.icarus.com/eda/verilog>.
+Icarus Verilog is intended to compile ALL of the Verilog HDL as
+described in the IEEE-1364 standard. Of course, it's not quite there
+yet. It does currently handle a mix of structural and behavioral
+constructs. For a view of the current state of Icarus Verilog, see its
+home page at <http://www.icarus.com/eda/verilog>.
  
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
@@ -16,7 +16,7 @@ tools. These back- end tools currently include a simulator written in
 C++ called VVM and an XNF (Xilinx Netlist Format) generator. See
 "vvm.txt" and "xnf.txt" for further details on these back-end
 processors. In the future, backends are expected for EDIF/LPM,
-structural Verilog, etc.
+structural Verilog, VHDL, etc.
 
 2.0 Building/Installing Icarus Verilog From Source
 
@@ -34,12 +34,14 @@ on a UNIX-like system:
 	- GNU Make
 	  The Makefiles use some GNU extensions to, so a basic POSIX
 	  make will not work. Linux systems typically come with a
-	  satisfactory make.
+	  satisfactory make. BSD based systems (i.e. NetBSD, FreeBSD)
+	  typically have GNU make as the gmake program.
 
 	- ISO C++ Compiler
 	  The ivl and ivlpp programs are written in C++ and makes use
-	  of templates and some of the standard C++ library. egcs
-	  compilers with the associated libstdc++ are known to work.
+	  of templates and some of the standard C++ library. egcs and
+	  recent gcc compilers with the associated libstdc++ are known
+	  to work.
 
 	- bison
 
@@ -48,6 +50,9 @@ on a UNIX-like system:
 	  but instead matches symbols and looks them up in a hash
 	  table in order to get the proper lexical code. The gperf
 	  program generates the lookup table.
+
+	  A version problem with this program is the most common cause
+	  of difficulty. See the Icarus Verilog FAQ.
 
 2.2 Compilation
 
@@ -93,8 +98,8 @@ step. There may be dangling references, and it is not yet clear which
 module is the root.
 
 One can see a human readable version of the final PFORM by using the
-``-P <path>'' flag to the compiler. This will cause ivl to dump the
-PFORM into the file named <path>.
+``-P <path>'' flag to the compiler. This will cause iverilog to dump
+the PFORM into the file named <path>.
 
 3.3 Elaboration
 
@@ -102,7 +107,8 @@ This phase takes the pform and generates a netlist. The driver selects
 (by user request or lucky guess) the root module to elaborate,
 resolves references and expands the instantiations to form the design
 netlist. (See netlist.txt.) Final semantic checks are performed during
-elaboration, and some simple optimizations are performed.
+elaboration, and some simple optimizations are performed. The netlist
+includes all the behavioral descriptions, as well as gates and wires.
 
 The elaborate() function performs the elaboration.
 
@@ -146,7 +152,7 @@ some useful transformations would be,
 	- combinational reduction
 	- Constant propagation
 
-The actual functions performed are specified on the command line by
+The actual functions performed are specified on the ivl command line by
 the -F flags (See below).
 
 3.5 Code Generation
@@ -159,17 +165,47 @@ The emit() method of the Design class performs this step. It runs
 through the design elements, calling target functions as need arises
 to generate actual output.
 
-The target code generator to used is given by the -t flag on the
+The user selects the target code generator with the -t flag on the
 command line.
 
-4.0 Running Verilog
+3.6 ATTRIBUTES
+
+The parser accepts as an extension to Verilog the $attribute module
+item. The syntax of the $attribute item is:
+
+	$attribute (<identifier>, <key>, <value>);
+
+The $attribute keyword looks like a system task invocation. The
+difference here is that the parameters are more restricted then those
+of a system task. The <identifier> must be an identifier. This will be
+the item to get an attribute. The <key> and <value> are strings, not
+expressions, that give the key and the value of the attribute to be
+attached to the identified object.
+
+Attributes are [<key> <value>] pairs and are used to communicate with
+the various processing steps. See the documentation for the processing
+step for a list of the pertinent attributes.
+
+Attributes can also be applied to gate types. When this is done, the
+attribute is given to every instantiation of the primitive. The syntax
+for the attribute statement is the same, except that the <identifier>
+names a primitive earlier in the compilation unit and the statement is
+placed in global scope, instead of within a module. The semicolon is
+not part of a type attribute.
+
+Note that attributes are also occasionally used for communication
+between processing steps. Processing steps that are aware of others
+may place attributes on netlist objects to communicate information to
+later steps.
+
+4.0 Running iverilog
 
 The preferred way to invoke the compiler with the iverilog(1)
 command. This program invokes the preprocessor (ivlpp) and the
 compiler (ivl) with the proper command line options to get the job
 done in a friendly way. See the iverilog(1) man page for usage details.
 
-4.1 Running IVL Directly
+4.1 Running IVL Directly (not recommended)
 
 The ivl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator, but not the preprocessor.
@@ -244,37 +280,7 @@ Usage: ivl <options>... file
 -v
 	Print version and copyright information for ivl.
 
-ATTRIBUTES
-
-The parser accepts as an extension to Verilog the $attribute module
-item. The syntax of the $attribute item is:
-
-	$attribute (<identifier>, <key>, <value>);
-
-The $attribute keyword looks like a system task invocation. The
-difference here is that the parameters are more restricted then those
-of a system task. The <identifier> must be an identifier. This will be
-the item to get an attribute. The <key> and <value> are strings, not
-expressions, that give the key and the value of the attribute to be
-attached to the identified object.
-
-Attributes are [<key> <value>] pairs and are used to communicate with
-the various processing steps. See the documentation for the processing
-step for a list of the pertinent attributes.
-
-Attributes can also be applied to gate types. When this is done, the
-attribute is given to every instantiation of the primitive. The syntax
-for the attribute statement is the same, except that the <identifier>
-names a primitive earlier in the compilation unit and the statement is
-placed in global scope, instead of within a module. The semicolon is
-not part of a type attribute.
-
-Note that attributes are also occasionally used for communication
-between processing steps. Processing steps that are aware of others
-may place attributes on netlist objects to communicate information to
-later steps.
-
-4.1 EXAMPLES
+4.2 EXAMPLES
 
 Example: Compiling "hello.vl"
 
@@ -294,25 +300,27 @@ endmodule
 Insure that "iverilog" is on your search path, and the vpi library 
 is available.
 
-For csh - 
+To compile the program:
 
   iverilog hello.vl
 
 (The above presumes that /usr/local/include and /usr/local/lib are
 part of the compiler search path, which is usually the case for gcc.)
 
-To run the program
+To run the program:
 
   ./a.out
 
+You can use the "-o" switch to name the output command to be generated
+by the compiler. See the iverilog(1) man page.
 
 5.0 Unsupported Constructs
 
-IVL is in development - as such it still only supports a (growing) subset
-of Verilog.  Below is a description of some of the currently unsupported
-verilog features. This list is not exhaustive, and does not account
-for errors in the compiler. See the Icarus Verilog web page for the
-current state of support for Verilog.
+Icarus Verilog is in development - as such it still only supports a
+(growing) subset of Verilog.  Below is a description of some of the
+currently unsupported verilog features. This list is not exhaustive,
+and does not account for errors in the compiler. See the Icarus
+Verilog web page for the current state of support for Verilog.
 
   - block disable not supported, i.e.:
 
@@ -337,10 +345,11 @@ current state of support for Verilog.
 
 6.0 CREDITS
 
-Except where otherwise noted, ivl and ivlpp are Copyright Stephen
-Williams. The proper notices are in the head of each file. However,
-I have received aid in the form of fixes, Verilog guidance, and
-especially testing from many people, including (in alphabetical order):
+Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
+Copyright Stephen Williams. The proper notices are in the head of each
+file. However, I have received aid in the form of fixes, Verilog
+guidance, and especially testing from many people, including (in
+alphabetical order):
 
 	Eric Aardoom <eric_aardoom@yahoo.com>
 	Stephan I. Boettcher <stephan@nevis.columbia.edu>
@@ -362,3 +371,43 @@ especially testing from many people, including (in alphabetical order):
 and others. Testers in particular include a larger community of people
 interested in a GPL Verilog for Linux. Special thanks to Steve Wilson
 for collecting and organizing the test suite code for all those testers.
+
+
+6.1 PORT MAINTAINERS
+
+This is a list of people who have created ports and precompiled
+packages for various operating systems. These folks have graciously
+taken on the task of building Icarus Verilog on their systems and
+bundled it into neat packages.(*) If you want to be added to the list (or
+removed from the list) send e-mail to me.
+
+      FreeBSD/{Intel,alpha}
+	*maintainer needed*
+
+      Linux/{alpha,Intel,SPARC} (RPMS)
+	Stephen Williams <steve@icarus.com>
+
+      Linux/* (.debs)
+	Hamish Moffatt <hamish@rising.com.au>
+
+      Macintosh -- MacO/S
+	Yasuhisa Kato <ykato@mac.com>
+
+      NetBSD/*
+	Dan <mcmahill@mtl.mit.edu>
+
+      Solaris/SPARC packages (.pkg)
+	Dan McMahill <mcmahill@mtl.mit.edu>
+
+(*) These are not the only systems where Icarus Verilog has been run,
+just the systems where precompiled binaries are publicly available.
+
+6.2 TEST SUITE MANAGER
+
+Steve Wilson <stevew@home.com> or <stevew@intrinsix.com> has taken on
+the large task of managing the test suite. He has maintained the
+regression test scripts, the driver list, received submissions from
+myself and others, and has written a great many tests on his own. Any
+compiler writer, for any language, will tell you that the test suite
+is at least as important as the compiler code itself.
+
