@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.14 2003/02/11 05:21:33 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.15 2003/02/12 05:28:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -166,7 +166,11 @@ static void show_this_item(struct vcd_info*info)
 
 static void show_this_item_x(struct vcd_info*info)
 {
-      lt_emit_value_bit_string(dump_file, info->sym, 0 /* array row */, "x");
+      if (vpi_get(vpiType,info->item) == vpiRealVar) {
+	      /* Should write a NaN here? */
+      } else {
+	    lt_emit_value_bit_string(dump_file, info->sym, 0, "x");
+      }
 }
 
 
@@ -726,6 +730,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.15  2003/02/12 05:28:01  steve
+ *  Set dumpoff of real variables to NaN.
+ *
  * Revision 1.14  2003/02/11 05:21:33  steve
  *  Support dump of vpiRealVar objects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.41 2003/02/11 05:21:33 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.42 2003/02/12 05:28:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -127,7 +127,10 @@ static void show_this_item(struct vcd_info*info)
 
 static void show_this_item_x(struct vcd_info*info)
 {
-      if (vpi_get(vpiSize, info->item) == 1) {
+      if (vpi_get(vpiType, info->item) == vpiRealVar) {
+	      /* Some tools dump nothing here...? */
+	    fprintf(dump_file, "rNaN %s\n", info->ident);
+      } else if (vpi_get(vpiSize, info->item) == 1) {
 	    fprintf(dump_file, "x%s\n", info->ident);
       } else {
 	    fprintf(dump_file, "bx %s\n", info->ident);
@@ -759,6 +762,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.42  2003/02/12 05:28:01  steve
+ *  Set dumpoff of real variables to NaN.
+ *
  * Revision 1.41  2003/02/11 05:21:33  steve
  *  Support dump of vpiRealVar objects.
  *
