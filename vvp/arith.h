@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.27 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: arith.h,v 1.28 2005/03/12 06:42:28 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -67,10 +67,12 @@ class vvp_arith_div : public vvp_arith_ {
 class vvp_arith_mod : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_mod(unsigned wid) : vvp_arith_(wid) {}
-
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      void wide(vvp_ipoint_t base, bool push);
+      explicit vvp_arith_mod(unsigned wid, bool signed_flag);
+      ~vvp_arith_mod();
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+    private:
+      void wide_(vvp_net_ptr_t ptr);
+      bool signed_flag_;
 };
 
 /* vvp_cmp_* objects...
@@ -197,6 +199,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.28  2005/03/12 06:42:28  steve
+ *  Implement .arith/mod.
+ *
  * Revision 1.27  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.41 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: arith.cc,v 1.42 2005/03/12 06:42:28 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -128,108 +128,86 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_send_vec4(ptr.ptr()->out, vval);
 }
 
-#if 0
-void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+
+vvp_arith_mod::vvp_arith_mod(unsigned wid, bool sf)
+: vvp_arith_(wid), signed_flag_(sf)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
-
-      if(wid_ > 8*sizeof(unsigned long)) {
-	    wide(base, push);
-	    return;
-      }
-
-      unsigned long a = 0, b = 0;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = obj->ival;
-	    if (val & 0xaa) {
-		  output_x_(base, push);
-		  return;
-	    }
-
-	    if (val & 0x01)
-		  a += 1UL << idx;
-	    if (val & 0x04)
-		  b += 1UL << idx;
-      }
-
-      unsigned sign_flip = 0;
-      if (signed_flag_) {
-	    if (a & (1UL << (wid_ - 1))) {
-		  a ^=  ~(-1UL << wid_);
-		  a += 1;
-		  sign_flip += 1;
-	    }
-
-	    if (b & (1UL << (wid_ - 1))) {
-		  b ^= ~(-1UL << wid_);
-		  b += 1;
-		  sign_flip += 1;
-	    }
-
-      }
-
-      if (b == 0) {
-	    output_x_(base, push);
-	    return;
-      }
-
-      unsigned long result = a / b;
-      if (sign_flip % 2 == 1)
-	    result = 0 - result;
-
-      output_val_(base, push, result);
 }
-#endif
 
-inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
+vvp_arith_mod::~vvp_arith_mod()
+{
+}
+
+void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
 {
       assert(0);
 }
 
-void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-#if 0
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
+      dispatch_operand_(ptr, bit);
 
-      if(wid_ > 8*sizeof(unsigned long)) {
-	    wide(base, push);
+      if (wid_ > 8 * sizeof(unsigned long)) {
+	    wide_(ptr);
+	    return ;
+      }
+
+      unsigned long a;
+      if (! vector4_to_value(op_a_, a)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
 	    return;
       }
 
-      unsigned long a = 0, b = 0;
+      unsigned long b;
+      if (! vector4_to_value(op_b_, b)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
 
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = obj->ival;
-	    if (val & 0xaa) {
-		  output_x_(base, push);
-		  return;
+      bool negate = false;
+	/* If we are doing signed divide, then take the sign out of
+	   the operands for now, and remember to put the sign back
+	   later. */
+      if (signed_flag_) {
+	    if (op_a_.value(op_a_.size()-1)) {
+		  a = (-a) & ~ (-1UL << op_a_.size());
+		  negate = !negate;
 	    }
 
-	    if (val & 0x01)
-		  a += 1UL << idx;
-	    if (val & 0x04)
-		  b += 1UL << idx;
+	    if (op_b_.value(op_b_.size()-1)) {
+		  b = (-b) & ~ (-1UL << op_b_.size());
+		  negate = ! negate;
+	    }
       }
 
       if (b == 0) {
-	    output_x_(base, push);
+	    vvp_vector4_t xval (wid_);
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1)
+		  xval.set_bit(idx, BIT4_X);
+
+	    vvp_send_vec4(ptr.ptr()->out, xval);
 	    return;
       }
 
-      output_val_(base, push, a%b);
-#else
-      fprintf(stderr, "XXXX forgot how to implement vvp_arith_mod::set\n");
-#endif
+      unsigned long val = a % b;
+      if (negate)
+	    val = -val;
+
+      assert(wid_ <= 8*sizeof(val));
+
+      vvp_vector4_t vval (wid_);
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    if (val & 1)
+		  vval.set_bit(idx, BIT4_1);
+	    else
+		  vval.set_bit(idx, BIT4_0);
+
+	    val >>= 1;
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, vval);
 }
+
 
 // Multiplication
 
@@ -760,6 +738,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.42  2005/03/12 06:42:28  steve
+ *  Implement .arith/mod.
+ *
  * Revision 1.41  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

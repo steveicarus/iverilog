@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.192 2005/03/12 04:27:42 steve Exp $"
+#ident "$Id: compile.cc,v 1.193 2005/03/12 06:42:28 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -897,13 +897,13 @@ void compile_arith_mod(char*label, long wid,
 {
       assert( wid > 0 );
 
-      if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .arith/mod has wrong number of symbols\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/mod has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_arith_mod(wid);
+      vvp_arith_ *arith = new vvp_arith_mod(wid, false);
 
       make_arith(arith, label, wid, argc, argv);
 }
@@ -1661,6 +1661,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.193  2005/03/12 06:42:28  steve
+ *  Implement .arith/mod.
+ *
  * Revision 1.192  2005/03/12 04:27:42  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,
