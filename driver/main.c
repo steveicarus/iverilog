@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.45 2002/08/10 22:27:13 steve Exp $"
+#ident "$Id: main.c,v 1.46 2002/08/10 22:36:59 steve Exp $"
 
 # include "config.h"
 
@@ -67,10 +67,6 @@ extern const char*optarg;
 
 #ifndef IVL_ROOT
 # define IVL_ROOT "."
-#endif
-
-#ifndef RDYNAMIC
-# define RDYNAMIC "-rdynamic"
 #endif
 
 # include  "globals.h"
@@ -661,6 +657,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.46  2002/08/10 22:36:59  steve
+ *  No longer any nead for -rdynamic flag
+ *
  * Revision 1.45  2002/08/10 22:27:13  steve
  *  Kill links to vvm.
  *
