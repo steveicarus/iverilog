@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.74 2003/04/02 04:25:26 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.75 2003/04/19 04:19:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -853,6 +853,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
       }
 
       NetETernary*res = new NetETernary(con, tru, fal);
+      res->set_line(*this);
       return res;
 }
 
@@ -952,6 +953,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.75  2003/04/19 04:19:38  steve
+ *  Set line number for ternary expressions.
+ *
  * Revision 1.74  2003/04/02 04:25:26  steve
  *  Fix xz extension of constants.
  *
