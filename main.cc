@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.63 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: main.cc,v 1.64 2002/08/18 22:06:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -566,6 +566,12 @@ int main(int argc, char*argv[])
 	    des->dump(out);
       }
 
+      if (des->errors) {
+	    cerr << des->errors
+		 << " error(s) in post-elaboration processing." <<
+		  endl;
+	    return des->errors;
+      }
 
       if (verbose_flag) {
 	    if (times_flag) {
@@ -573,6 +579,9 @@ int main(int argc, char*argv[])
 		  cerr<<" ... done, "
 		      <<cycles_diff(cycles+3, cycles+2)<<" seconds."<<endl;
 	    }
+      }
+
+      if (verbose_flag) {
 	    cout << "CODE GENERATION -t "<<target<< endl;
       }
 
@@ -596,6 +605,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.64  2002/08/18 22:06:29  steve
+ *  Terminate if the functors signal errors.
+ *
  * Revision 1.63  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
