@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.83 2003/01/26 21:16:00 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.84 2003/02/25 03:40:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -341,9 +341,10 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_MUX:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
-			sprintf(result, "L_%s/%u",
-				vvp_mangle_id(ivl_lpm_name(lpm)), idx);
-			return result;
+		     sprintf(result, "L_%s.%s/%u",
+			     vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
+			     vvp_mangle_id(ivl_lpm_basename(lpm)), idx);
+		     return result;
 		  }
 	    break;
 
@@ -358,9 +359,10 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_UFUNC:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
-			sprintf(result, "L_%s[%u]",
-				vvp_mangle_id(ivl_lpm_name(lpm)), idx);
-			return result;
+		     sprintf(result, "L_%s.%s[%u]",
+			     vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
+			     vvp_mangle_id(ivl_lpm_basename(lpm)), idx);
+		     return result;
 		  }
 
 	    break;
@@ -371,7 +373,9 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  sprintf(result, "L_%s", vvp_mangle_id(ivl_lpm_name(lpm)));
+		  sprintf(result, "L_%s.%s",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
+			  vvp_mangle_id(ivl_lpm_basename(lpm)));
 		  return result;
 	    }
 	    break;
@@ -1052,15 +1056,17 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 
       if (clk) {
 	    fprintf(vvp_out,
-		    "CLK_%s .event posedge, ",
-		    vvp_mangle_id(ivl_lpm_name(net)));
+		    "CLK_%s.%s .event posedge, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
 	    draw_input_from_net(clk);
 	    fprintf(vvp_out, ";\n");
       }
 
       fprintf(vvp_out, 
-	      "L_%s .mem/port", 
-	      vvp_mangle_id(ivl_lpm_name(net)));
+	      "L_%s.%s .mem/port", 
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)));
       fprintf(vvp_out, 
 	      " M_%s, %d,0, %d,\n  ", 
 	      vvp_memory_label(mem),
@@ -1074,8 +1080,9 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
       }
       
       if (clk) {
-	    fprintf(vvp_out, ",\n  CLK_%s, ", 
-		    vvp_mangle_id(ivl_lpm_name(net)));
+	    fprintf(vvp_out, ",\n  CLK_%s.%s, ", 
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
 	    pin = ivl_lpm_enable(net);
 	    if (pin)
 		  draw_input_from_net(pin);
@@ -1143,8 +1150,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s .arith/%s %u", 
-	      vvp_mangle_id(ivl_lpm_name(net)), type, width);
+      fprintf(vvp_out, "L_%s.%s .arith/%s %u", 
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
 
       draw_lpm_arith_a_b_inputs(net);
 
@@ -1169,8 +1177,9 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s .cmp/%s %u", 
-	      vvp_mangle_id(ivl_lpm_name(net)), type, width);
+      fprintf(vvp_out, "L_%s.%s .cmp/%s %u", 
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
 
       draw_lpm_arith_a_b_inputs(net);
 
@@ -1192,8 +1201,9 @@ static void draw_lpm_eq(ivl_lpm_t net)
       ivl_nexus_t nex;
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
-	    fprintf(vvp_out, "L_%s/L0C%u .functor XNOR, ",
-		    vvp_mangle_id(ivl_lpm_name(net)), idx);
+	    fprintf(vvp_out, "L_%s.%s/L0C%u .functor XNOR, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
 
 	    nex = ivl_lpm_data(net, idx);
 	    draw_input_from_net(nex);
@@ -1207,12 +1217,14 @@ static void draw_lpm_eq(ivl_lpm_t net)
       }
 
       if (width <= 4) {
-	    fprintf(vvp_out, "L_%s .functor %s",
-		    vvp_mangle_id(ivl_lpm_name(net)), and);
+	    fprintf(vvp_out, "L_%s.%s .functor %s",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), and);
 
 	    for (idx = 0 ;  idx < width ;  idx += 1)
-		  fprintf(vvp_out, ", L_%s/L0C%u",
-			  vvp_mangle_id(ivl_lpm_name(net)), idx);
+		  fprintf(vvp_out, ", L_%s.%s/L0C%u",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
 
 	    for (idx = width ;  idx < 4 ;  idx += 1)
 		  fprintf(vvp_out, ", C<1>");
@@ -1237,13 +1249,15 @@ static void draw_lpm_eq(ivl_lpm_t net)
 			if (last > lwidth)
 			      last = lwidth;
 
-			fprintf(vvp_out, "L_%s/L%uC%u .functor AND",
-				vvp_mangle_id(ivl_lpm_name(net)),
+			fprintf(vvp_out, "L_%s.%s/L%uC%u .functor AND",
+				vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+				vvp_mangle_id(ivl_lpm_basename(net)),
 				level, idx);
 
 			for (bit = first ;  bit < last ;  bit += 1)
-			      fprintf(vvp_out, ", L_%s/L%uC%u",
-				      vvp_mangle_id(ivl_lpm_name(net)),
+			      fprintf(vvp_out, ", L_%s.%s/L%uC%u",
+				      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+				      vvp_mangle_id(ivl_lpm_basename(net)),
 				      level-1, bit);
 
 			for (bit = last ;  bit < (idx*4+4) ;  bit += 1)
@@ -1257,12 +1271,14 @@ static void draw_lpm_eq(ivl_lpm_t net)
 		  cnt = (lwidth + 3) / 4;
 	    }
 
-	    fprintf(vvp_out, "L_%s .functor %s",
-		    vvp_mangle_id(ivl_lpm_name(net)), and);
+	    fprintf(vvp_out, "L_%s.%s .functor %s",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), and);
 
 	    for (idx = 0 ;  idx < lwidth ;  idx += 1)
-		  fprintf(vvp_out, ", L_%s/L%uC%u",
-			  vvp_mangle_id(ivl_lpm_name(net)),
+		  fprintf(vvp_out, ", L_%s.%s/L%uC%u",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)),
 			  level-1, idx);
 
 	    for (idx = lwidth ;  idx < 4 ;  idx += 1)
@@ -1299,7 +1315,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
       width = ivl_lpm_width(net);
 
 	/*        Q   C   CE  D   RS  --> Q+ */
-      fprintf(vvp_out, "L_%s/def .udp/sequ \"DFF\", 5, 2,"
+      fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
 	      " \"?" "r" "1" "0" "00"    "0\","
 	      " \"?" "r" "1" "1" "00"    "1\","
 	      " \"?" "r" "1" "x" "00"    "x\","
@@ -1311,7 +1327,9 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	      " \"?" "?" "?" "?" "1?"    "0\","
 	      " \"?" "?" "1" "?" "00"    "-\","
 	      " \"?" "?" "?" "?" "00"    "-\""
-	      ";\n", vvp_mangle_id(ivl_lpm_name(net)));
+	      ";\n",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)));
 
       aset_expr = ivl_lpm_aset_value(net);
       if (aset_expr) {
@@ -1322,10 +1340,13 @@ static void draw_lpm_ff(ivl_lpm_t net)
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t tmp;
 
-	    fprintf(vvp_out, "L_%s/%u .udp ",
-		    vvp_mangle_id(ivl_lpm_name(net)), idx);
+	    fprintf(vvp_out, "L_%s.%s/%u .udp ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
 
-	    fprintf(vvp_out, "L_%s/def, ", vvp_mangle_id(ivl_lpm_name(net)));
+	    fprintf(vvp_out, "L_%s.%s/def, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
 
 	    tmp = ivl_lpm_clk(net);
 	    draw_input_from_net(tmp);
@@ -1390,11 +1411,13 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 	    selwid = width;
 
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
-	    fprintf(vvp_out, "L_%s .shift/r %u", 
-		    vvp_mangle_id(ivl_lpm_name(net)), width);
+	    fprintf(vvp_out, "L_%s.%s .shift/r %u", 
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), width);
       else
-	    fprintf(vvp_out, "L_%s .shift/l %u", 
-		    vvp_mangle_id(ivl_lpm_name(net)), width);
+	    fprintf(vvp_out, "L_%s.%s .shift/l %u", 
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), width);
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    fprintf(vvp_out, ", ");
@@ -1419,8 +1442,9 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       char comma;
       ivl_scope_t def = ivl_lpm_define(net);
 
-      fprintf(vvp_out, "L_%s .ufunc TD_%s, %u",
-	      vvp_mangle_id(ivl_lpm_name(net)),
+      fprintf(vvp_out, "L_%s.%s .ufunc TD_%s, %u",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)),
 	      ivl_scope_name(def),
 	      ivl_lpm_width(net));
 
@@ -1518,8 +1542,8 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    return;
 
 	  default:
-	    fprintf(stderr, "XXXX LPM not supported: %s\n",
-		    ivl_lpm_name(net));
+	    fprintf(stderr, "XXXX LPM not supported: %s.%s\n",
+		    ivl_scope_name(ivl_lpm_scope(net)), ivl_lpm_basename(net));
       }
 }
 
@@ -1628,6 +1652,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.84  2003/02/25 03:40:45  steve
+ *  Eliminate use of ivl_lpm_name function.
+ *
  * Revision 1.83  2003/01/26 21:16:00  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

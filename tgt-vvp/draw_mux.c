@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.5 2002/08/29 03:04:01 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.6 2003/02/25 03:40:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -59,8 +59,9 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	   select vector. */
       for (idx = 0 ;  idx < size ;  idx += 2) {
 
-	    fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXX, ",
-		    vvp_mangle_id(ivl_lpm_name(net)), slice, sel, idx);
+	    fprintf(vvp_out, "L_%s.%s/%u/%u/%u .functor MUXX, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), slice, sel, idx);
 
 	    {
 		  ivl_nexus_t a = ivl_lpm_data2(net, idx+0, slice);
@@ -88,16 +89,20 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	    s = ivl_lpm_select(net, seldx);
 
 	    for (idx = 0 ;  idx < size ;  idx += span) {
-		  fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXX, ",
-			  vvp_mangle_id(ivl_lpm_name(net)), slice, level, idx);
+		  fprintf(vvp_out, "L_%s.%s/%u/%u/%u .functor MUXX, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)),
+			  slice, level, idx);
 
-		  fprintf(vvp_out, "L_%s/%u/%u/%u, ",
-			  vvp_mangle_id(ivl_lpm_name(net)),
+		  fprintf(vvp_out, "L_%s.%s/%u/%u/%u, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)),
 			  slice, level+1, idx);
 
 		  if ((idx + span/2) < size) {
-			fprintf(vvp_out, "L_%s/%u/%u/%u, ",
-				vvp_mangle_id(ivl_lpm_name(net)),
+			fprintf(vvp_out, "L_%s.%s/%u/%u/%u, ",
+				vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+				vvp_mangle_id(ivl_lpm_basename(net)),
 				slice, level+1, idx+span/2);
 		  } else {
 			fprintf(vvp_out, "C<x>, ");
@@ -110,16 +115,19 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 
       s = ivl_lpm_select(net, sel-1);
 
-      fprintf(vvp_out, "L_%s/%u .functor MUXX, ",
-	      vvp_mangle_id(ivl_lpm_name(net)), slice);
+      fprintf(vvp_out, "L_%s.%s/%u .functor MUXX, ",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)), slice);
 
-      fprintf(vvp_out, "L_%s/%u/2/0, ",
-	      vvp_mangle_id(ivl_lpm_name(net)), slice);
+      fprintf(vvp_out, "L_%s.%s/%u/2/0, ",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)), slice);
 
 
       if ((2 << (sel-1))/2 < size) {
-	    fprintf(vvp_out, "L_%s/%u/2/%u, ",
-		    vvp_mangle_id(ivl_lpm_name(net)),
+	    fprintf(vvp_out, "L_%s.%s/%u/2/%u, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)),
 		    slice, (2 << (sel-1))/2);
       } else {
 	    fprintf(vvp_out, "C<x>, ");
@@ -148,8 +156,9 @@ static void draw_lpm_mux_ab(ivl_lpm_t net)
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
 	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
-	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
-		    vvp_mangle_id(ivl_lpm_name(net)), idx);
+	    fprintf(vvp_out, "L_%s.%s/%u .functor MUXZ, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
 	    draw_input_from_net(a);
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(b);
@@ -176,6 +185,9 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.6  2003/02/25 03:40:45  steve
+ *  Eliminate use of ivl_lpm_name function.
+ *
  * Revision 1.5  2002/08/29 03:04:01  steve
  *  Generate x out for x select on wide muxes.
  *
