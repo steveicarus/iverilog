@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.94 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: stub.c,v 1.95 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -406,8 +406,17 @@ static void show_lpm(ivl_lpm_t net)
 		break;
 	  }
 
-	  case IVL_LPM_PART: {
-		fprintf(out, "  LPM_PART %s: <width=%u, base=%u, signed=%d>\n",
+	  case IVL_LPM_PART_VP: {
+		fprintf(out, "  LPM_PART_VP %s: <width=%u, base=%u, signed=%d>\n",
+			ivl_lpm_basename(net),
+			width, ivl_lpm_base(net), ivl_lpm_signed(net));
+		fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+		fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+		break;
+	  }
+
+	  case IVL_LPM_PART_PV: {
+		fprintf(out, "  LPM_PART_PV %s: <width=%u, base=%u, signed=%d>\n",
 			ivl_lpm_basename(net),
 			width, ivl_lpm_base(net), ivl_lpm_signed(net));
 		fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
@@ -584,13 +593,21 @@ static void show_signal(ivl_signal_t net)
 	    const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
 
 	    if ((sig = ivl_nexus_ptr_sig(ptr))) {
-		  fprintf(out, "      %s[%u] (%s0, %s1)\n",
-			  ivl_signal_name(sig),
-			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
+		  fprintf(out, "      SIG %s (%s0, %s1)",
+			  ivl_signal_name(sig), dr0, dr1);
+
+		    /* Only pin-0 of signals is used. If this is
+		       something other then pin-0, report an error. */
+		  if (ivl_nexus_ptr_pin(ptr) != 0)
+			fprintf(out, " (pin=%u, should be 0)",
+				ivl_nexus_ptr_pin(ptr));
+
+		  fprintf(out, "\n");
 
 	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
-		  fprintf(out, "      %s[%u] (%s0, %s1)\n",
-			  ivl_logic_name(log),
+		  fprintf(out, "      LOG %s.%s[%u] (%s0, %s1)\n",
+			  ivl_scope_name(ivl_logic_scope(log)),
+			  ivl_logic_basename(log),
 			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
 
 	    } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
@@ -810,6 +827,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.95  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.94  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.228 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: netlist.cc,v 1.229 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -393,7 +393,7 @@ long NetNet::msb() const
       return msb_;
 }
 
-long NetNet::vector_width() const
+unsigned long NetNet::vector_width() const
 {
       if (msb_ > lsb_)
 	    return msb_ - lsb_ + 1;
@@ -466,17 +466,30 @@ NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
       set_line(*sig);
 }
 
-NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid)
+NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
+			     NetPartSelect::dir_t dir)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
-    off_(off), wid_(wid)
+    off_(off), wid_(wid), dir_(dir)
 {
       connect(pin(1), sig->pin(0));
       set_line(*sig);
 
-      pin(0).set_dir(Link::OUTPUT);
-      pin(1).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("O"), 0);
-      pin(1).set_name(perm_string::literal("I"), 0);
+      switch (dir_) {
+	  case NetPartSelect::VP:
+	    pin(0).set_dir(Link::OUTPUT);
+	    pin(1).set_dir(Link::INPUT);
+	    break;
+	  case NetPartSelect::PV:
+	    pin(0).set_dir(Link::INPUT);
+	    pin(1).set_dir(Link::OUTPUT);
+	    break;
+	  case NetPartSelect::BI:
+	    pin(0).set_dir(Link::PASSIVE);
+	    pin(1).set_dir(Link::PASSIVE);
+	    break;
+      }
+      pin(0).set_name(perm_string::literal("Part"), 0);
+      pin(1).set_name(perm_string::literal("Vect"), 0);
 }
 
 NetPartSelect::~NetPartSelect()
@@ -491,6 +504,11 @@ unsigned NetPartSelect::width() const
 unsigned NetPartSelect::base() const
 {
       return off_;
+}
+
+NetPartSelect::dir_t NetPartSelect::dir() const
+{
+      return dir_;
 }
 
 NetProc::NetProc()
@@ -2326,6 +2344,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.229  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.228  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

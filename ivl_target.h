@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.130 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.131 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -232,7 +232,8 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
-      IVL_LPM_PART   = 15, /* part select */
+      IVL_LPM_PART_VP= 15, /* part select: vector to part */
+      IVL_LPM_PART_PV= 17, /* part select: part written to vector */
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SUB    =  8,
@@ -733,6 +734,25 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * The ivl_lpm_data function returns the connections for the inputs to
  * the concatentation. The ivl_lpm_size function returns the number of
  * inputs help by the device.
+ *
+ * - Part Select (IVL_LPM_PART_VP and IVL_LPM_PART_PV)
+ * There are two part select devices, one that extracts a part from a
+ * vector, and another that writes a part of a vector. The _VP is
+ * Vector-to-Part, and _PV is Part-to-Vector. The _VP form is meant to
+ * model part/bin selects in r-value expressions, where the _PV from
+ * is meant to model part selects in l-value nets.
+ *
+ * In both cases, ivl_lpm_data is the input pin, and ivl_lpm_q is the
+ * output. In the case of the _VP device, the vector is input and the
+ * part is the output. In the case of the _PV device, the part is the
+ * input and the vector is the output.
+ *
+ * Also in both cases, the width of the device is the width of the
+ * part. In the _VP case, this is obvious as the output nexus has the
+ * part width. In the _PV case, this is a little less obvious, but
+ * still correct. The output being written to the wider vector is
+ * indeed the width of the part, even though it is written to a wider
+ * gate. The target will need to handle this case specially.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -1393,6 +1413,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.131  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.130  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.139 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.140 2005/01/09 20:16:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1557,76 +1557,33 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
       assert(sig);
 
-      if (msb_ && lsb_) {
+	/* Catch the case of a non-constant bit select. That should be
+	   handled elsewhere. */
+      if (msb_ && !lsb_) {
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << msb_->get_line() << ": error: unable to "
-			"evaluate constant MSB expression: " << *msb_ <<
-			endl;
-		  des->errors += 1;
-		  return 0;
+		  return elaborate_net_bitmux_(des, scope, sig, rise,
+					       fall, decay, drive0, drive1);
 	    }
 
-	    verinum*lval = lsb_->eval_const(des, scope);
-	    if (lval == 0) {
-		  cerr << lsb_->get_line() << ": error: unable to "
-			"evaluate constant LSB expression: " << *lsb_ <<
-			endl;
-		  delete mval;
-		  des->errors += 1;
-		  return 0;
-	    }
+	    delete mval;
+      }
 
-	    assert(mval);
-	    assert(lval);
+      unsigned midx, lidx;
+      if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    return 0;
 
-	    long mbit = mval->as_long();
-	    long lbit = lval->as_long();
+      unsigned part_count = midx-lidx+1;
 
-	      /* Check that the part select is valid. Both ends of the
-		 constant part select must be within the range of the
-		 signal for the part select to be correct. */
-	    if (! (sig->sb_is_valid(mbit) && sig->sb_is_valid(lbit))) {
-		  cerr << get_line() << ": error: bit/part select ["
-		       << mbit << ":" << lbit
-		       << "] out of range for " << sig->name() << endl;
-		  des->errors += 1;
-		  return sig;
-	    }
-
-	    unsigned midx = sig->sb_to_idx(mbit);
-	    unsigned lidx = sig->sb_to_idx(lbit);
-
-	      /* This is a part select, create a new NetNet object
-		 that connects to just the desired parts of the
-		 identifier. Make sure the NetNet::Type is compatible
-		 with the sig type.
-
-		 Be careful to check the bit ordering. If the msb is
-		 less significant then the msb, then the source is
-		 broken. I can hack it in order to go on, but report
-		 an error. */
-
-	    if (midx < lidx) {
-		  cerr << get_line() << ": error: part select "
-		       << sig->name() << "[" << mval->as_long() << ":"
-		       << lval->as_long() << "] "
-		       << "has bit order reversed." << endl;
-		  des->errors += 1;
-
-		  unsigned tmp = midx;
-		  midx = lidx;
-		  lidx = tmp;
-	    }
-
-	    unsigned part_count = midx-lidx+1;
-
+      if (part_count != sig->vector_width()) {
 	    if (debug_elaborate) {
 		  cerr << get_line() << ": debug: Elaborate part select "
-		       << sig->name() << "["<<mbit<<":"<<lbit<<"]" << endl;
+		       << sig->name() << "[base="<<lidx
+		       << " wid=" << part_count << "]" << endl;
 	    }
 
-	    NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count);
+	    NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count,
+						 NetPartSelect::VP);
 	    ps->set_line(*sig);
 	    des->add_node(ps);
 
@@ -1636,47 +1593,8 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    connect(tmp->pin(0), ps->pin(0));
 
 	    sig = tmp;
-
-
-      } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
-	    if (mval == 0) {
-		  return elaborate_net_bitmux_(des, scope, sig, rise,
-					       fall, decay, drive0, drive1);
-	    }
-
-	    assert(mval);
-	    long mbit = mval->as_long();
-
-	      /* Check that the part select is valid. Both ends of the
-		 constant part select must be within the range of the
-		 signal for the part select to be correct. */
-	    if (! sig->sb_is_valid(mbit)) {
-		  cerr << get_line() << ": error: bit/part select ["
-		       << mbit
-		       << "] out of range for " << sig->name() << endl;
-		  des->errors += 1;
-		  return sig;
-	    }
-
-	    unsigned midx = sig->sb_to_idx(mbit);
-
-	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate part select "
-		       << sig->name() << "["<<mval->as_long()<<"]" << endl;
-	    }
-
-	    NetPartSelect*ps = new NetPartSelect(sig, midx, 1);
-	    ps->set_line(*sig);
-	    des->add_node(ps);
-
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, 1, 0);
-	    tmp->local_flag(true);
-	    connect(tmp->pin(0), ps->pin(0));
-
-	    sig = tmp;
       }
+
 
       return sig;
 }
@@ -1804,7 +1722,8 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 	    unsigned wid = nets[idx]->vector_width();
 	    unsigned off = width - wid;
-	    NetPartSelect*ps = new NetPartSelect(osig, off, wid);
+	    NetPartSelect*ps = new NetPartSelect(osig, off, wid,
+						 NetPartSelect::VP);
 	    des->add_node(ps);
 
 	    connect(ps->pin(1), osig->pin(0));
@@ -1817,6 +1736,79 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 
       osig->local_flag(true);
       return osig;
+}
+
+/*
+ * This private method evaluates the part selects (if any) for the
+ * signal. The sig argument is the NetNet already located for the
+ * PEIdent name. The midx and lidx arguments are loaded with the
+ * results, which may be the whole vector, or a single bit, or
+ * anything in between. The values are in canonical indices.
+ */
+bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
+				unsigned&midx, unsigned&lidx) const
+{
+      if (msb_ && lsb_) {
+	    verinum*mval = msb_->eval_const(des, scope);
+	    assert(mval);
+	    verinum*lval = lsb_->eval_const(des, scope);
+	    assert(lval);
+
+	    midx = sig->sb_to_idx(mval->as_long());
+	    lidx = sig->sb_to_idx(lval->as_long());
+
+	      /* Detect reversed indices of a part select. */
+	    if (lidx > midx) {
+		  cerr << get_line() << ": error: Part select "
+		       << sig->name() << "[" << mval->as_long() << ":"
+		       << lval->as_long() << "] indices reversed." << endl;
+		  cerr << get_line() << ":      : Did you mean "
+		       << sig->name() << "[" << lval->as_long() << ":"
+		       << mval->as_long() << "]?" << endl;
+		  unsigned tmp = midx;
+		  midx = lidx;
+		  lidx = tmp;
+		  des->errors += 1;
+	    }
+
+	      /* Detect a part select out of range. */
+	    if (midx >= sig->vector_width()) {
+		  cerr << get_line() << ": error: Part select "
+		       << sig->name() << "[" << mval->as_long() << ":"
+		       << lval->as_long() << "] out of range." << endl;
+		  midx = sig->vector_width() - 1;
+		  lidx = 0;
+		  des->errors += 1;
+	    }
+
+      } else if (msb_) {
+	    verinum*mval = msb_->eval_const(des, scope);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << path_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return false;
+	    }
+	    assert(mval);
+
+	    midx = sig->sb_to_idx(mval->as_long());
+	    if (midx >= sig->vector_width()) {
+		  cerr << get_line() << ": error: Index " << sig->name()
+		       << "[" << mval->as_long() << "] out of range."
+		       << endl;
+		  des->errors += 1;
+		  midx = 0;
+	    }
+	    lidx = midx;
+
+      } else {
+	    assert(msb_ == 0 && lsb_ == 0);
+	    midx = sig->vector_width() - 1;
+	    lidx = 0;
+      }
+
+      return true;
 }
 
 /*
@@ -1895,65 +1887,37 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 	    sig->port_type(NetNet::PINOUT);
       }
 
-      if (msb_ && lsb_) {
-	      /* Detect a part select. Evaluate the bits and elaborate
-		 the l-value by creating a sub-net that links to just
-		 the right pins. */
-	    verinum*mval = msb_->eval_const(des, scope);
-	    assert(mval);
-	    verinum*lval = lsb_->eval_const(des, scope);
-	    assert(lval);
-	    unsigned midx = sig->sb_to_idx(mval->as_long());
-	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+      unsigned midx, lidx;
+      if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    return 0;
 
-	    if (midx >= lidx) {
-		  unsigned subnet_wid = midx-lidx+1;
-		  if (subnet_wid > sig->pin_count()) {
-			cerr << get_line() << ": bit select out of "
-			     << "range for " << sig->name() << endl;
-			return sig;
-		  }
+      unsigned subnet_wid = midx-lidx+1;
 
-		  NetSubnet*tmp = new NetSubnet(sig, lidx, subnet_wid);
+	/* If the desired l-value vector is narrower then the
+	   signal itself, then use a NetPartSelect node to
+	   arrange for connection to the desired bits. All this
+	   can be skipped if the desired with matches the
+	   original vector. */
 
-		  sig = tmp;
+      if (subnet_wid != sig->vector_width()) {
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: "
+		       << "Elaborate lnet part select "
+		       << sig->name()
+		       << "[base=" << lidx
+		       << " wid=" << subnet_wid <<"]"
+		       << endl;
 
-	    } else {
-		  unsigned subnet_wid = midx-lidx+1;
+	    NetNet*subsig = new NetNet(sig->scope(),
+				       sig->scope()->local_symbol(),
+				       NetNet::WIRE, subnet_wid);
 
-		  if (subnet_wid > sig->pin_count()) {
-			cerr << get_line() << ": error: "
-			     << "part select out of range for "
-			     << sig->name() << "." << endl;
-			des->errors += 1;
-			return sig;
-		  }
+	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
+						  NetPartSelect::PV);
+	    des->add_node(sub);
+	    connect(sub->pin(0), subsig->pin(0));
 
-		  NetSubnet*tmp = new NetSubnet(sig, lidx, subnet_wid);
-
-		  sig = tmp;
-	    }
-
-      } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
-	    if (mval == 0) {
-		  cerr << get_line() << ": error: index of " << path_ <<
-			" needs to be constant in l-value of assignment." <<
-			endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    assert(mval);
-	    unsigned idx = sig->sb_to_idx(mval->as_long());
-	    if (idx >= sig->pin_count()) {
-		  cerr << get_line() << "; index " << sig->name() <<
-			"[" << mval->as_long() << "] out of range." << endl;
-		  des->errors += 1;
-		  idx = 0;
-	    }
-
-	    NetSubnet*tmp = new NetSubnet(sig, idx, 1);
-	    sig = tmp;
+	    sig = subsig;
       }
 
       return sig;
@@ -1962,7 +1926,10 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 /*
  * This method is used to elaborate identifiers that are ports to a
  * scope. The scope is presumed to be that of the module that has the
- * port.
+ * port. This elaboration is done inside the module, and is only done
+ * to PEIdent objects. This method is used by elaboration of a module
+ * instantiation (PGModule::elaborate_mod_) to get NetNet objects for
+ * the port.
  */
 NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
@@ -1974,6 +1941,8 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+	/* Check the port_type of the signal to make sure it is really
+	   a port, and its direction is resolved. */
       switch (sig->port_type()) {
 	  case NetNet::PINPUT:
 	  case NetNet::POUTPUT:
@@ -2004,64 +1973,22 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      unsigned midx;
+      unsigned lidx;
 
-      if (msb_ && lsb_) {
-	      /* Detect a part select. Evaluate the bits and elaborate
-		 the l-value by creating a sub-net that links to just
-		 the right pins. */
-	    verinum*mval = msb_->eval_const(des, scope);
-	    assert(mval);
-	    verinum*lval = lsb_->eval_const(des, scope);
-	    assert(lval);
-	    unsigned midx = sig->sb_to_idx(mval->as_long());
-	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+	/* Evaluate the part/bit select expressions, to get the part
+	   select of the signal that attaches to the port. Also handle
+	   range and direction checking here. */
 
-	    if (midx >= lidx) {
-		  unsigned part_count = midx-lidx+1;
-		  if (part_count > sig->pin_count()) {
-			cerr << get_line() << ": bit select out of "
-			     << "range for " << sig->name() << endl;
-			return sig;
-		  }
+      if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    return 0;
 
-		  NetSubnet*tmp = new NetSubnet(sig, lidx, part_count);
-		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
-			connect(tmp->pin(idx-lidx), sig->pin(idx));
 
-		  sig = tmp;
+      unsigned swid = midx - lidx + 1;
 
-	    } else {
-		    /* XXXX Signals reversed?? */
-		  unsigned part_count = lidx-midx+1;
-		  assert(part_count <= sig->pin_count());
-
-		  NetSubnet*tmp = new NetSubnet(sig, midx, part_count);
-		  for (unsigned idx = midx ;  idx >= lidx ;  idx -= 1)
-			connect(tmp->pin(idx-midx), sig->pin(idx));
-
-		  sig = tmp;
-	    }
-
-      } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
-	    if (mval == 0) {
-		  cerr << get_line() << ": index of " << path_ <<
-			" needs to be constant in port context." <<
-			endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    assert(mval);
-	    unsigned idx = sig->sb_to_idx(mval->as_long());
-	    if (idx >= sig->pin_count()) {
-		  cerr << get_line() << "; index " << sig->name() <<
-			"[" << mval->as_long() << "] out of range." << endl;
-		  des->errors += 1;
-		  idx = 0;
-	    }
-	    NetSubnet*tmp = new NetSubnet(sig, idx, 1);
-	    connect(tmp->pin(0), sig->pin(idx));
-	    sig = tmp;
+      if (swid < sig->vector_width()) {
+	    cerr << get_line() << ": XXXX: Forgot to implement part select"
+		 << " of signal port." << endl;
       }
 
       return sig;
@@ -2560,6 +2487,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.140  2005/01/09 20:16:00  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.139  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

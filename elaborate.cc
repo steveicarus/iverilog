@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.312 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.313 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -312,7 +312,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    instance_width = count;
 	    count = 1;
 
-	    if (debug_elaborate)
+	    if (debug_elaborate && instance_width != 1)
 		  cerr << get_line() << ": debug: PGBuiltin: "
 			"Collapsed gate array into single wide "
 			"(" << instance_width << ") instance." << endl;
@@ -507,7 +507,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  } else for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1) {
 			  /* Use part selects to get the bits
 			     connected to the inputs of out gate. */
-			NetPartSelect*tmp1 = new NetPartSelect(sig, gdx, 1);
+			NetPartSelect*tmp1 = new NetPartSelect(sig, gdx, 1,
+							   NetPartSelect::VP);
 			tmp1->set_line(*this);
 			des->add_node(tmp1);
 			connect(tmp1->pin(1), sig->pin(0));
@@ -603,7 +604,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
       } else {
 
-	      /* Otherwise, this is a positional list of fort
+	      /* Otherwise, this is a positional list of port
 		 connections. In this case, the port count must be
 		 right. Check that is is, the get the pin list. */
 
@@ -685,8 +686,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    svector<PEIdent*> mport = rmod->get_port(idx);
 	    svector<NetNet*>prts (mport.count() * instance.count());
 
-	      // Count the internal pins of the port.
-	    unsigned prts_pin_count = 0;
+	      // Count the internal vector bits of the port.
+	    unsigned prts_vector_width = 0;
 
 	    for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
 		  NetScope*inst_scope = instance[inst];
@@ -702,21 +703,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			      continue;
 
 			assert(prts[lbase + ldx]);
-			prts_pin_count += prts[lbase + ldx]->pin_count();
+			prts_vector_width += prts[lbase + ldx]->vector_width();
 		  }
 	    }
 
-	      // If I find that the port in unconnected inside the
+	      // If I find that the port is unconnected inside the
 	      // module, then there is nothing to connect. Skip the
 	      // argument.
-	    if (prts_pin_count == 0) {
+	    if (prts_vector_width == 0) {
 		  continue;
 	    }
 
 	      // We know by design that each instance has the same
 	      // width port. Therefore, the prts_pin_count must be an
 	      // even multiple of the instance count.
-	    assert(prts_pin_count % instance.count() == 0);
+	    assert(prts_vector_width % instance.count() == 0);
 
 	      // Elaborate the expression that connects to the
 	      // module[s] port. sig is the thing outside the module
@@ -744,12 +745,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       array, then let the net determine it's own
 		       width. We use that, then, to decide how to hook
 		       it up. */
-		  unsigned desired_pin_count = prts_pin_count;
+		  unsigned desired_vector_width = prts_vector_width;
 		  if (instance.count() != 1)
-			desired_pin_count = 0;
+			desired_vector_width = 0;
 
 		  sig = pins[idx]->elaborate_net(des, scope,
-						 desired_pin_count,
+						 desired_vector_width,
 						 0, 0, 0);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_line()
@@ -771,12 +772,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      /* If we are working with an instance array, then the
 		 signal width must match the port width exactly. */
 	    if ((instance.count() != 1)
-		&& (sig->pin_count() != prts_pin_count)
-		&& (sig->pin_count() != prts_pin_count/instance.count())) {
+		&& (sig->vector_width() != prts_vector_width)
+		&& (sig->vector_width() != prts_vector_width/instance.count())) {
 		  cerr << pins[idx]->get_line() << ": error: "
-		       << "Port expression width " << sig->pin_count()
-		       << " does not match expected width " << prts_pin_count
-		       << " or " << (prts_pin_count/instance.count())
+		       << "Port expression width " << sig->vector_width()
+		       << " does not match expected width "<< prts_vector_width
+		       << " or " << (prts_vector_width/instance.count())
 		       << "." << endl;
 		  des->errors += 1;
 		  continue;
@@ -786,20 +787,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
 	    if ((instance.count() == 1)
-		&& (prts_pin_count != sig->pin_count())) {
+		&& (prts_vector_width != sig->vector_width())) {
 		  cerr << get_line() << ": warning: Port " << (idx+1)
 		       << " (" << rmod->ports[idx]->name << ") of "
-		       << type_ << " expects " << prts_pin_count <<
-			" bits, got " << sig->pin_count() << "." << endl;
+		       << type_ << " expects " << prts_vector_width <<
+			" bits, got " << sig->vector_width() << "." << endl;
 
-		  if (prts_pin_count > sig->pin_count()) {
+		  if (prts_vector_width > sig->vector_width()) {
 			cerr << get_line() << ":        : Leaving "
-			     << (prts_pin_count-sig->pin_count())
+			     << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port unconnected."
 			     << endl;
 		  } else {
 			cerr << get_line() << ":        : Leaving "
-			     << (sig->pin_count()-prts_pin_count)
+			     << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression dangling."
 			     << endl;
 		  }
@@ -815,41 +816,85 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // the number of connections to make.
 
 	      // Connect this many of the port pins. If the expression
-	      // is too small, the reduce the number of connects.
-	    unsigned ccount = prts_pin_count;
-	    if (instance.count() == 1 && sig->pin_count() < ccount)
-		  ccount = sig->pin_count();
+	      // is too small, then reduce the number of connects.
+	    unsigned ccount = prts_vector_width;
+	    if (instance.count() == 1 && sig->vector_width() < ccount)
+		  ccount = sig->vector_width();
 
 	      // The spin_modulus is the width of the signal (not the
 	      // port) if this is an instance array. This causes
 	      // signals wide enough for a single instance to be
 	      // connected to all the instances.
-	    unsigned spin_modulus = prts_pin_count;
+	    unsigned spin_modulus = prts_vector_width;
 	    if (instance.count() != 1)
-		  spin_modulus = sig->pin_count();
+		  spin_modulus = sig->vector_width();
 
 	      // Now scan the concatenation that makes up the port,
 	      // connecting pins until we run out of port pins or sig
-	      // pins.
+	      // pins. The sig object is the NetNet that is connected
+	      // to the port from the outside, and the prts object is
+	      // an array of signals to be connected to the sig.
 
+	    NetConcat*ctmp;
 	    unsigned spin = 0;
-	    for (unsigned ldx = prts.count() ;  ldx > 0 ;  ldx -= 1) {
-		  unsigned cnt = prts[ldx-1]->pin_count();
-		  if (cnt > ccount)
-			cnt = ccount;
-		  for (unsigned p = 0 ;  p < cnt ;  p += 1) {
-			connect(sig->pin(spin%spin_modulus),
-				prts[ldx-1]->pin(p));
-			ccount -= 1;
-			spin += 1;
+
+	    if (prts.count() == 1) {
+
+		    // The simplest case, there are no
+		    // parts/concatenations on the inside of the
+		    // module, so the port and sig need simply be
+		    // connected directly.
+		  connect(prts[0]->pin(0), sig->pin(0));
+
+	    } else if (sig->vector_width() == prts_vector_width/instance.count()) {
+
+		    // The signal width is exactly the width of a
+		    // single instance of the port. In this case,
+		    // connect the sig to all the ports identically.
+		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1)
+			connect(prts[ldx]->pin(0), sig->pin(0));
+
+	    } else switch (prts[0]->port_type()) {
+		case NetNet::POUTPUT:
+		  ctmp = new NetConcat(scope, scope->local_symbol(),
+				       prts_vector_width,
+				       prts.count());
+		  des->add_node(ctmp);
+		  connect(ctmp->pin(0), sig->pin(0));
+		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
+			connect(ctmp->pin(ldx+1),
+				prts[prts.count()-ldx-1]->pin(0));
 		  }
-		  if (ccount == 0)
-			break;
+		  break;
+
+		case NetNet::PINPUT:
+		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
+			NetNet*sp = prts[prts.count()-ldx-1];
+			NetPartSelect*ptmp = new NetPartSelect(sig, spin,
+							   sp->vector_width(),
+							   NetPartSelect::VP);
+			des->add_node(ptmp);
+			connect(ptmp->pin(0), sp->pin(0));
+			spin += sp->vector_width();
+		  }
+		  break;
+		case NetNet::PINOUT:
+		  cerr << get_line() << ": XXXX: "
+		       << "Forgot how to bind input ports!" << endl;
+		  des->errors += 1;
+		  break;
+		case NetNet::PIMPLICIT:
+		  cerr << get_line() << ": internal error: "
+		       << "Unexpected IMPLICIT port" << endl;
+		  des->errors += 1;
+		  break;
+		case NetNet::NOT_A_PORT:
+		  cerr << get_line() << ": internal error: "
+		       << "Unexpected NOT_A_PORT port." << endl;
+		  des->errors += 1;
+		  break;
 	    }
 
-
-	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
-		  delete tmp;
       }
 
 }
@@ -2845,6 +2890,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.313  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.312  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

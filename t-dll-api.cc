@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.112 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.113 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -682,7 +682,8 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 {
       assert(net);
       switch (net->type) {
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
 	    return net->u_.part.base;
 	  default:
 	    assert(0);
@@ -789,7 +790,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx < net->u_.concat.inputs);
 	    return net->u_.concat.pins[idx+1];
 
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
 	    assert(idx == 0);
 	    return net->u_.part.a;
 
@@ -939,7 +941,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.pins[0];
 
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
 	    assert(idx == 0);
 	    return net->u_.part.q;
 
@@ -1027,7 +1030,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
 	    return 0;
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
 	    return net->u_.part.signed_flag;
 	  default:
 	    assert(0);
@@ -1079,7 +1083,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.ufunc.port_wid[0];
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.width;
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
 	    return net->u_.part.width;
 	  default:
 	    assert(0);
@@ -1963,6 +1968,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.113  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.112  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_link.cc,v 1.15 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -364,7 +364,7 @@ const char* Nexus::name() const
       }
       assert(sig);
       ostringstream tmp;
-      tmp << sig->name();
+      tmp << sig->scope()->name() << "." << sig->name();
       if (sig->pin_count() > 1)
 	    tmp << "<" << pin << ">";
 
@@ -499,6 +499,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.15  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.14  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

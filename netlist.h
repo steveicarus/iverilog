@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.323 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.324 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 /*
@@ -400,7 +400,7 @@ class NetNet  : public NetObj {
 	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
       long msb() const;
       long lsb() const;
-      long vector_width() const;
+      unsigned long vector_width() const;
 
 	/* This method converts a signed index (the type that might be
 	   found in the verilog source) to a pin number. It accounts
@@ -591,6 +591,10 @@ class NetCompare  : public NetNode {
  * remaining pins are the input that are combined to make the
  * output. It is seperated out because it it generally a special case
  * for the code generators.
+ *
+ * When constructing the node, the width is the vector_width of the
+ * output, and the cnt is the number of pins. (1 + the number of input
+ * vectors.)
  */
 class NetConcat  : public NetNode {
 
@@ -1163,19 +1167,45 @@ class NetSubnet  : public NetNet {
 };
 
 /*
- * The NetPartSelect device represents an r-value part select of a
- * signal. The output (pin 0) is a vector that is a part select of the
- * input (pin 1). The part to be selected is the canonical (0-based)
- * offset and the specified number of bits (wid).
+ * The NetPartSelect device represents a netlist part select of a
+ * signal vector. Pin 0 is a vector that is a part select of pin 1,
+ * which connected to the NetNet of the signal being selected from.
+ *
+ * The part to be selected is the canonical (0-based) offset and the
+ * specified number of bits (wid).
+ *
+ * The NetPartSelect can be output from the signal (i.e. reading a
+ * part), input into the signal, or bi-directional. The DIR method
+ * gives the type of the node.
+ *
+ * VP (Vector-to-Part)
+ *  Output pin 0 is the part select, and input pin 1 is connected to
+ *  the NetNet object.
+ *
+ * PV (Part-to-Vector)
+ *  Output pin 1 is connected to the NetNet, and input pin 0 is the
+ *  part select. In this case, the node is driving the NetNet.
+ *
+ * BI (BI-directional)
+ *  Pin 0 is the part select and pin 1 is connected to the NetNet, but
+ *  the ports are intended to be bi-directional.
+ *
+ * Note that whatever the direction that data is intended to flow,
+ * pin-0 is the part select and pin-1 is connected to the NetNet.
  */
 class NetPartSelect  : public NetNode {
 
     public:
-      explicit NetPartSelect(NetNet*sig, unsigned off, unsigned wid);
+	// enum for the device direction
+      enum dir_t { VP, PV, BI };
+
+      explicit NetPartSelect(NetNet*sig,
+			     unsigned off, unsigned wid, dir_t dir);
       ~NetPartSelect();
 
-      unsigned width() const;
       unsigned base()  const;
+      unsigned width() const;
+      dir_t    dir()   const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*tgt) const;
@@ -1183,6 +1213,7 @@ class NetPartSelect  : public NetNode {
     private:
       unsigned off_;
       unsigned wid_;
+      dir_t    dir_;
 };
 
 /*
@@ -3380,6 +3411,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.324  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.323  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

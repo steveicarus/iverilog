@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.67 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: PExpr.h,v 1.68 2005/01/09 20:16:00 steve Exp $"
 #endif
 
 # include  <string>
@@ -276,6 +276,9 @@ class PEIdent : public PExpr {
       NetAssign_* elaborate_mem_lval_(Design*des, NetScope*scope,
 				      NetMemory*mem) const;
 
+      bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
+			     unsigned&midx, unsigned&lidx) const;
+
 };
 
 class PENumber : public PExpr {
@@ -503,6 +506,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.68  2005/01/09 20:16:00  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.67  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

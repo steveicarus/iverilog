@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.151 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.152 2005/01/09 20:16:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -356,7 +356,19 @@ void NetModulo::dump_node(ostream&o, unsigned ind) const
 
 void NetPartSelect::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "NetPartSelect: "
+      const char*pt = "";
+      switch (dir_) {
+	  case VP:
+	    pt = "VP";
+	    break;
+	  case PV:
+	    pt = "PV";
+	    break;
+	  case BI:
+	    pt = "BI";
+	    break;
+      }
+      o << setw(ind) << "" << "NetPartSelect(" << pt << "): "
 	<< name() << " off=" << off_ << " wid=" << wid_ <<endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -1097,6 +1109,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.152  2005/01/09 20:16:00  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.151  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

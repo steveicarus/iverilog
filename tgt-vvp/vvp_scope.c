@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.105 2004/12/29 23:52:09 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.106 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -431,6 +431,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
@@ -438,7 +439,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_UFUNC:
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV: /* NOTE: This is onlt a partial driver. */
 	    if (ivl_lpm_q(lpm, 0) == nex) {
 		  sprintf(result, "L_%p", lpm);
 		  return result;
@@ -446,7 +448,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	    break;
 
-	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
@@ -1299,9 +1300,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 	/* XXXX For now, only handle concatenation of 4 values. */
       assert(icnt <= 4);
 
-      fprintf(vvp_out, "L_%s.%s .concat [",
-	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)));
+      fprintf(vvp_out, "L_%p .concat [", net);
 
       for (idx = 0 ;  idx < icnt ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
@@ -1310,7 +1309,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
       }
 
       for ( ;  idx < 4 ;  idx += 1)
-	    fpritnf(vvp_out, " 0");
+	    fprintf(vvp_out, " 0");
 
       fprintf(vvp_out, "]");
 
@@ -1569,6 +1568,22 @@ static void draw_lpm_part(ivl_lpm_t net)
       fprintf(vvp_out, ", %u, %u;\n", base, width);
 }
 
+/*
+ * Handle a PART SELECT PV device. Generate a .part/pv node that
+ * includes the part input, and the geometry of the part.
+ */
+static void draw_lpm_part_pv(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned base  = ivl_lpm_base(net);
+      unsigned signal_width = width_of_nexus(ivl_lpm_q(net,0));
+
+      fprintf(vvp_out, "L_%p .part/pv ", net);
+      draw_input_from_net(ivl_lpm_data(net, 0));
+
+      fprintf(vvp_out, ", %u, %u, %u;\n", base, width, signal_width);
+}
+
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
@@ -1585,8 +1600,12 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_add(net);
 	    return;
 
-	  case IVL_LPM_PART:
+	  case IVL_LPM_PART_VP:
 	    draw_lpm_part(net);
+	    return;
+
+	  case IVL_LPM_PART_PV:
+	    draw_lpm_part_pv(net);
 	    return;
 
 	  case IVL_LPM_CONCAT:
@@ -1743,6 +1762,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.106  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.105  2004/12/29 23:52:09  steve
  *  Generate code for the .concat functors, from NetConcat objects.
  *  Generate C<> constants of correct widths for functor arguments.

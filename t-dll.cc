@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.133 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.134 2005/01/09 20:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1898,7 +1898,17 @@ bool dll_target::concat(const NetConcat*net)
 bool dll_target::part_select(const NetPartSelect*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type = IVL_LPM_PART;
+      switch (net->dir()) {
+	  case NetPartSelect::VP:
+	    obj->type = IVL_LPM_PART_VP;
+	    break;
+	  case NetPartSelect::PV:
+	    obj->type = IVL_LPM_PART_PV;
+	    break;
+	  case NetPartSelect::BI:
+	    assert(0); // XXXX Not supported yet
+	    break;
+      }
       obj->name = net->name(); // NetPartSelect names are permallocated.
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
@@ -1912,18 +1922,40 @@ bool dll_target::part_select(const NetPartSelect*net)
       obj->u_.part.signed_flag = 0;
       const Nexus*nex;
 
-	/* NetPartSelect:pin(0) is the output pin. */
-      nex = net->pin(0).nexus();
-      assert(nex->t_cookie());
+      switch (obj->type) {
+	  case IVL_LPM_PART_VP:
+	      /* NetPartSelect:pin(0) is the output pin. */
+	    nex = net->pin(0).nexus();
+	    assert(nex->t_cookie());
 
-      obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+
+	      /* NetPartSelect:pin(1) is the input pin. */
+	    nex = net->pin(1).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    break;
+
+	  case IVL_LPM_PART_PV:
+	      /* NetPartSelect:pin(1) is the output pin. */
+	    nex = net->pin(1).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+
+	      /* NetPartSelect:pin(0) is the input pin. */
+	    nex = net->pin(0).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
       nexus_lpm_add(obj->u_.part.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-
-	/* NetPartSelect:pin(1) is the input pin. */
-      nex = net->pin(1).nexus();
-      assert(nex->t_cookie());
-
-      obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
       nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
@@ -2207,6 +2239,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.134  2005/01/09 20:16:01  steve
+ *  Use PartSelect/PV and VP to handle part selects through ports.
+ *
  * Revision 1.133  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.
