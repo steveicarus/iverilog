@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.5 2001/12/14 06:03:17 steve Exp $"
+#ident "$Id: bufif.cc,v 1.6 2001/12/19 23:43:03 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -33,9 +33,9 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
       unsigned char out0 = 0x00 | (odrive0<<0) | (odrive0<<4);
       unsigned char out1 = 0x88 | (odrive1<<0) | (odrive1<<4);
-      unsigned char outX = 0x80 | (odrive1<<0) | (odrive0<<4);
+      unsigned char outX = 0x80 | (odrive0<<0) | (odrive1<<4);
       unsigned char outH = 0x88 | (0)          | (odrive1<<4);
-      unsigned char outL = 0x00 | (odrive1<<0) | (0);
+      unsigned char outL = 0x00 | (odrive0<<0) | (0);
 
       unsigned val;
       unsigned str;
@@ -43,13 +43,13 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       switch (in1 ^ pol_) {
 
 	  case 1:
-	    switch (in0) {
+	    switch (in0 ^ inv_) {
 		case 0:
-		  val = 0 ^ inv_;
+		  val = 0;
 		  str = out0;
 		  break;
 		case 1:
-		  val = 1 ^ inv_;
+		  val = 1;
 		  str = out1;
 		  break;
 		default:
@@ -64,16 +64,22 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 	    str = HiZ;
 	    break;
 
+	      /* The control input is x or z, so the output is H or
+		 L, depending on the (possibly inverted) input. This
+		 is not the same as X, as it is a combination of the
+		 drive strength of the output and HiZ. */
 	  default:
-	    val = 2;
-	    switch (in0) {
+	    switch (in0 ^ inv_) {
 		case 0:
+		  val = 2;
 		  str = outL;
 		  break;
 		case 1:
+		  val = 2;
 		  str = outH;
 		  break;
 		default:
+		  val = 2;
 		  str = outX;
 		  break;
 	    }
@@ -85,6 +91,9 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.6  2001/12/19 23:43:03  steve
+ *  clarify bufif output strenghts.
+ *
  * Revision 1.5  2001/12/14 06:03:17  steve
  *  Arrange bufif to support notif as well.
  *
