@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.1 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.2 2001/06/21 23:05:08 steve Exp $"
 #endif
 
 /*
@@ -113,6 +113,16 @@ int vpi_remove_cb(vpiHandle ref)
       return 0;
 }
 
+/*
+ * A functor callback trips when a functor is set by the functor_set
+ * function. This only happens when a propagated value passes
+ * through. This causes a callback only if the callback flag in the
+ * functor is set.
+ *
+ * When I get to this point, I locate the signal is associated with
+ * this functor and call all the callbacks on its callback list. The
+ * callbacks are deleted as I go.
+ */
 void vpip_trip_functor_callbacks(vvp_ipoint_t ptr)
 {
       struct __vpiSignal*sig = vpip_sig_from_ptr(ptr);
@@ -140,6 +150,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.2  2001/06/21 23:05:08  steve
+ *  Some documentation of callback behavior.
+ *
  * Revision 1.1  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *

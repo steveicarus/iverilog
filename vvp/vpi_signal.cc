@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.16 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.17 2001/06/21 23:05:08 steve Exp $"
 #endif
 
 /*
@@ -366,6 +366,13 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 }
 
 
+/*
+ * Signals that are created for the design are kept in a table sorted
+ * by the functor address so that I cal look up that functor given the
+ * functor address. This is used by callbacks, for example.
+ *
+ * XXXX NOTE: I need to balance this tree someday.
+ */
 static struct __vpiSignal*by_bits_root = 0;
 static void by_bits_insert(struct __vpiSignal*sig)
 {
@@ -494,6 +501,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.17  2001/06/21 23:05:08  steve
+ *  Some documentation of callback behavior.
+ *
  * Revision 1.16  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *
@@ -520,33 +530,5 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
  *  Add strengths to functors at compile time,
  *  and Make functors pass their strengths as they
  *  propagate their output.
- *
- * Revision 1.9  2001/04/26 00:01:33  steve
- *  Support $deposit to a wire or reg.
- *
- * Revision 1.8  2001/04/25 04:45:52  steve
- *  Implement vpi_put_value for signals.
- *
- * Revision 1.7  2001/04/05 01:34:26  steve
- *  Add the .var/s and .net/s statements for VPI support.
- *
- * Revision 1.6  2001/04/04 17:43:19  steve
- *  support decimal strings from signals.
- *
- * Revision 1.5  2001/03/25 20:45:10  steve
- *  Add vpiOctStrVal access to signals.
- *
- * Revision 1.4  2001/03/25 19:38:05  steve
- *  Support making hex strings.
- *
- * Revision 1.3  2001/03/25 00:35:35  steve
- *  Add the .net statement.
- *
- * Revision 1.2  2001/03/21 05:13:03  steve
- *  Allow var objects as vpiHandle arguments to %vpi_call.
- *
- * Revision 1.1  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
  */
 
