@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.6 2003/05/14 04:18:16 steve Exp $"
+#ident "$Id: sys_random.c,v 1.7 2003/05/15 00:38:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,6 +105,9 @@ static int sys_dist_uniform_sizetf(char*x)
 /* make sure this matches N+1 in mti19937int.c */
 #define NP1	624+1
 
+/* Icarus seed cookie */
+#define COOKIE	0x1ca1ca1c
+
 static struct context_s global_context = { .mti = NP1 };
 
 static int sys_random_calltf(char*name)
@@ -113,7 +116,7 @@ static int sys_random_calltf(char*name)
       vpiHandle call_handle;
       vpiHandle argv;
       vpiHandle seed = 0;
-      int pseed;
+      int i_seed = 0;
       struct context_s *context;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
@@ -128,7 +131,7 @@ static int sys_random_calltf(char*name)
 
 	    val.format = vpiIntVal;
 	    vpi_get_value(seed, &val);
-	    pseed = val.value.integer;
+	    i_seed = val.value.integer;
 
 	      /* Since there is a seed use the current 
 	         context or create a new one */
@@ -144,8 +147,8 @@ static int sys_random_calltf(char*name)
 
 	      /* If the argument is not the Icarus cookie, then
 		 reseed context */
-	    if (pseed != 0x1ca1ca1c)
-	          sgenrand(context, pseed);
+	    if (i_seed != COOKIE)
+	          sgenrand(context, i_seed);
       } else {
 	    /* use global context */
           context = &global_context;
@@ -157,9 +160,9 @@ static int sys_random_calltf(char*name)
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
         /* mark seed with cookie */
-      if (seed) {
+      if (seed && i_seed != COOKIE) {
 	    val.format = vpiIntVal;
-	    val.value.integer = 0x1ca1ca1c;		
+	    val.value.integer = COOKIE;		
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
 
@@ -194,6 +197,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.7  2003/05/15 00:38:29  steve
+ *  Eliminate some redundant vpi_put_values.
+ *
  * Revision 1.6  2003/05/14 04:18:16  steve
  *  Use seed to store random number context.
  *
