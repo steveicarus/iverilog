@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.9 2002/10/19 23:18:52 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.10 2003/08/26 04:45:47 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -26,8 +26,8 @@ CFLAGS="@PIC@ -O -I@INCLUDEDIR@"
 
 # These are used for linking...
 LD=gcc
-LDFLAGS="@SHARED@"
-LDLIBS="-L@LIBDIR@ -lveriuser -lvpi"
+LDFLAGS="@SHARED@ -L@LIBDIR@"
+LDLIBS="-lveriuser -lvpi"
 
 CCSRC=
 CXSRC=
@@ -69,6 +69,20 @@ do
     -l*) LIB="$LIB $parm"
 	 ;;
 
+    --cflags)
+	 echo "$CFLAGS"
+	 exit;
+	 ;;
+
+    --ldflags)
+	 echo "$LDFLAGS"
+	 exit;
+	 ;;
+
+    --ldlibs)
+	 echo "$LDLIBS"
+	 exit;
+	 ;;
     esac
 
 done

@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "$Date: 2003/07/15 03:49:22 $" Version "$Date: 2003/07/15 03:49:22 $"
+.TH iverilog-vpi 1 "$Date: 2003/08/26 04:45:47 $" Version "$Date: 2003/08/26 04:45:47 $"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
@@ -54,6 +54,45 @@ Set for the use during compilation the root if the Icarus Verilog
 install. This is the place where you installed Icarus Verilog when you
 ran the installer. This flag is also only needed once, and the path is
 stored in the registry for future use.
+
+.SH "UNIX-ONLY OPTIONS"
+
+The UNIX version of \fIiverilog-vpi\fP includes additional flags to
+let Makefile gurus peek at the configuration of the \fIiverilog\fP
+installation.  This way, Makefiles can be written that handle complex VPI
+builds natively, and without hard-coding values that depend on the
+system and installation.  If used at all, these options must be
+used one at a time, and without any other options or directives.
+
+.TP 8
+.B --cflags
+Print the compiler flags (CFLAGS or CXXFLAGS) needed to compile source
+code destined for a VPI module.
+
+.TP 8
+.B --ldflags
+Print the linker flags (LDFLAGS) needed to link a VPI module.
+
+.TP 8
+.B --ldlibs
+Print the libraries (LDLIBS) needed to link a VPI module.
+
+.P
+Example GNU makefile that takes advantage of these flags:
+.IP "" 4
+CFLAGS = -Wall -O $(CFLAGS_$@)
+.br
+VPI_CFLAGS := $(shell iverilog-vpi --cflags)
+.br
+CFLAGS_messagev.o = $(VPI_CFLAGS)
+.br
+CFLAGS_fifo.o = $(VPI_CFLAGS)
+.br
+messagev.o fifo.o: transport.h
+.br
+messagev.vpi: messagev.o fifo.o
+.br
+	iverilog-vpi $^
 
 .SH "AUTHOR"
 .nf
