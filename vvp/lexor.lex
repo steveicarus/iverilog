@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.7 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: lexor.lex,v 1.8 2001/03/25 19:36:45 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -35,7 +35,7 @@
 
 
   /* A label is any non-blank text that appears left justified. */
-^[.$_a-zA-Z][.$_a-zA-Z0-9]* {
+^[.$_a-zA-Z][.$_a-zA-Z0-9<>]* {
       yylval.text = strdup(yytext);
       return T_LABEL; }
 
@@ -77,7 +77,7 @@
 
   /* Symbols are pretty much what is left. They are used to refer to
      labels so the rule must match a string that a label would match. */
-[.$_a-zA-Z][.$_a-zA-Z0-9]* {
+[.$_a-zA-Z][.$_a-zA-Z0-9<>]* {
       yylval.text = strdup(yytext);
       return T_SYMBOL; }
 
@@ -104,6 +104,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.8  2001/03/25 19:36:45  steve
+ *  Accept <> characters in labels and symbols.
+ *
  * Revision 1.7  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *
