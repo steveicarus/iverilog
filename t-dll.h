@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.104 2003/06/23 01:25:44 steve Exp $"
+#ident "$Id: t-dll.h,v 1.105 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -299,6 +299,8 @@ struct ivl_lpm_s {
 		  ivl_nexus_t we;
 		  ivl_nexus_t aclr;
 		  ivl_nexus_t aset;
+		  ivl_nexus_t sclr;
+		  ivl_nexus_t sset;
 		  union {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
@@ -681,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.105  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.104  2003/06/23 01:25:44  steve
  *  Module attributes make it al the way to ivl_target.
  *
@@ -723,63 +728,5 @@ struct ivl_variable_s {
  *
  * Revision 1.94  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.93  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.92  2002/08/07 02:36:10  steve
- *  Get local StringHeap.h
- *
- * Revision 1.91  2002/08/07 00:54:39  steve
- *  Add force to nets.
- *
- * Revision 1.90  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.89  2002/08/04 19:13:16  steve
- *  dll uses StringHeap for named items.
- *
- * Revision 1.88  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.87  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.86  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.85  2002/06/16 20:39:12  steve
- *  Normalize run-time index expressions for bit selects
- *
- * Revision 1.84  2002/06/16 19:19:16  steve
- *  Generate runtime code to normalize indices.
- *
- * Revision 1.83  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.82  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.81  2002/05/29 22:05:55  steve
- *  Offset lvalue index expressions.
- *
- * Revision 1.80  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.79  2002/05/26 01:39:03  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.118 2003/07/30 01:13:28 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.119 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1527,6 +1527,16 @@ void dll_target::lpm_ff(const NetFF*net)
 	    obj->u_.ff.aset_value = 0;
       }
 
+      if (net->pin_Sclr().is_linked()) {
+	    nex = net->pin_Sclr().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.sclr = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.sclr);
+	    nexus_lpm_add(obj->u_.ff.sclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.ff.sclr = 0;
+      }
+
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
@@ -2134,6 +2144,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.119  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.118  2003/07/30 01:13:28  steve
  *  Add support for triand and trior.
  *

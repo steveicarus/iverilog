@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.120 2003/07/30 01:13:28 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.121 2003/08/15 02:23:52 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -668,6 +668,9 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_aset_value(ivl_lpm_t net);
+extern ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net);
+extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
+extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
@@ -1220,6 +1223,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.121  2003/08/15 02:23:52  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.120  2003/07/30 01:13:28  steve
  *  Add support for triand and trior.
  *

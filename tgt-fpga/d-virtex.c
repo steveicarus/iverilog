@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.31 2003/07/04 00:10:09 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.32 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -249,6 +249,8 @@ void virtex_generic_dff(ivl_lpm_t net)
 
       ivl_nexus_t aclr = ivl_lpm_async_clr(net);
       ivl_nexus_t aset = ivl_lpm_async_set(net);
+      ivl_nexus_t sclr = ivl_lpm_sync_clr(net);
+      ivl_nexus_t sset = ivl_lpm_sync_set(net);
       const char*abits = 0;
 
       if (aset) {
@@ -258,6 +260,10 @@ void virtex_generic_dff(ivl_lpm_t net)
 	    assert(abits);
       }
 
+	/* XXXX Can't handle both synchronous and asynchronous clear. */
+      assert( ! (aclr && sclr) );
+	/* XXXX Can't handle synchronous set at all. */
+      assert( ! sset );
 
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 	    edif_cellref_t obj;
@@ -268,9 +274,14 @@ void virtex_generic_dff(ivl_lpm_t net)
 		 an FDCE device. */
 	    if (aset && (abits[idx] == '1')) {
 		  obj = edif_cellref_create(edf, xilinx_cell_fdcpe(xlib));
+	    } else if (aclr) {
+		  obj = edif_cellref_create(edf, xilinx_cell_fdce(xlib));
+	    } else if (sclr) {
+		  obj = edif_cellref_create(edf, xilinx_cell_fdre(xlib));
 	    } else {
 		  obj = edif_cellref_create(edf, xilinx_cell_fdce(xlib));
 	    }
+
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
 	    edif_add_to_joint(jnt, obj, FDCE_Q);
@@ -288,6 +299,9 @@ void virtex_generic_dff(ivl_lpm_t net)
 
 	    if (aclr) {
 		  jnt = edif_joint_of_nexus(edf, aclr);
+		  edif_add_to_joint(jnt, obj, FDCE_CLR);
+	    } else if (sclr) {
+		  jnt = edif_joint_of_nexus(edf, sclr);
 		  edif_add_to_joint(jnt, obj, FDCE_CLR);
 	    }
 
@@ -831,6 +845,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.32  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.31  2003/07/04 00:10:09  steve
  *  Generate MUXF5 based 4-input N-wide muxes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.5 2003/08/10 16:42:23 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.6 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 /*
@@ -350,9 +350,10 @@ static void lpm_show_dff(ivl_lpm_t net)
       unsigned idx;
       unsigned pin, wid = ivl_lpm_width(net);
 
-      sprintf(name, "fd%s%s%u",
+      sprintf(name, "fd%s%s%s%u",
 	      ivl_lpm_enable(net)? "ce" : "",
 	      ivl_lpm_async_clr(net)? "cl" : "",
+	      ivl_lpm_sync_clr(net)? "sc" : "",
 	      wid);
 
       cell = edif_xlibrary_findcell(xlib, name);
@@ -363,6 +364,8 @@ static void lpm_show_dff(ivl_lpm_t net)
 	    if (ivl_lpm_enable(net))
 		  nports += 1;
 	    if (ivl_lpm_async_clr(net))
+		  nports += 1;
+	    if (ivl_lpm_sync_clr(net))
 		  nports += 1;
 
 	    cell = edif_xcell_create(xlib, strdup(name), nports);
@@ -392,6 +395,11 @@ static void lpm_show_dff(ivl_lpm_t net)
 		  pin += 1;
 	    }
 
+	    if (ivl_lpm_sync_clr(net)) {
+		  edif_cell_portconfig(cell, pin, "Sclr", IVL_SIP_INPUT);
+		  pin += 1;
+	    }
+
 	    edif_cell_portconfig(cell, pin, "Clock", IVL_SIP_INPUT);
 	    pin += 1;
 
@@ -416,6 +424,13 @@ static void lpm_show_dff(ivl_lpm_t net)
 	    pin = edif_cell_port_byname(cell, "Aclr");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_async_clr(net));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+
+      if (ivl_lpm_sync_clr(net)) {
+	    pin = edif_cell_port_byname(cell, "Sclr");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_sync_clr(net));
 	    edif_add_to_joint(jnt, ref, pin);
       }
 
@@ -690,6 +705,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.6  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.5  2003/08/10 16:42:23  steve
  *  Add async clear to LPM_FF devices.
  *

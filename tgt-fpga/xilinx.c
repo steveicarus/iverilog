@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.9 2003/07/04 01:08:03 steve Exp $"
+#ident "$Id: xilinx.c,v 1.10 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -203,6 +203,20 @@ edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib)
       edif_cell_portconfig(cell, FDCE_CE, "CE",  IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_CLR,"CLR", IVL_SIP_INPUT);
       edif_cell_portconfig(cell, FDCE_PRE,"PRE", IVL_SIP_INPUT);
+      return cell;
+}
+
+edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib)
+{
+      static edif_cell_t cell = 0;
+      if (cell != 0) return cell;
+
+      cell = edif_xcell_create(xlib, "FDRE", 5);
+      edif_cell_portconfig(cell, FDCE_Q,  "Q",   IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, FDCE_D,  "D",   IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, FDCE_C,  "C",   IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, FDCE_CE, "CE",  IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, FDCE_CLR,"R",   IVL_SIP_INPUT);
       return cell;
 }
 
@@ -937,6 +951,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.10  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.9  2003/07/04 01:08:03  steve
  *  PAD attribute can be used to assign pins.
  *

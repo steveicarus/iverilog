@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.29 2003/08/14 02:41:05 steve Exp $"
+#ident "$Id: synth2.cc,v 1.30 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -387,6 +387,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 					tmp_map->pin_count());
 
 	    verinum tmp_aset = ff->aset_value();
+	    verinum tmp_sset = ff->sset_value();
 
 	      /* Create a new DFF to handle this part of the begin-end
 		 block. Connect this NetFF to the associated pins of
@@ -397,14 +398,22 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    des->add_node(ff2);
 
 	    verinum aset_value2 (verinum::V1, ff2->width());
+	    verinum sset_value2 (verinum::V1, ff2->width());
 	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map,
 						   tmp_map->pin(idx).nexus());
+
+		    /* Connect Data and Q bits to the new FF. */
 		  connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
 		  connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
 
+		    /* Copy the asynch set bit to the new device. */
 		  if (ptr < tmp_aset.len())
 			aset_value2.set(idx, tmp_aset[ptr]);
+
+		    /* Copy the synch set bit to the new device. */
+		  if (ptr < tmp_sset.len())
+			sset_value2.set(idx, tmp_sset[ptr]);
 
 		  if (pin_accounting[ptr] != 0) {
 			cerr << cur->get_line() << ": error: "
@@ -417,10 +426,15 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			pin_accounting[ptr] = cur;
 		  }
 	    }
+
 	    if (ff->pin_Aclr().is_linked())
 		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
 	    if (ff->pin_Aset().is_linked())
 		  connect(ff->pin_Aset(),  ff2->pin_Aset());
+	    if (ff->pin_Sclr().is_linked())
+		  connect(ff->pin_Sclr(),  ff2->pin_Sclr());
+	    if (ff->pin_Sset().is_linked())
+		  connect(ff->pin_Sset(),  ff2->pin_Sset());
 	    if (ff->pin_Clock().is_linked())
 		  connect(ff->pin_Clock(), ff2->pin_Clock());
 	    if (ff->pin_Enable().is_linked())
@@ -559,6 +573,56 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       }
 
       delete expr_input;
+
+	/* Detect the case that this is a *synchronous* set/reset. It
+	   is not asyncronous because we know the condition is not
+	   included in the sensitivity list, but if the if_ case is
+	   constant (has no inputs) then we can model this as a
+	   synchronous set/reset. */
+      NexusSet*a_set = if_->nex_input();
+
+      if (a_set->count() == 0) {
+
+	    NetNet*rst = expr_->synthesize(des);
+	    assert(rst->pin_count() == 1);
+
+	      /* Synthesize the true clause to figure out what
+		 kind of set/reset we have. */
+	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, nex_map->pin_count());
+	    asig->local_flag(true);
+	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+
+	    assert(asig->pin_count() == ff->width());
+
+	      /* Collect the set/reset value into a verinum. If
+		 this turns out to be entirely 0 values, then
+		 use the Sclr input. Otherwise, use the Aset
+		 input and save the set value. */
+	    verinum tmp (verinum::V0, ff->width());
+	    for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+
+		  assert(asig->pin(bit).nexus()->drivers_constant());
+		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+	    }
+
+	    assert(tmp.is_defined());
+	    if (tmp.is_zero()) {
+		  connect(ff->pin_Sclr(), rst->pin(0));
+
+	    } else {
+		  connect(ff->pin_Sset(), rst->pin(0));
+		  ff->sset_value(tmp);
+	    }
+
+	    delete a_set;
+
+	    return else_->synth_sync(des, scope, ff, nex_map,
+				     nex_out, svector<NetEvProbe*>(0))
+		  && flag;
+      }
+
+      delete a_set;
 
 	/* Failed to find an asynchronous set/reset, so any events
 	   input are probably in error. */
@@ -813,6 +877,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.30  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.29  2003/08/14 02:41:05  steve
  *  Fix dangling pointer in NexusSet handling blocks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.217 2003/07/05 20:42:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.218 2003/08/15 02:23:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -622,6 +622,11 @@ Link& NetFF::pin_Sclr()
       return pin(7);
 }
 
+const Link& NetFF::pin_Sclr() const
+{
+      return pin(7);
+}
+
 Link& NetFF::pin_Data(unsigned w)
 {
       unsigned pn = 8 + 2*w;
@@ -658,6 +663,16 @@ void NetFF::aset_value(const verinum&val)
 const verinum& NetFF::aset_value() const
 {
       return aset_value_;
+}
+
+void NetFF::sset_value(const verinum&val)
+{
+      sset_value_ = val;
+}
+
+const verinum& NetFF::sset_value() const
+{
+      return sset_value_;
 }
 
 
@@ -2179,6 +2194,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.218  2003/08/15 02:23:52  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.217  2003/07/05 20:42:08  steve
  *  Fix some enumeration warnings.
  *

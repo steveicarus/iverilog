@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.101 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.102 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -620,12 +620,36 @@ extern "C" ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net)
+{
+      assert(net);
+      switch(net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.sclr;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net)
 {
       assert(net);
       switch(net->type) {
 	  case IVL_LPM_FF:
 	    return net->u_.ff.aset;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net)
+{
+      assert(net);
+      switch(net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.sset;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1848,6 +1872,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.102  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.101  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

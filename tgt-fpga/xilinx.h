@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.7 2003/07/04 00:10:09 steve Exp $"
+#ident "$Id: xilinx.h,v 1.8 2003/08/15 02:23:53 steve Exp $"
 #endif
 
 /*
@@ -67,8 +67,12 @@ extern edif_cell_t xilinx_cell_lut4(edif_xlibrary_t xlib);
 
 /* === Flip-Flop Devices === */
 
+/*
+ * These are flip-flops of various sort, but similar pinouts.
+ */
 extern edif_cell_t xilinx_cell_fdce(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_fdcpe(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_fdre(edif_xlibrary_t xlib);
 #define FDCE_Q   0
 #define FDCE_C   1
 #define FDCE_D   2
@@ -126,6 +130,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.8  2003/08/15 02:23:53  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.7  2003/07/04 00:10:09  steve
  *  Generate MUXF5 based 4-input N-wide muxes.
  *

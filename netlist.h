@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.296 2003/08/09 03:23:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.297 2003/08/15 02:23:52 steve Exp $"
 #endif
 
 /*
@@ -680,11 +680,16 @@ class NetFF  : public NetNode {
       const Link& pin_Enable() const;
       const Link& pin_Aset() const;
       const Link& pin_Aclr() const;
+      const Link& pin_Sset() const;
+      const Link& pin_Sclr() const;
       const Link& pin_Data(unsigned) const;
       const Link& pin_Q(unsigned) const;
 
       void aset_value(const verinum&val);
       const verinum& aset_value() const;
+
+      void sset_value(const verinum&val);
+      const verinum& sset_value() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -692,6 +697,7 @@ class NetFF  : public NetNode {
 
     private:
       verinum aset_value_;
+      verinum sset_value_;
 };
 
 
@@ -3316,6 +3322,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.297  2003/08/15 02:23:52  steve
+ *  Add synthesis support for synchronous reset.
+ *
  * Revision 1.296  2003/08/09 03:23:40  steve
  *  Add support for IVL_LPM_MULT device.
  *
