@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/06/30 22:59:40 $" Version "$Date: 2001/06/30 22:59:40 $"
+.TH iverilog 1 "$Date: 2001/07/29 22:50:28 $" Version "$Date: 2001/07/29 22:50:28 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -186,6 +186,7 @@ To compile hello.v to a file in XNF-format called hello.xnf
 Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
+vvp(1),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
 .SH COPYRIGHT
