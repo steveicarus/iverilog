@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.20 2001/04/29 20:47:39 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.21 2001/04/30 05:11:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -224,7 +224,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    }
 
       } else {
-	    fprintf(vvp_out, "    %%and %u, %u, 1;\n", lv.base, rv.base);
+	    fprintf(vvp_out, "    %%or %u, %u, 1;\n", lv.base, rv.base);
 	    clr_vector(rv);
       }
 
@@ -855,6 +855,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.21  2001/04/30 05:11:18  steve
+ *  OR is %or. Get this right.
+ *
  * Revision 1.20  2001/04/29 20:47:39  steve
  *  Evalulate logical or (||)
  *
