@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.306 2004/09/05 17:44:41 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.307 2004/09/05 21:07:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2088,6 +2088,12 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    expr = cmp;
       }
 
+	/* precalculate as much as possible of the wait expression. */
+      if (NetExpr*tmp = expr->eval_tree()) {
+	    delete expr;
+	    expr = tmp;
+      }
+
 	/* Detect the unusual case that the wait expression is
 	   constant. Constant true is OK (it becomes transparent) but
 	   constant false is almost certainly not what is intended. */
@@ -2192,6 +2198,10 @@ NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 	    enet = statement_->elaborate(des, scope);
 	    if (enet == 0)
 		  return 0;
+
+      } else {
+	    enet = new NetBlock(NetBlock::SEQU, 0);
+	    enet->set_line(*this);
       }
 
       if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE))
@@ -2759,6 +2769,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.307  2004/09/05 21:07:26  steve
+ *  Support degenerat wait statements.
+ *
  * Revision 1.306  2004/09/05 17:44:41  steve
  *  Add support for module instance arrays.
  *
