@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.54 2002/04/14 21:16:48 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.55 2002/04/25 05:04:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -411,9 +411,49 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       select attached to it. Generate a NetESelect
 		       object to select the bit as desired. */
 		  NetExpr*mtmp = msb_->elaborate_expr(des, scope);
-		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
-		  tmp->set_line(*this);
-		  tmp = stmp;
+		  if (! dynamic_cast<NetEConst*>(mtmp)) {
+			NetExpr*re = mtmp->eval_tree();
+			if (re) {
+			      delete mtmp;
+			      mtmp = re;
+			}
+		  }
+
+		    /* Let's first try to get constant values for both
+		       the parameter and the bit select. If they are
+		       both constant, then evaluate the bit select and
+		       return instead a single-bit constant. */
+
+		  NetEConst*le = dynamic_cast<NetEConst*>(tmp);
+		  NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
+		  if (le && re) {
+
+			verinum lv = le->value();
+			verinum rv = re->value();
+			verinum::V rb = verinum::Vx;
+
+			long ridx = rv.as_long();
+			if ((ridx >= 0) && (ridx < lv.len())) {
+			      rb = lv[ridx];
+
+			} else if ((ridx >= 0) && (!lv.has_len())) {
+			      if (lv.has_sign())
+				    rb = lv[lv.len()-1];
+			      else
+				    rb = verinum::V0;
+			}
+
+			NetEConst*re = new NetEConst(verinum(rb, 1));
+			delete tmp;
+			delete mtmp;
+			tmp = re;
+
+		  } else {
+
+			NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
+			tmp->set_line(*this);
+			tmp = stmp;
+		  }
 	    }
 
 
@@ -745,6 +785,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.55  2002/04/25 05:04:31  steve
+ *  Evaluate constant bit select of constants.
+ *
  * Revision 1.54  2002/04/14 21:16:48  steve
  *  Evaluate logical not at elaboration time.
  *
