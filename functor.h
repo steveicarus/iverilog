@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.2 1999/11/01 02:07:40 steve Exp $"
+#ident "$Id: functor.h,v 1.3 1999/12/01 06:06:16 steve Exp $"
 #endif
 
 /*
@@ -46,8 +46,20 @@ struct functor_t {
       virtual void lpm_ff(class Design*des, class NetFF*);
 };
 
+struct proc_match_t {
+      virtual ~proc_match_t();
+
+      virtual int assign(class NetAssign*);
+      virtual int condit(class NetCondit*);
+      virtual int pevent(class NetPEvent*);
+};
+
+
 /*
  * $Log: functor.h,v $
+ * Revision 1.3  1999/12/01 06:06:16  steve
+ *  Redo synth to use match_proc_t scanner.
+ *
  * Revision 1.2  1999/11/01 02:07:40  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

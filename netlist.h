@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.96 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.97 1999/12/01 06:06:16 steve Exp $"
 #endif
 
 /*
@@ -863,6 +863,10 @@ class NetProc  : public LineInfo {
 	// target. The target returns true if OK, false for errors.
       virtual bool emit_proc(ostream&, struct target_t*) const;
 
+	// This method is called by functors that want to scan a
+	// process in search of matchable patterns.
+      virtual int match_proc(struct proc_match_t*);
+
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -918,6 +922,7 @@ class NetAssign  : public NetAssign_ {
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
@@ -1080,6 +1085,7 @@ class NetCondit  : public NetProc {
       void emit_recurse_else(ostream&, struct target_t*) const;
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1173,6 +1179,7 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
       NetProc* statement();
       const NetProc* statement() const;
 
+      virtual int match_proc(struct proc_match_t*);
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2044,6 +2051,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.97  1999/12/01 06:06:16  steve
+ *  Redo synth to use match_proc_t scanner.
+ *
  * Revision 1.96  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

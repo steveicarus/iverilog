@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: synth.cc,v 1.2 1999/11/02 04:55:34 steve Exp $"
+#ident "$Id: synth.cc,v 1.3 1999/12/01 06:06:16 steve Exp $"
 #endif
 
 /*
@@ -26,8 +26,12 @@
  * is especially interesting for the sequential components such as
  * flip flops and latches. As threads are transformed into components,
  * the design is rewritten.
- *
- * Currently, this transform recognizes the following patterns:
+ */
+# include  "functor.h"
+# include  "netlist.h"
+
+/*
+ * This transform recognizes the following patterns:
  *
  *    always @(posedge CLK) Q = D
  *    always @(negedge CLK) Q = D
@@ -39,8 +43,105 @@
  * registers) and the CE must be single-bit identifiers. The generated
  * device will be wide enough to accomodate Q and D.
  */
-# include  "functor.h"
-# include  "netlist.h"
+class match_dff : public proc_match_t {
+
+    public:
+      match_dff(Design*d, NetProcTop*t)
+      : des_(d), top_(t), pclk_(0), nclk_(0), con_(0), ce_(0),
+	asn_(0), d_(0)
+      { }
+
+      ~match_dff() { }
+
+      void make_it();
+
+    private:
+      virtual int assign(NetAssign*);
+      virtual int condit(NetCondit*);
+      virtual int pevent(NetPEvent*);
+
+      Design*des_;
+      NetProcTop*top_;
+      NetPEvent*pclk_;
+      NetNEvent*nclk_;
+
+      NetCondit *con_;
+      NetNet*ce_;
+      NetAssign *asn_;
+
+      NetNet*d_;
+};
+
+int match_dff::assign(NetAssign*as)
+{
+      if (!pclk_)
+	    return 0;
+      if (asn_)
+	    return 0;
+
+      asn_ = as;
+      d_ = asn_->rval()->synthesize(des_);
+      if (d_ == 0)
+	    return 0;
+
+      return 1;
+}
+
+int match_dff::condit(NetCondit*co)
+{
+      if (!pclk_)
+	    return 0;
+      if (con_ || asn_)
+	    return 0;
+
+      con_ = co;
+      if (con_->else_clause())
+	    return 0;
+      ce_ = con_->expr()->synthesize(des_);
+      if (ce_ == 0)
+	    return 0;
+
+      return con_->if_clause()->match_proc(this);
+}
+
+int match_dff::pevent(NetPEvent*pe)
+{
+      if (pclk_ || con_ || asn_)
+	    return 0;
+
+      pclk_ = pe;
+
+	// ... there must be a single event source, ...
+      svector<class NetNEvent*>*neb = pclk_->back_list();
+      if (neb == 0)
+	    return 0;
+      if (neb->count() != 1) {
+	    delete neb;
+	    return 0;
+      }
+      nclk_ = (*neb)[0];
+      delete neb;
+      return pclk_->statement()->match_proc(this);
+}
+
+void match_dff::make_it()
+{
+      NetFF*ff = new NetFF(asn_->name(), asn_->pin_count());
+
+      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
+	    connect(ff->pin_Data(idx), d_->pin(idx));
+	    connect(ff->pin_Q(idx), asn_->pin(idx));
+      }
+
+      connect(ff->pin_Clock(), nclk_->pin(0));
+      if (ce_) connect(ff->pin_Enable(), ce_->pin(0));
+
+      ff->attribute("LPM_FFType", "DFF");
+      if (nclk_->type() == NetNEvent::NEGEDGE)
+	    ff->attribute("Clock:LPM_Polarity", "INVERT");
+
+      des_->add_node(ff);
+}
 
 class synth_f  : public functor_t {
 
@@ -49,20 +150,8 @@ class synth_f  : public functor_t {
 
     private:
       void proc_always_(class Design*);
-      void proc_casn_(class Design*);
-      void proc_ccon_(class Design*);
 
-	// The matcher does something like a recursive descent search
-	// for the templates. These variables are filled in as the
-	// searcher finds them.
-
-      class NetProcTop*top_;
-
-      class NetPEvent *pclk_;
-      class NetNEvent *nclk_;
-
-      class NetCondit *con_;
-      class NetAssign *asn_;
+      NetProcTop*top_;
 };
 
 
@@ -85,141 +174,14 @@ void synth_f::process(class Design*des, class NetProcTop*top)
  */
 void synth_f::proc_always_(class Design*des)
 {
-	// The statement must be a NetPEvent, ...
-      pclk_ = dynamic_cast<class NetPEvent*>(top_->statement());
-      if (pclk_ == 0)
-	    return;
-
-	// ... there must be a single event source, ...
-      svector<class NetNEvent*>*neb = pclk_->back_list();
-      if (neb == 0)
-	    return;
-      if (neb->count() != 1) {
-	    delete neb;
-	    return;
-      }
-      nclk_ = (*neb)[0];
-      delete neb;
-
-	// ... the event must be an edge, ...
-      switch (nclk_->type()) {
-	  case NetNEvent::POSEDGE:
-	  case NetNEvent::NEGEDGE:
-	    break;
-	  default:
-	    return;
-      }
-
-	// Is this a clocked assignment?
-      asn_ = dynamic_cast<NetAssign*>(pclk_->statement());
-      if (asn_) {
-	    proc_casn_(des);
-	    return;
-      }
-
-      con_ = dynamic_cast<NetCondit*>(pclk_->statement());
-      if (con_) {
-	    proc_ccon_(des);
+      match_dff dff_pat(des, top_);
+      if (top_->statement()->match_proc(&dff_pat)) {
+	    dff_pat.make_it();
+	    des->delete_process(top_);
 	    return;
       }
 }
 
-/*
- * The process so far has been matched as:
- *
- *   always @(posedge nclk_) asn_ = <r>;
- *   always @(negedge nclk_) asn_ = <r>;
- */
-void synth_f::proc_casn_(class Design*des)
-{
-	// Turn the r-value into gates.
-      NetNet*sig = asn_->rval()->synthesize(des);
-      assert(sig);
-
-	// The signal and the assignment must be the same width...
-      assert(asn_->pin_count() == sig->pin_count());
-
-      NetFF*ff = new NetFF(asn_->name(), asn_->pin_count());
-      ff->attribute("LPM_FFType", "DFF");
-
-      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
-	    connect(ff->pin_Data(idx), sig->pin(idx));
-	    connect(ff->pin_Q(idx), asn_->pin(idx));
-      }
-
-      switch (nclk_->type()) {
-	  case NetNEvent::POSEDGE:
-	    connect(ff->pin_Clock(), nclk_->pin(0));
-	    break;
-
-	  case NetNEvent::NEGEDGE:
-	    connect(ff->pin_Clock(), nclk_->pin(0));
-	    ff->attribute("Clock:LPM_Polarity", "INVERT");
-	    break;
-      }
-
-      des->add_node(ff);
-
-	// This process is matched and replaced with a DFF. Get
-	// rid of the now useless NetProcTop.
-      des->delete_process(top_);
-}
-
-/*
- * The process so far has been matched as:
- *
- *    always @(posedge nclk_) if ...;
- *    always @(negedge nclk_) if ...;
- */
-void synth_f::proc_ccon_(class Design*des)
-{
-      if (con_->else_clause())
-	    return;
-
-      asn_ = dynamic_cast<NetAssign*>(con_->if_clause());
-      if (asn_ == 0)
-	    return;
-
-      NetNet*sig = asn_->rval()->synthesize(des);
-      assert(sig);
-
-	// The signal and the assignment must be the same width...
-      assert(asn_->pin_count() == sig->pin_count());
-
-      NetESignal*ce = dynamic_cast<NetESignal*>(con_->expr());
-      if (ce == 0)
-	    return;
-      if (ce->pin_count() != 1)
-	    return;
-
-      NetFF*ff = new NetFF(asn_->name(), asn_->pin_count());
-      ff->attribute("LPM_FFType", "DFF");
-
-      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
-	    connect(ff->pin_Data(idx), sig->pin(idx));
-	    connect(ff->pin_Q(idx), asn_->pin(idx));
-      }
-
-      switch (nclk_->type()) {
-	  case NetNEvent::POSEDGE:
-	    connect(ff->pin_Clock(), nclk_->pin(0));
-	    connect(ff->pin_Enable(), ce->pin(0));
-	    break;
-
-	  case NetNEvent::NEGEDGE:
-	    connect(ff->pin_Clock(), nclk_->pin(0));
-	    connect(ff->pin_Enable(), ce->pin(0));
-	    ff->attribute("Clock:LPM_Polarity", "INVERT");
-	    break;
-      }
-
-      des->add_node(ff);
-
-
-	// This process is matched and replaced with a DFF. Get
-	// rid of the now useless NetProcTop.
-      des->delete_process(top_);
-}
 
 void synth(Design*des)
 {
@@ -229,6 +191,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.3  1999/12/01 06:06:16  steve
+ *  Redo synth to use match_proc_t scanner.
+ *
  * Revision 1.2  1999/11/02 04:55:34  steve
  *  Add the synthesize method to NetExpr to handle
  *  synthesis of expressions, and use that method

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.4 1999/11/18 03:52:19 steve Exp $"
+#ident "$Id: functor.cc,v 1.5 1999/12/01 06:06:16 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -80,8 +80,50 @@ void NetFF::functor_node(Design*des, functor_t*fun)
       fun->lpm_ff(des, this);
 }
 
+proc_match_t::~proc_match_t()
+{
+}
+
+int NetProc::match_proc(proc_match_t*that)
+{
+      return 0;
+}
+
+int proc_match_t::assign(NetAssign*)
+{
+      return 0;
+}
+
+int NetAssign::match_proc(proc_match_t*that)
+{
+      return that->assign(this);
+}
+
+int proc_match_t::condit(NetCondit*)
+{
+      return 0;
+}
+
+int NetCondit::match_proc(proc_match_t*that)
+{
+      return that->condit(this);
+}
+
+int proc_match_t::pevent(NetPEvent*)
+{
+      return 0;
+}
+
+int NetPEvent::match_proc(proc_match_t*that)
+{
+      return that->pevent(this);
+}
+
 /*
  * $Log: functor.cc,v $
+ * Revision 1.5  1999/12/01 06:06:16  steve
+ *  Redo synth to use match_proc_t scanner.
+ *
  * Revision 1.4  1999/11/18 03:52:19  steve
  *  Turn NetTmp objects into normal local NetNet objects,
  *  and add the nodangle functor to clean up the local
