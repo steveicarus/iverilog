@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.26 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.27 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -72,6 +72,17 @@ _BEGIN_DECL
  *    processes. Structural expressions are instead treated as logic
  *    gates.
  *
+ * ivl_lpm_t
+ *    This object is the base class for all the various LPM type
+ *    device nodes. This object carries a few base properties
+ *    (including a type) including a handle to the specific type.
+ *
+ *    All the ivl_lpm_*_t objects are derived from this type, and
+ *    there are methods to get one from the other.
+ *
+ * ivl_lpm_ff_t
+ *    This is a flip-flop.
+ *
  * ivl_net_logic_t
  *    This object represents various built in logic devices. In fact,
  *    this includes just about every directional device that has a
@@ -113,6 +124,8 @@ _BEGIN_DECL
  */
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
+typedef struct ivl_lpm_s      *ivl_lpm_t;
+typedef struct ivl_lpm_ff_s   *ivl_lpm_ff_t;
 typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
@@ -160,6 +173,11 @@ typedef enum ivl_logic_e {
       IVL_LO_XNOR,
       IVL_LO_XOR
 } ivl_logic_t;
+
+/* This is the type of an LPM object. */
+typedef enum ivl_lpm_type_e {
+      IVL_LPM_FF
+} ivl_lpm_type_t;
 
 /* Processes are initial or always blocks with a statement. This is
    the type of the ivl_process_t object. */
@@ -339,6 +357,31 @@ extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 
+/* LPM
+ * These functions support access to the properties of LPM devices.
+ *
+ * ivl_lpm_name
+ *    Return the name of the device.
+ *
+ * ivl_lpm_type
+ *    Return the ivl_lpm_type_t of the secific LPM device.
+ *
+ * ivl_lpm_width
+ *    Return the width of the LPM device. What this means depends on
+ *    the LPM type, but it generally has to do with the width of the
+ *    output data path.
+ */
+extern const char*    ivl_lpm_name(ivl_lpm_t net);
+extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
+extern unsigned       ivl_lpm_width(ivl_lpm_t net);
+
+
+/*
+ * These are cast functions for the ivl_lpm_t. They cast the object to
+ * the requested type, checking for errors along the way.
+ */
+extern ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net);
+
 
 /* LVAL
  * The l-values of assignments are concatenation of ivl_lval_t
@@ -444,6 +487,8 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 extern int          ivl_scope_children(ivl_scope_t net, ivl_scope_f func);
 extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
+extern unsigned     ivl_scope_lpms(ivl_scope_t net);
+extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
@@ -549,6 +594,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.27  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.26  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.144 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.145 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -446,6 +446,11 @@ const NetProc* NetProcTop::statement() const
       return statement_;
 }
 
+NetScope* NetProcTop::scope()
+{
+      return scope_;
+}
+
 const NetScope* NetProcTop::scope() const
 {
       return scope_;
@@ -468,8 +473,8 @@ const NetScope* NetProcTop::scope() const
  *     ...
  */
 
-NetFF::NetFF(const string&n, unsigned wid)
-: NetNode(n, 8 + 2*wid)
+NetFF::NetFF(NetScope*s, const string&n, unsigned wid)
+: NetNode(s, n, 8 + 2*wid)
 {
       pin_Clock().set_dir(Link::INPUT);
       pin_Clock().set_name("Clock", 0);
@@ -2449,6 +2454,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.145  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.144  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

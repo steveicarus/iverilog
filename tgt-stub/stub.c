@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.23 2000/10/28 22:32:34 steve Exp $"
+#ident "$Id: stub.c,v 1.24 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 /*
@@ -85,6 +85,24 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  default:
 	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
 	    break;
+      }
+}
+
+static void show_lpm(ivl_lpm_t net)
+{
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_FF: {
+		ivl_lpm_ff_t ff = ivl_lpm_ff(net);
+
+		fprintf(out, "  LPM_FF %s: <width=%u>\n",
+			ivl_lpm_name(net),
+			ivl_lpm_width(net));
+		break;
+	  }
+
+	  default:
+	    fprintf(out, "  %s: <width=%u>\n", ivl_lpm_name(net),
+		    ivl_lpm_width(net));
       }
 }
 
@@ -306,6 +324,9 @@ static int show_scope(ivl_scope_t net)
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1)
 	    show_logic(ivl_scope_log(net, idx));
 
+      for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1)
+	    show_lpm(ivl_scope_lpm(net, idx));
+
       fprintf(out, "end scope %s\n", ivl_scope_name(net));
       return ivl_scope_children(net, show_scope);
 }
@@ -340,6 +361,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.24  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.23  2000/10/28 22:32:34  steve
  *  API for concatenation expressions.
  *

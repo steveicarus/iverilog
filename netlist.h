@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.177 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.178 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 /*
@@ -568,7 +568,7 @@ class NetModulo  : public NetNode {
 class NetFF  : public NetNode {
 
     public:
-      NetFF(const string&n, unsigned width);
+      NetFF(NetScope*s, const string&n, unsigned width);
       ~NetFF();
 
       unsigned width() const;
@@ -2007,6 +2007,7 @@ class NetProcTop  : public LineInfo {
       NetProc*statement();
       const NetProc*statement() const;
 
+      NetScope*scope();
       const NetScope*scope() const;
 
       void dump(ostream&, unsigned ind) const;
@@ -2811,6 +2812,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.178  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.177  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *

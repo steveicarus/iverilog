@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.16 2000/10/28 22:32:34 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.17 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -234,6 +234,27 @@ extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
       return net->pins_[pin];
 }
 
+extern "C" ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net)
+{
+      assert(net->type == IVL_LPM_FF);
+      return (ivl_lpm_ff_t)net;
+}
+
+extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
+{
+      return net->name;
+}
+
+extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
+{
+      return net->type;
+}
+
+extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
+{
+      return net->width;
+}
+
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
 {
       assert(net);
@@ -322,6 +343,19 @@ extern "C" ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx)
       assert(net);
       assert(idx < net->nlog_);
       return net->log_[idx];
+}
+
+extern "C" unsigned ivl_scope_lpms(ivl_scope_t net)
+{
+      assert(net);
+      return net->nlpm_;
+}
+
+extern "C" ivl_lpm_t ivl_scope_lpm(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nlpm_);
+      return net->lpm_[idx];
 }
 
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
@@ -536,6 +570,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.17  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.16  2000/10/28 22:32:34  steve
  *  API for concatenation expressions.
  *

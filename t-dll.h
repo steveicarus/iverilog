@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.17 2000/10/28 22:32:34 steve Exp $"
+#ident "$Id: t-dll.h,v 1.18 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -49,6 +49,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
+      void lpm_ff(const NetFF*);
       void net_assign(const NetAssign_*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
@@ -132,6 +133,34 @@ struct ivl_expr_s {
 		  ivl_expr_t lsb_;
 	    } subsig_;
       } u_;
+};
+
+/*
+ * This is the base part of all ivl_lpm_*_t objects. It contains a
+ * type code to identify the extended type, and holds properties that
+ * are common to all (or most) lpm devices.
+ */
+struct ivl_lpm_s {
+      ivl_lpm_type_t type;
+      ivl_scope_t scope;
+      char* name;
+
+      unsigned width;
+};
+
+struct ivl_lpm_ff_s {
+      struct ivl_lpm_s base;
+
+      ivl_nexus_t clk;
+
+      union {
+	    ivl_nexus_t*pins;
+	    ivl_nexus_t pin;
+      } q;
+      union {
+	    ivl_nexus_t*pins;
+	    ivl_nexus_t pin;
+      } d;
 };
 
 /*
@@ -233,6 +262,9 @@ struct ivl_scope_s {
 
       unsigned nlog_;
       ivl_net_logic_t*log_;
+
+      unsigned nlpm_;
+      ivl_lpm_t* lpm_;
 };
 
 /*
@@ -317,6 +349,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.18  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.17  2000/10/28 22:32:34  steve
  *  API for concatenation expressions.
  *

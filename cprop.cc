@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.17 2000/10/07 19:45:42 steve Exp $"
+#ident "$Id: cprop.cc,v 1.18 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -153,7 +153,8 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 	// If some of the FFs are unconnected, make a new FF array
 	// that does not include the useless FF devices.
       if (unlinked_count > 0) {
-	    NetFF*tmp = new NetFF(obj->name(), obj->width()-unlinked_count);
+	    NetFF*tmp = new NetFF(obj->scope(), obj->name(),
+				  obj->width()-unlinked_count);
 	    connect(tmp->pin_Clock(), obj->pin_Clock());
 	    connect(tmp->pin_Enable(), obj->pin_Enable());
 	    connect(tmp->pin_Aload(), obj->pin_Aload());
@@ -433,6 +434,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.18  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.17  2000/10/07 19:45:42  steve
  *  Put logic devices into scopes.
  *

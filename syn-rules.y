@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.9 2000/09/02 20:54:21 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.10 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 /*
@@ -139,7 +139,8 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       assert(d);
 
-      NetFF*ff = new NetFF(asn->l_val(0)->name(), asn->l_val(0)->pin_count());
+      NetFF*ff = new NetFF(top->scope(), asn->l_val(0)->name(),
+			   asn->l_val(0)->pin_count());
 
       for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
 	    connect(ff->pin_Data(idx), d->pin(idx));

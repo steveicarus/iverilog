@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.102 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.103 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 /*
@@ -250,7 +250,9 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 
 void NetFF::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "LPM_FF: " << name() << endl;
+      o << setw(ind) << "" << "LPM_FF: " << name()
+	<< " scope=" << (scope()? scope()->name() : "") << endl;
+
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -975,6 +977,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.103  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.102  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.18 2000/11/09 22:19:34 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.19 2000/11/11 00:03:36 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -116,6 +116,24 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 
 }
 
+static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
+{
+      if (scope->nlpm_ == 0) {
+	    assert(scope->lpm_ == 0);
+	    scope->nlpm_ = 1;
+	    scope->lpm_ = (ivl_lpm_t*)malloc(sizeof(ivl_lpm_t));
+	    scope->lpm_[0] = net;
+
+      } else {
+	    assert(scope->lpm_);
+	    scope->nlpm_ += 1;
+	    scope->lpm_   = (ivl_lpm_t*)
+		  realloc(scope->lpm_,
+			  scope->nlpm_*sizeof(ivl_lpm_t));
+	    scope->lpm_[scope->nlpm_-1] = net;
+      }
+}
+
 bool dll_target::start_design(const Design*des)
 {
       dll_path_ = des->get_flag("DLL");
@@ -137,6 +155,8 @@ bool dll_target::start_design(const Design*des)
       des_.root_->sigs_ = 0;
       des_.root_->nlog_ = 0;
       des_.root_->log_ = 0;
+      des_.root_->nlpm_ = 0;
+      des_.root_->lpm_ = 0;
 
       target_ = (target_design_f)dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -253,6 +273,49 @@ void dll_target::logic(const NetLogic*net)
       scope_add_logic(scope, obj);
 }
 
+void dll_target::lpm_ff(const NetFF*net)
+{
+      ivl_lpm_ff_t obj = new struct ivl_lpm_ff_s;
+      obj->base.type  = IVL_LPM_FF;
+      obj->base.name  = strdup(net->name());
+      obj->base.width = net->width();
+      obj->base.scope = find_scope(des_.root_, net->scope());
+      assert(obj->base.scope);
+
+      scope_add_lpm(obj->base.scope, &obj->base);
+
+      const Nexus*nex;
+
+      nex = net->pin_Clock().nexus();
+      assert(nex->t_cookie());
+      obj->clk = (ivl_nexus_t) nex->t_cookie();
+	/* XXXX set nexus back pointer? XXXX */
+
+      if (obj->base.width == 1) {
+	    nex = net->pin_Q(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->q.pin = (ivl_nexus_t) nex->t_cookie();
+
+	    nex = net->pin_Data(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->d.pin = (ivl_nexus_t) nex->t_cookie();
+
+      } else {
+	    obj->q.pins = new ivl_nexus_t [obj->base.width * 2];
+	    obj->d.pins = obj->q.pins + obj->base.width;
+
+	    for (unsigned idx = 0 ;  idx < obj->base.width ;  idx += 1) {
+		  nex = net->pin_Q(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+
+		  nex = net->pin_Data(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+	    }
+      }
+}
+
 /*
  * The assignment l-values are captured by the assignment statements
  * themselves in the process handling.
@@ -336,6 +399,8 @@ void dll_target::scope(const NetScope*net)
 	    scope->sigs_ = 0;
 	    scope->nlog_ = 0;
 	    scope->log_ = 0;
+	    scope->nlpm_ = 0;
+	    scope->lpm_ = 0;
 
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
 	    assert(parent != 0);
@@ -510,6 +575,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.19  2000/11/11 00:03:36  steve
+ *  Add support for the t-dll backend grabing flip-flops.
+ *
  * Revision 1.18  2000/11/09 22:19:34  steve
  *  Initialize scope when creating it.
  *
