@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.13 2000/09/23 16:34:47 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.14 2000/12/02 02:40:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -239,6 +239,21 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		    vp->value.integer = val;
 	    break;
 
+	  case vpiStringVal:
+	    assert(nbits%8 == 0);
+	    for (idx = nbits ;  idx >= 8 ;  idx -= 8) {
+		  char tmp = 0;
+		  unsigned bdx;
+		  for (bdx = 8 ;  bdx > 0 ;  bdx -= 1) {
+			tmp <<= 1;
+			if (B_IS1(bits[idx-8+bdx-1]))
+			      tmp |= 1;
+		  }
+		  *cp++ = tmp;
+	    }
+	    *cp++ = 0;
+	    break;
+
 	  case vpiVectorVal:
 	    vp->value.vector = vect;
 	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
@@ -424,6 +439,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.14  2000/12/02 02:40:56  steve
+ *  Support for %s in $display (PR#62)
+ *
  * Revision 1.13  2000/09/23 16:34:47  steve
  *  Handle unknowns in decimal strings.
  *

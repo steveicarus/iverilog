@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.20 2000/11/04 05:49:22 steve Exp $"
+#ident "$Id: sys_display.c,v 1.21 2000/12/02 02:40:56 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -118,6 +118,12 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		      case 'O':
 			do_num = 1;
 			value.format = vpiOctStrVal;
+			cp += 1;
+			break;
+		      case 's':
+		      case 'S':
+			do_num = 1;
+			value.format = vpiStringVal;
 			cp += 1;
 			break;
 		      case 't':
@@ -594,6 +600,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.21  2000/12/02 02:40:56  steve
+ *  Support for %s in $display (PR#62)
+ *
  * Revision 1.20  2000/11/04 05:49:22  steve
  *  Integrate parameter count changes (PR#34)
  *
