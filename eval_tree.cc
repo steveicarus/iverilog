@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.24 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.25 2001/07/16 20:41:41 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -704,6 +704,18 @@ NetEConst* NetEConcat::eval_tree()
 	    }
       }
 
+	// Handle the special case that the repeat expression is
+	// zero. In this case, just return a 0 value with the expected
+	// width.
+      if (repeat_ == 0) {
+	    verinum val (verinum::V0, expr_width());
+	    NetEConst*res = new NetEConst(val);
+	    res->set_width(val.len());
+	    return res;
+      }
+
+	// Figure out the width of the repeated expression, and make a
+	// verinum to hold the result.
       unsigned gap = expr_width() / repeat_;
       verinum val (verinum::Vx, repeat_ * gap);
 
@@ -982,6 +994,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.25  2001/07/16 20:41:41  steve
+ *  Handle 0 counts in repeat concatenation.
+ *
  * Revision 1.24  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.
