@@ -142,7 +142,7 @@ void preprocess(void)
 
   argument = (char *)malloc(256);
 
-  sprintf(argument, LIBDIR "ivl/ivlpp %s %s -L -o%s %s",
+  sprintf(argument, LIBDIR "/ivl/ivlpp %s %s -L -o%s %s",
 	  P_IF_SET(ivlppdefines),
 	  P_IF_SET(ivlppincdir),
 	  tmpPPfile,
