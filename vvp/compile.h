@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.17 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: compile.h,v 1.18 2001/04/25 04:35:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -66,8 +66,13 @@ extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern vpiHandle compile_vpi_lookup(const char*label);
 
 /* 
- * The first function creates a UDP, the second function adds table 
-   entries, and the third one instantiates a UDP functor.
+ * The `compile_udp_def' function creates a UDP.  The `table' is a
+ * NULL terminated array of char*, as assembled by `compile_udp_table'.  
+ * `compile_udp_table' is called with `table'==NULL to create a new 
+ * table, or with an existing table to append to.
+ *
+ * `compile_udp_functor' creates a mode-3 functor refering to the 
+ * labeled UDP.  
  */
 
 extern void compile_udp_def(int sequ, char*label, char *name,
@@ -155,6 +160,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.18  2001/04/25 04:35:05  steve
+ *  Document the UDP implementation.
+ *
  * Revision 1.17  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

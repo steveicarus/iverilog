@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.16 2001/04/18 04:21:23 steve Exp $
+ *  $Id: README.txt,v 1.17 2001/04/25 04:35:05 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -98,6 +98,67 @@ LSB is port 0, and the MSB port 3.
 Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of
 combining up to four inputs down to one output.
+
+
+UDP STATEMENTS:
+
+A UDP statement either defines a User Defined Primitive, or
+instantiates a previously defined UDP by creating a UDP functor.  A
+UDP functor has as many inputs as the UDP definition requires.
+
+UDPs come in sequential and combinatorial flavors.  Sequential UDPs
+carry an output state and can respond to edges at the inputs.  The
+output of a combinatorial UDPs is a function of its current inputs
+only.
+
+The function of a UDP is defined via a table.  The rows of the table
+are strings which describe input states or edges, and the new output
+state.	Combinatorial UDPs require one character for each input, and
+one character at the end for the output state.	Sequential UDPs need
+an additional char for the current state, which is the first char of
+the row.  
+
+Any input transition or the new state must match at most one row (or
+all matches must provide the same output state).  If no row matches,
+the output becomes 1'bx.
+
+The output state can be specified as "0", "1", or "x".	Sequential
+UDPs may also have "-": no change.
+
+An input or current output state can be "1", "0", "x", or "?" (don't
+care).	For Sequential UDPs, at most one input state specification may
+be replaced by an edge specification.  Valid edges are:
+
+	"*": (??)	"_": (?0)	"+": (?1)	"%": (?x)
+	"r": (01)	"R": (x1)	"f": (10)	"F": (x0)
+	"p": (0?)	"n": (1?)	"P": (0x)	"N": (1x)
+
+A combinatorial UDP is defined like this:
+
+	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ; 
+ 
+<type> is a label that identifies the UDP.  <number> is the number of
+inputs.	 "<name>" is there for public identification.  Sequential UDPs
+need an additional initialization value:
+
+	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ; 
+
+<init> is the initial value for all instances of the UDP.  We do not
+provide initial values for individual instances.  <init> must be a
+number 0, 1, or 2 (for 1'bx).
+
+A UDP functor instance is created so:
+
+	<label> .udp  <type>, <symbol_list> ;
+
+Where <label> identifies the functor, <type> is the label of a UDP
+defined earlier, and <symbol_list> is a list of symbols, one for each
+input of the UDP.
+
+ATTN: The "<name>" attribute of the UDP is pretty useless, and may go
+away in future versions.  It may be useful for diagnostic messages,
+though.
+ 
 
 VARIABLE STATEMENTS:
 
