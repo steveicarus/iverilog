@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.7 2003/05/15 00:38:29 steve Exp $"
+#ident "$Id: sys_random.c,v 1.8 2003/11/10 20:15:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,7 +108,13 @@ static int sys_dist_uniform_sizetf(char*x)
 /* Icarus seed cookie */
 #define COOKIE	0x1ca1ca1c
 
-static struct context_s global_context = { .mti = NP1 };
+static struct context_s global_context = {
+#if !defined(_MSC_VER)
+    .mti =
+#else
+    // For MSVC simply use the fact that mti is located first
+#endif
+        NP1 };
 
 static int sys_random_calltf(char*name)
 {
@@ -197,6 +203,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.8  2003/11/10 20:15:33  steve
+ *  Simply MSVC compatibility patch.
+ *
  * Revision 1.7  2003/05/15 00:38:29  steve
  *  Eliminate some redundant vpi_put_values.
  *
