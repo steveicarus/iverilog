@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.23 1999/11/22 00:30:52 steve Exp $"
+#ident "$Id: vvm.h,v 1.24 1999/12/02 03:36:01 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -106,7 +106,7 @@ class vvm_bits_t {
       virtual unsigned get_width() const =0;
       virtual vpip_bit_t get_bit(unsigned idx) const =0;
 
-      unsigned as_unsigned();
+      unsigned as_unsigned() const;
 };
 
 extern ostream& operator << (ostream&os, vpip_bit_t);
@@ -294,6 +294,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.24  1999/12/02 03:36:01  steve
+ *  shiftl and shiftr take unsized second parameter.
+ *
  * Revision 1.23  1999/11/22 00:30:52  steve
  *  Detemplate some and, or and nor methods.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.15 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.16 1999/12/02 03:36:01 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -217,7 +217,7 @@ vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
  */
 template <unsigned WIDTH>
 vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
-				  const vvm_bitset_t<32>&r)
+				     const vvm_bits_t&r)
 {
       vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
@@ -234,7 +234,7 @@ vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
  */
 template <unsigned WIDTH>
 vvm_bitset_t<WIDTH> vvm_binop_shiftr(const vvm_bitset_t<WIDTH>&l,
-				  const vvm_bitset_t<32>&r)
+				     const vvm_bits_t&r)
 {
       vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
@@ -608,6 +608,9 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.16  1999/12/02 03:36:01  steve
+ *  shiftl and shiftr take unsized second parameter.
+ *
  * Revision 1.15  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
