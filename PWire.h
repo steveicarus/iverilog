@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.h,v 1.5 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: PWire.h,v 1.6 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,7 +58,7 @@ class PWire : public LineInfo {
 	// Write myself to the specified stream.
       void dump(ostream&out) const;
 
-      void elaborate(Design*, const string&path) const;
+      void elaborate(Design*, NetScope*scope) const;
 
     private:
       string name_;
@@ -82,6 +82,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.6  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.5  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.

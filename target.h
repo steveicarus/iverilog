@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.25 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: target.h,v 1.26 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -54,6 +54,10 @@ struct target_t {
 
 	/* Start the design. */
       virtual void start_design(ostream&os, const Design*);
+
+	/* This is called once for each scope in the design, before
+	   anything else is called. */
+      virtual void scope(ostream&os, const NetScope*);
 
 	/* Output a signal (called for each signal) */
       virtual void signal(ostream&os, const NetNet*);
@@ -117,6 +121,7 @@ struct expr_scan_t {
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*);
+      virtual void expr_scope(const NetEScope*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*);
       virtual void expr_ternary(const NetETernary*);
@@ -142,6 +147,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.26  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.25  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *

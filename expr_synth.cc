@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.4 1999/11/19 03:00:59 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.5 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -45,7 +45,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
-      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
 
       string oname = des->local_symbol(path);
       NetAddSub *adder = new NetAddSub(oname, width);
@@ -82,7 +82,7 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetNet*rsig = right_->synthesize(des);
 
       assert(lsig->pin_count() == rsig->pin_count());
-      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, lsig->pin_count());
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, lsig->pin_count());
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
 	    string oname = des->local_symbol(path);
@@ -124,7 +124,7 @@ NetNet* NetEConst::synthesize(Design*des)
       string path = des->local_symbol("SYNTH");
       unsigned width=expr_width();
 
-      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    string oname = des->local_symbol(path);
 	    NetConst *c = new NetConst(oname, value().get(idx));
@@ -144,7 +144,7 @@ NetNet* NetEUBits::synthesize(Design*des)
       string path = des->local_symbol("SYNTH");
       NetNet*isig = expr_->synthesize(des);
 
-      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, isig->pin_count());
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, isig->pin_count());
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
 	    string oname = des->local_symbol(path);
@@ -178,7 +178,7 @@ NetNet* NetETernary::synthesize(Design *des)
       assert(csig->pin_count() == 1);
       assert(tsig->pin_count() == fsig->pin_count());
       unsigned width=tsig->pin_count();
-      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
 
       string oname = des->local_symbol(path);
       NetMux *mux = new NetMux(oname, width, 2, 1);
@@ -195,8 +195,7 @@ NetNet* NetETernary::synthesize(Design *des)
 
 NetNet* NetESignal::synthesize(Design*des)
 {
-	//NetNet*sig = new NetNet(name(), NetNet::WIRE, pin_count());
-      NetNet*sig = new NetNet(des->local_symbol(name()),
+      NetNet*sig = new NetNet(0, des->local_symbol(name()),
 			      NetNet::WIRE, pin_count());
       sig->local_flag(true);
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
@@ -207,6 +206,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.5  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.4  1999/11/19 03:00:59  steve
  *  Whoops, created a signal with a duplicate name.
  *

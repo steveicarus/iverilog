@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.94 1999/11/24 04:01:59 steve Exp $"
+#ident "$Id: netlist.h,v 1.95 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,7 @@ class Design;
 class NetNode;
 class NetProc;
 class NetProcTop;
+class NetScope;
 class NetExpr;
 class NetESignal;
 class ostream;
@@ -232,12 +233,14 @@ class NetNet  : public NetObj, public LineInfo {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
-      explicit NetNet(const string&n, Type t, unsigned npins =1);
+      explicit NetNet(NetScope*s, const string&n, Type t, unsigned npins =1);
 
-      explicit NetNet(const string&n, Type t, long ms, long ls);
+      explicit NetNet(NetScope*s, const string&n, Type t, long ms, long ls);
 
       virtual ~NetNet();
 
+      NetScope* scope();
+      const NetScope* scope() const;
 
       Type type() const { return type_; }
       void type(Type t) { type_ = t; }
@@ -274,6 +277,7 @@ class NetNet  : public NetObj, public LineInfo {
       Design*design_;
 
     private:
+      NetScope*scope_;
       Type   type_;
       PortType port_type_;
 
@@ -1619,6 +1623,29 @@ class NetEParam  : public NetExpr {
       string name_;
 };
 
+
+/*
+ * This class is a special (and magical) expression node type that
+ * represents scope names. These can only be found as parameters to
+ * NetSTask objects.
+ */
+class NetEScope  : public NetExpr {
+
+    public:
+      NetEScope(NetScope*);
+      ~NetEScope();
+
+      const NetScope* scope() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEScope* dup_expr() const;
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      NetScope*scope_;
+};
+
 /*
  * This node represents a system function call in an expression. The
  * object contains the name of the system function, which the backend
@@ -1833,20 +1860,24 @@ class NetESubSignal  : public NetExpr {
 
 /*
  * This object type is used to contain a logical scope within a
- * design.
+ * design. The scope doesn't represent any executable hardware, but is
+ * just a handle that netlist processors can use to grab at the design.
  */
 class NetScope {
 
     public:
+      enum TYPE { MODULE, BEGIN_END, FORK_JOIN };
       NetScope(const string&root);
-      NetScope(const string&path, const string&n);
+      NetScope(const string&path, TYPE t);
       ~NetScope();
 
+      TYPE type() const;
       string name() const;
 
       void dump(ostream&) const;
 
     private:
+      TYPE type_;
       string name_;
 };
 
@@ -1872,8 +1903,10 @@ class Design {
 
       string get_flag(const string&key) const;
 
-      string make_root_scope(const string&name);
-      string make_scope(const string&path, const string&name);
+      NetScope* make_root_scope(const string&name);
+      NetScope* make_scope(const string&path, NetScope::TYPE t,
+			   const string&name);
+      NetScope* find_scope(const string&path);
 
 	// PARAMETERS
       void set_parameter(const string&, NetExpr*);
@@ -2003,6 +2036,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.95  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.94  1999/11/24 04:01:59  steve
  *  Detect and list scope names.
  *

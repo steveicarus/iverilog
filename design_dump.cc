@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.59 1999/11/24 04:01:58 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.60 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 /*
@@ -49,6 +49,8 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
+      if (scope_)
+	    o << " scope=" << scope_->name();
       o << " #(" << rise_time() << "," << fall_time() << "," <<
 	    decay_time() << ") init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
@@ -581,7 +583,19 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 
 void NetScope::dump(ostream&o) const
 {
-      o << name_ << endl;
+      o << name_;
+      switch (type_) {
+	  case BEGIN_END:
+	    o << " sequential block";
+	    break;
+	  case FORK_JOIN:
+	    o << " parallel block";
+	    break;
+	  case MODULE:
+	    o << " module";
+	    break;
+      }
+      o << endl;
 }
 
 void NetSTask::dump(ostream&o, unsigned ind) const
@@ -708,6 +722,11 @@ void NetEConst::dump(ostream&o) const
 void NetEIdent::dump(ostream&o) const
 {
       o << name_;
+}
+
+void NetEScope::dump(ostream&o) const
+{
+      o << "<scope=" << scope_->name() << ">";
 }
 
 void NetESignal::dump(ostream&o) const
@@ -855,6 +874,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.60  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.59  1999/11/24 04:01:58  steve
  *  Detect and list scope names.
  *

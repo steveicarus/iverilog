@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.129 1999/11/24 04:01:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.130 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 /*
@@ -54,8 +54,9 @@ static const map<string,PUdp*>*   udplist = 0;
  * elaboration this creates an object in the design that represent the
  * defined item.
  */
-void PWire::elaborate(Design*des, const string&path) const
+void PWire::elaborate(Design*des, NetScope*scope) const
 {
+      const string path = scope->name();
       NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
 	    wtype = NetNet::WIRE;
@@ -141,7 +142,7 @@ void PWire::elaborate(Design*des, const string&path) const
 
       } else {
 
-	    NetNet*sig = new NetNet(path + "." + name_, wtype, msb, lsb);
+	    NetNet*sig = new NetNet(scope, path + "." + name_, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
@@ -376,7 +377,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
       assert(get_name() != "");
-      const string my_name = des->make_scope(path, get_name());
+      NetScope*my_scope = des->make_scope(path, NetScope::MODULE, get_name());
+      const string my_name = my_scope -> name();
 
       const svector<PExpr*>*pins;
 
@@ -445,7 +447,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, my_name, overrides_);
+      rmod->elaborate(des, my_scope, overrides_);
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters. Scan
@@ -635,7 +637,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(des->local_symbol(path),
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -690,7 +692,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(des->local_symbol(path),
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -724,7 +726,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       NetLogic*gate;
       switch (op_) {
 	  case '~': // Bitwise NOT
-	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			     sub_sig->pin_count());
 	    sig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
@@ -742,7 +744,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
-	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -759,7 +761,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '&': // Reduction AND
-	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -776,7 +778,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '|': // Reduction OR
-	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -793,7 +795,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '^': // Reduction XOR
-	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1124,7 +1126,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		  return 0;
 	    }
 
-	    NetNet*tmp = new NetNet(n, NetNet::REG, wid);
+	    NetNet*tmp = new NetNet(0, n, NetNet::REG, wid);
 	    tmp->set_line(*this);
 	    des->add_signal(tmp);
 
@@ -1322,7 +1324,9 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(type);
       bool fail_flag = false;
 
-      string npath = name_.length()? des->make_scope(path, name_) : path;
+      string npath = name_.length()
+	    ? des->make_scope(path, NetScope::BEGIN_END, name_) -> name()
+	    : path;
 
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
@@ -1949,8 +1953,9 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
       return loop;
 }
 
-bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_) const
+bool Module::elaborate(Design*des, NetScope*scope, svector<PExpr*>*overrides_) const
 {
+      const string path = scope->name();
       bool result_flag = true;
 
 	// Generate all the parameters that this instance of this
@@ -2035,7 +2040,7 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 		 ; wt != wl.end()
 		 ; wt ++ ) {
 
-	    (*wt)->elaborate(des, path);
+	    (*wt)->elaborate(des, scope);
       }
 
 	// Elaborate functions.
@@ -2129,11 +2134,11 @@ Design* elaborate(const map<string,Module*>&modules,
 	// module and elaborate what I find.
       Design*des = new Design;
 
-      des->make_root_scope(root);
+      NetScope*scope = des->make_root_scope(root);
 
       modlist = &modules;
       udplist = &primitives;
-      bool rc = rmod->elaborate(des, root, (svector<PExpr*>*)0);
+      bool rc = rmod->elaborate(des, scope, (svector<PExpr*>*)0);
       modlist = 0;
       udplist = 0;
 
@@ -2147,6 +2152,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.130  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.129  1999/11/24 04:01:58  steve
  *  Detect and list scope names.
  *
@@ -2252,50 +2260,5 @@ Design* elaborate(const map<string,Module*>&modules,
  *  Allow expanding of additive operators.
  *
  * Revision 1.100  1999/09/25 02:57:30  steve
- *  Parse system function calls.
- *
- * Revision 1.99  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.98  1999/09/23 02:28:27  steve
- *  internal error message for funky comparison width.
- *
- * Revision 1.97  1999/09/23 00:21:54  steve
- *  Move set_width methods into a single file,
- *  Add the NetEBLogic class for logic expressions,
- *  Fix error setting with of && in if statements.
- *
- * Revision 1.96  1999/09/22 21:25:42  steve
- *  Expand bits in delayed assignments.
- *
- * Revision 1.95  1999/09/22 04:30:04  steve
- *  Parse and elaborate named for/join blocks.
- *
- * Revision 1.94  1999/09/22 02:00:48  steve
- *  assignment with blocking event delay.
- *
- * Revision 1.93  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
- * Revision 1.92  1999/09/18 22:23:50  steve
- *  Match bit widths comming out of task output ports.
- *
- * Revision 1.91  1999/09/18 02:51:35  steve
- *  report non-constant part select expressions.
- *
- * Revision 1.90  1999/09/18 01:53:08  steve
- *  Detect constant lessthen-equal expressions.
- *
- * Revision 1.89  1999/09/17 02:06:25  steve
- *  Handle unconnected module ports.
- *
- * Revision 1.88  1999/09/16 04:18:15  steve
- *  elaborate concatenation repeats.
- *
- * Revision 1.87  1999/09/16 00:33:45  steve
- *  Handle implicit !=0 in if statements.
- *
- * Revision 1.86  1999/09/15 04:17:52  steve
- *  separate assign lval elaboration for error checking.
  */
 

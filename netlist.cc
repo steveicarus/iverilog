@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.93 1999/11/24 04:01:59 steve Exp $"
+#ident "$Id: netlist.cc,v 1.94 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -368,8 +368,8 @@ NetNode::~NetNode()
 	    design_->del_node(this);
 }
 
-NetNet::NetNet(const string&n, Type t, unsigned npins)
-: NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0),
+NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
+: NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0), scope_(s),
     type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
     local_flag_(false)
 {
@@ -378,10 +378,10 @@ NetNet::NetNet(const string&n, Type t, unsigned npins)
 	    ivalue_[idx] = verinum::Vz;
 }
 
-NetNet::NetNet(const string&n, Type t, long ms, long ls)
+NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 : NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
-    sig_prev_(0), design_(0), type_(t), port_type_(NOT_A_PORT),
-    msb_(ms), lsb_(ls), local_flag_(false)
+    sig_prev_(0), design_(0), scope_(s), type_(t),
+    port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false)
 {
       ivalue_ = new verinum::V[pin_count()];
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
@@ -394,6 +394,16 @@ NetNet::~NetNet()
 	    design_->del_signal(this);
 }
 
+NetScope* NetNet::scope()
+{
+      return scope_;
+}
+
+const NetScope* NetNet::scope() const
+{
+      return scope_;
+}
+
 unsigned NetNet::sb_to_idx(long sb) const
 {
       if (msb_ >= lsb_)
@@ -403,7 +413,7 @@ unsigned NetNet::sb_to_idx(long sb) const
 }
 
 NetTmp::NetTmp(const string&name, unsigned npins)
-: NetNet(name, IMPLICIT, npins)
+: NetNet(0, name, IMPLICIT, npins)
 {
       local_flag(true);
 }
@@ -1776,12 +1786,27 @@ NetEParam* NetEParam::dup_expr() const
       return 0;
 }
 
+NetEScope::NetEScope(NetScope*s)
+: scope_(s)
+{
+}
+
+NetEScope::~NetEScope()
+{
+}
+
+const NetScope* NetEScope::scope() const
+{
+      return scope_;
+}
+
 NetESignal::NetESignal(NetNet*n)
 : NetExpr(n->pin_count()), NetNode(n->name(), n->pin_count())
 {
       set_line(*n);
       for (unsigned idx = 0 ;  idx < n->pin_count() ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
+	    pin(idx).set_dir(NetObj::Link::PASSIVE);
 	    connect(pin(idx), n->pin(idx));
       }
 }
@@ -1790,8 +1815,10 @@ NetESignal::NetESignal(const string&n, unsigned np)
 : NetExpr(np), NetNode(n, np)
 {
       expr_width(pin_count());
-      for(unsigned idx = 0 ;  idx < np ;  idx += 1)
+      for(unsigned idx = 0 ;  idx < np ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
+	    pin(idx).set_dir(NetObj::Link::PASSIVE);
+      }
 }
 
 NetESignal::~NetESignal()
@@ -1927,17 +1954,22 @@ const NetExpr* NetRepeat::expr() const
 }
 
 NetScope::NetScope(const string&n)
-: name_(n)
+: type_(NetScope::MODULE), name_(n)
 {
 }
 
-NetScope::NetScope(const string&p, const string&n)
-: name_(p + "." + n)
+NetScope::NetScope(const string&p, NetScope::TYPE t)
+: type_(t), name_(p)
 {
 }
 
 NetScope::~NetScope()
 {
+}
+
+NetScope::TYPE NetScope::type() const
+{
+      return type_;
 }
 
 string NetScope::name() const
@@ -2246,17 +2278,30 @@ Design::~Design()
 {
 }
 
-string Design::make_root_scope(const string&root)
+NetScope* Design::make_root_scope(const string&root)
 {
-      scopes_[root] = new NetScope(root);
-      return root;
+      NetScope*scope = new NetScope(root);
+      scopes_[root] = scope;
+      return scope;
 }
 
-string Design::make_scope(const string&path, const string&name)
+NetScope* Design::make_scope(const string&path,
+			     NetScope::TYPE t,
+			     const string&name)
 {
       string npath = path + "." + name;
-      scopes_[npath] = new NetScope(path, name);
-      return npath;
+      NetScope*scope = new NetScope(npath, t);
+      scopes_[npath] = scope;
+      return scope;
+}
+
+NetScope* Design::find_scope(const string&key)
+{
+      map<string,NetScope*>::const_iterator tmp = scopes_.find(key);
+      if (tmp == scopes_.end())
+	    return 0;
+      else
+	    return (*tmp).second;
 }
 
 void Design::set_parameter(const string&key, NetExpr*expr)
@@ -2572,6 +2617,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.94  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.93  1999/11/24 04:01:59  steve
  *  Detect and list scope names.
  *
@@ -2864,78 +2912,5 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
  *
  * Revision 1.15  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.14  1998/12/18 05:16:25  steve
- *  Parse more UDP input edge descriptions.
- *
- * Revision 1.13  1998/12/17 23:54:58  steve
- *  VVM support for small sequential UDP objects.
- *
- * Revision 1.12  1998/12/14 02:01:35  steve
- *  Fully elaborate Sequential UDP behavior.
- *
- * Revision 1.11  1998/12/07 04:53:17  steve
- *  Generate OBUF or IBUF attributes (and the gates
- *  to garry them) where a wire is a pad. This involved
- *  figuring out enough of the netlist to know when such
- *  was needed, and to generate new gates and signales
- *  to handle what's missing.
- *
- * Revision 1.10  1998/12/02 04:37:13  steve
- *  Add the nobufz function to eliminate bufz objects,
- *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
- *  Signal folding is aware of attributes, and
- *  the XNF target can dump UDP objects based on LCA
- *  attributes.
- *
- * Revision 1.9  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.8  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.7  1998/11/18 04:25:22  steve
- *  Add -f flags for generic flag key/values.
- *
- * Revision 1.6  1998/11/16 05:03:53  steve
- *  Add the sigfold function that unlinks excess
- *  signal nodes, and add the XNF target.
- *
- * Revision 1.5  1998/11/13 06:23:17  steve
- *  Introduce netlist optimizations with the
- *  cprop function to do constant propogation.
- *
- * Revision 1.4  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.3  1998/11/07 19:17:10  steve
- *  Calculate expression widths at elaboration time.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:00  steve
- *  Introduce verilog to CVS.
- *
  */
 

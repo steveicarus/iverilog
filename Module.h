@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.9 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: Module.h,v 1.10 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 # include  <list>
@@ -33,6 +33,7 @@ class PFunction;
 class PWire;
 class PProcess;
 class Design;
+class NetScope;
 
 /*
  * A module is a named container and scope. A module holds a bunch of
@@ -93,7 +94,7 @@ class Module {
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
       void dump(ostream&out) const;
-      bool elaborate(Design*, const string&path, svector<PExpr*>*overrides_) const;
+      bool elaborate(Design*, NetScope*scope, svector<PExpr*>*overrides_) const;
 
     private:
       const string name_;
@@ -113,6 +114,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.10  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.9  1999/08/23 16:48:39  steve
  *  Parameter overrides support from Peter Monta
  *  AND and XOR support wide expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.26 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: target.cc,v 1.27 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -28,6 +28,10 @@ target_t::~target_t()
 }
 
 void target_t::start_design(ostream&os, const Design*)
+{
+}
+
+void target_t::scope(ostream&, const NetScope*)
 {
 }
 
@@ -267,6 +271,12 @@ void expr_scan_t::expr_memory(const NetEMemory*)
 	    "unhandled expr_memory." << endl;
 }
 
+void expr_scan_t::expr_scope(const NetEScope*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_scope." << endl;
+}
+
 void expr_scan_t::expr_signal(const NetESignal*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -305,6 +315,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.27  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.26  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *

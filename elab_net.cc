@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.8 1999/11/21 17:35:37 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.9 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -73,7 +73,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
       switch (op_) {
 	  case '^': // XOR
 	    assert(lsig->pin_count() == rsig->pin_count());
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			      lsig->pin_count());
 	    osig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
@@ -92,7 +92,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 
 	  case '&': // AND
 	    assert(lsig->pin_count() == rsig->pin_count());
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			      lsig->pin_count());
 	    osig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
@@ -111,7 +111,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 
 	  case '|': // Bitwise OR
 	    assert(lsig->pin_count() == rsig->pin_count());
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			      lsig->pin_count());
 	    osig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
@@ -156,7 +156,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    }
 
 	      // The output is the AND of the two logic values.
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
 	    connect(gate->pin(0), osig->pin(0));
 	    des->add_signal(osig);
@@ -237,7 +237,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    width = rsig->pin_count();
 
 	// Make the adder as wide as the widest operand
-      osig = new NetNet(des->local_symbol(path), NetNet::WIRE, width);
+      osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE, width);
       NetAddSub*adder = new NetAddSub(name, width);
 
 	// Connect the adder to the various parts.
@@ -306,7 +306,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    return 0;
       }
 
-      NetNet*osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
       osig->local_flag(true);
 
       NetNode*gate;
@@ -356,7 +356,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  des->add_node(gate_t);
 
 		    // Attach a label to this intermediate wire
-		  NetNet*tmp = new NetNet(des->local_symbol(path),
+		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
 		  connect(gate_t->pin(0), tmp->pin(0));
@@ -430,7 +430,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	      /* Very special case, constant 0 shift. */
 	    if (dist == 0) return lsig;
 
-	    NetNet*osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+	    NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 				     lsig->pin_count());
 	    osig->local_flag(true);
 
@@ -469,7 +469,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 				       lsig->pin_count(),
 				       rsig->pin_count());
 
-      NetNet*osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			       lsig->pin_count());
       osig->local_flag(true);
 
@@ -514,7 +514,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
 		  verinum pvalue = pc->value();
-		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT,
+		  sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT,
 				   pc->expr_width());
 		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1) {
 			NetConst*cp = new NetConst(des->local_symbol(path),
@@ -525,7 +525,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 	    } else {
 
-		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+		  sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT, 1);
 		  des->add_signal(sig);
 		  cerr << get_line() << ": warning: Implicitly defining "
 			"wire " << path << "." << text_ << "." << endl;
@@ -666,7 +666,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    }
 
 	      /* Fine, create an implicit wire as an l-value. */
-	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+	    sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT, 1);
 	    des->add_signal(sig);
 	    cerr << get_line() << ": warning: Implicitly defining "
 		  "wire " << path << "." << text_ << "." << endl;
@@ -758,7 +758,7 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       if ((lwidth > 0) && (lwidth < width))
 	    width = lwidth;
 
-      NetNet*net = new NetNet(des->local_symbol(path),
+      NetNet*net = new NetNet(0, des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
       for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
@@ -795,7 +795,7 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       assert(width == tru_sig->pin_count());
       assert(expr_sig->pin_count() == 1);
 
-      NetNet*sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+      NetNet*sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 		       tru_sig->pin_count());
       sig->local_flag(true);
 
@@ -816,6 +816,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.9  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.8  1999/11/21 17:35:37  steve
  *  Memory name lookup handles scopes.
  *

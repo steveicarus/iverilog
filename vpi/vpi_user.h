@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.7 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.8 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -98,6 +98,9 @@ typedef struct t_vpi_value {
 #define vpiIterator    27
 #define vpiMemory      29
 #define vpiMemoryWord  30
+#define vpiModule      32
+#define vpiNamedBegin  33
+#define vpiNamedFork   35
 #define vpiNet         36
 #define vpiReg         48
 #define vpiSysTaskCall 57
@@ -207,6 +210,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.8  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.7  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.8 1999/11/19 05:02:15 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.9 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -135,7 +135,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(1)) == 0) {
-	    NetNet*tmp = new NetNet(des->local_symbol("$"), NetNet::WIRE);
+	    NetNet*tmp = new NetNet(0, des->local_symbol("$"), NetNet::WIRE);
 	    tmp->local_flag(true);
 	    connect(buf->pin(1), tmp->pin(0));
 	    des->add_signal(tmp);
@@ -238,7 +238,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(0)) == 0) {
-	    NetNet*tmp = new NetNet(des->local_symbol("$"), NetNet::WIRE);
+	    NetNet*tmp = new NetNet(0, des->local_symbol("$"), NetNet::WIRE);
 	    connect(buf->pin(0), tmp->pin(0));
 	    des->add_signal(tmp);
       }
@@ -282,6 +282,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.9  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.8  1999/11/19 05:02:15  steve
  *  Handle inverted clock into OUTFF.
  *

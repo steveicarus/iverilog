@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.9 1999/11/21 17:35:37 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.10 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 
@@ -181,6 +181,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    return tmp;
       }
 
+      if (NetScope*nsc = des->find_scope(text_)) {
+	    NetEScope*tmp = new NetEScope(nsc);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
       if (NetNet*net = des->find_signal(path, text_)) {
@@ -324,6 +330,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.10  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.9  1999/11/21 17:35:37  steve
  *  Memory name lookup handles scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.79 1999/11/24 04:38:49 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.80 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -54,6 +54,7 @@ class target_vvm : public target_t {
       target_vvm();
 
       virtual void start_design(ostream&os, const Design*);
+      virtual void scope(ostream&os, const NetScope*);
       virtual void signal(ostream&os, const NetNet*);
       virtual void memory(ostream&os, const NetMemory*);
       virtual void task_def(ostream&os, const NetTaskDef*);
@@ -483,9 +484,10 @@ class vvm_parm_rval  : public expr_scan_t {
       string result;
 
     private:
-      virtual void expr_const(const NetEConst*expr);
+      virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
-      virtual void expr_memory(const NetEMemory*mem);
+      virtual void expr_memory(const NetEMemory*);
+      virtual void expr_scope(const NetEScope*);
       virtual void expr_signal(const NetESignal*);
 
     private:
@@ -563,6 +565,11 @@ void vvm_parm_rval::expr_memory(const NetEMemory*mem)
       result = string("&") + mangle(mem->name()) + ".base";
 }
 
+void vvm_parm_rval::expr_scope(const NetEScope*escope)
+{
+      result = string("&") + mangle(escope->scope()->name()) + "_scope.base";
+}
+
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
 {
       string res = string("&") + mangle(expr->name()) + ".base";
@@ -611,6 +618,29 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 		<< endl;
       start_code << "static void design_start(vvm_simulation&sim)" << endl;
       start_code << "{" << endl;
+}
+
+void target_vvm::scope(ostream&os, const NetScope*scope)
+{
+      string hname = mangle(scope->name()) + "_scope";
+      os << "// SCOPE: " << scope->name() << endl;
+      os << "static struct __vpiScope " << hname << ";" << endl;
+
+      string type_code;
+      switch (scope->type()) {
+	  case NetScope::MODULE:
+	    type_code = "vpiModule";
+	    break;
+	  case NetScope::BEGIN_END:
+	    type_code = "vpiNamedBegin";
+	    break;
+	  case NetScope::FORK_JOIN:
+	    type_code = "vpiNamedFork";
+	    break;
+      }
+
+      init_code << "      vpip_make_scope(&" << hname << ", " <<
+	    type_code << ", \"" << scope->name() << "\");" << endl;
 }
 
 void target_vvm::end_design(ostream&os, const Design*mod)
@@ -689,6 +719,9 @@ bool target_vvm::process(ostream&os, const NetProcTop*top)
 
 void target_vvm::signal(ostream&os, const NetNet*sig)
 {
+#if 1
+      os << "// XXXX handle signal " << sig->name() << endl;
+#endif
 
 	/* Scan the signals of the vector, passing the initial value
 	   to the inputs of all the connected devices. */
@@ -829,6 +862,7 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 
 	    if (dynamic_cast<const NetNet*>(cur)) {
 		    // Skip signals
+
 	    } else if (cur->pin(pin).get_name() != "") {
 
 		  delayed << "      " << mangle(cur->name()) << ".set_"
@@ -1279,6 +1313,17 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 
       init_code << "      vpip_make_reg(&" << net_name <<
 	    ", \"" << net->name() << "\");" << endl;
+
+#if 0
+	/* If the signal (that I am declaring and initializing) is
+	   attached to a scope in the netlist, then attach it to the
+	   scope for real here. */
+      if (const NetScope*scope = net->scope()) {
+	    init_code << "      vpip_attach_to_scope(&" <<
+		  mangle(scope->name()) << "_scope, &" << net_name <<
+		  ".base);" << endl;
+      }
+#endif
 }
 
 /*
@@ -1942,6 +1987,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.80  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.79  1999/11/24 04:38:49  steve
  *  LT and GT fixes from Eric Aardoom.
  *

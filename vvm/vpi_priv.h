@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.6 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.7 1999/11/27 19:07:58 steve Exp $"
 #endif
 
 /*
@@ -114,6 +114,20 @@ struct __vpiNull {
 extern struct __vpiNull vpip_null;
 
 /*
+ * This type represents the handle to a Verilog scope. These include
+ * module instantiations and name begin-end blocks. The attach
+ * function is used to attach handles to the scope by the runtime
+ * initializaiton. 
+ */
+struct __vpiScope {
+      struct __vpiHandle base;
+	/* The scope has a name. (this points to static memory.) */
+      const char*name;
+};
+extern void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
+
+
+/*
  * This structure represents nets and registers. You can tell which by
  * the type_code in the base. The bits member points to the actual
  * array of bits that the environment provides. The bits must persist
@@ -181,6 +195,9 @@ struct __vpiNumberConst {
  */
 extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
 extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name);
+extern vpiHandle vpip_make_scope(struct __vpiScope*ref,
+				 int type_code,
+				 const char*name);
 extern vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
 					const char*val);
 extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
@@ -254,6 +271,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.7  1999/11/27 19:07:58  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.6  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *

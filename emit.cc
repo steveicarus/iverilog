@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.29 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: emit.cc,v 1.30 1999/11/27 19:07:57 steve Exp $"
 #endif
 
 /*
@@ -255,6 +255,13 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
       bool rc = true;
       tgt->start_design(o, this);
 
+	// enumerate the scopes
+      { map<string,NetScope*>::const_iterator sc;
+        for (sc = scopes_.begin() ;  sc != scopes_.end() ;  sc++) {
+	      tgt->scope(o, (*sc).second);
+	}
+      }
+
 	// emit signals
       if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
@@ -339,6 +346,11 @@ void NetEParam::expr_scan(struct expr_scan_t*tgt) const
 	   << endl;
 }
 
+void NetEScope::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_scope(this);
+}
+
 void NetEUFunc::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ufunc(this);
@@ -382,6 +394,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.30  1999/11/27 19:07:57  steve
+ *  Support the creation of scopes.
+ *
  * Revision 1.29  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *
