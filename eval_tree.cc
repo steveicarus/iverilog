@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.33 2002/02/01 05:09:14 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.34 2002/04/14 19:28:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1038,6 +1038,7 @@ NetEConst* NetEUReduce::eval_tree()
 		}
 
 		res = v1? verinum::V0 : (vx? verinum::Vx : verinum::V1);
+		break;
 	  }
 
 	  case '&': {
@@ -1064,6 +1065,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.34  2002/04/14 19:28:47  steve
+ *  Fix constant evaluation of unary
+ *
  * Revision 1.33  2002/02/01 05:09:14  steve
  *  Propagate sign in unary minus.
  *
