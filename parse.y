@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.129 2001/10/09 18:11:58 steve Exp $"
+#ident "$Id: parse.y,v 1.130 2001/10/14 02:03:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1883,6 +1883,9 @@ specify_item
 	  ',' expression ')' ';'
 		{ delete $5;
 		  delete $7;
+		}
+	| K_Swidth '(' spec_reference_event ',' expression ')' ';'
+		{ delete $5;
 		}
 	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
 	  ',' expression ',' expression ')' ';'
