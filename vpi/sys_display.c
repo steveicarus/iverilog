@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.64 2003/08/03 03:54:02 steve Exp $"
+#ident "$Id: sys_display.c,v 1.65 2003/08/26 03:51:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,6 +66,7 @@ struct strobe_cb_info {
       vpiHandle scope;
       vpiHandle*items;
       unsigned nitems;
+      unsigned mcd;
 };
 
 static int is_constant(vpiHandle obj)
@@ -983,9 +984,8 @@ static int strobe_cb(p_cb_data cb)
 {
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
-      do_display(1, info);
-
-      vpi_printf("\n");
+      do_display(info->mcd, info);
+      my_mcd_printf(info->mcd, "\n");
 
       free(info->name);
       free(info->items);
@@ -1005,6 +1005,52 @@ static int sys_strobe_calltf(char*name)
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
       struct strobe_cb_info*info = calloc(1, sizeof(struct strobe_cb_info));
+      if(name[1] == 'f') {
+	      vpiHandle item = vpi_scan(argv);
+	      int type;
+	      s_vpi_value value;
+
+	      if (item == 0) {
+		      vpi_printf("%s: mcd parameter missing.\n", name);
+		      return 0;
+	      }
+
+	      type = vpi_get(vpiType, item);
+	      switch (type) {
+	      case vpiReg:
+	      case vpiRealVar:
+	      case vpiIntegerVar:
+	      case vpiNet:
+		      break;
+
+	      case vpiConstant:
+		      switch (vpi_get(vpiConstType, item)) {
+		      case vpiDecConst:
+		      case vpiBinaryConst:
+		      case vpiOctConst:
+		      case vpiHexConst:
+			      break;
+		      default:
+			      vpi_printf("ERROR: %s mcd parameter must be integral", name);
+			      vpi_printf(", got vpiType=vpiConstant, vpiConstType=%d\n",
+					 vpi_get(vpiConstType, item));
+			      vpi_free_object(argv);
+			      return 0;
+		      }
+		      break;
+		      
+	      default:
+		      vpi_printf("ERROR: %s mcd parameter must be integral", name);
+		      vpi_printf(", got vpiType=%d\n", type);
+		      vpi_free_object(argv);
+		      return 0;
+	      }
+	      value.format = vpiIntVal;
+	      vpi_get_value(item, &value);
+	      info->mcd = value.value.integer;
+      } else {
+	      info->mcd = 1;
+      }
 
       array_from_iterator(info, argv);
       info->name = strdup(name);
@@ -1601,6 +1647,39 @@ void sys_display_register()
       tf_data.user_data = "$strobeb";
       vpi_register_systf(&tf_data);
 
+      //============================== fstrobe
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fstrobe";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fstrobe";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fstrobeh";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fstrobeh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fstrobeo";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fstrobeo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fstrobeb";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fstrobeb";
+      vpi_register_systf(&tf_data);
+
       //============================== monitor
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitor";
@@ -1745,6 +1824,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.65  2003/08/26 03:51:05  steve
+ *  Add support for fstrobe system tasks.
+ *
  * Revision 1.64  2003/08/03 03:54:02  steve
  *  mcd value can come from a vpiNet.
  *
