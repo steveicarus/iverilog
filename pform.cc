@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.73 2001/01/15 00:47:01 steve Exp $"
+#ident "$Id: pform.cc,v 1.74 2001/02/17 05:15:33 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -645,14 +645,21 @@ void pform_makewire(const vlltype&li, const string&nm,
       const string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur) {
-	    if (cur->get_wire_type() != NetNet::IMPLICIT) {
+	    if ((cur->get_wire_type() != NetNet::IMPLICIT)
+		&& (cur->get_wire_type() != NetNet::IMPLICIT_REG)) {
 		  strstream msg;
 		  msg << name << " previously defined at " <<
 			cur->get_line() << "." << ends;
 		  VLerror(msg.str());
 	    } else {
 		  bool rc = cur->set_wire_type(type);
-		  assert(rc);
+		  if (rc == false) {
+			strstream msg;
+			msg << name << " definition conflicts with "
+			    << "definition at " << cur->get_line()
+			    << "." << ends;
+			VLerror(msg.str());
+		  }
 	    }
 	    return;
       }
@@ -1003,6 +1010,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.74  2001/02/17 05:15:33  steve
+ *  Allow task ports to be given real types.
+ *
  * Revision 1.73  2001/01/15 00:47:01  steve
  *  Pass scope type information to the target module.
  *

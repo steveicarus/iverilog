@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.11 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.12 2001/02/17 05:15:33 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -311,6 +311,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned wid = 1;
       long lsb = 0, msb = 0;
 
+      assert(msb_.count() == lsb_.count());
       if (msb_.count()) {
 	    svector<long>mnum (msb_.count());
 	    svector<long>lnum (msb_.count());
@@ -413,6 +414,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.12  2001/02/17 05:15:33  steve
+ *  Allow task ports to be given real types.
+ *
  * Revision 1.11  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.
