@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.57 2003/04/20 02:49:07 steve Exp $"
+#ident "$Id: sys_display.c,v 1.58 2003/05/02 04:44:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1185,11 +1185,11 @@ static int sys_fdisplay_calltf(char *name)
       type = vpi_get(vpiType, item);
       switch (type) {
 	    case vpiReg:
-	    case vpiRealVal:
+	    case vpiRealVar:
 	    case vpiIntegerVar:
 	      break;
 	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
+	      vpi_printf("ERROR: %s mcd parameter must be integral", name);
 	      vpi_printf(", got vpiType=%d\n", type);
 	      vpi_free_object(argv);
 	      return 0;
@@ -1649,6 +1649,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.58  2003/05/02 04:44:41  steve
+ *  $fdisplay can have a RealVar, not RealVal argument.
+ *
  * Revision 1.57  2003/04/20 02:49:07  steve
  *  acc_fetch_value support for %v format.
  *
