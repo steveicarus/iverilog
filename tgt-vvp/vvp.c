@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.9 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: vvp.c,v 1.10 2001/07/16 18:26:08 steve Exp $"
 #endif
 
 /*
@@ -26,14 +26,18 @@
 # include  "vvp_priv.h"
 # include  <string.h>
 # include  <assert.h>
+# include  <sys/types.h>
+# include  <sys/stat.h>
 
 FILE*vvp_out = 0;
 
 inline static void draw_execute_header(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
-      if (cp)
-	fprintf(vvp_out, "#! %s\n", cp);
+      if (cp) {
+	    fprintf(vvp_out, "#! %s\n", cp);
+	    fchmod(fileno(vvp_out), 0755);
+      }
 }
 
 inline static void draw_module_declarations(ivl_design_t des)
