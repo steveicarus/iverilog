@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_readmem.c,v 1.2 1999/12/15 04:02:38 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.3 1999/12/15 04:35:34 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -94,7 +94,10 @@ static int sys_readmem_calltf(char*name)
 
       value.format = vpiVectorVal;
       value.value.vector = calloc((wwid+31)/32, sizeof (s_vpi_vecval));
-      sys_readmem_start_file(file, 0, wwid, value.value.vector);
+      if (strcmp(name,"$readmemb") == 0)
+	    sys_readmem_start_file(file, 1, wwid, value.value.vector);
+      else
+	    sys_readmem_start_file(file, 0, wwid, value.value.vector);
 
       while (item && ((code = readmemlex()) != 0)) {
 	    switch (code) {
@@ -128,10 +131,21 @@ void sys_readmem_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemh";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$readmemb";
+      tf_data.calltf    = sys_readmem_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$readmemb";
+      vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.3  1999/12/15 04:35:34  steve
+ *  Add readmemb.
+ *
  * Revision 1.2  1999/12/15 04:02:38  steve
  *  Excess warning.
  *
