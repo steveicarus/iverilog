@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.115 2003/08/05 03:01:58 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.116 2003/08/28 04:11:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,7 +182,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 
 	/* The owidth is the output width of the lpm_add_sub
-	   device. If the desired with is greater then the width of
+	   device. If the desired width is greater then the width of
 	   the operands, then widen the adder and let code below pad
 	   the operands. If this is an adder, we can take advantage of
 	   the carry bit. */
@@ -2326,6 +2326,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.116  2003/08/28 04:11:17  steve
+ *  Spelling patch.
+ *
  * Revision 1.115  2003/08/05 03:01:58  steve
  *  Primitive outputs have same limitations as continuous assignment.
  *

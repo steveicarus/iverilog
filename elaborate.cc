@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.285 2003/08/05 03:01:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.286 2003/08/28 04:11:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,7 +115,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 them to carry strengths from the rval.
 
 		 While we are at it, handle the case where the r-value
-		 is not as wide as th l-value by padding with a
+		 is not as wide as the l-value by padding with a
 		 constant-0. */
 
 	    unsigned cnt = lval->pin_count();
@@ -2579,6 +2579,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.286  2003/08/28 04:11:17  steve
+ *  Spelling patch.
+ *
  * Revision 1.285  2003/08/05 03:01:58  steve
  *  Primitive outputs have same limitations as continuous assignment.
  *

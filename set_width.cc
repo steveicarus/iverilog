@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.33 2003/07/26 03:34:42 steve Exp $"
+#ident "$Id: set_width.cc,v 1.34 2003/08/28 04:11:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -343,7 +343,7 @@ bool NetESFunc::set_width(unsigned w)
 }
 
 /*
- * The signal should automatically pad with zeros to get to th desired
+ * The signal should automatically pad with zeros to get to the desired
  * width. Do not allow signal bits to be truncated, however.
  */
 bool NetESignal::set_width(unsigned w)
@@ -411,6 +411,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.34  2003/08/28 04:11:19  steve
+ *  Spelling patch.
+ *
  * Revision 1.33  2003/07/26 03:34:42  steve
  *  Start handling pad of expressions in code generators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.83 2003/08/26 16:26:01 steve Exp $"
+#ident "$Id: lexor.lex,v 1.84 2003/08/28 04:11:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,7 +109,7 @@ W [ \t\b\f\r]+
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
 
-  /* C++ style comments start with / / and run to the ene of the
+  /* C++ style comments start with / / and run to the end of the
      current line. These are very easy to handle. */
 
 "//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }

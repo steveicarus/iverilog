@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.20 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.21 2003/08/28 04:11:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -56,7 +56,7 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 	    r->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined
-		 with from this. Make sure. */
+		 width from this. Make sure. */
 	    assert(! r->has_width() );
 
       } else if ( (tmp = dynamic_cast<NetEConst*>(l))
@@ -67,7 +67,7 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 	    l->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined
-		 with from this. Make sure. */
+		 width from this. Make sure. */
 	    assert(! l->has_width() );
 
       }
@@ -516,6 +516,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.21  2003/08/28 04:11:19  steve
+ *  Spelling patch.
+ *
  * Revision 1.20  2003/06/18 03:55:18  steve
  *  Add arithmetic shift operators.
  *

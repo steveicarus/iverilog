@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.47 2003/08/09 03:23:40 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.48 2003/08/28 04:11:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -721,7 +721,7 @@ NetNet* NetESelect::synthesize(Design *des)
 }
 
 /*
- * Synthesize a ?: operator an a NetMux device. Connect the condition
+ * Synthesize a ?: operator as a NetMux device. Connect the condition
  * expression to the select input, then connect the true and false
  * expressions to the B and A inputs. This way, when the select input
  * is one, the B input, which is the true expression, is selected.
@@ -809,6 +809,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.48  2003/08/28 04:11:18  steve
+ *  Spelling patch.
+ *
  * Revision 1.47  2003/08/09 03:23:40  steve
  *  Add support for IVL_LPM_MULT device.
  *

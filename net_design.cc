@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.37 2003/06/24 01:38:02 steve Exp $"
+#ident "$Id: net_design.cc,v 1.38 2003/08/28 04:11:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -631,8 +631,8 @@ void Design::del_node(NetNode*net)
       assert(net->design_ == this);
       assert(net != 0);
 
-	/* Interact with the Design::functor method by manipulate the
-	   cur and nxt pointers that is is using. */
+	/* Interact with the Design::functor method by manipulating the
+	   cur and nxt pointers that it is using. */
       if (net == nodes_functor_nxt_)
 	    nodes_functor_nxt_ = nodes_functor_nxt_->node_next_;
       if (net == nodes_functor_nxt_)
@@ -685,6 +685,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.38  2003/08/28 04:11:19  steve
+ *  Spelling patch.
+ *
  * Revision 1.37  2003/06/24 01:38:02  steve
  *  Various warnings fixed.
  *

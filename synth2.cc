@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.30 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: synth2.cc,v 1.31 2003/08/28 04:11:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -196,7 +196,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
       assert(cur == sel_pins);
 
-	/* Hook up the output of th mux to the mapped output pins. */
+	/* Hook up the output of the mux to the mapped output pins. */
       for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
 	    connect(nex_out->pin(idx), mux->pin_Result(idx));
 
@@ -877,6 +877,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.31  2003/08/28 04:11:19  steve
+ *  Spelling patch.
+ *
  * Revision 1.30  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.297 2003/08/15 02:23:52 steve Exp $"
+#ident "$Id: netlist.h,v 1.298 2003/08/28 04:11:19 steve Exp $"
 #endif
 
 /*
@@ -1380,7 +1380,7 @@ class NetProc : public virtual LineInfo {
  * NetAssign_ object points to the next most significant bits of l-value.
  *
  * NOTE: The elaborator will make an effort to match the width of the
- * r-value to the with of the l-value, but targets and functions
+ * r-value to the width of the l-value, but targets and functions
  * should know that this is not a guarantee.
  */
 
@@ -2024,7 +2024,7 @@ class NetFuncDef {
  * in simulation ticks.
  *
  * If the delay expression is non-constant, construct the NetPDelay
- * object with a NetExpr* instead of the d value, and use th expr()
+ * object with a NetExpr* instead of the d value, and use the expr()
  * method to get the expression. If expr() returns 0, use the delay()
  * method to get the constant delay.
  */
@@ -3310,7 +3310,7 @@ extern unsigned count_signals(const Link&pin);
 extern Link* find_next_output(Link*lnk);
 
 /* Find the signal connected to the given node pin. There should
-   always be exactly one signal. The bidx parameter get filled with
+   always be exactly one signal. The bidx parameter gets filled with
    the signal index of the Net, in case it is a vector. */
 const NetNet* find_link_signal(const NetObj*net, unsigned pin,
 			       unsigned&bidx);
@@ -3322,6 +3322,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.298  2003/08/28 04:11:19  steve
+ *  Spelling patch.
+ *
  * Revision 1.297  2003/08/15 02:23:52  steve
  *  Add synthesis support for synchronous reset.
  *
