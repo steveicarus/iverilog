@@ -86,7 +86,7 @@ tool so it is not clear that the standard really is at fault. It is
 clear, however, that somebody goofed somewhere.
 
 My personal opinion is that there is no logical need to require that
-all module_item_declarations preceed any other module items. I
+all module_item_declarations precede any other module items. I
 personally would oppose such a restriction. It may make sense to
 require that declarations of variables within a module be preceded by
 their use, although even that is not necessary for the implementation
@@ -97,7 +97,7 @@ sample2 can have implications that affect any declaration order
 rules. When reaching into a module with a hierarchical name, the
 module being referenced is already completely declared (or not
 declared at all, as in sample2) so module_item order is completely
-irrelevent. But a "declare before use" rule would infect module
+irrelevant. But a "declare before use" rule would infect module
 ordering, by requiring that modules that are used be first defined.
 
 
@@ -141,7 +141,7 @@ ports.
 
 With the above in mind, I have decided to *allow* function and task
 ports to be declared with types, as long as the types are variable
-types, such ag reg or integer. Without this, there would be no
+types, such as reg or integer. Without this, there would be no
 portable way to pass integers into functions/tasks. The standard does
 not say it is allowed, but it doesn't *disallow* it, and other
 commercial tools seem to work similarly.
@@ -172,7 +172,7 @@ take it that x is allowed, as that is what Verilog-XL does.
 
 There seems to be ambiguity in how code like this should be parsed:
 
-	repeat (5) @(posedge clk) <statment>;
+	repeat (5) @(posedge clk) <statement>;
 
 There are two valid interpretations of this code, from the
 IEEE1364-1995 standard. One looks like this:
@@ -386,7 +386,7 @@ changes in inputs until the thread that changed the inputs yields
 execution.
 
 
-* BIT AND PART SELECTS OF PARAMTERS
+* BIT AND PART SELECTS OF PARAMETERS
 
 Bit and part selects are supposed to only be supported on vector nets
 and variables (wires, regs, etc.) However, it is common for Verilog
@@ -400,8 +400,11 @@ constant vector of bits foo[X:0]. That is, zero based. The bit and
 part selects operate from that assumption.
 
 
-$Id: ieee1364-notes.txt,v 1.11 2002/04/27 02:38:04 steve Exp $
+$Id: ieee1364-notes.txt,v 1.12 2002/06/11 03:34:33 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.12  2002/06/11 03:34:33  steve
+ Spelling patch (Larry Doolittle)
+
 Revision 1.11  2002/04/27 02:38:04  steve
  Support selecting bits from parameters.
 

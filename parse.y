@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.154 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: parse.y,v 1.155 2002/06/11 03:34:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -241,7 +241,7 @@ attribute
 	| IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: attibute value "
+			yyerror(@3, "error: attribute value "
 			            "expression must be constant.");
 			delete tmp;
 			tmp = 0;
@@ -285,7 +285,7 @@ block_item_decl
 		}
 	| K_realtime list_of_identifiers ';'
 		{ delete $2;
-		  yyerror(@1, "sorry: reatime variables not supported.");
+		  yyerror(@1, "sorry: realtime variables not supported.");
 		}
 	| K_parameter parameter_assign_list ';'
 	| K_localparam localparam_assign_list ';'
@@ -1122,16 +1122,16 @@ list_of_identifiers
 
 
   /* The list_of_ports and list_of_port_declarations rules are the
-     port list formats for module ports. The lost_of_ports_opt rule is
+     port list formats for module ports. The list_of_ports_opt rule is
      only used by the module start rule.
 
      The first, the list_of_ports, is the 1364-1995 format, a list of
      port names, including .name() syntax.
 
-     The list_of_port_declaractions the 1364-2001 format, an in-line
+     The list_of_port_declarations the 1364-2001 format, an in-line
      declaration of the ports.
 
-     In both cases, the lost_of_ports and lost_of_port_declarations
+     In both cases, the list_of_ports and list_of_port_declarations
      returns an array of Module::port_t* items that include the name
      of the port internally and externally. The actual creation of the
      nets/variables is done in the declaration, whether internal to
@@ -1319,7 +1319,7 @@ assign_list
 
 
   /* This is the global structure of a module. A module in a start
-     section, with optional ports, then an opetional list of module
+     section, with optional ports, then an optional list of module
      items, and finally an end marker. */
 
 module  : module_start IDENTIFIER
@@ -1539,7 +1539,7 @@ module_item
 		  yyerrok;
 		}
 
-  /* These rules are for the Icarus VErilog specific $attribute
+  /* These rules are for the Icarus Verilog specific $attribute
      extensions. Then catch the parameters of the $attribute keyword. */
 
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
@@ -1548,7 +1548,7 @@ module_item
 		  delete $5;
 		}
 	| KK_attribute '(' error ')' ';'
-		{ yyerror(@1, "error: Misformed $attribute parameter list."); }
+		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
 	;
 
 
@@ -1635,8 +1635,8 @@ parameter_assign_list
 	;
 
 
-  /* Localparam assignments and asignment lists are broken into
-     separate BNF so that I can call slightly different paramter
+  /* Localparam assignments and assignment lists are broken into
+     separate BNF so that I can call slightly different parameter
      handling code. They parse the same as parameters, they just
      behave differently when someone tries to override them. */
 
@@ -1784,7 +1784,7 @@ port
 		  $$ = tmp;
 		}
 
-  /* This attaches a name to a port reference contatenation list so
+  /* This attaches a name to a port reference concatenation list so
      that parameter passing be name is possible. */
 
 	| '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
@@ -2373,7 +2373,7 @@ statement
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
 		{ $$ = 0;
-		  yyerror(@9, "error: Error in for loop step assigment.");
+		  yyerror(@9, "error: Error in for loop step assignment.");
 		}
 	| K_for '(' lpvalue '=' expression ';' error ';'
 	  lpvalue '=' expression ')' statement

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.98 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.99 2002/06/11 03:34:33 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -98,7 +98,7 @@ _BEGIN_DECL
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
- *    or always statements from the verilog source.
+ *    or always statements from the Verilog source.
  *
  * ivl_scope_t
  *    Elaborated scopes within a design are represented by this
@@ -337,7 +337,7 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  *
  * ivl_design_process
  *    This function scans the processes (threads) in the design. It
- *    calls the user suplied function on each of the processes until
+ *    calls the user supplied function on each of the processes until
  *    one of the functors returns non-0 or all the processes are
  *    scanned. This function will return 0, or the non-zero value that
  *    was returned from the last scanned process.
@@ -515,7 +515,7 @@ extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
 extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
 
-  /* DEPRICATED */
+  /* DEPRECATED */
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
 
 extern unsigned        ivl_logic_attr_cnt(ivl_net_logic_t net);
@@ -550,7 +550,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    this device.
  *
  * ivl_lpm_type
- *    Return the ivl_lpm_type_t of the secific LPM device.
+ *    Return the ivl_lpm_type_t of the specific LPM device.
  *
  * ivl_lpm_width
  *    Return the width of the LPM device. What this means depends on
@@ -567,7 +567,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    vector for devices that have more inputs.
  *
  * ivl_lpm_datab
- *    Return the input data nexis for device types that have a second
+ *    Return the input data nexus for device types that have a second
  *    input vector. For example, arithmetic devices are like this.
  *
  * ivl_lpm_q
@@ -580,7 +580,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *
  * ivl_lpm_size
  *    In addition to a width, some devices have a size. The size is
- *    often the number of inputs per out, i.e. the number of inputs
+ *    often the number of inputs per out, i.e., the number of inputs
  *    per bit for a MUX.
  */
 extern const char*    ivl_lpm_name(ivl_lpm_t net);
@@ -705,7 +705,7 @@ extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
  *    connected to the nexus.
  *
  *    If the target is an LPM device, then this value is zero, and it
- *    is up to the application to find the pin that referse to this
+ *    is up to the application to find the pin that refers to this
  *    nexus. The problem is that LPM devices do not have a pinout per
  *    se, the pins all have specific names.
  *
@@ -805,7 +805,7 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *
  * ivl_scope_lpm
  * ivl_scope_lpms
- *    Scopes have 0 or more LPM devices in them. These functions acess
+ *    Scopes have 0 or more LPM devices in them. These functions access
  *    those devices.
  *
  * ivl_scope_name
@@ -868,7 +868,7 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
- * regs, and also named things that are preated as temporaries during
+ * regs, and also named things that are created as temporaries during
  * certain elaboration or optimization steps. A signal may also be a
  * port of a module or task.
  *
@@ -878,7 +878,7 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
  * ivl_signal_pins
  * ivl_signal_pin
  *    The ivl_signal_pin function returns the nexus connected to the
- *    signal. If the signal is a vectory, the idx can be a non-zero
+ *    signal. If the signal is a vector, the idx can be a non-zero
  *    value, and the result is the nexus for the specified bit.
  *
  * ivl_signal_port
@@ -892,7 +892,7 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
  *    signal is signed.
  *
  * ivl_signal_type
- *    Return the type of the signal, i.e. reg, wire, tri0, et al.
+ *    Return the type of the signal, i.e., reg, wire, tri0, etc.
  *
  * ivl_signal_name
  *    This function returns the fully scoped hierarchical name for the
@@ -929,7 +929,7 @@ extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
  * may be a compound statement.)
  *
  * The ivl_process_type function gets the type of the process,
- * an "inital" or "always" statement.
+ * an "initial" or "always" statement.
  *
  * A process is placed in a scope. The statement within the process
  * operates within the scope of the process unless there are calls
@@ -958,7 +958,7 @@ extern ivl_attribute_t ivl_process_attr_val(ivl_process_t net, unsigned idx);
  *
  * The ivl_statement_type() function returns the type code for the
  * statement. This is the major type, and implies which of the later
- * functions are applicable to the statemnt.
+ * functions are applicable to the statement.
  */
 extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 
@@ -1050,6 +1050,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.99  2002/06/11 03:34:33  steve
+ *  Spelling patch (Larry Doolittle)
+ *
  * Revision 1.98  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

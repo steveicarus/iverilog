@@ -2,7 +2,7 @@
 Icarus Verilog LOADABLE TARGET API (ivl_target)
 
   Copyright 2002 Stephen Williams <steve@icarus.com>
-  $Id: ivl_target.txt,v 1.2 2002/03/17 19:31:17 steve Exp $
+  $Id: ivl_target.txt,v 1.3 2002/06/11 03:34:33 steve Exp $
 
 
 The ivl_target API is the interface available to modules that the
@@ -12,7 +12,7 @@ for code generators that are intended to write netlist files or
 executable programs.
 
 The functions and types of the API are summarized in the ivl_target.h
-header file. This ducument describes how the functions and types of
+header file. This document describes how the functions and types of
 the API are used to access and interpret the netlist of the design.
 
 
@@ -40,6 +40,9 @@ There are ivl_lpm_size() input ports, each with the width
 ivl_lpm_data2_width(). The actual nexus is indexed by ivl_lpm_data2().
 
 $Log: ivl_target.txt,v $
+Revision 1.3  2002/06/11 03:34:33  steve
+ Spelling patch (Larry Doolittle)
+
 Revision 1.2  2002/03/17 19:31:17  steve
  Add API to support user defined function.
 
