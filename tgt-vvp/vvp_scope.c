@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.8 2001/03/29 03:47:13 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.9 2001/03/31 19:29:23 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -239,12 +239,15 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_event_in_scope(event);
       }
 
-      ivl_scope_children(net, draw_scope, net);
+      ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.9  2001/03/31 19:29:23  steve
+ *  Fix compilation warnings.
+ *
  * Revision 1.8  2001/03/29 03:47:13  steve
  *  events can take up to 4 inputs.
  *

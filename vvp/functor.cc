@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.8 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: functor.cc,v 1.9 2001/03/31 19:29:23 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -252,13 +252,10 @@ void functor_propagate(vvp_ipoint_t ptr)
       functor_t fp = functor_index(ptr);
       unsigned char oval = fp->oval;
 
-	//printf("functor %lx becomes %u\n", ptr, oval);
-
       vvp_ipoint_t idx = fp->out;
       while (idx) {
 	    functor_t idxp = functor_index(idx);
 	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
-	      //printf("    set %lx to %u\n", idx, oval);
 	    functor_set(idx, oval);
 	    idx = next;
       }
@@ -268,9 +265,9 @@ void functor_dump(FILE*fd)
 {
       for (unsigned idx = 1 ;  idx < functor_count ;  idx += 1) {
 	    functor_t cur = functor_index(idx*4);
-	    fprintf(fd, "%10p: out=%x port={%x %x %x %x}\n", idx*4,
-		    cur->out, cur->port[0], cur->port[1],
-		    cur->port[2], cur->port[3]);
+	    fprintf(fd, "%10p: out=%x port={%x %x %x %x}\n",
+		    (void*)(idx*4), cur->out, cur->port[0],
+		    cur->port[1], cur->port[2], cur->port[3]);
       }
 }
 
@@ -300,6 +297,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.9  2001/03/31 19:29:23  steve
+ *  Fix compilation warnings.
+ *
  * Revision 1.8  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

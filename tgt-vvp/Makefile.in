@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2001/03/25 05:59:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2001/03/31 19:29:23 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -46,7 +46,7 @@ all: vvp.tgt
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall $(CPPFLAGS) -I$(srcdir)/.. -MD -c $< -o $*.o
+	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = vvp.o eval_expr.o vvp_process.o vvp_scope.o
