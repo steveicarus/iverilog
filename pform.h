@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.56 2002/05/19 23:37:28 steve Exp $"
+#ident "$Id: pform.h,v 1.57 2002/05/20 02:06:01 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -119,6 +119,17 @@ struct lgate {
  */
 extern void pform_startmodule(const char*, const char*file, unsigned lineno);
 extern void pform_module_set_ports(svector<Module::port_t*>*);
+
+/* This function is used to support the port definition in a
+   port_definition_list. In this case, we have everything needed to
+   define the port, all in one place. */
+extern void pform_module_define_port(const struct vlltype&li,
+				     const char*name,
+				     NetNet::PortType,
+				     NetNet::Type type,
+				     bool signed_flag,
+				     svector<PExpr*>*range);
+
 extern Module::port_t* pform_module_port_reference(char*name,
 						   const char*file,
 						   unsigned lineno);
@@ -142,8 +153,8 @@ extern void pform_pop_scope();
  * go into a module that is currently opened.
  */
 extern void pform_makewire(const struct vlltype&li, const char*name,
-			   NetNet::Type type = NetNet::IMPLICIT,
-			   NetNet::PortType =NetNet::NOT_A_PORT);
+			   NetNet::Type type = NetNet::IMPLICIT);
+
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   list<char*>*names,
@@ -230,6 +241,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.57  2002/05/20 02:06:01  steve
+ *  Add ranges and signed to port list declarations.
+ *
  * Revision 1.56  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
  *

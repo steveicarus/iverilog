@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.150 2002/05/19 23:37:28 steve Exp $"
+#ident "$Id: parse.y,v 1.151 2002/05/20 02:06:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,10 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %}
 
 %union {
+      bool flag;
+
       char letter;
+
 	/* text items are C strings allocated by the lexor using
 	   strdup. They can be put into lists with the texts type. */
       char*text;
@@ -119,6 +122,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %token KK_attribute
 
+%type <flag>    signed_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -1112,36 +1116,40 @@ list_of_port_declarations
         ;
 
 port_declaration
-	: K_input  net_type IDENTIFIER
+	: K_input net_type signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($3, @1.text,
+		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
-		  pform_makewire(@1, $3, $2, NetNet::PINPUT);
-		  delete $3;
+		  pform_module_define_port(@1, $5, NetNet::PINPUT,
+					   $2, $3, $4);
+		  delete $5;
 		  $$ = ptmp;
 		}
-	| K_inout  net_type IDENTIFIER
+	| K_inout  net_type signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($3, @1.text,
+		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
-		  pform_makewire(@1, $3, $2, NetNet::PINOUT);
-		  delete $3;
+		  pform_module_define_port(@1, $5, NetNet::PINOUT,
+					   $2, $3, $4);
+		  delete $5;
 		  $$ = ptmp;
 		}
-	| K_output net_type IDENTIFIER
+	| K_output net_type signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($3, @1.text,
+		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
-		  pform_makewire(@1, $3, $2, NetNet::POUTPUT);
-		  delete $3;
+		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
+					   $2, $3, $4);
+		  delete $5;
 		  $$ = ptmp;
 		}
-	| K_output var_type IDENTIFIER
+	| K_output var_type signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($3, @1.text,
+		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
-		  pform_makewire(@1, $3, $2, NetNet::POUTPUT);
-		  delete $3;
+		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
+					   $2, $3, $4);
+		  delete $5;
 		  $$ = ptmp;
 		}
 	;
@@ -1152,6 +1160,7 @@ list_of_ports_opt
 	|                       { $$ = 0; }
 	;
 
+signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
 
   /* An lavalue is the expression that can go on the left side of a
      continuous assign statement. This checks (where it can) that the

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.94 2002/05/19 23:37:28 steve Exp $"
+#ident "$Id: pform.cc,v 1.95 2002/05/20 02:06:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -784,6 +784,54 @@ void pform_make_reginit(const struct vlltype&li,
 }
 
 /*
+ * This function is used by the parser when I have port definition of
+ * the form like this:
+ *
+ *     input wire signed [7:0] nm;
+ *
+ * The port_type, type, signed_flag and range are known all at once,
+ * so we can create the PWire object all at once instead of piecemeal
+ * as is done for the old method.
+ */
+void pform_module_define_port(const struct vlltype&li,
+			      const char*nm,
+			      NetNet::PortType port_type,
+			      NetNet::Type type,
+			      bool signed_flag,
+			      svector<PExpr*>*range)
+{
+      hname_t name = hier_name(nm);
+      PWire*cur = pform_cur_module->get_wire(name);
+      if (cur) {
+	    strstream msg;
+	    msg << name << " definition conflicts with "
+		<< "definition at " << cur->get_line()
+		<< "." << ends;
+	    VLerror(msg.str());
+	    return;
+      }
+
+
+      cur = new PWire(name, type, port_type);
+      cur->set_file(li.text);
+      cur->set_lineno(li.first_line);
+
+      cur->set_signed(signed_flag);
+
+      if (range == 0) {
+	    cur->set_range(0, 0);
+
+      } else {
+	    assert(range->count() == 2);
+	    assert((*range)[0]);
+	    assert((*range)[1]);
+	    cur->set_range((*range)[0], (*range)[1]);
+      }
+
+      pform_cur_module->add_wire(cur);
+}
+
+/*
  * This function makes a single signal (a wire, a reg, etc) as
  * requested by the parser. The name is unscoped, so I attach the
  * current scope to it (with the scoped_name function) and I try to
@@ -801,9 +849,7 @@ void pform_make_reginit(const struct vlltype&li,
  * do check to see if the name has already been declared, as this
  * function is called for every declaration.
  */
-void pform_makewire(const vlltype&li, const char*nm,
-		    NetNet::Type type,
-		    NetNet::PortType port_type)
+void pform_makewire(const vlltype&li, const char*nm, NetNet::Type type)
 {
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -830,7 +876,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    return;
       }
 
-      cur = new PWire(name, type, port_type);
+      cur = new PWire(name, type, NetNet::NOT_A_PORT);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
       pform_cur_module->add_wire(cur);
@@ -1262,6 +1308,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.95  2002/05/20 02:06:01  steve
+ *  Add ranges and signed to port list declarations.
+ *
  * Revision 1.94  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
  *
