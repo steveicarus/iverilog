@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.7 1999/07/17 03:39:11 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.8 1999/08/18 04:00:02 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -82,7 +82,7 @@ class target_xnf  : public target_t {
 };
 
 /*
- * This function takes a signal name and mangles it into an equivilent
+ * This function takes a signal name and mangles it into an equivalent
  * name that is suitable to the XNF format.
  */
 string target_xnf::mangle(const string&name)
@@ -333,6 +333,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.8  1999/08/18 04:00:02  steve
+ *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
+ *
  * Revision 1.7  1999/07/17 03:39:11  steve
  *  simplified process scan for targets.
  *

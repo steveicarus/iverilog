@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.70 1999/08/08 20:06:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.71 1999/08/18 04:00:02 steve Exp $"
 #endif
 
 /*
@@ -1025,7 +1025,7 @@ NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
       return tmp;
 }
 
-NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
+NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 {
 	// System identifiers show up in the netlist as identifiers.
       if (text_[0] == '$')
@@ -1033,7 +1033,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 
       string name = path+"."+text_;
 
-	// If the identifier name a paramter name, then return
+	// If the identifier name a parameter name, then return
 	// the expression that it represents.
       if (const NetExpr*ex = des->find_parameter(path, text_))
 	    return ex->dup_expr();
@@ -1304,7 +1304,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	   This rewriting of the expression allows me to not bother to
 	   actually and literally represent the delayed assign in the
-	   netlist. The compound statement is exactly equivilent. */
+	   netlist. The compound statement is exactly equivalent. */
 
       if (dex) {
 	    string n = des->local_symbol(path);
@@ -1808,7 +1808,7 @@ NetProc* PForever::elaborate(Design*des, const string&path) const
 }
 
 /*
- * elaborate the for loop as the equivilent while loop. This eases the
+ * elaborate the for loop as the equivalent while loop. This eases the
  * task for the target code generator. The structure is:
  *
  *     begin
@@ -2051,6 +2051,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.71  1999/08/18 04:00:02  steve
+ *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
+ *
  * Revision 1.70  1999/08/08 20:06:06  steve
  *  Uninitialized low and high indices for single gate syntax
  *
@@ -2106,7 +2109,7 @@ Design* elaborate(const map<string,Module*>&modules,
  *  part select in expressions.
  *
  * Revision 1.54  1999/07/13 04:08:26  steve
- *  Construct delayed assignment as an equivilent block.
+ *  Construct delayed assignment as an equivalent block.
  *
  * Revision 1.53  1999/07/12 00:59:36  steve
  *  procedural blocking assignment delays.

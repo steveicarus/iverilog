@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfsyn.cc,v 1.2 1999/07/18 21:17:51 steve Exp $"
+#ident "$Id: xnfsyn.cc,v 1.3 1999/08/18 04:00:02 steve Exp $"
 #endif
 
 /*
@@ -136,13 +136,16 @@ void xnfsyn_f::proc_casn_(class Design*des)
 
 	// ... and the rval must be a simple signal.
       NetESignal*sig = dynamic_cast<NetESignal*>(asn_->rval());
-      if (sig == 0)
+      if (sig == 0) {
+	    cerr << "Noted complex rval in DFF, name " << asn_->name() <<
+		", not yet implemented" << endl;
 	    return ;
+      }
 
 	// The signal and the assignment must be the same width...
       assert(asn_->pin_count() == sig->pin_count());
 
-	// Geneate enough DFF objects to handle the entire width.
+	// Generate enough DFF objects to handle the entire width.
       for (unsigned idx = 0 ;  idx < asn_->pin_count() ;  idx += 1) {
 
 	      // XXXX FIXME: Objects need unique names!
@@ -170,7 +173,7 @@ void xnfsyn_f::proc_casn_(class Design*des)
 }
 
 /*
- * The process si far has been matches as:
+ * The process so far has been matched as:
  *
  *    always @(posedge nclk_) if ...;
  *    always @(negedge nclk_) if ...;
@@ -197,7 +200,7 @@ void xnfsyn_f::proc_ccon_(class Design*des)
       if (ce->pin_count() != 1)
 	    return;
 
-	// Geneate enough DFF objects to handle the entire width.
+	// Generate enough DFF objects to handle the entire width.
       for (unsigned idx = 0 ;  idx < asn_->pin_count() ;  idx += 1) {
 
 	      // XXXX FIXME: Objects need unique names!
@@ -233,6 +236,9 @@ void xnfsyn(Design*des)
 
 /*
  * $Log: xnfsyn.cc,v $
+ * Revision 1.3  1999/08/18 04:00:02  steve
+ *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
+ *
  * Revision 1.2  1999/07/18 21:17:51  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

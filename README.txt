@@ -289,6 +289,7 @@ I have received aid in the form of fixes, Verilog guidance, and
 especially testing from many people, including (in alphabetical order):
 
 	Ed Carter <r47652@email.sps.mot.com>
+	Larry Doolittle <LRDoolittle@lbl.gov>
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
 	Stefan Petersen <spe@geda.seul.org>

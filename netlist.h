@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.55 1999/08/06 04:05:28 steve Exp $"
+#ident "$Id: netlist.h,v 1.56 1999/08/18 04:00:02 steve Exp $"
 #endif
 
 /*
@@ -438,7 +438,7 @@ class NetLogic  : public NetNode {
  * expand it out any further then this in the netlist, as this can be
  * used to represent target device primitives.
  *
- * The UDP can be combinational or sequential. The sequentianl UDP
+ * The UDP can be combinational or sequential. The sequential UDP
  * includes the current output in the truth table, and supports edges,
  * whereas the combinational does not and is entirely level sensitive.
  * In any case, pin 0 is an output, and all the remaining pins are
@@ -1440,6 +1440,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.56  1999/08/18 04:00:02  steve
+ *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
+ *
  * Revision 1.55  1999/08/06 04:05:28  steve
  *  Handle scope of parameters.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.15 1999/07/17 19:51:00 steve Exp $"
+#ident "$Id: target.cc,v 1.16 1999/08/18 04:00:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -79,16 +79,18 @@ void target_t::net_const(ostream&os, const NetConst*)
 	    "Unhandled CONSTANT node." << endl;
 }
 
-void target_t::net_esignal(ostream&os, const NetESignal*)
+void target_t::net_esignal(ostream&os, const NetESignal*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled Expression Signal node." << endl;
+      net->dump_node(cerr, 4);
 }
 
-void target_t::net_event(ostream&os, const NetNEvent*)
+void target_t::net_event(ostream&os, const NetNEvent*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled EVENT net node." << endl;
+      net->dump_node(cerr, 4);
 }
 
 void target_t::process(ostream&os, const NetProcTop*top)
@@ -140,10 +142,11 @@ void target_t::proc_delay(ostream&os, const NetPDelay*)
 	    "Unhandled proc_delay." << endl;
 }
 
-void target_t::proc_event(ostream&os, const NetPEvent*)
+void target_t::proc_event(ostream&os, const NetPEvent*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_event." << endl;
+      net->dump(cerr, 4);
 }
 
 void target_t::proc_forever(ostream&os, const NetForever*)
@@ -241,6 +244,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.16  1999/08/18 04:00:02  steve
+ *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
+ *
  * Revision 1.15  1999/07/17 19:51:00  steve
  *  netlist support for ternary operator.
  *
