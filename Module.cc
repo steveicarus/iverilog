@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.1 1998/11/03 23:28:51 steve Exp $"
+#ident "$Id: Module.cc,v 1.2 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -44,7 +44,7 @@ PWire* Module::get_wire(const string&name)
 		 ; cur != wires_.end()
 		 ; cur ++ ) {
 
-	    if ((*cur)->name == name)
+	    if ((*cur)->name() == name)
 		  return *cur;
       }
 
@@ -54,6 +54,10 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.2  1999/06/17 05:34:42  steve
+ *  Clean up interface of the PWire class,
+ *  Properly match wire ranges.
+ *
  * Revision 1.1  1998/11/03 23:28:51  steve
  *  Introduce verilog to CVS.
  *

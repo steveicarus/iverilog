@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.27 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: pform.cc,v 1.28 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -91,34 +91,22 @@ void pform_make_udp(string*name, list<string>*parms,
       assert(parms->size() > 0);
 
 	/* Put the declarations into a map, so that I can check them
-	   off with the parameters in the list. I will rebuild a list
+	   off with the parameters in the list. If the port is already
+	   in the map, merge the port type. I will rebuild a list
 	   of parameters for the PUdp object. */
       map<string,PWire*> defs;
-      for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1) {
 
-	    if (defs[(*decl)[idx]->name] == 0) {
-		  defs[(*decl)[idx]->name] = (*decl)[idx];
+	    string pname = (*decl)[idx]->name();
+	    PWire*cur = defs[pname];
+	    if (PWire*cur = defs[pname]) {
+		  bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
+		  assert(rc);
 
-	    } else switch ((*decl)[idx]->port_type) {
-
-		case NetNet::PIMPLICIT:
-		case NetNet::POUTPUT:
-		  assert(defs[(*decl)[idx]->name]->port_type != NetNet::PINPUT);
-		    // OK, merge the output definitions.
-		  defs[(*decl)[idx]->name]->port_type = NetNet::POUTPUT;
-		  if ((*decl)[idx]->type == NetNet::REG)
-			defs[(*decl)[idx]->name]->type = NetNet::REG;
-		  break;
-
-		case NetNet::PINPUT:
-		    // Allow duplicate input declarations.
-		  assert(defs[(*decl)[idx]->name]->port_type == NetNet::PINPUT);
-		  delete (*decl)[idx];
-		  break;
-
-		default:
-		  assert(0);
+	    } else {
+		  defs[pname] = (*decl)[idx];
 	    }
+      }
 
 
 	/* Put the parameters into a vector of wire descriptions. Look
@@ -138,11 +126,11 @@ void pform_make_udp(string*name, list<string>*parms,
 	   declared a register, if anything. */
       assert(pins.count() > 0);
       assert(pins[0]);
-      assert(pins[0]->port_type == NetNet::POUTPUT);
+      assert(pins[0]->get_port_type() == NetNet::POUTPUT);
       for (unsigned idx = 1 ;  idx < pins.count() ;  idx += 1) {
 	    assert(pins[idx]);
-	    assert(pins[idx]->port_type == NetNet::PINPUT);
-	    assert(pins[idx]->type != NetNet::REG);
+	    assert(pins[idx]->get_port_type() == NetNet::PINPUT);
+	    assert(pins[idx]->get_wire_type() != NetNet::REG);
       }
 
 	/* Interpret and check the table entry strings, to make sure
@@ -162,7 +150,7 @@ void pform_make_udp(string*name, list<string>*parms,
 	      input[idx] = tmp.substr(0, pins.count()-1);
 	      tmp = tmp.substr(pins.count()-1);
 
-	      if (pins[0]->type == NetNet::REG) {
+	      if (pins[0]->get_wire_type() == NetNet::REG) {
 		    assert(tmp[0] == ':');
 		    assert(tmp.size() == 4);
 		    current[idx] = tmp[1];
@@ -181,7 +169,7 @@ void pform_make_udp(string*name, list<string>*parms,
       verinum::V init = verinum::Vx;
       if (init_expr) {
 	      // XXXX
-	    assert(pins[0]->type == NetNet::REG);
+	    assert(pins[0]->get_wire_type() == NetNet::REG);
 
 	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
 	    assert(pa);
@@ -190,7 +178,7 @@ void pform_make_udp(string*name, list<string>*parms,
 	    assert(id);
 
 	      // XXXX
-	    assert(id->name() == pins[0]->name);
+	    assert(id->name() == pins[0]->name());
 
 	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
 	    assert(np);
@@ -206,12 +194,12 @@ void pform_make_udp(string*name, list<string>*parms,
 	    PUdp*udp = new PUdp(*name, parms->size());
 
 	      // Detect sequential udp.
-	    if (pins[0]->type == NetNet::REG)
+	    if (pins[0]->get_wire_type() == NetNet::REG)
 		  udp->sequential = true;
 
 	      // Make the port list for the UDP
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
-		  udp->ports[idx] = pins[idx]->name;
+		  udp->ports[idx] = pins[idx]->name();
 
 	    udp->tinput   = input;
 	    udp->tcurrent = current;
@@ -353,17 +341,19 @@ void pform_makewire(const vlltype&li, const string&name,
 {
       PWire*cur = cur_module->get_wire(name);
       if (cur) {
-	    if (cur->type != NetNet::IMPLICIT) {
+	    if (cur->get_wire_type() != NetNet::IMPLICIT) {
 		  strstream msg;
 		  msg << name << " previously defined at " <<
 			cur->get_line() << ".";
 		  VLerror(msg.str());
+	    } else {
+		  bool rc = cur->set_wire_type(type);
+		  assert(rc);
 	    }
-	    cur->type = type;
 	    return;
       }
 
-      cur = new PWire(name, type);
+      cur = new PWire(name, type, NetNet::NOT_A_PORT);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
       cur_module->add_wire(cur);
@@ -387,12 +377,8 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
 	    return;
       }
 
-      if (cur->port_type != NetNet::PIMPLICIT) {
+      if (! cur->set_port_type(pt))
 	    VLerror("error setting port direction.");
-	    return;
-      }
-
-      cur->port_type = pt;
 }
 
 void pform_set_attrib(const string&name, const string&key, const string&value)
@@ -418,6 +404,10 @@ void pform_set_type_attrib(const string&name, const string&key,
       (*udp).second ->attributes[key] = value;
 }
 
+/*
+ * This function attaches a memory index range to an existing
+ * register. (The named wire must be a register.
+ */
 void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 {
       PWire*cur = cur_module->get_wire(name);
@@ -426,10 +416,7 @@ void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 	    return;
       }
 
-      assert(cur->lidx == 0);
-      assert(cur->ridx == 0);
-      cur->lidx = l;
-      cur->ridx = r;
+      cur->set_memory_idx(l, r);
 }
 
 static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
@@ -443,35 +430,9 @@ static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 	    return;
       }
 
-      if ((cur->msb == 0) && (cur->lsb == 0)){
-	    cur->msb = (*range)[0];
-	    cur->lsb = (*range)[1];
-      } else {
-	    if (cur->msb == 0) {
-		  VLerror(yylloc, "missing msb of range.");
-		  return;
-	    }
-	    if (cur->lsb == 0) {
-		  VLerror(yylloc, "missing lsb of range.");
-		  return;
-	    }
-	    PExpr*msb = (*range)[0];
-	    PExpr*lsb = (*range)[1];
-	    assert(msb);
-	    assert(lsb);
-	    if (msb == 0) {
-		  VLerror(yylloc, "failed to parse msb of range.");
-	    } else if (lsb == 0) {
-		  VLerror(yylloc, "failed to parse lsb of range.");
-	    } else if (! (cur->msb->is_the_same(msb) &&
-			  cur->lsb->is_the_same(lsb))) {
-		  cerr << msb->get_line() << ": bit range mismatch"
-			" for " << name << ": [" << *msb << ":" <<
-			*lsb << "] != [" << *cur->msb << ":" <<
-			*cur->lsb << "]" << endl;
-		  error_count += 1;
-	    }
-      }
+      assert((*range)[0]);
+      assert((*range)[1]);
+      cur->set_range((*range)[0], (*range)[1]);
 }
 
 void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
@@ -503,11 +464,11 @@ static void pform_set_reg_integer(const string&name)
 {
       PWire*cur = cur_module->get_wire(name);
       assert(cur);
-      assert(cur->type == NetNet::REG);
-      cur->type = NetNet::INTEGER;
+      bool rc = cur->set_wire_type(NetNet::INTEGER);
+      assert(rc);
 
-      cur->msb = new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH));
-      cur->lsb = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+      cur->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
+		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
 }
 
 void pform_set_reg_integer(list<string>*names)
@@ -527,8 +488,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<string>*names)
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    PWire*pp = new PWire(*cur);
-	    pp->port_type = NetNet::PINPUT;
+	    PWire*pp = new PWire(*cur, NetNet::IMPLICIT, NetNet::PINPUT);
 	    (*out)[idx] = pp;
       }
 
@@ -590,6 +550,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.28  1999/06/17 05:34:42  steve
+ *  Clean up interface of the PWire class,
+ *  Properly match wire ranges.
+ *
  * Revision 1.27  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

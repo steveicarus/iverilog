@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.h,v 1.4 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: PWire.h,v 1.5 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "LineInfo.h"
 # include <map>
+# include  "svector.h"
 class ostream;
 class PExpr;
 class Design;
@@ -37,22 +38,20 @@ class Design;
 class PWire : public LineInfo {
 
     public:
-      PWire(const string&n, NetNet::Type t =NetNet::IMPLICIT)
-      : name(n), type(t), port_type(NetNet::NOT_A_PORT), msb(0),
-	lsb(0), lidx(0), ridx(0)
-      { }
+      PWire(const string&n, NetNet::Type t, NetNet::PortType pt);
 
-      string name;
-      NetNet::Type type;
-      NetNet::PortType port_type;
 
-      PExpr*msb;
-      PExpr*lsb;
+      const string&name() const { return name_; }
 
-	// If this wire is actually a memory, these indices will give
-	// me the size and address range of the memory.
-      PExpr*lidx;
-      PExpr*ridx;
+      NetNet::Type get_wire_type() const;
+      bool set_wire_type(NetNet::Type);
+
+      NetNet::PortType get_port_type() const;
+      bool set_port_type(NetNet::PortType);
+
+      void set_range(PExpr*msb, PExpr*lsb);
+
+      void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
       map<string,string> attributes;
 
@@ -61,6 +60,21 @@ class PWire : public LineInfo {
 
       void elaborate(Design*, const string&path) const;
 
+    private:
+      string name_;
+      NetNet::Type type_;
+      NetNet::PortType port_type_;
+
+	// These members hold expressions for the bit width of the
+	// wire. If they do not exist, the wire is 1 bit wide.
+      svector<PExpr*>msb_;
+      svector<PExpr*>lsb_;
+
+	// If this wire is actually a memory, these indices will give
+	// me the size and address range of the memory.
+      PExpr*lidx_;
+      PExpr*ridx_;
+
     private: // not implemented
       PWire(const PWire&);
       PWire& operator= (const PWire&);
@@ -68,6 +82,10 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.5  1999/06/17 05:34:42  steve
+ *  Clean up interface of the PWire class,
+ *  Properly match wire ranges.
+ *
  * Revision 1.4  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *

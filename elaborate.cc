@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.45 1999/06/15 05:38:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.46 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 /*
@@ -100,70 +100,82 @@ static const map<string,PUdp*>*   udplist = 0;
  */
 void PWire::elaborate(Design*des, const string&path) const
 {
-      NetNet::Type wtype = type;
+      NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
 	    wtype = NetNet::WIRE;
 
       unsigned wid = 1;
 
-	/* Wires, registers and memories can have a width, expressed
-	   as the msb index and lsb index. */
-      if (msb && lsb) {
-	    verinum*mval = msb->eval_const(des, path);
-	    if (mval == 0) {
-		  cerr << msb->get_line() << ": Unable to evaluate "
-			"constant expression ``" << *msb << "''." <<
-			endl;
-		  des->errors += 1;
-		  return;
-	    }
-	    verinum*lval = lsb->eval_const(des, path);
-	    if (mval == 0) {
-		  cerr << lsb->get_line() << ": Unable to evaluate "
-			"constant expression ``" << *lsb << "''." <<
-			endl;
-		  des->errors += 1;
-		  return;
+      if (msb_.count()) {
+	    svector<long>mnum (msb_.count());
+	    svector<long>lnum (msb_.count());
+
+	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
+		  verinum*mval = msb_[idx]->eval_const(des,path);
+		  if (mval == 0) {
+			cerr << msb_[idx]->get_line() << ": Unable to "
+			      "evaluate constant expression ``" <<
+			      *msb_[idx] << "''." << endl;
+			des->errors += 1;
+			return;
+		  }
+		  verinum*lval = lsb_[idx]->eval_const(des, path);
+		  if (mval == 0) {
+			cerr << lsb_[idx]->get_line() << ": Unable to "
+			      "evaluate constant expression ``" <<
+			      *lsb_[idx] << "''." << endl;
+			des->errors += 1;
+			return;
+		  }
+
+		  mnum[idx] = mval->as_long();
+		  lnum[idx] = lval->as_long();
+		  delete mval;
+		  delete lval;
 	    }
 
-	    long mnum = mval->as_long();
-	    long lnum = lval->as_long();
-	    delete mval;
-	    delete lval;
+	    for (unsigned idx = 1 ;  idx < msb_.count() ;  idx += 1) {
+		  if ((mnum[idx] != mnum[0]) || (lnum[idx] != lnum[0])) {
+			cerr << get_line() << ": Inconsistent width, "
+			      "[" << mnum[idx] << ":" << lnum[idx] << "]"
+			      " vs. [" << mnum[0] << ":" << lnum[0] << "]"
+			      " for signal ``" << name_ << "''" << endl;
+			des->errors += 1;
+			return;
+		  }
+	    }
 
-	    if (mnum > lnum)
-		  wid = mnum - lnum + 1;
+	    if (mnum[0] > lnum[0])
+		  wid = mnum[0] - lnum[0] + 1;
 	    else
-		  wid = lnum - mnum + 1;
+		  wid = lnum[0] - mnum[0] + 1;
 
-      } else if (msb) {
-	    verinum*val = msb->eval_const(des, path);
-	    assert(val);
-	    assert(val->as_ulong() > 0);
-	    wid = val->as_ulong();
+
       }
 
-      if (lidx || ridx) {
+      if (lidx_ || ridx_) {
+	    assert(lidx_ && ridx_);
+
 	      // If the register has indices, then this is a
 	      // memory. Create the memory object.
-	    verinum*lval = lidx->eval_const(des, path);
+	    verinum*lval = lidx_->eval_const(des, path);
 	    assert(lval);
-	    verinum*rval = ridx->eval_const(des, path);
+	    verinum*rval = ridx_->eval_const(des, path);
 	    assert(rval);
 
 	    long lnum = lval->as_long();
 	    long rnum = rval->as_long();
 	    delete lval;
 	    delete rval;
-	    NetMemory*sig = new NetMemory(path+"."+name, wid, lnum, rnum);
+	    NetMemory*sig = new NetMemory(path+"."+name_, wid, lnum, rnum);
 	    sig->set_attributes(attributes);
 	    des->add_memory(sig);
 
       } else {
 
-	    NetNet*sig = new NetNet(path + "." + name, wtype, wid);
+	    NetNet*sig = new NetNet(path + "." + name_, wtype, wid);
 	    sig->set_line(*this);
-	    sig->port_type(port_type);
+	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
 	    des->add_signal(sig);
       }
@@ -370,7 +382,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		    // for the position that matches the binding name.
 		  unsigned pidx = 0;
 		  while (pidx < nexp) {
-			if (pins_[idx].name == rmod->ports[pidx]->name)
+			if (pins_[idx].name == rmod->ports[pidx]->name())
 			      break;
 
 			pidx += 1;
@@ -439,14 +451,14 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	    assert(sig);
 	    NetNet*prt = des->find_signal(my_name + "." +
-					  rmod->ports[idx]->name);
+					  rmod->ports[idx]->name());
 	    assert(prt);
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths.
 	    if (prt->pin_count() != sig->pin_count()) {
 		  cerr << get_line() << ": Port " <<
-			rmod->ports[idx]->name << " of " << type_ <<
+			rmod->ports[idx]->name() << " of " << type_ <<
 			" expects " << prt->pin_count() << " pins, got " <<
 			sig->pin_count() << " from " << sig->name() << endl;
 		  des->errors += 1;
@@ -1563,6 +1575,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.46  1999/06/17 05:34:42  steve
+ *  Clean up interface of the PWire class,
+ *  Properly match wire ranges.
+ *
  * Revision 1.45  1999/06/15 05:38:39  steve
  *  Support case expression lists.
  *

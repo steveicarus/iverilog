@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.43 1999/06/16 03:13:29 steve Exp $"
+#ident "$Id: parse.y,v 1.44 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1057,38 +1057,31 @@ parameter_assign_list
 
 port
 	: IDENTIFIER
-		{ $$ = new PWire(*$1, NetNet::IMPLICIT);
-		  $$->port_type = NetNet::PIMPLICIT;
+		{ $$ = new PWire(*$1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
 		  $$->set_file(@1.text);
 		  $$->set_lineno(@1.first_line);
 		  delete $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ PWire*tmp = new PWire(*$1, NetNet::IMPLICIT);
-		  tmp->port_type = NetNet::PIMPLICIT;
+		{ PWire*tmp = new PWire(*$1, NetNet::IMPLICIT,
+					NetNet::PIMPLICIT);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
 			yyerror(@3, "msb expression of port bit select "
 			        "must be constant.");
-			delete $3;
-		  } else {
-			tmp->msb = $3;
 		  }
 		  if (!pform_expression_is_constant($5)) {
 			yyerror(@3, "lsb expression of port bit select "
 			        "must be constant.");
-			delete $5;
-		  } else {
-			tmp->lsb = $5;
 		  }
+		  tmp->set_range($3, $5);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "invalid port bit select");
-		  $$ = new PWire(*$1, NetNet::IMPLICIT);
-		  $$->port_type = NetNet::PIMPLICIT;
+		  $$ = new PWire(*$1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
 		  $$->set_file(@1.text);
 		  $$->set_lineno(@1.first_line);
 		  delete $1;
@@ -1583,16 +1576,14 @@ udp_port_decl
 	: K_input list_of_variables ';'
 		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire(*$2);
-		  pp->port_type = NetNet::POUTPUT;
+		{ PWire*pp = new PWire(*$2, NetNet::IMPLICIT, NetNet::POUTPUT);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_reg IDENTIFIER ';'
-		{ PWire*pp = new PWire(*$2, NetNet::REG);
-		  pp->port_type = NetNet::PIMPLICIT;
+		{ PWire*pp = new PWire(*$2, NetNet::REG, NetNet::PIMPLICIT);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  delete $2;

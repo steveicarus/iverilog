@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.22 1999/06/15 05:38:39 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.23 1999/06/17 05:34:42 steve Exp $"
 #endif
 
 /*
@@ -138,9 +138,9 @@ void PEBinary::dump(ostream&out) const
 
 void PWire::dump(ostream&out) const
 {
-      out << "    " << type;
+      out << "    " << type_;
 
-      switch (port_type) {
+      switch (port_type_) {
 	  case NetNet::PIMPLICIT:
 	    out << " (implicit input)";
 	    break;
@@ -157,18 +157,18 @@ void PWire::dump(ostream&out) const
 	    break;
       }
 
-      if (lsb || msb) {
-	    assert(lsb && msb);
-	    out << " [" << *msb << ":" << *lsb << "]";
+      for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
+	    assert(lsb_[idx] && msb_[idx]);
+	    out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
       }
 
-      out << " " << name;
+      out << " " << name_;
 
 	// If the wire has indices, dump them.
-      if (lidx || ridx) {
+      if (lidx_ || ridx_) {
 	    out << "[";
-	    if (lidx) out << *lidx;
-	    if (ridx) out << ":" << *ridx;
+	    if (lidx_) out << *lidx_;
+	    if (ridx_) out << ":" << *ridx_;
 	    out << "]";
       }
 
@@ -489,6 +489,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.23  1999/06/17 05:34:42  steve
+ *  Clean up interface of the PWire class,
+ *  Properly match wire ranges.
+ *
  * Revision 1.22  1999/06/15 05:38:39  steve
  *  Support case expression lists.
  *
