@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.9 2000/04/09 04:18:16 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.10 2000/06/03 02:22:15 steve Exp $"
 #endif
 
 /*
@@ -324,6 +324,8 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 
 static int sys_dumpvars_calltf(char*name)
 {
+      unsigned depth;
+      s_vpi_value value;
       s_vpi_time now;
       vpiHandle item;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -335,10 +337,24 @@ static int sys_dumpvars_calltf(char*name)
       }
 
       item = vpi_scan(argv);
+      switch (vpi_get(vpiType, item)) {
+	  case vpiConstant:
+	  case vpiNet:
+	  case vpiReg:
+	  case vpiMemoryWord:
+	    value.format = vpiIntVal;
+	    vpi_get_value(item, &value);
+	    break;
+	  default:
+	    value.value.integer = 0;
+	    break;
+      }
+
+      depth = value.value.integer == 0? 0xffffU : value.value.integer;
 
       assert(dump_file);
 
-      scan_scope(99, argv);
+      scan_scope(depth, argv);
 
       fprintf(dump_file, "$enddefinitions $end\n");
 
@@ -381,6 +397,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.10  2000/06/03 02:22:15  steve
+ *  Interpret the depth paramter of dumpvars.
+ *
  * Revision 1.9  2000/04/09 04:18:16  steve
  *  Catch duplicate $dumpvars of symbols (ajb)
  *
