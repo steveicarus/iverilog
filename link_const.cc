@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.6 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: link_const.cc,v 1.7 2000/11/20 01:41:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -69,7 +69,7 @@ bool link_drivers_constant(const Link&lnk)
 
 verinum::V driven_value(const Link&lnk)
 {
-      verinum::V val = verinum::Vx;
+      verinum::V val = lnk.get_init();
 
       const Nexus*nex = lnk.nexus();
       for (const Link*cur = nex->first_nlink()
@@ -90,11 +90,14 @@ verinum::V driven_value(const Link&lnk)
 	    }
       }
 
-      return lnk.get_init();
+      return val;
 }
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.7  2000/11/20 01:41:12  steve
+ *  Whoops, return the calculated constant value rom driven_value.
+ *
  * Revision 1.6  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *
