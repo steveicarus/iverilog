@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.25 2001/08/05 02:49:07 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.26 2001/08/31 22:59:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -139,6 +139,50 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 NetNet* NetEBComp::synthesize(Design*des)
 {
+      NetEConst*lcon = reinterpret_cast<NetEConst*>(left_);
+      NetEConst*rcon = reinterpret_cast<NetEConst*>(right_);
+
+	/* Handle the special case where one of the inputs is constant
+	   0. We can use an OR gate to do the comparison. Synthesize
+	   the non-const side as normal, then or(nor) the signals
+	   together to get result. */
+      if ((rcon && (rcon->value() == verinum(0UL,rcon->expr_width())))
+	  || (lcon && (lcon->value() == verinum(0UL,lcon->expr_width())))) {
+
+	    NetNet*lsig = rcon
+		  ? left_->synthesize(des)
+		  : right_->synthesize(des);
+	    NetScope*scope = lsig->scope();
+	    assert(scope);
+	    string path = des->local_symbol(scope->name());
+
+	    NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+	    osig->local_flag(true);
+
+	    NetLogic*gate;
+	    switch (op_) {
+		case 'e':
+		case 'E':
+		  gate = new NetLogic(scope, des->local_symbol(path),
+				      lsig->pin_count()+1, NetLogic::NOR);
+		  break;
+		case 'n':
+		case 'N':
+		  gate = new NetLogic(scope, des->local_symbol(path),
+				      lsig->pin_count()+1, NetLogic::OR);
+		  break;
+		default:
+		  assert(0);
+	    }
+
+	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), lsig->pin(idx));
+
+	    des->add_node(gate);
+	    return osig;
+      }
+
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
 
@@ -509,6 +553,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.26  2001/08/31 22:59:48  steve
+ *  synthesize the special case of compare with 0.
+ *
  * Revision 1.25  2001/08/05 02:49:07  steve
  *  Properly synthesize part selects.
  *
