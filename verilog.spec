@@ -4,7 +4,7 @@ Version: 0.8
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-0.8.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/v0.8/verilog-0.8.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
