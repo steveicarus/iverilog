@@ -1,7 +1,7 @@
 #ifndef __functor_H
 #define __functor_H
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.20 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: functor.h,v 1.21 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 /*
@@ -77,6 +77,9 @@ struct functor_t {
 
 	/* This method is called for each MUX. */
       virtual void lpm_mux(class Design*des, class NetMux*);
+
+	/* This method is called for each unary reduction gate. */
+      virtual void lpm_ureduce(class Design*des, class NetUReduce*);
 };
 
 struct proc_match_t {
@@ -92,6 +95,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.21  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.20  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

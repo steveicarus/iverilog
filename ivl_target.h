@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.137 2005/01/29 18:46:18 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.138 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -238,6 +238,12 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MUX    =  5,
       IVL_LPM_PART_VP= 15, /* part select: vector to part */
       IVL_LPM_PART_PV= 17, /* part select: part written to vector */
+      IVL_LPM_RE_AND = 20,
+      IVL_LPM_RE_NAND= 21,
+      IVL_LPM_RE_NOR = 22,
+      IVL_LPM_RE_OR  = 23,
+      IVL_LPM_RE_XNOR= 24,
+      IVL_LPM_RE_XOR = 25,
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SUB    =  8,
@@ -799,6 +805,11 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * (so the target need not worry about sign extension) but when doing
  * magnitude compare, the signedness does matter. In any case, the
  * result of the compare is always unsigned.
+ *
+ * - Reduction operators (IVL_LPM_RE_*)
+ * These devices have one input, a vector, and generate a single bit
+ * result. The width from the ivl_lpm_width is the width of the input
+ * vector.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -1470,6 +1481,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.138  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.137  2005/01/29 18:46:18  steve
  *  Netlist boolean expressions generate gate vectors.
  *

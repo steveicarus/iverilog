@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.154 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.155 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -370,6 +370,41 @@ void NetRamDq::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
 	<< name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetUReduce::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "reduction logic: ";
+      switch (type_) {
+	  case NONE:
+	    o << "NONE";
+	    break;
+	  case AND:
+	    o << "and";
+	    break;
+	  case OR:
+	    o << "or";
+	    break;
+	  case XOR:
+	    o << "xor";
+	    break;
+	  case NAND:
+	    o << "nand";
+	    break;
+	  case NOR:
+	    o << "nor";
+	    break;
+	  case XNOR:
+	    o << "xnor";
+	    break;
+      }
+      o << " #(" << rise_time()
+	<< "," << fall_time() << "," << decay_time() << ") " << name()
+	<< " scope=" << (scope()? scope()->name() : "")
+	<< endl;
+
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1094,6 +1129,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.155  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.154  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.115 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.116 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -755,6 +755,15 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.arith.b;
 
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	    assert(idx == 0);
+	    return net->u_.reduce.a;
+
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
@@ -912,6 +921,15 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.mux.q.pins[idx];
 
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	    assert(idx == 0);
+	    return net->u_.reduce.q;
+
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
@@ -1006,10 +1024,16 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.signed_flag;
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	    return 0;
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.signed_flag;
-	    return 0;
 	  case IVL_LPM_UFUNC:
 	    return 0;
 	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
@@ -1061,6 +1085,13 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	    return net->u_.reduce.width;
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.width;
@@ -1953,6 +1984,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.116  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.115  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

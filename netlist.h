@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.331 2005/01/30 01:43:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.332 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 /*
@@ -1303,6 +1303,32 @@ class NetLogic  : public NetNode {
 
       explicit NetLogic(NetScope*s, perm_string n, unsigned pins,
 			TYPE t, unsigned wid);
+
+      TYPE type() const;
+      unsigned width() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*, functor_t*);
+
+    private:
+      TYPE type_;
+      unsigned width_;
+};
+
+/*
+ * This class represents *reduction* logic operators. Certain boolean
+ * logic operators have reduction forms which take in a vector and
+ * return a single bit that is calculated by applying the logic
+ * operation through the width of the input vector. These correspond
+ * to reduction unary operators in Verilog.
+ */
+class NetUReduce  : public NetNode {
+
+    public:
+      enum TYPE {NONE, AND, OR, XOR, NAND, NOR, XNOR};
+
+      NetUReduce(NetScope*s, perm_string n, TYPE t, unsigned wid);
 
       TYPE type() const;
       unsigned width() const;
@@ -3370,6 +3396,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.332  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.331  2005/01/30 01:43:48  steve
  *  Clarify width argument to NetNet constructor.
  *

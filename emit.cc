@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.81 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: emit.cc,v 1.82 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -125,6 +125,12 @@ bool NetRamDq::emit_node(struct target_t*tgt) const
       tgt->lpm_ram_dq(this);
       return true;
 }
+
+bool NetUReduce::emit_node(struct target_t*tgt) const
+{
+      return tgt->ureduce(this);
+}
+
 
 bool NetUserFunc::emit_node(struct target_t*tgt) const
 {
@@ -512,6 +518,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.82  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.81  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

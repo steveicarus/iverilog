@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.137 2005/01/28 05:39:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.138 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -910,6 +910,58 @@ void dll_target::logic(const NetLogic*net)
       obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
+}
+
+bool dll_target::ureduce(const NetUReduce*net)
+{
+      struct ivl_lpm_s*obj = new struct ivl_lpm_s;
+      switch (net->type()) {
+	  case NetUReduce::NONE:
+	    assert(0);
+	    return false;
+	  case NetUReduce::AND:
+	    obj->type = IVL_LPM_RE_AND;
+	    break;
+	  case NetUReduce::OR:
+	    obj->type = IVL_LPM_RE_OR;
+	    break;
+	  case NetUReduce::XOR:
+	    obj->type = IVL_LPM_RE_XOR;
+	    break;
+	  case NetUReduce::NAND:
+	    obj->type = IVL_LPM_RE_NAND;
+	    break;
+	  case NetUReduce::NOR:
+	    obj->type = IVL_LPM_RE_NOR;
+	    break;
+	  case NetUReduce::XNOR:
+	    obj->type = IVL_LPM_RE_XNOR;
+	    break;
+      }
+
+      obj->name = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.reduce.width = net->width();
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.reduce.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.reduce.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.reduce.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
 }
 
 void dll_target::net_case_cmp(const NetCaseCmp*net)
@@ -2174,6 +2226,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.138  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.137  2005/01/28 05:39:33  steve
  *  Simplified NetMult and IVL_LPM_MULT.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.69 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: target.h,v 1.70 2005/02/03 04:56:21 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -91,6 +91,7 @@ struct target_t {
 
 	/* Output a gate (called for each gate) */
       virtual void logic(const NetLogic*);
+      virtual bool ureduce(const NetUReduce*); /* unary reduction operator */
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void net_case_cmp(const NetCaseCmp*);
@@ -170,6 +171,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.70  2005/02/03 04:56:21  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.69  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

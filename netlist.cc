@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.234 2005/01/28 05:39:33 steve Exp $"
+#ident "$Id: netlist.cc,v 1.235 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2210,6 +2210,26 @@ unsigned NetLogic::width() const
       return width_;
 }
 
+NetUReduce::NetUReduce(NetScope*scope, perm_string n,
+		       NetUReduce::TYPE t, unsigned wid)
+: NetNode(scope, n, 2), type_(t), width_(wid)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"));
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("I"));
+}
+
+NetUReduce::TYPE NetUReduce::type() const
+{
+      return type_;
+}
+
+unsigned NetUReduce::width() const
+{
+      return width_;
+}
+
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
 : name_(n), proc_(0), ports_(po)
 {
@@ -2249,6 +2269,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.235  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.234  2005/01/28 05:39:33  steve
  *  Simplified NetMult and IVL_LPM_MULT.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.32 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: functor.cc,v 1.33 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,6 +76,10 @@ void functor_t::lpm_mult(class Design*, class NetMult*)
 }
 
 void functor_t::lpm_mux(class Design*, class NetMux*)
+{
+}
+
+void functor_t::lpm_ureduce(class Design*, class NetUReduce*)
 {
 }
 
@@ -206,6 +210,11 @@ void NetMux::functor_node(Design*des, functor_t*fun)
       fun->lpm_mux(des, this);
 }
 
+void NetUReduce::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_ureduce(des, this);
+}
+
 proc_match_t::~proc_match_t()
 {
 }
@@ -267,6 +276,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.33  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.32  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

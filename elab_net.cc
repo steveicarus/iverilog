@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.149 2005/01/30 05:20:38 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.150 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2306,6 +2306,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       NetNet* sig = 0;
       NetLogic*gate;
 
+
 	// Handle the special case of a 2's complement of a constant
 	// value. This can be reduced to a no-op on a precalculated
 	// result.
@@ -2354,7 +2355,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       assert(sub_sig);
 
       bool reduction=false;
-      NetLogic::TYPE gtype = NetLogic::AND;
+      NetUReduce::TYPE rtype = NetUReduce::NONE;
 
       switch (op_) {
 	  case '~': // Bitwise NOT
@@ -2375,17 +2376,17 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
-	    reduction=true; gtype = NetLogic::NOR; break;
+	    reduction=true; rtype = NetUReduce::NOR; break;
 	  case '&': // Reduction AND
-	    reduction=true; gtype = NetLogic::AND; break;
+	    reduction=true; rtype = NetUReduce::AND; break;
 	  case '|': // Reduction OR
-	    reduction=true; gtype = NetLogic::OR; break;
+	    reduction=true; rtype = NetUReduce::OR; break;
 	  case '^': // Reduction XOR
-	    reduction=true; gtype = NetLogic::XOR; break;
+	    reduction=true; rtype = NetUReduce::XOR; break;
 	  case 'A': // Reduction NAND (~&)
-	    reduction=true; gtype = NetLogic::NAND; break;
+	    reduction=true; rtype = NetUReduce::NAND; break;
 	  case 'X': // Reduction XNOR (~^)
-	    reduction=true; gtype = NetLogic::XNOR; break;
+	    reduction=true; rtype = NetUReduce::XNOR; break;
 
 	  case '-': // Unary 2's complement.
 	    sig = new NetNet(scope, scope->local_symbol(),
@@ -2443,21 +2444,24 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
-      if (reduction) {
-	    cerr << get_line()
-		 << ": XXXX: PEUnary::elab_net reductions not complete." << endl;
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), gtype, 1);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
+      if (reduction) {
+	    NetUReduce*rgate;
+
+	      // The output of a reduction operator is 1 bit
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
+	    sig->local_flag(true);
+
+	    rgate = new NetUReduce(scope, scope->local_symbol(),
+				   rtype, sub_sig->vector_width());
+	    rgate->set_line(*this);
+	    connect(rgate->pin(0), sig->pin(0));
+	    connect(rgate->pin(1), sub_sig->pin(0));
+
+	    des->add_node(rgate);
+	    rgate->rise_time(rise);
+	    rgate->fall_time(fall);
+	    rgate->decay_time(decay);
       }
 
       return sig;
@@ -2465,6 +2469,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.150  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.149  2005/01/30 05:20:38  steve
  *  Elaborate unary subtract and NOT in netlist
  *  contexts, and concatenation too.
@@ -2509,171 +2516,5 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
  *
  * Revision 1.136  2004/10/04 00:25:46  steve
  *  Error message to match assertion.
- *
- * Revision 1.135  2004/09/24 04:25:19  steve
- *  Detect and prevent implicit declaration of hierarchical names.
- *
- * Revision 1.134  2004/08/28 15:42:12  steve
- *  Add support for $unsigned.
- *
- * Revision 1.133  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.132  2004/06/24 15:22:23  steve
- *  Code cleanup from Larry.
- *
- * Revision 1.131  2004/06/22 18:41:48  steve
- *  Fix broken calcuation of NE for constant.
- *
- * Revision 1.130  2004/06/18 16:38:22  steve
- *  compare-to-constant uses sig len, not val len.
- *
- * Revision 1.129  2004/06/16 23:32:58  steve
- *  Handle equality compare to constants specially.
- *
- * Revision 1.128  2004/06/13 04:56:53  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.127  2004/06/01 01:04:57  steve
- *  Fix synthesis method for logical and/or
- *
- * Revision 1.126  2004/05/31 23:34:36  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.125  2004/02/20 18:53:34  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.124  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.123  2004/02/15 04:23:48  steve
- *  Fix evaluation of compare to constant expression.
- *
- * Revision 1.122  2003/10/30 04:31:34  steve
- *  Catch real variables in net expressions.
- *
- * Revision 1.121  2003/10/20 01:44:28  steve
- *  memory index need not be self determined width.
- *
- * Revision 1.120  2003/09/23 03:31:28  steve
- *  Catch unsized expressions in continuous assigns.
- *
- * Revision 1.119  2003/09/19 03:50:12  steve
- *  Remove find_memory method from Design class.
- *
- * Revision 1.118  2003/09/13 01:30:07  steve
- *  Missing case warnings.
- *
- * Revision 1.117  2003/09/03 04:29:18  steve
- *  Only build a mux as wide as can be selected.
- *
- * Revision 1.116  2003/08/28 04:11:17  steve
- *  Spelling patch.
- *
- * Revision 1.115  2003/08/05 03:01:58  steve
- *  Primitive outputs have same limitations as continuous assignment.
- *
- * Revision 1.114  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.113  2003/05/01 01:13:57  steve
- *  More complete bit range internal error message,
- *  Better test of part select ranges on non-zero
- *  signal ranges.
- *
- * Revision 1.112  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.111  2003/03/29 05:51:25  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.110  2003/03/26 06:16:38  steve
- *  Some better internal error messages.
- *
- * Revision 1.109  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.108  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.107  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.106  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.105  2003/01/19 00:35:39  steve
- *  Detect null arguments to concatenation operator.
- *
- * Revision 1.104  2003/01/17 05:48:35  steve
- *  Remove useless variable.
- *
- * Revision 1.103  2002/12/06 03:08:19  steve
- *  Reword some error messages for clarity.
- *
- * Revision 1.102  2002/11/09 19:20:48  steve
- *  Port expressions for output ports are lnets, not nets.
- *
- * Revision 1.101  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.100  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.99  2002/09/08 01:37:13  steve
- *  Fix padding of operand of unary minus.
- *
- * Revision 1.98  2002/08/31 03:48:50  steve
- *  Fix reverse bit ordered bit select in continuous assignment.
- *
- * Revision 1.97  2002/08/21 02:28:03  steve
- *  Carry mux output delays.
- *
- * Revision 1.96  2002/08/14 03:57:27  steve
- *  Constants can self-size themselves in unsized contexts.
- *
- * Revision 1.95  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.94  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.93  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.92  2002/06/22 04:22:40  steve
- *  Wide unary minus in continuous assignments.
- *
- * Revision 1.91  2002/06/19 04:20:03  steve
- *  Remove NetTmp and add NetSubnet class.
- *
- * Revision 1.90  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.89  2002/04/23 03:53:59  steve
- *  Add support for non-constant bit select.
- *
- * Revision 1.88  2002/04/22 00:53:39  steve
- *  Do not allow implicit wires in sensitivity lists.
- *
- * Revision 1.87  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.86  2002/01/23 05:23:17  steve
- *  No implicit declaration in assign l-values.
- *
- * Revision 1.85  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.84  2001/12/31 04:23:59  steve
- *  Elaborate multiply nets with constant operands ad NetConst.
  */
 

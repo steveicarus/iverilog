@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.118 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: t-dll.h,v 1.119 2005/02/03 04:56:20 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -71,6 +71,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void event(const NetEvent*);
       void variable(const NetVariable*);
       void logic(const NetLogic*);
+      bool ureduce(const NetUReduce*);
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
       void lpm_add_sub(const NetAddSub*);
@@ -353,6 +354,11 @@ struct ivl_lpm_s {
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q, a;
 	    } part;
+
+	    struct ivl_lpm_reduce_s {
+		  unsigned width;
+		  ivl_nexus_t q,  a;
+	    } reduce;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
@@ -680,6 +686,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.119  2005/02/03 04:56:20  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.118  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

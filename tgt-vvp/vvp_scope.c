@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.112 2005/01/22 16:22:13 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.113 2005/02/03 04:56:21 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -438,6 +438,12 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
@@ -1618,6 +1624,16 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
       fprintf(vvp_out, ", %u, %u, %u;\n", base, width, signal_width);
 }
 
+/*
+ * Draw unary reduction devices.
+ */
+static void draw_lpm_re(ivl_lpm_t net, const char*type)
+{
+      fprintf(vvp_out, "L_%p .reduce/%s ", net, type);
+      draw_input_from_net(ivl_lpm_data(net,0));
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
@@ -1660,6 +1676,25 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_MUX:
 	    draw_lpm_mux(net);
+	    return;
+
+	  case IVL_LPM_RE_AND:
+	    draw_lpm_re(net, "and");
+	    return;
+	  case IVL_LPM_RE_OR:
+	    draw_lpm_re(net, "or");
+	    return;
+	  case IVL_LPM_RE_XOR:
+	    draw_lpm_re(net, "xor");
+	    return;
+	  case IVL_LPM_RE_NAND:
+	    draw_lpm_re(net, "nand");
+	    return;
+	  case IVL_LPM_RE_NOR:
+	    draw_lpm_re(net, "nor");
+	    return;
+	  case IVL_LPM_RE_XNOR:
+	    draw_lpm_re(net, "xnor");
 	    return;
 
 	  case IVL_LPM_SHIFTL:
@@ -1794,6 +1829,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.113  2005/02/03 04:56:21  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.112  2005/01/22 16:22:13  steve
  *  LPM_CMP_NE/EQ are vectored devices.
  *

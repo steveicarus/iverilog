@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.105 2005/01/30 05:09:04 steve Exp $"
+#ident "$Id: stub.c,v 1.106 2005/02/03 04:56:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -380,6 +380,48 @@ static void show_lpm_mult(ivl_lpm_t net)
       }
 }
 
+/*
+ * The reduction operators have similar characteristics and are
+ * displayed here.
+ */
+static void show_lpm_re(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      const char*type = "?";
+      unsigned width = ivl_lpm_width(net);
+
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_RE_AND:
+	    type = "AND";
+	    break;
+	  default:
+	    break;
+      }
+
+      fprintf(out, "  LPM_RE_%s: <width=%u>\n", type, width);
+
+      nex = ivl_lpm_q(net, 0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+
+      nex = ivl_lpm_data(net, 0);
+      fprintf(out, "    D: %s\n", ivl_nexus_name(nex));
+
+      nex = ivl_lpm_q(net, 0);
+
+      if (1 != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Width of Q is %u, expecting 1\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_data(net, 0);
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Width of input is %u, expecting %u\n",
+		    width_of_nexus(nex), width);
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_sub(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -435,6 +477,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_CONCAT:
 	    show_lpm_concat(net);
+	    break;
+
+	  case IVL_LPM_RE_AND:
+	    show_lpm_re(net);
 	    break;
 
 	  case IVL_LPM_SHIFTL: {
@@ -1012,6 +1058,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.106  2005/02/03 04:56:21  steve
+ *  laborate reduction gates into LPM_RED_ nodes.
+ *
  * Revision 1.105  2005/01/30 05:09:04  steve
  *  Support LPM_SUB
  *
