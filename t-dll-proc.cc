@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.33 2001/07/27 02:41:56 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.34 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,22 +135,10 @@ void dll_target::proc_assign(const NetAssign*net)
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
 
-	    cur->width_ = asn->pin_count();
-	    cur->type_ = IVL_LVAL_REG;
-
-	    if (cur->width_ > 1) {
-		  cur->n.pins_ = new ivl_nexus_t[cur->width_];
-		  for (unsigned pp = 0 ;  pp < cur->width_ ;  pp += 1) {
-			const Nexus*nex = asn->pin(pp).nexus();
-			assert(nex->t_cookie());
-			cur->n.pins_[pp] = (ivl_nexus_t)nex->t_cookie();
-		  }
-
-	    } else {
-		  const Nexus*nex = asn->pin(0).nexus();
-		  assert(nex->t_cookie());
-		  cur->n.pin_ = (ivl_nexus_t)nex->t_cookie();
-	    }
+	    cur->width_ = asn->lwidth();
+	    cur->loff_  = asn->get_loff();
+	    cur->type_  = IVL_LVAL_REG;
+	    cur->n.sig  = find_signal(des_.root_, asn->sig());
 
 	    cur->idx = 0;
 	    if (asn->bmux()) {
@@ -173,8 +161,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 {
       unsigned cnt = net->l_val_count();
 
-      unsigned long delay_val = net->l_val(0)->rise_time();
-
+      unsigned long delay_val = net->rise_time();
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
@@ -188,24 +175,10 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
 
-	    assert(asn->rise_time() == delay_val);
-
 	    cur->type_ = IVL_LVAL_REG;
-	    cur->width_ = asn->pin_count();
-
-	    if (cur->width_ > 1) {
-		  cur->n.pins_ = new ivl_nexus_t[cur->width_];
-		  for (unsigned pp = 0 ;  pp < cur->width_ ;  pp += 1) {
-			const Nexus*nex = asn->pin(pp).nexus();
-			assert(nex->t_cookie());
-			cur->n.pins_[pp] = (ivl_nexus_t)nex->t_cookie();
-		  }
-
-	    } else {
-		  const Nexus*nex = asn->pin(0).nexus();
-		  assert(nex->t_cookie());
-		  cur->n.pin_ = (ivl_nexus_t)nex->t_cookie();
-	    }
+	    cur->width_ = asn->lwidth();
+	    cur->loff_  = asn->get_loff();
+	    cur->n.sig = find_signal(des_.root_, asn->sig());
 
 	    cur->idx = 0;
 	    if (asn->bmux()) {
@@ -245,9 +218,9 @@ void dll_target::proc_assign_mem(const NetAssignMem*net)
       struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_;
 
       cur->type_ = IVL_LVAL_MEM;
-      cur->n.mem_ = lookup_memory_(net->memory());
-      assert(cur->n.mem_);
-      cur->width_ = ivl_memory_width(cur->n.mem_);
+      cur->n.mem = lookup_memory_(net->memory());
+      assert(cur->n.mem);
+      cur->width_ = ivl_memory_width(cur->n.mem);
       
       assert(expr_ == 0);
 
@@ -274,8 +247,8 @@ void dll_target::proc_assign_mem_nb(const NetAssignMemNB*net)
       struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_;
 
       cur->type_ = IVL_LVAL_MEM;
-      cur->n.mem_ = lookup_memory_(net->memory());
-      cur->width_ = ivl_memory_width(cur->n.mem_);
+      cur->n.mem = lookup_memory_(net->memory());
+      cur->width_ = ivl_memory_width(cur->n.mem);
       
       assert(expr_ == 0);
 
@@ -693,6 +666,15 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.34  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.33  2001/07/27 02:41:56  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

@@ -63,8 +63,10 @@ ivl_lpm_width
 ivl_lval_idx
 ivl_lval_mem
 ivl_lval_mux
+ivl_lval_part_off
 ivl_lval_pin
 ivl_lval_pins
+ivl_lval_sig
 
 ivl_memory_basename
 ivl_memory_name

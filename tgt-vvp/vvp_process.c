@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.41 2001/08/16 03:45:17 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.42 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -58,7 +58,7 @@ unsigned bitchar_to_idx(char bit)
  * instruction to perform the actual assignment, and calculate any
  * lvalues and rvalues that need calculating.
  *
- * The set_to_nexus function takes a particular nexus and generates
+ * The set_to_lvariable function takes a particular nexus and generates
  * the %set statements to assign the value.
  *
  * The show_stmt_assign function looks at the assign statement, scans
@@ -66,21 +66,13 @@ unsigned bitchar_to_idx(char bit)
  * nexus.
  */
 
-static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
+static void set_to_lvariable(ivl_lval_t lval, unsigned idx, unsigned bit)
 {
-      unsigned idx;
+      ivl_signal_t sig  = ivl_lval_sig(lval);
+      unsigned part_off = ivl_lval_part_off(lval);
 
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-	    unsigned pin = ivl_nexus_ptr_pin(ptr);
-	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-
-	    if (sig == 0)
-		  continue;
-
-	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-		    vvp_mangle_id(ivl_signal_name(sig)), pin, bit);
-      }
+      fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
+	      vvp_mangle_id(ivl_signal_name(sig)), idx+part_off, bit);
 }
 
 static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
@@ -91,21 +83,15 @@ static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
 	      vvp_mangle_id(ivl_memory_name(mem)), bit);
 }
 
-static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
+static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
+				unsigned bit, unsigned delay)
 {
-      unsigned idx;
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      unsigned part_off = ivl_lval_part_off(lval);
 
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-	    unsigned pin = ivl_nexus_ptr_pin(ptr);
-	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-
-	    if (sig == 0)
-		  continue;
-
-	    fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
-		    vvp_mangle_id(ivl_signal_name(sig)), pin, delay, bit);
-      }
+      fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
+	      vvp_mangle_id(ivl_signal_name(sig)),
+	      idx+part_off, delay, bit);
 }
 
 static void assign_to_memory(ivl_memory_t mem, unsigned idx, 
@@ -128,74 +114,91 @@ static int show_stmt_assign(ivl_statement_t net)
 	   about generating code to evaluate the r-value expressions. */
 
       if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
-	    unsigned idx;
+	    unsigned lidx;
 	    const char*bits = ivl_expr_bits(rval);
 	    unsigned wid = ivl_expr_width(rval);
+	    unsigned cur_rbit = 0;
 
-	      /* XXXX Only single l-value supported for now */
-	    assert(ivl_stmt_lvals(net) == 1);
+	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+		  unsigned idx;
+		  unsigned bit_limit = wid - cur_rbit;
+		  lval = ivl_stmt_lval(net, lidx);
 
-	    lval = ivl_stmt_lval(net, 0);
-	      /* XXXX No mux support yet. */
-	    assert(ivl_lval_mux(lval) == 0);
-	    mem = ivl_lval_mem(lval);
+		    /* XXXX No mux support yet. */
+		  assert(ivl_lval_mux(lval) == 0);
+		  mem = ivl_lval_mem(lval);
 
-	    if (mem) 
-		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
+		  if (mem) 
+			draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
-	    if (wid > ivl_lval_pins(lval))
-		  wid = ivl_lval_pins(lval);
+		  if (bit_limit > ivl_lval_pins(lval))
+			bit_limit = ivl_lval_pins(lval);
 
-	    for (idx = 0 ;  idx < wid ;  idx += 1)
-		  if (mem)
-			set_to_memory(mem, idx, bitchar_to_idx(bits[idx]));
-		  else
-			set_to_nexus(ivl_lval_pin(lval, idx),
-				     bitchar_to_idx(bits[idx]));
+		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			if (mem)
+			      set_to_memory(mem, idx,
+					    bitchar_to_idx(bits[cur_rbit]));
+			else
+			      set_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]));
 
-	    for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		  if (mem)
-			set_to_memory(mem, idx, 0);
-		  else
-			set_to_nexus(ivl_lval_pin(lval, idx), 0);
+			cur_rbit += 1;
+		  }
+
+		  for (idx = bit_limit ; idx < ivl_lval_pins(lval) ; idx += 1)
+			if (mem)
+			      set_to_memory(mem, idx, 0);
+			else
+			      set_to_lvariable(lval, idx, 0);
+
+	    }
 
 	    return 0;
       }
 
       { struct vector_info res = draw_eval_expr(rval);
         unsigned wid = res.wid;
-	unsigned idx;
+	unsigned lidx;
+	unsigned cur_rbit = 0;
 
-	  /* XXXX Only single l-value supported for now */
-	assert(ivl_stmt_lvals(net) == 1);
+	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	      unsigned idx;
+	      unsigned bit_limit = wid - cur_rbit;
+	      lval = ivl_stmt_lval(net, lidx);
 
-	lval = ivl_stmt_lval(net, 0);
-	  /* XXXX No mux support yet. */
-	assert(ivl_lval_mux(lval) == 0);
-	mem = ivl_lval_mem(lval);
+		/* XXXX No mux support yet. */
+	      assert(ivl_lval_mux(lval) == 0);
 
-	if (ivl_lval_pins(lval) < wid)
-	      wid = ivl_lval_pins(lval);
+	      mem = ivl_lval_mem(lval);
+	      if (mem) 
+		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
-	if (mem) 
-	      draw_memory_index_expr(mem, ivl_lval_idx(lval));
-	
-	for (idx = 0 ;  idx < wid ;  idx += 1) {
-	      unsigned bidx = res.base < 4 ? res.base : (res.base+idx);
-	      if (mem)
-		    set_to_memory(mem, idx, bidx);
-	      else
-		    set_to_nexus(ivl_lval_pin(lval, idx), bidx);
+	      if (bit_limit > ivl_lval_pins(lval))
+		    bit_limit = ivl_lval_pins(lval);
+
+	      for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+		    unsigned bidx = res.base < 4
+			  ? res.base
+			  : (res.base+cur_rbit);
+		    if (mem)
+			  set_to_memory(mem, idx, bidx);
+		    else
+			  set_to_lvariable(lval, idx, bidx);
+
+		    cur_rbit += 1;
+	      }
+
+	      for (idx = bit_limit ; idx < ivl_lval_pins(lval) ; idx += 1)
+		    if (mem)
+			  set_to_memory(mem, idx, 0);
+		    else
+			  set_to_lvariable(lval, idx, 0);
+
 	}
 
-	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-	      if (mem)
-		    set_to_memory(mem, idx, 0);
-	      else
-		    set_to_nexus(ivl_lval_pin(lval, idx), 0);
-	
 	clr_vector(res);
       }
+
 
       return 0;
 }
@@ -219,72 +222,89 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	   about generating code to evaluate the r-value expressions. */
 
       if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
-	    unsigned idx;
+	    unsigned lidx;
 	    const char*bits = ivl_expr_bits(rval);
 	    unsigned wid = ivl_expr_width(rval);
+	    unsigned cur_rbit = 0;
 
-	      /* XXXX Only single l-value supported for now */
-	    assert(ivl_stmt_lvals(net) == 1);
+	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+		  unsigned idx;
+		  unsigned bit_limit = wid - cur_rbit;
+		  lval = ivl_stmt_lval(net, lidx);
 
-	    lval = ivl_stmt_lval(net, 0);
-	      /* XXXX No mux support yet. */
-	    assert(ivl_lval_mux(lval) == 0);
-	    mem = ivl_lval_mem(lval);
+		    /* XXXX No mux support yet. */
+		  assert(ivl_lval_mux(lval) == 0);
 
-	    if (mem) 
-		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
-
-	    if (wid > ivl_lval_pins(lval))
-		  wid = ivl_lval_pins(lval);
-
-	    for (idx = 0 ;  idx < wid ;  idx += 1)
+		  mem = ivl_lval_mem(lval);
 		  if (mem)
-			assign_to_memory(mem, idx, 
-					 bitchar_to_idx(bits[idx]), delay);
-		  else
-			assign_to_nexus(ivl_lval_pin(lval, idx),
-					bitchar_to_idx(bits[idx]), delay);
-	    
-	    for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		  if (mem)
-			assign_to_memory(mem, idx, 0, delay);
-		  else
-			assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
-	    
+			draw_memory_index_expr(mem, ivl_lval_idx(lval));
+
+		  if (bit_limit > ivl_lval_pins(lval))
+			bit_limit = ivl_lval_pins(lval);
+
+		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			if (mem)
+			      assign_to_memory(mem, idx, 
+					       bitchar_to_idx(bits[cur_rbit]),
+					       delay);
+			else
+			      assign_to_lvariable(lval, idx,
+						  bitchar_to_idx(bits[cur_rbit]),
+						  delay);
+
+			cur_rbit += 1;
+		  }
+
+		  for (idx = bit_limit; idx < ivl_lval_pins(lval); idx += 1)
+			if (mem)
+			      assign_to_memory(mem, idx, 0, delay);
+			else
+			      assign_to_lvariable(lval, idx, 0, delay);
+
+	    }
 	    return 0;
       }
 
+
       { struct vector_info res = draw_eval_expr(rval);
         unsigned wid = res.wid;
-	unsigned idx;
+	unsigned lidx;
+	unsigned cur_rbit = 0;
 
-	  /* XXXX Only single l-value supported for now */
-	assert(ivl_stmt_lvals(net) == 1);
+	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	      unsigned idx;
+	      unsigned bit_limit = wid - cur_rbit;
+	      lval = ivl_stmt_lval(net, lidx);
 
-	lval = ivl_stmt_lval(net, 0);
-	  /* XXXX No mux support yet. */
-	assert(ivl_lval_mux(lval) == 0);
-	mem = ivl_lval_mem(lval);
+		/* XXXX No mux support yet. */
+	      assert(ivl_lval_mux(lval) == 0);
 
-	if (ivl_lval_pins(lval) < wid)
-	      wid = ivl_lval_pins(lval);
+	      mem = ivl_lval_mem(lval);
+	      if (mem) 
+		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
-	if (mem) 
-	      draw_memory_index_expr(mem, ivl_lval_idx(lval));
-	
-	for (idx = 0 ;  idx < wid ;  idx += 1) {
-	      unsigned bidx = res.base < 4 ? res.base : (res.base+idx);
-	      if (mem)
-		    assign_to_memory(mem, idx, bidx, delay);
-	      else
-		    assign_to_nexus(ivl_lval_pin(lval, idx), bidx, delay);
+	      if (bit_limit > ivl_lval_pins(lval))
+		    bit_limit = ivl_lval_pins(lval);
+
+	      for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+		    unsigned bidx = res.base < 4
+			  ? res.base
+			  : (res.base+cur_rbit);
+		    if (mem)
+			  assign_to_memory(mem, idx, bidx, delay);
+		    else
+			  assign_to_lvariable(lval, idx, bidx, delay);
+
+		    cur_rbit += 1;
+	      }
+
+	      for (idx = bit_limit ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+		    if (mem)
+			  assign_to_memory(mem, idx, 0, delay);
+		    else
+			  assign_to_lvariable(lval, idx, 0, delay);
+
 	}
-	
-	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-	      if (mem)
-		    assign_to_memory(mem, idx, 0, delay);
-	      else
-		    assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
 
 	clr_vector(res);
       }
@@ -931,6 +951,15 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.42  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.41  2001/08/16 03:45:17  steve
  *  statement ends after while loop labels.
  *

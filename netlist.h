@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.213 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.214 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 /*
@@ -1162,10 +1162,10 @@ class NetProc : public LineInfo {
  * should know that this is not a guarantee.
  */
 
-class NetAssign_ : public NetNode {
+class NetAssign_ {
 
     public:
-      NetAssign_(const string&n, unsigned w);
+      NetAssign_(NetNet*sig);
       ~NetAssign_();
 
 	// If this expression exists, then only a single bit is to be
@@ -1173,21 +1173,32 @@ class NetAssign_ : public NetNode {
 	// the pin that gets the value.
       const NetExpr*bmux() const;
 
+      unsigned get_loff() const;
+
       void set_bmux(NetExpr*);
+      void set_part(unsigned loff, unsigned wid);
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it not
 	// nexessarily the same as the pin_count().
       unsigned lwidth() const;
 
-      virtual bool emit_node(struct target_t*) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
+	// Get the name of the underlying object.
+      const char*name() const;
+
+      NetNet* sig() const;
 
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
 
+      void dump_lval(ostream&o) const;
+
     private:
+      NetNet *sig_;
       NetExpr*bmux_;
+
+      unsigned loff_;
+      unsigned lwid_;
 };
 
 class NetAssignBase : public NetProc {
@@ -1211,6 +1222,7 @@ class NetAssignBase : public NetProc {
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
 
+	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
 
     private:
@@ -1236,12 +1248,23 @@ class NetAssignNB  : public NetAssignBase {
       explicit NetAssignNB(NetAssign_*lv, NetExpr*rv);
       ~NetAssignNB();
 
+      void rise_time(unsigned);
+      void fall_time(unsigned);
+      void decay_time(unsigned);
+
+      unsigned rise_time() const;
+      unsigned fall_time() const;
+      unsigned decay_time() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
+
+      unsigned rise_time_;
+      unsigned fall_time_;
+      unsigned decay_time_;
 };
 
 /*
@@ -2824,6 +2847,15 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.214  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.213  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

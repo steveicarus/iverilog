@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.56 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: target.cc,v 1.57 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -128,12 +128,6 @@ void target_t::lpm_ram_dq(const NetRamDq*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetRamDq." << endl;
-}
-
-void target_t::net_assign(const NetAssign_*)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled assignment (NetAssign_) node." << endl;
 }
 
 void target_t::net_case_cmp(const NetCaseCmp*)
@@ -389,6 +383,15 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.57  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.56  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

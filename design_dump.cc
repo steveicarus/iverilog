@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.116 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.117 2001/08/25 23:50:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -237,15 +237,6 @@ void NetMux::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetAssign_::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "Procedural assign (NetAssign_): " << name();
-      if (bmux())
-	    o << "[" << *bmux() << "]";
-      o << endl;
-      dump_node_pins(o, ind+4);
-}
-
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetBUFZ: " << name()
@@ -417,16 +408,29 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetAssign_::dump_lval(ostream&o) const
+{
+      if (sig_) {
+	    o << sig_->name();
+	    if (bmux_) {
+		  o << "[" << *bmux_ << "]";
+
+	    } else {
+		  o << "[" << (loff_+lwid_-1) << ":" << loff_ << "]";
+	    }
+      } else {
+	    o << "";
+      }
+}
+
 void NetAssignBase::dump_lval(ostream&o) const
 {
-      o << "" << "{" << lval_->name();
-      if (lval_->bmux())
-	    o << "[" << *lval_->bmux() << "]";
+      o << "{";
+      lval_->dump_lval(o);
 
       for (NetAssign_*cur = lval_->more ;  cur ;  cur = cur->more) {
-	    o << ", " << cur->name();
-	    if (cur->bmux())
-		  o << "[" << *cur->bmux() << "]";
+	    o << ", ";
+	    cur->dump_lval(o);
       }
 
       o << "}";
@@ -439,8 +443,10 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       dump_lval(o);
 
       o << " = ";
+#if 0
       if (l_val(0)->rise_time())
 	    o << "#" << l_val(0)->rise_time() << " ";
+#endif
       o << *rval() << ";" << endl;
 }
 
@@ -450,8 +456,10 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
       dump_lval(o);
 
       o << " <= ";
+#if 0
       if (l_val(0)->rise_time())
 	    o << "#" << l_val(0)->rise_time() << " ";
+#endif
       o << *rval() << ";" << endl;
 
 }
@@ -960,6 +968,15 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.117  2001/08/25 23:50:02  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.116  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.10 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: link_const.cc,v 1.11 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,9 +44,18 @@ bool link_drivers_constant(const Link&lnk)
 	    if (cur->get_dir() == Link::INPUT)
 		  continue;
 
-	      /* If this is an input or input port of a root module,
+	      /* If this is an input or inout port of a root module,
 		 then the is probably not a constant value. I
-		 certainly don't know what the value is, anyhow. */
+		 certainly don't know what the value is, anyhow. This
+		 can happen in cases like this:
+
+		 module main(sig);
+		     input sig;
+		 endmodule
+
+		 If main is a root module (it has no parent) then sig
+		 is not constant because it connects to an unspecified
+		 outside world. */
 
 	    if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) do {
 		  if (sig->port_type() == NetNet::NOT_A_PORT)
@@ -63,7 +72,8 @@ bool link_drivers_constant(const Link&lnk)
 
 
 	      /* If the link is PASSIVE then it doesn't count as a
-		 driver if its initial value is Vz. */
+		 driver if its initial value is Vz. PASSIVE nodes
+		 include wires and tri nets. */
 	    if (cur->get_dir() == Link::PASSIVE)
 		  continue;
 
@@ -113,6 +123,15 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.11  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.10  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

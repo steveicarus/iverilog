@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.61 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: emit.cc,v 1.62 2001/08/25 23:50:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,12 +54,6 @@ bool NetUDP::emit_node(struct target_t*tgt) const
 bool NetAddSub::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_add_sub(this);
-      return true;
-}
-
-bool NetAssign_::emit_node(struct target_t*tgt) const
-{
-      tgt->net_assign(this);
       return true;
 }
 
@@ -476,6 +470,15 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.62  2001/08/25 23:50:02  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.61  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.7 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.8 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,19 +38,18 @@ unsigned count_lval_width(const NetAssign_*idx)
       return wid;
 }
 
-NetAssign_::NetAssign_(const string&n, unsigned w)
-: NetNode(n, w), bmux_(0)
+NetAssign_::NetAssign_(NetNet*s)
+: sig_(s), bmux_(0)
 {
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::OUTPUT);
-	    pin(idx).set_name("P", idx);
-      }
-
+      loff_ = 0;
+      lwid_ = sig_->pin_count();
+      sig_->incr_eref();
       more = 0;
 }
 
 NetAssign_::~NetAssign_()
 {
+      if (sig_) sig_->decr_eref();
       assert( more == 0 );
       if (bmux_) delete bmux_;
 }
@@ -69,7 +68,34 @@ const NetExpr* NetAssign_::bmux() const
 unsigned NetAssign_::lwidth() const
 {
       if (bmux_) return 1;
-      else return pin_count();
+      else return lwid_;
+}
+
+const char*NetAssign_::name() const
+{
+      if (sig_) {
+	    return sig_->name();
+      } else {
+	    return "";
+      }
+}
+
+NetNet* NetAssign_::sig() const
+{
+      assert(sig_);
+      return sig_;
+}
+
+void NetAssign_::set_part(unsigned lo, unsigned lw)
+{
+      loff_ = lo;
+      lwid_ = lw;
+      assert(sig_->pin_count() >= (lo + lw));
+}
+
+unsigned NetAssign_::get_loff() const
+{
+      return loff_;
 }
 
 NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
@@ -167,14 +193,56 @@ NetAssign::~NetAssign()
 NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv)
 : NetAssignBase(lv, rv)
 {
+      rise_time_ = 0;
+      fall_time_ = 0;
+      decay_time_ = 0;
 }
 
 NetAssignNB::~NetAssignNB()
 {
 }
 
+void NetAssignNB::rise_time(unsigned t)
+{
+      rise_time_ = t;
+}
+
+void NetAssignNB::fall_time(unsigned t)
+{
+      fall_time_ = t;
+}
+
+void NetAssignNB::decay_time(unsigned t)
+{
+      decay_time_ = t;
+}
+
+unsigned NetAssignNB::rise_time() const
+{
+      return rise_time_;
+}
+
+unsigned NetAssignNB::fall_time() const
+{
+      return fall_time_;
+}
+
+unsigned NetAssignNB::decay_time() const
+{
+      return decay_time_;
+}
+
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.8  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.7  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.219 2001/08/01 05:17:31 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.220 2001/08/25 23:50:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -927,12 +927,12 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       if (rise_time || event_) {
 	    string n = des->local_symbol(path);
-	    unsigned wid = lv->pin_count();
+	    unsigned wid = lv->lwidth();
 
-	    rv->set_width(lv->pin_count());
-	    rv = pad_to_width(rv, lv->pin_count());
+	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
 
-	    if (! rv->set_width(lv->pin_count())) {
+	    if (! rv->set_width(wid)) {
 		  cerr << get_line() << ": error: Unable to match "
 			"expression width of " << rv->expr_width() <<
 			" to l-value width of " << wid << "." << endl;
@@ -947,11 +947,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	      /* Generate an assignment of the l-value to the temporary... */
 	    n = des->local_symbol(path);
-	    NetAssign_*lvt = new NetAssign_(n, wid);
-	    des->add_node(lvt);
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lvt->pin(idx), tmp->pin(idx));
+	    NetAssign_*lvt = new NetAssign_(tmp);
 
 	    NetAssign*a1 = new NetAssign(lvt, rv);
 	    a1->set_line(*this);
@@ -1078,13 +1074,12 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       unsigned long rise_time, fall_time, decay_time;
       delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
-      lv->rise_time(rise_time);
-      lv->fall_time(fall_time);
-      lv->decay_time(decay_time);
-
 
 	/* All done with this node. mark its line number and check it in. */
       NetAssignNB*cur = new NetAssignNB(lv, rv);
+      cur->rise_time(rise_time);
+      cur->fall_time(fall_time);
+      cur->decay_time(decay_time);
       cur->set_line(*this);
       return cur;
 }
@@ -1409,10 +1404,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 		  continue;
 
 	    NetExpr*rv = parms_[idx]->elaborate_expr(des, scope);
-	    NetAssign_*lv = new NetAssign_("@", port->pin_count());
-	    des->add_node(lv);
-	    for (unsigned pi = 0 ;  pi < port->pin_count() ;  pi += 1)
-		  connect(port->pin(pi), lv->pin(pi));
+	    NetAssign_*lv = new NetAssign_(port);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }
@@ -1971,10 +1963,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(sig);
-      NetAssign_*lv = new NetAssign_("@for-assign", sig->pin_count());
-      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
-	    connect(lv->pin(idx), sig->pin(idx));
-      des->add_node(lv);
+      NetAssign_*lv = new NetAssign_(sig);
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
@@ -2001,10 +1990,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	   statement. Put this into the "body" block. */
       sig = des->find_signal(scope, id2->name());
       assert(sig);
-      lv = new NetAssign_("@for-assign", sig->pin_count());
-      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
-	    connect(lv->pin(idx), sig->pin(idx));
-      des->add_node(lv);
+      lv = new NetAssign_(sig);
 
 	/* Make the rvalue of the increment expression, and size it
 	   for the lvalue. */
@@ -2362,6 +2348,15 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.220  2001/08/25 23:50:02  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.219  2001/08/01 05:17:31  steve
  *  Accept empty port lists to module instantiation.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.13 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.14 2001/08/25 23:50:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -74,10 +74,7 @@ NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetAssign_*lv = new NetAssign_(scope->local_symbol(), ll->pin_count());
-      for (unsigned idx = 0 ; idx < ll->pin_count() ;  idx += 1)
-	    connect(lv->pin(idx), ll->pin(idx));
-      des->add_node(lv);
+      NetAssign_*lv = new NetAssign_(ll);
       return lv;
 }
 
@@ -116,42 +113,15 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 
 	    assert(tmp);
 
-	      /* If adjacent l-values in the concatenation are not bit
-		 selects, then merge them into a single NetAssign_
-		 object.
 
-		 If we cannot merge, then just link the new one to the
-		 previous one. */
+	      /* Link the new l-value to the previous one. */
 
-	    if (res && (res->bmux() == 0) && (tmp->bmux() == 0)) {
-		  unsigned wid1 = tmp->pin_count();
-		  unsigned wid2 = res->pin_count() + tmp->pin_count();
-		  NetAssign_*tmp2 = new NetAssign_(res->name(), wid2);
+	    NetAssign_*last = tmp;
+	    while (last->more)
+		  last = last->more;
 
-		  assert(tmp->more == 0);
-
-		  tmp2->more = res->more;
-		  res->more = 0;
-
-		  for (unsigned idx = 0 ;  idx < wid1 ; idx += 1)
-			connect(tmp2->pin(idx), tmp->pin(idx));
-
-		  for (unsigned idx = 0 ;  idx < res->pin_count() ; idx += 1)
-			connect(tmp2->pin(idx+wid1), res->pin(idx));
-
-		  delete res;
-		  delete tmp;
-		  res = tmp2;
-		  des->add_node(res);
-
-	    } else {
-		  NetAssign_*last = tmp;
-		  while (last->more)
-			last = last->more;
-
-		  last->more = res;
-		  res = tmp;
-	    }
+	    last->more = res;
+	    res = tmp;
       }
 
       return res;
@@ -259,13 +229,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       if (mux) {
 
 	      /* If there is a non-constant bit select, make a
-		 NetAssign_ the width of the target reg and attach a
+		 NetAssign_ to the target reg and attach a
 		 bmux to select the target bit. */
-	    unsigned wid = reg->pin_count();
-	    lv = new NetAssign_(des->local_symbol(scope->name()), wid);
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx));
+	    lv = new NetAssign_(reg);
 
 	    lv->set_bmux(mux);
 
@@ -277,8 +243,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	    unsigned loff = reg->sb_to_idx(lsb);
 	    unsigned moff = reg->sb_to_idx(msb);
 	    unsigned wid = moff - loff + 1;
-
-	    lv = new NetAssign_(des->local_symbol(scope->name()), wid);
 
 	    if (moff < loff) {
 		  cerr << get_line() << ": error: part select "
@@ -301,20 +265,27 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    assert(moff < reg->pin_count());
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx+loff));
+	    lv = new NetAssign_(reg);
+	    lv->set_part(loff, wid);
 
+	    assert(moff < reg->pin_count());
       }
 
-
-      des->add_node(lv);
 
       return lv;
 }
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.14  2001/08/25 23:50:02  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.13  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

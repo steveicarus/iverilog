@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.62 2001/08/10 00:40:45 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.63 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -730,8 +730,14 @@ extern "C" ivl_memory_t ivl_lval_mem(ivl_lval_t net)
 {
       assert(net);
       if (net->type_ == IVL_LVAL_MEM)
-	    return net->n.mem_;
+	    return net->n.mem;
       return 0x0;
+}
+
+extern "C" unsigned ivl_lval_part_off(ivl_lval_t net)
+{
+      assert(net);
+      return net->loff_;
 }
 
 extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
@@ -745,10 +751,13 @@ extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
       assert(net);
       assert(idx < net->width_);
       assert(net->type_ != IVL_LVAL_MEM);
-      if (net->width_ == 1)
-	    return net->n.pin_;
-      else
-	    return net->n.pins_[idx];
+      return ivl_signal_pin(net->n.sig, idx+net->loff_);
+}
+
+extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
+{
+      assert(net);
+      return net->n.sig;
 }
 
 extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
@@ -1309,6 +1318,15 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.63  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.62  2001/08/10 00:40:45  steve
  *  tgt-vvp generates code that skips nets as inputs.
  *

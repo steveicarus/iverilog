@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.169 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: netlist.cc,v 1.170 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -363,16 +363,21 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
       assert(s);
 
       verinum::V init_value = verinum::Vz;
+      Link::DIR dir = Link::PASSIVE;
+
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
 	    init_value = verinum::Vx;
+	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY0:
 	    init_value = verinum::V0;
+	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY1:
 	    init_value = verinum::V1;
+	    dir = Link::OUTPUT;
 	    break;
 	  default:
 	    break;
@@ -380,6 +385,7 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
+	    pin(idx).set_dir(dir);
 	    pin(idx).set_init(init_value);
       }
 
@@ -2385,6 +2391,15 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.170  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.169  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

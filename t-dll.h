@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.59 2001/08/10 00:40:45 steve Exp $"
+#ident "$Id: t-dll.h,v 1.60 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -289,9 +289,9 @@ struct ivl_lpm_s {
 };
 
 /*
- * This object contains references to ivl_nexus_t objects that in turn
- * are reg nets. This is used by the assignment to represent the
- * l-value expressions.
+ * This object represents l-values to assignments. The l-value can be
+ * a register bit or part select, or a memory word select with a part
+ * select.
  */
 
 enum ivl_lval_type_t {
@@ -302,12 +302,12 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       unsigned width_  :24;
+      unsigned loff_   :24;
       unsigned type_   : 8;
       ivl_expr_t idx;
       union {
-	    ivl_nexus_t*pins_;
-	    ivl_nexus_t pin_;
-	    ivl_memory_t mem_;
+	    ivl_signal_t sig;
+	    ivl_memory_t mem;
       } n;
 };
 
@@ -562,6 +562,15 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.60  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.59  2001/08/10 00:40:45  steve
  *  tgt-vvp generates code that skips nets as inputs.
  *

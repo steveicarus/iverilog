@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.211 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.212 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -168,7 +168,6 @@ class target_vvm : public target_t {
       virtual void logic(const NetLogic*);
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
-      virtual void net_assign(const NetAssign_*) { }
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
@@ -2348,9 +2347,9 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	    defn << "      switch (" << bval
 		 << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0; idx < lv->pin_count(); idx += 1) {
+	    for (unsigned idx = 0; idx < lv->lwidth(); idx += 1) {
 
-		  string nexus = lv->pin(idx).nexus()->name();
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2379,7 +2378,7 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	   that does the assignment. This is an optimization that
 	   reduces the size of the generated C++. */
 
-      unsigned*nexus_map = new unsigned[lv->pin_count()];
+      unsigned*nexus_map = new unsigned[lv->lwidth()];
 
       bool sequential_flag = true;
       bool uniform_flag = true;
@@ -2388,8 +2387,8 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 		  : verinum::V0;
       unsigned zeros_start = 0;
 
-      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
-	    string nexus = lv->pin(idx).nexus()->name();
+      for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
+	    string nexus = lv->sig()->pin(idx).nexus()->name();
 	    nexus_map[idx] = nexus_wire_map[nexus];
 
 	    verinum::V tmp = (idx+off) < value.len() 
@@ -2409,18 +2408,18 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
       }
 
 
-      if (sequential_flag && uniform_flag && (lv->pin_count() > 1)) {
+      if (sequential_flag && uniform_flag && (lv->lwidth() > 1)) {
 
 	    const char*rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
 	    unsigned base = nexus_map[0];
 
 	    defn << "      for (unsigned idx = 0 ;  idx < "
-		 << lv->pin_count() << " ;  idx += 1)" << endl;
+		 << lv->lwidth() << " ;  idx += 1)" << endl;
 
 	    defn << "        nexus_wire_table[idx+" <<base<< "]"
 		 << ".reg_assign(" << rval << ");" << endl;
 
-      } else if (sequential_flag && (zeros_start < lv->pin_count())) {
+      } else if (sequential_flag && (zeros_start < lv->lwidth())) {
 
 	      /* If the nexa are sequential and the high bits are all
 		 zeros, then we can write simple reg_assign statements
@@ -2449,13 +2448,13 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	    unsigned base = nexus_map[zeros_start];
 
 	    defn << "      for (unsigned idx = 0 ;  idx < "
-		 << (lv->pin_count()-zeros_start) << " ;  idx += 1)" << endl;
+		 << (lv->lwidth()-zeros_start) << " ;  idx += 1)" << endl;
 
 	    defn << "        nexus_wire_table[idx+" <<base<< "]"
 		 << ".reg_assign(" << rval << ");" << endl;
 
 
-      } else for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+      } else for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
 	    unsigned ncode = nexus_map[idx];
 
 	    val = (idx+off) < value.len() 
@@ -2493,9 +2492,9 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
 
-		  string nexus = lv->pin(idx).nexus()->name();
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2509,7 +2508,7 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	    defn << "      }" << endl;
 
       } else {
-	    unsigned min_count = lv->pin_count();
+	    unsigned min_count = lv->lwidth();
 	    if ((wid-off) < min_count)
 		  min_count = wid - off;
 
@@ -2517,9 +2516,9 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 		 the l-value. */
 
 	    bool sequential_flag = true;
-	    unsigned*nexus_map = new unsigned[lv->pin_count()];
-	    for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
-		  string nexus = lv->pin(idx).nexus()->name();
+	    unsigned*nexus_map = new unsigned[lv->lwidth()];
+	    for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  nexus_map[idx] = nexus_wire_map[nexus];
 
 		  if ((idx >= 1) && (nexus_map[idx] != (nexus_map[idx-1]+1)))
@@ -2544,7 +2543,7 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 		  }
 	    }
 
-	    for (unsigned idx = min_count; idx < lv->pin_count(); idx += 1) {
+	    for (unsigned idx = min_count; idx < lv->lwidth(); idx += 1) {
 		  unsigned ncode = nexus_map[idx];
 		  defn << "      nexus_wire_table["<<ncode<<"]"
 		       << ".reg_assign(St0);" << endl;
@@ -2667,7 +2666,11 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 				     unsigned off)
 {
       const verinum value = rv->value();
+#if 0
       const unsigned rise_time = lv->rise_time();
+#else
+      const unsigned rise_time = 0;
+#endif
 
 	/* This condition catches the special case of assigning to a
 	   non-constant bit select. This cal be something like:
@@ -2695,9 +2698,9 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 	    defn << "      switch (" << bval
 		 << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0; idx < lv->pin_count(); idx += 1) {
+	    for (unsigned idx = 0; idx < lv->lwidth(); idx += 1) {
 
-		  string nexus = lv->pin(idx).nexus()->name();
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2720,8 +2723,8 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 	   the entire width of the l-value, assign constant bit values
 	   to the appropriate nexus. */
 
-      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
-	    string nexus = lv->pin(idx).nexus()->name();
+      for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
+	    string nexus = lv->sig()->pin(idx).nexus()->name();
 	    unsigned ncode = nexus_wire_map[nexus];
 
 	    verinum::V val = (idx+off) < value.len() 
@@ -2744,7 +2747,11 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 				     unsigned wid, unsigned off)
 {
       assert(lv);
+#if 0
       const unsigned rise_time = lv->rise_time();
+#else
+      const unsigned rise_time = 0;
+#endif
 
 	/* Now, if there is a mux on the l-value, generate a code to
 	   assign a single bit to one of the bits of the
@@ -2759,9 +2766,9 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
-	    for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < lv->lwidth() ;  idx += 1) {
 
-		  string nexus = lv->pin(idx).nexus()->name();
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
@@ -2776,12 +2783,12 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 	    defn << "      }" << endl;
 
       } else {
-	    unsigned min_count = lv->pin_count();
+	    unsigned min_count = lv->lwidth();
 	    if ((wid-off) < min_count)
 		  min_count = wid - off;
 
 	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
-		  string nexus = lv->pin(idx).nexus()->name();
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      vvm_delayed_assign(nexus_wire_table["
 		       <<ncode<<"], "
@@ -2789,8 +2796,8 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 		       <<rise_time<< ");" << endl;
 	    }
 
-	    for (unsigned idx = min_count; idx < lv->pin_count(); idx += 1) {
-		  string nexus = lv->pin(idx).nexus()->name();
+	    for (unsigned idx = min_count; idx < lv->lwidth(); idx += 1) {
+		  string nexus = lv->sig()->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      vvm_delayed_assign(nexus_wire_table["
 		       <<ncode<<"], St0, " <<rise_time<< ");" << endl;
@@ -3645,6 +3652,15 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.212  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.211  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.76 2001/08/10 00:40:45 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.77 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -551,11 +551,17 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
 
 /* LVAL
  * The l-values of assignments are concatenation of ivl_lval_t
- * objects. Each l-value has a bunch of connections (in the form of
- * ivl_nexus_t objects) and possibly a mux expression. The compiler
- * takes care of part selects and nested concatenations. The
- * ivl_stmt_lval function pulls ivl_lval_t objects out of the
- * statement.
+ * objects. Each lvi_lval_t object is an assignment to a var or a
+ * memory, through a bit select, part select or word select.
+ *
+ * Var lvals are things like assignments to a part select or a bit
+ * select. Assignment to the whole variable is a special case of a
+ * part select, as is a bit select with a constant expression. The
+ * ivl_lval_pins statement returns the width of the part select for
+ * the lval. The ivl_lval_pin function returns the nexus to the N-th
+ * bit of the part select. The compiler takes care of positioning the
+ * part select so that ivl_lval_pin(net, 0) is the proper bit in the
+ * signal.
  *
  * ivl_lval_mux
  *    If the l-value includes a bit select expression, this method
@@ -567,6 +573,14 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    ivl_memory_t that represents that memory. Otherwise, it 
  *    returns 0.
  *
+ * ivl_lval_sig
+ *    If the l-value is a variable, this method returns the signal
+ *    object that is the target of the assign.
+ *
+ * ivl_lval_part_off
+ *    The part select of the signal is based here. This is the
+ *    canonical index of bit-0 of the part select.
+ *
  * ivl_lval_idx 
  *    If the l-value is a memory, this method returns an
  *    ivl_expr_t that represents the index expression.  Otherwise, it 
@@ -576,14 +590,16 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    Return an ivl_nexus_t for the connection of the ivl_lval_t.
  *
  * ivl_lval_pins
- *    Return the number of pins for this object.  */
+ *    Return the number of pins for this object.
+ */
 
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
+extern unsigned    ivl_lval_part_off(ivl_lval_t net);
 extern unsigned    ivl_lval_pins(ivl_lval_t net);
 extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
-
+extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
@@ -907,6 +923,15 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.77  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.76  2001/08/10 00:40:45  steve
  *  tgt-vvp generates code that skips nets as inputs.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.53 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: target.h,v 1.54 2001/08/25 23:50:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -87,7 +87,6 @@ struct target_t {
       virtual void logic(const NetLogic*);
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
-      virtual void net_assign(const NetAssign_*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
@@ -163,6 +162,15 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.54  2001/08/25 23:50:03  steve
+ *  Change the NetAssign_ class to refer to the signal
+ *  instead of link into the netlist. This is faster
+ *  and uses less space. Make the NetAssignNB carry
+ *  the delays instead of the NetAssign_ lval objects.
+ *
+ *  Change the vvp code generator to support multiple
+ *  l-values, i.e. concatenations of part selects.
+ *
  * Revision 1.53  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of
