@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_memory.c,v 1.1 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -51,7 +51,6 @@ static int memory_get(int code, vpiHandle ref)
 static char* memory_get_str(int code, vpiHandle ref)
 {
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
-
       assert(ref->vpi_type->type_code==vpiMemory);
 
       switch (code) {
@@ -63,10 +62,55 @@ static char* memory_get_str(int code, vpiHandle ref)
       return 0;
 }
 
+static vpiHandle memory_iterate(int code, vpiHandle ref)
+{
+      unsigned idx;
+      struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
+      assert(ref->vpi_type->type_code==vpiMemory);
+
+      switch (code) {
+	  case vpiMemoryWord:
+	    if (rfp->args == 0) {
+		  rfp->args = calloc(rfp->size, sizeof(vpiHandle));
+		  for (idx = 0 ;  idx < rfp->size ;  idx += 1)
+			rfp->args[idx] = &rfp->words[idx].base;
+	    }
+	    return vpip_make_iterator(rfp->size, rfp->args);
+
+	  default:
+	    return 0;
+      }
+}
+
+static int memory_word_get(int code, vpiHandle ref)
+{
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
+      assert(ref->vpi_type->type_code==vpiMemoryWord);
+
+      switch (code) {
+	  case vpiSize:
+	    return rfp->mem->width;
+
+	  default:
+	    return 0;
+      }
+}
+
 static const struct __vpirt vpip_memory_rt = {
       vpiMemory,
       memory_get,
       memory_get_str,
+      0,
+      0,
+      0,
+      memory_iterate
+};
+
+static const struct __vpirt vpip_memory_word_rt = {
+      vpiMemoryWord,
+      memory_word_get,
+      0,
+      0,
       0,
       0,
       0
@@ -75,15 +119,29 @@ static const struct __vpirt vpip_memory_rt = {
 vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 			   unsigned wid, unsigned siz)
 {
+      unsigned idx;
+
       ref->base.vpi_type = &vpip_memory_rt;
       ref->name = name;
       ref->bits = calloc(wid*siz, sizeof(enum vpip_bit_t));
+      ref->words = calloc(siz, sizeof(struct __vpiMemoryWord));
+      ref->args = 0;
       ref->width = wid;
       ref->size  = siz;
+
+      for (idx = 0 ;  idx < siz ;  idx += 1) {
+	    ref->words[idx].base.vpi_type = &vpip_memory_word_rt;
+	    ref->words[idx].mem = ref;
+	    ref->words[idx].index = idx;
+      }
+
       return &(ref->base);
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.2  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.1  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *

@@ -1,0 +1,141 @@
+/*
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT)
+#ident "$Id: sys_readmem.c,v 1.1 1999/12/15 04:01:14 steve Exp $"
+#endif
+
+# include  <vpi_user.h>
+# include  <string.h>
+# include  <stdlib.h>
+# include  <stdio.h>
+# include  <assert.h>
+# include  "sys_readmem_lex.h"
+
+static int sys_readmem_calltf(char*name)
+{
+      int code;
+      int wwid;
+      char*path;
+      FILE*file;
+      s_vpi_value value;
+      vpiHandle words;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: file name parameter missing.\n", name);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, item) != vpiConstant) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      if (vpi_get(vpiConstType, item) != vpiStringConst) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiStringVal;
+      vpi_get_value(item, &value);
+      path = strdup(value.value.str);
+
+	/* Get and check the second paramter. It must be a memory. */
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("%s: Missing memory parameter\n", name);
+	    free(path);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, item) != vpiMemory) {
+	    vpi_printf("%s: Second parameter must be a memory.\n", name);
+	    free(path);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+	/* XXXX remaining parameters not supported. */
+      vpi_free_object(argv);
+
+	/* Open the data file. */
+      file = fopen(path, "r");
+      if (file == 0) {
+	    vpi_printf("%s: Unable to open %s for reading.\n", name, path);
+	    free(path);
+	    return 0;
+      }
+
+      words = vpi_iterate(vpiMemoryWord, item);
+      assert(words);
+
+      item = vpi_scan(words);
+      wwid = vpi_get(vpiSize, item);
+
+      value.format = vpiVectorVal;
+      value.value.vector = calloc((wwid+31)/32, sizeof (s_vpi_vecval));
+      sys_readmem_start_file(file, 0, wwid, value.value.vector);
+
+      while (item && ((code = readmemlex()) != 0)) {
+	    switch (code) {
+		case MEM_ADDRESS:
+		  vpi_printf("XXXX addresses not supported\n");
+		  break;
+		case MEM_WORD:
+		  vpi_put_value(item, &value, 0, vpiNoDelay);
+		  item = vpi_scan(words);
+		  break;
+		default:
+		  vpi_printf("Huh?! (%d)\n", code);
+		  break;
+	    }
+      }
+
+      vpi_printf("%s: task not implemented, yet.\n", name);
+
+      if (item) vpi_free_object(words);
+      free(value.value.vector);
+      fclose(file);
+      return 0;
+}
+
+void sys_readmem_register()
+{
+      s_vpi_systf_data tf_data;
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$readmemh";
+      tf_data.calltf    = sys_readmem_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$readmemh";
+      vpi_register_systf(&tf_data);
+}
+
+/*
+ * $Log: sys_readmem.c,v $
+ * Revision 1.1  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
+ */
+

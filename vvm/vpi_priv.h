@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.8 1999/11/28 00:56:08 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.9 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 /*
@@ -61,6 +61,7 @@ struct __vpirt {
       int   (*vpi_get_)(int, vpiHandle);
       char* (*vpi_get_str_)(int, vpiHandle);
       void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
+      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, p_vpi_time, int);
 
 	/* These methods follow references. */
       vpiHandle (*handle_)(int, vpiHandle);
@@ -85,7 +86,6 @@ struct __vpiCallback {
  */
 struct __vpiIterator {
       struct __vpiHandle base;
-
       vpiHandle *args;
       unsigned  nargs;
       unsigned  next;
@@ -93,15 +93,25 @@ struct __vpiIterator {
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
- * N being the width of a word.
+ * N being the width of a word. The memory word handle just points
+ * back to the memory and uses an index to identify its position in
+ * the memory.
  */
 struct __vpiMemory {
       struct __vpiHandle base;
 	/* The signal has a name (this points to static memory.) */
       const char*name;
       enum vpip_bit_t*bits;
+      struct __vpiMemoryWord*words;
+      vpiHandle*args;
       unsigned width;
       unsigned size;
+};
+
+struct __vpiMemoryWord {
+      struct __vpiHandle base;
+      struct __vpiMemory*mem;
+      int index;
 };
 
 /*
@@ -274,6 +284,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.9  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.8  1999/11/28 00:56:08  steve
  *  Build up the lists in the scope of a module,
  *  and get $dumpvars to scan the scope for items.

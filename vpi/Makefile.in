@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.7 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: Makefile.in,v 1.8 1999/12/15 04:01:14 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,10 +52,14 @@ all: system.vpi
 	$(CC) -Wall $(CPPFLAGS) -I$(srcdir) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = sys_table.o sys_display.o sys_finish.o sys_vcd.o
+O = sys_table.o sys_display.o sys_finish.o sys_readmem.o sys_readmem_lex.o \
+sys_vcd.o
 
 system.vpi: $O
 	$(CC) -shared -o $@ $O
+
+sys_readmem_lex.c: sys_readmem_lex.lex
+	flex -t -Preadmem sys_readmem_lex.lex > sys_readmem_lex.c
 
 clean:
 	rm -f *.o dep/*.d

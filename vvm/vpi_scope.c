@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.c,v 1.2 1999/11/28 00:56:08 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.3 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -38,6 +38,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_module_rt = {
       vpiModule,
+      0,
       0,
       0,
       0,
@@ -75,6 +76,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.3  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.2  1999/11/28 00:56:08  steve
  *  Build up the lists in the scope of a module,
  *  and get $dumpvars to scan the scope for items.

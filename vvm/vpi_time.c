@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_time.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -62,6 +62,7 @@ static const struct __vpirt vpip_time_var_rt = {
       0,
       timevar_get_value,
       0,
+      0,
       0
 };
 
@@ -74,6 +75,9 @@ vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref, const char*val)
 
 /*
  * $Log: vpi_time.c,v $
+ * Revision 1.2  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

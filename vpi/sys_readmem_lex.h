@@ -1,3 +1,5 @@
+#ifndef __sys_readmem_lex_H
+#define __sys_readmem_lex_H
 /*
  * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
@@ -17,35 +19,23 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_null.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: sys_readmem_lex.h,v 1.1 1999/12/15 04:01:14 steve Exp $"
 #endif
 
-# include  "vpi_priv.h"
+# include  <stdio.h>
+# include  <vpi_user.h>
 
-static const struct __vpirt vpip_null_rt = {
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
+# define MEM_ADDRESS 257
+# define MEM_WORD    258
 
-struct __vpiNull vpip_null = {
-      { &vpip_null_rt }
-};
+extern void sys_readmem_start_file(FILE*in, int bin_flag,
+				   unsigned width, struct t_vpi_vecval*val);
+extern int readmemlex();
 
 /*
- * $Log: vpi_null.c,v $
- * Revision 1.2  1999/12/15 04:01:14  steve
+ * $Log: sys_readmem_lex.h,v $
+ * Revision 1.1  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *
- * Revision 1.1  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
  */
-
+#endif

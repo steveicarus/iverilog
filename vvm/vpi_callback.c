@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.c,v 1.4 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: vpi_callback.c,v 1.5 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -26,6 +26,7 @@
 
 static struct __vpirt vpip_callback_rt = {
       vpiCallback,
+      0,
       0,
       0,
       0,
@@ -169,6 +170,9 @@ int vpi_remove_cb(vpiHandle ref)
 
 /*
  * $Log: vpi_callback.c,v $
+ * Revision 1.5  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.4  1999/11/07 20:33:30  steve
  *  Add VCD output and related system tasks.
  *

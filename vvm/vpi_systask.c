@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_systask.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -41,11 +41,15 @@ const struct __vpirt vpip_systask_rt = {
       0,
       0,
       0,
+      0,
       systask_iter
 };
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.2  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

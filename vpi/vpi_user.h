@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.9 1999/11/28 00:56:08 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.10 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -58,6 +58,10 @@ typedef struct t_vpi_time {
 #define vpiScaledRealTime 1
 #define vpiSimTime        2
 #define vpiSuppressTime   3
+
+typedef struct t_vpi_vecval {
+      int aval, bval; /* ab encoding: 00=0, 10=1, 11=X, 01=Z */
+} s_vpi_vecval, *p_vpi_vecval;
 
 /*
  * This structure holds values that are passed back and forth between
@@ -123,6 +127,15 @@ typedef struct t_vpi_value {
 #   define vpiOctConst    4
 #   define vpiHexConst    5
 #   define vpiStringConst 6
+
+/* DELAY MODES */
+#define vpiNoDelay            1
+#define vpiInertialDelay      2
+#define vpiTransportDelay     3
+#define vpiPureTransportDelay 4
+
+#define vpiForceFlag   5
+#define vpiReleaseFlag 6
 
 
 /* VPI FUNCTIONS */
@@ -198,6 +211,8 @@ extern vpiHandle  vpi_scan(vpiHandle iter);
 extern int   vpi_get(int property, vpiHandle ref);
 extern char* vpi_get_str(int property, vpiHandle ref);
 extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
+extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
+			       p_vpi_time when, int flags);
 
 extern int vpi_free_object(vpiHandle ref);
 
@@ -211,6 +226,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.10  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.9  1999/11/28 00:56:08  steve
  *  Build up the lists in the scope of a module,
  *  and get $dumpvars to scan the scope for items.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.c,v 1.5 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.6 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -71,6 +71,7 @@ static const struct __vpirt vpip_net_rt = {
       signal_get_str,
       signal_get_value,
       0,
+      0,
       0
 };
 
@@ -88,6 +89,7 @@ static const struct __vpirt vpip_reg_rt = {
       signal_get_str,
       signal_get_value,
       0,
+      0,
       0
 };
 
@@ -101,6 +103,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name)
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.6  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.5  1999/11/07 20:33:30  steve
  *  Add VCD output and related system tasks.
  *

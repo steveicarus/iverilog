@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.c,v 1.4 1999/11/06 22:16:50 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.5 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -286,6 +286,7 @@ static const struct __vpirt vpip_string_rt = {
       0,
       string_value,
       0,
+      0,
       0
 };
 
@@ -294,6 +295,7 @@ static const struct __vpirt vpip_number_rt = {
       number_get,
       0,
       number_value,
+      0,
       0,
       0
 };
@@ -317,6 +319,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.5  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.4  1999/11/06 22:16:50  steve
  *  Get the $strobe task working.
  *

@@ -17,16 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_table.c,v 1.2 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: sys_table.c,v 1.3 1999/12/15 04:01:14 steve Exp $"
 #endif
 
 extern void sys_finish_register();
 extern void sys_display_register();
+extern void sys_readmem_register();
 extern void sys_vcd_register();
 
 void (*vlog_startup_routines[])() = {
       sys_finish_register,
       sys_display_register,
+      sys_readmem_register,
       sys_vcd_register,
       0
 };
@@ -34,6 +36,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.3  1999/12/15 04:01:14  steve
+ *  Add the VPI implementation of $readmemh.
+ *
  * Revision 1.2  1999/11/07 20:33:30  steve
  *  Add VCD output and related system tasks.
  *
