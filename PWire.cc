@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.cc,v 1.4 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: PWire.cc,v 1.5 2001/01/06 02:29:35 steve Exp $"
 #endif
 
 # include  "PWire.h"
@@ -43,11 +43,9 @@ bool PWire::set_wire_type(NetNet::Type t)
 	    return true;
 	  case NetNet::IMPLICIT_REG:
 	    if (t == NetNet::REG) { type_ = t; return true; }
-	    if (t == NetNet::INTEGER) {type_ = t; return true; }
 	    return false;
 	  case NetNet::REG:
 	    if (t == NetNet::REG) return true;
-	    if (t == NetNet::INTEGER) {type_ = t; return true; }
 	    return false;
 	  default:
 	    if (type_ != t)
@@ -103,13 +101,16 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 {
       assert(lidx_ == 0);
       assert(ridx_ == 0);
-      assert((type_ == NetNet::REG) || (type_ == NetNet::INTEGER));
+      assert(type_ == NetNet::REG);
       lidx_ = ldx;
       ridx_ = rdx;
 }
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.5  2001/01/06 02:29:35  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.4  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

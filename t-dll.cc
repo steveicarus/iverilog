@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.23 2000/12/15 18:06:47 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.24 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -533,7 +533,6 @@ void dll_target::signal(const NetNet*net)
       switch (net->type()) {
 
 	  case NetNet::REG:
-	  case NetNet::INTEGER:
 	    obj->type_ = IVL_SIT_REG;
 	    break;
 
@@ -644,6 +643,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.24  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.23  2000/12/15 18:06:47  steve
  *  A dlerror implementatin that HP/UX might like.
  *

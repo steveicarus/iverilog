@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_anet.cc,v 1.1 2000/12/06 06:31:09 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.2 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 /*
@@ -122,7 +122,6 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
       switch (sig->type()) {
 	  case NetNet::REG:
 	  case NetNet::IMPLICIT_REG:
-	  case NetNet::INTEGER:
 	    break;
 
 	  default:
@@ -148,6 +147,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.2  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.1  2000/12/06 06:31:09  steve
  *  Check lvalue of procedural continuous assign (PR#29)
  *

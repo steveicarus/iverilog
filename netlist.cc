@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.151 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: netlist.cc,v 1.152 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -33,9 +33,6 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	    break;
 	  case NetNet::IMPLICIT_REG:
 	    o << "reg /*implicit*/";
-	    break;
-	  case NetNet::INTEGER:
-	    o << "integer";
 	    break;
 	  case NetNet::REG:
 	    o << "reg";
@@ -312,7 +309,6 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
-	  case INTEGER:
 	    init_value = verinum::Vx;
 	    break;
 	  case SUPPLY0:
@@ -345,7 +341,6 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
-	  case INTEGER:
 	    init_value = verinum::Vx;
 	    break;
 	  case SUPPLY0:
@@ -2480,6 +2475,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.152  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.151  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.191 2001/01/04 16:49:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.192 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 /*
@@ -304,6 +304,9 @@ class NetNode  : public NetObj {
  * NetNet. NetNet objects also appear as side effects of synthesis or
  * other abstractions.
  *
+ * Note that there are no INTEGER types. Express a verilog integer as
+ * a ``reg signed'' instead. The parser automatically does this for us.
+ *
  * NetNet objects have a name and exist within a scope, so the
  * constructor takes a pointer to the containing scope. The object
  * automatically adds itself to the scope.
@@ -318,8 +321,7 @@ class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
-		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
-		  INTEGER, TIME };
+		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG, TIME };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -2844,6 +2846,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.192  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.191  2001/01/04 16:49:50  steve
  *  Evaluate constant === and !== expressions.
  *

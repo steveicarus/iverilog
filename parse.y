@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.114 2000/12/16 17:16:08 steve Exp $"
+#ident "$Id: parse.y,v 1.115 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -206,7 +206,7 @@ block_item_decl
 		{ delete $3;
 		  yyerror(@2, "sorry: signed reg not supported.");
 		}
-	| K_integer list_of_variables ';'
+	| K_integer register_variable_list ';'
 		{ pform_set_reg_integer($2);
 		}
 	| K_time list_of_variables ';'
@@ -1276,6 +1276,13 @@ module_item
 
 	| K_specify specify_item_list K_endspecify
 		{
+		}
+
+  /* These rules match various errors that the user can type. */
+
+	| error
+		{ yyerror(@1, "error: invalid module item. "
+			  "Did you forget an initial or always?");
 		}
 
   /* These rules are for the Icarus VErilog specific $attribute

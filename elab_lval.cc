@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.8 2000/12/12 06:14:51 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.9 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -178,9 +178,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       }
       assert(reg);
 
-      if ((reg->type() != NetNet::REG)
-	  && (reg->type() != NetNet::INTEGER)
-	  && (reg->type() != NetNet::TIME)) {
+      if ((reg->type() != NetNet::REG) && (reg->type() != NetNet::TIME)) {
 	    cerr << get_line() << ": error: " << name() <<
 		  " is not a reg/integer/time in " << scope->name() <<
 		  "." << endl;
@@ -308,6 +306,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.9  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.8  2000/12/12 06:14:51  steve
  *  sorry for concatenated memories in l-values. (PR#76)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.68 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: pform.cc,v 1.69 2001/01/06 02:29:36 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -897,11 +897,13 @@ static void pform_set_reg_integer(const char*nm)
       string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::INTEGER, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
+	    cur->set_signed(true);
 	    pform_cur_module->add_wire(cur);
       } else {
-	    bool rc = cur->set_wire_type(NetNet::INTEGER);
+	    bool rc = cur->set_wire_type(NetNet::REG);
 	    assert(rc);
+	    cur->set_signed(true);
       }
       assert(cur);
 
@@ -1008,6 +1010,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.69  2001/01/06 02:29:36  steve
+ *  Support arrays of integers.
+ *
  * Revision 1.68  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.
