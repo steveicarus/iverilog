@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.27 2000/03/20 17:54:10 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.28 2000/03/27 04:38:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -927,7 +927,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
 	    if (idx >= sig->pin_count()) {
-		  cerr << get_line() << "; index " << sig->name() <<
+		  cerr << get_line() << ": index " << sig->name() <<
 			"[" << mval->as_long() << "] out of range." << endl;
 		  des->errors += 1;
 		  idx = 0;
@@ -1356,6 +1356,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.28  2000/03/27 04:38:15  steve
+ *  Speling error.
+ *
  * Revision 1.27  2000/03/20 17:54:10  steve
  *  Remove dangerous tmp signal delete.
  *
