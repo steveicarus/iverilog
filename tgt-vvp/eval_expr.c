@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.60 2002/05/29 16:29:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.61 2002/05/30 01:57:23 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -539,6 +539,21 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static int number_is_unknown(ivl_expr_t ex)
+{
+      const char*bits;
+      unsigned idx;
+
+      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+
+      bits = ivl_expr_bits(ex);
+      for (idx = 0 ;  idx < ivl_expr_width(ex) ;  idx += 1)
+	    if ((bits[idx] != '0') && (bits[idx] != '1'))
+		  return 1;
+
+      return 0;
+}
+
 static struct vector_info draw_add_immediate(ivl_expr_t le,
 					     ivl_expr_t re,
 					     unsigned wid)
@@ -574,8 +589,27 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 	    assert(0);
       }
 
-      assert(0 == (imm & ~0xffffUL));
-      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n", lv.base, imm, wid);
+	/* Now generate enough %addi instructions to add the entire
+	   immediate value to the destination. The adds are done 16
+	   bits at a time, but 17 bits are done to push the carry into
+	   the higher bits if needed. */
+      { unsigned base;
+        for (base = 0 ;  base < lv.wid ;  base += 16) {
+	      unsigned long tmp = imm & 0xffffUL;
+	      unsigned add_wid = lv.wid - base;
+
+	      imm >>= 16;
+	      if ((imm != 0) && (add_wid > 17))
+		    add_wid = 17;
+
+	      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n",
+		      lv.base+base, tmp, add_wid);
+
+	      if (imm == 0)
+		    break;
+	}
+      }
+
       return lv;
 }
 
@@ -594,7 +628,9 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    return draw_add_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '+')
-	  && (ivl_expr_type(re) == IVL_EX_NUMBER))
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
+	  && (ivl_expr_width(re) <= 8 * sizeof(unsigned long))
+	  && (! number_is_unknown(re)))
 	    return draw_add_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid);
@@ -1559,6 +1595,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.61  2002/05/30 01:57:23  steve
+ *  Use addi with wide immediate values.
+ *
  * Revision 1.60  2002/05/29 16:29:34  steve
  *  Add %addi, which is faster to simulate.
  *
