@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.41 2001/08/03 17:06:10 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.42 2001/08/23 02:54:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1029,9 +1029,19 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
-      for (idx = 0 ;  idx < swid ;  idx += 1)
-	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, vvp_mangle_id(ivl_signal_name(retval)), idx);
+      { unsigned load_wid = swid;
+        if (load_wid > ivl_signal_pins(retval))
+	      load_wid = ivl_signal_pins(retval);
+
+	for (idx = 0 ;  idx < load_wid ;  idx += 1)
+	      fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
+		      res.base+idx,
+		      vvp_mangle_id(ivl_signal_name(retval)), idx);
+
+	if (load_wid < swid)
+	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		      res.base+load_wid, swid-load_wid);
+      }
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -1173,6 +1183,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.42  2001/08/23 02:54:15  steve
+ *  Handle wide assignment to narrow return value.
+ *
  * Revision 1.41  2001/08/03 17:06:10  steve
  *  More detailed messages about unsupported things.
  *
