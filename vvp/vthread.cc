@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.49 2001/07/19 04:40:55 steve Exp $"
+#ident "$Id: vthread.cc,v 1.50 2001/07/20 04:57:00 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -222,10 +222,13 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
       return thr;
 }
 
+/*
+ * Reaping pulls the thread out of the stack of threads. If I have a
+ * child, then hand it over to my parent.
+ */
 static void vthread_reap(vthread_t thr)
 {
       assert(thr->wait_next == 0);
-      assert(thr->child == 0);
 
       free(thr->bits);
       thr->bits = 0;
@@ -606,6 +609,39 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
  * This terminates the current thread. If there is a parent who is
  * waiting for me to die, then I schedule it. At any rate, I mark
  * myself as a zombie by setting my pc to 0.
+ *
+ * It is possible for this thread to have children at this %end. This
+ * means that my child is really my sibling created by my parent, and
+ * my parent will do the proper %joins in due course. For example:
+ *
+ *     %fork child_1, test;
+ *     %fork child_2, test;
+ *     ... parent code ...
+ *     %join;
+ *     %join;
+ *     %end;
+ *
+ *   child_1 ;
+ *     %end;
+ *   child_2 ;
+ *     %end;
+ *
+ * In this example, the main thread creates threads child_1 and
+ * child_2. It is possible that this thread is child_2, so there is a
+ * parent pointer and a child pointer, even though I did no
+ * %forks or %joins. This means that I have a ->child pointer and a
+ * ->parent pointer.
+ *
+ * If the main thread has executed the first %join, then it is waiting
+ * for me, and I will be reaped right away.
+ *
+ * If the main thread has not executed a %join yet, then this thread
+ * becomes a zombie. The main thread executes its %join eventually,
+ * reaping me at that time.
+ *
+ * It does not matter the order that child_1 and child_2 threads call
+ * %end -- child_2 will be reaped by the first %join, and child_1 will
+ * be reaped by the second %join.
  */
 bool of_END(vthread_t thr, vvp_code_t)
 {
@@ -613,12 +649,6 @@ bool of_END(vthread_t thr, vvp_code_t)
 
       thr->i_have_ended = 1;
       thr->pc = 0;
-
-	/* If this thread has children, then there is a programming
-	   error as there were not enough %join instructions to reap
-	   all the children. */
-      assert(thr->child == 0);
-
 
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
@@ -632,8 +662,13 @@ bool of_END(vthread_t thr, vvp_code_t)
 
 	/* If I have no parents, then no one can %join me and there is
 	   no reason to stick around. This can happen, for example if
-	   I am an ``initial'' thread. */
+	   I am an ``initial'' thread.
+
+	   If I have children at this point, then I must have been the
+	   main thread (there is no other parent) and an error (not
+	   enough %joins) has been detected. */
       if (thr->parent == 0) {
+	    assert(thr->child == 0);
 	    vthread_reap(thr);
 	    return false;
       }
@@ -1291,6 +1326,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.50  2001/07/20 04:57:00  steve
+ *  Fix of_END when a middle thread ends.
+ *
  * Revision 1.49  2001/07/19 04:40:55  steve
  *  Add support for the delayx opcode.
  *
