@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.25 2002/11/13 03:03:08 steve Exp $"
+#ident "$Id: set_width.cc,v 1.26 2003/01/26 21:02:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -257,6 +257,7 @@ bool NetEConst::set_width(unsigned w)
 	    for (unsigned idx = value_.len() ;  idx < w  ; idx += 1)
 		  tmp.set(idx, pad);
 
+	    tmp.has_sign(value_.has_sign());
 	    value_ = tmp;
 
 	    expr_width(w);
@@ -370,6 +371,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.26  2003/01/26 21:02:21  steve
+ *  Remember to save signedness of number.
+ *
  * Revision 1.25  2002/11/13 03:03:08  steve
  *  Do not truncate high bits of right shift.
  *
