@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: link_const.cc,v 1.15 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: link_const.cc,v 1.16 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -127,10 +127,10 @@ verinum::V Nexus::driven_value() const
 
 	    const NetConst*obj;
 	    const NetNet*sig;
-	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj())) {
+	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
 		  val = obj->value(cur->get_pin());
 
-	    } else if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) {
+	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
 
 		  if (sig->type() == NetNet::SUPPLY0) {
 			driven_ = V0;
@@ -164,6 +164,9 @@ verinum::V Nexus::driven_value() const
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.16  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.15  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.291 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.292 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 /*
@@ -1997,7 +1997,7 @@ class NetFuncDef {
       unsigned port_count() const;
       const NetNet*port(unsigned idx) const;
 
-      virtual void dump(ostream&, unsigned ind) const;
+      void dump(ostream&, unsigned ind) const;
 
     private:
       NetScope*scope_;
@@ -3306,6 +3306,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.292  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.291  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

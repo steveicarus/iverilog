@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.113 2003/05/01 01:13:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.114 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,8 +104,6 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
       }
 
       NetNet*osig;
-      NetNode*gate;
-      NetNode*gate_t;
 
       switch (op_) {
 	  case '^': // XOR
@@ -177,8 +175,6 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       }
 
       NetNet*osig;
-      NetNode*gate;
-      NetNode*gate_t;
 
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
@@ -233,7 +229,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       if (owidth > width)
 	    connect(osig->pin(width), adder->pin_Cout());
 
-      gate = adder;
+      NetNode*gate = adder;
       gate->rise_time(rise);
       gate->fall_time(fall);
       gate->decay_time(decay);
@@ -976,7 +972,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	// Calculate the number of useful bits for the shift amount,
 	// and elaborate the right_ expression as the shift amount.
       unsigned dwid = 0;
-      while ((1 << dwid) < lwidth)
+      while ((1U << dwid) < lwidth)
 	    dwid += 1;
 
       NetNet*rsig = right_->elaborate_net(des, scope, dwid, 0, 0, 0);
@@ -2327,6 +2323,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.114  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.113  2003/05/01 01:13:57  steve
  *  More complete bit range internal error message,
  *  Better test of part select ranges on non-zero

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.7 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.8 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,7 +107,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
       NetNet*sig = des->find_signal(scope, path_);
 
       if (sig == 0) {
-	    if (NetMemory*mem = des->find_memory(scope, path_)) {
+	    if (des->find_memory(scope, path_)) {
 		  cerr << get_line() << ": error: memories not allowed "
 		       << "on left side of procedural continuous "
 		       << "assignment." << endl;
@@ -149,6 +149,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.8  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.7  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

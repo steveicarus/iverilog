@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.10 2003/02/08 19:49:21 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.11 2003/06/21 01:21:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,8 +116,6 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 {
       assert(scope);
 
-      int shift = scope->time_unit() - des->get_precision();
-
 
       if (delay_[0]) {
 	    rise_time = calculate_val(des, scope, delay_[0]);
@@ -148,6 +146,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.11  2003/06/21 01:21:42  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.10  2003/02/08 19:49:21  steve
  *  Calculate delay statement delays using elaborated
  *  expressions instead of pre-elaborated expression

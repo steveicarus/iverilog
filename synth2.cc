@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.25 2003/04/03 04:30:00 steve Exp $"
+#ident "$Id: synth2.cc,v 1.26 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,24 +171,24 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	   elided. */
       map<unsigned long,unsigned long>guard2sel;
       cur = 0;
-      for (unsigned idx = 0 ;  idx < (1<<esig->pin_count()) ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < (1U<<esig->pin_count()) ;  idx += 1) {
 	    if ((idx & ~sel_mask) == sel_ref) {
 		  guard2sel[idx] = cur;
 		  cur += 1;
 	    }
       }
-      assert(cur == (1 << sel_pins));
+      assert(cur == (1U << sel_pins));
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(),
-			      1 << sel_pins, sel_pins);
+			      1U << sel_pins, sel_pins);
 
 	/* Connect the non-constant select bits to the select input of
 	   the mux device. */
       cur = 0;
       for (unsigned idx = 0 ;  idx < esig->pin_count() ;  idx += 1) {
 	      /* skip bits that are known to be constant. */
-	    if ((sel_mask & (1 << idx)) == 0)
+	    if ((sel_mask & (1U << idx)) == 0)
 		  continue;
 
 	    connect(mux->pin_Sel(cur), esig->pin(idx));
@@ -201,7 +201,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    connect(nex_out->pin(idx), mux->pin_Result(idx));
 
       NetProc**statement_map = new NetProc*[1 << sel_pins];
-      for (unsigned item = 0 ;  item < (1<<sel_pins) ;  item += 1)
+      for (unsigned item = 0 ;  item < (1U<<sel_pins) ;  item += 1)
 	    statement_map[item] = 0;
 
 	/* Assign the input statements to MUX inputs. This involves
@@ -230,7 +230,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	   sub-statements. If I get to an input that has no statement,
 	   then use the default statement there. */
       NetNet*default_sig = 0;
-      for (unsigned item = 0 ;  item < (1<<sel_pins) ;  item += 1) {
+      for (unsigned item = 0 ;  item < (1U<<sel_pins) ;  item += 1) {
 
 	      /* Detect the case that this is a default input, and I
 		 have a precalculated default_sig. */
@@ -779,6 +779,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.26  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.25  2003/04/03 04:30:00  steve
  *  Prevent overrun comparing verinums to zero.
  *

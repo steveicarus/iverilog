@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.24 2002/08/24 05:02:37 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.25 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -142,7 +142,6 @@ static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
 
 	/* Connect the input Data bits of the RAM, from the r-value of
 	   the assignment. */
-      int loff = a->get_loff();
       for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
 	    connect(ram->pin_Data(idx), d->bit(idx+rval_pinoffset));
       }
@@ -183,7 +182,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       NetAssign_*a;
       unsigned rval_pinoffset=0;
-      for (unsigned i=0; a=asn->l_val(i); i++) {
+      for (unsigned i=0; (a=asn->l_val(i)); i++) {
 
 	// asn->l_val(i) are the set of *NetAssign_'s that form the list
 	// of lval expressions.  Treat each one independently, keeping
@@ -232,7 +231,7 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
 	    for (Link*cur = nex->first_nlink()
 		       ;  cur ;  cur = cur->next_nlink()) {
 
-		  if (NetNet*net = dynamic_cast<NetNet*> (cur->get_obj()))
+		  if (dynamic_cast<NetNet*> (cur->get_obj()))
 			cur->set_init(bit);
 
 	    }

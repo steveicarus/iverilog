@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.31 2003/06/18 03:55:19 steve Exp $"
+#ident "$Id: set_width.cc,v 1.32 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -284,7 +284,7 @@ bool NetEConst::set_width(unsigned w)
 
       } else {
 	    unsigned use_w = w;
-	    bool flag = true;
+
 	    verinum::V pad_bit = value_.has_sign()
 		  ? value_[value_.len() - 1]
 		  : verinum::V0;
@@ -411,6 +411,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.32  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.31  2003/06/18 03:55:19  steve
  *  Add arithmetic shift operators.
  *

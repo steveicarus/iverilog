@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.35 2003/04/14 03:40:21 steve Exp $"
+#ident "$Id: eval.cc,v 1.36 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -150,7 +150,6 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
  */
 verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
 {
-      NetScope*found_in;
       assert(scope);
       const NetExpr*expr = des->find_parameter(scope, path_);
 
@@ -241,6 +240,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.36  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.35  2003/04/14 03:40:21  steve
  *  Make some effort to preserve bits while
  *  operating on constant values.

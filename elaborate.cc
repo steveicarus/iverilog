@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.282 2003/06/13 19:10:20 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.283 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1089,7 +1089,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	/* Based on the specific type of the l-value, do cleanup
 	   processing on the r-value. */
-      if (NetVariable*tmp = lv->var()) {
+      if (lv->var()) {
 
       } else if (rv->expr_type() == NetExpr::ET_REAL) {
 
@@ -1134,7 +1134,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    rv = new NetEConst(*val);
 	    delete val;
 
-      } else if (rv = rval()->elaborate_expr(des, scope)) {
+      } else if ((rv = rval()->elaborate_expr(des, scope))) {
 
 	      /* OK, go on. */
 
@@ -2423,7 +2423,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	    NetProcTop*top;
+	    NetProcTop*top=NULL;
 	    switch ((*st)->type()) {
 		case PProcess::PR_INITIAL:
 		  top = new NetProcTop(scope, NetProcTop::KINITIAL, cur);
@@ -2432,6 +2432,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		  top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
 		  break;
 	    }
+	    assert(top);
 
 	      // Evaluate the attributes for this process, if there
 	      // are any. These attributes are to be attached to the
@@ -2559,6 +2560,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.283  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.282  2003/06/13 19:10:20  steve
  *  Handle assign of real to vector.
  *

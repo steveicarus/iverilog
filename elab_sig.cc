@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.28 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.29 2003/06/21 01:21:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -505,6 +505,8 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete lval;
 	    delete rval;
 	    NetMemory*sig = new NetMemory(scope, name, wid, lnum, rnum);
+	      // The constructor automatically adds the memory object
+	      // to the scope. Do I need to set line number information?
 
       } else {
 
@@ -522,6 +524,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.29  2003/06/21 01:21:43  steve
+ *  Harmless fixup of warnings.
+ *
  * Revision 1.28  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *
