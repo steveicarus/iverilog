@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.18 2000/04/26 01:35:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.19 2000/08/01 01:38:25 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -132,6 +132,8 @@ W [ \t\b\f]+
      lexor state and execute the inclusion. */
 
 <PPINCLUDE>\n { istack->lineno += 1; yy_pop_state(); do_include(); }
+<PPINCLUDE>\r\n { istack->lineno += 1; yy_pop_state(); do_include(); }
+<PPINCLUDE>\n\r { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
 
@@ -144,7 +146,7 @@ W [ \t\b\f]+
 
 <PPDEFINE>.* { do_define(); }
 
-<PPDEFINE>\n {
+<PPDEFINE>(\n|"\r\n"|"\n\r") {
       def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
