@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.18 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: memory.cc,v 1.19 2002/09/17 00:42:22 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -130,12 +130,15 @@ char *memory_name(vvp_memory_t mem)
 
 // Compilation
 
-static symbol_table_t memory_table;
+static symbol_table_t memory_table = 0;
 
 vvp_memory_t memory_find(char *label)
 {
-  symbol_value_t v = sym_get_value(memory_table, label);
-  return (vvp_memory_t)v.ptr;
+      if (memory_table == 0)
+	    return 0;
+
+      symbol_value_t v = sym_get_value(memory_table, label);
+      return (vvp_memory_t)v.ptr;
 }
 
 vvp_memory_t memory_create(char *label)
@@ -507,6 +510,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.19  2002/09/17 00:42:22  steve
+ *  Proper initialization of the memories table.
+ *
  * Revision 1.18  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
