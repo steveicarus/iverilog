@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.96 2003/06/11 02:23:45 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.97 2003/06/13 19:10:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -260,8 +260,8 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	  && number_is_immediate(re, 16))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
-      if (ivl_expr_value(le) == IVL_VT_REAL) {
-	    assert(ivl_expr_value(re) == IVL_VT_REAL);
+      if ((ivl_expr_value(le) == IVL_VT_REAL)
+	  ||(ivl_expr_value(re) == IVL_VT_REAL))  {
 	    return draw_binary_expr_eq_real(exp);
       }
 
@@ -2017,6 +2017,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.97  2003/06/13 19:10:20  steve
+ *  Handle assign of real to vector.
+ *
  * Revision 1.96  2003/06/11 02:23:45  steve
  *  Proper pad of signed constants.
  *

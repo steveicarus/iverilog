@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.281 2003/05/19 02:50:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.282 2003/06/13 19:10:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1090,6 +1090,11 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	/* Based on the specific type of the l-value, do cleanup
 	   processing on the r-value. */
       if (NetVariable*tmp = lv->var()) {
+
+      } else if (rv->expr_type() == NetExpr::ET_REAL) {
+
+	      // The r-value is a real. Casting will happen in the
+	      // code generator, so leave it.
 
       } else {
 	    unsigned wid = count_lval_width(lv);
@@ -2554,6 +2559,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.282  2003/06/13 19:10:20  steve
+ *  Handle assign of real to vector.
+ *
  * Revision 1.281  2003/05/19 02:50:58  steve
  *  Implement the wait statement behaviorally instead of as nets.
  *
