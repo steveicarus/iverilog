@@ -399,9 +399,16 @@ value with a defined size. The parameter value is considered be a
 constant vector of bits foo[X:0]. That is, zero based. The bit and
 part selects operate from that assumption.
 
+Verilog 2001 adds syntax to allow the user to explicitly declare the
+parameter range (i.e. parameter [5:0] foo = 9;) so Icarus Verilog will
+(or should) use the explicitly declared vector dimensions to interpret
+bit and part selects.
 
-$Id: ieee1364-notes.txt,v 1.12 2002/06/11 03:34:33 steve Exp $
+$Id: ieee1364-notes.txt,v 1.13 2002/08/20 04:11:53 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.13  2002/08/20 04:11:53  steve
+ Support parameters with defined ranges.
+
 Revision 1.12  2002/06/11 03:34:33  steve
  Spelling patch (Larry Doolittle)
 
