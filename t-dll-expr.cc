@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.19 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.20 2001/10/23 04:22:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -237,9 +237,9 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr);
 
-      if (0/*net->sig()->lsb() != 0*/) {
+      if (net->sig()->lsb() > net->sig()->msb() ) {
 	    cerr << net->get_line() << ": sorry: LSB for signal "
-		 << "is not zero." << endl;
+		 << "is > MSB." << endl;
       }
 
       expr->type_ = IVL_EX_BITSEL;
@@ -250,6 +250,52 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       net->index()->expr_scan(this);
       assert(expr_);
       expr->u_.bitsel_.bit = expr_;
+
+	/* If the lsb of the signal is not 0, then we are about to
+	   lose the proper offset to the normalized vector. Modify the
+	   expression to subtract the offset:
+
+	      reg [7:4] a;
+	      ... = a[x];
+
+	      becomes
+
+	      reg [3:0] a;
+	      ... = a[x-4];
+
+	    to reflect the normalizing of vectors that is done by the
+	    compiler. */
+
+      if (net->sig()->lsb() != 0) {
+
+	      /* Create in tmpc the constant offset (4 in the above
+		 example) to be subtracted from the index. */
+	    char*bits;
+	    long lsb = net->sig()->lsb();
+	    ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+	    tmpc->type_  = IVL_EX_NUMBER;
+	    tmpc->width_ = expr->u_.bitsel_.bit->width_;
+	    tmpc->signed_ = net->index()->has_sign()? 1 : 0;
+	    tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+	    for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
+		  bits[idx] = (lsb & 1)? '1' : '0';
+		  lsb >>= 1;
+	    }
+
+	      /* Now make the subtractor (x-4 in the above example)
+		 that has as input A the index expression and input B
+		 the constant to subtract. */
+	    ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+	    tmps->type_  = IVL_EX_BINARY;
+	    tmps->width_ = tmpc->width_;
+	    tmps->signed_ = net->index()->has_sign()? 1 : 0;
+	    tmps->u_.binary_.op_  = '-';
+	    tmps->u_.binary_.lef_ = expr->u_.bitsel_.bit;
+	    tmps->u_.binary_.rig_ = tmpc;
+
+	      /* Replace (x) with (x-4) */
+	    expr->u_.bitsel_.bit = tmps;
+      }
 
       expr_ = expr;
 }
@@ -301,6 +347,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.20  2001/10/23 04:22:41  steve
+ *  Support bit selects of non-0 lsb for vectors.
+ *
  * Revision 1.19  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *
