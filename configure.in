@@ -4,6 +4,7 @@ AC_INIT(netlist.h)
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_CHECK_TOOL(STRIP, strip, true)
 AC_PROG_INSTALL
 
 AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile)

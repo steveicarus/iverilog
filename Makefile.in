@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.23 1999/10/22 23:58:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.24 1999/10/23 16:55:51 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -41,6 +41,7 @@ CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+STRIP = @STRIP@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
@@ -52,10 +53,17 @@ all: ivl verilog
 	cd ivlpp ; $(MAKE) all
 
 clean:
-	rm *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc verilog
 	cd vpi ; $(MAKE) clean
 	cd vvm ; $(MAKE) clean
 	cd ivlpp ; $(MAKE) clean
+
+distclean: clean
+	rm -f vpi/Makefile
+	rm -f vvm/Makefile
+	rm -f ivlpp/Makefile
+	rm -f config.status config.cache config.log
+	rm -f Makefile
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
 FF = nobufz.o propinit.o sigfold.o xnfio.o xnfsyn.o
@@ -115,6 +123,7 @@ $(bindir)/verilog: ./verilog
 
 $(bindir)/ivl: ivl
 	$(INSTALL_PROGRAM) ./ivl $(bindir)/ivl
+	$(STRIP) $(bindir)/ivl
 
 $(mandir)/man1/verilog.1: $(srcdir)/verilog.1
 	$(INSTALL_DATA) $(srcdir)/verilog.1 $(mandir)/man1/verilog.1
