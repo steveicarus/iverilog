@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.14 2003/06/25 04:04:19 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.15 2004/09/10 23:13:05 steve Exp $"
 #endif
 
 /*
@@ -84,7 +84,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    }
 
 	    /* squirrel away veriusertfs in persistent user_data */
-	    data = (p_pli_data) calloc(1, sizeof(s_pli_data));
+	    data = calloc(1, sizeof(s_pli_data));
 	    assert(data != NULL);
 	    data->tf = tf;
 
@@ -92,7 +92,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 		 it to the pli_data that represents this
 		 function. Supply wrapper functions for the system
 		 task actions. */
-	    (void) memset(&tf_data, 0, sizeof(s_vpi_systf_data));
+	    memset(&tf_data, 0, sizeof(s_vpi_systf_data));
 	    switch (tf->type) {
 		case usertask:
 		  tf_data.type = vpiSysTask;
@@ -164,7 +164,7 @@ static int compiletf(char *data)
       vpi_put_userdata(call_h, pli);
 
       /* default cb_data */
-      (void) memset(&cb_data, 0, sizeof(s_cb_data));
+      memset(&cb_data, 0, sizeof(s_cb_data));
       cb_data.cb_rtn = callback;
       cb_data.user_data = data;
 
@@ -182,7 +182,7 @@ static int compiletf(char *data)
 	    cb_data.reason = cbValueChange;
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
 		  /* replicate user_data for each instance */
-		  dp = (p_pli_data)calloc(1, sizeof(s_pli_data));
+		  dp = calloc(1, sizeof(s_pli_data));
 		  assert(dp != NULL);
 		  memcpy(dp, cb_data.user_data, sizeof(s_pli_data));
 		  dp->paramvc = paramvc++;
@@ -389,6 +389,9 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.15  2004/09/10 23:13:05  steve
+ *  Compile cleanup of C code.
+ *
  * Revision 1.14  2003/06/25 04:04:19  steve
  *  Fix mingw portability problems.
  *

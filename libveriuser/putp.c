@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: putp.c,v 1.6 2003/06/26 03:20:24 steve Exp $"
+#ident "$Id: putp.c,v 1.7 2004/09/10 23:13:05 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -74,7 +74,7 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
       /* fill in vpi_value */
       val.format = vpiIntVal;
       val.value.integer = value;
-      (void)vpi_put_value(arg_h, &val, 0, vpiNoDelay);
+      vpi_put_value(arg_h, &val, 0, vpiNoDelay);
 
       if (arg_h)
 	    vpi_free_object(sys_i);
@@ -123,7 +123,7 @@ PLI_INT32 tf_iputrealp(PLI_INT32 n, double value, void *obj)
       /* fill in vpi_value */
       val.format = vpiRealVal;
       val.value.real = value;
-      (void)vpi_put_value(arg_h, &val, 0, vpiNoDelay);
+      vpi_put_value(arg_h, &val, 0, vpiNoDelay);
 
 free:
       vpi_free_object(sys_i);
@@ -145,6 +145,9 @@ PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
 }
 /*
  * $Log: putp.c,v $
+ * Revision 1.7  2004/09/10 23:13:05  steve
+ *  Compile cleanup of C code.
+ *
  * Revision 1.6  2003/06/26 03:20:24  steve
  *  Correct handle of put to function return value.
  *

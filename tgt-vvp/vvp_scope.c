@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.100 2004/06/30 02:16:27 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.101 2004/09/10 23:13:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -57,7 +57,7 @@ const char *vvp_mangle_id(const char *id)
 	    int n = se - inp;
 	    unsigned int nlen = strlen(id) + 4*(++nesc) + 1;
 	    if (out_len < nlen) {
-		  out = (char *) realloc(out, nlen);
+		  out = realloc(out, nlen);
 		  assert(out);
 		  out_len = nlen;
 	    }
@@ -107,7 +107,7 @@ const char *vvp_mangle_name(const char *id)
 	    int n = se - inp;
 	    unsigned int nlen = strlen(id) + 2*(++nesc) + 1;
 	    if (out_len < nlen) {
-		  out = (char *) realloc(out, nlen);
+		  out = realloc(out, nlen);
 		  assert(out);
 		  out_len = nlen;
 	    }
@@ -462,8 +462,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 	      /* Save this driver. */
 	    if (ndrivers >= adrivers) {
 		  adrivers += 4;
-		  drivers = (ivl_nexus_ptr_t*)
-			realloc(drivers, adrivers*sizeof(ivl_nexus_ptr_t));
+		  drivers = realloc(drivers, adrivers*sizeof(ivl_nexus_ptr_t));
 		  assert(drivers);
 	    }
 	    drivers[ndrivers] = nptr;
@@ -679,7 +678,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
   
   if (i >= nudps)
     {
-      udps = (ivl_udp_t*)realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
+      udps = realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
       assert(udps);
       udps[nudps++] = udp;
       draw_udp_def(udp);
@@ -1589,6 +1588,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.101  2004/09/10 23:13:05  steve
+ *  Compile cleanup of C code.
+ *
  * Revision 1.100  2004/06/30 02:16:27  steve
  *  Implement signed divide and signed right shift in nets.
  *
