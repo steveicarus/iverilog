@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2000/10/15 21:02:08 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2000/11/11 00:51:21 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -29,8 +29,8 @@ srcdir = @srcdir@
 
 VPATH = $(srcdir)
 
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 includedir = $(prefix)/include
 
 CC = @CC@
