@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.127 2002/06/08 23:42:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.128 2002/06/14 21:38:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -843,8 +843,12 @@ void NetEBinary::dump(ostream&o) const
 
 void NetEConcat::dump(ostream&o) const
 {
-      if (repeat_)
-	    o << *repeat_;
+      if (repeat_calculated_) {
+	    if (repeat_value_ != 1)
+		  o << repeat_value_;
+      } else if (repeat_) {
+	    o << "<" << *repeat_ << ">";
+      }
 
       if (parms_[0])
 	    o << "{" << *parms_[0];
@@ -973,6 +977,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.128  2002/06/14 21:38:41  steve
+ *  Fix expression width for repeat concatenations.
+ *
  * Revision 1.127  2002/06/08 23:42:46  steve
  *  Add NetRamDq synthsesis from memory l-values.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.60 2002/05/24 00:44:54 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.61 2002/06/14 21:38:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -375,6 +375,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
       NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
       tmp->set_line(*this);
 
+      unsigned wid_sum = 0;
+
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    assert(parms_[idx]);
@@ -390,8 +392,11 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 		  des->errors += 1;
 	    }
 
+	    wid_sum += ex->expr_width();
 	    tmp->set(idx, ex);
       }
+
+      tmp->set_width(wid_sum * tmp->repeat());
 
       return tmp;
 }
@@ -869,6 +874,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.61  2002/06/14 21:38:41  steve
+ *  Fix expression width for repeat concatenations.
+ *
  * Revision 1.60  2002/05/24 00:44:54  steve
  *  Add support for $bits (SystemVerilog)
  *
