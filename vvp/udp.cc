@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.19 2003/03/18 01:32:33 steve Exp $"
+#ident "$Id: udp.cc,v 1.20 2003/04/01 05:32:56 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -33,10 +33,15 @@
 
 void udp_functor_s::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-  // old_ival is set on the way out
-  put(i, val);
-  unsigned char out = udp->propagate(this, i);
-  put_oval(out, push);
+	// old_ival is set on the way out
+      put(i, val);
+      unsigned char out = udp->propagate(this, i);
+
+	// Send the result to the output. If this is a combinational
+	// UDP, then push according to the push flag. However, do
+	// *not* push sequential outputs. This output schedules like a
+	// non-blocking assignment.
+      put_oval(out, push && !udp->sequ);
 }
 
 
@@ -355,6 +360,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.20  2003/04/01 05:32:56  steve
+ *  Propagate output of sequential udp like non-blocksing assign.
+ *
  * Revision 1.19  2003/03/18 01:32:33  steve
  *  Add the q edge flag.
  *
