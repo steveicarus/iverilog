@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.4 1998/12/01 00:42:15 steve Exp $"
+#ident "$Id: target.h,v 1.5 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -64,6 +64,7 @@ struct target_t {
       virtual void udp(ostream&os,  const NetUDP*);
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_const(ostream&os, const NetConst*);
+      virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
 
 	/* Output a process (called for each process) */
@@ -72,6 +73,7 @@ struct target_t {
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
+      virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
@@ -114,6 +116,13 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.5  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.4  1998/12/01 00:42:15  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

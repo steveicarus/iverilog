@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.4 1998/12/01 00:42:15 steve Exp $"
+#ident "$Id: target.cc,v 1.5 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -61,6 +61,12 @@ void target_t::net_const(ostream&os, const NetConst*)
 	    "Unhandled CONSTANT node." << endl;
 }
 
+void target_t::net_esignal(ostream&os, const NetESignal*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled Expression Signal node." << endl;
+}
+
 void target_t::net_pevent(ostream&os, const NetPEvent*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -77,6 +83,13 @@ void target_t::proc_assign(ostream&os, const NetAssign*)
 
 void target_t::proc_block(ostream&os, const NetBlock*)
 {
+}
+
+void target_t::proc_case(ostream&os, const NetCase*cur)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled case:" << endl;
+      cur->dump(cerr, 6);
 }
 
 void target_t::proc_condit(ostream&os, const NetCondit*condit)
@@ -153,6 +166,13 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.5  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.4  1998/12/01 00:42:15  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

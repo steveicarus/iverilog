@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.15 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: netlist.cc,v 1.16 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -423,13 +423,21 @@ void NetEConst::set_width(unsigned w)
       expr_width(w);
 }
 
+NetESignal::NetESignal(NetNet*n)
+: NetExpr(n->pin_count()), NetNode(n->name(), n->pin_count())
+{
+      for (unsigned idx = 0 ;  idx < n->pin_count() ;  idx += 1) {
+	    connect(pin(idx), n->pin(idx));
+      }
+}
+
 NetESignal::~NetESignal()
 {
 }
 
 void NetESignal::set_width(unsigned w)
 {
-      assert(w == sig_->pin_count());
+      assert(w == pin_count());
       expr_width(w);
 }
 
@@ -873,6 +881,13 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.16  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.15  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

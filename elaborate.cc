@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.13 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.14 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 /*
@@ -572,7 +572,9 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 	    string name = path+"."+text_;
 	    NetNet*net = des->find_signal(name);
 	    assert(net);
-	    return new NetESignal(net);
+	    NetESignal*node = new NetESignal(net);
+	    des->add_node(node);
+	    return node;
       }
 }
 
@@ -871,6 +873,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.14  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.13  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

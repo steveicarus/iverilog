@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.5 1999/02/01 00:26:49 steve Exp $"
+#ident "$Id: emit.cc,v 1.6 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 /*
@@ -88,6 +88,11 @@ void NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
 void NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_block(o, this);
+}
+
+void NetCase::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_case(o, this);
 }
 
 void NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
@@ -205,6 +210,11 @@ void NetESignal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_signal(this);
 }
 
+void NetESignal::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_esignal(o, this);
+}
+
 void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_unary(this);
@@ -224,6 +234,13 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.6  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.5  1999/02/01 00:26:49  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.

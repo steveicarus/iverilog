@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.11 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.12 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 /*
@@ -445,7 +445,14 @@ void NetEIdent::dump(ostream&o) const
 
 void NetESignal::dump(ostream&o) const
 {
-      o << sig_->name();
+      o << name();
+}
+
+void NetESignal::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Expression Node: " << name() << endl;
+
+      dump_node_pins(o, ind+4);
 }
 
 void NetEUnary::dump(ostream&o) const
@@ -490,6 +497,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.12  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.11  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

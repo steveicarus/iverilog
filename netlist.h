@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.17 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: netlist.h,v 1.18 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 /*
@@ -543,7 +543,13 @@ class NetCase  : public NetProc {
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
-	//virtual void emit_proc(ostream&, struct target_t*) const;
+      const NetExpr*expr() const { return expr_; }
+      unsigned nitems() const { return nitems_; }
+
+      const NetExpr*expr(unsigned idx) const { return items_[idx].guard; }
+      const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -823,22 +829,22 @@ class NetEIdent  : public NetExpr {
 /* When a signal shows up in an expression, this type represents
    it. From this the expression can get any kind of access to the
    structural signal. */
-class NetESignal  : public NetExpr {
+class NetESignal  : public NetExpr, public NetNode {
 
     public:
-      NetESignal(NetNet*n)
-      : NetExpr(n->pin_count()), sig_(n) { }
+      NetESignal(NetNet*n);
       ~NetESignal();
 
-      const string& name() const { return sig_->name(); }
+      const string& name() const { return NetNode::name(); }
 
       virtual void set_width(unsigned);
 
       virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetNet*sig_;
 };
 
 /*
@@ -953,6 +959,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.18  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.17  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.9 1999/01/01 01:46:01 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.10 1999/02/08 02:49:56 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -45,10 +45,12 @@ class target_vvm : public target_t {
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
       virtual void net_const(ostream&os, const NetConst*);
+      virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
+      virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
@@ -307,10 +309,10 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    if (sig->get_ival(idx) == verinum::Vz)
 		  continue;
 
-	    for (NetObj::Link*lnk = sig->pin(0).next_link()
+	    for (const NetObj::Link*lnk = sig->pin(0).next_link()
 		       ; (*lnk) != sig->pin(0) ;  lnk = lnk->next_link()) {
 		  const NetNode*net;
-		  if (net = dynamic_cast<const NetNode*>(lnk->get_obj())) {
+		  if ((net = dynamic_cast<const NetNode*>(lnk->get_obj()))) {
 			init_code << "      " <<
 			      mangle(lnk->get_obj()->name()) <<
 			      ".init(" << lnk->get_pin() << ", V" <<
@@ -520,6 +522,10 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
       emit_gate_outputfun_(gate);
 }
 
+void target_vvm::net_esignal(ostream&, const NetESignal*)
+{
+}
+
 /*
  * The net_pevent device is a synthetic device type--a fabrication of
  * the elaboration phase. An event device receives value changes from
@@ -574,18 +580,17 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       net->find_lval_range(lval, msb, lsb);
 
       if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
-	    os << setw(indent_) << "" << "// " << lval->name()
-	       << " = ";
+	    os << "        // " << lval->name() << " = ";
 	    net->rval()->dump(os);
 	    os << endl;
 
-	    os << setw(indent_) << "" << mangle(lval->name())
+	    os << "        " << mangle(lval->name())
 	       << " = " << rval << ";" << endl;
       } else {
 	    assert(0);
       }
 
-      os << setw(indent_) << "" << mangle(lval->name()) <<
+      os << "        " << mangle(lval->name()) <<
 	    "_mon.trigger(sim_);" << endl;
 
 
@@ -603,15 +608,20 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 		  if (dynamic_cast<const NetAssign*>(cur))
 			continue;
 
+		    // Skip NetESignal nodes. They are handled as
+		    // expressions.
+		  if (dynamic_cast<const NetESignal*>(cur))
+			continue;
+
 		  if (const NetNet*sig = dynamic_cast<const NetNet*>(cur)) {
-			os << setw(indent_) << "" << mangle(sig->name())
+			os << "        " << mangle(sig->name())
 			   << "[" << pin << "] = " << rval << "[" << idx
 			   << "];" << endl;
-			os <<setw(indent_) << ""  << mangle(sig->name())
+			os << "        "  << mangle(sig->name())
 			   << "_mon.trigger(sim_);" << endl;
 
 		  } else {
-			os << setw(indent_) << "" << mangle(cur->name()) <<
+			os << "        " << mangle(cur->name()) <<
 			      ".set(sim_, " << pin << ", " <<
 			      rval << "[" << idx << "]);" << endl;
 		  }
@@ -624,19 +634,95 @@ void target_vvm::proc_block(ostream&os, const NetBlock*net)
       net->emit_recurse(os, this);
 }
 
+/*
+ * The code for a case statement introduces basic blocks so causes
+ * steps to be created. There is a step for each case, and the
+ * out. For example:
+ *
+ *    case (foo)
+ *        1 : X;
+ *        2 : Y;
+ *    endcase
+ *    Z;
+ *
+ * causes code for Z to be generated, and also code for X and Y that
+ * each branch to Z when they finish. X, Y and Z all generate at least
+ * one step.
+ */
+void target_vvm::proc_case(ostream&os, const NetCase*net)
+{
+      string expr = emit_proc_rval(os, indent_, net->expr());
+
+      ostrstream sc;
+      unsigned default_step_ = thread_step_ + 1;
+      thread_step_ += 1;
+
+	/* Handle the case statement like a computed goto, where the
+	   result of the case statements is the next state to go
+	   to. Once that is done, return true so that statement is
+	   executed. */
+      for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
+	    string guard = emit_proc_rval(os, indent_, net->expr(idx));
+
+	    thread_step_ += 1;
+
+	    os << "        if (" << expr << ".eequal(" << guard <<
+		  "))" << endl;
+	    os << "            step_ = &step_" <<
+		  thread_step_ << "_;" << endl;
+
+	    { unsigned save_indent = indent_;
+	      indent_ = 8;
+	      sc << "      bool step_" << thread_step_ << "_()" << endl;
+	      sc << "      {" << endl;
+	      net->stat(idx)->emit_proc(sc, this);
+	      sc << "        step_ = &step_" << default_step_ << "_;" << endl;
+	      sc << "        return true;" << endl;
+	      sc << "      }" << endl;
+	      indent_ = save_indent;
+	    }
+      }
+
+      os << "        else" << endl;
+      os << "            step_ = &step_" << default_step_ << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+      os << sc.str();
+      os << "      bool step_" << default_step_ << "_()" << endl;
+      os << "      {" << endl;
+}
+
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
-      unsigned ind = indent_;
-      indent_ += 4;
-
       string expr = emit_proc_rval(os, indent_, net->expr());
-      os << setw(ind) << "" << "if (" << expr << "[0] == V1) {" << endl;
-      net->emit_recurse_if(os, this);
-      os << setw(ind) << "" << "} else {" << endl;
-      net->emit_recurse_else(os, this);
-      os << setw(ind) << "" << "}" << endl;
 
-      indent_ = ind;
+      unsigned if_step = ++thread_step_;
+      unsigned else_step = ++thread_step_;
+      unsigned out_step = ++thread_step_;
+
+      os << "        if (" << expr << "[0] == V1)" << endl;
+      os << "          step_ = &step_" << if_step << "_;" << endl;
+      os << "        else" << endl;
+      os << "          step_ = &step_" << else_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      };" << endl;
+
+      os << "      bool step_" << if_step << "_()" << endl;
+      os << "      {" << endl;
+      net->emit_recurse_if(os, this);
+      os << "        step_ = &step_" << out_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      bool step_" << else_step << "_()" << endl;
+      os << "      {" << endl;
+      net->emit_recurse_else(os, this);
+      os << "        step_ = &step_" << out_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      bool step_" << out_step << "_()" << endl;
+      os << "      {" << endl;
 }
 
 void target_vvm::proc_task(ostream&os, const NetTask*net)
@@ -778,6 +864,13 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.10  1999/02/08 02:49:56  steve
+ *  Turn the NetESignal into a NetNode so
+ *  that it can connect to the netlist.
+ *  Implement the case statement.
+ *  Convince t-vvm to output code for
+ *  the case statement.
+ *
  * Revision 1.9  1999/01/01 01:46:01  steve
  *  Add startup after initialization.
  *
