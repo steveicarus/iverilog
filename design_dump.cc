@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.21 1999/05/05 03:04:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.22 1999/05/06 02:29:32 steve Exp $"
 #endif
 
 /*
@@ -355,7 +355,7 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 
 void NetPDelay::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "#" << delay_ << endl;
+      o << setw(ind) << "" << "#" << delay_;
       if (statement_) {
 	    o << endl;
 	    statement_->dump(o, ind+2);
@@ -568,6 +568,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.22  1999/05/06 02:29:32  steve
+ *  Excesss endl.
+ *
  * Revision 1.21  1999/05/05 03:04:46  steve
  *  Fix handling of null delay statements.
  *
