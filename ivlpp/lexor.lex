@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.5 1999/07/10 00:36:12 steve Exp $"
+#ident "$Id: lexor.lex,v 1.6 1999/07/11 16:59:58 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -36,6 +36,7 @@ static void output_init();
 static void def_match();
 static void def_start();
 static void do_define();
+static int  is_defined(const char*name);
 
 static void include_filename();
 static void do_include();
@@ -75,9 +76,17 @@ static struct include_stack_t*standby = 0;
 static int comment_enter = 0;
 %}
 
+%option stack
+
 %x PPINCLUDE
 %x PPDEFINE
 %x CCOMMENT
+
+%x IFDEF_FALSE
+%s IFDEF_TRUE
+%x IFDEF_SUPR
+
+W [ \t\b\f]+
 
 %%
 
@@ -109,14 +118,52 @@ static int comment_enter = 0;
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-^`define[ \t]+[a-zA-Z][a-zA-Z0-9_]*[ \t]+ { BEGIN(PPDEFINE); def_start(); }
+^`define[ \t]+[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
 
-<PPDEFINE>.* { do_define(); }
+<PPDEFINE>.*\n {
+      do_define();
+      istack->lineno += 1;
+      fputc('\n', yyout);
+      BEGIN(0); }
 
-<PPDEFINE>\n { istack->lineno += 1; BEGIN(0); ECHO; }
 
+  /* Detect conditional compilation directives, and parse them. If I
+     find the name defined, switch to the IFDEF_TRUE state and stay
+     there until I get an `else or `endif. Otherwise, switch to the
+     IFDEF_FALSE state and start tossing data.
 
-  /* This pattern notices macros and arranges for it to be replaced. */
+     Handle suppressed `ifdef with an additional suppress start
+     condition that stacks on top of the IFDEF_FALSE so that output is
+     not accidentally turned on within nested ifdefs. */
+
+^{W}?`ifdef{W}[a-zA-Z][a-zA-Z0-9_]*.* {
+      char*name = strchr(yytext, '`');
+      assert(name);
+      name += 6;
+      name += strspn(name, " \t\b\f");
+      name[strcspn(name, " \t\b\f")] = 0;
+
+      if (is_defined(name)) {
+	    yy_push_state(IFDEF_TRUE);
+      } else {
+	    yy_push_state(IFDEF_FALSE);
+      }
+  }
+
+<IFDEF_FALSE,IFDEF_SUPR>^{W}?`ifdef{W}.* { yy_push_state(IFDEF_SUPR); }
+
+<IFDEF_TRUE>{W}?`else.*  { BEGIN(IFDEF_FALSE); }
+<IFDEF_FALSE>{W}?`else.* { BEGIN(IFDEF_TRUE); }
+<IFDEF_SUPR>{W}?`else.*  {  }
+
+<IFDEF_FALSE,IFDEF_SUPR>.  {  }
+<IFDEF_FALSE,IFDEF_SUPR>\n { istack->lineno += 1; fputc('\n', yyout); }
+
+<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>^{W}?`endif.* {
+      yy_pop_state();
+  }
+
+  /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
 
   /* Any text that is not a directive just gets passed through to the
@@ -139,6 +186,26 @@ struct define_t {
 
 static struct define_t*def_table = 0;
 
+static struct define_t*def_lookup(const char*name)
+{
+      struct define_t*cur = def_table;
+      while (cur) {
+	    int cmp = strcmp(name, cur->name);
+	    if (cmp == 0) return cur;
+	    if (cmp < 0)
+		  cur = cur->left;
+	    else
+		  cur = cur->right;
+      }
+
+      return 0;
+}
+
+static int is_defined(const char*name)
+{
+      return def_lookup(name) != 0;
+}
+
   /* When a macro use is discovered in the source, this function is
      used to look up the name and emit the substitution in its
      place. If the name is not found, then the `name string is written
@@ -146,15 +213,7 @@ static struct define_t*def_table = 0;
 
 static void def_match()
 {
-      struct define_t*cur = def_table;
-      while (cur) {
-	    int cmp = strcmp(yytext+1, cur->name);
-	    if (cmp == 0) break;
-	    if (cmp < 0)
-		  cur = cur->left;
-	    else
-		  cur = cur->right;
-      }
+      struct define_t*cur = def_lookup(yytext+1);
 
       if (cur) {
 	    struct include_stack_t*isp
@@ -166,6 +225,7 @@ static void def_match()
 	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
       } else {
+	    fprintf(yyout, "%s", yytext);
       }
 }
 
