@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.86 2002/11/22 00:01:50 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.87 2002/12/19 23:11:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1374,7 +1374,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 	   writeable vector space and work from there instead. */
       if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
-	    res.wid = wid;
+	    res.wid = subv.wid;
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
 		    subv.base, res.wid);
 	    subv = res;
@@ -1963,6 +1963,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.87  2002/12/19 23:11:29  steve
+ *  Keep bit select subexpression width if it is constant.
+ *
  * Revision 1.86  2002/11/22 00:01:50  steve
  *  Careful of left operands to shift that are constant.
  *
