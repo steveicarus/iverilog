@@ -17,16 +17,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.2 2001/03/21 01:49:43 steve Exp $"
+#ident "$Id: vvp.c,v 1.3 2001/03/23 02:41:04 steve Exp $"
 #endif
 
 /*
  */
 
 # include  "vvp_priv.h"
+# include  <string.h>
 # include  <assert.h>
 
 FILE*vvp_out = 0;
+
+static void draw_module_declarations(ivl_design_t des)
+{
+      const char*cp = ivl_design_flag(des, "VPI_MODULE_LIST");
+
+      while (*cp) {
+	    char buffer[128];
+	    const char*comma = strchr(cp, ',');
+
+	    if (comma == 0)
+		  comma = cp + strlen(cp);
+
+	    strncpy(buffer, cp, comma-cp);
+	    buffer[comma-cp] = 0;
+	    fprintf(vvp_out, ":vpi_module \"%s\";\n", buffer);
+
+	    cp = comma;
+      }
+}
 
 int target_design(ivl_design_t des)
 {
@@ -39,6 +59,8 @@ int target_design(ivl_design_t des)
 	    perror(path);
 	    return -1;
       }
+
+      draw_module_declarations(des);
 
       root = ivl_design_root(des);
       draw_scope(root, 0);
