@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.233 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.234 2002/04/21 17:43:13 steve Exp $"
 #endif
 
 /*
@@ -1281,6 +1281,8 @@ class NetAssignBase : public NetProc {
       const NetAssign_* l_val(unsigned) const;
       unsigned l_val_count() const;
 
+      virtual NexusSet* nex_input();
+
 	// This returns the total width of the accumulated l-value. It
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
@@ -1299,7 +1301,6 @@ class NetAssign : public NetAssignBase {
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
 
-      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1350,6 +1351,8 @@ class NetAssignMem_ : public NetProc {
       const NetMemory*memory()const { return mem_; }
       const NetExpr*index()const    { return index_; }
       const NetExpr*rval()const     { return rval_; }
+
+      virtual NexusSet* nex_input();
 
     private:
       NetMemory*mem_;
@@ -1411,6 +1414,7 @@ class NetBlock  : public NetProc {
 	// for sequential blocks.
       void emit_recurse(struct target_t*) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1484,6 +1488,7 @@ class NetCAssign  : public NetProc, public NetNode {
 
       const Link& lval_pin(unsigned) const;
 
+      virtual NexusSet* nex_input();
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1520,6 +1525,7 @@ class NetCondit  : public NetProc {
       bool emit_recurse_if(struct target_t*) const;
       bool emit_recurse_else(struct target_t*) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1767,6 +1773,8 @@ class NetForce  : public NetProc, public NetNode {
 
       const NetNet*lval() const;
 
+      virtual NexusSet* nex_input();
+
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1788,6 +1796,7 @@ class NetForever : public NetProc {
 
       void emit_recurse(struct target_t*) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1853,6 +1862,7 @@ class NetPDelay  : public NetProc {
       unsigned long delay() const;
       const NetExpr*expr() const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1876,6 +1886,7 @@ class NetRepeat : public NetProc {
       const NetExpr*expr() const;
       void emit_recurse(struct target_t*) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1924,6 +1935,7 @@ class NetSTask  : public NetProc {
 
       const NetExpr* parm(unsigned idx) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2025,6 +2037,7 @@ class NetUTask  : public NetProc {
 
       const NetScope* task() const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2047,6 +2060,7 @@ class NetWhile  : public NetProc {
 
       void emit_proc_recurse(struct target_t*) const;
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2970,6 +2984,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.234  2002/04/21 17:43:13  steve
+ *  implement nex_input for behavioral statements.
+ *
  * Revision 1.233  2002/04/21 04:59:08  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

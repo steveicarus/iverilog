@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.148 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: parse.y,v 1.149 2002/04/21 17:43:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2260,6 +2260,13 @@ statement
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_statement($3);
+		  $$ = tmp;
+		}
+	| '@' '(' '*' ')' statement_opt
+		{ PEventStatement*tmp = new PEventStatement;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
 	| lpvalue '=' expression ';'
