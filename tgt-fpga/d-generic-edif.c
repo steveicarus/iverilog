@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.13 2003/02/26 01:24:42 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.14 2003/06/17 03:47:41 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -337,6 +337,31 @@ static void edif_show_logic(ivl_net_logic_t net)
 	    edif_set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
 	    break;
 
+        case IVL_LO_BUFZ:
+          {
+            static int bufz_warned_once=0;
+            if (!bufz_warned_once) {
+              fprintf (stderr,
+                       "0:0: internal warning: BUFZ objects found "
+                       "in EDIF netlist.\n");
+              fprintf (stderr,
+                       "0:0:                 : I'll make BUFs for them.\n");
+              bufz_warned_once=1;
+            }
+            assert(ivl_logic_pins(net) == 2);
+            fprintf(xnf, "(instance (rename U%u \"%s\")",
+                    edif_uref, ivl_logic_name(net));
+            fprintf(xnf, " (viewRef net"
+                    " (cellRef BUF (libraryRef VIRTEX))))\n");
+
+            sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+            edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+
+            sprintf(jbuf, "(portRef I (instanceRef U%u))", edif_uref);
+            edif_set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
+          }
+          break;
+
 	  case IVL_LO_NOR:
 	    assert(ivl_logic_pins(net) <= 10);
 	    assert(ivl_logic_pins(net) >= 3);
@@ -450,6 +475,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.14  2003/06/17 03:47:41  steve
+ *  Handle bufz as buf in generic fpga/edif target.
+ *
  * Revision 1.13  2003/02/26 01:24:42  steve
  *  ivl_lpm_name is obsolete.
  *
