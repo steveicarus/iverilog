@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.145 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.146 2000/07/15 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -690,6 +690,7 @@ class NetMux  : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned width_;
@@ -2658,6 +2659,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.146  2000/07/15 05:13:44  steve
+ *  Detect muxing Vz as a bufufN.
+ *
  * Revision 1.145  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

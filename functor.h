@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.13 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: functor.h,v 1.14 2000/07/15 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -64,6 +64,9 @@ struct functor_t {
 
 	/* This method is called for each multiplier. */
       virtual void lpm_mult(class Design*des, class NetMult*);
+
+	/* This method is called for each MUX. */
+      virtual void lpm_mux(class Design*des, class NetMux*);
 };
 
 struct proc_match_t {
@@ -79,6 +82,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.14  2000/07/15 05:13:44  steve
+ *  Detect muxing Vz as a bufufN.
+ *
  * Revision 1.13  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.12 2000/06/25 19:59:41 steve Exp $"
+#ident "$Id: cprop.cc,v 1.13 2000/07/15 05:13:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -41,6 +41,7 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_add_sub(Design*des, NetAddSub*obj);
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
+      virtual void lpm_mux(Design*des, NetMux*obj);
 };
 
 void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
@@ -227,6 +228,82 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 }
 
 /*
+ * This detects the case where the mux selects between a value an
+ * Vz. In this case, replace the device with a bufif with the sel
+ * input used to enable the output.
+ */
+void cprop_functor::lpm_mux(Design*des, NetMux*obj)
+{
+      if (obj->size() != 2)
+	    return;
+      if (obj->sel_width() != 1)
+	    return;
+
+	/* If the first input is all constant Vz, then replace the
+	   NetMux with an array of BUFIF1 devices, with the enable
+	   connected to the select input. */
+      bool flag = true;
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+	    if (! link_drivers_constant(obj->pin_Data(idx, 0))) {
+		  flag = false;
+		  break;
+	    }
+
+	    if (driven_value(obj->pin_Data(idx, 0)) != verinum::Vz) {
+		  flag = false;
+		  break;
+	    }
+      }
+
+      if (flag) {
+	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+		  NetLogic*tmp = new NetLogic(des->local_symbol(obj->name()),
+					      3, NetLogic::BUFIF1);
+
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,1), tmp->pin(1));
+		  connect(obj->pin_Sel(0), tmp->pin(2));
+		  des->add_node(tmp);
+	    }
+
+	    count += 1;
+	    delete obj;
+	    return;
+      }
+
+	/* If instead the second input is all constant Vz, replace the
+	   NetMux with an array of BUFIF0 devices. */
+      flag = true;
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+	    if (! link_drivers_constant(obj->pin_Data(idx, 1))) {
+		  flag = false;
+		  break;
+	    }
+
+	    if (driven_value(obj->pin_Data(idx, 1)) != verinum::Vz) {
+		  flag = false;
+		  break;
+	    }
+      }
+
+      if (flag) {
+	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+		  NetLogic*tmp = new NetLogic(des->local_symbol(obj->name()),
+					      3, NetLogic::BUFIF1);
+
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,0), tmp->pin(1));
+		  connect(obj->pin_Sel(0), tmp->pin(2));
+		  des->add_node(tmp);
+	    }
+
+	    count += 1;
+	    delete obj;
+	    return;
+      }
+}
+
+/*
  * This functor looks to see if the constant is connected to nothing
  * but signals. If that is the case, delete the dangling constant and
  * the now useless signals. This functor is applied after the regular
@@ -286,6 +363,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.13  2000/07/15 05:13:43  steve
+ *  Detect muxing Vz as a bufufN.
+ *
  * Revision 1.12  2000/06/25 19:59:41  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

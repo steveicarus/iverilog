@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.18 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: functor.cc,v 1.19 2000/07/15 05:13:43 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -66,6 +66,11 @@ void functor_t::lpm_logic(class Design*, class NetLogic*)
 void functor_t::lpm_mult(class Design*, class NetMult*)
 {
 }
+
+void functor_t::lpm_mux(class Design*, class NetMux*)
+{
+}
+
 
 void NetScope::run_functor(Design*des, functor_t*fun)
 {
@@ -154,6 +159,11 @@ void NetMult::functor_node(Design*des, functor_t*fun)
       fun->lpm_mult(des, this);
 }
 
+void NetMux::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_mux(des, this);
+}
+
 proc_match_t::~proc_match_t()
 {
 }
@@ -217,6 +227,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.19  2000/07/15 05:13:43  steve
+ *  Detect muxing Vz as a bufufN.
+ *
  * Revision 1.18  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

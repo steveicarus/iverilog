@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.41 2000/07/08 04:59:20 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.42 2000/07/15 05:13:43 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -996,9 +996,15 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    unsigned midx = sig->sb_to_idx(mval->as_long());
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
+	      /* This is a part select, create a new NetNet object
+		 that connects to just the desired parts of the
+		 identifier. Make sure the NetNet::Type is compatible
+		 with the sig type. */
+
 	    if (midx >= lidx) {
-		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
-					  midx-lidx+1);
+		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+					  sig->type(), midx-lidx+1);
+		  tmp->local_flag(true);
 		  if (tmp->pin_count() > sig->pin_count()) {
 			cerr << get_line() << ": bit select out of "
 			     << "range for " << sig->name() << endl;
@@ -1011,8 +1017,10 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  sig = tmp;
 
 	    } else {
-		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
-					  lidx-midx+1);
+		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+					  sig->type(), midx-lidx+1);
+		  tmp->local_flag(true);
+
 		  assert(tmp->pin_count() <= sig->pin_count());
 		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
@@ -1037,7 +1045,14 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  des->errors += 1;
 		  idx = 0;
 	    }
-	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path), 1);
+
+	      /* This is a bit select, create a compatible NetNet with
+		 a single bit that links to the selected bit of the
+		 expression. */
+	    NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+				    sig->type(), 1);
+	    tmp->local_flag(true);
+
 	    connect(tmp->pin(0), sig->pin(idx));
 	    sig = tmp;
       }
@@ -1604,6 +1619,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.42  2000/07/15 05:13:43  steve
+ *  Detect muxing Vz as a bufufN.
+ *
  * Revision 1.41  2000/07/08 04:59:20  steve
  *  Eleminate reduction gate for 1-bit compares.
  *
