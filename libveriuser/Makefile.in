@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2003/02/22 04:39:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,6 +43,7 @@ CXXFLAGS = @CXXFLAGS@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
+RANLIB = @RANLIB@
 
 A = a_close.o a_configure.o a_fetch_argc.o a_fetch_argv.o a_fetch_fullname.o \
 a_fetch_location.o a_fetch_tfarg.o a_fetch_type.o a_fetch_type_str.o \
@@ -63,6 +64,7 @@ Makefile: Makefile.in config.status
 libveriuser.a: $O
 	rm -f $@
 	ar cvq $@ $O
+	$(RANLIB) $@
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep

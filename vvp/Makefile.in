@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.43 2003/02/21 03:40:35 steve Exp $"
+#ident "$Id: Makefile.in,v 1.44 2003/02/22 04:39:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -39,6 +39,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 STRIP = @STRIP@
+RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
 
@@ -86,6 +87,7 @@ libvpi.a: libvpi.c
 	$(CC) -c $(srcdir)/libvpi.c
 	rm -f libvpi.a
 	ar cqv libvpi.a libvpi.o
+	$(RANLIB) libvpi.a
 
 vvp: $O 
 	$(CXX) $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
