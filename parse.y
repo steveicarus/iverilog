@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.100 2000/06/27 16:00:40 steve Exp $"
+#ident "$Id: parse.y,v 1.101 2000/06/30 15:50:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1369,11 +1369,12 @@ parameter_assign
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
 			yyerror(@3, "error: parameter value "
-			            "must be constant.");
+			            "must be a constant expression.");
 			delete tmp;
 			tmp = 0;
+		  } else {
+			pform_set_parameter($1, tmp);
 		  }
-		  pform_set_parameter($1, tmp);
 		  delete $1;
 		}
 	;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.18 2000/05/07 04:37:55 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.19 2000/06/30 15:50:20 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -212,8 +212,25 @@ bool PETernary::is_constant(Module*) const
       return false;
 }
 
+PEUnary::PEUnary(char op, PExpr*ex)
+: op_(op), expr_(ex)
+{
+}
+
+PEUnary::~PEUnary()
+{
+}
+
+bool PEUnary::is_constant(Module*m) const
+{
+      return expr_->is_constant(m);
+}
+
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.19  2000/06/30 15:50:20  steve
+ *  Allow unary operators in constant expressions.
+ *
  * Revision 1.18  2000/05/07 04:37:55  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.40 2000/06/13 05:22:16 steve Exp $"
+#ident "$Id: PExpr.h,v 1.41 2000/06/30 15:50:20 steve Exp $"
 #endif
 
 # include  <string>
@@ -247,8 +247,8 @@ class PEString : public PExpr {
 class PEUnary : public PExpr {
 
     public:
-      explicit PEUnary(char op, PExpr*ex)
-      : op_(op), expr_(ex) { }
+      explicit PEUnary(char op, PExpr*ex);
+      ~PEUnary();
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
@@ -260,6 +260,8 @@ class PEUnary : public PExpr {
 				    Link::strength_t drive1) const;
       virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+
+      virtual bool is_constant(Module*) const;
 
     private:
       char op_;
@@ -381,6 +383,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.41  2000/06/30 15:50:20  steve
+ *  Allow unary operators in constant expressions.
+ *
  * Revision 1.40  2000/06/13 05:22:16  steve
  *  Support concatenation in parameter expressions.
  *
