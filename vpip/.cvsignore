@@ -1,4 +1,5 @@
 libvpip.a
+vpip.dll
 Makefile
 configure
 config.log

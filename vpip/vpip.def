@@ -11,9 +11,12 @@ EXPORTS
     vpi_handle_by_index 
     vpi_iterate 
     vpi_mcd_close 
+    vpi_mcd_fgetc
+    vpi_mcd_fputc
     vpi_mcd_init 
     vpi_mcd_name 
     vpi_mcd_open 
+    vpi_mcd_open_x
     vpi_mcd_printf 
     vpi_printf 
     vpi_put_value 
