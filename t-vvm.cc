@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.212 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.213 2001/10/14 03:50:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1997,8 +1997,14 @@ void target_vvm::logic(const NetLogic*gate)
 	    out << "static vvm_xor " << mname << "("
 		<< (gate->pin_count()-1 ) << ", ";
 	    break;
+          case NetLogic::PULLDOWN:
+	    out << "static vvm_pulldown " << mname << "(";
+	    break;
+          case NetLogic::PULLUP:
+	    out << "static vvm_pullup " << mname << "(";
+	    break;
 	  default:
-	    out << "#error \"internal ivl error:bad gate type for " <<
+	    out << "#error \"internal ivl error:bad gate type " << gate->type() << " for " <<
 		  gate->name() << "\"" << endl;
       }
 
@@ -3652,6 +3658,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.213  2001/10/14 03:50:53  steve
+ *  vvm support for pullup/down gates (PR#288)
+ *
  * Revision 1.212  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

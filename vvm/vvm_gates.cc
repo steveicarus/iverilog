@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.22 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.23 2001/10/14 03:50:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -839,8 +839,47 @@ void vvm_xor::take_value(unsigned key, vpip_bit_t val)
       output(compute_xor(input_, width_));
 }
 
+vvm_pullup::vvm_pullup(unsigned d)
+: vvm_1bit_out(d)
+{
+}
+
+void vvm_pullup::start()
+{
+      output(St1);
+}
+
+void vvm_pullup::take_value(unsigned key, vpip_bit_t val)
+{
+}
+
+vvm_pullup::~vvm_pullup()
+{
+}
+
+vvm_pulldown::vvm_pulldown(unsigned d)
+: vvm_1bit_out(d)
+{
+}
+
+void vvm_pulldown::start()
+{
+      output(St0);
+}
+
+void vvm_pulldown::take_value(unsigned key, vpip_bit_t val)
+{
+}
+
+vvm_pulldown::~vvm_pulldown()
+{
+}
+
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.23  2001/10/14 03:50:53  steve
+ *  vvm support for pullup/down gates (PR#288)
+ *
  * Revision 1.22  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

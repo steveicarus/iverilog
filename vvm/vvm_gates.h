@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.71 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.72 2001/10/14 03:50:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -865,6 +865,30 @@ class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_1bit_out {
 };
 
 /*
+ * The pullup is a trivial device that drives a logic 1 onto its output.
+ */
+class vvm_pullup  : public vvm_nexus::recvr_t, public vvm_1bit_out {
+    public:
+      explicit vvm_pullup(unsigned delay =0);
+      ~vvm_pullup();
+      void start();
+    private:
+      void take_value(unsigned, vpip_bit_t val);
+};
+
+/*
+ * The pulldown is a trivial device that drives a logic 0 onto its output.
+ */
+class vvm_pulldown  : public vvm_nexus::recvr_t, public vvm_1bit_out {
+    public:
+      explicit vvm_pulldown(unsigned delay =0);
+      ~vvm_pulldown();
+      void start();
+    private:
+      void take_value(unsigned, vpip_bit_t val);
+};
+
+/*
  * Threads use the vvm_sync to wait for something to happen. This
  * class cooperates with the various event source classes that receive
  * events and trigger the associated vvm_sync object.
@@ -960,6 +984,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.72  2001/10/14 03:50:53  steve
+ *  vvm support for pullup/down gates (PR#288)
+ *
  * Revision 1.71  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *
