@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.13 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.14 2002/08/29 03:04:01 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -273,6 +273,44 @@ static void draw_NMOS(void)
 				    val = 0;
 			      else
 				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_MUXX(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_MUXX[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i3 == 0)
+				    val = 3;
+			      else if (i3 == 2)
+				    val = 2;
+			      else if (i3 == 3)
+				    val = 2;
+			      else if (i2 >= 2) {
+				    val = 2;
+			      } else if (i2 == 0)
+				    val = i0;
+			      else
+				    val = i1;
 
 			      byte |= val << (i0*2);
 			}
@@ -628,6 +666,7 @@ main()
       draw_BUFZ();
       draw_PMOS();
       draw_NMOS();
+      draw_MUXX();
       draw_MUXZ();
       draw_EEQ();
       draw_NAND();
@@ -643,6 +682,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.14  2002/08/29 03:04:01  steve
+ *  Generate x out for x select on wide muxes.
+ *
  * Revision 1.13  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.4 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.5 2002/08/29 03:04:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -28,6 +28,10 @@
 # include  <stdlib.h>
 # include  <string.h>
 
+/*
+ * This draws a general mux, a slice at a time. Use MUXX so that
+ * unknows lead to unknown output.
+ */
 static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 {
       unsigned sel = ivl_lpm_selects(net);
@@ -55,7 +59,7 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	   select vector. */
       for (idx = 0 ;  idx < size ;  idx += 2) {
 
-	    fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXZ, ",
+	    fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXX, ",
 		    vvp_mangle_id(ivl_lpm_name(net)), slice, sel, idx);
 
 	    {
@@ -76,7 +80,7 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	    fprintf(vvp_out, ", C<1>;\n");
       }
 
-	/* Draw the tree of MUXZ devices to connect the inner tree
+	/* Draw the tree of MUXX devices to connect the inner tree
 	   nodes. */
       for (seldx = 1 ;  seldx < (sel-1) ;  seldx += 1) {
 	    unsigned level = sel - seldx;
@@ -84,7 +88,7 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 	    s = ivl_lpm_select(net, seldx);
 
 	    for (idx = 0 ;  idx < size ;  idx += span) {
-		  fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXZ, ",
+		  fprintf(vvp_out, "L_%s/%u/%u/%u .functor MUXX, ",
 			  vvp_mangle_id(ivl_lpm_name(net)), slice, level, idx);
 
 		  fprintf(vvp_out, "L_%s/%u/%u/%u, ",
@@ -106,7 +110,7 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 
       s = ivl_lpm_select(net, sel-1);
 
-      fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
+      fprintf(vvp_out, "L_%s/%u .functor MUXX, ",
 	      vvp_mangle_id(ivl_lpm_name(net)), slice);
 
       fprintf(vvp_out, "L_%s/%u/2/0, ",
@@ -172,6 +176,9 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.5  2002/08/29 03:04:01  steve
+ *  Generate x out for x select on wide muxes.
+ *
  * Revision 1.4  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

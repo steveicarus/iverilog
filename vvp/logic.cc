@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.10 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: logic.cc,v 1.11 2002/08/29 03:04:01 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -112,6 +112,9 @@ void compile_functor(char*label, char*type,
       } else if (strcmp(type, "RNMOS") == 0) {
 	    obj = new vvp_rnmos_s;
 
+      } else if (strcmp(type, "MUXX") == 0) {
+	    obj = new table_functor_s(ft_MUXX);
+
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj = new table_functor_s(ft_MUXZ);
 
@@ -164,6 +167,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.11  2002/08/29 03:04:01  steve
+ *  Generate x out for x select on wide muxes.
+ *
  * Revision 1.10  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.5 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: logic.h,v 1.6 2002/08/29 03:04:01 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -51,6 +51,7 @@ extern const unsigned char ft_BUFIF1[];
 extern const unsigned char ft_BUFZ[];
 extern const unsigned char ft_PMOS[];
 extern const unsigned char ft_NMOS[];
+extern const unsigned char ft_MUXX[];
 extern const unsigned char ft_MUXZ[];
 extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
@@ -63,6 +64,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.6  2002/08/29 03:04:01  steve
+ *  Generate x out for x select on wide muxes.
+ *
  * Revision 1.5  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
