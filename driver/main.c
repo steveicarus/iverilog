@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.19 2001/06/30 04:23:02 steve Exp $"
+#ident "$Id: main.c,v 1.20 2001/06/30 21:53:42 steve Exp $"
 
 const char HELP[] =
 "Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]
@@ -81,7 +81,7 @@ const char*base = 0;
 const char*mtm  = 0;
 const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
-const char*targ  = "vvm";
+const char*targ  = "vvp";
 const char*start = 0;
 
 char warning_flags[16] = "";
@@ -637,6 +637,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.20  2001/06/30 21:53:42  steve
+ *  Make the vvp target the default.
+ *
  * Revision 1.19  2001/06/30 04:23:02  steve
  *  Get include and lib paths right for mingw and vvm.
  *
@@ -677,24 +680,5 @@ int main(int argc, char **argv)
  *
  * Revision 1.7  2001/01/20 19:02:05  steve
  *  Switch hte -f flag to the -p flag.
- *
- * Revision 1.6  2001/01/20 02:15:51  steve
- *  apologize for not supporting non-constant delays.
- *
- * Revision 1.5  2000/11/30 02:50:54  steve
- *  Add command file (-c) support from Nadim Shaikli.
- *
- * Revision 1.4  2000/10/28 17:28:16  steve
- *  Split vpip for everybody.
- *
- * Revision 1.3  2000/10/28 03:47:25  steve
- *  Use the conf file to generate the vvm ivl string.
- *
- * Revision 1.2  2000/10/28 03:45:47  steve
- *  Use the conf file to generate the vvm ivl string.
- *
- * Revision 1.1  2000/10/08 22:36:56  steve
- *  iverilog with an iverilog.conf configuration file.
- *
  */
 
