@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.34 2002/07/12 17:09:21 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.35 2002/07/17 05:13:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -537,7 +537,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    /* Value */
 	    vpiNet,
 	    vpiReg,
-	    vpiIntegerVar,
+	    vpiVariables,
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
@@ -559,6 +559,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiIntegerVar:
+	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
 	    if (skip)
@@ -800,6 +801,10 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.35  2002/07/17 05:13:43  steve
+ *  Implementation of vpi_handle_by_name, and
+ *  add the vpiVariables iterator.
+ *
  * Revision 1.34  2002/07/12 17:09:21  steve
  *  Remember to scan IntegerVars.
  *

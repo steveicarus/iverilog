@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.8 2002/07/15 03:57:30 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.9 2002/07/17 05:13:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -548,7 +548,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    /* Value */
 	    vpiNet,
 	    vpiReg,
-	    vpiIntegerVar,
+	    vpiVariables,
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
@@ -570,6 +570,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiIntegerVar:
+	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
 	    if (skip)
@@ -812,6 +813,10 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.9  2002/07/17 05:13:43  steve
+ *  Implementation of vpi_handle_by_name, and
+ *  add the vpiVariables iterator.
+ *
  * Revision 1.8  2002/07/15 03:57:30  steve
  *  Fix dangling pointer in pop_scope.
  *

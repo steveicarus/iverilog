@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.18 2002/07/14 02:52:05 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.19 2002/07/17 05:13:43 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -97,19 +97,22 @@ static vpiHandle scope_get_handle(int code, vpiHandle obj)
       return 0;
 }
 
-/* Handle subclasses for vpiTypes */
-static inline int compare_types(int code, int type)
+/* compares vpiType's considering object classes */
+static int compare_types(int code, int type)
 {
-      if (code == type ||
-	  code == vpiScope &&
-	    type == vpiModule ||
-	    type == vpiFunction ||
-	    type == vpiTask ||
-	    type == vpiNamedBegin ||
-	    type == vpiNamedFork)
-      {
+      if (  code == type
+	|| (code == vpiInternalScope &&
+	     (type == vpiModule ||
+	     type == vpiFunction ||
+	     type == vpiTask ||
+	     type == vpiNamedBegin ||
+	     type == vpiNamedFork))
+	|| (code == vpiVariables &&
+	     (type == vpiIntegerVar ||
+	     type == vpiTimeVar))
+      )
 	    return 1;
-      } else
+      else
 	    return 0;
 }
 
@@ -152,10 +155,6 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 
       switch (code) {
 	  case vpiInternalScope:
-	    return module_iter_subset(vpiScope, ref);
-
-	      /* Generate and iterator for all the modules contained
-		 in this scope. */
 	  case vpiMemory:
 	  case vpiModule:
 	  case vpiNamedEvent:
@@ -408,6 +407,10 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.19  2002/07/17 05:13:43  steve
+ *  Implementation of vpi_handle_by_name, and
+ *  add the vpiVariables iterator.
+ *
  * Revision 1.18  2002/07/14 02:52:05  steve
  *  Fix vpiScope iterator.
  *

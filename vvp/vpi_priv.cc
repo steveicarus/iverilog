@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.19 2002/07/12 02:04:44 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.20 2002/07/17 05:13:43 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -211,14 +211,14 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
 		    "vpi_register_systf. You can't do that!\n");
 	    return 0;
       }
-	    
+
       if (ref == 0)
 	    return vpi_iterate_global(type);
 
       if (ref->vpi_type->iterate_)
-          return (ref->vpi_type->iterate_)(type, ref);
+	  return (ref->vpi_type->iterate_)(type, ref);
       else
-          return 0;
+	  return 0;
 }
 
 vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
@@ -226,6 +226,98 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
       assert(ref);
       assert(ref->vpi_type->index_);
       return (ref->vpi_type->index_)(ref, idx);
+}
+
+static vpiHandle find_name(char *name, vpiHandle handle)
+{
+      vpiHandle rtn = 0;
+      struct __vpiScope*ref = (struct __vpiScope*)handle;
+
+      /* check module names */
+      if (!strcmp(name, vpi_get_str(vpiName, handle)))
+	    rtn = handle;
+
+      /* brute force search for the name in all objects in this scope */
+      for (unsigned i = 0 ;  i < ref->nintern ;  i += 1) {
+	    char *nm = vpi_get_str(vpiName, ref->intern[i]);
+	    if (!strcmp(name, nm)) {
+		  rtn = ref->intern[i];
+		  break;
+	    } else if (vpi_get(vpiType, ref->intern[i]) == vpiMemory) {
+		  /* We need to iterate on the words */
+		  vpiHandle word_i, word_h;
+		  word_i = vpi_iterate(vpiMemoryWord, ref->intern[i]);
+		  while (word_i && (word_h = vpi_scan(word_i))) {
+			nm = vpi_get_str(vpiName, word_h);
+			if (!strcmp(name, nm)) {
+			      rtn = word_h;
+			      break;
+			}
+		  }
+	    }
+	    /* found it yet? */
+	    if (rtn) break;
+      }
+
+      return rtn;
+}
+
+static vpiHandle find_scope(char *name, vpiHandle handle, int depth)
+{
+      vpiHandle iter, hand, rtn = 0;
+
+      iter = !handle ? vpi_iterate(vpiModule, NULL) :
+		       vpi_iterate(vpiInternalScope, handle);
+
+      while (iter && (hand = vpi_scan(iter))) {
+	    char *nm = vpi_get_str(vpiName, hand);
+	    int len = strlen(nm);
+	    char *cp = name + len;	/* hier seperator */
+
+	    if (!handle && !strcmp(name, nm)) {
+		  /* root module */
+		  rtn = hand;
+	    } else if (!strncmp(name, nm, len) && *(cp) == '.')
+		  /* recurse deeper */
+		  rtn = find_scope(cp+1, hand, depth + 1);
+
+	    /* found it yet ? */
+	    if (rtn) break;
+      }
+
+      /* matched up to here */
+      if (!rtn) rtn = handle;
+
+      return rtn;
+}
+
+vpiHandle vpi_handle_by_name(char *name, vpiHandle scope)
+{
+      vpiHandle hand;
+      char *nm, *cp;
+      int len;
+
+      /* If scope provided, look in cooresponding module; otherwise
+       * traverse the hierarcy specified in name to find the leaf module
+       * and try finding it there.
+       */
+      if (scope)
+	    hand = vpi_handle(vpiModule, scope);
+      else
+	    hand = find_scope(name, NULL, 0);
+
+      if (hand) {
+	    /* remove hierarchical portion of name */
+	    nm = vpi_get_str(vpiFullName, hand);
+	    len = strlen(nm);
+	    cp = name + len;
+	    if (!strncmp(name, nm, len) && *cp == '.') name = cp + 1;
+
+	    /* Ok, time to burn some cycles */
+	    return find_name(name, hand);
+      }
+
+      return 0;
 }
 
 extern "C" void vpi_vprintf(const char*fmt, va_list ap)
@@ -248,6 +340,10 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.20  2002/07/17 05:13:43  steve
+ *  Implementation of vpi_handle_by_name, and
+ *  add the vpiVariables iterator.
+ *
  * Revision 1.19  2002/07/12 02:04:44  steve
  *  vpi_iterate return null if there is nothing to iterate.
  *
@@ -296,4 +392,3 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
  * Revision 1.6  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  */
-

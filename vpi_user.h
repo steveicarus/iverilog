@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.12 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.13 2002/07/17 05:13:43 steve Exp $"
 #endif
 
 
@@ -173,6 +173,7 @@ typedef struct t_vpi_value {
 #define vpiSysTfCall   85
 #define vpiArgument    89
 #define vpiInternalScope 92
+#define vpiVariables   100 
 
 #define vpiCallback  1000
 
@@ -287,6 +288,7 @@ extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
 extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
+extern vpiHandle  vpi_handle_by_name(char*name, vpiHandle scope);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern int   vpi_get(int property, vpiHandle ref);
@@ -326,6 +328,10 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.13  2002/07/17 05:13:43  steve
+ *  Implementation of vpi_handle_by_name, and
+ *  add the vpiVariables iterator.
+ *
  * Revision 1.12  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *
