@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.10 2003/06/13 19:23:42 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.11 2003/06/21 23:40:15 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -25,6 +25,8 @@
 #include  <stdlib.h>
 #include  <math.h>
 #include  "config.h"
+#include  "priv.h"
+#include  <assert.h>
 
 /*
  * some TF time routines implemented using VPI interface
@@ -128,14 +130,42 @@ void tf_unscale_realdelay(void*obj, double real, double *areal)
 
 PLI_INT32 tf_gettimeprecision(void)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
-      return vpi_get(vpiTimePrecision, hand);
+      PLI_INT32 rc;
+      vpiHandle hand;
+      vpiHandle sys = vpi_handle(vpiSysTfCall,0);
+      assert(sys);
+
+      hand = vpi_handle(vpiScope, sys);
+      rc = vpi_get(vpiTimePrecision, hand);
+
+      if (pli_trace)
+	    fprintf(pli_trace, "tf_gettimeprecision(<%s>) --> %d\n",
+		    vpi_get_str(vpiName, sys), rc);
+
+      return rc;
 }
 
 PLI_INT32 tf_igettimeprecision(void*obj)
 {
-      vpiHandle hand = vpi_handle(vpiScope, (vpiHandle)obj);
-      return vpi_get(vpiTimePrecision, hand);
+      PLI_INT32 rc;
+
+      if (obj == 0) {
+	      /* If the obj pointer is null, then get the simulation
+		 time precision. */
+	    rc = vpi_get(vpiTimePrecision, 0);
+
+      } else {
+
+	    vpiHandle scope = vpi_handle(vpiScope, (vpiHandle)obj);
+	    assert(scope);
+	    rc = vpi_get(vpiTimePrecision, scope);
+      }
+
+      if (pli_trace)
+	    fprintf(pli_trace, "tf_igettimeprecision(<%s>) --> %d\n",
+		    obj? vpi_get_str(vpiName, obj) : ".", rc);
+
+      return rc;
 }
 
 
@@ -153,6 +183,9 @@ PLI_INT32 tf_igettimeunit(void*obj)
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.11  2003/06/21 23:40:15  steve
+ *  gettimeprecision will null argument has specific meaning.
+ *
  * Revision 1.10  2003/06/13 19:23:42  steve
  *  Add a bunch more PLI1 routines.
  *
