@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: PExpr.h,v 1.3 1998/11/09 18:55:33 steve Exp $"
 #endif
 
 # include  <string>
@@ -84,6 +84,7 @@ class PENumber : public PExpr {
       const verinum& value() const { return *value_; }
 
       virtual void dump(ostream&) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const() const;
 
@@ -138,6 +139,14 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.3  1998/11/09 18:55:33  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

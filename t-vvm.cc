@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.3 1998/11/07 19:17:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.4 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 # include  <iostream>
 # include  <strstream>
+# include  <iomanip>
 # include  <string>
 # include  <typeinfo>
 # include  "netlist.h"
@@ -42,12 +43,14 @@ class target_vvm : public target_t {
       virtual void signal(ostream&os, const NetNet*);
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
+      virtual void net_const(ostream&os, const NetConst*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
+      virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
       virtual void end_process(ostream&os, const NetProcTop*);
@@ -57,8 +60,11 @@ class target_vvm : public target_t {
       void emit_gate_outputfun_(const NetNode*);
 
       ostrstream delayed;
+      ostrstream init_code;
       unsigned process_counter;
       unsigned thread_step_;
+
+      unsigned indent_;
 };
 
 /*
@@ -69,13 +75,14 @@ class target_vvm : public target_t {
 class vvm_proc_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_proc_rval(ostream&os)
-      : result(""), os_(os) { }
+      explicit vvm_proc_rval(ostream&os, unsigned i)
+      : result(""), os_(os), indent_(i) { }
 
       string result;
 
     private:
       ostream&os_;
+      unsigned indent_;
 
     private:
       virtual void expr_const(const NetEConst*);
@@ -88,10 +95,10 @@ class vvm_proc_rval  : public expr_scan_t {
 void vvm_proc_rval::expr_const(const NetEConst*expr)
 {
       string tname = make_temp();
-      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> "
-	  << tname << ";" << endl;
+      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
+	    expr->expr_width() << "> " << tname << ";" << endl;
       for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    os_ << "        " << tname << "[" << idx << "] = ";
+	    os_ << setw(indent_) << "" << tname << "[" << idx << "] = ";
 	    switch (expr->value().get(idx)) {
 		case verinum::V0:
 		  os_ << "V0";
@@ -153,16 +160,24 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       string rres = result;
 
       result = make_temp();
-      os_ << "        vvm_bitset_t<" << expr->expr_width() << ">" <<
-	    result << ";" << endl;
+      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
+	    expr->expr_width() << ">" << result << ";" << endl;
       switch (expr->op()) {
 	  case 'e':
-	    os_ << "        " << result << " = vvm_binop_eq(" << lres
-		<< "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case 'n':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_ne("
+		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
-	    os_ << "        " << result << " = vvm_binop_plus(" << lres
-		<< "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_plus("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '-':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_minus("
+		<< lres << "," << rres << ");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
@@ -173,9 +188,9 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       }
 }
 
-static string emit_proc_rval(ostream&os, const NetExpr*expr)
+static string emit_proc_rval(ostream&os, unsigned indent, const NetExpr*expr)
 {
-      vvm_proc_rval scan (os);
+      vvm_proc_rval scan (os, indent);
       expr->expr_scan(&scan);
       return scan.result;
 }
@@ -253,6 +268,9 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 
       os << "main()" << endl << "{" << endl;
       os << "      vvm_simulation sim;" << endl;
+
+      init_code << ends;
+      os << init_code.str();
 
       for (unsigned idx = 0 ;  idx < process_counter ;  idx += 1)
 	    os << "      thread" << (idx+1) << "_t thread_" <<
@@ -333,6 +351,10 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    os << "static vvm_or" << "<" << gate->pin_count()-1 <<
 		  "," << gate->delay1() << "> ";
 	    break;
+	  case NetLogic::XNOR:
+	    os << "static vvm_xnor" << "<" << gate->pin_count()-1 <<
+		  "," << gate->delay1() << "> ";
+	    break;
 	  case NetLogic::XOR:
 	    os << "static vvm_xor" << "<" << gate->pin_count()-1 <<
 		  "," << gate->delay1() << "> ";
@@ -357,6 +379,41 @@ void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 }
 
 /*
+ * The NetConst is a synthetic device created to represent constant
+ * values. I represent them in the output as a vvm_bufz object that
+ * has its input connected to nothing but is initialized to the
+ * desired constant value.
+ */
+void target_vvm::net_const(ostream&os, const NetConst*gate)
+{
+      os << "static void " << mangle(gate->name()) <<
+	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+
+      os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
+	    mangle(gate->name()) << "_output_fun);" << endl;
+
+      init_code << "      " << mangle(gate->name()) << ".set(&sim, 1, ";
+      switch (gate->value()) {
+	  case verinum::V0:
+	    init_code << "V0";
+	    break;
+	  case verinum::V1:
+	    init_code << "V1";
+	    break;
+	  case verinum::Vx:
+	    init_code << "Vx";
+	    break;
+	  case verinum::Vz:
+	    init_code << "Vz";
+	    break;
+      }
+      init_code << ");" << endl;
+
+
+      emit_gate_outputfun_(gate);
+}
+
+/*
  * The net_pevent device is a synthetic device type--a fabrication of
  * the elaboration phase. An event device receives value changes from
  * the attached signal. It is an input only device, its only value
@@ -375,6 +432,7 @@ void target_vvm::net_pevent(ostream&os, const NetPEvent*gate)
 void target_vvm::start_process(ostream&os, const NetProcTop*proc)
 {
       process_counter += 1;
+      indent_ = 8;
       thread_step_ = 0;
 
       os << "class thread" << process_counter <<
@@ -402,16 +460,16 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
  */
 void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
-      string rval = emit_proc_rval(os, net->rval());
+      string rval = emit_proc_rval(os, indent_, net->rval());
 
-      os << "        // " << net->lval()->name() << " = ";
+      os << setw(indent_) << "" << "// " << net->lval()->name() << " = ";
       net->rval()->dump(os);
       os << endl;
 
-      os << "        " << mangle(net->lval()->name()) << " = " << rval <<
-	    ";" << endl;
+      os << setw(indent_) << "" << mangle(net->lval()->name()) << " = "
+	 << rval << ";" << endl;
 
-      os << "        " << mangle(net->lval()->name()) <<
+      os << setw(indent_) << "" << mangle(net->lval()->name()) <<
 	    "_mon.trigger(sim_);" << endl;
 
 
@@ -430,14 +488,14 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			continue;
 
 		  if (const NetNet*sig = dynamic_cast<const NetNet*>(cur)) {
-			os << "        " << mangle(sig->name()) << "[" <<
-			      pin << "] = " << rval << "[" << idx <<
-			      "];" << endl;
-			os << "        " << mangle(sig->name()) <<
-			      "_mon.trigger(sim_);" << endl;
+			os << setw(indent_) << "" << mangle(sig->name())
+			   << "[" << pin << "] = " << rval << "[" << idx
+			   << "];" << endl;
+			os <<setw(indent_) << ""  << mangle(sig->name())
+			   << "_mon.trigger(sim_);" << endl;
 
 		  } else {
-			os << "        " << mangle(cur->name()) <<
+			os << setw(indent_) << "" << mangle(cur->name()) <<
 			      ".set(sim_, " << pin << ", " <<
 			      rval << "[" << idx << "]);" << endl;
 		  }
@@ -452,12 +510,17 @@ void target_vvm::proc_block(ostream&os, const NetBlock*net)
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
-      string expr = emit_proc_rval(os, net->expr());
-      os << "        if (" << expr << "[0] == V1) {" << endl;
+      unsigned ind = indent_;
+      indent_ += 4;
+
+      string expr = emit_proc_rval(os, indent_, net->expr());
+      os << setw(ind) << "" << "if (" << expr << "[0] == V1) {" << endl;
       net->emit_recurse_if(os, this);
-      os << "        } else {" << endl;
+      os << setw(ind) << "" << "} else {" << endl;
       net->emit_recurse_else(os, this);
-      os << "        }" << endl;
+      os << setw(ind) << "" << "}" << endl;
+
+      indent_ = ind;
 }
 
 void target_vvm::proc_task(ostream&os, const NetTask*net)
@@ -479,6 +542,21 @@ void target_vvm::proc_task(ostream&os, const NetTask*net)
       }
 }
 
+void target_vvm::proc_while(ostream&os, const NetWhile*net)
+{
+      unsigned ind = indent_;
+      indent_ += 4;
+
+      os << setw(ind) << "" << "for (;;) {" << endl;
+      string expr = emit_proc_rval(os, indent_, net->expr());
+      os << setw(indent_) << "" << "if (" << expr << "[0] != V1)"
+	    " break;" << endl;
+      net->emit_proc_recurse(os, this);
+      os << setw(ind) << "" << "}" << endl;
+
+      indent_ = ind;
+}
+
 /*
  * Within a process, the proc_event is a statement that is blocked
  * until the event is signalled.
@@ -486,8 +564,10 @@ void target_vvm::proc_task(ostream&os, const NetTask*net)
 void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 {
       thread_step_ += 1;
-      os << "        step_ = &step_" << thread_step_ << "_;" << endl;
-      os << "        " << mangle(proc->name()) << ".wait(vvm_pevent::";
+      os << setw(indent_) << "" << "step_ = &step_" << thread_step_ <<
+	    "_;" << endl;
+      os << setw(indent_) << "" << mangle(proc->name()) <<
+	    ".wait(vvm_pevent::";
       switch (proc->edge()) {
 	  case NetPEvent::ANYEDGE:
 	    os << "ANYEDGE";
@@ -497,6 +577,9 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 	    break;
 	  case NetPEvent::NEGEDGE:
 	    os << "NEGEDGE";
+	    break;
+	  case NetPEvent::POSITIVE:
+	    os << "POSITIVE";
 	    break;
       }
       os << ", this);" << endl;
@@ -545,6 +628,14 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.4  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.3  1998/11/07 19:17:10  steve
  *  Calculate expression widths at elaboration time.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 /*
@@ -105,9 +105,6 @@ void PWire::dump(ostream&out) const
 	  case NetNet::REG:
 	    out << "    reg ";
 	    break;
-	  default:
-	    out << "    (" << type << ") ";
-	    break;
       }
 
       switch (port_type) {
@@ -141,7 +138,8 @@ void PGate::dump_pins(ostream&out) const
 	    out << *pin(0);
 			      
 	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
-		  out << ", " << *pin(idx);
+		  out << ", ";
+		  if (pin(idx)) out << *pin(idx);
 	    }
       }
 }
@@ -256,10 +254,21 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
 	  case NetPEvent::NEGEDGE:
 	    out << "negedge ";
 	    break;
+	  case NetPEvent::POSITIVE:
+	    out << "positive ";
+	    break;
       }
       out << *expr_ << ")" << endl;
 
       statement_->dump(out, ind+2);
+}
+
+void PForStatement::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "for (" << name1_ << " = " << *expr1_
+	  << "; " << *cond_ << "; " << name2_ << " = " << *expr2_ <<
+	    ")" << endl;
+      statement_->dump(out, ind+3);
 }
 
 void PProcess::dump(ostream&out, unsigned ind) const
@@ -314,6 +323,14 @@ void pform_dump(ostream&out, Module*mod)
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.3  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:06  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.2 1998/11/07 17:04:48 steve Exp $"
+#ident "$Id: verinum.cc,v 1.3 1998/11/09 18:55:35 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -162,6 +162,24 @@ string verinum::as_string() const
       return result;
 }
 
+ostream& operator<< (ostream&o, verinum::V v)
+{
+      switch (v) {
+	  case verinum::V0:
+	    o << "0";
+	    break;
+	  case verinum::V1:
+	    o << "1";
+	    break;
+	  case verinum::Vx:
+	    o << "x";
+	    break;
+	  case verinum::Vz:
+	    o << "z";
+	    break;
+      }
+}
+
 ostream& operator<< (ostream&o, const verinum&v)
 {
       o << v.len() << "'b";
@@ -178,36 +196,10 @@ ostream& operator<< (ostream&o, const verinum&v)
 	    if (trim_left != v.get(idx-1))
 		  break;
 
-      switch (trim_left) {
-	  case verinum::V0:
-	    o << "0";
-	    break;
-	  case verinum::V1:
-	    o << "1";
-	    break;
-	  case verinum::Vx:
-	    o << "x";
-	    break;
-	  case verinum::Vz:
-	    o << "z";
-	    break;
-      }
+      o << trim_left;
 
       while (idx > 0) {
-	    switch (v.get(idx-1)) {
-		case verinum::V0:
-		  o << "0";
-		  break;
-		case verinum::V1:
-		  o << "1";
-		  break;
-		case verinum::Vx:
-		  o << "x";
-		  break;
-		case verinum::Vz:
-		  o << "z";
-		  break;
-	    }
+	    o << v.get(idx-1);
 	    idx -= 1;
       }
 
@@ -216,6 +208,14 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.3  1998/11/09 18:55:35  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:04:48  steve
  *  Properly dump 0 length numbers.
  *

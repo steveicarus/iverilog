@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: parse.y,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -176,6 +176,9 @@ expression
 		}
 	| expression '+' expression
 		{ $$ = new PEBinary('+', $1, $3);
+		}
+	| expression '-' expression
+		{ $$ = new PEBinary('-', $1, $3);
 		}
 	| expression '&' expression
 		{ $$ = new PEBinary('&', $1, $3);
@@ -530,6 +533,34 @@ statement
 		{ yyerror(@1, "Malformed conditional expression.");
 		  $$ = $5;
 		}
+	| K_for '(' lvalue '=' expression ';' expression ';'
+	  lvalue '=' expression ')' statement
+		{ $$ = new PForStatement(*$3, $5, $7, *$9, $11, $13);
+		  delete $3;
+		  delete $9;
+		}
+	| K_for '(' lvalue '=' expression ';' expression ';'
+	  error ')' statement
+		{ $$ = 0;
+		  yyerror(@9, "Error in for loop step assigment.");
+		}
+	| K_for '(' lvalue '=' expression ';' error ';'
+	  lvalue '=' expression ')' statement
+		{ $$ = 0;
+		  yyerror(@7, "Error in for loop condition expression.");
+		}
+	| K_for '(' error ')' statement
+		{ $$ = 0;
+		  yyerror(@3, "Incomprehensible for loop.");
+		}
+	| K_while '(' expression ')' statement
+		{ $$ = 0;
+		  yyerror(@1, "Sorry, while loops not implemented.");
+		}
+	| K_while '(' error ')' statement
+		{ $$ = 0;
+		  yyerror(@3, "Error in while loop condition.");
+		}
 	| delay statement_opt
 		{ PDelayStatement*tmp = new PDelayStatement($1, $2);
 		  $$ = tmp;
@@ -545,6 +576,12 @@ statement
 	| lvalue K_LE expression ';'
 		{ $$ = pform_make_assignment($1, $3);
 		  yyerror(@1, "Sorry, non-blocking assignment not implemented.");
+		}
+	| K_wait '(' expression ')' statement_opt
+		{ PEventStatement*tmp;
+		  tmp = new PEventStatement(NetPEvent::POSITIVE, $3);
+		  tmp->set_statement($5);
+		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list ')' ';'
 		{ $$ = pform_make_calltask($1, $3);

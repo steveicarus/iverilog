@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.3 1998/11/07 19:17:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.4 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -149,7 +149,9 @@ NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
       switch (op_) {
+	      // comparison operators return a 1-bin wide result.
 	  case 'e':
+	  case 'n':
 	    expr_width(1);
 	    break;
 	  default:
@@ -178,6 +180,7 @@ void NetEBinary::set_width(unsigned w)
 		  op_ << "." << endl;
 
 	  case '+':
+	  case '-':
 	    left_->set_width(w);
 	    right_->set_width(w);
 	    expr_width(w);
@@ -317,6 +320,14 @@ void Design::add_process(NetProcTop*pro)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.4  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.3  1998/11/07 19:17:10  steve
  *  Calculate expression widths at elaboration time.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 /*
@@ -149,25 +149,31 @@ void PGAssign::elaborate(Design*des, const string&path) const
 void PGBuiltin::elaborate(Design*des, const string&path) const
 {
       NetLogic*cur = 0;
+      string name = get_name();
+      if (name == "")
+	    name = local_symbol(path);
 
       switch (type()) {
 	  case AND:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::AND);
+	    cur = new NetLogic(name, pin_count(), NetLogic::AND);
 	    break;
 	  case NAND:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::NAND);
+	    cur = new NetLogic(name, pin_count(), NetLogic::NAND);
 	    break;
 	  case NOR:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::NOR);
+	    cur = new NetLogic(name, pin_count(), NetLogic::NOR);
 	    break;
 	  case NOT:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::NOT);
+	    cur = new NetLogic(name, pin_count(), NetLogic::NOT);
 	    break;
 	  case OR:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::OR);
+	    cur = new NetLogic(name, pin_count(), NetLogic::OR);
+	    break;
+	  case XNOR:
+	    cur = new NetLogic(name, pin_count(), NetLogic::XNOR);
 	    break;
 	  case XOR:
-	    cur = new NetLogic(get_name(), pin_count(), NetLogic::XOR);
+	    cur = new NetLogic(name, pin_count(), NetLogic::XOR);
 	    break;
       }
 
@@ -225,6 +231,9 @@ void PGModule::elaborate(Design*des, const string&path) const
       assert(pin_count() == rmod->ports.size());
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	      // Skip unconnected module ports.
+	    if (pin(idx) == 0)
+		  continue;
 	    NetNet*sig = pin(idx)->elaborate_net(des, path);
 	    if (sig == 0) {
 		  cerr << "Expression too complicated for elaboration." << endl;
@@ -311,6 +320,19 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	    des->add_node(gate);
 	    break;
 
+	  case 'e': // ==
+	    assert(lsig->pin_count() == 1);
+	    assert(rsig->pin_count() == 1);
+	    gate = new NetLogic(local_symbol(path), 3, NetLogic::XNOR);
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    osig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    connect(gate->pin(0), osig->pin(0));
+	    des->add_signal(osig);
+	    des->add_node(gate);
+	    break;
+
 	  default:
 	    cerr << "Unhandled BINARY '" << op_ << "'" << endl;
 	    osig = 0;
@@ -361,6 +383,21 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
       }
 
       return sig;
+}
+
+/*
+ * XXXX For now, only generate a single bit. I am going to have to add
+ * code to properly calculate expression bit widths, eventually.
+ */
+NetNet* PENumber::elaborate_net(Design*des, const string&path) const
+{
+      NetNet*net = new NetNet(local_symbol(path), NetNet::IMPLICIT);
+      net->local_flag(true);
+      NetConst*tmp = new NetConst(local_symbol(path), value_->get(0));
+      des->add_node(tmp);
+      des->add_signal(net);
+      connect(net->pin(0), tmp->pin(0));
+      return net;
 }
 
 NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
@@ -449,7 +486,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
 
 NetProc* Statement::elaborate(Design*des, const string&path) const
 {
-      cerr << "What kind of statement? " << typeid(*this).name() << endl;
+      cerr << "elaborate: What kind of statement? " <<
+	    typeid(*this).name() << endl;
       NetProc*cur = new NetProc;
       return cur;
 }
@@ -540,6 +578,40 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
       return ev;
 }
 
+/*
+ * elaborate the for loop as the equivilent while loop. This eases the
+ * task for the target code generator. The structure is:
+ *
+ *     begin
+ *       name1_ = expr1_;
+ *       while (cond_) begin
+ *          statement_;
+ *          name2_ = expr2_;
+ *       end
+ *     end
+ */
+NetProc* PForStatement::elaborate(Design*des, const string&path) const
+{
+      NetBlock*top = new NetBlock(NetBlock::SEQU);
+      NetNet*sig = des->find_signal(path+"."+name1_);
+      assert(sig);
+      NetAssign*init = new NetAssign(sig, expr1_->elaborate_expr(des, path));
+      top->append(init);
+
+      NetBlock*body = new NetBlock(NetBlock::SEQU);
+
+      body->append(statement_->elaborate(des, path));
+
+      sig = des->find_signal(path+"."+name2_);
+      assert(sig);
+      NetAssign*step = new NetAssign(sig, expr2_->elaborate_expr(des, path));
+      body->append(step);
+
+      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path), body);
+      top->append(loop);
+      return top;
+}
+
 void Module::elaborate(Design*des, const string&path) const
 {
 	// Get all the explicitly declared wires of the module and
@@ -618,6 +690,14 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.3  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.2 1998/11/07 17:05:06 steve Exp $"
+#ident "$Id: target.h,v 1.3 1998/11/09 18:55:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -62,6 +62,7 @@ struct target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void net_assign(ostream&os, const NetAssign*);
+      virtual void net_const(ostream&os, const NetConst*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
 
 	/* Output a process (called for each process) */
@@ -72,6 +73,7 @@ struct target_t {
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
+      virtual void proc_while(ostream&os, const NetWhile*);
 
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
@@ -111,6 +113,14 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.3  1998/11/09 18:55:35  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:06  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

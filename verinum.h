@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.1 1998/11/03 23:29:08 steve Exp $"
+#ident "$Id: verinum.h,v 1.2 1998/11/09 18:55:35 steve Exp $"
 #endif
 
 # include  <string>
@@ -74,9 +74,18 @@ class verinum {
 
 class ostream;
 ostream& operator<< (ostream&, const verinum&);
+ostream& operator<< (ostream&, verinum::V);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.2  1998/11/09 18:55:35  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.1  1998/11/03 23:29:08  steve
  *  Introduce verilog to CVS.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: Statement.h,v 1.3 1998/11/09 18:55:33 steve Exp $"
 #endif
 
 # include  <string>
@@ -198,6 +198,30 @@ class PEventStatement  : public Statement {
       Statement*statement_;
 };
 
+class PForStatement  : public Statement {
+
+    public:
+      PForStatement(const string&n1, PExpr*e1, PExpr*cond,
+		    const string&n2, PExpr*e2, Statement*st)
+      : name1_(n1), expr1_(e1), cond_(cond), name2_(n2), expr2_(e2),
+	statement_(st)
+      { }
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      string name1_;
+      PExpr* expr1_;
+
+      PExpr*cond_;
+
+      string name2_;
+      PExpr* expr2_;
+
+      Statement*statement_;
+};
+
 class PNoop  : public Statement {
 
     public:
@@ -206,6 +230,14 @@ class PNoop  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.3  1998/11/09 18:55:33  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

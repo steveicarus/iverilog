@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 /*
@@ -115,6 +115,12 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
+void NetConst::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "constant " << value_ << ": " << name() << endl;
+      dump_node_pins(o, ind+4);
+}
+
 void NetLogic::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "logic: ";
@@ -133,6 +139,9 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	    break;
 	  case OR:
 	    o << "or";
+	    break;
+	  case XNOR:
+	    o << "xnor";
 	    break;
 	  case XOR:
 	    o << "xor";
@@ -156,6 +165,9 @@ void NetPEvent::dump_node(ostream&o, unsigned ind) const
 	    break;
 	  case NEGEDGE:
 	    o << "negedge ";
+	    break;
+	  case POSITIVE:
+	    o << "positive ";
 	    break;
       }
 
@@ -222,16 +234,19 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
 
 void NetPEvent::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "@";
+      o << setw(ind) << "" ;
       switch (edge_) {
 	  case NEGEDGE:
-	    o << "(negedge " << name() << ")";
+	    o << "@" << "(negedge " << name() << ")";
 	    break;
 	  case POSEDGE:
-	    o << "(posedge " << name() << ")";
+	    o << "@" << "(posedge " << name() << ")";
 	    break;
 	  case ANYEDGE:
-	    o << name();
+	    o << "@" << name();
+	    break;
+	  case POSITIVE:
+	    o << "wait (" << name() << ")";
 	    break;
       }
       o << endl;
@@ -261,6 +276,12 @@ void NetTask::dump(ostream&o, unsigned ind) const
       o << ";" << endl;
 }
 
+void NetWhile::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
+      proc_->dump(o, ind+3);
+}
+
 /* Dump a statement type that someone didn't write a dump for. */
 void NetProc::dump(ostream&o, unsigned ind) const
 {
@@ -284,6 +305,9 @@ void NetEBinary::dump(ostream&o) const
 	    break;
 	  case 'e':
 	    o << "==";
+	    break;
+	  case 'n':
+	    o << "!=";
 	    break;
       }
       o << "(";
@@ -351,6 +375,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.3  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

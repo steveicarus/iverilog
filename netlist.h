@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.3 1998/11/07 19:17:10 steve Exp $"
+#ident "$Id: netlist.h,v 1.4 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 /*
@@ -252,13 +252,28 @@ class NetBUFZ  : public NetNode {
       virtual void emit_node(ostream&, struct target_t*) const;
 };
 
+class NetConst  : public NetNode {
+
+    public:
+      explicit NetConst(const string&n, verinum::V v)
+      : NetNode(n, 1), value_(v) { }
+
+      verinum::V value() const { return value_; }
+
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+    private:
+      verinum::V value_;
+};
+
 /*
  * This class represents all manner of logic gates.
  */
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, NAND, NOR, NOT, OR, XOR };
+      enum TYPE { AND, NAND, NOR, NOT, OR, XNOR, XOR };
 
       explicit NetLogic(const string&n, unsigned pins, TYPE t)
       : NetNode(n, pins), type_(t) { }
@@ -390,7 +405,7 @@ class NetPDelay  : public NetProc {
 class NetPEvent  : public NetProc, public NetNode {
 
     public:
-      enum Type { ANYEDGE, POSEDGE, NEGEDGE };
+      enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
 
     public:
       NetPEvent(const string&ev, Type ed, NetProc*st)
@@ -447,6 +462,30 @@ class NetTask  : public NetProc {
       unsigned nparms_;
       NetExpr**parms_;
 };
+
+/*
+ * The while statement is a condition that is tested in the front of
+ * each iteration, and a statement (a NetProc) that is executed as
+ * long as the condition is true.
+ */
+class NetWhile  : public NetProc {
+
+    public:
+      NetWhile(NetExpr*c, NetProc*p)
+      : cond_(c), proc_(p) { }
+
+      NetExpr*expr() const { return cond_; }
+
+      void emit_proc_recurse(ostream&, struct target_t*) const;
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr*cond_;
+      NetProc*proc_;
+};
+
 
 /* The is the top of any process. It carries the type (initial or
    always) and a pointer to the statement, probably a block, that
@@ -670,6 +709,14 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.4  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.3  1998/11/07 19:17:10  steve
  *  Calculate expression widths at elaboration time.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: lexor.lex,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -68,7 +68,7 @@ static verinum*make_sized_hex(const char*txt);
 "===" { return K_CEQ; }
 "!==" { return K_CNE; }
 
-[;:\[\],()#=.@&!<|^~+-] { return yytext[0]; }
+[;:\[\],()#=.@&!<|^~+*/-] { return yytext[0]; }
 
 \"            { BEGIN(CSTRING); }
 <CSTRING>\\\" { yymore(); }

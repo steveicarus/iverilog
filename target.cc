@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
+#ident "$Id: target.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -47,6 +47,12 @@ void target_t::bufz(ostream&os, const NetBUFZ*)
 
 void target_t::net_assign(ostream&os, const NetAssign*)
 {
+}
+
+void target_t::net_const(ostream&os, const NetConst*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled CONSTANT node." << endl;
 }
 
 void target_t::net_pevent(ostream&os, const NetPEvent*)
@@ -88,6 +94,13 @@ void target_t::proc_event(ostream&os, const NetPEvent*)
 
 void target_t::proc_task(ostream&os, const NetTask*)
 {
+}
+
+void target_t::proc_while(ostream&os, const NetWhile*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled while:" << endl;
+      net->dump(cerr, 6);
 }
 
 void target_t::end_process(ostream&os, const NetProcTop*)
@@ -134,6 +147,14 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.3  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:06  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: emit.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
 #endif
 
 /*
@@ -43,6 +43,11 @@ void NetLogic::emit_node(ostream&o, struct target_t*tgt) const
 void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_assign(o, this);
+}
+
+void NetConst::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_const(o, this);
 }
 
 void NetPEvent::emit_node(ostream&o, struct target_t*tgt) const
@@ -109,6 +114,11 @@ void NetTask::emit_proc(ostream&o, struct target_t*tgt) const
       tgt->proc_task(o, this);
 }
 
+void NetWhile::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_while(o, this);
+}
+
 void NetBlock::emit_recurse(ostream&o, struct target_t*tgt) const
 {
       if (last_ == 0)
@@ -131,6 +141,11 @@ void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
 {
       if (else_)
 	    else_->emit_proc(o, tgt);
+}
+
+void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
+{
+      proc_->emit_proc(o, tgt);
 }
 
 void Design::emit(ostream&o, struct target_t*tgt) const
@@ -203,6 +218,14 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.3  1998/11/09 18:55:34  steve
+ *  Add procedural while loops,
+ *  Parse procedural for loops,
+ *  Add procedural wait statements,
+ *  Add constant nodes,
+ *  Add XNOR logic gate,
+ *  Make vvm output look a bit prettier.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.
