@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.7 2002/05/30 02:37:26 steve Exp $"
+#ident "$Id: veriuser.h,v 1.8 2002/05/31 04:26:44 steve Exp $"
 #endif
 
 /*
@@ -61,7 +61,7 @@ typedef struct t_tfcell
       int   forwref;            /* usually set to 1 */
       char  *tfveritool;        /* usually ignored */
       char  *tferrmessage;      /* usually ignored */
-      char  pad[20];            /* Pad of XL */
+      char  reserved[20];            /* reserved */
 } s_tfcell, *p_tfcell;
 
 extern s_tfcell veriusertfs[];
@@ -98,6 +98,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.8  2002/05/31 04:26:44  steve
+ *  Call padding reserved.
+ *
  * Revision 1.7  2002/05/30 02:37:26  steve
  *  Add the veriusertf_register funciton.
  *
