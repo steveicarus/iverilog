@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: nodangle.cc,v 1.19 2003/06/25 04:46:03 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.20 2004/01/15 06:04:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -50,6 +50,42 @@ void nodangle_f::event(Design*des, NetEvent*ev)
 	    delete ev;
 	    etotal += 1;
 	    return;
+      }
+
+	/* Try to remove duplicate probes from the event. */
+      for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
+	    unsigned jdx = idx + 1;
+	    while (jdx < ev->nprobe()) {
+		  NetEvProbe*ip = ev->probe(idx);
+		  NetEvProbe*jp = ev->probe(jdx);
+
+		  if (ip->edge() != jp->edge()) {
+			jdx += 1;
+			continue;
+		  }
+
+		  bool fully_connected = true;
+		  for (unsigned jpin = 0; jpin < jp->pin_count(); jpin += 1) {
+			unsigned ipin = 0;
+			bool connected_flag = false;
+			for (ipin = 0 ; ipin < ip->pin_count(); ipin += 1)
+			      if (connected(ip->pin(ipin), jp->pin(jpin))) {
+				    connected_flag = true;
+				    break;
+			      }
+
+			if (!connected_flag) {
+			      fully_connected = false;
+			      break;
+			}
+		  }
+
+		  if (fully_connected) {
+			delete jp;
+		  } else {
+			jdx += 1;
+		  }
+	    }
       }
 
 	/* Try to find all the events that are similar to me, and
@@ -169,6 +205,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.20  2004/01/15 06:04:19  steve
+ *  Remove duplicate NetEvProbe objects in nodangle.
+ *
  * Revision 1.19  2003/06/25 04:46:03  steve
  *  Do not elide ports of cells.
  *
