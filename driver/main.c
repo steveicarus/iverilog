@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.1 2000/10/08 22:36:56 steve Exp $"
+#ident "$Id: main.c,v 1.2 2000/10/28 03:45:47 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -117,57 +117,18 @@ static int t_vvm(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl %s -o %s.cc -tvvm -Fcprop %s -Fnodangle"
-	      " -fVPI_MODULE_PATH=%s", base, warning_flags, opath,
-	      synth_flag?"-Fsynth -Fsyn-rules":"", base);
+      pattern = lookup_pattern("<ivl>");
+      if (pattern == 0) {
+	    fprintf(stderr, "No such target: %s\n", targ);
+	    return -1;
+      }
 
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
+      tmp[0] = ' ';
+      tmp[1] = '|';
+      tmp[2] = ' ';
+      rc = build_string(tmp+3, sizeof tmp - 3, pattern);
+      cmd = realloc(cmd, ncmd+3+rc+1);
       strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
-
-      if (f_list) {
-	    rc = strlen(f_list);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, f_list);
-	    ncmd += rc;
-      }
-
-      if (mod_list) {
-	    rc = strlen(mod_list);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, mod_list);
-	    ncmd += rc;
-      }
-
-      if (mtm) {
-	    sprintf(tmp, " -T%s", mtm);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (npath) {
-	    sprintf(tmp, " -N%s", npath);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (start) {
-	    sprintf(tmp, " -s%s", start);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-      sprintf(tmp, " -- -");
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
-      strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
 
       if (verbose_flag)
 	    printf("translate: %s\n", cmd);
@@ -495,6 +456,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.2  2000/10/28 03:45:47  steve
+ *  Use the conf file to generate the vvm ivl string.
+ *
  * Revision 1.1  2000/10/08 22:36:56  steve
  *  iverilog with an iverilog.conf configuration file.
  *
