@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.16 2001/03/31 17:36:02 steve Exp $"
+#ident "$Id: vthread.cc,v 1.17 2001/04/01 04:34:28 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -213,6 +213,56 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CMPX(vthread_t thr, vvp_code_t cp)
+{
+      unsigned eq = 1;
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lv = thr_get_bit(thr, idx1);
+	    unsigned rv = thr_get_bit(thr, idx2);
+
+	    if ((lv < 2) && (rv < 2) && (lv != rv)) {
+		  eq = 0;
+		  break;
+	    }
+
+	    if (idx1 >= 4) idx1 += 1;
+	    if (idx2 >= 4) idx2 += 1;
+      }
+
+      thr_put_bit(thr, 4, eq);
+
+      return true;
+}
+
+bool of_CMPZ(vthread_t thr, vvp_code_t cp)
+{
+      unsigned eq = 1;
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lv = thr_get_bit(thr, idx1);
+	    unsigned rv = thr_get_bit(thr, idx2);
+
+	    if ((lv < 3) && (rv < 3) && (lv != rv)) {
+		  eq = 0;
+		  break;
+	    }
+
+	    if (idx1 >= 4) idx1 += 1;
+	    if (idx2 >= 4) idx2 += 1;
+      }
+
+      thr_put_bit(thr, 4, eq);
+
+      return true;
+}
+
 bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
 	//printf("thread %p: %%delay %lu\n", thr, cp->number);
@@ -362,6 +412,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.17  2001/04/01 04:34:28  steve
+ *  Implement %cmp/x and %cmp/z instructions.
+ *
  * Revision 1.16  2001/03/31 17:36:02  steve
  *  Add the jmp/1 instruction.
  *

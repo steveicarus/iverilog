@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.10 2001/03/31 17:36:02 steve Exp $"
+#ident "$Id: codes.h,v 1.11 2001/04/01 04:34:28 steve Exp $"
 #endif
 
 
@@ -38,6 +38,8 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
+extern bool of_CMPX(vthread_t thr, vvp_code_t code);
+extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
@@ -97,6 +99,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.11  2001/04/01 04:34:28  steve
+ *  Implement %cmp/x and %cmp/z instructions.
+ *
  * Revision 1.10  2001/03/31 17:36:02  steve
  *  Add the jmp/1 instruction.
  *
