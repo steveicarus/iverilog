@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: parse.y,v 1.202 2005/02/19 16:44:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -990,7 +990,6 @@ expr_primary
 			yyerror(@2, "error: Repeat expression "
 			            "must be constant.");
 			delete rep;
-			delete $2;
 			rep = 0;
 		  }
 		  PEConcat*tmp = new PEConcat(*$4, rep);
