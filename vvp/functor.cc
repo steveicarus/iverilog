@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.4 2001/03/22 05:08:00 steve Exp $"
+#ident "$Id: functor.cc,v 1.5 2001/03/22 05:28:16 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -178,7 +178,7 @@ void functor_propagate(vvp_ipoint_t ptr)
       functor_t fp = functor_index(ptr);
       unsigned char oval = fp->oval;
 
-      printf("functor %lx becomes %u\n", ptr, oval);
+	//printf("functor %lx becomes %u\n", ptr, oval);
 
       vvp_ipoint_t idx = fp->out;
       while (idx) {
@@ -226,6 +226,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.5  2001/03/22 05:28:16  steve
+ *  no longer need out message.
+ *
  * Revision 1.4  2001/03/22 05:08:00  steve
  *  implement %load, %inv, %jum/0 and %cmp/u
  *
