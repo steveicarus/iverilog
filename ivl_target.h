@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.6 2000/08/27 15:51:50 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.7 2000/09/18 01:24:32 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -68,6 +68,7 @@ typedef struct ivl_net_signal_s*ivl_net_signal_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
+typedef struct ivl_statement_s*ivl_statement_t;
 
 
 /* This function returns the string value of the named flag. The key
@@ -110,6 +111,29 @@ extern const char* ivl_get_nexus_name(ivl_nexus_t net);
 
 
 extern unsigned  ivl_get_signal_pins(ivl_net_signal_t net);
+
+
+/*
+ * These functions get information about a process. A process is
+ * an initial or always block within the original Verilog source, that
+ * is translated into a type and a single statement. (The statement
+ * may be a compound statement.)
+ *
+ * The ivl_get_process_type function gets the type of the process,
+ * an "inital" or "always" statement.
+ *
+ * The ivl_get_process_stmt functin gets the statement that forms the
+ * process. See the statement related functions for how to manipulate
+ * statements.
+ */
+typedef enum ivl_process_type {
+      IVL_PR_INITIAL = 0,
+      IVL_PR_ALWAYS  = 1
+} ivl_process_type_t;
+
+extern ivl_process_type_t ivl_get_process_type(ivl_process_t net);
+
+extern ivl_statement_t ivl_get_process_stmt(ivl_process_t net);
 
 
 /* TARGET MODULE ENTRY POINTS
@@ -191,8 +215,10 @@ typedef int (*net_signal_f)(const char*name, ivl_net_signal_t net);
    block in the design. In principle, the target creates a thread for
    each process in the Verilog original.
 
-   XXXX I have not yet decided if it it up to the target to scan the
-   process statements, or if I will do that myself. Hmm... */
+   This function is called with the entire thread generated. The
+   process and statement access methods can be used to randomly
+   (read-only) access all the code of the thread. Also, the module may
+   hold on to the process, the core will not delete it. */
 typedef int (*process_f)(ivl_process_t net);
 
 
@@ -210,6 +236,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.7  2000/09/18 01:24:32  steve
+ *  Get the structure for ivl_statement_t worked out.
+ *
  * Revision 1.6  2000/08/27 15:51:50  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.6 2000/08/27 15:51:51 steve Exp $"
+#ident "$Id: stub.c,v 1.7 2000/09/18 01:24:32 steve Exp $"
 #endif
 
 /*
@@ -115,12 +115,24 @@ int target_net_signal(const char*name, ivl_net_signal_t net)
 
 int target_process(ivl_process_t net)
 {
-      fprintf(out, "STUB: process\n");
+      switch (ivl_get_process_type(net)) {
+	  case IVL_PR_INITIAL:
+	    fprintf(out, "      initial\n");
+	    break;
+	  case IVL_PR_ALWAYS:
+	    fprintf(out, "      always\n");
+	    break;
+      }
+
+      fprintf(out, "        STUB: process\n");
       return 0;
 }
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.7  2000/09/18 01:24:32  steve
+ *  Get the structure for ivl_statement_t worked out.
+ *
  * Revision 1.6  2000/08/27 15:51:51  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.
