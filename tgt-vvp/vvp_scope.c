@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.61 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.62 2002/01/06 03:15:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -151,6 +151,31 @@ ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
       return out;
 }
 
+const char*drive_string(ivl_drive_t drive)
+{
+      switch (drive) {
+	  case IVL_DR_HiZ:
+	    return "";
+	  case IVL_DR_SMALL:
+	    return "sm";
+	  case IVL_DR_MEDIUM:
+	    return "me";
+	  case IVL_DR_WEAK:
+	    return "we";
+	  case IVL_DR_LARGE:
+	    return "la";
+	  case IVL_DR_PULL:
+	    return "pu";
+	  case IVL_DR_STRONG:
+	    return "";
+	  case IVL_DR_SUPPLY:
+	    return "su";
+      }
+
+      return "";
+}
+
+	    
 /*
  * The draw_scope function draws the major functional items within a
  * scope. This includes the scopes themselves, of course. All the
@@ -224,7 +249,20 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
 	    const char*bits = ivl_const_bits(cptr);
-	    sprintf(result, "C<%c>", bits[nptr_pin]);
+	    ivl_drive_t drive;
+	    switch (bits[nptr_pin]) {
+		case '0':
+		  drive = ivl_nexus_ptr_drive0(nptr);
+		  sprintf(result, "C<%s0>", drive_string(drive));
+		  break;
+		case '1':
+		  drive = ivl_nexus_ptr_drive1(nptr);
+		  sprintf(result, "C<%s1>", drive_string(drive));
+		  break;
+		default:
+		  sprintf(result, "C<%c>", bits[nptr_pin]);
+	    }
+
 	    return result;
       }
 
@@ -1326,6 +1364,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.62  2002/01/06 03:15:43  steve
+ *  Constant values have drive strengths.
+ *
  * Revision 1.61  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *
@@ -1371,58 +1412,5 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
  *
  * Revision 1.47  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
- *
- * Revision 1.46  2001/09/14 04:15:46  steve
- *  Generate code for identity comparators.
- *
- * Revision 1.45  2001/08/10 00:40:45  steve
- *  tgt-vvp generates code that skips nets as inputs.
- *
- * Revision 1.44  2001/08/03 17:06:10  steve
- *  More detailed messages about unsupported things.
- *
- * Revision 1.43  2001/07/28 03:18:50  steve
- *  Generate constant symbols for supply nets.
- *
- * Revision 1.42  2001/07/22 21:31:14  steve
- *  supply signals give input values.
- *
- * Revision 1.41  2001/07/18 02:44:39  steve
- *  Relax driver limit from 64 to forever (Stephan Boettcher)
- *
- * Revision 1.40  2001/07/16 18:31:49  steve
- *  Nest resolvers when there are lots of drivers (Stephan Boettcher)
- *
- * Revision 1.39  2001/07/09 15:38:35  steve
- *  Properly step through wide inputs. (Stephan Boettcher)
- *
- * Revision 1.38  2001/07/07 03:01:06  steve
- *  Generate code for right shift.
- *
- * Revision 1.37  2001/07/06 04:48:04  steve
- *  Generate code for structural left shift.
- *
- * Revision 1.36  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.35  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- *
- * Revision 1.34  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.33  2001/06/16 02:41:42  steve
- *  Generate code to support memory access in continuous
- *  assignment statements. (Stephan Boettcher)
- *
- * Revision 1.32  2001/06/15 04:14:19  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.31  2001/06/07 04:20:10  steve
  */
 

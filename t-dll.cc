@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.75 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.76 2002/01/06 03:15:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,6 +95,45 @@ inline const char*dlerror(void)
 #endif
 
 static struct dll_target dll_target_obj;
+
+static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
+{
+      switch (lnk.drive0()) {
+	  case Link::HIGHZ:
+	    drv0 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    drv0 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    drv0 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    drv0 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    drv0 = IVL_DR_SUPPLY;
+	    break;
+      }
+
+      switch (lnk.drive1()) {
+	  case Link::HIGHZ:
+	    drv1 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    drv1 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    drv1 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    drv1 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    drv1 = IVL_DR_SUPPLY;
+	    break;
+      }
+}
 
 /*
  * This function locates an ivl_scope_t object that matches the
@@ -265,7 +304,8 @@ static ivl_nexus_ptr_t nexus_log_add(ivl_nexus_t nex,
       return nex->ptrs_ + top - 1;
 }
 
-static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
+static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin,
+			  ivl_drive_t drive0, ivl_drive_t drive1)
 {
       unsigned top = nex->nptr_ + 1;
       nex->ptrs_ = (struct ivl_nexus_ptr_s*)
@@ -273,8 +313,8 @@ static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
-      nex->ptrs_[top-1].drive0 = IVL_DR_STRONG;
-      nex->ptrs_[top-1].drive1 = IVL_DR_STRONG;
+      nex->ptrs_[top-1].drive0 = drive0;
+      nex->ptrs_[top-1].drive1 = drive1;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.con= net;
 }
@@ -1533,20 +1573,27 @@ bool dll_target::net_const(const NetConst*net)
 	   case can be handled more efficiently without allocating
 	   array space. */
       if (obj->width_ == 1) {
+	    ivl_drive_t drv0, drv1;
+	    drive_from_link(net->pin(0), drv0, drv1);
 	    const Nexus*nex = net->pin(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->n.pin_ = (ivl_nexus_t) nex->t_cookie();
-	    nexus_con_add(obj->n.pin_, obj, 0);
+	    nexus_con_add(obj->n.pin_, obj, 0, drv0, drv1);
 
       } else {
 	    obj->n.pins_ = new ivl_nexus_t[obj->width_];
 	    for (unsigned idx = 0 ;  idx < obj->width_ ;  idx += 1) {
 		  if (! net->pin(idx).is_linked())
 			continue;
+
+		  ivl_drive_t drv0, drv1;
+		  drive_from_link(net->pin(idx), drv0, drv1);
+
 		  const Nexus*nex = net->pin(idx).nexus();
 		  assert(nex->t_cookie());
+
 		  obj->n.pins_[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_con_add(obj->n.pins_[idx], obj, idx);
+		  nexus_con_add(obj->n.pins_[idx], obj, idx, drv0, drv1);
 	    }
       }
 
@@ -1790,6 +1837,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.76  2002/01/06 03:15:43  steve
+ *  Constant values have drive strengths.
+ *
  * Revision 1.75  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *
