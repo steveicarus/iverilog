@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.28 2001/07/16 17:57:51 steve Exp $"
+#ident "$Id: functor.h,v 1.29 2001/07/28 03:12:39 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -161,8 +161,10 @@ typedef struct functor_s *functor_t;
 
 enum strength_e {
       HiZ = 0x00,
+      Su0 = 0x77, /* Su0-Su0 */
       St0 = 0x66, /* St0-St0 */
       Pu0 = 0x55, /* Pu0-Pu0 */
+      Su1 = 0x77|0x88, /* Su1 - Su1 */
       St1 = 0x66|0x88, /* St1 - St1 */
       Pu1 = 0x55|0x88, /* Pu1 - Pu1 */
       StX = 0x66|0x80, /* St0 - St1 */
@@ -298,6 +300,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.29  2001/07/28 03:12:39  steve
+ *  Support C<su0> and C<su1> special symbols.
+ *
  * Revision 1.28  2001/07/16 17:57:51  steve
  *  Merge sig and old_ival into union to save space.
  *

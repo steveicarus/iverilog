@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.90 2001/07/26 03:13:51 steve Exp $"
+#ident "$Id: compile.cc,v 1.91 2001/07/28 03:12:39 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -291,6 +291,12 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 		  continue;
 	    }
 
+	    if (strcmp(argv[idx].text, "C<su0>") == 0) {
+		  free(argv[idx].text);
+		  functor_put_input(iobj, idx, 0, Su0);
+		  continue;
+	    }
+
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
 		  free(argv[idx].text);
 		  functor_put_input(iobj, idx, 1, St1);
@@ -300,6 +306,12 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    if (strcmp(argv[idx].text, "C<pu1>") == 0) {
 		  free(argv[idx].text);
 		  functor_put_input(iobj, idx, 1, Pu1);
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<su1>") == 0) {
+		  free(argv[idx].text);
+		  functor_put_input(iobj, idx, 1, Su1);
 		  continue;
 	    }
 
@@ -1367,8 +1379,24 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		  continue;
 	    }
 
+	    if (strcmp(argv[idx].text, "C<su0>") == 0) {
+		  obj->oval = 0;
+		  obj->odrive0 = 7;
+		  obj->odrive1 = 7;
+		  schedule_functor(ptr, 0);
+		  continue;
+	    }
+
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
 		  obj->oval = 1;
+		  schedule_functor(ptr, 0);
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<su1>") == 0) {
+		  obj->oval = 1;
+		  obj->odrive0 = 7;
+		  obj->odrive1 = 7;
 		  schedule_functor(ptr, 0);
 		  continue;
 	    }
@@ -1537,6 +1565,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.91  2001/07/28 03:12:39  steve
+ *  Support C<su0> and C<su1> special symbols.
+ *
  * Revision 1.90  2001/07/26 03:13:51  steve
  *  Make the -M flag add module search paths.
  *
