@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.86 1999/11/29 00:38:27 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.87 1999/12/02 16:58:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1257,13 +1257,16 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 
 void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 {
+      const NetObj::Link&lnk = gate->pin(0);
+
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
+	"_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
+	"(vvm_simulation*, vpip_bit_t);" << endl;
 
       assert(gate->pin_count() == 3);
       os << "static vvm_eeq" << "<" << gate->rise_time() << "> "
 	 << mangle(gate->name()) << "(&" << mangle(gate->name()) <<
-	    "_output_fun);" << endl;
+	"_output_" << lnk.get_name() << "_" << lnk.get_inst() << ");" << endl;
 
       emit_gate_outputfun_(gate, 0);
 
@@ -1955,6 +1958,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.87  1999/12/02 16:58:58  steve
+ *  Update case comparison (Eric Aardoom).
+ *
  * Revision 1.86  1999/11/29 00:38:27  steve
  *  Properly initialize registers.
  *

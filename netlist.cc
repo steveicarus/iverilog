@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.96 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.97 1999/12/02 16:58:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1344,9 +1344,9 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 NetCaseCmp::NetCaseCmp(const string&n)
 : NetNode(n, 3)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(1).set_dir(Link::INPUT);
-      pin(2).set_dir(Link::INPUT);
+      pin(0).set_dir(Link::OUTPUT); pin(0).set_name("O",0);
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("I",0);
+      pin(2).set_dir(Link::INPUT); pin(2).set_name("I",1);
 }
 
 NetCaseCmp::~NetCaseCmp()
@@ -2641,6 +2641,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.97  1999/12/02 16:58:58  steve
+ *  Update case comparison (Eric Aardoom).
+ *
  * Revision 1.96  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.29 1999/12/02 04:54:11 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.30 1999/12/02 16:58:58 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -716,8 +716,8 @@ template <unsigned long DELAY> class vvm_eeq {
       explicit vvm_eeq(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val)
-	    { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
@@ -727,10 +727,10 @@ template <unsigned long DELAY> class vvm_eeq {
 		    sim->active_event(ev);
 	    }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		    return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 	      start(sim);
 	    }
 
@@ -897,6 +897,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.30  1999/12/02 16:58:58  steve
+ *  Update case comparison (Eric Aardoom).
+ *
  * Revision 1.29  1999/12/02 04:54:11  steve
  *  Handle mux sel of X, if inputs are equal.
  *
