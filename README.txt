@@ -39,7 +39,7 @@ on a UNIX-like system:
 	- GNU Make
 	  The Makefiles use some GNU extensions, so a basic POSIX
 	  make will not work. Linux systems typically come with a
-	  satisfactory make. BSD based systems (i.e. NetBSD, FreeBSD)
+	  satisfactory make. BSD based systems (i.e., NetBSD, FreeBSD)
 	  typically have GNU make as the gmake program.
 
 	- ISO C++ Compiler
@@ -152,10 +152,10 @@ The elaborate() function performs the elaboration.
 
 One can see a human readable version of the final, elaborated and
 optimized netlist by using the ``-N <path>'' flag to the compiler. If
-elaboration succeeds, the final netlist (i.e. after optimizations but
+elaboration succeeds, the final netlist (i.e., after optimizations but
 before code generation) will be dumped into the file named <path>.
 
-Elaboration is actually performed it two steps: scopes and parameters
+Elaboration is actually performed in two steps: scopes and parameters
 first, followed by the structural and behavioral elaboration.
 
 3.3.1 Scope Elaboration
@@ -184,19 +184,19 @@ simply passing through the pform.
 
 This is actually a collection of processing steps that perform
 optimizations that do not depend on the target technology. Examples of
-some useful transformations would be,
+some useful transformations are
 
-	- eliminate null effect circuitry,
+	- eliminate null effect circuitry
 	- combinational reduction
 	- constant propagation
 
 The actual functions performed are specified on the ivl command line by
-the -F flags (See below).
+the -F flags (see below).
 
 3.5 Code Generation
 
 This step takes the design netlist and uses it to drive the code
-generator. (See target.h.) This may require transforming the
+generator (see target.h). This may require transforming the
 design to suit the technology.
 
 The emit() method of the Design class performs this step. It runs
@@ -208,7 +208,7 @@ command line.
 
 3.6 ATTRIBUTES
 
-    NOTE: The $attribute syntax is being deprecated in favor of the
+    NOTE: The $attribute syntax will soon be deprecated in favor of the
     Verilog-2001 attribute syntax, which cleaner and standardized.
 
 The parser accepts, as an extension to Verilog, the $attribute module
@@ -269,7 +269,7 @@ endmodule
 
 --------------------------------------------------------------
 
-Insure that "iverilog" is on your search path, and the vpi library 
+Ensure that "iverilog" is on your search path, and the vpi library 
 is available.
 
 To compile the program:
@@ -348,7 +348,7 @@ language that are defined.
     Preprocessing Library Modules
 
 	Icarus Verilog does preprocess modules that are loaded from
-	libraries via the -y mechinism. However, the only macros
+	libraries via the -y mechanism. However, the only macros
 	defined during compilation of that file are those that it
 	defines itself (or includes) or that are defined on the
 	command line or command file.
@@ -375,7 +375,7 @@ language that are defined.
 	Icarus Verilog allows the programmer to specify the field
 	with. The "%t" format in Icarus Verilog works exactly as it
 	does in standard Verilog. However, if the programmer chooses
-	to specify a minimum width, i.e. "%5t" Then for that display
+	to specify a minimum width (i.e., "%5t"), then for that display
 	Icarus Verilog will override the $timeformat minimum width and
 	use the explicit minimum width.
 
