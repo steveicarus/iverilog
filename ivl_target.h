@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.38 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.39 2001/03/30 05:49:52 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -250,6 +250,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_CONDIT,
       IVL_ST_DELAY,
       IVL_ST_DELAYX,
+      IVL_ST_FORK,
       IVL_ST_STASK,
       IVL_ST_TRIGGER,
       IVL_ST_WAIT,
@@ -671,9 +672,9 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * statement types can be passed to the function.
  */
 
-  /* IVL_ST_BLOCK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
-  /* IVL_ST_BLOCK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
@@ -720,6 +721,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.39  2001/03/30 05:49:52  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.38  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *

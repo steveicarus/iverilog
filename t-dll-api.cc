@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.26 2001/03/29 03:47:38 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.27 2001/03/30 05:49:52 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -557,16 +557,27 @@ extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
 
 extern "C" unsigned ivl_stmt_block_count(ivl_statement_t net)
 {
-      assert(net->type_ == IVL_ST_BLOCK);
-      return net->u_.block_.nstmt_;
+      switch (net->type_) {
+	  case IVL_ST_BLOCK:
+	  case IVL_ST_FORK:
+	    return net->u_.block_.nstmt_;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 					       unsigned i)
 {
-      assert(net->type_ == IVL_ST_BLOCK);
-      assert(i < net->u_.block_.nstmt_);
-      return net->u_.block_.stmt_ + i;
+      switch (net->type_) {
+	  case IVL_ST_BLOCK:
+	  case IVL_ST_FORK:
+	    return net->u_.block_.stmt_ + i;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
@@ -716,6 +727,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.27  2001/03/30 05:49:52  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.26  2001/03/29 03:47:38  steve
  *  Behavioral trigger statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.11 2001/03/29 03:47:38 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.12 2001/03/30 05:49:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -185,6 +185,44 @@ static int show_stmt_delay(ivl_statement_t net)
       return rc;
 }
 
+static int show_stmt_fork(ivl_statement_t net)
+{
+      unsigned idx;
+      int rc = 0;
+      static int transient_id = 0;
+      unsigned cnt = ivl_stmt_block_count(net);
+
+      int out = transient_id++;
+
+	/* Draw a fork statement for all but one of the threads of the
+	   fork/join. Send the threads off to a bit of code where they
+	   are implemented. */
+      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+	    fprintf(vvp_out, "    %%fork t_%u;\n", transient_id+idx);
+      }
+
+	/* Draw code to execute the remaining thread in the current
+	   thread, then generate enough joins to merge back together. */
+      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1));
+
+      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+	    fprintf(vvp_out, "    %%join;\n");
+      }
+      fprintf(vvp_out, "    %%jmp t_%u;\n", out);
+
+      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+	    fprintf(vvp_out, "t_%u\n", transient_id+idx);
+	    rc += show_statement(ivl_stmt_block_stmt(net, idx));
+	    fprintf(vvp_out, "    %%end;\n");
+      }
+
+	/* This is the label for the out. Use this to branck around
+	   the implementations of all the child threads. */
+      fprintf(vvp_out, "t_%u\n", out);
+
+      return rc;
+}
+
 /*
  * noop statements are implemented by doing nothing.
  */
@@ -277,6 +315,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_delay(net);
 	    break;
 
+	  case IVL_ST_FORK:
+	    rc += show_stmt_fork(net);
+	    break;
+
 	  case IVL_ST_NOOP:
 	    rc += show_stmt_noop(net);
 	    break;
@@ -302,50 +344,7 @@ static int show_statement(ivl_statement_t net)
 
       return rc;
 }
-#if 0
-static void show_stmt_event_wait(ivl_statement_t net)
-{
-      ivl_edge_type_t edge = ivl_stmt_edge(net);
-      ivl_nexus_t nex;
 
-      const char*estr = "";
-
-      assert(ivl_stmt_pins(net) == 1);
-      nex = ivl_stmt_pin(net, 0);
-
-      switch (edge) {
-	  case IVL_EDGE_POS:
-	    estr = "posedge";
-	    break;
-	  case IVL_EDGE_NEG:
-	    estr = "negedge";
-	    break;
-	  case IVL_EDGE_ANY:
-	    estr = "anyedge";
-	    break;
-      }
-
-      fprintf(vvp_out, "L_%s .event %s, ", ivl_nexus_name(nex), estr);
-      draw_nexus_input(nex);
-      fprintf(vvp_out, ";\n");
-
-}
-#endif
-#if 0
-static void show_stmt_events(ivl_statement_t net)
-{
-      switch (ivl_statement_type(net)) {
-	  case IVL_ST_WAIT:
-	    show_stmt_event_wait(net);
-	    return;
-	  case IVL_ST_DELAY:
-	    show_stmt_events(ivl_stmt_sub_stmt(net));
-	    return;
-	  default:
-	    return;
-      }
-}
-#endif
 
 /*
  * The process as a whole is surrounded by this code. We generate a
@@ -361,11 +360,7 @@ int draw_process(ivl_process_t net, void*x)
 
       local_count = 0;
       fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
-#if 0
-	/* Show any .event statements that are needed to support this
-	   thread. */
-      show_stmt_events(stmt);
-#endif
+
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
       fprintf(vvp_out, "T_%d\n", thread_count);
@@ -399,6 +394,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.12  2001/03/30 05:49:53  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.11  2001/03/29 03:47:38  steve
  *  Behavioral trigger statements.
  *

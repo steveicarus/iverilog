@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.14 2001/03/29 03:47:38 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.15 2001/03/30 05:49:52 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -152,7 +152,9 @@ bool dll_target::proc_block(const NetBlock*net)
 	   it, so fill in the block fields of the existing statement,
 	   and generate the contents for the statement array. */
 
-      stmt_cur_->type_ = IVL_ST_BLOCK;
+      stmt_cur_->type_ = (net->type() == NetBlock::SEQU)
+	    ? IVL_ST_BLOCK
+	    : IVL_ST_FORK;
       stmt_cur_->u_.block_.nstmt_ = count;
       stmt_cur_->u_.block_.stmt_ = (struct ivl_statement_s*)
 	    calloc(count, sizeof(struct ivl_statement_s));
@@ -356,6 +358,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.15  2001/03/30 05:49:52  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.14  2001/03/29 03:47:38  steve
  *  Behavioral trigger statements.
  *

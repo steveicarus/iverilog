@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.26 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.27 2001/03/30 05:49:52 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -341,7 +341,7 @@ struct ivl_statement_s {
 		  ivl_expr_t rval_;
 	    } assign_;
 
-	    struct { /* IVL_ST_BLOCK */
+	    struct { /* IVL_ST_BLOCK, IVL_ST_FORK */
 		  struct ivl_statement_s*stmt_;
 		  unsigned nstmt_;
 	    } block_;
@@ -387,6 +387,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.27  2001/03/30 05:49:52  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.26  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.31 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: stub.c,v 1.32 2001/03/30 05:49:52 steve Exp $"
 #endif
 
 /*
@@ -186,6 +186,17 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    fprintf(out, "%*s#%lu\n", ind, "", ivl_stmt_delay_val(net));
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
 	    break;
+
+	  case IVL_ST_FORK: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		fprintf(out, "%*sfork\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*sjoin\n", ind, "");
+		break;
+	  }
 
 	  case IVL_ST_NOOP:
 	    fprintf(out, "%*s/* noop */;\n", ind, "");
@@ -449,6 +460,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.32  2001/03/30 05:49:52  steve
+ *  Generate code for fork/join statements.
+ *
  * Revision 1.31  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *
