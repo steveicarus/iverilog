@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.15 2002/09/06 04:56:29 steve Exp $"
+#ident "$Id: resolv.cc,v 1.16 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -128,7 +128,7 @@ static unsigned blend(unsigned a, unsigned b)
       }
 
 
-	/* Cannonicalize the HiZ value. */
+	/* Canonicalize the HiZ value. */
       if ((res&0x77) == 0)
 	    res = HiZ;
 
@@ -182,7 +182,7 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 
       // Do not propagate (push).  Why?  Because if, for example, a
       // clock buffer is modeled as parallel inverters, the output
-      // must not show 'bx transitions when the inverters all propagte
+      // must not show 'bx transitions when the inverters all propagate
       // at the same time.
 
       put_ostr(val, sval, false);
@@ -204,6 +204,9 @@ void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.16  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.15  2002/09/06 04:56:29  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from

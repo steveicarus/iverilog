@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.11 2003/02/06 17:41:33 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.12 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 /*
@@ -331,7 +331,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp,
 }
 
 // The code fully supports vpiReg, vpi_Net, but we do not 
-// create such things, yet.  Lacking a neme, for example.
+// create such things, yet.  Lacking a name, for example.
 
 static const struct __vpirt vpip_vthr_const_rt = {
       vpiConstant,
@@ -469,6 +469,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.12  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.11  2003/02/06 17:41:33  steve
  *  Support constant types for thread words.
  *

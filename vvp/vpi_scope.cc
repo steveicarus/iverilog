@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.22 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.23 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -196,7 +196,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 **  connected to the same wire.  The SDF annotator need to find those
 **  functors which are inside the scope of the target module, which
 **  are driven by the source functor.  And even this is only an
-**  aproximation, in case the wire is connected to multiple inputs of
+**  approximation, in case the wire is connected to multiple inputs of
 **  the same module.  But those should have the same delays anyway.
 **
 */
@@ -242,9 +242,9 @@ void functor_set_scope(vpiHandle scope)
 }
 
 /*
-**  Lockup the scope of a functor.
+**  Look up the scope of a functor.
 **
-**  Cannot use bserach, since we are not looking for an exact match
+**  Cannot use bsearch, since we are not looking for an exact match
 */
 vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
 {
@@ -447,6 +447,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.23  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.22  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

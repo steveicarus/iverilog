@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.19 2002/09/17 00:42:22 steve Exp $"
+#ident "$Id: memory.cc,v 1.20 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -409,7 +409,7 @@ void write_event(vvp_memory_port_t p)
 
 void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
 {
-  // !attention! "i" may not corespont to "this"
+  // !attention! "i" may not correspond to "this"
   functor_t ifu = functor_index(i);
   ifu->put(i, val);
 
@@ -419,8 +419,8 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
 	update_data(this);
     }
 
-  // port ix+naddr is the write clock.  If it's input value is
-  // undefined, we do assynchronous write.  Else any event on ix+naddr
+  // port ix+naddr is the write clock.  If its input value is
+  // undefined, we do asynchronous write.  Else any event on ix+naddr
   // is a valid write clock edge.  Connect an appropriate edge event
   // functor.
   
@@ -510,6 +510,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.20  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.19  2002/09/17 00:42:22  steve
  *  Proper initialization of the memories table.
  *

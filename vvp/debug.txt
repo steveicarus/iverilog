@@ -17,7 +17,7 @@ breakpoint, or until the simulation ends.
 
 * lookup <symbol>...
 
-Give a symbol name, and this function will lookup that symbol and
+Give a symbol name, and this function will look up that symbol and
 return the type and address.
 
 fbreak <address>...

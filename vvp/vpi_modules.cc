@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.13 2003/01/10 03:06:32 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.14 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -56,7 +56,7 @@ void vpip_load_module(const char*name)
       if (strchr(name, sep)) {
 	      /* If the name has at least one directory character in
 		 it, then assume it is a complete name, maybe including any
-		 possble .vpi suffix. */
+		 possible .vpi suffix. */
 	    rc = stat(name, &sb);
 
 	    if (rc != 0) {            /* did we find a file? */
@@ -121,6 +121,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.14  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.13  2003/01/10 03:06:32  steve
  *  Remove vpithunk, and move libvpi to vvp directory.
  *

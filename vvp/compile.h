@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.48 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: compile.h,v 1.49 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -70,7 +70,7 @@ extern void compile_vpi_time_precision(long pre);
  * this function will free them. (Or save them permanently.) This
  * includes the argv array and the strings it references.
  *
- * The argc and argv are a list of char* that are the port paramters
+ * The argc and argv are a list of char* that are the port parameters
  * of the functor. The compile should match those port parameters up
  * to existing functors to manage the linking.
  */
@@ -143,7 +143,7 @@ extern void code_label_lookup(struct vvp_code_s *code, char *label);
  * `compile_udp_table' is called with `table'==NULL to create a new 
  * table, or with an existing table to append to.
  *
- * `compile_udp_functor' creates a mode-3 functor refering to the 
+ * `compile_udp_functor' creates a mode-3 functor referring to the 
  * labeled UDP.  
  */
 
@@ -261,6 +261,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.49  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.48  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

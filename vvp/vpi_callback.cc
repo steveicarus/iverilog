@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.25 2002/09/20 02:42:11 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.26 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 /*
@@ -178,7 +178,7 @@ struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 /*
  * A value change callback is tripped when a bit of a signal
  * changes. This function creates that value change callback and
- * attaches it to the relevent vpiSignal object. Also, if the signal
+ * attaches it to the relevant vpiSignal object. Also, if the signal
  * does not already have them, create some callback functors to do the
  * actual value change detection.
  */
@@ -530,6 +530,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.26  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.25  2002/09/20 02:42:11  steve
  *  Add support for cbAfterDelay.
  *

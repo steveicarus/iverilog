@@ -20,14 +20,14 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *  ---
- *    You should also have recieved a copy of the Picture Elements
+ *    You should also have received a copy of the Picture Elements
  *    Binary Software License offer along with the source. This offer
  *    allows you to obtain the right to redistribute the software in
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.21 2003/02/02 01:40:24 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.22 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -586,6 +586,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.22  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.21  2003/02/02 01:40:24  steve
  *  Five vpi_free_object a default behavior.
  *

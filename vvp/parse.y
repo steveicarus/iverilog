@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.50 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: parse.y,v 1.51 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -114,7 +114,7 @@ program
 
 
   /* A statement can be any of the following. In all cases, the
-     statment is terminated by a semi-colon. In general, a statement
+     statement is terminated by a semi-colon. In general, a statement
      has a label, an opcode of some source, and operands. The
      structure of the operands depends on the opcode. */
 
@@ -137,7 +137,7 @@ statement
 
   /* UDP statements define or instantiate UDPs.  Definitions take a 
      label (UDP type id) a name (string), the number of inputs, and 
-     for sequentioal UDPs the initial value. */
+     for sequential UDPs the initial value. */
 
 	| T_LABEL K_UDP_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' udp_table ';'
 		{ compile_udp_def(1, $1, $3, $5, $7, $9); }
@@ -400,7 +400,7 @@ operand
      Each argument of the call is represented as a vpiHandle
      object.  If the argument is a symbol, the symbol name will be 
      kept, until the argument_list is complete.  Then, all symbol
-     lookups will be attemted.  Postoned lookups will point into the 
+     lookups will be attempted.  Postponed lookups will point into the 
      resulting $$->argv.
      If it is some other supported object, the necessary
      vpiHandle object is created to support it. */
@@ -569,6 +569,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.51  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.50  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.153 2003/02/06 17:41:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.154 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1196,7 +1196,7 @@ void compile_memory_init(char *memid, unsigned i, unsigned char val)
 /*
  * The parser uses this function to compile and link an executable
  * opcode. I do this by looking up the opcode in the opcode_table. The
- * table gives the operand structure that is acceptible, so I can
+ * table gives the operand structure that is acceptable, so I can
  * process the operands here as well.
  */
 void compile_code(char*label, char*mnem, comp_operands_t opa)
@@ -1520,6 +1520,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.154  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.153  2003/02/06 17:41:47  steve
  *  Add the %sub/wr instruction.
  *

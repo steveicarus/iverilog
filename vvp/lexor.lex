@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.37 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: lexor.lex,v 1.38 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -50,9 +50,9 @@
       assert(yylval.text);
       return T_STRING; }
 
-  /* Binary vector tokens are pared here. The result of this is a
+  /* Binary vector tokens are parsed here. The result of this is a
      string of binary 4-values in the yylval.vect.text string. This is
-     preceeded by an 's' if the vector is signed. */
+     preceded by an 's' if the vector is signed. */
 [1-9][0-9]*("'b"|"'sb")[01xz]+ {
       yylval.vect.idx = strtoul(yytext, 0, 10);
       yylval.vect.text = (char*)malloc(yylval.vect.idx + 2);
@@ -176,6 +176,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.38  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.37  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

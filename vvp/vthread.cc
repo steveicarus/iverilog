@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.100 2003/02/06 17:41:47 steve Exp $"
+#ident "$Id: vthread.cc,v 1.101 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -54,7 +54,7 @@
  *
  * The %fork instruction creates a new thread and pushes that onto the
  * stack of children for the thread. This new thread, then, becomes
- * the new direct descendent of the thread. This new thread is
+ * the new direct descendant of the thread. This new thread is
  * therefore also the first thread to be reaped when the parent does a
  * %join.
  *
@@ -895,7 +895,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	      //assert(tmp->is_scheduled == 0);
 
       } else {
-	      /* No parent at all. Goodby. */
+	      /* No parent at all. Goodbye. */
 	    vthread_reap(thr);
       }
 
@@ -1704,7 +1704,7 @@ tally:
 /*
  * %mov <dest>, <src>, <wid>
  *   This instruction is implemented by the of_MOV function
- *   below. However, durning runtime vvp might notice that the
+ *   below. However, during runtime vvp might notice that the
  *   parameters have certain properties that make it possible to
  *   replace the of_MOV opcode with a more specific instruction that
  *   more directly does the job. All the of_MOV*_ functions are
@@ -2616,6 +2616,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.101  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.100  2003/02/06 17:41:47  steve
  *  Add the %sub/wr instruction.
  *

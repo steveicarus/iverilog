@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.29 2003/02/02 01:40:24 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.30 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -303,7 +303,7 @@ static vpiHandle find_scope(char *name, vpiHandle handle, int depth)
       while (iter && (hand = vpi_scan(iter))) {
 	    char *nm = vpi_get_str(vpiName, hand);
 	    int len = strlen(nm);
-	    char *cp = name + len;	/* hier seperator */
+	    char *cp = name + len;	/* hier separator */
 
 	    if (!handle && !strcmp(name, nm)) {
 		  /* root module */
@@ -328,8 +328,8 @@ vpiHandle vpi_handle_by_name(char *name, vpiHandle scope)
       char *nm, *cp;
       int len;
 
-      /* If scope provided, look in cooresponding module; otherwise
-       * traverse the hierarcy specified in name to find the leaf module
+      /* If scope provided, look in corresponding module; otherwise
+       * traverse the hierarchy specified in name to find the leaf module
        * and try finding it there.
        */
       if (scope)
@@ -395,6 +395,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.30  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.29  2003/02/02 01:40:24  steve
  *  Five vpi_free_object a default behavior.
  *

@@ -52,7 +52,7 @@ S_test .scope "test", S_main;
     .scope S_test;
 T_0/1 ;
     %delay 5;
-    %vpi_call "$display", "FAILED -- thread wasn't disbled";
+    %vpi_call "$display", "FAILED -- thread wasn't disabled";
     %vpi_call "$finish";
     %end;
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.12 2003/01/06 23:57:26 steve Exp $"
+#ident "$Id: schedule.h,v 1.13 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -72,14 +72,14 @@ struct vvp_gen_event_s
 extern void schedule_simulate(void);
 
 /*
- * Get the current absolue simulation time. This is not used
+ * Get the current absolute simulation time. This is not used
  * internally by the scheduler (which uses time differences instead)
  * but is used for printouts and stuff.
  */
 extern vvp_time64_t schedule_simtime(void);
 
 /*
- * This function is the equivilent of the $finish system task. It
+ * This function is the equivalent of the $finish system task. It
  * tells the simulator that simulation is done, the current thread
  * should be stopped, all remaining events abandoned and the
  * schedule_simulate() function will return.
@@ -101,6 +101,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.13  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.12  2003/01/06 23:57:26  steve
  *  Schedule wait lists of threads as a single event,
  *  to save on events. Also, improve efficiency of

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.46 2003/02/01 05:50:04 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.47 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -35,7 +35,7 @@
 
 /*
  * The vpi_mode_flag contains the major mode for VPI use. This is used
- * to generate error messages whe vpi functions are called
+ * to generate error messages when vpi functions are called
  * incorrectly.
  */
 enum vpi_mode_t {
@@ -108,7 +108,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 				    bool free_args_flag);
 
 /*
- * This represents callback handles. There are some privat types that
+ * This represents callback handles. There are some private types that
  * are defined and used in vpi_callback.cc.
  */
 struct __vpiCallback {
@@ -135,7 +135,7 @@ struct __vpiSystemTime {
 
 /*
  * Scopes are created by .scope statements in the source. These
- * objects hold the items and properties that are knowably bound to a
+ * objects hold the items and properties that are knowingly bound to a
  * scope.
  */
 struct __vpiScope {
@@ -172,7 +172,7 @@ struct __vpiSignal {
       int msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
-      unsigned isint_ : 1;	// origial type was integer
+      unsigned isint_ : 1;	// original type was integer
 	/* The represented value is here. */
       vvp_fvector_t bits;
         /* This is the callback event functor */
@@ -395,6 +395,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.47  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.46  2003/02/01 05:50:04  steve
  *  Make $time and $realtime available to $display uniquely.
  *

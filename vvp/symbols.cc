@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.cc,v 1.10 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: symbols.cc,v 1.11 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -168,7 +168,7 @@ static void split_node_(struct tree_node_*cur)
 			new_node->parent = cur->parent;
 
 		/* Move the last half of the data from the end of the old node
-		   to the begining of the new node. At the same time, reduce
+		   to the beginning of the new node. At the same time, reduce
 		   the size of the old node. */
 		idx1 = new_node->count;
 		idx2 = cur->count;
@@ -244,7 +244,7 @@ static struct tree_node_* split_leaf_(struct tree_node_*cur)
       new_leaf->parent = cur->parent;
 
 	/* Move the last half of the data from the end of the old leaf
-	   to the beggining of the new leaf. At the same time, reduce
+	   to the beginning of the new leaf. At the same time, reduce
 	   the size of the old leaf. */
       unsigned idx1 = new_leaf->count;
       unsigned idx2 = cur->count;
@@ -422,6 +422,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.11  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.10  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

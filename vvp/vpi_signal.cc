@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.51 2003/01/07 18:07:50 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.52 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 /*
@@ -442,7 +442,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
  * The put_value method writes the value into the vector, and returns
  * the affected ref. This operation works much like the %set or
  * %assign instructions and causes all the side-effects that the
- * equivilent instruction would cause.
+ * equivalent instruction would cause.
  */
 
 static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
@@ -763,6 +763,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.52  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.51  2003/01/07 18:07:50  steve
  *  Allocate res-buf in bigger chunks
  *

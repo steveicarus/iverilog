@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.21 2003/01/06 23:57:26 steve Exp $"
+#ident "$Id: schedule.cc,v 1.22 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -176,8 +176,8 @@ static void schedule_event_(struct event_s*cur)
 
 	      /* Look for the first event after the cur
 		 event. Decrease the cur->delay as I go, and use the
-		 skip member to accellerate the search. When I'm done,
-		 prev will point to the even immediately before where
+		 skip member to accelerate the search. When I'm done,
+		 prev will point to the event immediately before where
 		 this event goes. */
 	    struct event_s*prev = idx;
 	    while (cur->delay > idx->delay) {
@@ -437,6 +437,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.22  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.21  2003/01/06 23:57:26  steve
  *  Schedule wait lists of threads as a single event,
  *  to save on events. Also, improve efficiency of

@@ -17,12 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: debug.cc,v 1.10 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: debug.cc,v 1.11 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 /*
  * This file provides a simple command line debugger for the vvp
- * runtime. It is a means to interract with the user running the
+ * runtime. It is a means to interact with the user running the
  * simulation.
  */
 
@@ -154,6 +154,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.11  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.10  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

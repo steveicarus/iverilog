@@ -9,8 +9,7 @@ source file.
 
 The current values of the inputs are stored in a single 8-bit byte,
 2-bits per value. This is the ``ival'' member. The input of a functor
-gets set by propagation events, assign events or %set
-instructions.
+gets set by propagation events, assign events, or %set instructions.
 
 The output value is stored in two bits of the functor. The current
 output is used to detect edges when the input changes. Whenever an

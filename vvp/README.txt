@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.41 2003/01/25 23:48:06 steve Exp $
+ *  $Id: README.txt,v 1.42 2003/02/09 23:33:26 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -202,7 +202,7 @@ general syntax of a variable is:
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the
 current scope. The variable also has a width, defined by the indices
-for the mst significant and lest significant bits. If the indices are
+for the most significant and lest significant bits. If the indices are
 equal (normally 0) the vector has width of one. If the width is greater
 then one, a contiguous array of functors is created and the value of
 the label is the address of the least significant bit.
@@ -264,7 +264,7 @@ functor pointer, though.
 
 MEMORY STATEMENTS:
 
-Three types of memory stetement perform (1) creation of a memory, (2)
+Three types of memory statement perform (1) creation of a memory, (2)
 connecting a read port to an existing memory, and (3) initializing the
 memory's contents.
 
@@ -301,7 +301,7 @@ become a list of numbers, when multi-index memory ports become
 supported).
 
 Any address change, or any change in the addressed memory contents is
-imediately propagated to the port outputs.
+immediately propagated to the port outputs.
 
 A write port is a superset of a read port.  It is a vector of functors
 that is wide enough to accept the address bits, an event input, a
@@ -325,14 +325,14 @@ To initialize a memory, use:
 			val val val ...
 			;
 
-<memid> is the lavbel of the memory.  [<start>] is optional,
-identifying the bits locattion where the first value is loaded.
+<memid> is the label of the memory.  [<start>] is optional,
+identifying the bits location where the first value is loaded.
 <start> must be a multiple of four, and defaults to zero, if omitted.
 
 The values are decimal or hex numbers (0x prefix), which may be
-optionally separated by commata ','.  Each number in the range 0..256
+optionally separated by comma ','.  Each number in the range 0..256
 initializes four memory bits.  Two bits form each byte for each memory
-bit, in the ususal encoding.
+bit, in the usual encoding.
 
 Procedural access to the memory employs an index register to address a
 bit location in the memory, via the commands:
@@ -388,7 +388,7 @@ to make this one go.
 
 WORD STATEMENTS:
 
-Verilog includes some scalered word types available to the programmer,
+Verilog includes some scalar word types available to the programmer,
 including real variables, and possible extension types that the code
 generator can transparently use. Variables of these special types are
 declared with .word statements:
@@ -438,7 +438,7 @@ being forced.
 
 STRUCTURAL ARITHMETIC STATEMENTS:
 
-The various Verilog arithmetic opeators (+-*/%) are available to
+The various Verilog arithmetic operators (+-*/%) are available to
 structural contexts even though they do not fit into nice neat
 functors. These operators are not in general bitwise, so special
 measures are needed to make them work in a functor environment. We
@@ -536,7 +536,7 @@ caller and %end in the callee. The %fork, then is simply a
 generalization of a function call, where the caller does not
 necessarily wait for the callee.
 
-For all the behavior of threads and thread parantage to work
+For all the behavior of threads and thread parentage to work
 correctly, all %fork statements must have a corresponding %join in the
 parent, and %end in the child. Without this proper matching, the
 hierarchical relationships can get confused. The behavior of erroneous
@@ -620,7 +620,7 @@ various instructions.
 THE RELATIONSHIP BETWEEN FUNCTORS, THREADS AND EVENTS
 
 Given the above summary of the major components of vvp, some
-description of their relationship is warrented. Functors provide a
+description of their relationship is warranted. Functors provide a
 structural description of the design (so far as it can be described
 structurally) and these functors run independently of the threads. In
 particular, when an input to a functor is set, it calculates a new
@@ -766,7 +766,7 @@ becomes:
 * named events
 
 Events in general are implemented as functors, but named events in
-partinular have no inputs and only the event output. The way to
+particular have no inputs and only the event output. The way to
 generate code for these is like so:
 
 	a  .event "name";

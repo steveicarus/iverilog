@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.17 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: udp.cc,v 1.18 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -305,7 +305,7 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 	{
 	  if (!sequ)
 	    {
-	      fprintf(stderr, "vvp: edge in compinatorial UDP\n");
+	      fprintf(stderr, "vvp: edge in combinatorial UDP\n");
 	      assert(0);
 	    }
 	  if (!i)
@@ -350,6 +350,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.18  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.17  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

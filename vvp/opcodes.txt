@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.48 2003/02/06 17:41:47 steve Exp $
+ *  $Id: opcodes.txt,v 1.49 2003/02/09 23:33:26 steve Exp $
  */
 
 
@@ -10,8 +10,8 @@ EXECUTABLE INSTRUCTION OPCODES
 
 Instruction opcodes all start with a % character and have 0 or more
 operands. In no case are there more then 3 operands. This chapter
-describes the specific behavior of each opcode, in hopefully enough
-detail that its complete effect can be predicted.
+describes the specific behavior of each opcode, in enough detail
+(I hope) that its complete effect can be predicted.
 
 General principles of Arithmetic:
 
@@ -33,7 +33,7 @@ See also the %sub instruction.
 
 * %add/wr <bit-l>, <bit-r>
 
-This is the real valued version of hte %add instruction. The arguments
+This is the real valued version of the %add instruction. The arguments
 are word indices of the operands. The right operand is added into the
 left operand.
 
@@ -130,7 +130,7 @@ variable.  This opcode affects only a single bit.
 
 * %deassign <var-label>, <wid>
 
-Deactive and disconnect a procedural continuous assignment to a
+Deactivate and disconnect a procedural continuous assignment to a
 variable. The <var-label> identifies the affected variable.  <wid>
 specifies the how many bits to deassign.
 
@@ -156,13 +156,13 @@ the same. That is, x and z are considered equal. In other words the eq
 bit is the same as ``=='' and the eeq bit ``===''.
 
 The lt bit is 1 if the left vector is less then the right vector, or 0
-if greater then or equal to the right vector. It is the equivilent of
+if greater then or equal to the right vector. It is the equivalent of
 the Verilog < operator. Combinations of these three bits can be used
 to implement all the Verilog comparison operators.
 
 The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
-compare. In either case, if either operand constains x or z, then lt
+compare. In either case, if either operand contains x or z, then lt
 bit gets the x value.
 
 
@@ -332,7 +332,7 @@ a .var or a .functor, and may be indexed with array syntax to get at a
 functor within a vector of functors. This instruction loads only a
 single bit.
 
-THe %load/v instruction is a vector version, that loads an entire
+The %load/v instruction is a vector version, that loads an entire
 vector, starting at the given <bit> and functor.
 
 * %load/m <bit>, <memory-label>
@@ -459,7 +459,7 @@ truth table:
 * %or/r <dst>, <src>, <wid>
 
 This is a reduction version of the %or opcode. The <src> is a vector,
-and the <dst> is a writeable scaler. The <dst> gets the value of the
+and the <dst> is a writable scalar. The <dst> gets the value of the
 or of all the bits of the src vector.
 
 
@@ -488,7 +488,7 @@ value. Once the set completes, the value is immediately available to
 be read out of the variable. The <bit> is the address of the thread
 register that contains the bit value to assign.
 
-The %set/v instrunction is the same as the %set, but it adds a width
+The %set/v instruction is the same as the %set, but it adds a width
 for a vector. The bits are written out in order, starting at the
 addressed variable bit and working up. If the <bit> is one of the
 constant bits, then the value is repeated for the width. Otherwise,
@@ -549,7 +549,7 @@ See also the %add instruction.
 * %subi <bit-l>, <imm>, <wid>
 
 This instruction arithmetically subtracts the immediate value from the
-left vector. The <imm> value is a 16bit unsigned value zer-extended to
+left vector. The <imm> value is a 16bit unsigned value zero-extended to
 the <wid> of the left vector. The result replaces the left vector.
 
 See also the %addi instruction.

@@ -31,7 +31,7 @@
 ;      end
 ;    endmodule
 ;
-; Notice the use of the .arith/sum statment, including the specification
+; Notice the use of the .arith/sum statement, including the specification
 ; of the width (4 bits) and the order that the bits of the operands are
 ; passed to the statement.
 

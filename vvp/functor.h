@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.48 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: functor.h,v 1.49 2003/02/09 23:33:26 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -72,7 +72,7 @@
  * The strength-aware outputs are specified as an 8 bit value, that is
  * two 4 bit numbers. The value is encoded with two drive strengths (0-7)
  * and two drive values (0 or 1). Each nibble contains three bits of
- * strength and one bit of value, like so: VSSS. The high nible has
+ * strength and one bit of value, like so: VSSS. The high nibble has
  * the strength-value closest to supply1, and the low nibble has the
  * strength-value closest to supply0.
  *
@@ -308,7 +308,7 @@ struct extra_outputs_functor_s: public functor_s {
 };
 
 // extra_ports_functor_s redirects to base without setting the inputs.
-// But base must be awayr that i may not match this.  This is used by 
+// But base must be aware that i may not match this.  This is used by 
 // memory ports.
 
 struct extra_ports_functor_s : public extra_outputs_functor_s
@@ -352,6 +352,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.49  2003/02/09 23:33:26  steve
+ *  Spelling fixes.
+ *
  * Revision 1.48  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
