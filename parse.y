@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.123 2001/06/23 00:31:06 steve Exp $"
+#ident "$Id: parse.y,v 1.124 2001/07/01 23:44:43 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -85,6 +85,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %token <number> NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
+%token K_PO_POS K_PO_NEG
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
@@ -104,6 +105,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
 %token K_wor K_xnor K_xor
+%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth
 
 %token KK_attribute
 
@@ -156,6 +158,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
 
+%token K_TAND
 %right '?' ':'
 %left K_LOR
 %left K_LAND
@@ -1305,8 +1308,16 @@ module_item
 
   /* specify blocks are parsed but ignored. */
 
+	| K_specify K_endspecify
+		{ /* empty lists are legal syntax. */ }
+
 	| K_specify specify_item_list K_endspecify
 		{
+		}
+
+	| K_specify error K_endspecify
+		{ yyerror(@1, "error: syntax error in specify block");
+		  yyerrok;
 		}
 
   /* These rules match various errors that the user can type into
@@ -1813,11 +1824,63 @@ register_variable_list
 
 specify_item
 	: K_specparam specparam_list ';'
-	| specify_simple_path '=' '(' specify_delay_value_list ')' ';'
+	| specify_simple_path_decl ';'
 		{
 		}
-	| specify_simple_path '=' delay_value_simple ';'
+	| specify_edge_path_decl ';'
 		{
+		}
+	| K_if '(' expression ')' specify_simple_path_decl ';'
+		{
+		}
+	| K_if '(' expression ')' specify_edge_path_decl ';'
+		{
+		}
+	| K_Shold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ')' ';'
+		{ delete $7;
+		}
+	| K_Shold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' identifier ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
+	| K_Speriod '(' spec_reference_event ',' expression ')' ';'
+		{ delete $5;
+		}
+	| K_Speriod '(' spec_reference_event ',' expression ','
+	  identifier ')' ';'
+		{ delete $5;
+		  delete $7;
+		}
+	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ')' ';'
+		{ delete $7;
+		}
+	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' identifier ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
+	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ')' ';'
+		{ delete $7;
+		}
+	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' identifier ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
+	| K_Swidth '(' spec_reference_event ',' expression ',' expression
+	  ',' identifier ')' ';'
+		{ delete $5;
+		  delete $7;
+		  delete $9;
+		}
+	| K_Swidth '(' spec_reference_event ',' expression
+	  ',' expression ')' ';'
+		{ delete $5;
+		  delete $7;
 		}
 	;
 
@@ -1831,9 +1894,37 @@ specify_item_list
 	| specify_item_list specify_item
 	;
 
+specify_edge_path_decl
+	: specify_edge_path '=' '(' specify_delay_value_list ')'
+	;
+
+specify_edge_path
+	: '(' K_posedge specify_path_identifiers spec_polarity
+	  K_EG IDENTIFIER ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity
+	  K_EG '(' IDENTIFIER K_PO_POS expression ')' ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity
+	  K_SG IDENTIFIER ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity
+	  K_SG '(' IDENTIFIER K_PO_POS expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity
+	  K_EG IDENTIFIER ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity
+	  K_EG '(' IDENTIFIER K_PO_POS expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity
+	  K_SG IDENTIFIER ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity
+	  K_SG '(' IDENTIFIER K_PO_POS expression ')' ')'
+	;
+
+specify_simple_path_decl
+	: specify_simple_path '=' '(' specify_delay_value_list ')'
+	| specify_simple_path '=' delay_value_simple
+	;
+
 specify_simple_path
-	: '(' specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
+	: '(' specify_path_identifiers spec_polarity K_EG expression ')'
+	| '(' specify_path_identifiers spec_polarity K_SG expression ')'
 	;
 
 specify_path_identifiers
@@ -1846,6 +1937,12 @@ specparam
 		{ delete $1;
 		  delete $3;
 		}
+	| IDENTIFIER '=' expression ':' expression ':' expression
+		{ delete $1;
+		  delete $3;
+		  delete $5;
+		  delete $7;
+		}
 	;
 
 specparam_list
@@ -1855,6 +1952,20 @@ specparam_list
 
 spec_polarity: '+' | '-' | ;
 
+spec_reference_event
+	: K_posedge IDENTIFIER
+		{ delete $2; }
+	| K_negedge IDENTIFIER
+		{ delete $2; }
+	| K_posedge IDENTIFIER K_TAND expression
+		{ delete $2;
+		  delete $4;
+		}
+	| K_negedge IDENTIFIER K_TAND expression
+		{ delete $2;
+		  delete $4;
+		}
+	;
 
 statement
 

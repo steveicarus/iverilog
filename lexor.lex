@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.58 2001/06/18 00:51:23 steve Exp $"
+#ident "$Id: lexor.lex,v 1.59 2001/07/01 23:44:43 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -130,11 +130,14 @@ W [ \t\b\f\r]+
 "!==" { return K_CNE; }
 "||" { return K_LOR; }
 "&&" { return K_LAND; }
+"&&&" { return K_TAND; }
 "~|" { return K_NOR; }
 "~^" { return K_NXOR; }
 "^~" { return K_NXOR; }
 "~&" { return K_NAND; }
 "->" { return K_TRIGGER; }
+"+:" { return K_PO_POS; }
+"-:" { return K_PO_NEG; }
 
 
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
@@ -197,6 +200,16 @@ W [ \t\b\f\r]+
 \$([a-zA-Z0-9$_]+)        {
       if (strcmp(yytext,"$attribute") == 0)
 	    return KK_attribute;
+      if (strcmp(yytext,"$hold") == 0)
+	    return K_Shold;
+      if (strcmp(yytext,"$period") == 0)
+	    return K_Speriod;
+      if (strcmp(yytext,"$recovery") == 0)
+	    return K_Srecovery;
+      if (strcmp(yytext,"$setup") == 0)
+	    return K_Ssetup;
+      if (strcmp(yytext,"$width") == 0)
+	    return K_Swidth;
       yylval.text = strdup(yytext);
       return SYSTEM_IDENTIFIER; }
 
