@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.105 2003/01/16 21:44:19 steve Exp $"
+#ident "$Id: pform.cc,v 1.106 2003/01/17 05:47:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -958,6 +958,8 @@ void pform_makewire(const vlltype&li,
 	    PWire*cur = pform_cur_module->get_wire(name);
 	    if (cur != 0) {
 		  PEIdent*lval = new PEIdent(hname_t(first->name));
+		  lval->set_file(li.text);
+		  lval->set_lineno(li.first_line);
 		  pform_make_pgassign(lval, first->expr, delay, str);
 	    }
 
@@ -1370,6 +1372,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.106  2003/01/17 05:47:30  steve
+ *  Missed a case of setting line on an PEident.
+ *
  * Revision 1.105  2003/01/16 21:44:19  steve
  *  Detect duplicate module declarations.
  *
