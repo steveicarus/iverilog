@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.122 2003/08/22 23:14:26 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.123 2003/11/08 20:06:21 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -85,7 +85,7 @@ _BEGIN_DECL
  * ivl_net_logic_t
  *    This object represents various built in logic devices. In fact,
  *    this includes just about every directional device that has a
- *    single output, including logic gates and nmos, pmos and cmon
+ *    single output, including logic gates and nmos, pmos and cmos
  *    devices. There is also the occasional Icarus Verilog creation.
  *
  * ivl_nexus_t
@@ -1232,6 +1232,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.123  2003/11/08 20:06:21  steve
+ *  Spelling fixes in comments.
+ *
  * Revision 1.122  2003/08/22 23:14:26  steve
  *  Preserve variable ranges all the way to the vpi.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.304 2003/10/31 02:47:11 steve Exp $"
+#ident "$Id: netlist.h,v 1.305 2003/11/08 20:06:21 steve Exp $"
 #endif
 
 /*
@@ -86,7 +86,7 @@ class NetObj  : public Attrib, public virtual LineInfo {
 
     public:
     public:
-	// The name of the object must be a a perallocated string. A
+	// The name of the object must be a permallocated string. A
 	// lex_strings string, for example.
       explicit NetObj(NetScope*s, const char*n, unsigned npins);
       virtual ~NetObj();
@@ -207,7 +207,7 @@ class Link {
       verinum::V init_;
 
 	// These members name the pin of the link. If the name
-	// has width, then the ninst_ member is the index of the
+	// has width, then the inst_ member is the index of the
 	// pin.
       string   name_;
       unsigned inst_;
@@ -322,7 +322,7 @@ class NexusSet {
 class NetNode  : public NetObj {
 
     public:
-	// The name paramter must be a permallocated string.
+	// The name parameter must be a permallocated string.
       explicit NetNode(NetScope*s, const char*n, unsigned npins);
 
       virtual ~NetNode();
@@ -1637,7 +1637,7 @@ class NetCAssign  : public NetProc, public NetNode {
 /*
  * A condit represents a conditional. It has an expression to test,
  * and a pair of statements to select from. If the original statement
- * has empty clauses, then the NetProc for it will be a nul pointer.
+ * has empty clauses, then the NetProc for it will be a null pointer.
  */
 class NetCondit  : public NetProc {
 
@@ -3310,6 +3310,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.305  2003/11/08 20:06:21  steve
+ *  Spelling fixes in comments.
+ *
  * Revision 1.304  2003/10/31 02:47:11  steve
  *  NetEUReduce has its own dup_expr method.
  *

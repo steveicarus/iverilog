@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.17 2003/09/25 00:25:14 steve Exp $"
+#ident "$Id: compiler.h,v 1.18 2003/11/08 20:06:21 steve Exp $"
 #endif
 
 # include  <list>
@@ -64,7 +64,7 @@
 
 /*
  * These are flags to enable various sorts of warnings. By default all
- * the warnings are of, the -W<list> parameter arranges for each to be
+ * the warnings are off, the -W<list> parameter arranges for each to be
  * enabled. 
  */
 
@@ -105,6 +105,9 @@ extern StringHeapLex lex_strings;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.18  2003/11/08 20:06:21  steve
+ *  Spelling fixes in comments.
+ *
  * Revision 1.17  2003/09/25 00:25:14  steve
  *  Summary list of missing modules.
  *

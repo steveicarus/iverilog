@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h.in,v 1.5 2003/10/29 03:28:27 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.6 2003/11/08 20:06:21 steve Exp $"
 #endif
 
 # undef HAVE_INTTYPES_H
@@ -27,7 +27,7 @@
 #ifdef HAVE_INTTYPES_H
 
 /*
- * If the host enhironment has the stdint.h header file,
+ * If the host environment has the stdint.h header file,
  * then use that to size our PLI types.
  */
 #ifndef __STDC_FORMAT_MACROS
@@ -51,7 +51,7 @@ typedef unsigned char  PLI_UBYTE8;
 
 /*
  * If we do not have the c99 stdint.h header file, then use
- * configure detenction to guess the pli types ourselves.
+ * configure detection to guess the pli types ourselves.
  */
 
 # define SIZEOF_UNSIGNED_LONG_LONG 8
@@ -90,6 +90,9 @@ typedef unsigned char  PLI_UBYTE8;
 
 /*
  * $Log: _pli_types.h.in,v $
+ * Revision 1.6  2003/11/08 20:06:21  steve
+ *  Spelling fixes in comments.
+ *
  * Revision 1.5  2003/10/29 03:28:27  steve
  *  Add the PLU_UINT64_FMT string for formatting output.
  *
