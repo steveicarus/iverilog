@@ -1,5 +1,5 @@
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_vpi.cc,v 1.5 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vvp_vpi.cc,v 1.6 2002/12/11 23:55:22 steve Exp $"
 #endif
 
 #include <stdarg.h>
@@ -27,6 +27,7 @@ void vvp_vpi_init()
   vvpt.vpi_iterate = vpi_iterate;
   vvpt.vpi_scan = vpi_scan;
   vvpt.vpi_handle_by_index = vpi_handle_by_index;
+  vvpt.vpi_handle_by_name = vpi_handle_by_name;
   vvpt.vpi_get_time = vpi_get_time;
   vvpt.vpi_get = vpi_get;
   vvpt.vpi_get_str = vpi_get_str;
@@ -39,6 +40,10 @@ void vvp_vpi_init()
 
 /*
  * $Log: vvp_vpi.cc,v $
+ * Revision 1.6  2002/12/11 23:55:22  steve
+ *  Add vpi_handle_by_name to the VPI interface,
+ *  and bump the vpithunk magic number.
+ *
  * Revision 1.5  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.24 2002/08/24 05:02:58 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.25 2002/12/11 23:55:22 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -133,6 +133,12 @@ int vpi_get(int property, vpiHandle ref)
 
 char* vpi_get_str(int property, vpiHandle ref)
 {
+      if (ref == 0) {
+	    fprintf(stderr, "vpi error: vpi_get_str(%d, ...) called "
+		    "with null vpiHandle.\n", property);
+	    return 0;
+      }
+
       assert(ref);
       if (ref->vpi_type->vpi_get_str_ == 0)
 	    return 0;
@@ -363,6 +369,10 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.25  2002/12/11 23:55:22  steve
+ *  Add vpi_handle_by_name to the VPI interface,
+ *  and bump the vpithunk magic number.
+ *
  * Revision 1.24  2002/08/24 05:02:58  steve
  *  Fix = vs == error.
  *

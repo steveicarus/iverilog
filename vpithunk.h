@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpithunk.h,v 1.4 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: vpithunk.h,v 1.5 2002/12/11 23:55:22 steve Exp $"
 #endif
 
 /* These functions are actually defined in lieu of the vpi functions
@@ -38,7 +38,9 @@ extern void vpi_sim_vcontrol(int operation, va_list ap);
 
 EXTERN_C_END
 
-#define VPI_THUNK_MAGIC  (0x87836BA4)
+/* before v0.7: 0x87836BA4 */
+/* v0.7 thunk magic is 0x87836BA5 */
+#define VPI_THUNK_MAGIC  (0x87836BA5)
 
 typedef struct {
   int magic;
@@ -67,6 +69,7 @@ typedef struct {
   int (*vpi_free_object)(vpiHandle ref);
   int (*vpi_get_vlog_info)(p_vpi_vlog_info vlog_info_p);
   int (*vpi_chk_error)(p_vpi_error_info info);
+  vpiHandle (*vpi_handle_by_name)(char *name, vpiHandle scope);
 } vpi_thunk, *p_vpi_thunk;
 
 DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);
@@ -75,6 +78,10 @@ DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);
 
 /*
  * $Log: vpithunk.h,v $
+ * Revision 1.5  2002/12/11 23:55:22  steve
+ *  Add vpi_handle_by_name to the VPI interface,
+ *  and bump the vpithunk magic number.
+ *
  * Revision 1.4  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

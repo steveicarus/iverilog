@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpithunk.c,v 1.6 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: vpithunk.c,v 1.7 2002/12/11 23:55:22 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -188,6 +188,11 @@ extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index)
   VPIT_CALL(vpi_handle_by_index,0,(ref, index));
 }
 
+extern vpiHandle  vpi_handle_by_name(char *name, vpiHandle scope)
+{
+      VPIT_CALL(vpi_handle_by_name,0,(name, scope));
+}
+
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t)
 {
   VPITV_CALL(vpi_get_time, (obj,t));
@@ -232,6 +237,10 @@ extern int vpi_chk_error(p_vpi_error_info info)
 
 /*
  * $Log: vpithunk.c,v $
+ * Revision 1.7  2002/12/11 23:55:22  steve
+ *  Add vpi_handle_by_name to the VPI interface,
+ *  and bump the vpithunk magic number.
+ *
  * Revision 1.6  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *
