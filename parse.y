@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.23 1999/05/07 04:26:49 steve Exp $"
+#ident "$Id: parse.y,v 1.24 1999/05/08 20:19:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -59,7 +59,7 @@ extern void lex_end_table();
       verinum* number;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
+%token <text>   IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
 %token K_LE K_GE K_EQ K_NE K_CEQ K_CNE
 %token K_LOR K_LAND
@@ -225,6 +225,13 @@ delay
 		  $$ = tmp;
 		  delete $2;
 		}
+	| '#' '(' IDENTIFIER ')'
+		{ PEIdent*tmp = new PEIdent(*$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		  delete $3;
+		}
 	;
 
 delay_opt
@@ -327,6 +334,12 @@ expression
 	| expression '|' expression
 		{ $$ = new PEBinary('|', $1, $3);
 		}
+	| expression '<' expression
+		{ $$ = new PEBinary('<', $1, $3);
+		}
+	| expression '>' expression
+		{ $$ = new PEBinary('>', $1, $3);
+		}
 	| expression K_EQ expression
 		{ $$ = new PEBinary('e', $1, $3);
 		}
@@ -410,6 +423,8 @@ expr_primary
 		}
 	;
 
+  /* A gate_instance is a module instantiation or a built in part
+     type. In any case, the gate has a set of connections to ports. */
 gate_instance
 	: IDENTIFIER '(' expression_list ')'
 		{ lgate*tmp = new lgate;
@@ -441,6 +456,16 @@ gate_instance
 		  tmp->parms = $2;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
+		  $$ = tmp;
+		}
+	| IDENTIFIER '(' port_name_list ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = *$1;
+		  tmp->parms = 0;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  delete $1;
+		  yyerror(@1, "Sorry, named port connections not supported.");
 		  $$ = tmp;
 		}
 	;
@@ -641,6 +666,9 @@ module_item
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		}
+	| K_task IDENTIFIER ';' statement K_endtask
+		{ yyerror(@1, "Sorry, task declarations not supported.");
+		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ pform_set_attrib(*$3, *$5, *$7);
 		  delete $3;
@@ -700,6 +728,21 @@ port
 		  $$->port_type = NetNet::PIMPLICIT;
 		  delete $1;
 		}
+	;
+
+port_name
+	: PORTNAME '(' IDENTIFIER ')'
+		{ delete $1;
+		  delete $3;
+		}
+	| PORTNAME '(' ')'
+		{ delete $1;
+		}
+	;
+
+port_name_list
+	: port_name_list ',' port_name
+	| port_name
 	;
 
 port_type
@@ -839,6 +882,10 @@ statement
 		{ $$ = pform_make_assignment($1, $3);
 		  yyerror(@1, "Sorry, non-blocking assignment not implemented.");
 		}
+	| lpvalue '=' delay expression ';'
+		{ $$ = pform_make_assignment($1, $3);
+		  yyerror(@1, "Sorry, assignment timing control not implemented.");
+		}
 	| K_wait '(' expression ')' statement_opt
 		{ PEventStatement*tmp;
 		  PEEvent*etmp = new PEEvent(NetNEvent::POSITIVE, $3);
@@ -851,6 +898,14 @@ statement
 		}
 	| SYSTEM_IDENTIFIER ';'
 		{ $$ = pform_make_calltask($1);
+		}
+	| IDENTIFIER '(' expression_list ')' ';'
+		{ yyerror(@1, "Sorry, task enabling not implemented.");
+		  $$ = new PNoop;
+		}
+	| IDENTIFIER ';'
+		{ yyerror(@1, "Sorry, task enabling not implemented.");
+		  $$ = new PNoop;
 		}
 	| error ';'
 		{ yyerror(@1, "malformed statement");

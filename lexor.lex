@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.12 1999/05/06 04:09:28 steve Exp $"
+#ident "$Id: lexor.lex,v 1.13 1999/05/08 20:19:20 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -125,6 +125,10 @@ static verinum*make_unsized_hex(const char*txt);
       yylval.text = new string(yytext);
       return SYSTEM_IDENTIFIER; }
 
+\.[a-zA-Z_][a-zA-Z0-9$_]* {
+      yylval.text = new string(yytext+1);
+      return PORTNAME; }
+
 [0-9][0-9_]*\'d[0-9][0-9_]*    { yylval.number = make_sized_dec(yytext);
 				   return NUMBER; }
 [0-9][0-9_]*\'[bB][0-1xz_]+    { yylval.number = make_sized_binary(yytext);
@@ -222,6 +226,7 @@ static const struct { const char*name; int code; } key_table[] = {
       { "endprimitive", K_endprimitive },
       { "endspecify", K_endspecify },
       { "endtable", K_endtable },
+      { "endtask", K_endtask },
       { "event", K_event },
       { "for", K_for },
       { "force", K_force },

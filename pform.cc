@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.15 1999/05/07 04:26:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.16 1999/05/08 20:19:20 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -289,7 +289,7 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
-	    vector<PExpr*>wires (cur.parms->size());
+	    vector<PExpr*>wires (cur.parms? cur.parms->size() : 0);
 	    for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
 		  PExpr*ep = cur.parms->front();
 		  cur.parms->pop_front();
@@ -533,6 +533,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.16  1999/05/08 20:19:20  steve
+ *  Parse more things.
+ *
  * Revision 1.15  1999/05/07 04:26:49  steve
  *  Parse more complex continuous assign lvalues.
  *
