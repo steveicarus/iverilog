@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.11 2002/10/30 03:58:45 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.12 2002/11/01 02:36:22 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -271,7 +271,8 @@ void edif_show_footer(ivl_design_t des)
       edif_show_consts(des);
 
       for (cur = net_list ;  cur ;  cur = cur->next) {
-	    fprintf(xnf, "(net N%u (joined %s))\n", nref, cur->joined);
+	    fprintf(xnf, "(net (rename N%u \"%s\") (joined %s))\n",
+		    nref, ivl_nexus_name(cur->nex), cur->joined);
 	    nref += 1;
       }
 
@@ -448,6 +449,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.12  2002/11/01 02:36:22  steve
+ *  Give nets better names, if available.
+ *
  * Revision 1.11  2002/10/30 03:58:45  steve
  *  Fix up left shift to pass compile,
  *  fix up ADD/SUB to generate missing pieces,
