@@ -197,9 +197,75 @@ well as all the other major Verilog tools, but the standard does not
 say this.
 
 
+* UNSIZED EXPRESSIONS AS PARAMETERS TO CONCATENATION {}
 
-$Id: ieee1364-notes.txt,v 1.5 2001/01/02 17:28:08 steve Exp $
+The Verilog standard clearly states in 4.1.14:
+
+	"Unsized constant numbers shall not be allowed in
+	concatenations. This is because the size of each
+	operand in the concatenation is needed to calculate
+	the complete size of the concatenation."
+
+So for example the expression {1'b0, 16} is clearly illegal. It
+also stands to reason that {1'b0, 15+1} is illegal, for exactly the
+same justification. What is the size of the expression (15+1)?
+Furthermore, it is reasonable to expect that (16) and (15+1) are
+exactly the same so far as the compiler is concerned.
+
+Unfortunately, Cadence seems to feel otherwise. In particular, it has
+been reported that although {1'b0, 16} causes an error, {1'b0, 15+1}
+is accepted. Further testing shows that any expression other then a
+simple unsized constant is accepted there, even if all the operands of
+all the operators that make up the expression are unsized integers.
+
+This is a semantic problem. Icarus Verilog doesn't limit the size of
+integer constants. This is valid as stated in 2.5.1 Note 3:
+
+	"The number of bits that make up an unsized number
+	(which is a simple decimal number or a number without
+	the size specification) shall be *at*least* 32."
+	[emphasis added]
+
+Icarus Verilog will hold any integer constant, so the size will be as
+large as it needs to be, whether that is 64bits, 128bits, or
+more. With this in mind, what is the value of these expressions?
+
+	{'h1_00_00_00_00}
+	{'h1 << 32}
+	{'h0_00_00_00_01 << 32}
+	{'h5_00_00_00_00 + 1}
+
+These examples show that the standard is justified in requiring that
+the operands of concatenation have size. The dispute is what it takes
+to cause an expression to have a size, and what that size is.
+Verilog-XL claims that (16) does not have a size, but (15+1) does. The
+size of the expression (15+1) is the size of the adder that is
+created, but how wide is the adder when adding unsized constants?
+
+One might note that the quote from section 4.1.14 says "Unsized
+*constant*numbers* shall not be allowed." It does not say "Unsized
+expressions...", so arguably accepting (15+1) or even (16+0) as an
+operand to a concatenation is not a violation of the letter of the
+law. However, the very next sentence of the quote expresses the
+intent, and accepting (15+1) as having a more defined size then (16)
+seems to be a violation of that intent.
+
+Whatever a compiler decides the size is, the user has no way to
+predict it, and the compiler should not have the right to treat (15+1)
+any differently then (16). Therefore, Icarus Verilog takes the
+position that such expressions are *unsized* and are not allowed as
+operands to concatenations. Icarus Verilog will in general assume that
+operations on unsized numbers produce unsized results. There are
+exceptions when the operator itself does define a size, such as the
+comparison operators or the reduction operators. Icarus Verilog will
+generate appropriate error messages.
+
+
+$Id: ieee1364-notes.txt,v 1.6 2001/02/12 16:48:04 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.6  2001/02/12 16:48:04  steve
+ Rant about bit widths.
+
 Revision 1.5  2001/01/02 17:28:08  steve
  Resolve repeat ambiguity in favor of loop.
 
