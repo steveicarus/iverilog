@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.3 2003/06/26 03:57:05 steve Exp $"
+#ident "$Id: xilinx.h,v 1.4 2003/06/28 04:18:47 steve Exp $"
 #endif
 
 /*
@@ -39,12 +39,14 @@
    this category. */
 extern edif_cell_t xilinx_cell_buf (edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_inv (edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib);
 #define BUF_O 0
 #define BUF_I 1
-
+  /* Only some buffers have this input. */
+#define BUF_T 2
 
 /* === LUT Devices === */
 
@@ -96,6 +98,7 @@ extern edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib);
 /* === Inheritable Methods === */
 
 extern void virtex_show_footer(ivl_design_t des);
+extern void virtex_logic(ivl_net_logic_t net);
 extern void virtex_generic_dff(ivl_lpm_t net);
 extern void virtex_eq(ivl_lpm_t net);
 extern void virtex_ge(ivl_lpm_t net);
@@ -110,6 +113,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.4  2003/06/28 04:18:47  steve
+ *  Add support for wide OR/NOR gates.
+ *
  * Revision 1.3  2003/06/26 03:57:05  steve
  *  Add Xilinx support for A/B MUX devices.
  *

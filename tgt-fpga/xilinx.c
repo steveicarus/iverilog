@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.3 2003/06/26 03:57:05 steve Exp $"
+#ident "$Id: xilinx.c,v 1.4 2003/06/28 04:18:47 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -49,6 +49,18 @@ edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib)
       cell = edif_xcell_create(xlib, "BUFG", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
+      return cell;
+}
+
+edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib)
+{
+      static edif_cell_t cell = 0;
+      if (cell) return cell;
+
+      cell = edif_xcell_create(xlib, "BUFT", 3);
+      edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, BUF_T, "T", IVL_SIP_INPUT);
       return cell;
 }
 
@@ -436,6 +448,24 @@ void xilinx_logic(ivl_net_logic_t net)
 	    edif_add_to_joint(jnt, obj, BUF_I);
 	    break;
 
+	  case IVL_LO_BUFIF0:
+	      /* The Xilinx BUFT devices is a BUF that adds a T
+		 input. The output is tri-stated if the T input is
+		 1. In other words, it acts just like bufif0. */
+	    assert(ivl_logic_pins(net) == 3);
+
+	    obj = edif_cellref_create(edf, xilinx_cell_buft(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+	    edif_add_to_joint(jnt, obj, BUF_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
+	    edif_add_to_joint(jnt, obj, BUF_I);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
+	    edif_add_to_joint(jnt, obj, BUF_T);
+	    break;
+
 	  case IVL_LO_NOT:
 	    assert(ivl_logic_pins(net) == 2);
 
@@ -732,6 +762,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.4  2003/06/28 04:18:47  steve
+ *  Add support for wide OR/NOR gates.
+ *
  * Revision 1.3  2003/06/26 03:57:05  steve
  *  Add Xilinx support for A/B MUX devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.26 2003/06/26 03:57:05 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.27 2003/06/28 04:18:47 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -161,6 +161,170 @@ void virtex_show_footer(ivl_design_t des)
       }
 
       edif_print(xnf, edf);
+}
+
+static void virtex_or_wide(ivl_net_logic_t net)
+{
+      edif_cell_t cell_muxcy_l = xilinx_cell_muxcy_l(xlib);
+      edif_cell_t cell_muxcy = xilinx_cell_muxcy(xlib);
+      edif_cell_t cell_lut4 = xilinx_cell_lut4(xlib);
+
+      edif_cellref_t true_out, false_out;
+      edif_cellref_t lut, muxcy, muxcy_down;
+      edif_joint_t jnt;
+
+      unsigned idx, inputs, lut4_cnt;
+
+      if (ivl_logic_type(net) == IVL_LO_OR) {
+	    true_out  = edif_cellref_create(edf, cell_1);
+	    false_out = edif_cellref_create(edf, cell_0);
+      } else {
+	    true_out  = edif_cellref_create(edf, cell_0);
+	    false_out = edif_cellref_create(edf, cell_1);
+      }
+
+      inputs = ivl_logic_pins(net) - 1;
+      lut4_cnt = (inputs-1)/4;
+
+      for (idx = 0 ;  idx < lut4_cnt ;  idx += 1) {
+	    muxcy = edif_cellref_create(edf, cell_muxcy_l);
+	    lut = edif_cellref_create(edf, cell_lut4);
+
+	    edif_cellref_pstring(lut, "INIT", "0001");
+
+	    jnt = edif_joint_create(edf);
+	    edif_add_to_joint(jnt, lut, LUT_O);
+	    edif_add_to_joint(jnt, muxcy, MUXCY_S);
+
+	    jnt = edif_joint_create(edf);
+	    edif_add_to_joint(jnt, true_out, 0);
+	    edif_add_to_joint(jnt, muxcy, MUXCY_DI);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, idx*4+1+0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, idx*4+1+1));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, idx*4+1+2));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, idx*4+1+3));
+	    edif_add_to_joint(jnt, lut, LUT_I3);
+
+	    if (idx > 0) {
+		  jnt = edif_joint_create(edf);
+		  edif_add_to_joint(jnt, muxcy, MUXCY_CI);
+		  edif_add_to_joint(jnt, muxcy_down, MUXCY_O);
+	    } else {
+		  jnt = edif_joint_create(edf);
+		  edif_add_to_joint(jnt, muxcy, MUXCY_CI);
+		  edif_add_to_joint(jnt, false_out, 0);
+	    }
+
+	    muxcy_down = muxcy;
+      }
+
+      muxcy = edif_cellref_create(edf, cell_muxcy);
+      jnt = edif_joint_create(edf);
+      edif_add_to_joint(jnt, true_out, 0);
+      edif_add_to_joint(jnt, muxcy, MUXCY_DI);
+
+      jnt = edif_joint_create(edf);
+      edif_add_to_joint(jnt, muxcy, MUXCY_CI);
+      edif_add_to_joint(jnt, muxcy_down, MUXCY_O);
+
+      switch (ivl_logic_pins(net) - 1 - lut4_cnt*4) {
+
+	  case 1:
+	    lut = edif_cellref_create(edf, xilinx_cell_inv(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
+	    edif_add_to_joint(jnt, lut, BUF_I);
+	    break;
+
+	  case 2:
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+1));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+	    break;
+
+	  case 3:
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+1));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+2));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+	    break;
+
+	  case 4:
+	    lut = edif_cellref_create(edf, cell_lut4);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+1));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+2));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+3));
+	    edif_add_to_joint(jnt, lut, LUT_I3);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      jnt = edif_joint_create(edf);
+      edif_add_to_joint(jnt, lut, LUT_O);
+      edif_add_to_joint(jnt, muxcy, MUXCY_S);
+
+      jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+      edif_add_to_joint(jnt, muxcy, MUXCY_O);
+}
+
+/*
+ * Pick off the cases where there is a Virtex specific implementation
+ * that is better then the generic Xilinx implementation. Route the
+ * remaining to the base xilinx_logic implementation.
+ */
+void virtex_logic(ivl_net_logic_t net)
+{
+	/* Nothing I can do if the user expresses a specific
+	   opinion. The cellref attribute forces me to let the base
+	   xilinx_logic take care of it. */
+      if (ivl_logic_attr(net, "cellref")) {
+	    xilinx_logic(net);
+	    return;
+      }
+
+      switch (ivl_logic_type(net)) {
+
+	  case IVL_LO_OR:
+	  case IVL_LO_NOR:
+	    if (ivl_logic_pins(net) <= 5) {
+		  xilinx_logic(net);
+
+	    } else {
+		  virtex_or_wide(net);
+	    }
+	    break;
+
+	  default:
+	    xilinx_logic(net);
+	    break;
+      }
 }
 
 void virtex_generic_dff(ivl_lpm_t net)
@@ -665,7 +829,7 @@ const struct device_s d_virtex_edif = {
       virtex_show_footer,
       xilinx_show_scope,
       xilinx_pad,
-      xilinx_logic,
+      virtex_logic,
       virtex_generic_dff,
       virtex_eq,
       virtex_eq,
@@ -680,6 +844,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.27  2003/06/28 04:18:47  steve
+ *  Add support for wide OR/NOR gates.
+ *
  * Revision 1.26  2003/06/26 03:57:05  steve
  *  Add Xilinx support for A/B MUX devices.
  *

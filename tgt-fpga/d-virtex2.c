@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.15 2003/06/26 03:57:05 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.16 2003/06/28 04:18:47 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -136,7 +136,7 @@ const struct device_s d_virtex2_edif = {
       virtex_show_footer,
       xilinx_show_scope,
       xilinx_pad,
-      xilinx_logic,
+      virtex_logic,
       virtex_generic_dff,
       virtex_eq,
       virtex_eq,
@@ -151,6 +151,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.16  2003/06/28 04:18:47  steve
+ *  Add support for wide OR/NOR gates.
+ *
  * Revision 1.15  2003/06/26 03:57:05  steve
  *  Add Xilinx support for A/B MUX devices.
  *
