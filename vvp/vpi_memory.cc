@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.19 2002/09/11 16:06:57 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.20 2002/09/12 15:13:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -347,23 +347,26 @@ static char* memory_word_get_str(int code, vpiHandle ref)
 
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
 
-      char *bn = vpi_get_str(vpiFullName, &rfp->mem->scope->base);
+      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->mem->scope->base));
       char *nm = memory_name(rfp->mem->mem);
 
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 10 + 4, RBUF_STR);
 
       switch (code) {
 	  case vpiFullName:
 	    sprintf(rbuf, "%s.%s[%d]", bn, nm, rfp->index.value);
+	    free(bn);
 	    return rbuf;
 	    break;
 	  case vpiName: {
 	    sprintf(rbuf, "%s[%d]", nm, rfp->index.value);
+	    free(bn);
 	    return rbuf;
 	    break;
 	  }
       }
 
+      free(bn);
       return 0;
 }
 
@@ -583,6 +586,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.20  2002/09/12 15:13:07  steve
+ *  Account for buffer overrun in memory word names.
+ *
  * Revision 1.19  2002/09/11 16:06:57  steve
  *  Fix wrecked rbuf in vpi_get_str of signals and memories.
  *
