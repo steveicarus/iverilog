@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.25 2001/02/16 03:27:31 steve Exp $"
+#ident "$Id: cprop.cc,v 1.26 2001/02/18 01:07:32 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -38,6 +38,7 @@ struct cprop_functor  : public functor_t {
 
       unsigned count;
 
+      virtual void signal(Design*des, NetNet*obj);
       virtual void lpm_add_sub(Design*des, NetAddSub*obj);
       virtual void lpm_compare(Design*des, NetCompare*obj);
       virtual void lpm_compare_eq_(Design*des, NetCompare*obj);
@@ -45,6 +46,10 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
 };
+
+void cprop_functor::signal(Design*des, NetNet*obj)
+{
+}
 
 void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 {
@@ -932,6 +937,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.26  2001/02/18 01:07:32  steve
+ *  check signals in the cprop functor.
+ *
  * Revision 1.25  2001/02/16 03:27:31  steve
  *  Constant propagation for compare ==.
  *
