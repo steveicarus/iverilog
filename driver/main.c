@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.37 2002/05/24 01:13:00 steve Exp $"
+#ident "$Id: main.c,v 1.38 2002/05/27 23:14:06 steve Exp $"
 
 # include "config.h"
 
@@ -632,7 +632,7 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%civlpp %s%s -f%s ", base,sep,
+      sprintf(tmp, "%s%civlpp %s%s -D__ICARUS__=1 -f%s ", base,sep,
 	      verbose_flag?" -v":"",
 	      e_flag?"":" -L", source_path);
 
@@ -700,6 +700,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.38  2002/05/27 23:14:06  steve
+ *  Predefine __ICARUS__
+ *
  * Revision 1.37  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
  *
