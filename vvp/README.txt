@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.22 2001/05/02 04:05:17 steve Exp $
+ *  $Id: README.txt,v 1.23 2001/05/02 23:16:50 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -170,10 +170,6 @@ A UDP functor instance is created so:
 Where <label> identifies the functor, <type> is the label of a UDP
 defined earlier, and <symbol_list> is a list of symbols, one for each
 input of the UDP.
-
-ATTN: The "<name>" attribute of the UDP is pretty useless, and may go
-away in future versions.  It may be useful for diagnostic messages,
-though.
  
 
 VARIABLE STATEMENTS:
@@ -334,18 +330,15 @@ initializes four memory bits.  Two bits form each byte for each memory
 bit, in the ususal encoding.
 
 Procedural access to the memory employs an index register to address a
-bit location in the mememory, via the commands:
+bit location in the memory, via the commands:
 
-	%load/mem   <bit>, <memid>[<ix>] ;
-	%set/mem    <memid>[<ix>], <bit> ;
-	%assign/mem <memid>[<ix>], <delay>, <bit> ;
+	%load/m   <bit>, <memid> ;
+	%set/m    <memid>, <bit> ;
+	%assign/m <memid>, <delay>, <bit> ;
 
-???  is "/mem" required, or shall functors and memories share a
-namespace? ???
-
-<ix> identifies one of the four index registers of the current
-thread.  The value of register <ix> is the index in the memories bit
-space, where each data word occupies a multiple of four bits.
+The memory bit is addressed by index register 3.  The value of
+register 3 is the index in the memory's bit space, where each data
+word occupies a multiple of four bits.
 
 
 EVENT STATEMENTS

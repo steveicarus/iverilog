@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.22 2001/05/02 01:57:25 steve Exp $"
+#ident "$Id: codes.h,v 1.23 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 
@@ -52,6 +52,7 @@ extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_MUL(vthread_t thr, vvp_code_t code);
+extern bool of_IX_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_JMP(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
@@ -126,6 +127,13 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.23  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.22  2001/05/02 01:57:25  steve
  *  Support behavioral subtraction.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.33 2001/05/02 01:57:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.34 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -168,6 +168,7 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
       thr->is_scheduled = 0;
       thr->i_have_ended = 0;
       thr->waiting_for_event = 0;
+      thr->is_scheduled = 0;
 
       thr_put_bit(thr, 0, 0);
       thr_put_bit(thr, 1, 1);
@@ -626,20 +627,24 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 
 
 /*
-** Index registers, signed arithmetic.
+** Index registers, unsigned arithmetic.
 */
 
 bool of_IX_ADD(vthread_t thr, vvp_code_t cp)
 {
-  int number = (int)cp->number; // signed
-  thr->index[cp->bit_idx1 & 3] += number;
+  thr->index[cp->bit_idx1 & 3] += cp->number;
+  return true;
+}
+
+bool of_IX_SUB(vthread_t thr, vvp_code_t cp)
+{
+  thr->index[cp->bit_idx1 & 3] -= cp->number;
   return true;
 }
 
 bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 {
-  int number = (int)cp->number; // signed
-  thr->index[cp->bit_idx1 & 3] *= number;
+  thr->index[cp->bit_idx1 & 3] *= cp->number;
   return true;
 }
 
@@ -714,9 +719,8 @@ bool of_LOAD(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
-      assert(cp->bit_idx2 < 4);
-      unsigned char val = memory_get(cp->mem, thr->index[cp->bit_idx1]);
-      thr_put_bit(thr, cp->bit_idx2, val);
+      unsigned char val = memory_get(cp->mem, thr->index[3]);
+      thr_put_bit(thr, cp->bit_idx1, val);
       return true;
 }
 
@@ -809,9 +813,8 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
 
 bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx2 < 4);
-      unsigned char val = thr_get_bit(thr, cp->bit_idx2);
-      memory_set(cp->mem, thr->index[cp->bit_idx1], val);
+      unsigned char val = thr_get_bit(thr, cp->bit_idx1);
+      memory_set(cp->mem, thr->index[3], val);
 
       return true;
 }
@@ -966,6 +969,13 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.34  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.33  2001/05/02 01:57:26  steve
  *  Support behavioral subtraction.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.24 2001/05/02 04:05:17 steve Exp $"
+#ident "$Id: parse.y,v 1.25 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -45,6 +45,8 @@ extern FILE*yyin;
       struct symb_s  symb;
       struct symbv_s symbv;
 
+      struct numbv_s numbv;
+
       struct symb_s vect;
 
       struct argv_s argv;
@@ -66,7 +68,8 @@ extern FILE*yyin;
 %token <vect> T_VECTOR
 
 %type <symb>  symbol symbol_opt
-%type <symbv> symbols symbols_net numbers
+%type <symbv> symbols symbols_net
+%type <numbv> numbers
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 %type <table> udp_table
@@ -426,6 +429,13 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.25  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.24  2001/05/02 04:05:17  steve
  *  Remove the init parameter of functors, and instead use
  *  the special C<?> symbols to initialize inputs. This is

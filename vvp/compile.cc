@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.52 2001/05/02 04:05:17 steve Exp $"
+#ident "$Id: compile.cc,v 1.53 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -56,9 +56,8 @@ enum operand_e {
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
-        /* The operand is a memory, with index ... */
-      OA_MEM_X3, /* ... hardwired index register 3  */
-      OA_MEM_I1  /* ... index register in bit1      */
+        /* The operand is a pointer to a memory */
+      OA_MEM_PTR,
 };
 
 struct opcode_table_s {
@@ -73,7 +72,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_X3, OA_BIT1,     OA_BIT2} },
+      { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -84,19 +83,20 @@ const static struct opcode_table_s opcode_table[] = {
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
+      { "%ix/sub", of_IX_SUB, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
-      { "%load/m", of_LOAD_MEM,2, {OA_BIT2,     OA_MEM_I1,   OA_NONE} },
+      { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
-      { "%set/m",  of_SET_MEM,2,  {OA_MEM_I1,   OA_BIT1,     OA_NONE} },
+      { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -692,8 +692,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  code->number = opa->argv[idx].numb;
 		  break;
 
-        	case OA_MEM_I1:
-	        case OA_MEM_X3:
+        	case OA_MEM_PTR:
 		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;
@@ -701,26 +700,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 
 		  code->mem = memory_find(opa->argv[idx].symb.text);
 		  if (code->mem == 0) {
-			yyerror("functor undefined");
-			break;
-		  }
-
-		  if (opa->argv[idx].symb.idx >= 4) {
-		        yyerror("index operand out of range (0..3)");
-		        break;
-		  }
-
-		  switch(op->argt[idx]) {
-		      case OA_MEM_I1:
-		        code->bit_idx1 = (unsigned short) 
-			  opa->argv[idx].symb.idx;
-		        break;
-		      case OA_MEM_X3:
-		        if (opa->argv[idx].symb.idx != 3)
-			      yyerror("index operand must be 3");
-			break;
-		      default:
-			break;
+			yyerror("memory undefined");
 		  }
 
 		  free(opa->argv[idx].symb.text);
@@ -1064,6 +1044,13 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.53  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.52  2001/05/02 04:05:17  steve
  *  Remove the init parameter of functors, and instead use
  *  the special C<?> symbols to initialize inputs. This is

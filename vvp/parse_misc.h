@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.4 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.5 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 
@@ -50,17 +50,18 @@ struct symb_s {
 
 struct symbv_s {
       unsigned cnt;
-      union {
-            struct symb_s*vect;
-	    long*nvec;
-      };
+      struct symb_s*vect;
 };
 
 extern void symbv_init(struct symbv_s*obj);
 extern void symbv_add(struct symbv_s*obj, struct symb_s item);
 
-#define numbv_s    symbv_s
-#define numbv_init symbv_init
+struct numbv_s {
+      unsigned cnt;
+      long*nvec;
+};
+
+extern void numbv_init(struct numbv_s*obj);
 extern void numbv_add(struct numbv_s*obj, long item);
 
 
@@ -75,6 +76,13 @@ extern void argv_add(struct argv_s*obj, vpiHandle);
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.5  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.4  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *

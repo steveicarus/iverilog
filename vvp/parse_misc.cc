@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.4 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.5 2001/05/02 23:16:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -46,6 +46,12 @@ void symbv_add(struct symbv_s*obj, struct symb_s item)
       obj->cnt += 1;
 }
 
+void numbv_init(struct numbv_s*obj)
+{
+      obj->cnt = 0;
+      obj->nvec = 0;
+}
+
 void numbv_add(struct numbv_s*obj, long item)
 {
       obj->nvec = (long*) realloc(obj->nvec, (obj->cnt+1) * sizeof(long));
@@ -69,6 +75,13 @@ void argv_add(struct argv_s*obj, vpiHandle item)
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.5  2001/05/02 23:16:50  steve
+ *  Document memory related opcodes,
+ *  parser uses numbv_s structures instead of the
+ *  symbv_s and a mess of unions,
+ *  Add the %is/sub instruction.
+ *        (Stephan Boettcher)
+ *
  * Revision 1.4  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
