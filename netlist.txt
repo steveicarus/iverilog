@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.9 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: netlist.txt,v 1.10 2000/07/23 18:06:15 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -269,7 +269,33 @@ recurse. (The elaboration process does reserve the right to flatten
 some task calls. C++ programmers recognize this as inlining a task.)
 
 
+TIME SCALE IN NETLISTS
+
+The Design class and the NetScope classes carry time scale and
+resolution information of the elaborated design. There is a global
+resolution, and there are scope specific units and resolutions. Units
+and resolutions are specified as signed integers, and interpreted as
+the power of 10 of the value. For example, a resolution "-9" means
+that "1" is 1ns (1e-9). The notation supports units from -128 to +127.
+It is up to the back-ends to interpret "-4" as "100us".
+
+Delays are expressed in the netlist by integers. The units of these
+delays are always given in the units of the design precision. This
+allows everything to work with integers, and generally places the
+burden of scaling delays into elaboration. This is, after all, a
+common task. The Design::get_precision() method gets the global design
+precision.
+
+Each NetScope also carries its local time_units and time_precision
+values. These are filled in during scope elaboration and are used in
+subsequent elaboration phases to arrange for scaling of delays. This
+information can also be used by the code generator to scale times back
+to the units of the scope, if that is desired.
+
  $Log: netlist.txt,v $
+ Revision 1.10  2000/07/23 18:06:15  steve
+  Document time scale in netlists.
+
  Revision 1.9  2000/07/14 06:12:57  steve
   Move inital value handling from NetNet to Nexus
   objects. This allows better propogation of inital
