@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.146 2005/01/29 00:37:06 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.147 2005/01/29 16:46:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1453,8 +1453,19 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    assert(pc);
 	    verinum pvalue = pc->value();
 
+	      /* If the desired lwidth is more then the width of the
+		 constant value, extend the value to fit the desired
+		 output. */
+	    if (lwidth > pvalue.len()) {
+		  verinum tmp (0UL, lwidth);
+		  for (unsigned idx = 0 ;  idx < pvalue.len() ;  idx += 1)
+			tmp.set(idx, pvalue.get(idx));
+
+		  pvalue = tmp;
+	    }
+
 	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
-			     NetNet::IMPLICIT, pc->expr_width());
+			     NetNet::IMPLICIT, pvalue.len());
 	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
 				       pvalue);
 	    des->add_node(cp);
@@ -2441,6 +2452,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.147  2005/01/29 16:46:22  steve
+ *  Elaborate parameter reference to desired width without concats.
+ *
  * Revision 1.146  2005/01/29 00:37:06  steve
  *  Integrate pr1072 fix from v0_8-branch.
  *
