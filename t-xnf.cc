@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.41 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.42 2001/06/30 20:11:15 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -452,7 +452,7 @@ void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
 	    os << "CY4_02, CYMODE=ADD-FG-CI" << endl;
 	    break;
 	  case EXAMINE_CI:
-	    os << "CY4_42, CYMODE-EXAMINE-CI" << endl;
+	    os << "CY4_42, CYMODE=EXAMINE-CI" << endl;
 	    break;
       }
       for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
@@ -923,6 +923,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.42  2001/06/30 20:11:15  steve
+ *  typo in CYMODE=EXAMINE-CI string.
+ *
  * Revision 1.41  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *
