@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.h,v 1.2 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: StringHeap.h,v 1.3 2003/01/16 21:44:46 steve Exp $"
 #endif
 
 class StringHeap {
@@ -35,6 +35,7 @@ class StringHeap {
 
       char*cell_base_;
       unsigned cell_ptr_;
+      unsigned cell_count_;
 
     private: // not implemented
       StringHeap(const StringHeap&);
@@ -43,6 +44,9 @@ class StringHeap {
 
 /*
  * $Log: StringHeap.h,v $
+ * Revision 1.3  2003/01/16 21:44:46  steve
+ *  Keep some debugging status.
+ *
  * Revision 1.2  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

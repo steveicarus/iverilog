@@ -23,7 +23,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.2 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: StringHeap.cc,v 1.3 2003/01/16 21:44:46 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -38,6 +38,7 @@ StringHeap::StringHeap()
 {
       cell_base_ = 0;
       cell_ptr_ = HEAPCELL;
+      cell_count_ = 0;
 }
 
 StringHeap::~StringHeap()
@@ -55,6 +56,8 @@ const char* StringHeap::add(const char*text)
       if (rem < (len+1)) {
 	    cell_base_ = (char*)malloc(HEAPCELL);
 	    cell_ptr_ = 0;
+	    cell_count_ += 1;
+	    assert(cell_base_ != 0);
       }
 
       char*res = cell_base_ + cell_ptr_;
@@ -62,11 +65,16 @@ const char* StringHeap::add(const char*text)
       cell_ptr_ += len;
       cell_base_[cell_ptr_++] = 0;
 
+      assert(cell_ptr_ <= HEAPCELL);
+
       return res;
 }
 
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.3  2003/01/16 21:44:46  steve
+ *  Keep some debugging status.
+ *
  * Revision 1.2  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
