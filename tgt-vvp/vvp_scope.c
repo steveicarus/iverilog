@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.44 2001/08/03 17:06:10 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.45 2001/08/10 00:40:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -253,14 +253,32 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       return "C<z>";
 }
 
+/*
+ * This function draws the input to a net. What that means is that it
+ * returns a static string that can be used to represent a resolved
+ * driver to a nexus. If there are multiple drivers to the nexus, then
+ * it writes out the resolver declarations needed to perform strength
+ * resolution.
+ *
+ * The string that this returns must be copied out before this
+ * function is called again. Otherwise, the string memory will be
+ * overwritten.
+ */
 static const char* draw_net_input(ivl_nexus_t nex)
 {
-      static char result[512];
+      char result[512];
       unsigned idx;
       int level;
       unsigned ndrivers = 0;
       static ivl_nexus_ptr_t *drivers = 0x0;
       static unsigned adrivers = 0;
+
+	/* If this nexus already has a label, then its input is
+	   already figured out. Just return the existing label. */
+      const char*nex_private = (const char*)ivl_nexus_get_private(nex);
+      if (nex_private)
+	    return nex_private;
+
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
@@ -283,13 +301,19 @@ static const char* draw_net_input(ivl_nexus_t nex)
 
 	/* If the nexus has no drivers, then send a constant HiZ into
 	   the net. */
-      if (ndrivers == 0)
-	    return "C<z>";
+      if (ndrivers == 0) {
+	    nex_private = "C<z>";
+	    ivl_nexus_set_private(nex, nex_private);
+	    return nex_private;
+      }
 
 
 	/* If the nexus has exactly one driver, then simply draw it. */
-      if (ndrivers == 1)
-	    return draw_net_input_drive(nex, drivers[0]);
+      if (ndrivers == 1) {
+	    nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
+	    ivl_nexus_set_private(nex, nex_private);
+	    return nex_private;
+      }
 
       level = 0;
       while (ndrivers) {
@@ -327,18 +351,21 @@ static const char* draw_net_input(ivl_nexus_t nex)
       }
       
       sprintf(result, "RS_%s", vvp_mangle_id(ivl_nexus_name(nex)));
-      return result;
+      nex_private = strdup(result);
+      ivl_nexus_set_private(nex, nex_private);
+      return nex_private;
 }
 
 
 
 /*
- * This function looks at the nexus in search for the net to attach
+ * This function looks at the nexus in search of the net to attach
  * functor inputs to. Sort the signals in the nexus by name, and
  * choose the lexically earliest one.
  */
-void draw_input_from_net(ivl_nexus_t nex)
+static void draw_input_from_net(ivl_nexus_t nex)
 {
+#if 0
       unsigned idx;
       ivl_signal_t sig = 0;
       unsigned sig_pin = 0;
@@ -367,6 +394,13 @@ void draw_input_from_net(ivl_nexus_t nex)
       assert(sig);
       fprintf(vvp_out, "V_%s[%u]", 
 	      vvp_mangle_id(ivl_signal_name(sig)), sig_pin);
+#else
+      const char*nex_private = (const char*)ivl_nexus_get_private(nex);
+      if (nex_private == 0)
+	    nex_private = draw_net_input(nex);
+      assert(nex_private);
+      fprintf(vvp_out, "%s", nex_private);
+#endif
 }
 
 /*
@@ -376,6 +410,7 @@ void draw_input_from_net(ivl_nexus_t nex)
  */
 static void draw_reg_in_scope(ivl_signal_t sig)
 {
+      unsigned idx;
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
 
@@ -384,45 +419,13 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
 	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
-}
 
-/*
- * This function takes a nexus and a signal, and finds the next signal
- * (lexically) that is connected to at the same nexus. Return the
- * ivl_nexus_ptr_t object to represent that junction.
- */
-static ivl_nexus_ptr_t find_net_just_after(ivl_nexus_t nex,
-					   ivl_signal_t sig)
-{
-      ivl_nexus_ptr_t res = 0;
-      ivl_signal_t res_sig = 0;
-      unsigned idx;
-
-      for (idx = 0 ; idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_signal_t tmp = ivl_nexus_ptr_sig(ptr);
-
-	    if (tmp == 0)
-		  continue;
-
-	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(sig)) <= 0)
-		  continue;
-
-	    if (res == 0) {
-		  res = ptr;
-		  res_sig = tmp;
-		  continue;
-	    }
-
-	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(res_sig)) < 0) {
-		  res = ptr;
-		  res_sig = tmp;
-	    }
+	/* Attach input information to the nexus. */
+      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
+	    draw_net_input(nex);
       }
-
-      return res;
 }
-
 
 /*
  * This function draws a net. This is a bit more complicated as we
@@ -441,19 +444,9 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
 	/* Connect all the pins of the signal to something. */
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr;
 	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
 
-	    ptr = find_net_just_after(nex, sig);
-	    if (ptr) {
-		  char tmp[512];
-		  sprintf(tmp, "V_%s[%u]",
-			  vvp_mangle_id(ivl_signal_name(ivl_nexus_ptr_sig(ptr))),
-			  ivl_nexus_ptr_pin(ptr));
-		  args[idx] = strdup(tmp);
-	    } else {
-		  args[idx] = strdup(draw_net_input(nex));
-	    }
+	    args[idx] = draw_net_input(nex);
       }
 
       fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
@@ -461,7 +454,6 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
 	    fprintf(vvp_out, ", %s", args[idx]);
-	    free(args[idx]);
       }
       fprintf(vvp_out, ";\n");
 
@@ -1136,6 +1128,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.45  2001/08/10 00:40:45  steve
+ *  tgt-vvp generates code that skips nets as inputs.
+ *
  * Revision 1.44  2001/08/03 17:06:10  steve
  *  More detailed messages about unsupported things.
  *
@@ -1182,103 +1177,5 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
  *  Generate vvp code for GT and GE comparisons.
  *
  * Revision 1.31  2001/06/07 04:20:10  steve
- *  Account for carry out on add devices.
- *
- * Revision 1.30  2001/06/07 03:09:37  steve
- *  support subtraction in tgt-vvp.
- *
- * Revision 1.29  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.28  2001/05/12 16:34:47  steve
- *  Fixup the resolver syntax.
- *
- * Revision 1.27  2001/05/12 03:31:01  steve
- *  Generate resolvers for multiple drivers.
- *
- * Revision 1.26  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.25  2001/05/06 00:01:02  steve
- *  Generate code that causes the value of a net to be passed
- *  passed through all nets of a nexus.
- *
- * Revision 1.24  2001/05/03 04:55:46  steve
- *  Generate code for the fully general event or.
- *
- * Revision 1.23  2001/05/02 04:05:16  steve
- *  Remove the init parameter of functors, and instead use
- *  the special C<?> symbols to initialize inputs. This is
- *  clearer and more regular.
- *
- * Revision 1.22  2001/04/30 00:00:27  steve
- *  detect multiple drivers on nexa.
- *
- * Revision 1.21  2001/04/29 23:16:31  steve
- *  Add bufif and pull devices.
- *
- * Revision 1.20  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.19  2001/04/24 02:59:52  steve
- *  Fix generation of udp/comb definitions.
- *
- * Revision 1.18  2001/04/24 02:23:58  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.17  2001/04/21 02:04:01  steve
- *  Add NAND and XNOR functors.
- *
- * Revision 1.16  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.15  2001/04/14 05:11:49  steve
- *  Use event/or for wide anyedge statements.
- *
- * Revision 1.14  2001/04/06 02:28:03  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.13  2001/04/05 01:38:24  steve
- *  Generate signed .net and .var statements.
- *
- * Revision 1.12  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.11  2001/04/01 21:34:48  steve
- *  Recognize the BUF device.
- *
- * Revision 1.10  2001/04/01 01:48:21  steve
- *  Redesign event information to support arbitrary edge combining.
- *
- * Revision 1.9  2001/03/31 19:29:23  steve
- *  Fix compilation warnings.
- *
- * Revision 1.8  2001/03/29 03:47:13  steve
- *  events can take up to 4 inputs.
- *
- * Revision 1.7  2001/03/28 06:07:40  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.6  2001/03/27 06:27:41  steve
- *  Generate code for simple @ statements.
- *
- * Revision 1.5  2001/03/25 19:36:12  steve
- *  Draw AND NOR and NOT gates.
- *
- * Revision 1.4  2001/03/25 05:59:47  steve
- *  Recursive make check target.
- *
- * Revision 1.3  2001/03/25 03:53:40  steve
- *  Include signal bit index in functor input.
- *
- * Revision 1.2  2001/03/25 03:25:43  steve
- *  Generate .net statements, and nexus inputs.
- *
- * Revision 1.1  2001/03/21 01:49:43  steve
- *  Scan the scopes of a design, and draw behavioral
- *  blocking  assignments of constants to vectors.
- *
  */
 

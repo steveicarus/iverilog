@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.61 2001/07/28 01:17:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.62 2001/08/10 00:40:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -757,6 +757,18 @@ extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
       return net->name_;
 }
 
+extern "C" void* ivl_nexus_get_private(ivl_nexus_t net)
+{
+      assert(net);
+      return net->private_data;
+}
+
+extern "C" void ivl_nexus_set_private(ivl_nexus_t net, void*data)
+{
+      assert(net);
+      net->private_data = data;
+}
+
 extern "C" unsigned ivl_nexus_ptrs(ivl_nexus_t net)
 {
       assert(net);
@@ -1297,6 +1309,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.62  2001/08/10 00:40:45  steve
+ *  tgt-vvp generates code that skips nets as inputs.
+ *
  * Revision 1.61  2001/07/28 01:17:40  steve
  *  Support getting the signal from IVL_EX_SIGNAL expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.58 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: t-dll.h,v 1.59 2001/08/10 00:40:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -391,6 +391,7 @@ struct ivl_nexus_s {
       unsigned nptr_;
       struct ivl_nexus_ptr_s*ptrs_;
       char*name_;
+      void*private_data;
 };
 
 
@@ -561,6 +562,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.59  2001/08/10 00:40:45  steve
+ *  tgt-vvp generates code that skips nets as inputs.
+ *
  * Revision 1.58  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

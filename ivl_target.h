@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.75 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.76 2001/08/10 00:40:45 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -604,6 +604,14 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  * ivl_nexus_ptr
  *    Return a nexus pointer given the nexus and an index.
  *
+ * ivl_nexus_set_private
+ * ivl_nexus_get_private
+ *    The target module often needs to associate data with a nexus for
+ *    later use when the nexus is encountered associated with a
+ *    device. These methods allow the code generator to store to or
+ *    retrieve from a nexus a void* of private data. This pointer is
+ *    guaranteed to be 0 before the target module is invoked.
+ *
  * Once an ivl_nexus_ptr_t is selected by the ivl_nexus_ptr method,
  * the properties of the pointer can be accessed by the following
  * methods:
@@ -651,6 +659,10 @@ extern const char*     ivl_nexus_name(ivl_nexus_t net);
 extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
 extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
 
+extern void  ivl_nexus_set_private(ivl_nexus_t net, void*data);
+extern void* ivl_nexus_get_private(ivl_nexus_t net);
+
+
 extern ivl_drive_t  ivl_nexus_ptr_drive0(ivl_nexus_ptr_t net);
 extern ivl_drive_t  ivl_nexus_ptr_drive1(ivl_nexus_ptr_t net);
 extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
@@ -658,7 +670,6 @@ extern ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net);
 extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
-
 
 /* SCOPE
  * Scopes of various sort have these properties. Use these methods to
@@ -896,6 +907,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.76  2001/08/10 00:40:45  steve
+ *  tgt-vvp generates code that skips nets as inputs.
+ *
  * Revision 1.75  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

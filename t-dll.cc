@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.56 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.57 2001/08/10 00:40:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,6 +180,7 @@ ivl_memory_t dll_target::lookup_memory_(const NetMemory*cur)
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 {
       ivl_nexus_t tmp = new struct ivl_nexus_s;
+      tmp->private_data = 0;
       tmp->nptr_ = 1;
       tmp->ptrs_ = (struct ivl_nexus_ptr_s*)
 	    malloc(sizeof(struct ivl_nexus_ptr_s));
@@ -1484,6 +1485,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.57  2001/08/10 00:40:45  steve
+ *  tgt-vvp generates code that skips nets as inputs.
+ *
  * Revision 1.56  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

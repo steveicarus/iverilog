@@ -72,9 +72,11 @@ ivl_memory_root
 ivl_memory_size
 ivl_memory_width
 
+ivl_nexus_get_private
 ivl_nexus_name
 ivl_nexus_ptrs
 ivl_nexus_ptr
+ivl_nexus_set_private
 
 ivl_nexus_ptr_con
 ivl_nexus_ptr_drive0
