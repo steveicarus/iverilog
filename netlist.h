@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.288 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.289 2003/06/05 04:28:24 steve Exp $"
 #endif
 
 /*
@@ -2477,6 +2477,7 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_eqeq_();
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
+      NetEConst*eval_leeq_real_();
       NetEConst*eval_gt_();
       NetEConst*eval_gteq_();
       NetEConst*eval_neeq_();
@@ -3303,6 +3304,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.289  2003/06/05 04:28:24  steve
+ *  Evaluate <= with real operands.
+ *
  * Revision 1.288  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

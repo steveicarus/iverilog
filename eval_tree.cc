@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.53 2003/06/04 01:26:17 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.54 2003/06/05 04:28:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -241,8 +241,69 @@ NetEConst* NetEBComp::eval_less_()
       return new NetEConst(result);
 }
 
+NetEConst* NetEBComp::eval_leeq_real_()
+{
+      NetEConst*vtmp;
+      NetECReal*rtmp;
+      double lv, rv;
+
+      switch (left_->expr_type()) {
+	  case ET_REAL:
+	    rtmp = dynamic_cast<NetECReal*> (left_);
+	    if (rtmp == 0)
+		  return 0;
+
+	    lv = rtmp->value().as_double();
+	    break;
+
+	  case ET_VECTOR:
+	    vtmp = dynamic_cast<NetEConst*> (left_);
+	    if (vtmp == 0)
+		  return 0;
+
+	    lv = vtmp->value().as_long();
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+
+      switch (right_->expr_type()) {
+	  case ET_REAL:
+	    rtmp = dynamic_cast<NetECReal*> (right_);
+	    if (rtmp == 0)
+		  return 0;
+
+	    rv = rtmp->value().as_double();
+	    break;
+
+	  case ET_VECTOR:
+	    vtmp = dynamic_cast<NetEConst*> (right_);
+	    if (vtmp == 0)
+		  return 0;
+
+	    rv = vtmp->value().as_long();
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      verinum result((lv <= rv)? verinum::V1 : verinum::V0, 1);
+      vtmp = new NetEConst(result);
+      vtmp->set_line(*this);
+
+      return vtmp;
+}
+
 NetEConst* NetEBComp::eval_leeq_()
 {
+      if (right_->expr_type() == ET_REAL)
+	    return eval_leeq_real_();
+      if (left_->expr_type() == ET_REAL)
+	    return eval_leeq_real_();
+
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
 
@@ -252,9 +313,8 @@ NetEConst* NetEBComp::eval_leeq_()
 	    return new NetEConst(result);
       }
 
-
       if (left_->expr_width() == 0) {
-	    cerr << get_line() << ": internal error: Something wrong"
+	    cerr << get_line() << ": internal error: Something wrong "
 		 << "with the left side width of <= ?" << endl;
 	    cerr << get_line() << ":               : " << *this << endl;
       }
@@ -1398,6 +1458,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.54  2003/06/05 04:28:24  steve
+ *  Evaluate <= with real operands.
+ *
  * Revision 1.53  2003/06/04 01:26:17  steve
  *  internal error for <= expression errors.
  *
@@ -1412,173 +1475,5 @@ NetEConst* NetEUReduce::eval_tree()
  * Revision 1.50  2003/04/14 03:40:21  steve
  *  Make some effort to preserve bits while
  *  operating on constant values.
- *
- * Revision 1.49  2003/03/15 18:07:58  steve
- *  More resilient WRT right expression width of GT.
- *
- * Revision 1.48  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.47  2003/02/07 02:47:58  steve
- *  NetEBDiv handles real value constant expressions.
- *
- * Revision 1.46  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.45  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.44  2002/12/05 02:14:33  steve
- *  Support bit select in constant expressions.
- *
- * Revision 1.43  2002/11/09 01:40:19  steve
- *  Postpone parameter width check to evaluation.
- *
- * Revision 1.42  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.41  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.40  2002/05/25 16:43:47  steve
- *  Eval ^ and &0 expressions.
- *
- * Revision 1.39  2002/05/06 02:30:27  steve
- *  Allow parameters in concatenation of widths are defined.
- *
- * Revision 1.38  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
- *
- * Revision 1.37  2002/04/27 05:03:46  steve
- *  Preserve stringiness string part select and concatenation.
- *
- * Revision 1.36  2002/04/27 03:17:15  steve
- *  Fixup eval of signed constants.
- *
- * Revision 1.35  2002/04/24 02:47:02  steve
- *  Fix compile time eval of signed <= signed.
- *
- * Revision 1.34  2002/04/14 19:28:47  steve
- *  Fix constant evaluation of unary
- *
- * Revision 1.33  2002/02/01 05:09:14  steve
- *  Propagate sign in unary minus.
- *
- * Revision 1.32  2002/01/22 01:40:04  steve
- *  Precalculate constant results of memory index expressions.
- *
- * Revision 1.31  2001/12/30 00:39:25  steve
- *  Evaluate constant unary minus.
- *
- * Revision 1.30  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.29  2001/11/19 01:54:14  steve
- *  Port close cropping behavior from mcrgb
- *  Move window array reset to libmc.
- *
- * Revision 1.28  2001/10/22 15:31:21  steve
- *  fix constant overrun in | operands.
- *
- * Revision 1.27  2001/10/20 00:11:24  steve
- *  Evaluate constant == when operands differ in width.
- *
- * Revision 1.26  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.25  2001/07/16 20:41:41  steve
- *  Handle 0 counts in repeat concatenation.
- *
- * Revision 1.24  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- *
- * Revision 1.23  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.22  2001/02/07 02:46:31  steve
- *  Support constant evaluation of / and % (PR#124)
- *
- * Revision 1.21  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.20  2001/01/04 16:49:50  steve
- *  Evaluate constant === and !== expressions.
- *
- * Revision 1.19  2001/01/04 04:28:42  steve
- *  Evaluate constant logical && and ||.
- *
- * Revision 1.18  2001/01/02 04:21:14  steve
- *  Support a bunch of unary operators in parameter expressions.
- *
- * Revision 1.17  2001/01/02 03:23:40  steve
- *  Evaluate constant &, | and unary ~.
- *
- * Revision 1.16  2001/01/01 21:49:33  steve
- *  Fix shift and ternary operators in parameter expressions (PR#86)
- *
- * Revision 1.15  2000/12/16 20:00:17  steve
- *  Handle non-constant l-values.
- *
- * Revision 1.14  2000/12/16 19:03:30  steve
- *  Evaluate <= and ?: in parameter expressions (PR#81)
- *
- * Revision 1.13  2000/09/29 04:42:56  steve
- *  Cnstant evaluation of NE.
- *
- * Revision 1.12  2000/09/27 18:28:37  steve
- *  multiply in parameter expressions.
- *
- * Revision 1.11  2000/07/07 04:53:54  steve
- *  Add support for non-constant delays in delay statements,
- *  Support evaluating ! in constant expressions, and
- *  move some code from netlist.cc to net_proc.cc.
- *
- * Revision 1.10  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.9  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.8  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.7  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.6  1999/10/22 23:57:53  steve
- *  do the <= in bits, not numbers.
- *
- * Revision 1.5  1999/10/10 23:29:37  steve
- *  Support evaluating + operator at compile time.
- *
- * Revision 1.4  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.3  1999/09/23 00:21:54  steve
- *  Move set_width methods into a single file,
- *  Add the NetEBLogic class for logic expressions,
- *  Fix error setting with of && in if statements.
- *
- * Revision 1.2  1999/09/21 00:13:40  steve
- *  Support parameters that reference other paramters.
- *
- * Revision 1.1  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
  */
 
