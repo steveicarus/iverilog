@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.5 2003/09/04 20:28:05 steve Exp $"
+#ident "$Id: async.cc,v 1.6 2003/12/20 00:33:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,6 +36,16 @@ bool NetCondit::is_asynchronous()
       return false;
 }
 
+/*
+ * NetEvWait statements come from statements of the form @(...) in the
+ * Verilog source. These event waits are considered asynchronous if
+ * all of the events in the list are ANYEDGE, and all the inputs to
+ * the statement are included in the sensitivity list. If any of the
+ * events are posedge or negedge, the statement is synchronous
+ * (i.e. an edge-triggered flip-flop) and if any of the inputs are
+ * unaccounted for in the sensitivity list then the statement is a
+ * latch.
+ */
 bool NetEvWait::is_asynchronous()
 {
 	/* The "sense" set contains the set of Nexa that are in the
@@ -64,7 +74,10 @@ bool NetEvWait::is_asynchronous()
 
       delete sense;
       delete inputs;
-      return true;
+
+	/* If it passes all the other tests, then this statement is
+	   asynchronous if the sub-statement is asynchronous. */
+      return statement_->is_asynchronous();
 }
 
 bool NetProc::is_asynchronous()
@@ -82,6 +95,9 @@ bool NetProcTop::is_asynchronous()
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.6  2003/12/20 00:33:39  steve
+ *  More thorough check that NetEvWait is asynchronous.
+ *
  * Revision 1.5  2003/09/04 20:28:05  steve
  *  Support time0 resolution of combinational threads.
  *
