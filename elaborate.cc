@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.90 1999/09/18 01:53:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.91 1999/09/18 02:51:35 steve Exp $"
 #endif
 
 /*
@@ -1441,6 +1441,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  assert(msb_);
 		  verinum*lsn = lsb_->eval_const(des, path);
 		  verinum*msn = msb_->eval_const(des, path);
+		  if ((lsn == 0) || (msn == 0)) {
+			cerr << get_line() << ": Part select expresions "
+			      " must be constant expressions." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
 		  assert(lsn);
 		  assert(msn);
 		  unsigned long lsv = lsn->as_ulong();
@@ -2291,9 +2298,9 @@ NetProc* PForever::elaborate(Design*des, const string&path) const
  * elaborate the for loop as the equivalent while loop. This eases the
  * task for the target code generator. The structure is:
  *
- *     begin
+ *     begin : top
  *       name1_ = expr1_;
- *       while (cond_) begin
+ *       while (cond_) begin : body
  *          statement_;
  *          name2_ = expr2_;
  *       end
@@ -2307,6 +2314,10 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       assert(id2);
 
       NetBlock*top = new NetBlock(NetBlock::SEQU);
+
+	/* make the expression, and later the initial assignment to
+	   the condition variable. The statement in the for loop is
+	   very specifically an assignment. */
       NetNet*sig = des->find_signal(path, id1->name());
       if (sig == 0) {
 	    cerr << id1->get_line() << ": register ``" << id1->name()
@@ -2324,8 +2335,18 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       NetBlock*body = new NetBlock(NetBlock::SEQU);
 
-      body->append(statement_->elaborate(des, path));
+	/* Elaborate the statement that is contained in the for
+	   loop. If there is an error, this will return 0 and I should
+	   skip the append. No need to worry, the error has been
+	   reported so it's OK that the netlist is bogus. */
+      NetProc*tmp = statement_->elaborate(des, path);
+      if (tmp)
+	    body->append(tmp);
 
+
+	/* Elaborate the increment assignment statement at the end of
+	   the for loop. This is also a very specific assignment
+	   statement. Put this into the "body" block. */
       sig = des->find_signal(path, id2->name());
       assert(sig);
       NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
@@ -2618,6 +2639,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.91  1999/09/18 02:51:35  steve
+ *  report non-constant part select expressions.
+ *
  * Revision 1.90  1999/09/18 01:53:08  steve
  *  Detect constant lessthen-equal expressions.
  *
