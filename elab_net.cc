@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.62 2001/02/08 01:10:30 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.63 2001/02/09 20:18:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1136,9 +1136,16 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    NetNet*tmp = new NetNet(scope, des->local_symbol(path),
 				    sig->type(), midx-lidx+1);
 	    tmp->local_flag(true);
-	    if (tmp->pin_count() > sig->pin_count()) {
-		  cerr << get_line() << ": bit select out of "
-		       << "range for " << sig->name() << endl;
+
+	      /* Check that the bit or part select of the signal is
+		 within the range of the part. The lidx is the
+		 normalized index of the LSB, so that plus the desired
+		 width must be <= the width of the references signal. */
+	    if ((lidx + tmp->pin_count()) > sig->pin_count()) {
+		  cerr << get_line() << ": error: bit/part select ["
+		       << mval->as_long() << ":" << lval->as_long()
+		       << "] out of range for " << sig->name() << endl;
+		  des->errors += 1;
 		  return sig;
 	    }
 
@@ -1896,6 +1903,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.63  2001/02/09 20:18:15  steve
+ *  Detect part select out of range in nets. (PR#138)
+ *
  * Revision 1.62  2001/02/08 01:10:30  steve
  *  Remove dead code.
  *
