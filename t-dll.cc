@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.30 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.31 2001/03/30 06:10:15 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -215,6 +215,8 @@ bool dll_target::start_design(const Design*des)
       des_.root_->sigs_ = 0;
       des_.root_->nlog_ = 0;
       des_.root_->log_ = 0;
+      des_.root_->nevent_ = 0;
+      des_.root_->event_ = 0;
       des_.root_->nlpm_ = 0;
       des_.root_->lpm_ = 0;
       des_.root_->type_ = IVL_SCT_MODULE;
@@ -314,14 +316,7 @@ void dll_target::event(const NetEvent*net)
 
 	    obj->npins = pr->pin_count();
 	    obj->pins = (ivl_nexus_t*)calloc(obj->npins, sizeof(ivl_nexus_t));
-#if 0
-	    for (unsigned idx = 0 ;  idx < obj->npins ;  idx += 1) {
-		  ivl_nexus_t nex = (ivl_nexus_t)
-			pr->pin(idx).nexus()->t_cookie();
-		  assert(nex);
-		  obj->pins[idx] = nex;
-	    }
-#endif
+
       } else {
 	    obj->npins = 0;
 	    obj->pins  = 0;
@@ -544,6 +539,8 @@ void dll_target::scope(const NetScope*net)
 	    scope->sigs_ = 0;
 	    scope->nlog_ = 0;
 	    scope->log_ = 0;
+	    scope->nevent_ = 0;
+	    scope->event_ = 0;
 	    scope->nlpm_ = 0;
 	    scope->lpm_ = 0;
 
@@ -746,6 +743,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.31  2001/03/30 06:10:15  steve
+ *  Initialize the event_ list of new scopes.
+ *
  * Revision 1.30  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.
