@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.5 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.6 2003/02/16 02:23:14 steve Exp $"
 #endif
 
 /*
@@ -48,13 +48,13 @@ static int callback(p_cb_data);
 /*
  * Register veriusertfs routines/wrappers.
  */
-void veriusertfs_register()
+void veriusertfs_register_table(p_tfcell vtable)
 {
       p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
 
-      for (tf = veriusertfs; tf; tf++) {
+      for (tf = vtable; tf; tf++) {
 	    /* last element */
 	    if (tf->type == 0) break;
 
@@ -84,6 +84,7 @@ void veriusertfs_register()
 			continue;
 		  break;
 	    }
+
 	    tf_data.tfname = tf->tfname;
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
@@ -207,6 +208,9 @@ static int callback(p_cb_data data)
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.6  2003/02/16 02:23:14  steve
+ *  Change the IV veriusertfs_register to accept table pointers.
+ *
  * Revision 1.5  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

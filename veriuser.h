@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.18 2002/12/19 21:37:04 steve Exp $"
+#ident "$Id: veriuser.h,v 1.19 2003/02/16 02:23:22 steve Exp $"
 #endif
 
 /*
@@ -130,7 +130,7 @@ typedef struct t_tfcell
  * void (*vlog_startup_routines[])() = { &veriusertfs_register };
  */
 extern s_tfcell veriusertfs[];
-extern void veriusertfs_register();
+extern void veriusertfs_register_table(p_tfcell vtable);
 
 #define usertask 1
 #define userfunction 2
@@ -258,6 +258,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.19  2003/02/16 02:23:22  steve
+ *  Change the IV veriusertfs_register to accept table pointers.
+ *
  * Revision 1.18  2002/12/19 21:37:04  steve
  *  Add tf_message, tf_get/setworkarea, and
  *  ty_typep functions, along with defines
