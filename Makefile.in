@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.33 2000/01/01 20:57:50 steve Exp $"
+#ident "$Id: Makefile.in,v 1.34 2000/01/09 17:43:28 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -135,7 +135,7 @@ $(mandir)/man1/verilog.1: $(srcdir)/verilog.1
 	$(INSTALL_DATA) $(srcdir)/verilog.1 $(mandir)/man1/verilog.1
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(mandir)/man1
+	$(srcdir)/mkinstalldirs $(bindir) $(libdir)/ivl $(mandir)/man1
 
 uninstall:
 	rm -f $(libdir)/ivl/ivl
