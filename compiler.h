@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.14 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: compiler.h,v 1.15 2003/02/22 04:12:49 steve Exp $"
 #endif
 
 # include  <list>
@@ -72,6 +72,9 @@ extern bool error_implicit;
 /* inherit timescales across files. */
 extern bool warn_timescale;
 
+/* Warn about legal but questionable module port bindings. */
+extern bool warn_portbinding;
+
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
@@ -95,6 +98,9 @@ extern char*ivlpp_string;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.15  2003/02/22 04:12:49  steve
+ *  Add the portbind warning.
+ *
  * Revision 1.14  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

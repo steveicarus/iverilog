@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.50 2003/01/10 19:01:04 steve Exp $"
+#ident "$Id: main.c,v 1.51 2003/02/22 04:12:49 steve Exp $"
 
 # include "config.h"
 
@@ -251,16 +251,25 @@ static void process_warning_switch(const char*name)
 	    strcpy(warning_flags, "-W");
 
       if (strcmp(name,"all") == 0) {
-	    strcat(warning_flags, "it");
+	    strcat(warning_flags, "ipt");
 
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags+2, 'i'))
+		  strcat(warning_flags, "i");
+      } else if (strcmp(name,"portbind") == 0) {
+	    if (! strchr(warning_flags+2, 'p'))
 		  strcat(warning_flags, "i");
       } else if (strcmp(name,"timescale") == 0) {
 	    if (! strchr(warning_flags+2, 't'))
 		  strcat(warning_flags, "t");
       } else if (strcmp(name,"no-implicit") == 0) {
 	    char*cp = strchr(warning_flags+2, 'i');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-portbind") == 0) {
+	    char*cp = strchr(warning_flags+2, 'p');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -688,6 +697,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.51  2003/02/22 04:12:49  steve
+ *  Add the portbind warning.
+ *
  * Revision 1.50  2003/01/10 19:01:04  steve
  *  Only use libiberty.h if available.
  *

@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/06/23 20:10:51 $" Version "$Date: 2002/06/23 20:10:51 $"
+.TH iverilog 1 "$Date: 2003/02/22 04:12:49 $" Version "$Date: 2003/02/22 04:12:49 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -199,6 +199,12 @@ This enables all supported warning categories.
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B portbind
+This enables warnings for ports of module instantiations that are not
+connected but probably should be. Dangling input ports, for example,
+will generate a warning.
 
 .TP 8
 .B timescale

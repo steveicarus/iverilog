@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.64 2002/08/18 22:06:29 steve Exp $"
+#ident "$Id: main.cc,v 1.65 2003/02/22 04:12:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,6 +90,7 @@ FILE *depend_file = NULL;
  */
 bool warn_implicit  = false;
 bool warn_timescale = false;
+bool warn_portbinding = false;
 
 bool error_implicit = false;
 
@@ -421,6 +422,9 @@ int main(int argc, char*argv[])
 	  case 'i':
 	    warn_implicit = true;
 	    break;
+	  case 'p':
+	    warn_portbinding = true;
+	    break;
 	  case 't':
 	    warn_timescale = true;
 	    break;
@@ -605,6 +609,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.65  2003/02/22 04:12:49  steve
+ *  Add the portbind warning.
+ *
  * Revision 1.64  2002/08/18 22:06:29  steve
  *  Terminate if the functors signal errors.
  *

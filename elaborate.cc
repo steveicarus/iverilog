@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.273 2003/02/08 19:49:21 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.274 2003/02/22 04:12:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -579,8 +579,36 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in.
-	    if ((*pins)[idx] == 0)
+
+	    if ((*pins)[idx] == 0) {
+
+		    // While we're here, look to see if this
+		    // unconnected (from the outside) port is an
+		    // input. If so, consider printing a port binding
+		    // warning.
+		  if (warn_portbinding) {
+			svector<PEIdent*> mport = rmod->get_port(idx);
+			if (mport.count() == 0)
+			      continue;
+
+			NetNet*tmp = des->find_signal(my_scope,
+						      mport[0]->path());
+			assert(tmp);
+
+			if (tmp->port_type() == NetNet::PINPUT) {
+			      cerr << get_line() << ": warning: "
+				   << "Instantiating module "
+				   << rmod->mod_name()
+				   << " with dangling input port "
+				   << rmod->ports[idx]->name
+				   << "." << endl;
+			}
+		  }
+
 		  continue;
+	    }
+
+
 
 	      // Inside the module, the port is zero or more signals
 	      // that were already elaborated. List all those signals
@@ -2474,6 +2502,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.274  2003/02/22 04:12:49  steve
+ *  Add the portbind warning.
+ *
  * Revision 1.273  2003/02/08 19:49:21  steve
  *  Calculate delay statement delays using elaborated
  *  expressions instead of pre-elaborated expression
