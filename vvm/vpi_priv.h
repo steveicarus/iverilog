@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.23 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.24 2000/09/08 17:08:10 steve Exp $"
 #endif
 
 /*
@@ -348,6 +348,7 @@ struct vpip_simulation {
 
 extern struct vpip_simulation vpip_simulation_obj;
 
+extern void vpip_set_vlog_info(int argc, char**argv);
 extern void vpip_init_simulation();
 extern void vpip_time_scale(int precision);
 extern void vpip_simulation_run();
@@ -385,6 +386,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.24  2000/09/08 17:08:10  steve
+ *  initialize vlog info.
+ *
  * Revision 1.23  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *

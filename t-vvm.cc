@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.171 2000/09/03 17:58:14 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.172 2000/09/08 17:08:10 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1055,7 +1055,10 @@ void target_vvm::end_design(const Design*mod)
       out << "// **** end start_code" << endl;
 
 
-      out << "main()" << endl << "{" << endl;
+      out << "main(int argc, char*argv[])" << endl << "{" << endl;
+
+      out << "      vpip_set_vlog_info(argc, argv);" << endl;
+
       string vpi_module_path = mod->get_flag("VPI_MODULE_PATH");
       if (vpi_module_path.length() > 0)
 	    out << "      vvm_set_module_path(\"" << vpi_module_path <<
@@ -3113,6 +3116,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.172  2000/09/08 17:08:10  steve
+ *  initialize vlog info.
+ *
  * Revision 1.171  2000/09/03 17:58:14  steve
  *  Properly ignore NetAssign_ objects.
  *
