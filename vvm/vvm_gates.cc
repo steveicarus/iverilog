@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -15,15 +15,9 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- *  ---
- *    You should also have recieved a copy of the Picture Elements
- *    Binary Software License offer along with the source. This offer
- *    allows you to obtain the right to redistribute the software in
- *    binary (compiled) form. If you have not received it, contact
- *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.7 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.8 2000/03/17 03:36:07 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -140,6 +134,51 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
       }
 }
 
+vvm_buf::vvm_buf(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_buf::~vvm_buf()
+{
+}
+
+void vvm_buf::init_I(unsigned, vpip_bit_t)
+{
+}
+
+void vvm_buf::take_value(unsigned, vpip_bit_t val)
+{
+      vpip_bit_t outval = val;
+      if (val == Vz) outval = Vx;
+      output(outval);
+}
+
+vvm_bufif1::vvm_bufif1(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = Vx;
+      input_[1] = Vx;
+}
+
+vvm_bufif1::~vvm_bufif1()
+{
+}
+
+void vvm_bufif1::init_I(unsigned, vpip_bit_t)
+{
+}
+
+void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if (input_[1] != V1) output(Vz);
+      else if (input_[0] == Vz) output(Vx);
+      else output(input_[0]);
+}
+
 vvm_eeq::vvm_eeq(unsigned long d)
 : vvm_1bit_out(d)
 {
@@ -175,9 +214,34 @@ vpip_bit_t vvm_eeq::compute_() const
       return outval;
 }
 
+vvm_not::vvm_not(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_not::~vvm_not()
+{
+}
+
+void vvm_not::init_I(unsigned, vpip_bit_t)
+{
+}
+
+void vvm_not::start()
+{
+}
+
+void vvm_not::take_value(unsigned, vpip_bit_t val)
+{
+      output(v_not(val));
+}
+
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.8  2000/03/17 03:36:07  steve
+ *  Remove some useless template parameters.
+ *
  * Revision 1.7  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.42 2000/03/17 03:05:13 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.43 2000/03/17 03:36:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -600,57 +600,30 @@ class vvm_ram_dq  : protected vvm_ram_callback {
 	    }
 };
 
-template <unsigned long DELAY> class vvm_buf {
+class vvm_buf  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_buf(vvm_out_event::action_t o)
-      : output_(o)
-      { }
+      explicit vvm_buf(unsigned long d);
+      ~vvm_buf();
 
-      void init_I(unsigned, vpip_bit_t) { }
+      void init_I(unsigned, vpip_bit_t);
       void start() { }
-
-      void set_I(unsigned, vpip_bit_t val)
-	    { vpip_bit_t outval = val;
-	      if (val == Vz) val = Vx;
-	      vvm_event*ev = new vvm_out_event(outval, output_);
-	      ev->schedule(DELAY);
-	    }
-
     private:
-      vvm_out_event::action_t output_;
+      void take_value(unsigned, vpip_bit_t val);
 };
 
-template <unsigned long DELAY> class vvm_bufif1 {
+class vvm_bufif1  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_bufif1(vvm_out_event::action_t o)
-      : output_(o)
-	    { input_[0] = Vx;
-	      input_[1] = Vx;
-	    }
+      explicit vvm_bufif1(unsigned long d);
+      ~vvm_bufif1();
 
-      void set(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
-		  return;
-	      input_[idx-1] = val;
-	      vvm_event*ev = new vvm_out_event(compute_(), output_);
-	      ev->schedule(DELAY);
-	    }
-
-      void start()
-	    {
-	    }
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
 
     private:
       vpip_bit_t input_[2];
-      vvm_out_event::action_t output_;
-
-      vpip_bit_t compute_() const
-	    { if (input_[1] != V1) return Vz;
-	      if (input_[0] == Vz) return Vx;
-	      return input_[0];
-	    }
+      void take_value(unsigned key, vpip_bit_t val);
 };
 
 template <unsigned WIDTH> 
@@ -685,20 +658,15 @@ class vvm_nand : public vvm_1bit_out, public vvm_nexus::recvr_t {
 class vvm_not  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_not(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_not(unsigned long d);
+      ~vvm_not();
 
-      void init_I(unsigned, vpip_bit_t) { }
-      void start() { }
-
+      void init_I(unsigned, vpip_bit_t);
+      void start();
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
-
-      void set_I(unsigned, vpip_bit_t val)
-	    { output(v_not(val)); }
-
-    private:
+      void take_value(unsigned key, vpip_bit_t val);
 };
+
 
 template <unsigned WIDTH> 
 class vvm_xnor : public vvm_1bit_out, public vvm_nexus::recvr_t {
@@ -927,6 +895,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.43  2000/03/17 03:36:07  steve
+ *  Remove some useless template parameters.
+ *
  * Revision 1.42  2000/03/17 03:05:13  steve
  *  Update vvm_mult to nexus style.
  *
