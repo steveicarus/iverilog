@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.54 2002/04/14 03:54:40 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.55 2002/04/14 19:19:21 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -514,7 +514,8 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 	/* Done with the condition expression. */
       clr_vector(cond);
 
-      rc += show_statement(ivl_stmt_cond_true(net), sscope);
+      if (ivl_stmt_cond_true(net))
+	    rc += show_statement(ivl_stmt_cond_true(net), sscope);
 
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
@@ -1104,6 +1105,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.55  2002/04/14 19:19:21  steve
+ *  Handle empty true case of conditional statements.
+ *
  * Revision 1.54  2002/04/14 03:54:40  steve
  *  Vector constants to vpi_call can have sign.
  *
