@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.36 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: emit.cc,v 1.37 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 /*
@@ -248,6 +248,21 @@ void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
 	    else_->emit_proc(o, tgt);
 }
 
+bool NetEvTrig::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_trigger(o, this);
+}
+
+bool NetEvWait::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_wait(o, this);
+}
+
+bool NetEvWait::emit_recurse(ostream&o, struct target_t*tgt) const
+{
+      return statement_->emit_proc(o, tgt);
+}
+
 void NetForever::emit_recurse(ostream&o, struct target_t*tgt) const
 {
       if (statement_)
@@ -263,6 +278,10 @@ void NetRepeat::emit_recurse(ostream&o, struct target_t*tgt) const
 void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
 {
       tgt->scope(o, this);
+
+      for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
+	    tgt->event(o, cur);
+
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->emit_scope(o, tgt);
 }
@@ -407,6 +426,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.37  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.36  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.32 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: target.cc,v 1.33 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -33,6 +33,12 @@ void target_t::start_design(ostream&os, const Design*)
 
 void target_t::scope(ostream&, const NetScope*)
 {
+}
+
+void target_t::event(ostream&, const NetEvent*ev)
+{
+      cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled event <" << ev->full_name() << ">." << endl;
 }
 
 void target_t::signal(ostream&os, const NetNet*)
@@ -231,6 +237,13 @@ void target_t::proc_repeat(ostream&os, const NetRepeat*)
 	    "Unhandled proc_repeat." << endl;
 }
 
+bool target_t::proc_trigger(ostream&os, const NetEvTrig*tr)
+{
+      cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled event trigger." << endl;
+      return false;
+}
+
 void target_t::proc_stask(ostream&os, const NetSTask*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -241,6 +254,13 @@ void target_t::proc_utask(ostream&os, const NetUTask*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_utask." << endl;
+}
+
+bool target_t::proc_wait(ostream&os, const NetEvWait*tr)
+{
+      cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled event wait." << endl;
+      return false;
 }
 
 void target_t::proc_while(ostream&os, const NetWhile*net)
@@ -326,6 +346,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.33  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.32  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *

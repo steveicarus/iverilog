@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.153 2000/04/01 22:14:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.154 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,7 @@
 # include  <typeinfo>
 # include  <strstream>
 # include  "pform.h"
+# include  "PEvent.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 
@@ -46,6 +47,13 @@ string Design::local_symbol(const string&path)
   // needs it to find the module definition.
 static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
+
+void PEvent::elaborate(Design*des, NetScope*scope) const
+{
+      NetEvent*ev = new NetEvent(name_);
+      ev->set_line(*this);
+      scope->add_event(ev);
+}
 
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
@@ -1540,6 +1548,30 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 				    NetProc*enet) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+	/* Handle as a special case the block on an event. In this
+	   case I generate a NetEvWait object to represent me.
+
+	   XXXX Do I want to move all event handling to NetEvent style
+	   event support? I think I do. */
+
+      if ((expr_.count() == 1) && (expr_[0]->expr() == 0)) {
+	    string ename = expr_[0]->name();
+	    NetEvent*ev = scope->find_event(ename);
+	    if (ev == 0) {
+		  cerr << get_line() << ": error: no such named event "
+		       << "``" << ename << "''." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    NetEvWait*pr = new NetEvWait(ev, enet);
+	    pr->set_line(*this);
+	    return pr;
+      }
+
 
 	/* Create a single NetPEvent, and a unique NetNEvent for each
 	   conjuctive event. An NetNEvent can have many pins only if
@@ -1837,10 +1869,20 @@ void PTask::elaborate_2(Design*des, const string&path) const
 
 NetProc* PTrigger::elaborate(Design*des, const string&path) const
 {
-      cerr << get_line() << ": sorry: named event trigger not supported."
-	   << endl;
-      des->errors += 1;
-      return 0;
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetEvent*ev = scope->find_event(event_);
+      if (ev == 0) {
+	    cerr << get_line() << ": error: event <" << event_ << ">"
+		 << " not found." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetEvTrig*trig = new NetEvTrig(ev);
+      trig->set_line(*this);
+      return trig;
 }
 
 /*
@@ -1856,11 +1898,22 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
       return loop;
 }
 
+/*
+ * When a module is instantiated, it creates the scope then uses this
+ * method to elaborate the contents of the module.
+ */
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       const string path = scope->name();
       bool result_flag = true;
 
+	// Scan through the named events and elaborate them.
+      for (map<string,PEvent*>::const_iterator et = events.begin()
+		 ; et != events.end() ;  et ++ ) {
+
+	    (*et).second->elaborate(des, scope);
+
+      }
 
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
@@ -2018,6 +2071,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.154  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.153  2000/04/01 22:14:19  steve
  *  detect unsupported block on named events.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.117 2000/04/02 04:26:06 steve Exp $"
+#ident "$Id: netlist.h,v 1.118 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 /*
@@ -1244,6 +1244,84 @@ class NetCondit  : public NetProc {
 };
 
 /*
+ * A NetEvent is an object that represents an event object, that is
+ * objects declared like so in Verilog:
+ *
+ *        event foo;
+ *
+ * Once an object of this type exists, behavioral code can wait on the
+ * event or trigger the event. Event waits refer to this object, as do
+ * the event trigger statements.
+ *
+ * The NetEvWait class represents a thread wait for an event. When
+ * this statement is executed, it starts waiting on the
+ * event. Conceptually, it puts itself on the event list for the
+ * referenced event. When the event is triggered, the wit ends its
+ * block and starts the associated statement.
+ *
+ * The NetEvTrig class represents trigger statements. Executing this
+ * statement causes the referenced event to be triggered, which it
+ * turn awakens the waiting threads.
+ */
+class NetEvent : public LineInfo {
+
+      friend class NetScope;
+
+    public:
+      explicit NetEvent (const string&n);
+      ~NetEvent();
+
+      string name() const;
+      string full_name() const;
+
+      NetScope* scope();
+      const NetScope* scope() const;
+
+    private:
+      string name_;
+
+	// The NetScope class uses these to list the events.
+      NetScope*scope_;
+      NetEvent*snext_;
+
+    private: // not implemented
+      NetEvent(const NetEvent&);
+      NetEvent& operator= (const NetEvent&);
+};
+
+class NetEvTrig  : public NetProc {
+
+    public:
+      explicit NetEvTrig(NetEvent*tgt);
+      ~NetEvTrig();
+
+      const NetEvent*event() const;
+
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetEvent*event_;
+};
+
+class NetEvWait  : public NetProc {
+
+    public:
+      explicit NetEvWait(NetEvent*tgt, NetProc*st);
+      ~NetEvWait();
+
+      const NetEvent*event() const;
+
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      bool emit_recurse(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetEvent*event_;
+      NetProc*statement_;
+};
+
+/*
  * A forever statement is executed over and over again forever. Or
  * until its block is disabled.
  */
@@ -1365,7 +1443,10 @@ class NetNEvent  : public NetNode {
     public:
       enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
 
+	// Use this constructor to create NEvent objects that receive
+	// their status from the structural netlist.
       NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe);
+
       ~NetNEvent();
 
       Type type() const;
@@ -2081,6 +2162,11 @@ class NetScope {
       NetExpr* set_localparam(const string&name, NetExpr*val);
       const NetExpr*get_parameter(const string&name) const;
 
+	/* These methods set or access events that live in this
+	   scope. */
+
+      void add_event(NetEvent*);
+      NetEvent*find_event(const string&name);
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
@@ -2111,6 +2197,8 @@ class NetScope {
 
       map<string,NetExpr*>parameters_;
       map<string,NetExpr*>localparams_;
+
+      NetEvent*events_;
 
       NetScope*up_;
       NetScope*sib_;
@@ -2280,6 +2368,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.118  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.117  2000/04/02 04:26:06  steve
  *  Remove the useless sref template.
  *

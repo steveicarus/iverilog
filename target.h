@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.31 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: target.h,v 1.32 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,6 +58,9 @@ struct target_t {
 	/* This is called once for each scope in the design, before
 	   anything else is called. */
       virtual void scope(ostream&os, const NetScope*);
+
+	/* Output an event object. Called for each named event in the scope. */
+      virtual void event(ostream&os, const NetEvent*);
 
 	/* Output a signal (called for each signal) */
       virtual void signal(ostream&os, const NetNet*);
@@ -104,8 +107,10 @@ struct target_t {
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
+      virtual bool proc_trigger(ostream&os, const NetEvTrig*);
       virtual void proc_stask(ostream&os, const NetSTask*);
       virtual void proc_utask(ostream&os, const NetUTask*);
+      virtual bool proc_wait(ostream&os,  const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
 
       virtual void proc_event(ostream&os, const NetPEvent*);
@@ -149,6 +154,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.32  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.31  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *

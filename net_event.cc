@@ -1,5 +1,3 @@
-#ifndef __PEvent_H
-#define __PEvent_H
 /*
  * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
  *
@@ -19,44 +17,66 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PEvent.h,v 1.2 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: net_event.cc,v 1.1 2000/04/04 03:20:15 steve Exp $"
 #endif
 
-# include  "LineInfo.h"
-# include  <string>
-class ostream;
-class Design;
-class NetScope;
+# include  "netlist.h"
+
+NetEvent::NetEvent(const string&n)
+: name_(n)
+{
+      scope_ = 0;
+      snext_ = 0;
+}
+
+NetEvent::~NetEvent()
+{
+}
+
+string NetEvent::name() const
+{
+      return name_;
+}
+
+string NetEvent::full_name() const
+{
+      assert(scope_);
+      return scope_->name() + "." + name_;
+}
+
+NetEvTrig::NetEvTrig(NetEvent*ev)
+: event_(ev)
+{
+}
+
+NetEvTrig::~NetEvTrig()
+{
+}
+
+const NetEvent* NetEvTrig::event() const
+{
+      return event_;
+}
+
+NetEvWait::NetEvWait(NetEvent*ev, NetProc*pr)
+: event_(ev), statement_(pr)
+{
+}
+
+NetEvWait::~NetEvWait()
+{
+      delete statement_;
+}
+
+const NetEvent* NetEvWait::event() const
+{
+      return event_;
+}
 
 /*
- * The PEvent class represents event objects. These are things that
- * are declared in Verilog as ``event foo;''
- */
-class PEvent : public LineInfo {
-
-    public:
-      explicit PEvent(const string&name);
-      ~PEvent();
-
-      string name() const;
-
-      void elaborate(Design*des, NetScope*scope) const;
-
-    private:
-      string name_;
-
-    private: // not implemented
-      PEvent(const PEvent&);
-      PEvent& operator= (const PEvent&);
-};
-
-/*
- * $Log: PEvent.h,v $
- * Revision 1.2  2000/04/04 03:20:15  steve
+ * $Log: net_event.cc,v $
+ * Revision 1.1  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *
- * Revision 1.1  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
  */
-#endif
+

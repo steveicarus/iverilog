@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.129 2000/04/02 04:26:07 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.130 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -57,6 +57,7 @@ class target_vvm : public target_t {
 
       virtual void start_design(ostream&os, const Design*);
       virtual void scope(ostream&os, const NetScope*);
+      virtual void event(ostream&os, const NetEvent*);
       virtual void signal(ostream&os, const NetNet*);
       virtual void memory(ostream&os, const NetMemory*);
       virtual void task_def(ostream&os, const NetTaskDef*);
@@ -93,7 +94,9 @@ class target_vvm : public target_t {
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
+      virtual bool proc_trigger(ostream&os, const NetEvTrig*);
       virtual void proc_utask(ostream&os, const NetUTask*);
+      virtual bool proc_wait(ostream&os, const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
@@ -779,6 +782,13 @@ void target_vvm::scope(ostream&os, const NetScope*scope)
 
       init_code << "      vpip_make_scope(&" << hname << ", " <<
 	    type_code << ", \"" << scope->name() << "\");" << endl;
+}
+
+void target_vvm::event(ostream&os, const NetEvent*event)
+{
+      string mname = mangle(event->full_name());
+      os << "static vvm_sync " << mname << "; // "
+	 << event->get_line() << ": event " << event->full_name() << endl;
 }
 
 void target_vvm::end_design(ostream&os, const Design*mod)
@@ -2350,6 +2360,19 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
       defn << "      if (vpip_finished()) return false;" << endl;
 }
 
+bool target_vvm::proc_trigger(ostream&os, const NetEvTrig*trig)
+{
+      const NetEvent*ev = trig->event();
+      assert(ev);
+
+      string ename = mangle(ev->full_name());
+
+      defn << "      " << ename << ".wakeup(); // "
+	   << trig->get_line() << ": -> " << ev->full_name() << endl;
+
+      return true;
+}
+
 void target_vvm::proc_utask(ostream&os, const NetUTask*net)
 {
       unsigned out_step = ++thread_step_;
@@ -2366,6 +2389,30 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
 	    "_() {" << endl;
       defn << "      delete callee_;" << endl;
       defn << "      callee_ = 0;" << endl;
+}
+
+bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
+{
+      unsigned out_step = ++thread_step_;
+
+      const NetEvent*ev = wait->event();
+      assert(ev);
+
+      string ename = mangle(ev->full_name());
+
+      defn << "      step_ = &" << thread_class_ << "::step_"
+	   << out_step << "_;" << endl;
+      defn << "      " << ename << ".wait(this); // "
+	   << wait->get_line() << ": @" << ev->full_name() << "..." << endl;
+
+      defn << "      return false;" << endl;
+      defn << "}" << endl;
+
+      os << "      bool step_" << out_step << "_();" << endl;
+      defn << "bool " << thread_class_ << "::step_" << out_step
+	   << "_() {" << endl;
+
+      return wait->emit_recurse(os, this);
 }
 
 /*
@@ -2531,6 +2578,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.130  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.129  2000/04/02 04:26:07  steve
  *  Remove the useless sref template.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.72 2000/04/02 04:26:06 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.73 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 /*
@@ -527,6 +527,22 @@ void NetCondit::dump(ostream&o, unsigned ind) const
       }
 }
 
+void NetEvTrig::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "-> " << event_->name() << "; "
+	<< "// " << get_line() << endl;
+}
+
+void NetEvWait::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "@" << event_->name()
+	<< "  // " << get_line() << endl;
+      if (statement_)
+	    statement_->dump(o, ind+2);
+      else
+	    o << setw(ind+2) << "" << "/* noop */ ;" << endl;
+}
+
 void NetForever::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "forever" << endl;
@@ -646,6 +662,12 @@ void NetScope::dump(ostream&o) const
 		  o << "    defparam " << (*pp).first << " = " <<
 			*(*pp).second << ";" << endl;
 	    }
+      }
+
+	/* Dump the events in this scope. */
+      for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
+	    o << "    event " << cur->name() << "; "
+	      << "// " << cur->get_line() << endl;
       }
 
 	/* Dump any sub-scopes. */
@@ -906,6 +928,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.73  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.72  2000/04/02 04:26:06  steve
  *  Remove the useless sref template.
  *

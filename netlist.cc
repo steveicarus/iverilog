@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.111 2000/04/02 04:26:06 steve Exp $"
+#ident "$Id: netlist.cc,v 1.112 2000/04/04 03:20:15 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1760,7 +1760,7 @@ NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
 {
       event_ = pe;
       next_ = pe->src_;
-      pe->src_ = next_;
+      pe->src_ = this;
 
       for (unsigned idx = 0 ;  idx < wid ; idx += 1) {
 	    pin(idx).set_name("P", idx);
@@ -2359,116 +2359,6 @@ const NetExpr* NetRepeat::expr() const
       return expr_;
 }
 
-/*
- * The NetScope class keeps a scope tree organized. Each node of the
- * scope tree points to its parent, its right sibling and its leftmost
- * child. The root node has no parent or siblings. The node stores the
- * name of the scope. The complete hierarchical name of the scope is
- * formed by appending the path of scopes from the root to the scope
- * in question.
- */
-NetScope::NetScope(const string&n)
-: type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
-{
-}
-
-NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
-: type_(t), name_(n), up_(up), sib_(0), sub_(0)
-{
-      sib_ = up_->sub_;
-      up_->sub_ = this;
-}
-
-NetScope::~NetScope()
-{
-      assert(sib_ == 0);
-      assert(sub_ == 0);
-}
-
-NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
-{
-      NetExpr*&ref = parameters_[key];
-      NetExpr* res = ref;
-      ref = expr;
-      return res;
-}
-
-NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
-{
-      NetExpr*&ref = localparams_[key];
-      NetExpr* res = ref;
-      ref = expr;
-      return res;
-}
-
-const NetExpr* NetScope::get_parameter(const string&key) const
-{
-      map<string,NetExpr*>::const_iterator idx;
-
-      idx = parameters_.find(key);
-      if (idx != parameters_.end())
-	    return (*idx).second;
-
-      idx = localparams_.find(key);
-      if (idx != localparams_.end())
-	    return (*idx).second;
-
-      return 0;
-}
-
-NetScope::TYPE NetScope::type() const
-{
-      return type_;
-}
-
-string NetScope::name() const
-{
-      if (up_)
-	    return up_->name() + "." + name_;
-      else
-	    return name_;
-}
-
-/*
- * This method locates a child scope by name. The name is the simple
- * name of the child, no heirarchy is searched.
- */
-NetScope* NetScope::child(const string&name)
-{
-      if (sub_ == 0) return 0;
-
-      NetScope*cur = sub_;
-      while (cur->name_ != name) {
-	    if (cur->sib_ == 0) return 0;
-	    cur = cur->sib_;
-      }
-
-      return cur;
-}
-
-const NetScope* NetScope::child(const string&name) const
-{
-      if (sub_ == 0) return 0;
-
-      NetScope*cur = sub_;
-      while (cur->name_ != name) {
-	    if (cur->sib_ == 0) return 0;
-	    cur = cur->sib_;
-      }
-
-      return cur;
-}
-
-NetScope* NetScope::parent()
-{
-      return up_;
-}
-
-const NetScope* NetScope::parent() const
-{
-      return up_;
-}
-
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
 : name_(n), proc_(0), ports_(po)
 {
@@ -2640,6 +2530,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.112  2000/04/04 03:20:15  steve
+ *  Simulate named event trigger and waits.
+ *
  * Revision 1.111  2000/04/02 04:26:06  steve
  *  Remove the useless sref template.
  *
