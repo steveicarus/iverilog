@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.198 2000/12/01 23:52:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.199 2000/12/06 06:31:09 steve Exp $"
 #endif
 
 /*
@@ -1487,7 +1487,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*lval = lval_->elaborate_anet(des, scope);
       if (lval == 0)
 	    return 0;
 
@@ -2333,6 +2333,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.199  2000/12/06 06:31:09  steve
+ *  Check lvalue of procedural continuous assign (PR#29)
+ *
  * Revision 1.198  2000/12/01 23:52:49  steve
  *  Handle null statements inside a wait. (PR#60)
  *

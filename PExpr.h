@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.44 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: PExpr.h,v 1.45 2000/12/06 06:31:09 steve Exp $"
 #endif
 
 # include  <string>
@@ -71,6 +71,10 @@ class PExpr : public LineInfo {
 				    Link::strength_t drive1 =Link::STRONG)
 	    const;
 
+	// This method elaborates the expression as NetNet objects. It
+	// only allows regs suitable for procedural continuous assignments.
+      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
+
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
@@ -109,6 +113,11 @@ class PEConcat : public PExpr {
       ~PEConcat();
 
       virtual void dump(ostream&) const;
+
+	// Concatenated Regs can be on the left of procedural
+	// continuous assignments.
+      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
+
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned width,
@@ -161,6 +170,9 @@ class PEIdent : public PExpr {
       ~PEIdent();
 
       virtual void dump(ostream&) const;
+
+	// Regs can be on the left of procedural continuous assignments
+      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
@@ -397,6 +409,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.45  2000/12/06 06:31:09  steve
+ *  Check lvalue of procedural continuous assign (PR#29)
+ *
  * Revision 1.44  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *

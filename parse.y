@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.110 2000/12/05 22:32:05 steve Exp $"
+#ident "$Id: parse.y,v 1.111 2000/12/06 06:31:09 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1797,7 +1797,7 @@ statement
 		  $$ = tmp;
 		}
 
-	| K_deassign lavalue';'
+	| K_deassign lavalue ';'
 		{ PDeassign*tmp = new PDeassign($2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
