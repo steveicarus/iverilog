@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.315 2005/01/22 18:16:00 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.316 2005/01/30 01:42:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,8 +94,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << lval->get_line() << ": debug: PGassign elaborated l-value "
-		 << "width=" << lval->vector_width() << endl;
+	    cerr << lval->get_line() << ": debug: PGassign: elaborated l-value"
+		 << " width=" << lval->vector_width() << endl;
       }
 
 	/* Handle the special case that the rval is simply an
@@ -216,6 +216,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << *pin(1) << endl;
 	    des->errors += 1;
 	    return;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: PGAssign: elaborated r-value"
+		 << " width="<<rval->vector_width() << endl;
       }
 
       assert(lval && rval);
@@ -2880,6 +2885,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.316  2005/01/30 01:42:05  steve
+ *  Debug messages for PGAssign elaboration.
+ *
  * Revision 1.315  2005/01/22 18:16:00  steve
  *  Remove obsolete NetSubnet class.
  *
