@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.7 2000/04/14 23:31:53 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.8 2000/04/15 01:44:59 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -31,6 +31,41 @@
  * time the go method is called. The events and delays that cause a
  * thread to block arrange for the go method to be called in the
  * future.
+ *
+ * THREAD STEPS
+ * The basic blocks of an executing thread are implemented as C/C++
+ * functions that take a vvm_thread pointer and return a boolean. The
+ * thread keeps a pointer to the function that is the current step. It
+ * is the responsibility of each step to write into the step_ member
+ * the pointer to the next step, and that is how things like branching
+ * and looping work.
+ *
+ * A thread executes by calling the current step function. When the
+ * step function returns, it uses the bolean return code to tell the
+ * scheduler whether the next step should be executed. Thus, a thread
+ * can give other threads a chance to execute by returning false.
+ *
+ * CALLING CONVENTION
+ * There are a few members in the vvm_thread for supporting calling
+ * other threads. This is like a function call in other languages, as
+ * the calling thread blocks until the called thread(s) terminate. It
+ * is also like functions in that thread calls nest.
+ *
+ * A thread is called by creating a new vvm_thread and saving a
+ * pointer to the new thread in the callee_ member of the calling
+ * thread. The called thread gets its back_ pointer set to that of the
+ * calling thread. The new thread is then activated with a call to its
+ * thread_yield() method, and the caller thread pauses by returning
+ * from its step function with the value "false".
+ *
+ * When the called thread is ready to terminate, it uses its back_
+ * pointer to find the calling thread, and activates it with the
+ * thread_yield() method. Then, the called thread finishes by
+ * returning false from its step method.
+ *
+ * When the caller resumes executing, it knows that the called thread
+ * is done, so it uses the callee_ pointer to delete the now finished
+ * thread, and the process is finished.
  */
 
 class vvm_sync;
@@ -59,6 +94,9 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.8  2000/04/15 01:44:59  steve
+ *  Document the calling convention.
+ *
  * Revision 1.7  2000/04/14 23:31:53  steve
  *  No more class derivation from vvm_thread.
  *
