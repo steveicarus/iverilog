@@ -8,6 +8,10 @@ AC_PROG_RANLIB
 AC_CYGWIN
 AC_EXEEXT
 
+# vvp32 is by default disabled
+#enable_vvp32=no
+AC_SUBST(enable_vvp32)
+
 AC_CHECK_HEADERS(malloc.h)
 
 AC_CHECK_SIZEOF(unsigned long long)
