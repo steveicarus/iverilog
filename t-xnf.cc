@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.39 2000/11/29 23:15:54 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.40 2001/02/10 03:22:49 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -771,19 +771,31 @@ void target_xnf::lpm_ram_dq(const NetRamDq*ram)
 
 bool target_xnf::net_const(const NetConst*c)
 {
+      unsigned x_bits = 0;
       for (unsigned idx = 0 ;  idx < c->pin_count() ;  idx += 1) {
 	    verinum::V v=c->value(idx);
-	    assert(v==verinum::V0 || v==verinum::V1);
 	    const Link& lnk = c->pin(idx);
-	      // Code parallels draw_pin above, some smart c++ guru should
-	      // find a way to make a method out of this.
-	    unsigned cpin;
-	    const NetObj*cur;
 
-	    out_ << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
+	    switch (v) {
+		case verinum::V0:
+		  out_ << "    PWR, 0, " << choose_sig_name(&lnk) << endl;
+		  break;
+		case verinum::V1:
+		  out_ << "    PWR, 1, " << choose_sig_name(&lnk) << endl;
+		  break;
+		case verinum::Vz:
+		  break;
+		default:
+		  x_bits += 1;
+		  if (x_bits == 1)
+			cerr << "xnf: error: Unknown (x) const bit value"
+			     << " assigned to " << choose_sig_name(&lnk)
+			     << endl;
+		  break;
+	    }
       }
 
-      return true;
+      return x_bits == 0;
 }
 
 /*
@@ -910,6 +922,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.40  2001/02/10 03:22:49  steve
+ *  Report errors when XNF code has constant X values. (PR#128)
+ *
  * Revision 1.39  2000/11/29 23:15:54  steve
  *  More informative BUFZ warning.
  *
