@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.9 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.10 1999/09/25 02:57:29 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -58,6 +58,15 @@ NetNet* PExpr::elaborate_lnet(Design*des, const string&path) const
 bool PEBinary::is_constant(Module*mod) const
 {
       return left_->is_constant(mod) && right_->is_constant(mod);
+}
+
+PECallFunction::PECallFunction(const string &n, const svector<PExpr *> &parms) 
+: name_(n), parms_(parms)
+{
+}
+
+PECallFunction::~PECallFunction()
+{
 }
 
 bool PEConcat::is_constant(Module *mod) const
@@ -119,6 +128,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.10  1999/09/25 02:57:29  steve
+ *  Parse system function calls.
+ *
  * Revision 1.9  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.71 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.72 1999/09/25 02:57:30 steve Exp $"
 #endif
 
 /*
@@ -1349,6 +1349,39 @@ class NetEParam  : public NetExpr {
 };
 
 /*
+ * This node represents a system function call in an expression. The
+ * object contains the name of the system function, which the backend
+ * uses to to VPI matching.
+ */
+class NetESFunc  : public NetExpr {
+
+    public:
+      NetESFunc(const string&name, NetESignal*, svector<NetExpr*>&);
+      ~NetESFunc();
+
+      const string& name() const;
+
+      const NetESignal*result() const;
+      unsigned parm_count() const;
+      const NetExpr* parm(unsigned idx) const;
+
+      virtual bool set_width(unsigned);
+      virtual void dump(ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetESFunc*dup_expr() const;
+
+    private:
+      string name_;
+      NetESignal*result_;
+      svector<NetExpr*> parms_;
+
+    private: // not implemented
+      NetESFunc(const NetESFunc&);
+      NetESFunc& operator= (const NetESFunc&);
+};
+
+/*
  * This class represents the ternary (?:) operator. It has 3
  * expressions, one of which is a condition used to select which of
  * the other two expressions is the result.
@@ -1657,6 +1690,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.72  1999/09/25 02:57:30  steve
+ *  Parse system function calls.
+ *
  * Revision 1.71  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *

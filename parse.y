@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.66 1999/09/22 04:30:04 steve Exp $"
+#ident "$Id: parse.y,v 1.67 1999/09/25 02:57:30 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -639,8 +639,10 @@ expr_primary
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list ')'
-		{ yyerror(@2, "Sorry, function calls not supported.");
-		  $$ = 0;
+                { PECallFunction*tmp = new PECallFunction($1, *$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| '(' expression ')'
 		{ $$ = $2; }

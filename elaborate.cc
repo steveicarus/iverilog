@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.99 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.100 1999/09/25 02:57:30 steve Exp $"
 #endif
 
 /*
@@ -792,43 +792,6 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
       return osig;
 }
 
-NetEUFunc* PECallFunction::elaborate_expr(Design*des, const string&path) const
-{
-      string myname = path+"."+name_;
-      NetFuncDef*def = des->find_function(path, name_);
-      if (def == 0) {
-	    cerr << get_line() << ": No function " << name_ <<
-		  " in this context (" << path << ")." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-      assert(def);
-      svector<NetExpr*> parms (parms_.count());
-
-      for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
-	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, myname);
-	    parms[idx] = tmp;
-      }
-
-	/* Look for the return value signal for the called function in
-	   the context of the function definition, not my context. */
-      NetNet*res = des->find_signal(def->name(), name_);
-      if (res == 0) {
-	    cerr << get_line() << ": INTERNAL ERROR: Unable to locate "
-		  "function return value for " << name_ << " in " <<
-		  def->name() << "." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      assert(res);
-      NetESignal*eres = new NetESignal(res);
-      assert(eres);
-      des->add_node(eres);
-      NetEUFunc*func = new NetEUFunc(def, eres, parms);
-      return func;
-}
-
 /*
  * The concatenation operator, as a net, is a wide signal that is
  * connected to all the pins of the elaborated expression nets.
@@ -1456,11 +1419,9 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
 				    Design*des, const string&path) const
 {
       NetExpr*rv = rval()->elaborate_expr(des, path);
-      if (rv == 0) {
-	    cerr << get_line() << ": " << "failed to elaborate expression."
-		 << endl;
+      if (rv == 0)
 	    return 0;
-      }
+
       assert(rv);
 
       rv->set_width(mem->width());
@@ -1613,11 +1574,9 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	/* Elaborate the r-value expression. */
       assert(rval());
       NetExpr*rv = rval()->elaborate_expr(des, path);
-      if (rv == 0) {
-	    cerr << get_line() << ": failed to elaborate expression."
-		 << endl;
+      if (rv == 0)
 	    return 0;
-      }
+
       assert(rv);
 
 	/* Try to evaluate the expression, at least as far as possible. */
@@ -1757,11 +1716,9 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
 {
 	/* Elaborate the r-value expression, ... */
       NetExpr*rv = rval()->elaborate_expr(des, path);
-      if (rv == 0) {
-	    cerr << get_line() << ": " << "failed to elaborate expression."
-		 << endl;
+      if (rv == 0)
 	    return 0;
-      }
+
       assert(rv);
       rv->set_width(mem->width());
 
@@ -1808,11 +1765,9 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	/* Elaborate the r-value expression. This generates a
 	   procedural expression that I attach to the assignment. */
       NetExpr*rv = rval()->elaborate_expr(des, path);
-      if (rv == 0) {
-	    cerr << get_line() << ": failed to elaborate expression."
-		 << endl;
+      if (rv == 0)
 	    return 0;
-      }
+
       assert(rv);
 
       NetAssignNB*cur;
@@ -2192,7 +2147,6 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path);
 	    if (expr == 0) {
-		  cerr << get_line() << ": Failed to elaborate expression: ";
 		  expr_[0]->dump(cerr);
 		  cerr << endl;
 		  des->errors += 1;
@@ -2637,6 +2591,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.100  1999/09/25 02:57:30  steve
+ *  Parse system function calls.
+ *
  * Revision 1.99  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *

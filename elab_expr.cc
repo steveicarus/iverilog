@@ -17,12 +17,60 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.2 1999/09/21 00:13:40 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.3 1999/09/25 02:57:30 steve Exp $"
 #endif
 
 
 # include  "pform.h"
 # include  "netlist.h"
+
+NetESFunc* PECallFunction::elaborate_sfunc_(Design*des, const string&path) const
+{
+      cerr << get_line() << ": sorry: system functions not supported."
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr(Design*des, const string&path) const
+{
+      if (name_[0] == '$')
+	    return elaborate_sfunc_(des, path);
+
+      string myname = path+"."+name_;
+      NetFuncDef*def = des->find_function(path, name_);
+      if (def == 0) {
+	    cerr << get_line() << ": error: No function " << name_ <<
+		  " in this context (" << path << ")." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      assert(def);
+      svector<NetExpr*> parms (parms_.count());
+
+      for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
+	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, myname);
+	    parms[idx] = tmp;
+      }
+
+	/* Look for the return value signal for the called function in
+	   the context of the function definition, not my context. */
+      NetNet*res = des->find_signal(def->name(), name_);
+      if (res == 0) {
+	    cerr << get_line() << ": internal error: Unable to locate "
+		  "function return value for " << name_ << " in " <<
+		  def->name() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(res);
+      NetESignal*eres = new NetESignal(res);
+      assert(eres);
+      des->add_node(eres);
+      NetEUFunc*func = new NetEUFunc(def, eres, parms);
+      return func;
+}
 
 
 NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
@@ -58,8 +106,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  verinum*lsn = lsb_->eval_const(des, path);
 		  verinum*msn = msb_->eval_const(des, path);
 		  if ((lsn == 0) || (msn == 0)) {
-			cerr << get_line() << ": Part select expresions "
-			      " must be constant expressions." << endl;
+			cerr << get_line() << ": error: "
+			      "Part select expresions must be "
+			      "constant expressions." << endl;
 			des->errors += 1;
 			return 0;
 		  }
@@ -130,7 +179,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    assert(idx_ == 0);
 	    NetExpr*i = msb_->elaborate_expr(des, path);
 	    if (i == 0) {
-		  cerr << get_line() << ": Unable to exaborate "
+		  cerr << get_line() << ": error: Unable to exaborate "
 			"index expression `" << *msb_ << "'" << endl;
 		  des->errors += 1;
 		  return 0;
@@ -142,7 +191,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
       }
 
 	// I cannot interpret this identifier. Error message.
-      cerr << get_line() << ": Unable to bind wire/reg/memory "
+      cerr << get_line() << ": error: Unable to bind wire/reg/memory "
 	    "`" << path << "." << text_ << "'" << endl;
       des->errors += 1;
       return 0;
@@ -150,6 +199,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.3  1999/09/25 02:57:30  steve
+ *  Parse system function calls.
+ *
  * Revision 1.2  1999/09/21 00:13:40  steve
  *  Support parameters that reference other paramters.
  *

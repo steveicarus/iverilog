@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.19 1999/09/15 04:17:52 steve Exp $"
+#ident "$Id: PExpr.h,v 1.20 1999/09/25 02:57:29 steve Exp $"
 #endif
 
 # include  <string>
@@ -263,23 +263,29 @@ class PETernary : public PExpr {
       PExpr*fal_;
 };
 
-
+/*
+ * This class represents a parsed call to a function.
+ */
 class PECallFunction : public PExpr {
- public:
-      explicit PECallFunction(const string &n, const svector<PExpr *> &parms) 
-	    : name_(n), parms_(parms) {}
-      ~PECallFunction() {}
+    public:
+      explicit PECallFunction(const string &n, const svector<PExpr *> &parms);
+      ~PECallFunction();
 
       virtual void dump(ostream &) const;
-      virtual NetEUFunc*elaborate_expr(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
- private:
+    private:
       string name_;
       svector<PExpr *> parms_;
+
+      NetESFunc* elaborate_sfunc_(Design*des, const string&path) const;
 };
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.20  1999/09/25 02:57:29  steve
+ *  Parse system function calls.
+ *
  * Revision 1.19  1999/09/15 04:17:52  steve
  *  separate assign lval elaboration for error checking.
  *
