@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.19 2001/04/22 23:09:45 steve Exp $"
+#ident "$Id: PGate.h,v 1.20 2001/10/19 01:55:32 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -196,6 +196,8 @@ class PGModule  : public PGate {
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
+      const string get_type();
+
     private:
       string type_;
       svector<PExpr*>*overrides_;
@@ -218,6 +220,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.20  2001/10/19 01:55:32  steve
+ *  Method to get the type_ member
+ *
  * Revision 1.19  2001/04/22 23:09:45  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

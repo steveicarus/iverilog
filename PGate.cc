@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.10 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: PGate.cc,v 1.11 2001/10/19 01:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -178,8 +178,16 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
+const string PGModule::get_type()
+{
+      return type_;
+}
+
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.11  2001/10/19 01:55:32  steve
+ *  Method to get the type_ member
+ *
  * Revision 1.10  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
