@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.10 2003/02/01 05:50:04 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.11 2003/02/02 02:14:14 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -143,10 +143,22 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
       unsigned long x, num_bits;
       vvp_time64_t simtime = schedule_simtime();
       int units = rfp->scope->time_units;
+
+	/* Calculate the divisor needed to scale the simulation time
+	   (in time_precision units) to time units of the scope. */
+      vvp_time64_t divisor = 1;
       while (units > vpi_time_precision) {
-	    simtime /= 10;
+	    divisor *= 10;
 	    units -= 1;
       }
+
+	/* Scale the simtime, and use the modulus to round up if
+	   appropriate. */
+      vvp_time64_t simtime_fraction = simtime % divisor;
+      simtime /= divisor;
+
+      if ((divisor >= 10) && (simtime_fraction >= (divisor/2)))
+	    simtime += 1;
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -243,6 +255,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.11  2003/02/02 02:14:14  steve
+ *  Proper rounding of scaled integer time.
+ *
  * Revision 1.10  2003/02/01 05:50:04  steve
  *  Make $time and $realtime available to $display uniquely.
  *
