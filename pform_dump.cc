@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.65 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.66 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 /*
@@ -586,11 +586,12 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 void PFunction::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "output " << out_->name() << ";" << endl;
-      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
-	    out << setw(ind) << "";
-	    out << "input ";
-	    out << (*ports_)[idx]->name() << ";" << endl;
-      }
+      if (ports_)
+	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+		  out << setw(ind) << "";
+		  out << "input ";
+		  out << (*ports_)[idx]->name() << ";" << endl;
+	    }
 
       if (statement_)
 	    statement_->dump(out, ind);
@@ -810,6 +811,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.66  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.65  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

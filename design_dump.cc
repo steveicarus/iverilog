@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.108 2000/12/16 01:45:47 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.109 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 /*
@@ -947,11 +947,12 @@ void NetETernary::dump(ostream&o) const
 void NetEUFunc::dump(ostream&o) const
 {
       o << name() << "(";
-      assert(parms_.count() > 0);
-      parms_[0]->dump(o);
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
-	    o << ", ";
-	    parms_[idx]->dump(o);
+      if (parms_.count() > 0) {
+	    parms_[0]->dump(o);
+	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+		  o << ", ";
+		  parms_[idx]->dump(o);
+	    }
       }
       o << ")";
 }
@@ -998,6 +999,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.109  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.108  2000/12/16 01:45:47  steve
  *  Detect recursive instantiations (PR#2)
  *

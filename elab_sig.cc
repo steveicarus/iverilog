@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.9 2001/01/07 07:00:31 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.10 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -182,34 +182,36 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    return;
       }
 
-      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+      if (ports_)
+	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 
-	      /* Parse the port name into the task name and the reg
-		 name. We know by design that the port name is given
-		 as two components: <func>.<port>. */
+		    /* Parse the port name into the task name and the reg
+		       name. We know by design that the port name is given
+		       as two components: <func>.<port>. */
 
-	    string pname = (*ports_)[idx]->name();
-	    string ppath = parse_first_name(pname);
+		  string pname = (*ports_)[idx]->name();
+		  string ppath = parse_first_name(pname);
 
-	    if (ppath != scope->basename()) {
-		  cerr << get_line() << ": internal error: function "
-		       << "port " << (*ports_)[idx]->name()
-		       << " has wrong name for function "
-		       << scope->name() << "." << endl;
-		  des->errors += 1;
+		  if (ppath != scope->basename()) {
+			cerr << get_line() << ": internal error: function "
+			     << "port " << (*ports_)[idx]->name()
+			     << " has wrong name for function "
+			     << scope->name() << "." << endl;
+			des->errors += 1;
+		  }
+
+		  NetNet*tmp = scope->find_signal(pname);
+		  if (tmp == 0) {
+			cerr << get_line() << ": internal error: function "
+			     << scope->name() << " is missing port "
+			     << pname << "." << endl;
+			scope->dump(cerr);
+			des->errors += 1;
+		  }
+
+		  ports[idx+1] = tmp;
 	    }
 
-	    NetNet*tmp = scope->find_signal(pname);
-	    if (tmp == 0) {
-		  cerr << get_line() << ": internal error: function "
-		       << scope->name() << " is missing port "
-		       << pname << "." << endl;
-		  scope->dump(cerr);
-		  des->errors += 1;
-	    }
-
-	    ports[idx+1] = tmp;
-      }
 
       NetFuncDef*def = new NetFuncDef(scope, ports);
       scope->set_func_def(def);
@@ -402,6 +404,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.10  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.9  2001/01/07 07:00:31  steve
  *  Detect port direction attached to non-ports.
  *

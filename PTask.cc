@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.cc,v 1.3 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PTask.cc,v 1.4 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 # include  "PTask.h"
 
-PTask::PTask(svector<PWire*>*p, Statement*s)
-: ports_(p), statement_(s)
+PTask::PTask()
+: ports_(0), statement_(0)
 {
 }
 
@@ -31,8 +31,25 @@ PTask::~PTask()
 {
 }
 
+void PTask::set_ports(svector<PWire*>*p)
+{
+      assert(ports_ == 0);
+      ports_ = p;
+}
+
+void PTask::set_statement(Statement*s)
+{
+      assert(statement_ == 0);
+      assert(s != 0);
+      statement_ = s;
+}
+
+
 /*
  * $Log: PTask.cc,v $
+ * Revision 1.4  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.3  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

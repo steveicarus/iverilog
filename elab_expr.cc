@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.32 2001/01/02 04:21:13 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.33 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 
@@ -179,7 +179,16 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       NetScope*dscope = des->find_scope(def->name());
       assert(dscope);
 
-      svector<NetExpr*> parms (parms_.count());
+	/* How many parameters have I got? Normally the size of the
+	   list is correct, but there is the special case of a list of
+	   1 nil pointer. This is how the parser tells me of no
+	   parameter. In other words, ``func()'' is 1 nil parameter. */
+
+      unsigned parms_count = parms_.count();
+      if ((parms_count == 1) && (parms_[0] == 0))
+	    parms_count = 0;
+
+      svector<NetExpr*> parms (parms_count);
 
 	/* Elaborate the input expressions for the function. This is
 	   done in the scope of the function call, and not the scope
@@ -187,8 +196,9 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 	   function is elaborated when the definition is elaborated. */
 
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
-	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope);
-	    parms[idx] = tmp;
+	    PExpr*tmp = parms_[idx];
+	    assert(tmp);
+	    parms[idx] = tmp->elaborate_expr(des, scope);
       }
 
 
@@ -529,6 +539,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.33  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.32  2001/01/02 04:21:13  steve
  *  Support a bunch of unary operators in parameter expressions.
  *

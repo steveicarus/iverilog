@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.h,v 1.9 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: PTask.h,v 1.10 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -36,8 +36,11 @@ class Statement;
 class PTask  : public LineInfo {
 
     public:
-      explicit PTask(svector<PWire*>*p, Statement*s);
+      explicit PTask();
       ~PTask();
+
+      void set_ports(svector<PWire *>*p);
+      void set_statement(Statement *s);
 
 	// Tasks introduce scope, to need to be handled during the
 	// scope elaboration pass. The scope passed is my scope,
@@ -70,9 +73,11 @@ class PTask  : public LineInfo {
 class PFunction : public LineInfo {
 
     public:
-      explicit PFunction(svector<PWire *>*p, Statement *s);
+      explicit PFunction();
       ~PFunction();
 
+      void set_ports(svector<PWire *>*p);
+      void set_statement(Statement *s);
       void set_output(PWire*);
 
       void elaborate_scope(Design*des, NetScope*scope) const;
@@ -93,6 +98,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.10  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.9  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during

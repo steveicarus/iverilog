@@ -17,18 +17,31 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PFunction.cc,v 1.3 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PFunction.cc,v 1.4 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 #include "PTask.h"
 
-PFunction::PFunction(svector<PWire*>*p, Statement*s)
-: out_(0), ports_(p), statement_(s)
+PFunction::PFunction()
+: out_(0), ports_(0), statement_(0)
 {
 }
 
 PFunction::~PFunction()
 {
+}
+
+void PFunction::set_ports(svector<PWire *>*p)
+{
+      assert(ports_ == 0);
+      ports_ = p;
+}
+
+void PFunction::set_statement(Statement*s)
+{
+      assert(s != 0);
+      assert(statement_ == 0);
+      statement_ = s;
 }
 
 void PFunction::set_output(PWire*o)
@@ -39,6 +52,9 @@ void PFunction::set_output(PWire*o)
 
 /*
  * $Log: PFunction.cc,v $
+ * Revision 1.4  2001/01/13 22:20:08  steve
+ *  Parse parameters within nested scopes.
+ *
  * Revision 1.3  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

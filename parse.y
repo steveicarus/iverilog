@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.116 2001/01/06 06:31:59 steve Exp $"
+#ident "$Id: parse.y,v 1.117 2001/01/13 22:20:08 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -68,9 +68,6 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
-
-      PTask*task;
-      PFunction*function;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -152,8 +149,6 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <porttype> port_type
 %type <parmvalue> parameter_value_opt
 
-%type <task> task_body
-%type <function> func_body
 %type <exprs> range_or_type_opt
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
@@ -220,6 +215,8 @@ block_item_decl
 		{ delete $2;
 		  yyerror(@1, "sorry: reatime variables not supported.");
 		}
+	| K_parameter parameter_assign_list ';'
+	| K_localparam localparam_assign_list ';'
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
@@ -242,6 +239,14 @@ block_item_decl
 		}
 	| K_realtime error ';'
 		{ yyerror(@1, "error: syntax error in realtime variable list.");
+		  yyerrok;
+		}
+	| K_parameter error ';'
+		{ yyerror(@1, "error: syntax error in parameter list.");
+		  yyerrok;
+		}
+	| K_localparam error ';'
+		{ yyerror(@1, "error: syntax error localparam list.");
 		  yyerrok;
 		}
 	;
@@ -869,15 +874,6 @@ expr_primary
 	;
 
 
-func_body
-	: function_item_list statement
-                { $$ = new PFunction($1, $2); }
-	| function_item_list
-		{ yyerror(@1, "error: function body has no statement.");
-		  $$ = new PFunction($1, 0);
-		}
-	;
-
   /* A function_item is either a block item (i.e. a reg or integer
      declaration) or an input declaration. There are no output or
      inout ports. */
@@ -1202,8 +1198,6 @@ module_item
 	| K_event list_of_variables ';'
 		{ pform_make_events($2, @1.text, @1.first_line);
 		}
-	| K_parameter parameter_assign_list ';'
-	| K_localparam localparam_assign_list ';' { }
 
   /* Most gate types have an optional drive strength and optional
      three-value delay. These rules handle the different cases. */
@@ -1267,13 +1261,15 @@ module_item
 
 	| K_task IDENTIFIER ';'
 		{ pform_push_scope($2); }
-	  task_body
-		{ pform_pop_scope(); }
+	  task_item_list_opt statement_opt
 	  K_endtask
-		{ PTask*tmp = $5;
+		{ PTask*tmp = new PTask;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  pform_set_task($2, $5);
+		  tmp->set_ports($5);
+		  tmp->set_statement($6);
+		  pform_set_task($2, tmp);
+		  pform_pop_scope();
 		  delete $2;
 		}
 
@@ -1284,13 +1280,15 @@ module_item
 
         | K_function range_or_type_opt IDENTIFIER ';'
                 { pform_push_scope($3); }
-          func_body
-                { pform_pop_scope(); }
+          function_item_list statement
           K_endfunction
-                { PFunction *tmp = $6;
+		{ PFunction *tmp = new PFunction;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  pform_set_function($3, $2, $6);
+		  tmp->set_ports($6);
+		  tmp->set_statement($7);
+		  pform_set_function($3, $2, tmp);
+		  pform_pop_scope();
 		  delete $3;
 		}
 
@@ -1318,6 +1316,12 @@ module_item
 	| K_assign error ';'
 		{ yyerror(@1, "error: syntax error in "
 			  "continuous assignment");
+		  yyerrok;
+		}
+
+	| K_function error K_endfunction
+		{ yyerror(@1, "error: I give up on this "
+			  "function definition.");
 		  yyerrok;
 		}
 
@@ -2190,12 +2194,6 @@ statement_opt
 	| ';' { $$ = 0; }
 	;
 
-task_body
-	: task_item_list_opt statement_opt
-		{ PTask*tmp = new PTask($1, $2);
-		  $$ = tmp;
-		}
-	;
 
 task_item
 	: block_item_decl
