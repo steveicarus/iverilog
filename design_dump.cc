@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.126 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.127 2002/06/08 23:42:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -431,6 +431,14 @@ void NetAssign_::dump_lval(ostream&o) const
 	    } else {
 		  o << "[" << (loff_+lwid_-1) << ":" << loff_ << "]";
 	    }
+      } else if (mem_) {
+	    // Is there an obvious way to flag memories in the dump
+	    // as different from the _real_ bit mux case?
+	    // o << "**memory**";
+	    o << mem_->name().c_str() << "[";
+	    if (bmux_) o << *bmux_;
+	      else     o << "**oops**";
+	    o << "]";
       } else {
 	    o << "";
       }
@@ -965,6 +973,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.127  2002/06/08 23:42:46  steve
+ *  Add NetRamDq synthsesis from memory l-values.
+ *
  * Revision 1.126  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

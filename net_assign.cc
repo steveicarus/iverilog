@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.11 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.12 2002/06/08 23:42:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,6 +68,11 @@ void NetAssign_::set_bmux(NetExpr*r)
       bmux_ = r;
 }
 
+NetExpr* NetAssign_::bmux()
+{
+      return bmux_;
+}
+
 const NetExpr* NetAssign_::bmux() const
 {
       return bmux_;
@@ -96,7 +101,7 @@ NetNet* NetAssign_::sig() const
       return sig_;
 }
 
-const NetMemory* NetAssign_::mem() const
+NetMemory* NetAssign_::mem() const
 {
       return mem_;
 }
@@ -231,6 +236,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.12  2002/06/08 23:42:46  steve
+ *  Add NetRamDq synthsesis from memory l-values.
+ *
  * Revision 1.11  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

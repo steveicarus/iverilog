@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.241 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.242 2002/06/08 23:42:46 steve Exp $"
 #endif
 
 /*
@@ -1228,6 +1228,7 @@ class NetAssign_ {
 	// If this expression exists, then only a single bit is to be
 	// set from the rval, and the value of this expression selects
 	// the pin that gets the value.
+      NetExpr*bmux();
       const NetExpr*bmux() const;
 
       unsigned get_loff() const;
@@ -1244,7 +1245,7 @@ class NetAssign_ {
       const char*name() const;
 
       NetNet* sig() const;
-      const NetMemory*mem() const;
+      NetMemory*mem() const;
 
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
@@ -2924,6 +2925,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.242  2002/06/08 23:42:46  steve
+ *  Add NetRamDq synthsesis from memory l-values.
+ *
  * Revision 1.241  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

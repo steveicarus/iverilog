@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.20 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.21 2002/06/08 23:42:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -133,6 +133,38 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
 
 }
 
+static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
+			 NetEvProbe*pclk, NetNet*ce,
+			 NetAssign_*a, unsigned rval_pinoffset)
+{
+      assert(d);
+      assert(a);
+
+	/* Connect the input Data bits of the RAM, from the r-value of
+	   the assignment. */
+      int loff = a->get_loff();
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
+	    connect(ram->pin_Data(idx), d->bit(idx+rval_pinoffset));
+      }
+
+	/* Connect the Address pins from the adr net discovered by the
+	   caller. */
+      for (unsigned idx = 0 ;  idx < ram->awidth() ;  idx += 1) {
+	    connect(ram->pin_Address(idx), adr->pin(idx));
+      }
+
+	/* Connect the input clock and the WE of the RAM. */
+      assert(pclk);
+      connect(ram->pin_InClock(), pclk->pin(0));
+      assert(ce);
+      connect(ram->pin_WE(), ce->pin(0));
+
+	/* This notices any other NetRamDq objects connected to the
+	   same NetMemory, that have the same address pins and are
+	   otherwise compatible. This absorbs them into this object. */
+      ram->absorb_partners();
+}
+
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn)
 {
@@ -162,11 +194,20 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 	// first data and 0, then carry and 1.
 	// FIXME:  ff gets its pin names wrong when loff_ is nonzero.
 
-            // cerr << "new NetFF named " << a->name() << endl;
-            NetFF*ff = new NetFF(top->scope(), a->name(),
+	    if (a->sig()) {
+              // cerr << "new NetFF named " << a->name() << endl;
+              NetFF*ff = new NetFF(top->scope(), a->name(),
 			   a->lwidth());
-            hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
-            des->add_node(ff);
+              hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
+              des->add_node(ff);
+	    } else if (a->mem()) {
+	      NetMemory *m=a->mem();
+	      NetNet *adr = a->bmux()->synthesize(des);
+	      NetRamDq*ram = new NetRamDq(top->scope(), m->name().c_str(),
+					  m, adr->pin_count());
+	      hookup_RAMDQ(ram, d, adr, pclk, ce, a, rval_pinoffset);
+              des->add_node(ram);
+	    }
             rval_pinoffset += a->lwidth();
       }
       des->delete_process(top);
@@ -217,7 +258,10 @@ struct tokenize : public proc_match_t {
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
-	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    // Bit Muxes can't be synthesized (yet), but it's too much
+	    // work to detect them now.
+	    // cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    cur->token = S_ASSIGN;
 	    cur->assign = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
@@ -229,7 +273,10 @@ struct tokenize : public proc_match_t {
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
-	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    // Bit Muxes can't be synthesized (yet), but it's too much
+	    // work to detect them now.
+	    // cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    cur->token = S_ASSIGN;
 	    cur->assign = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
