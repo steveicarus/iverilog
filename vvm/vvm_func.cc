@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.7 2000/04/26 03:32:40 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.8 2000/04/29 01:19:47 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -162,7 +162,7 @@ void vvm_binop_shiftr(vvm_bitset_t&v,
       assert(v.nbits == l.nbits);
       vvm_u32 s = r.as_unsigned();
       for (unsigned idx = 0 ;  idx < v.nbits ; idx += 1)
-	    v[idx] = (idx < (v.nbits-s)) ? l[idx+s] : St0;
+	    v[idx] = ((idx+s) < l.nbits) ? l[idx+s] : St0;
 }
 
 void vvm_binop_xnor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
@@ -496,6 +496,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.8  2000/04/29 01:19:47  steve
+ *  Proper bounds checking of the left operator of right shift.
+ *
  * Revision 1.7  2000/04/26 03:32:40  steve
  *  AND handles argument padding if necessary.
  *
