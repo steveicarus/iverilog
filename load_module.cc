@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.9 2002/07/10 04:34:18 steve Exp $"
+#ident "$Id: load_module.cc,v 1.10 2002/08/03 22:30:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -145,16 +145,20 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 		    /* If the directory is case insensitive, then so
 		       is the suffix. */
-		  if (key_case_sensitive)
-			if (strcmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
+		  if (key_case_sensitive) {
+			if (strcmp(de->d_name + (namsiz-sufsiz),
+				   sufptr) != 0)
 			      continue;
-		  else
-			if (strcasecmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
+		  } else {
+			if (strcasecmp(de->d_name + (namsiz-sufsiz),
+				       sufptr) != 0)
 			      continue;
+		  }
 
 		  key = new char[namsiz-sufsiz+1];
 		  strncpy(key, de->d_name, namsiz-sufsiz);
 		  key[namsiz-sufsiz] = 0;
+
 		  break;
 	    }
 
@@ -189,6 +193,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.10  2002/08/03 22:30:00  steve
+ *  Fix suffix parsing of library index.
+ *
  * Revision 1.9  2002/07/10 04:34:18  steve
  *  Library dir case insensitivity includes the suffix.
  *
