@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.81 2003/07/26 03:34:43 steve Exp $"
+#ident "$Id: stub.c,v 1.82 2003/12/03 01:54:07 steve Exp $"
 #endif
 
 # include "config.h"
+# include <assert.h>
 
 /*
  * This is a sample target module. All this does is write to the
@@ -484,7 +485,13 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_WAIT: {
 		ivl_event_t evnt = ivl_stmt_event(net);
-		fprintf(out, "%*s@(%s)\n", ind, "", ivl_event_name(evnt));
+
+		if (evnt == 0)
+		      fprintf(out, "%*s@(/*ERROR*/)\n", ind, "");
+		else
+		      fprintf(out, "%*s@(%s)\n", ind, "",
+			      ivl_event_name(evnt));
+
 		show_statement(ivl_stmt_sub_stmt(net), ind+4);
 		break;
 	  }
@@ -878,6 +885,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.82  2003/12/03 01:54:07  steve
+ *  Handle erroneous event lists.
+ *
  * Revision 1.81  2003/07/26 03:34:43  steve
  *  Start handling pad of expressions in code generators.
  *
