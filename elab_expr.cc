@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.46 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.47 2001/12/29 20:41:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -369,10 +369,19 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope) const
       return new NetEConst(verinum(val));
 }
 
+/*
+ * Elaborate an identifier in an expression. The identifier can be a
+ * parameter name, a signal name or a memory name. It can also be a
+ * scope name (Return a NetEScope) but only certain callers can use
+ * scope names. However, we still support it here.
+ *
+ * Function names are not handled here, they are detected by the
+ * parser and are elaborated by PECallFunction.
+ *
+ * The signal name may be escaped, but that affects nothing here.
+ */
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 {
-      assert(path_.peek_name(0)[0] != '$');
-
       assert(scope);
 
 	// If the identifier name is a parameter name, then return
@@ -642,6 +651,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.47  2001/12/29 20:41:30  steve
+ *  Allow escaped $ in identifiers.
+ *
  * Revision 1.46  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
