@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.9 2000/05/18 03:27:32 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.10 2000/07/08 22:40:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -272,6 +272,17 @@ void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		break;
 	  }
 
+	  case vpiIntVal: {
+		long val = vp->value.integer;
+		unsigned idx;
+
+		for (idx = 0 ;  idx < nbits ;  idx += 1) {
+		      bits[idx] = (val&1)? St1 : St0;
+		      val >>= 1;
+		}
+		break;
+	  }
+
 	  default:
 	    assert(0);
       }
@@ -371,6 +382,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.10  2000/07/08 22:40:07  steve
+ *  Allow set vpiIntVal on bitset type objects.
+ *
  * Revision 1.9  2000/05/18 03:27:32  steve
  *  Support writing scalars and vectors to signals.
  *
