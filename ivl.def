@@ -40,9 +40,11 @@ ivl_logic_basename
 ivl_logic_type
 ivl_logic_pin
 ivl_logic_pins
+ivl_logic_udp
 
 ivl_lpm_clk
 ivl_lpm_data
+ivl_lpm_data2
 ivl_lpm_name
 ivl_lpm_q
 ivl_lpm_select
@@ -115,3 +117,10 @@ ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval
 ivl_stmt_sub_stmt
+
+ivl_udp_init
+ivl_udp_name
+ivl_udp_nin
+ivl_udp_row
+ivl_udp_rows
+ivl_udp_sequ
