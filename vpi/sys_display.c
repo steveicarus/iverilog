@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.3 1999/10/08 17:47:49 steve Exp $"
+#ident "$Id: sys_display.c,v 1.4 1999/10/10 14:50:50 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -33,6 +33,17 @@ static void format_binary(vpiHandle argv, int fsize)
       if (item == 0) return;
 
       value.format = vpiBinStrVal;
+      vpi_get_value(item, &value);
+      vpi_printf("%s", value.value.str);
+}
+
+static void format_octal(vpiHandle argv, int fsize)
+{
+      s_vpi_value value;
+      vpiHandle item = vpi_scan(argv);
+      if (item == 0) return;
+
+      value.format = vpiOctStrVal;
       vpi_get_value(item, &value);
       vpi_printf("%s", value.value.str);
 }
@@ -129,6 +140,11 @@ static void format(s_vpi_value*fmt, vpiHandle argv)
 			break;
 		      case 'm':
 			format_m(argv, fsize);
+			cp += 1;
+			break;
+		      case 'o':
+		      case 'O':
+			format_octal(argv, fsize);
 			cp += 1;
 			break;
 		      case 't':
@@ -244,6 +260,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.4  1999/10/10 14:50:50  steve
+ *  Add Octal dump format.
+ *
  * Revision 1.3  1999/10/08 17:47:49  steve
  *  Add the %t formatting escape.
  *
