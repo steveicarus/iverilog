@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.182 2000/11/29 05:24:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.183 2000/12/02 05:08:04 steve Exp $"
 #endif
 
 /*
@@ -1378,7 +1378,7 @@ class NetBlock  : public NetProc {
  * way the comparisons are performed. Also, it is likely that the
  * target may be able to optimize differently.
  *
- * Case cane be one of three types:
+ * Case can be one of three types:
  *    EQ  -- All bits must exactly match
  *    EQZ -- z bits are don't care
  *    EQX -- x and z bits are don't care.
@@ -2824,6 +2824,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.183  2000/12/02 05:08:04  steve
+ *  Spelling error in comment.
+ *
  * Revision 1.182  2000/11/29 05:24:00  steve
  *  synthesis for unary reduction ! and N operators.
  *
