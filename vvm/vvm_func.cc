@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.6 2000/03/26 16:55:41 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.7 2000/04/26 03:32:40 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -93,12 +93,22 @@ vpip_bit_t vvm_unop_xnor(const vvm_bitset_t&r)
       return B_NOT(v);
 }
 
+/*
+ * Do a bitwise AND into the result. We only need to calculate enough
+ * bits to fill the result. If I need to extend either value, extend
+ * it with St0.
+ */
 void vvm_binop_and(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
-      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+      unsigned min = v.nbits;
+      if (r.nbits < min) min = r.nbits;
+      if (l.nbits < min) min = l.nbits;
+
+      for (unsigned idx = 0 ;  idx < min ;  idx += 1)
 	    v[idx] = B_AND(l[idx], r[idx]);
+
+      for (unsigned idx = min ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = St0;
 }
 
 void vvm_binop_minus(vvm_bitset_t&v, const vvm_bitset_t&l,
@@ -486,6 +496,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.7  2000/04/26 03:32:40  steve
+ *  AND handles argument padding if necessary.
+ *
  * Revision 1.6  2000/03/26 16:55:41  steve
  *  Remove the vvm_bits_t abstract class.
  *
