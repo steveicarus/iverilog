@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.52 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.53 2003/02/16 23:40:05 steve Exp $"
 #endif
 
 /*
@@ -735,6 +735,23 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
       return obj;
 }
 
+static struct __vpiSignal* allocate_vpiSignal(void)
+{
+      static struct __vpiSignal*alloc_array = 0;
+      static unsigned alloc_index = 0;
+      const unsigned alloc_count = 512;
+
+      if ((alloc_array == 0) || (alloc_index == alloc_count)) {
+	    alloc_array = (struct __vpiSignal*)
+		  calloc(alloc_count, sizeof(struct __vpiSignal));
+	    alloc_index = 0;
+      }
+
+      struct __vpiSignal*cur = alloc_array + alloc_index;
+      alloc_index += 1;
+      return cur;
+}
+
 /*
  * Construct a vpiNet object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
@@ -742,8 +759,7 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_fvector_t vec)
 {
-      struct __vpiSignal*obj = (struct __vpiSignal*)
-	    malloc(sizeof(struct __vpiSignal));
+      struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
       obj->name = vpip_string(name);
       obj->msb = msb;
@@ -763,6 +779,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.53  2003/02/16 23:40:05  steve
+ *  Permanent allocate vpiSignals more efficiently.
+ *
  * Revision 1.52  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
@@ -788,80 +807,4 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
  *
  * Revision 1.45  2002/07/23 15:11:41  steve
  *  integral type/ptrdiff_t warning.
- *
- * Revision 1.44  2002/07/23 02:36:34  steve
- *  Careful not to overrun vector buffer.
- *
- * Revision 1.43  2002/07/19 00:36:36  steve
- *  Support put of wide vpiVectorVal to signal.
- *
- * Revision 1.42  2002/07/09 03:24:37  steve
- *  Dynamic resizevpi result buf in more places.
- *
- * Revision 1.41  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.40  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.39  2002/07/03 23:39:57  steve
- *  Dynamic size result buffer for _str and _get_value functions.
- *
- * Revision 1.38  2002/07/03 23:16:27  steve
- *  don't pollute name space
- *  fix vecval for Z/X cases
- *
- * Revision 1.37  2002/07/03 02:09:38  steve
- *  vpiName, vpiFullName support in memory types,
- *  length checks for *_get_str() buffers,
- *  temporary buffers for *_get_str() data,
- *  dynamic storage for vpi_get_data() in memory types
- *  shared with signal white space
- *
- * Revision 1.36  2002/06/30 02:52:36  steve
- *  vpiVectorVal of very wide signals.
- *
- * Revision 1.35  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.34  2002/05/15 04:48:46  steve
- *  Support set by string for reg objects.
- *
- * Revision 1.33  2002/02/03 01:01:51  steve
- *  Use Larrys bits-to-decimal-string code.
- *
- * Revision 1.32  2002/01/09 03:29:12  steve
- *  String prints of non-round vectors (PR378)
- *
- * Revision 1.31  2001/12/18 05:31:54  steve
- *  Remove result length restrictions for vpi_get_value.
- *
- * Revision 1.30  2001/12/06 03:31:25  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.29  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.28  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.27  2001/10/18 04:52:31  steve
- *  Support vpiVectorVal for signals. (Philip Blundell)
- *
- * Revision 1.26  2001/10/15 01:49:50  steve
- *  Support getting scope of scope, and scope of signals.
- *
- * Revision 1.25  2001/09/30 05:18:46  steve
- *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
- *
- * Revision 1.24  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.23  2001/08/09 19:38:23  steve
- *  Nets (wires) do not use their own functors.
- *  Modifications to propagation of values.
- *  (Stephan Boettcher)
  */
