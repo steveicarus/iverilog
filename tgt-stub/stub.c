@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.67 2002/09/16 00:28:25 steve Exp $"
+#ident "$Id: stub.c,v 1.68 2002/09/18 03:33:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -482,6 +482,8 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_SUPPLY1:
 	    type = "supply1";
 	    break;
+	  default:
+	    break;
       }
 
       switch (ivl_signal_port(net)) {
@@ -496,6 +498,9 @@ static void show_signal(ivl_signal_t net)
 
 	  case IVL_SIP_INOUT:
 	    port = "inout ";
+	    break;
+
+	  case IVL_SIP_NONE:
 	    break;
       }
 
@@ -712,6 +717,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.68  2002/09/18 03:33:10  steve
+ *  Fix switch case warnings.
+ *
  * Revision 1.67  2002/09/16 00:28:25  steve
  *  Display FF enables.
  *
