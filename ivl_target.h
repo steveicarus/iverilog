@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.104 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.105 2002/08/24 05:03:40 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -479,6 +479,7 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
 
 extern const char*ivl_memory_basename(ivl_memory_t net);
 extern int ivl_memory_root(ivl_memory_t net);
+extern ivl_scope_t ivl_memory_scope(ivl_memory_t net);
 extern unsigned ivl_memory_size(ivl_memory_t net);
 extern unsigned ivl_memory_width(ivl_memory_t net);
 
@@ -1078,6 +1079,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.105  2002/08/24 05:03:40  steve
+ *  Missing declaration of ivl_memory_scope.
+ *
  * Revision 1.104  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
