@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.23 2000/12/30 03:11:15 steve Exp $"
+#ident "$Id: cprop.cc,v 1.24 2001/02/10 04:50:54 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -783,7 +783,22 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 		  clnk->cur_link(cur, pin);
 
 		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
-		  if (tmp && tmp->get_eref() > 0)
+		  if (tmp == 0)
+			continue;
+
+		  assert(tmp->scope());
+
+		    // If the net has an eref, then there is an
+		    // expression somewhere that reads this signal. So
+		    // the constant does get read.
+		  if (tmp->get_eref() > 0)
+			return;
+
+		    // If the net is a port of the root module, then
+		    // the constant may be driving something outside
+		    // the design, so do not eliminate it.
+		  if ((tmp->port_type() != NetNet::NOT_A_PORT)
+		      && (tmp->scope()->parent() == 0))
 			return;
 
 	    }
@@ -811,6 +826,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.24  2001/02/10 04:50:54  steve
+ *  Catch constants driving root module ports. (PR#130)
+ *
  * Revision 1.23  2000/12/30 03:11:15  steve
  *  Propagate initial value of constants into wires.
  *
