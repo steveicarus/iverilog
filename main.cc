@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.68 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: main.cc,v 1.69 2003/09/22 01:12:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -72,6 +72,9 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
+/* Count errors detected in flag processing. */
+unsigned flag_errors = 0;
+
 const char VERSION[] = "$Name:  $ $State: Exp $";
 
 const char*target = "null";
@@ -82,9 +85,13 @@ map<string,string> flags;
 
 list<const char*> library_suff;
 
+list<const char*> roots;
+
 char*ivlpp_string = 0;
 
+char* depfile_name = NULL;
 FILE *depend_file = NULL;
+
 /*
  * These are the warning enable flags.
  */
@@ -114,11 +121,62 @@ const bool CASE_SENSITIVE = false;
 const bool CASE_SENSITIVE = true;
 #endif
 
+static void process_generation_flag(const char*gen)
+{
+      if (strcmp(gen,"1") == 0)
+	    generation_flag = GN_VER1995;
+
+      else if (strcmp(gen,"2") == 0)
+	    generation_flag = GN_VER2001;
+
+      else if (strcmp(gen,"3.0") == 0)
+	    generation_flag = GN_SYSVER30;
+
+      else
+	    generation_flag = GN_DEFAULT;
+}
+
 /*
  * Read the contents of a config file. This file is a temporary
  * configuration file made by the compiler driver to carry the bulky
  * flags generated from the user. This reduces the size of the command
- * line needed to invoke ivl
+ * line needed to invoke ivl.
+ *
+ * Each line of the iconfig file has the format:
+ *
+ *      <keyword>:<value>
+ *
+ * The <value> is all the text after the ':' and up to but not
+ * including the end of the line. Thus, white spaces and ':'
+ * characters may appear here.
+ *
+ * The valid keys are:
+ *
+ *    -y:<dir>
+ *    -yl:<dir>
+ *    -Y:<string>
+ *
+ *    -T:<min/typ/max>
+ *        Select which expression to use.
+ *
+ *    depfile:<path>
+ *        Give the path to an output dependency file.
+ *
+ *    generation:<1|2|3.0>
+ *        This is the generation flag
+ *
+ *    ivlpp:<preprocessor command>
+ *        This specifies the ivlpp command line used to process
+ *        library modules as I read them in.
+ *
+ *    out:<path>
+ *        Path to the output file.
+ *
+ *    root:<name>
+ *        Specify a root module. There may be multiple of this.
+ *
+ *    warnings:<string>
+ *        Warning flag letters.
  */
 static void read_iconfig_file(const char*ipath)
 {
@@ -149,8 +207,36 @@ static void read_iconfig_file(const char*ipath)
 		  }
 	    }
 
-	    if (strcmp(buf, "ivlpp") == 0) {
+	    if (strcmp(buf, "depfile") == 0) {
+		  depfile_name = strdup(cp);
+
+	    } else if (strcmp(buf, "generation") == 0) {
+		  process_generation_flag(cp);
+
+	    } else if (strcmp(buf, "ivlpp") == 0) {
 		  ivlpp_string = strdup(cp);
+
+	    } else if (strcmp(buf, "out") == 0) {
+		  flags["-o"] = cp;
+
+	    } else if (strcmp(buf, "root") == 0) {
+		  roots.push_back(strdup(cp));
+
+	    } else if (strcmp(buf,"warnings") == 0) {
+		    /* Scan the warnings enable string for warning flags. */
+		  for ( ;  *cp ;  cp += 1) switch (*cp) {
+		      case 'i':
+			warn_implicit = true;
+			break;
+		      case 'p':
+			warn_portbinding = true;
+			break;
+		      case 't':
+			warn_timescale = true;
+			break;
+		      default:
+			break;
+		  }
 
 	    } else if (strcmp(buf, "-y") == 0) {
 		  build_library_index(cp, CASE_SENSITIVE);
@@ -160,6 +246,22 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "-Y") == 0) {
 		  library_suff.push_back(strdup(cp));
+
+	    } else if (strcmp(buf,"-T") == 0) {
+		  if (strcmp(cp,"min") == 0) {
+			min_typ_max_flag = MIN;
+			min_typ_max_warn = 0;
+		  } else if (strcmp(cp,"typ") == 0) {
+			min_typ_max_flag = TYP;
+			min_typ_max_warn = 0;
+		  } else if (strcmp(cp,"max") == 0) {
+			min_typ_max_flag = MAX;
+			min_typ_max_warn = 0;
+		  } else {
+			cerr << "Invalid argument (" << optarg << ") to -T flag."
+			     << endl;
+			flag_errors += 1;
+		  }
 
 	    }
       }
@@ -179,21 +281,6 @@ static void parm_to_flagmap(const string&flag)
       }
 
       flags[key] = value;
-}
-
-static void process_generation_flag(const char*gen)
-{
-      if (strcmp(gen,"1") == 0)
-	    generation_flag = GN_VER1995;
-
-      else if (strcmp(gen,"2") == 0)
-	    generation_flag = GN_VER2001;
-
-      else if (strcmp(gen,"3.0") == 0)
-	    generation_flag = GN_SYSVER30;
-
-      else
-	    generation_flag = GN_DEFAULT;
 }
 
 extern Design* elaborate(list <const char*>root);
@@ -266,12 +353,8 @@ int main(int argc, char*argv[])
 
       const char* net_path = 0;
       const char* pf_path = 0;
-      const char* warn_en = "";
       int opt;
-      unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
-      list<const char*> roots;
-      const char* depfile_name = NULL;
 
       struct tms cycles[5];
 
@@ -302,48 +385,20 @@ int main(int argc, char*argv[])
 	  case 'f':
 	    parm_to_flagmap(optarg);
 	    break;
-	  case 'g':
-	    process_generation_flag(optarg);
-	    break;
 	  case 'h':
 	    help_flag = true;
 	    break;
 	  case 'm':
 	    flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+optarg;
 	    break;
-	  case 'M':
-	    depfile_name = optarg;
-	    break;
 	  case 'N':
 	    net_path = optarg;
-	    break;
-	  case 'o':
-	    flags["-o"] = optarg;
 	    break;
 	  case 'P':
 	    pf_path = optarg;
 	    break;
 	  case 'p':
 	    parm_to_flagmap(optarg);
-	    break;
-	  case 's':
-	    roots.push_back(optarg);
-	    break;
-	  case 'T':
-	    if (strcmp(optarg,"min") == 0) {
-		  min_typ_max_flag = MIN;
-		  min_typ_max_warn = 0;
-	    } else if (strcmp(optarg,"typ") == 0) {
-		  min_typ_max_flag = TYP;
-		  min_typ_max_warn = 0;
-	    } else if (strcmp(optarg,"max") == 0) {
-		  min_typ_max_flag = MAX;
-		  min_typ_max_warn = 0;
-	    } else {
-		  cerr << "Invalid argument (" << optarg << ") to -T flag."
-		       << endl;
-		  flag_errors += 1;
-	    }
 	    break;
 	  case 't':
 	    target = optarg;
@@ -359,15 +414,6 @@ int main(int argc, char*argv[])
 	    cout << COPYRIGHT << endl;
 	    cout << endl << NOTICE << endl;
 	    return 0;
-	  case 'W':
-	    warn_en = optarg;
-	    break;
-	  case 'y':
-	    build_library_index(optarg, CASE_SENSITIVE);
-	    break;
-	  case 'Y':
-	    library_suff.push_back(optarg);
-	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -385,11 +431,8 @@ int main(int argc, char*argv[])
 "\t-h               Print usage information, and exit.\n"
 "\t-m <module>      Load vpi module <module>.\n"
 "\t-N <file>        Dump the elaborated netlist to <file>.\n"
-"\t-o <file>        Write output to <file>.\n"
 "\t-P <file>        Write the parsed input to <file>.\n"
 "\t-p <assign>      Set a parameter value.\n"
-"\t-s <module>      Select the top-level module.\n"
-"\t-T [min|typ|max] Select timing corner.\n"
 "\t-t <name>        Select target <name>.\n"
 "\t-v               Print progress indications"
 #if defined(HAVE_TIMES)
@@ -397,8 +440,6 @@ int main(int argc, char*argv[])
 #endif
                                            ".\n"
 "\t-V               Print version and copyright information, and exit.\n"
-"\t-y <dir>         Add directory to library search path.\n"
-"\t-Y <suf>         Add suffix string library search path.\n"
 
 		  ;
 	    cout << "Netlist functions:" << endl;
@@ -422,21 +463,6 @@ int main(int argc, char*argv[])
 	      }
       }
 	      
-
-	/* Scan the warnings enable string for warning flags. */
-      for (const char*cp = warn_en ;  *cp ;  cp += 1) switch (*cp) {
-	  case 'i':
-	    warn_implicit = true;
-	    break;
-	  case 'p':
-	    warn_portbinding = true;
-	    break;
-	  case 't':
-	    warn_timescale = true;
-	    break;
-	  default:
-	    break;
-      }
 
       if (verbose_flag) {
 	    if (times_flag)
@@ -632,6 +658,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.69  2003/09/22 01:12:08  steve
+ *  Pass more ivl arguments through the iconfig file.
+ *
  * Revision 1.68  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: build_string.c,v 1.11 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: build_string.c,v 1.12 2003/09/22 01:12:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -52,11 +52,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 			    strncpy(tmp_buf, pattern+1, tail-pattern-1);
 			    tmp_buf[tail-pattern-1] = 0;
 
-			    if (((*pattern == 's') && start)
-				|| ((*pattern == 'v') && verbose_flag)
+			    if (((*pattern == 'v') && verbose_flag)
 				|| ((*pattern == 'M') && depfile)
-				|| ((*pattern == 'N') && npath)
-				|| ((*pattern == 'T') && mtm)) {
+				|| ((*pattern == 'N') && npath)) {
 				  int rc = build_string(output, olen,
 							tmp_buf);
 				  output += rc;
@@ -78,12 +76,6 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(iconfig_path);
 			break;
 
-		      case 'g':
-			strcpy(output, generation);
-			output += strlen(generation);
-			olen -= strlen(generation);
-			break;
-
 		      case 'f':
 			if (f_list) {
 			      strcpy(output, f_list);
@@ -100,14 +92,6 @@ int build_string(char*output, size_t olen, const char*pattern)
 			}
 			break;
 
-		      case 'M':
-			if (depfile) {
-			      strcpy(output, depfile);
-			      output += strlen(depfile);
-			      olen -= strlen(depfile);
-			}
-			break;
-
 		      case 'N':
 			if (npath) {
 			      strcpy(output, npath);
@@ -116,38 +100,10 @@ int build_string(char*output, size_t olen, const char*pattern)
 			}
 			break;
 
-		      case 'o':
-			strcpy(output, opath);
-			output += strlen(opath);
-			olen -= strlen(opath);
-			break;
-
-		      case 's':
-			if (start) {
-			      strcpy(output, start);
-			      output += strlen(start);
-			      olen -= strlen(start);
-			}
-			break;
-
-		      case 'T':
-			if (mtm) {
-			      strcpy(output, mtm);
-			      output += strlen(mtm);
-			      olen -= strlen(mtm);
-			}
-			break;
-
 		      case 't':
 			strcpy(output, targ);
 			output += strlen(targ);
 			olen -= strlen(targ);
-			break;
-
-		      case 'W':
-			strcpy(output, warning_flags);
-			output += strlen(warning_flags);
-			olen -= strlen(warning_flags);
 			break;
 
 		  }
@@ -165,6 +121,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.12  2003/09/22 01:12:09  steve
+ *  Pass more ivl arguments through the iconfig file.
+ *
  * Revision 1.11  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

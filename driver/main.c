@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.53 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: main.c,v 1.54 2003/09/22 01:12:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,7 +90,7 @@ const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
 
-const char*generation = "-g3.0";
+const char*generation = "3.0";
 
 char warning_flags[16] = "";
 
@@ -98,7 +98,6 @@ char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
 char*command_filename = 0;
-char*start = 0;
 
 char*f_list = 0;
 
@@ -229,7 +228,8 @@ static int t_default(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       remove(source_path);
-      remove(iconfig_path);
+      if ( ! getenv("IVERILOG_ICONFIG"))
+	    remove(iconfig_path);
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
@@ -249,9 +249,6 @@ static int t_default(char*cmd, unsigned ncmd)
 
 static void process_warning_switch(const char*name)
 {
-      if (warning_flags[0] == 0)
-	    strcpy(warning_flags, "-W");
-
       if (strcmp(name,"all") == 0) {
 	    strcat(warning_flags, "ipt");
 
@@ -339,13 +336,13 @@ void process_file_name(const char*name)
 int process_generation(const char*name)
 {
       if (strcmp(name,"1") == 0)
-	    generation = "-g1";
+	    generation = "1";
 
       else if (strcmp(name,"2") == 0)
-	    generation = "-g2";
+	    generation = "2";
 
       else if (strcmp(name,"3.0") == 0)
-	    generation = "-g3.0";
+	    generation = "3.0";
 
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
@@ -420,7 +417,18 @@ int main(int argc, char **argv)
 
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
-      iconfig_path = strdup(my_tempfile("ivrlh", &iconfig_file));
+
+      if ( (iconfig_path = getenv("IVERILOG_ICONFIG")) ) {
+	    fprintf(stderr, "%s: IVERILOG_ICONFIG=%s\n",
+		    argv[0], iconfig_path);
+
+	    iconfig_file = fopen(iconfig_path, "w");
+
+      } else {
+
+	    iconfig_path = strdup(my_tempfile("ivrlh", &iconfig_file));
+      }
+
       if (NULL == iconfig_file) {
 	    fprintf(stderr, "%s: Error opening temporary file %s\n",
 		    argv[0], iconfig_path);
@@ -508,18 +516,7 @@ int main(int argc, char **argv)
 		  synth_flag = 1;
 		  break;
 		case 's':
-	          if (start) {
-			static const char *s = " -s ";
-			size_t l = strlen(start);
-			start = realloc(start, l + strlen(optarg) + strlen(s) + 1);
-			strcpy(start + l, s);
-			strcpy(start + l + strlen(s), optarg);
-		  } else {
-			static const char *s = "-s ";
-			start = malloc(strlen(optarg) + strlen(s) + 1);
-			strcpy(start, s);
-			strcpy(start + strlen(s), optarg);
-		  }
+		  fprintf(iconfig_file, "root:%s\n", optarg);
 		  break;
 		case 'T':
 		  if (strcmp(optarg,"min") == 0) {
@@ -566,6 +563,13 @@ int main(int argc, char **argv)
 	    if (version_flag)
 		  return 0;
       }
+
+	/* Write values to the iconfig file. */
+      if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
+      fprintf(iconfig_file, "generation:%s\n", generation);
+      fprintf(iconfig_file, "warnings:%s\n", warning_flags);
+      fprintf(iconfig_file, "out:%s\n", opath);
+      if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
 
       if (command_filename) {
 	    int rc;
@@ -666,7 +670,8 @@ int main(int argc, char **argv)
 	    rc = system(cmd);
 	    remove(source_path);
 	    fclose(iconfig_file);
-	    remove(iconfig_path);
+	    if ( ! getenv("IVERILOG_ICONFIG"))
+		  remove(iconfig_path);
 
 	    if (rc != 0) {
 		  if (WIFEXITED(rc)) {
@@ -699,6 +704,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.54  2003/09/22 01:12:09  steve
+ *  Pass more ivl arguments through the iconfig file.
+ *
  * Revision 1.53  2003/08/26 16:26:02  steve
  *  ifdef idents correctly.
  *
@@ -731,121 +739,5 @@ int main(int argc, char **argv)
  *
  * Revision 1.43  2002/07/14 23:32:31  steve
  *  No longer need the .exe on generated files.
- *
- * Revision 1.42  2002/07/14 23:11:35  steve
- *  Do temp file creation by hand.
- *
- * Revision 1.41  2002/05/28 20:40:37  steve
- *  ivl indexes the search path for libraries, and
- *  supports case insensitive module-to-file lookup.
- *
- * Revision 1.40  2002/05/28 02:25:03  steve
- *  Pass library paths through -Cfile instead of command line.
- *
- * Revision 1.39  2002/05/28 00:50:40  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- *
- * Revision 1.38  2002/05/27 23:14:06  steve
- *  Predefine __ICARUS__
- *
- * Revision 1.37  2002/05/24 01:13:00  steve
- *  Support language generation flag -g.
- *
- * Revision 1.36  2002/04/24 02:02:31  steve
- *  add -Wno- arguments to the driver.
- *
- * Revision 1.35  2002/04/15 00:04:23  steve
- *  Timescale warnings.
- *
- * Revision 1.34  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.33  2002/03/15 23:27:42  steve
- *  Patch to allow user to set place for temporary files.
- *
- * Revision 1.32  2002/02/03 07:05:37  steve
- *  Support print of version number.
- *
- * Revision 1.31  2001/11/21 02:20:34  steve
- *  Pass list of file to ivlpp via temporary file.
- *
- * Revision 1.30  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
- *
- * Revision 1.29  2001/11/13 03:30:26  steve
- *  The +incdir+ plusarg can take multiple directores,
- *  and add initial support for +define+ in the command file.
- *
- * Revision 1.28  2001/11/12 18:47:32  steve
- *  Support +incdir in command files, and ignore other
- *  +args flags. Also ignore -a and -v flags.
- *
- * Revision 1.27  2001/11/12 01:26:36  steve
- *  More sophisticated command file parser.
- *
- * Revision 1.26  2001/11/11 00:10:05  steve
- *  Remov XNF dead wood.
- *
- * Revision 1.25  2001/10/23 00:37:30  steve
- *  The -s flag can now be repeated on the iverilog command.
- *
- * Revision 1.24  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.23  2001/10/19 23:10:08  steve
- *  Fix memory fault with -c flag.
- *
- * Revision 1.22  2001/10/11 00:12:49  steve
- *  Detect execv failures.
- *
- * Revision 1.21  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.20  2001/06/30 21:53:42  steve
- *  Make the vvp target the default.
- *
- * Revision 1.19  2001/06/30 04:23:02  steve
- *  Get include and lib paths right for mingw and vvm.
- *
- * Revision 1.18  2001/06/30 00:59:24  steve
- *  Redo the ivl_root calculator for mingw.
- *
- * Revision 1.17  2001/06/27 02:22:26  steve
- *  Get include and lib paths from Makefile.
- *
- * Revision 1.16  2001/06/20 02:25:40  steve
- *  Edit ivl_install_dir only on mingw
- *
- * Revision 1.15  2001/06/15 05:14:21  steve
- *  Fix library path calculation on non Windows systems
- *  to include the install directories. (Brendan Simon)
- *
- * Revision 1.14  2001/06/12 03:53:10  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.13  2001/05/20 18:22:02  steve
- *  Fix WIFEXITED macro.
- *
- * Revision 1.12  2001/05/20 18:06:57  steve
- *  local declares if the header is missing.
- *
- * Revision 1.11  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.10  2001/05/17 03:14:26  steve
- *  Update help message.
- *
- * Revision 1.9  2001/04/26 16:04:39  steve
- *  Handle missing or uninstalled .conf files.
- *
- * Revision 1.8  2001/02/01 17:12:22  steve
- *  Forgot to actually allow the -p flag.
- *
- * Revision 1.7  2001/01/20 19:02:05  steve
- *  Switch hte -f flag to the -p flag.
  */
 
