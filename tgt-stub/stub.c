@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.47 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: stub.c,v 1.48 2001/07/22 21:30:56 steve Exp $"
 #endif
 
 /*
@@ -409,6 +409,12 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_WIRE:
 	    type = "wire";
 	    break;
+	  case IVL_SIT_SUPPLY0:
+	    type = "supply0";
+	    break;
+	  case IVL_SIT_SUPPLY1:
+	    type = "supply1";
+	    break;
       }
 
       switch (ivl_signal_port(net)) {
@@ -602,6 +608,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.48  2001/07/22 21:30:56  steve
+ *  Recognize supply signal types.
+ *
  * Revision 1.47  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *
