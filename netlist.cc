@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.100 1999/12/16 02:42:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.101 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1489,14 +1489,34 @@ NetProc* NetCondit::else_clause()
 }
 
 NetConst::NetConst(const string&n, verinum::V v)
-: NetNode(n, 1), value_(v)
+: NetNode(n, 1)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
+      value_ = new verinum::V[1];
+      value_[0] = v;
+}
+
+NetConst::NetConst(const string&n, const verinum&val)
+: NetNode(n, val.len())
+{
+      value_ = new verinum::V[pin_count()];
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(Link::OUTPUT);
+	    pin(idx).set_name("O", idx);
+	    value_[idx] = val.get(idx);
+      }
 }
 
 NetConst::~NetConst()
 {
+      delete[]value_;
+}
+
+verinum::V NetConst::value(unsigned idx) const
+{
+      assert(idx < pin_count());
+      return value_[idx];
 }
 
 NetFuncDef::NetFuncDef(const string&n, const svector<NetNet*>&po)
@@ -2744,6 +2764,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.101  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.100  1999/12/16 02:42:15  steve
  *  Simulate carry output on adders.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.13 1999/12/16 03:46:39 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.14 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -641,12 +641,11 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  verinum pvalue = pc->value();
 		  sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT,
 				   pc->expr_width());
-		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1) {
-			NetConst*cp = new NetConst(des->local_symbol(path),
-						   pvalue[idx]);
-			connect(sig->pin(idx), cp->pin(0));
-			des->add_node(cp);
-		  }
+		  NetConst*cp = new NetConst(des->local_symbol(path), pvalue);
+		  des->add_node(cp);
+		  des->add_signal(sig);
+		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
+			connect(sig->pin(idx), cp->pin(idx));
 
 	    } else {
 
@@ -886,13 +885,11 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       NetNet*net = new NetNet(0, des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path),
-					value_->get(idx));
-	    des->add_node(tmp);
-	    connect(net->pin(idx), tmp->pin(0));
-      }
+      NetConst*tmp = new NetConst(des->local_symbol(path), *value_);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    connect(net->pin(idx), tmp->pin(idx));
 
+      des->add_node(tmp);
       des->add_signal(net);
       return net;
 }
@@ -941,6 +938,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.14  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.13  1999/12/16 03:46:39  steve
  *  Structural logical or.
  *

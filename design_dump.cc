@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.63 1999/12/12 06:03:14 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.64 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 /*
@@ -189,7 +189,10 @@ void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 
 void NetConst::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "constant " << value_ << ": " << name() << endl;
+      o << setw(ind) << "" << "constant ";
+      for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
+	    o << value_[idx-1];
+      o << ": " << name() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -862,6 +865,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.64  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.63  1999/12/12 06:03:14  steve
  *  Allow memories without indices in expressions.
  *

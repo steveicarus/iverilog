@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.21 1999/12/16 18:54:32 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.22 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -603,15 +603,17 @@ void target_xnf::lpm_ram_dq(ostream&os, const NetRamDq*ram)
 
 void target_xnf::net_const(ostream&os, const NetConst*c)
 {
-      verinum::V v=c->value();
-      assert(v==verinum::V0 || v==verinum::V1);
-      const NetObj::Link& lnk = c->pin(0);
-      // Code parallels draw_pin above, some smart c++ guru should
-      // find a way to make a method out of this.
-      unsigned cpin;
-      const NetObj*cur;
+      for (unsigned idx = 0 ;  idx < c->pin_count() ;  idx += 1) {
+	    verinum::V v=c->value(idx);
+	    assert(v==verinum::V0 || v==verinum::V1);
+	    const NetObj::Link& lnk = c->pin(idx);
+	      // Code parallels draw_pin above, some smart c++ guru should
+	      // find a way to make a method out of this.
+	    unsigned cpin;
+	    const NetObj*cur;
 
-      os << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
+	    os << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
+      }
 }
 
 /*
@@ -709,6 +711,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.22  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.21  1999/12/16 18:54:32  steve
  *  Capture the carry out of carry-chain addition.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cprop.cc,v 1.2 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: cprop.cc,v 1.3 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,7 +35,7 @@ static bool is_a_const_node(const NetNode*obj)
       return dynamic_cast<const NetConst*>(obj);
 }
 
-static bool const_into_xnor(Design*des, NetConst*obj,
+static bool const_into_xnor(Design*des, verinum::V cval,
 			    NetLogic*log, unsigned pin)
 {
       assert(pin > 0);
@@ -44,7 +44,7 @@ static bool const_into_xnor(Design*des, NetConst*obj,
 	   the device is simply buffering the constant value. */
       if (log->pin_count() == 2) {
 	    cerr << "cprop: delete gate " << log->name() <<
-		  " and propogate " << obj->value() << "." << endl;
+		  " and propogate " << cval << "." << endl;
 
 	    assert(pin == 1);
 	    connect(log->pin(0), log->pin(1));
@@ -55,7 +55,7 @@ static bool const_into_xnor(Design*des, NetConst*obj,
 
 	/* If this is a constant 0, then replace the gate with one
 	   1-pin smaller. Skip this pin. */
-      if (obj->value() == verinum::V0) {
+      if (cval == verinum::V0) {
 	    cerr << "cprop: disconnect pin " << pin << " from gate "
 		 << log->name() << "." << endl;
 
@@ -78,7 +78,7 @@ static bool const_into_xnor(Design*des, NetConst*obj,
 	/* If this is a constant 1, then replace the gate with an XOR
 	   that is 1-pin smaller. Removing the constant 1 causes the
 	   sense of the output to change. */
-      if (obj->value() == verinum::V1) {
+      if (cval == verinum::V1) {
 	    cerr << "cprop: disconnect pin " << pin << " from gate "
 		 << log->name() << "." << endl;
 
@@ -101,7 +101,7 @@ static bool const_into_xnor(Design*des, NetConst*obj,
 	/* If this is a constant X or Z, then the gate is certain to
 	   generate an X. Replace the gate with a constant X. This may
 	   cause other signals all over to become dangling. */
-      if ((obj->value() == verinum::Vx) || (obj->value() == verinum::Vz)) {
+      if ((cval == verinum::Vx) || (cval == verinum::Vz)) {
 	    cerr << "cprop: replace gate " << log->name() << " with "
 		  "a constant X." << endl;
 
@@ -115,11 +115,11 @@ static bool const_into_xnor(Design*des, NetConst*obj,
       return false;
 }
 
-static void look_for_core_logic(Design*des, NetConst*obj)
+static void look_for_core_logic(Design*des, NetConst*obj, unsigned cpin)
 {
       NetObj*cur = obj;
       unsigned pin = 0;
-      for (obj->pin(0).next_link(cur, pin)
+      for (obj->pin(cpin).next_link(cur, pin)
 		 ; cur != obj
 		 ; cur->pin(pin).next_link(cur, pin)) {
 
@@ -130,7 +130,7 @@ static void look_for_core_logic(Design*des, NetConst*obj)
 	    bool flag = false;
 	    switch (log->type()) {
 		case NetLogic::XNOR:
-		  flag = const_into_xnor(des, obj, log, pin);
+		  flag = const_into_xnor(des, obj->value(cpin), log, pin);
 		  break;
 		default:
 		  break;
@@ -151,23 +151,25 @@ static void dangling_const(Design*des, NetConst*obj)
 {
 	// If there are any links that take input, abort this
 	// operation.
-      if (count_inputs(obj->pin(0)) > 0)
-	    return;
+      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
+	    if (count_inputs(obj->pin(idx)) > 0)
+		  return;
 
 	// If there are no other drivers, delete all the signals that
 	// are also dangling.
-      if (count_outputs(obj->pin(0)) == 1) {
+      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
+	    if (count_outputs(obj->pin(idx)) == 1) {
 
-	    NetObj*cur;
-	    unsigned pin;
-	    obj->pin(0).next_link(cur, pin);
-	    while (cur != obj) {
-		  cerr << "cprop: delete dangling signal " << cur->name() <<
-			"." << endl;
-		  delete cur;
-		  obj->pin(0).next_link(cur, pin);
+		  NetObj*cur;
+		  unsigned pin;
+		  obj->pin(idx).next_link(cur, pin);
+		  while (cur != obj) {
+			cerr << "cprop: delete dangling signal " <<
+			      cur->name() << "." << endl;
+			delete cur;
+			obj->pin(idx).next_link(cur, pin);
+		  }
 	    }
-      }
 
 	// Done. Delete me.
       delete obj;
@@ -178,7 +180,8 @@ void cprop(Design*des)
       des->clear_node_marks();
       while (NetNode*obj = des->find_node(&is_a_const_node)) {
 	    NetConst*cur = dynamic_cast<NetConst*>(obj);
-	    look_for_core_logic(des, cur);
+	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
+		  look_for_core_logic(des, cur, idx);
 	    cur->set_mark();
 	    dangling_const(des, cur);
       }
@@ -187,6 +190,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.3  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.2  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.102 1999/12/16 02:42:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.103 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 /*
@@ -707,20 +707,28 @@ class NetCaseCmp  : public NetNode {
       virtual void emit_node(ostream&, struct target_t*) const;
 };
 
-
+/*
+ * This class represents instances of the LPM_CONSTANT device. The
+ * node has only outputs and a constant value. The width is available
+ * by getting the pin_count(), and the value bits are available one at
+ * a time. There is no meaning to the aggregation of bits to form a
+ * wide NetConst object, although some targets may have an easier time
+ * detecting interesting constructs if they are combined.
+ */
 class NetConst  : public NetNode {
 
     public:
       explicit NetConst(const string&n, verinum::V v);
+      explicit NetConst(const string&n, const verinum&val);
       ~NetConst();
 
-      verinum::V value() const { return value_; }
+      verinum::V value(unsigned idx) const;
 
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      verinum::V value_;
+      verinum::V*value_;
 };
 
 /*
@@ -2070,6 +2078,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.103  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.102  1999/12/16 02:42:15  steve
  *  Simulate carry output on adders.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.6 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.7 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -125,12 +125,11 @@ NetNet* NetEConst::synthesize(Design*des)
       unsigned width=expr_width();
 
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
-      for (unsigned idx = 0 ;  idx < width;  idx += 1) {
-	    string oname = des->local_symbol(path);
-	    NetConst *c = new NetConst(oname, value().get(idx));
-	    connect(osig->pin(idx), c->pin(0));
-	    des->add_node(c);
-      }
+      NetConst*con = new NetConst(des->local_symbol(path), value());
+      for (unsigned idx = 0 ;  idx < width;  idx += 1)
+	    connect(osig->pin(idx), con->pin(idx));
+
+      des->add_node(con);
       des->add_signal(osig);
       return osig;
 }
@@ -200,6 +199,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.7  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.6  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

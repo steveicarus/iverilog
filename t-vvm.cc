@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.91 1999/12/16 02:42:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.92 1999/12/17 03:38:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -94,6 +94,7 @@ class target_vvm : public target_t {
       void end_process(ostream&os, const NetProcTop*);
 
     private:
+      void emit_init_value_(const NetObj::Link&lnk, verinum::V val);
       void emit_gate_outputfun_(const NetNode*, unsigned);
       string defn_gate_outputfun_(ostream&os, const NetNode*, unsigned);
 
@@ -745,36 +746,12 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    if (sig->get_ival(idx) == verinum::Vz)
 		  continue;
 
-	    map<string,bool>written;
-
 	    init_code << "      " << mangle(sig->name()) << ".init_P("
 		      << idx << ", V" << sig->get_ival(idx) << ");"
 		      << endl;
 
-	    for (const NetObj::Link*lnk = sig->pin(idx).next_link()
-		       ; (*lnk) != sig->pin(idx) ;  lnk = lnk->next_link()) {
-
-		  if (lnk->get_dir() == NetObj::Link::OUTPUT)
-			continue;
-
-		    // Check to see if the name has already been
-		    // written to. This can happen if the object is a
-		    // NetESignal, because there can be many of them
-		    // with the same name.
-		  if (written[lnk->get_obj()->name()])
-			continue;
-
-		  written[lnk->get_obj()->name()] = true;
-
-
-		  if (dynamic_cast<const NetNode*>(lnk->get_obj())) {
-			init_code << "      " <<
-			      mangle(lnk->get_obj()->name()) <<
-			      ".init_" << lnk->get_name() << "(" <<
-			      lnk->get_inst() << ", V" <<
-			      sig->get_ival(idx) << ");" << endl;
-		  }
-	    }
+	      // Propogate the initial value to inputs throughout.
+	    emit_init_value_(sig->pin(idx), sig->get_ival(idx));
       }
 }
 
@@ -857,6 +834,36 @@ string target_vvm::defn_gate_outputfun_(ostream&os,
       return name;
 }
 
+void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
+{
+      map<string,bool>written;
+
+      for (const NetObj::Link*cur = lnk.next_link()
+		 ; (*cur) != lnk ;  cur = cur->next_link()) {
+
+	    if (cur->get_dir() == NetObj::Link::OUTPUT)
+		  continue;
+
+	      // Check to see if the name has already been
+	      // written to. This can happen if the object is a
+	      // NetESignal, because there can be many of them
+	      // with the same name.
+	    if (written[cur->get_obj()->name()])
+		  continue;
+
+	    written[cur->get_obj()->name()] = true;
+
+	      // Write initial values to nodes and nets.
+	    if (dynamic_cast<const NetObj*>(cur->get_obj())) {
+		  init_code << "      " <<
+			mangle(cur->get_obj()->name()) <<
+			".init_" << cur->get_name() << "(" <<
+			cur->get_inst() << ", V" << val << ");" <<
+			endl;
+	    }
+      }
+}
+
 /*
  * This method handles writing output functions for gates that have a
  * single output (at pin 0). This writes the output_fun method into
@@ -878,7 +885,11 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
       const NetObj*cur;
       unsigned pin;
       gate->pin(gpin).next_link(cur, pin);
-      while (cur != gate) {
+      for ( ; cur != gate ; cur->pin(pin).next_link(cur, pin)) {
+
+	      // Skip pins that are output only.
+	    if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
+		  continue;
 
 	    if (cur->pin(pin).get_name() != "") {
 
@@ -892,7 +903,6 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 			  << pin << ", val);" << endl;
 	    }
 
-	    cur->pin(pin).next_link(cur, pin);
       }
 
       delayed << "}" << endl;
@@ -1290,29 +1300,8 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
  */
 void target_vvm::net_const(ostream&os, const NetConst*gate)
 {
-      string outfun = defn_gate_outputfun_(os, gate, 0);
-
-      os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
-	    outfun << ");" << endl;
-
-      init_code << "      " << mangle(gate->name()) << ".set(1, ";
-      switch (gate->value()) {
-	  case verinum::V0:
-	    init_code << "V0";
-	    break;
-	  case verinum::V1:
-	    init_code << "V1";
-	    break;
-	  case verinum::Vx:
-	    init_code << "Vx";
-	    break;
-	  case verinum::Vz:
-	    init_code << "Vz";
-	    break;
-      }
-      init_code << ");" << endl;
-
-      emit_gate_outputfun_(gate, 0);
+      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1)
+	    emit_init_value_(gate->pin(idx), gate->value(idx));
 }
 
 /*
@@ -1965,6 +1954,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.92  1999/12/17 03:38:46  steve
+ *  NetConst can now hold wide constants.
+ *
  * Revision 1.91  1999/12/16 02:42:15  steve
  *  Simulate carry output on adders.
  *
