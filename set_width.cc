@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.13 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: set_width.cc,v 1.14 2000/06/18 03:29:52 steve Exp $"
 #endif
 
 /*
@@ -47,8 +47,8 @@ bool NetEBinary::set_width(unsigned w)
 
 	  case 'l': // left shift  (<<)
 	  case 'r': // right shift (>>)
-	    flag = left_->set_width(w);
-	    expr_width(w);
+	      /* these operators are handled in the derived class. */
+	    assert(0);
 	    break;
 
 	      /* The default rule is that the operands of the binary
@@ -163,8 +163,15 @@ bool NetEBMult::set_width(unsigned w)
  */
 bool NetEBShift::set_width(unsigned w)
 {
-      bool flag;
-      flag = left_->set_width(w);
+      bool flag = true;
+
+      left_->set_width(w);
+      if (left_->expr_width() < w)
+	    left_ = pad_to_width(left_, w);
+
+      expr_width(left_->expr_width());
+      flag = expr_width() == w;
+
       return flag;
 }
 
@@ -300,6 +307,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.14  2000/06/18 03:29:52  steve
+ *  Handle width expansion of shift operators.
+ *
  * Revision 1.13  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.
