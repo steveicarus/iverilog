@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.52 2000/01/09 05:50:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.53 2000/02/18 05:15:03 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -303,12 +303,15 @@ void pform_makegates(PGBuiltin::Type type,
 
 /*
  * A module is different from a gate in that there are different
- * constraints, and sometimes different syntax.
+ * constraints, and sometimes different syntax. The X_modgate
+ * functions handle the instantaions of modules (and UDP objects) by
+ * making PGModule objects.
  */
 static void pform_make_modgate(const string&type,
 			       const string&name,
 			       struct parmvalue_t*overrides,
 			       svector<PExpr*>*wires,
+			       PExpr*msb, PExpr*lsb,
 			       const string&fn, unsigned ln)
 {
       if (name == "") {
@@ -321,6 +324,7 @@ static void pform_make_modgate(const string&type,
       PGModule*cur = new PGModule(type, name, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
+      cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->count();
@@ -345,6 +349,7 @@ static void pform_make_modgate(const string&type,
 			       const string&name,
 			       struct parmvalue_t*overrides,
 			       svector<portname_t*>*bind,
+			       PExpr*msb, PExpr*lsb,
 			       const string&fn, unsigned ln)
 {
       if (name == "") {
@@ -365,6 +370,7 @@ static void pform_make_modgate(const string&type,
       PGModule*cur = new PGModule(type, name, pins, npins);
       cur->set_file(fn);
       cur->set_lineno(ln);
+      cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
 	    unsigned cnt = overrides->by_name->count();
@@ -402,16 +408,22 @@ void pform_make_modgates(const string&type,
 	    lgate cur = (*gates)[idx];
 
 	    if (cur.parms_by_name) {
-		  pform_make_modgate(type, cur.name, overrides, cur.parms_by_name,
+		  pform_make_modgate(type, cur.name, overrides,
+				     cur.parms_by_name,
+				     cur.range[0], cur.range[1],
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
-		  pform_make_modgate(type, cur.name, overrides, cur.parms, cur.file,
-				     cur.lineno);
+		  pform_make_modgate(type, cur.name, overrides,
+				     cur.parms,
+				     cur.range[0], cur.range[1],
+				     cur.file, cur.lineno);
 	    } else {
 		  svector<PExpr*>*wires = new svector<PExpr*>(0);
-		  pform_make_modgate(type, cur.name, overrides, wires, cur.file,
-				     cur.lineno);
+		  pform_make_modgate(type, cur.name, overrides,
+				     wires,
+				     cur.range[0], cur.range[1],
+				     cur.file, cur.lineno);
 	    }
       }
 
@@ -808,6 +820,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.53  2000/02/18 05:15:03  steve
+ *  Catch module instantiation arrays.
+ *
  * Revision 1.52  2000/01/09 05:50:49  steve
  *  Support named parameter override lists.
  *

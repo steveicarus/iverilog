@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.143 2000/02/14 00:11:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.144 2000/02/18 05:15:02 steve Exp $"
 #endif
 
 /*
@@ -390,6 +390,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    cerr << get_line() << ": error: Instance/Scope name " <<
 		  get_name() << " already used in this context." <<
 		  endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      if (msb_) {
+	    cerr << get_line() << ": sorry: Module instantiation arrays "
+		  "are not yet supported." << endl;
 	    des->errors += 1;
 	    return;
       }
@@ -2003,6 +2010,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.144  2000/02/18 05:15:02  steve
+ *  Catch module instantiation arrays.
+ *
  * Revision 1.143  2000/02/14 00:11:11  steve
  *  Mark the line numbers of NetCondit nodes.
  *

@@ -339,6 +339,7 @@ I have received aid in the form of fixes, Verilog guidance, and
 especially testing from many people, including (in alphabetical order):
 
 	Eric Aardoom <eric_aardoom@yahoo.com>
+	Stephan I. Boettcher <stephan@nevis.columbia.edu>
 	Ed Carter <r47652@email.sps.mot.com>
 	Larry Doolittle <LRDoolittle@lbl.gov>
 	Guy Hutchison <ghutchis@pacbell.net>

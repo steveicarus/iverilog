@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.cc,v 1.5 1999/09/14 01:50:35 steve Exp $"
+#ident "$Id: PGate.cc,v 1.6 2000/02/18 05:15:02 steve Exp $"
 #endif
 
 # include  "PGate.h"
@@ -110,8 +110,47 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
+PGModule::PGModule(const string&type, const string&name, svector<PExpr*>*pins)
+: PGate(name, pins), type_(type), overrides_(0), pins_(0),
+  npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
+{
+}
+
+PGModule::PGModule(const string&type, const string&name,
+		   named<PExpr*>*pins, unsigned npins)
+: PGate(name, 0), type_(type), overrides_(0), pins_(pins),
+  npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
+{
+}
+
+void PGModule::set_parameters(svector<PExpr*>*o)
+{
+      assert(overrides_ == 0);
+      overrides_ = o;
+}
+
+void PGModule::set_parameters(named<PExpr*>*pa, unsigned npa)
+{
+      assert(parms_ == 0);
+      assert(overrides_ == 0);
+      parms_ = pa;
+      nparms_ = npa;
+}
+
+void PGModule::set_range(PExpr*msb, PExpr*lsb)
+{
+      assert(msb_ == 0);
+      assert(lsb_ == 0);
+
+      msb_ = msb;
+      lsb_ = lsb;
+}
+
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.6  2000/02/18 05:15:02  steve
+ *  Catch module instantiation arrays.
+ *
  * Revision 1.5  1999/09/14 01:50:35  steve
  *  Handle gates without delays.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.12 2000/01/09 05:50:48 steve Exp $"
+#ident "$Id: PGate.h,v 1.13 2000/02/18 05:15:02 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -156,30 +156,22 @@ class PGModule  : public PGate {
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
       explicit PGModule(const string&type, const string&name,
-			svector<PExpr*>*pins)
-      : PGate(name, pins), type_(type), overrides_(0), pins_(0),
-	  npins_(0), parms_(0), nparms_(0) { }
+			svector<PExpr*>*pins);
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
       explicit PGModule(const string&type, const string&name,
-			named<PExpr*>*pins, unsigned npins)
-      : PGate(name, 0), type_(type), overrides_(0), pins_(pins),
-	  npins_(npins), parms_(0), nparms_(0) { }
+			named<PExpr*>*pins, unsigned npins);
 
 
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
-      void set_parameters(svector<PExpr*>*o)
-      { assert(overrides_ == 0); overrides_ = o; }
+      void set_parameters(svector<PExpr*>*o);
+      void set_parameters(named<PExpr*>*pa, unsigned npa);
 
-      void set_parameters(named<PExpr*>*pa, unsigned npa)
-      { assert(parms_ == 0);
-        assert(overrides_ == 0);
-	parms_ = pa;
-	nparms_ = npa;
-      }
-
+	// Modules can be instantiated in ranges. The parser uses this
+	// method to pass the range to the pform.
+      void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*, const string&path) const;
@@ -194,12 +186,19 @@ class PGModule  : public PGate {
       named<PExpr*>*parms_;
       unsigned nparms_;
 
+	// Arrays of modules are give if these are set.
+      PExpr*msb_;
+      PExpr*lsb_;
+
       void elaborate_mod_(Design*, Module*mod, const string&path) const;
       void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.13  2000/02/18 05:15:02  steve
+ *  Catch module instantiation arrays.
+ *
  * Revision 1.12  2000/01/09 05:50:48  steve
  *  Support named parameter override lists.
  *

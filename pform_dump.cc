@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.47 2000/01/09 20:37:57 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.48 2000/02/18 05:15:03 steve Exp $"
 #endif
 
 /*
@@ -307,7 +307,18 @@ void PGModule::dump(ostream&out) const
 	    out << ") ";
       }
 
-      out << get_name() << "(";
+      out << get_name();
+
+	// If the module is arrayed, print the index expressions.
+      if (msb_ || lsb_) {
+	    out << "[";
+	    if (msb_) out << *msb_;
+	    out << ":";
+	    if (lsb_) out << *lsb_;
+	    out << "]";
+      }
+
+      out << "(";
       if (pins_) {
 	    out << "." << pins_[0].name << "(";
 	    if (pins_[0].parm) out << *pins_[0].parm;
@@ -691,6 +702,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.48  2000/02/18 05:15:03  steve
+ *  Catch module instantiation arrays.
+ *
  * Revision 1.47  2000/01/09 20:37:57  steve
  *  Careful with wires connected to multiple ports.
  *
