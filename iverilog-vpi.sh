@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.3 2002/05/15 01:25:25 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.4 2002/05/23 03:35:05 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -27,7 +27,7 @@ CFLAGS="@PIC@ -O"
 # These are used for linking...
 LD=gcc
 LDFLAGS="@SHARED@"
-LDLIBS=-lvpi
+LDLIBS="-lveriuser -lvpi"
 
 CCSRC=
 CXSRC=
