@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.47 2003/10/10 03:31:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.48 2003/10/10 03:34:15 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -113,7 +113,7 @@ clean:
 distclean: clean
 	rm -f Makefile
 
-install: all installdirs $(vpidir)/system.vpi
+install: all installdirs $(vpidir)/system.vpi $(INSTALL32)
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
