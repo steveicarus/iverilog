@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.52 2001/10/24 05:06:54 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.53 2001/11/19 04:25:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -95,7 +95,7 @@ static unsigned short allocate_vector(unsigned short wid)
 }
 
 
-static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
+static struct vector_info draw_binary_expr_eq(ivl_expr_t exp, unsigned ewid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -137,6 +137,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 	    break;
 
 	  case 'N': /* !== */
+	    if (lv.wid != rv.wid) {
+		  fprintf(stderr,"internal error: operands of !== "
+			  " have different widths: %u vs %u\n",
+			  lv.wid, rv.wid);
+	    }
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
 		    rv.base, lv.wid);
@@ -149,6 +154,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 	    break;
 
 	  case 'n': /* != */
+	    if (lv.wid != rv.wid) {
+		  fprintf(stderr,"internal error: operands of != "
+			  " have different widths: %u vs %u\n",
+			  lv.wid, rv.wid);
+	    }
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
 		    rv.base, lv.wid);
@@ -167,10 +177,12 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
-      { unsigned short base = allocate_vector(1);
+      { unsigned short base = allocate_vector(ewid);
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	lv.base = base;
-	lv.wid = 1;
+	lv.wid = ewid;
+	if (ewid > 1)
+	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
       }
 
       return lv;
@@ -233,7 +245,18 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	    clr_vector(rv);
       }
 
-      assert(wid == 1);
+	/* If we only want the single bit result, then we are done. */
+      if (wid == 1)
+	    return lv;
+
+	/* Write the result into a zero-padded result. */
+      { unsigned short base = allocate_vector(wid);
+        fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
+	clr_vector(lv);
+	lv.base = base;
+	lv.wid = wid;
+	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+      }
 
       return lv;
 }
@@ -246,12 +269,34 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-	/* XXXX For now, assume the operands are a single bit. */
-      assert(ivl_expr_width(le) == 1);
-      assert(ivl_expr_width(re) == 1);
-
       lv = draw_eval_expr_wid(le, wid);
+
+	/* if the left operand has width, then evaluate the single-bit
+	   logical equivilent. */
+      if ((lv.base >= 4) && (lv.wid > 1)) {
+	    struct vector_info tmp;
+	    clr_vector(lv);
+	    tmp.base = allocate_vector(1);
+	    tmp.wid = 1;
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
+		    lv.base, lv.wid);
+	    lv = tmp;
+      }
+
       rv = draw_eval_expr_wid(re, wid);
+
+	/* if the right operand has width, then evaluate the single-bit
+	   logical equivilent. */
+      if ((rv.base >= 4) && (rv.wid > 1)) {
+	    struct vector_info tmp;
+	    clr_vector(rv);
+	    tmp.base = allocate_vector(1);
+	    tmp.wid = 1;
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
+		    rv.base, rv.wid);
+	    rv = tmp;
+      }
+
 
       if (lv.base < 4) {
 	    if (rv.base < 4) {
@@ -277,7 +322,19 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    clr_vector(rv);
       }
 
-      assert(wid == 1);
+
+	/* If we only want the single bit result, then we are done. */
+      if (wid == 1)
+	    return lv;
+
+	/* Write the result into a zero-padded result. */
+      { unsigned short base = allocate_vector(wid);
+        fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
+	clr_vector(lv);
+	lv.base = base;
+	lv.wid = wid;
+	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+      }
 
       return lv;
 }
@@ -336,13 +393,13 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
-      { unsigned short base = allocate_vector(1);
+      { unsigned short base = allocate_vector(wid);
         fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
 	lv.base = base;
-	lv.wid = 1;
+	lv.wid = wid;
+	if (wid > 1)
+	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
       }
-
-      assert(wid == 1);
 
       return lv;
 }
@@ -554,8 +611,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	  case 'e': /* == */
 	  case 'N': /* !== */
 	  case 'n': /* != */
-	    assert(wid == 1);
-	    rv = draw_binary_expr_eq(exp);
+	    rv = draw_binary_expr_eq(exp, wid);
 	    break;
 
 	  case '<':
@@ -1250,6 +1306,20 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  fprintf(vvp_out, "    %%mov %u, 0, 1;\n", res.base);
 		  fprintf(vvp_out, "T_%u.%u ;\n", thread_count, label_out);
 	    }
+
+	      /* If the result needs to be bigger then the calculated
+		 value, then write it into a padded vector. */
+	    if (res.wid < wid) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(wid);
+		  tmp.wid = wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, res.base, res.wid);
+		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+			  tmp.base+res.wid, tmp.wid-res.wid);
+		  clr_vector(res);
+		  res = tmp;
+	    }
 	    break;
 
 	  case 'N':
@@ -1262,7 +1332,17 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    res = draw_eval_expr(sub);
 	    if (res.wid > 1) {
 		  struct vector_info tmp;
-		  assert(res.base >= 4);
+		    /* If the previous result is in the constant area
+		       (and is a vector) then copy it out into some
+		       temporary space. */
+		  if (res.base < 4) {
+			tmp.base = allocate_vector(res.wid);
+			tmp.wid = res.wid;
+			fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+				tmp.base, res.base, res.wid);
+			res = tmp;
+		  }
+
 		  tmp.base = res.base+1;
 		  tmp.wid = res.wid - 1;
 		  fprintf(vvp_out, "    %%%s/r %u, %u, %u;\n",
@@ -1271,7 +1351,22 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  clr_vector(tmp);
 		  res.wid = 1;
 	    } else if (inv) {
+		  assert(res.base >= 4);
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    }
+
+	      /* If the result needs to be bigger then the calculated
+		 value, then write it into a passed vector. */
+	    if (res.wid < wid) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(wid);
+		  tmp.wid = wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, res.base, res.wid);
+		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+			  tmp.base+res.wid, tmp.wid-res.wid);
+		  clr_vector(res);
+		  res = tmp;
 	    }
 	    break;
 
@@ -1353,6 +1448,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.53  2001/11/19 04:25:46  steve
+ *  Handle padding out of logical values.
+ *
  * Revision 1.52  2001/10/24 05:06:54  steve
  *  The ! expression returns 0 to x and z values.
  *
