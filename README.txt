@@ -43,7 +43,7 @@ on a UNIX-like system:
 	  recent gcc compilers with the associated libstdc++ are known
 	  to work. MSVC++ 5 and 6 are known to definitely *not* work.
 
-	- bison
+	- bison and flex
 
 	- gperf 2.7
 	  The lexical analyzer doesn't recognize keywords directly,
@@ -223,17 +223,6 @@ Usage: ivl <options>... file
 	The function is specified by name. Use the "ivl -h" command to
 	get a list of configured function names.
 
--f <assign>
-	Use this flag to set a parameter value. The format of the
-	assignment is <key>=<value> where key is any string up to the
-	first '=', and <value> is the rest of the option. If the '='
-	is omitted, then the key is assigned the empty string.
-
-	The useful keys are defined by the functions and the target in
-	use. These assignments are specifically useful for passing
-	target specific information to the target back-end, or
-	options/parameters to optimization functions, if any are defined.
-
 -m <module>
 	Cause a named VPI module to be included in the module
 	list. This parameter appends the named module to the end of
@@ -262,6 +251,17 @@ Usage: ivl <options>... file
 	The pform is the compiler's understanding of the input after
 	parsing and before elaboration. This is an aid for debugging
 	the compiler.
+
+-p <assign>
+	Use this flag to set a parameter value. The format of the
+	assignment is <key>=<value> where key is any string up to the
+	first '=', and <value> is the rest of the option. If the '='
+	is omitted, then the key is assigned the empty string.
+
+	The useful keys are defined by the functions and the target in
+	use. These assignments are specifically useful for passing
+	target specific information to the target back-end, or
+	options/parameters to optimization functions, if any are defined.
 
 -s <module>
 	Normally, ivl will elaborate the only module in the source
@@ -320,7 +320,9 @@ Icarus Verilog is in development - as such it still only supports a
 (growing) subset of Verilog.  Below is a description of some of the
 currently unsupported verilog features. This list is not exhaustive,
 and does not account for errors in the compiler. See the Icarus
-Verilog web page for the current state of support for Verilog.
+Verilog web page for the current state of support for Verilog, and in
+particular, browse the bug report database for reported unsupported
+constructs.
 
   - block disable not supported, i.e.:
 
@@ -335,7 +337,9 @@ Verilog web page for the current state of support for Verilog.
             assign foo = user_function(a,b); // sorry
 	    always @(a or b) foo = user_function(a,b); // OK
 
-  - real data types not supported. This includes real and realtime.
+  - real data types not supported. This includes real and
+    realtime. However, floating point constants in delay expressions
+    are supported so that `timescale works properly.
 
   - System functions are supported, but the compiler presumes that
     they return 32 bits. This is the typical case.
@@ -349,9 +353,9 @@ Verilog web page for the current state of support for Verilog.
 
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
 Copyright Stephen Williams. The proper notices are in the head of each
-file. However, I have received aid in the form of fixes, Verilog
-guidance, and especially testing from many people, including (in
-alphabetical order):
+file. However, I have early on received aid in the form of fixes,
+Verilog guidance, and especially testing from many people, including
+(in alphabetical order):
 
 	Eric Aardoom <eric_aardoom@yahoo.com>
 	Stephan I. Boettcher <stephan@nevis.columbia.edu>
@@ -380,7 +384,7 @@ for collecting and organizing the test suite code for all those testers.
 This is a list of people who have created ports and precompiled
 packages for various operating systems. These folks have graciously
 taken on the task of building Icarus Verilog on their systems and
-bundled it into neat packages.(*) If you want to be added to the list (or
+bundled it into neat packages.(+) If you want to be added to the list (or
 removed from the list) send e-mail to me.
 
       FreeBSD/{Intel,alpha}
@@ -396,7 +400,7 @@ removed from the list) send e-mail to me.
 	Yasuhisa Kato <ykato@mac.com>
 
       NetBSD/*
-	Dan <mcmahill@mtl.mit.edu>
+	Dan McMahill <mcmahill@mtl.mit.edu>
 
       Solaris/SPARC packages (.pkg)
 	Dan McMahill <mcmahill@mtl.mit.edu>
@@ -404,7 +408,7 @@ removed from the list) send e-mail to me.
       Cygwin32/*
         Venkat Iyer <venkat@comit.com>
 
-(*) These are not the only systems where Icarus Verilog has been run,
+(+) These are not the only systems where Icarus Verilog has been run,
 just the systems where precompiled binaries are publicly available.
 
 6.2 TEST SUITE MANAGER

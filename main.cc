@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.39 2000/11/22 20:48:32 steve Exp $"
+#ident "$Id: main.cc,v 1.40 2001/01/20 19:02:05 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -130,7 +130,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:s:T:t:vW:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:vW:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -159,6 +159,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'P':
 	    pf_path = optarg;
+	    break;
+	  case 'p':
+	    parm_to_flagmap(optarg);
 	    break;
 	  case 's':
 	    start_module = optarg;
@@ -327,6 +330,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.40  2001/01/20 19:02:05  steve
+ *  Switch hte -f flag to the -p flag.
+ *
  * Revision 1.39  2000/11/22 20:48:32  steve
  *  Allow sole module to be a root.
  *

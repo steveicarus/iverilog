@@ -25,7 +25,7 @@
  *
  * To compile this for XNF, try a command like this:
  *
- *    iverilog -txnf -fpart=XC4010XLPQ160 -fncf=xnf_add.ncf -oxnf_add.xnf xnf_add.v
+ *    iverilog -txnf -ppart=XC4010XLPQ160 -pncf=xnf_add.ncf -oxnf_add.xnf xnf_add.v
  *
  * That command causes an xnf_add.xnf and xnf_add.ncf file to be created.
  * Next, Use Xilinx Alliance or Foundation tools to make the xnf_add.ngd

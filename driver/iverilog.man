@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2001/01/05 05:16:03 $" Version "$Date: 2001/01/05 05:16:03 $"
+.TH iverilog 1 "$Date: 2001/01/20 19:02:05 $" Version "$Date: 2001/01/20 19:02:05 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
+[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -55,12 +55,6 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 verilog source for use by other compilers.
 .TP 8
-.B -f\fIflag=value\fP
-Assign a value to a target specific flag. The \fB-f\fP switch may be
-used as often as necessary to specify all the desired flags. The flags
-that are used depend on the target that is selected, and are described
-in target specific documentation. Flags that are not used are ignored.
-.TP 8
 .B -I\fIincludedir\fP 
 Append directory \fIincludepdir\fP to list of directoriess searched
 for Verilog include files. The \fB-I\fP switch may be used many times
@@ -81,6 +75,12 @@ elaborated and optimized.
 .B -o \fIfilename\fP
 Place output in the file \fIfilename\fP. If no output file name is
 specified, \fIiverilog\fP uses the default name \fBa.out\fP.
+.TP 8
+.B -p\fIflag=value\fP
+Assign a value to a target specific flag. The \fB-p\fP switch may be
+used as often as necessary to specify all the desired flags. The flags
+that are used depend on the target that is selected, and are described
+in target specific documentation. Flags that are not used are ignored.
 .TP 8
 .B -S
 Synthesize. Normally, if the target can accept behavioral

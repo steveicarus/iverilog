@@ -17,12 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.6 2001/01/20 02:15:51 steve Exp $"
+#ident "$Id: main.c,v 1.7 2001/01/20 19:02:05 steve Exp $"
 #endif
 
 const char HELP[] =
 "Usage: iverilog [-ESv] [-c <path>] [-Dmacro[=defn]] 
-                [-f flag=value] [-I<dir>] [-m module]
+                [-p flag=value] [-I<dir>] [-m module]
                 [-o <output>] [-s top_module] [-t<type>]
                 [-W class] source_file(s)
 See man page for details.";
@@ -296,15 +296,17 @@ int main(int argc, char **argv)
 		  e_flag = 1;
 		  break;
 		case 'f':
+		  fprintf(stderr, "warning: The -f flag is moved to -p\n");
+		case 'p':
 		  if (f_list == 0) {
-			f_list = malloc(strlen(" -f")+strlen(optarg)+1);
-			strcpy(f_list, " -f");
+			f_list = malloc(strlen(" -p")+strlen(optarg)+1);
+			strcpy(f_list, " -p");
 			strcat(f_list, optarg);
 		  } else {
 			f_list = realloc(f_list, strlen(f_list) +
-					 strlen(" -f") +
+					 strlen(" -p") +
 					 strlen(optarg) + 1);
-			strcat(f_list, " -f");
+			strcat(f_list, " -p");
 			strcat(f_list, optarg);
 		  }
 		  break;
@@ -518,6 +520,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.7  2001/01/20 19:02:05  steve
+ *  Switch hte -f flag to the -p flag.
+ *
  * Revision 1.6  2001/01/20 02:15:51  steve
  *  apologize for not supporting non-constant delays.
  *
