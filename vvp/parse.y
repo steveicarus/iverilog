@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.38 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: parse.y,v 1.39 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -208,17 +208,13 @@ statement
      named event instead. */
 
 	| T_LABEL K_EVENT T_SYMBOL ',' symbols ';'
-		{ struct symbv_s obj = $5;
-		  compile_event($1, $3, obj.cnt, obj.vect);
-		}
+		{ compile_event($1, $3, $5.cnt, $5.vect); }
 
 	| T_LABEL K_EVENT T_STRING ';'
-		{ compile_named_event($1, $3); }
+		{ compile_event($1, $3, 0, 0); }
 
 	| T_LABEL K_EVENT_OR symbols ';'
-		{ struct symbv_s obj = $3;
-		  compile_event_or($1, obj.cnt, obj.vect);
-		}
+		{ compile_event($1, 0, $3.cnt, $3.vect); }
 
 
   /* Instructions may have a label, and have zero or more
@@ -509,6 +505,11 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.39  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.38  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *

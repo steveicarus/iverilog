@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.61 2001/10/25 04:19:53 steve Exp $"
+#ident "$Id: vthread.cc,v 1.62 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1577,9 +1577,8 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
-      functor_t fp = functor_index(cp->iptr);
-      assert((fp->mode == 1) || (fp->mode == 2));
-      vvp_event_t ep = fp->event;
+      vvp_event_t ep = dynamic_cast<vvp_event_t>(functor_index(cp->iptr));
+      assert(ep);
       thr->wait_next = ep->threads;
       ep->threads = thr;
 
@@ -1672,6 +1671,11 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.62  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.61  2001/10/25 04:19:53  steve
  *  VPI support for callback to return values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.5 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: pointers.h,v 1.6 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 /*
@@ -86,16 +86,10 @@ inline unsigned ipoint_port(vvp_ipoint_t func)
 typedef unsigned vvp_cpoint_t;
 
 /*
- * The truth table that functors point to are addressed with this
- * typedef. 
- */
-typedef const unsigned char*vvp_truth_t;
-
-/*
  * The functor event mode uses a pointer of this type to point to the
  * extended event data.
  */
-typedef struct vvp_event_s *vvp_event_t;
+typedef struct event_functor_s *vvp_event_t;
 
 
 typedef struct vthread_s*vthread_t;
@@ -107,6 +101,11 @@ typedef struct vvp_fvector_s *vvp_fvector_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.6  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.5  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

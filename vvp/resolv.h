@@ -19,21 +19,26 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.h,v 1.2 2001/05/12 01:48:57 steve Exp $"
+#ident "$Id: resolv.h,v 1.3 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "functor.h"
 
-class vvp_resolv_s  : public vvp_fobj_s {
+class resolv_functor_s: public functor_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      resolv_functor_s() { istr[0]=istr[1]=istr[2]=istr[3]=StX; }
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      unsigned char istr[4];
 };
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.3  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.2  2001/05/12 01:48:57  steve
  *  Silly copyright typo.
  *

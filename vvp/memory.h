@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.h,v 1.3 2001/06/15 03:28:31 steve Exp $"
+#ident "$Id: memory.h,v 1.4 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -37,9 +37,9 @@ typedef struct vvp_memory_index_s *vvp_memory_index_t;
 
 void memory_new(vvp_memory_t mem, char *name, int lsb, int msb,
 		unsigned idxs, long *idx);
-void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix, 
-		     unsigned nbits, unsigned bitoff,
-		     unsigned naddr, bool writable);
+vvp_ipoint_t memory_port_new(vvp_memory_t mem,
+			     unsigned nbits, unsigned bitoff,
+			     unsigned naddr, bool writable);
 
 void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val);
 
@@ -61,6 +61,11 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.4  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.3  2001/06/15 03:28:31  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

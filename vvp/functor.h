@@ -19,10 +19,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.34 2001/10/27 03:43:56 steve Exp $"
+#ident "$Id: functor.h,v 1.35 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "pointers.h"
+
+/*
+ * Create a propagation event. The fun parameter points to the functor
+ * to have its output propagated, and the delay is the delay to
+ * schedule the propagation.
+ */
+extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
 
 /*
  *
@@ -53,27 +60,6 @@
  * output value is picked from the lookup table that the table pointer
  * points to.
  *
- * MODE 1: EDGE EVENT FUNCTORS
- *
- * These functors take inputs like mode 0 functors, but the input is
- * compared with the preveous input for that bit, and the results of
- * that comparison are used to detect edges. The functor may be
- * programmed to detect posedge, negedge, or any edge events. These
- * functors can have %wait instructions waiting on them.
- *
- * MODE 2: NAMED EVENT FUNCTORS
- *
- * These functors do not bother to check for edges. Any event on the
- * input causes an event to be detected. Like mode-1 functors, these
- * can have %wait instructions waiting on them. Mode-2 functors do not
- * have structural inputs, however. They take their inputs from %set
- * instructions.
- *
- * Mode-2 events can also be used to combine other mode-1 and mode-2
- * functors by setting their outputs to put to the mode-2
- * functor. Since the mode-2 functor does not take input, any number
- * of mode-1 and mode-2 functors may point in.
- *
  * MODE 42: LIFE, THE UNIVERSE AND EVERYTHING ELSE
  *
  * These functors are and escape for all other behaviors. This mode
@@ -84,7 +70,7 @@
  *
  * DRIVE STRENGTHS:
  *
- * The normal functor (modes 0, 1 and 2) is not aware of strengths. It
+ * The normal functor (modes 0) is not aware of strengths. It
  * generates strength simply by virtue of having strength
  * specifications. The drive strength specification includes a drive0
  * and drive1 strength, each with 8 possible values (that can be
@@ -117,43 +103,11 @@
  * value.
  */
 
-struct functor_s {
-	/* This is the truth table for the device */
-      union {
-	    vvp_truth_t table;
-	    vvp_event_t event;
-            struct vvp_fobj_s *obj;
-      };
-
-	/* This is the output for the device. */
-      vvp_ipoint_t out;
-	/* These are the input ports. */
-      vvp_ipoint_t port[4];
-	/* Input with strengths, for strength aware functors. */
-      unsigned char istr[4];
-	/* Input values without strengths. */
-      unsigned ival       : 8;
-	/* Output value (low bits) and drive1 and drive0 strength. */
-      unsigned oval       : 2;
-      unsigned odrive0    : 3;
-      unsigned odrive1    : 3;
-	/* Strength form of the output value. */
-      unsigned ostr       : 8;
-#if defined(WITH_DEBUG)
-	/* True if this functor triggers a breakpoint. */
-      unsigned breakpoint : 1;
-#endif
-
-	/* functor mode:  0 == table ;  1 == event */
-      unsigned mode       : 2;
-        /* General purpose flag for M42 functor's convenience */ 
-      unsigned flag42     : 1;
-      union {
- 	    unsigned char old_ival; // mode 1, UDP
-      };
-};
-
 typedef struct functor_s *functor_t;
+
+/*
+ * signal strengths
+ */
 
 enum strength_e {
       HiZ = 0x00,
@@ -166,46 +120,6 @@ enum strength_e {
       StX = 0x66|0x80, /* St0 - St1 */
 };
 
-/*
- * This a an `obj' structute for mode-42 functors.  
- * Each instance implements the get and set methods in a type specific
- * way, so that this represents a completely general functor.
- *
- * ::set(...)
- *
- * This method is called when any of the 4 inputs of the functor
- * receives a bit value. This method is called even if the set value
- * is the same as the existing value.
- *
- * ::get(...)
- *
- * This method is called to pull the "value" of the functor. Normally,
- * there is not much of a trick to this, but some types might need to
- * do complex things here, like look up a memory index. Anyhow, this
- * method must be idempotent, because I'm only going to tell you that
- * it happens when it happens.
- */
-
-#define M42 3
-
-struct vvp_fobj_s {
-      virtual unsigned get(vvp_ipoint_t i, functor_t f);
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push) =0;
-};
-
-
-/*
- * If functor mode is 1, the event member is valid and the vvp_event_s
- * points to the extended event information.
- */
-extern const unsigned char vvp_edge_posedge[16];
-extern const unsigned char vvp_edge_negedge[16];
-extern const unsigned char vvp_edge_anyedge[16];
-
-struct vvp_event_s {
-      vthread_t threads;
-      const unsigned char*vvp_edge_tab;
-};
 
 /*
  * Initialize the functors address space. This function must be called
@@ -225,15 +139,183 @@ extern void functor_init(void);
 extern vvp_ipoint_t functor_allocate(unsigned wid);
 
 /*
- * This function is used by the compile time to initialize the value
- * of an input, and by the run time to manipulate the bits of the
- * input in a uniform manner.
- *
- * The val parameter is the 2bit representation of the input value,
- * and the str is a strength aware version.
+ * Given an ipoint_t pointer, return a C pointer to the functor. This
+ * is like a pointer dereference. The point parameter must have been
+ * returned from a previous call to functor_allocate.
  */
-extern void functor_put_input(functor_t fp, unsigned pp,
-			      unsigned val, unsigned str);
+
+extern functor_t **functor_list;
+static const unsigned functor_chunks = 0x400;
+
+inline static functor_t functor_index(vvp_ipoint_t point)
+{
+      unsigned index1 = point/4/functor_chunks;
+      unsigned index2 = (point/4) % functor_chunks;
+
+      return functor_list[index1][index2];
+}
+
+/*
+ * This function defines the functor object.  After allocation an ipoint, 
+ * you must call this before functor_index() is called on it.
+ */
+extern void functor_define(vvp_ipoint_t point, functor_t obj);
+
+
+/*
+**                   The functor object
+*/
+
+struct functor_s {
+      functor_s();
+	/* This is the output for the device. */
+      vvp_ipoint_t out;
+	/* These are the input ports. */
+      vvp_ipoint_t port[4];
+
+	/* Input values without strengths. */
+      unsigned ival       : 8;
+
+    private:
+	/* Output value (low bits) and drive1 and drive0 strength. */
+      unsigned oval       : 2;
+    protected:
+      unsigned odrive0    : 3;
+      unsigned odrive1    : 3;
+    private:
+	/* Strength form of the output value. */
+      unsigned ostr       : 8;
+
+      unsigned inhibit    : 1;
+
+    public:
+#if defined(WITH_DEBUG)
+        /* True if this functor triggers a breakpoint. */
+      unsigned breakpoint : 1;
+#endif
+      virtual void set(vvp_ipoint_t ipt, bool push, 
+		       unsigned val, unsigned str = 0) = 0;
+
+      inline unsigned char get() { return oval; }
+      void put(vvp_ipoint_t ipt, unsigned val);
+      void put_oval(vvp_ipoint_t ptr, bool push, unsigned val);
+      void put_ostr(vvp_ipoint_t ptr, bool push, unsigned val, unsigned str);
+      bool disable(vvp_ipoint_t ptr);
+      bool enable(vvp_ipoint_t ptr);
+      void propagate(bool push);
+};
+
+inline functor_s::functor_s()
+{
+      out = 0;
+      port[0] = 0;
+      port[1] = 0;
+      port[2] = 0;
+      port[3] = 0;
+      ival = 0xaa;
+      oval = 2;
+      odrive0 = 6;
+      odrive1 = 6;
+      ostr = StX;
+      inhibit = 0;
+#if defined(WITH_DEBUG)
+      breakpoint = 0;
+#endif
+}
+
+/*
+ *  Set the ival for input port ptr to value val.
+ */
+
+inline void functor_s::put(vvp_ipoint_t ptr, unsigned val)
+{
+      static const unsigned char ival_mask[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
+      unsigned pp = ipoint_port(ptr);
+      unsigned char imask = ival_mask[pp];
+      ival = (ival & imask) | ((val & 3) << (2*pp));
+}
+
+inline void functor_s::propagate(bool push)
+{
+      vvp_ipoint_t idx = out;
+      while (idx) {
+	    functor_t idxp = functor_index(idx);
+	    idxp->set(idx, push, oval, ostr);
+	    idx = idxp->port[ipoint_port(idx)];
+	    
+#if defined(WITH_DEBUG)
+	    if (fp->breakpoint)
+		  breakpoint();
+#endif
+      }
+}
+
+inline void functor_s::put_oval(vvp_ipoint_t ptr, bool push, unsigned val)
+{
+      switch (val) {
+	  case 0:
+	    ostr = 0x00 | (odrive0<<0) | (odrive0<<4);
+	    break;
+	  case 1:
+	    ostr = 0x88 | (odrive1<<0) | (odrive1<<4);
+	    break;
+	  case 2:
+	    ostr = 0x80 | (odrive0<<0) | (odrive1<<4);
+	    break;
+	  case 3:
+	    ostr = 0x00;
+	    break;
+      }
+      if (inhibit)
+	    return;
+      if (val != oval) {
+	    oval = val;
+	    if (push)
+		  propagate(true);
+	    else
+		  schedule_functor(ptr, 0);
+      }
+}
+
+inline void functor_s::put_ostr(vvp_ipoint_t ptr, bool push, 
+				unsigned val, unsigned str)
+{
+      if (val != oval || str != ostr) {      
+	    ostr = str;
+	    if (inhibit)
+		  return;
+	    oval = val;
+	    if (push)
+		  propagate(true);
+	    else
+		  schedule_functor(ptr, 0);
+      }
+}
+
+inline bool functor_s::disable(vvp_ipoint_t ptr)
+{
+      bool r = inhibit;
+      inhibit = 1;
+      return r;
+}
+
+inline bool functor_s::enable(vvp_ipoint_t ptr)
+{
+      unsigned val;
+      if (ostr == 0)
+	    val = 3;
+      else switch (ostr & 0x88) {
+	  case 0x00: val = 0; break;
+	  case 0x88: val = 1; break;
+	  default:   val = 2;
+      }
+      if (val != oval) {
+	    schedule_functor(ptr, 0);
+      }
+      bool r = inhibit;
+      inhibit = 0;
+      return r;
+}
 
 /*
  * functor_set sets the addressed input to the specified value, and
@@ -245,14 +327,35 @@ extern void functor_put_input(functor_t fp, unsigned pp,
  * version is also passed, and typically just stored in the
  * functor.
  */
-extern void functor_set(vvp_ipoint_t point, unsigned val,
-			unsigned str, bool push);
+
+/*
+ * Set the addressed bit of the functor, and recalculate the
+ * output. If the output changes any, then generate the necessary
+ * propagation events to pass the output on.
+ */
+inline static 
+void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
+{
+      functor_t fp = functor_index(ptr);
+      fp->set(ptr, push, val, str);
+
+#if defined(WITH_DEBUG)
+      if (fp->breakpoint)
+	    breakpoint();
+#endif
+}
 
 /*
  * Read the value of the functor. In fact, only the *value* is read --
  * the strength of that value is stripped off.
  */
-extern unsigned functor_get(vvp_ipoint_t ptr);
+inline static 
+unsigned functor_get(vvp_ipoint_t ptr)
+{
+      functor_t fp = functor_index(ptr);
+      return fp->get();
+}
+
 
 /*
  * When a propagation event happens, this function is called with the
@@ -260,47 +363,64 @@ extern unsigned functor_get(vvp_ipoint_t ptr);
  * the inputs it is connected to, creating new propagation event on
  * the way.
  */
-extern void functor_propagate(vvp_ipoint_t ptr, bool push = true);
-/*
- * Given an ipoint_t pointer, return a C pointer to the functor. This
- * is like a pointer dereference. The point parameter must have been
- * returned from a previous call to functor_allocate.
- */
-extern functor_t functor_index(vvp_ipoint_t point);
-
-/*
- * This is a convenience function that returns the current output
- * value of the functor.
- */
-inline unsigned functor_oval(vvp_ipoint_t fptr)
+static inline
+void functor_propagate(vvp_ipoint_t ptr, bool push=true)
 {
-      functor_t fp = functor_index(fptr);
-      return fp->oval & 3;
+      functor_t fp = functor_index(ptr);
+      fp->propagate(push);
 }
 
-/*
- * Vectors of functors
- */
+// The extra_outputs_functor_s class is for devices that require 
+// multiple inputs and outputs.
+// ->set redirects the job to the base_, who knows what shall be done.
 
-extern unsigned vvp_fvector_size(vvp_fvector_t v);
-extern vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i);
-extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
-extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
-extern vvp_fvector_t vvp_fvector_new(unsigned size);
-extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
+struct extra_outputs_functor_s: public functor_s {
+      extra_outputs_functor_s(vvp_ipoint_t b = 0) : base_(b) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
-/*
- * M42 functor type for callback events
- */
-
-struct vvp_cb_fobj_s: public vvp_fobj_s {
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-      struct __vpiCallback *cb_handle;
-      unsigned permanent : 1;
+      unsigned base_;
 };
 
-struct vvp_cb_fobj_s *vvp_fvector_make_callback(vvp_fvector_t vec,
-						const unsigned char *edge = 0);
+// extra_ports_functor_s redirects to base without setting the inputs.
+// But base must be awayr that i may not match this.  This is used by 
+// memory ports.
+
+struct extra_ports_functor_s : public extra_outputs_functor_s
+{
+      extra_ports_functor_s(vvp_ipoint_t b = 0) : extra_outputs_functor_s(b) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+};
+
+// The extra_inputs_functor_s class is for devices that require 
+// multiple inputs but only one output
+// ->set redirects the job to ->out, that knows what shall be done.
+
+struct extra_inputs_functor_s: public functor_s {
+      extra_inputs_functor_s(vvp_ipoint_t b = 0) { out = b; }
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+};
+
+// edge_inputs_functor_s provides an old_ival
+// it's up to the set() method to use it (UDP).
+// The default set() is inherited from extra_inputs_functor_s.
+struct edge_inputs_functor_s: public extra_inputs_functor_s
+{
+      edge_inputs_functor_s() : old_ival(2) {}
+      unsigned char old_ival;
+};
+
+/*
+ *  Table driven functor.  oval = table[ival];
+ */
+
+struct table_functor_s: public functor_s {
+      typedef const unsigned char *truth_t;
+      explicit table_functor_s(truth_t t) : table(t) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      truth_t table;
+};
+
+// table functor types
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
@@ -318,8 +438,75 @@ extern const unsigned char ft_XNOR[];
 extern const unsigned char ft_XOR[];
 extern const unsigned char ft_var[];
 
+
+/*
+ *  Event / edge detection functors
+ */
+
+struct event_functor_s: public edge_inputs_functor_s {
+      typedef unsigned short edge_t;
+      explicit event_functor_s(edge_t e) : edge(e), threads(0) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      edge_t edge;
+      vthread_t threads;
+};
+
+#define VVP_EDGE(a,b) (1<<(((a)<<2)|(b)))
+
+const event_functor_s::edge_t vvp_edge_posedge 
+      = VVP_EDGE(0,1)
+      | VVP_EDGE(0,2)
+      | VVP_EDGE(0,3)
+      | VVP_EDGE(2,1)
+      | VVP_EDGE(3,1)
+      ;
+
+const event_functor_s::edge_t vvp_edge_negedge 
+      = VVP_EDGE(1,0)
+      | VVP_EDGE(1,2)
+      | VVP_EDGE(1,3)
+      | VVP_EDGE(2,0)
+      | VVP_EDGE(3,0)
+      ;
+
+const event_functor_s::edge_t vvp_edge_anyedge = 0x7bde;
+const event_functor_s::edge_t vvp_edge_none = 0;
+
+/*
+ *   Variable functors
+ */
+
+struct var_functor_s: public functor_s {
+      var_functor_s() : assigned(0) {};
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      unsigned assigned : 1;
+};
+
+
+/*
+ * Callback functors.
+ */
+struct callback_functor_s *vvp_fvector_make_callback
+                    (vvp_fvector_t, event_functor_s::edge_t = vvp_edge_none);
+/*
+ * Vectors of functors
+ */
+
+extern unsigned vvp_fvector_size(vvp_fvector_t v);
+extern vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i);
+extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
+extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
+extern vvp_fvector_t vvp_fvector_new(unsigned size);
+extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
+
+
 /*
  * $Log: functor.h,v $
+ * Revision 1.35  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.34  2001/10/27 03:43:56  steve
  *  Propagate functor push, to make assign better.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.6 2001/10/14 01:45:11 steve Exp $"
+#ident "$Id: resolv.cc,v 1.7 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -137,44 +137,43 @@ static unsigned blend(unsigned a, unsigned b)
  * inputs are resolved with the blend function, and the final value is
  * reduced to a 4-value result for propagation.
  */
-void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
+void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 {
-      unsigned val = fp->istr[0];
+      unsigned pp = ipoint_port(i);
+      istr[pp] = str;
 
-      val = blend(val, fp->istr[1]);
-      val = blend(val, fp->istr[2]);
-      val = blend(val, fp->istr[3]);
+      unsigned sval = istr[0];
+      sval = blend(sval, istr[1]);
+      sval = blend(sval, istr[2]);
+      sval = blend(sval, istr[3]);
 
-      unsigned oval;
-      if (val == HiZ) {
-	    oval = 3;
+      unsigned val;
+      if (sval == HiZ) {
+	    val = 3;
 
-      } else switch (val & 0x88) {
+      } else switch (sval & 0x88) {
 	  case 0x00:
-	    oval = 0;
+	    val = 0;
 	    break;
 	  case 0x88:
-	    oval = 1;
+	    val = 1;
 	    break;
 	  default:
-	    oval = 2;
+	    val = 2;
 	    break;
       }
 
-      fp->oval = oval;
-
 	/* If the output changes, then create a propagation event. */
-      if (val != fp->ostr) {
-	    fp->ostr = val;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
-      }
+      put_ostr(i, push, val, sval);
 }
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.7  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.6  2001/10/14 01:45:11  steve
  *  Propogate strength-only changes from resolver.
  *

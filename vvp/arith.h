@@ -19,148 +19,117 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.10 2001/10/27 03:22:26 steve Exp $"
+#ident "$Id: arith.h,v 1.11 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "functor.h"
 
-class vvp_arith_  : public vvp_fobj_s {
+// base class for arithmetic functors
+
+class vvp_arith_  : public functor_s {
 
     public:
-      explicit vvp_arith_(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_arith_(unsigned wid) : wid_(wid) {};
 
     protected:
-      vvp_ipoint_t base_;
       unsigned wid_;
 
     protected:
-      void output_x_(bool push);
-
-    private: // not implemented
-      vvp_arith_(const vvp_arith_&);
-      vvp_arith_& operator= (const vvp_arith_&);
+      void output_x_(vvp_ipoint_t base, bool push, unsigned val = 2);
+      void output_val_(vvp_ipoint_t base, bool push, unsigned long sum);
 };
 
+// base class for wide arithmetic functors
+
+class vvp_wide_arith_  : public vvp_arith_ {
+    public:
+      explicit vvp_wide_arith_(unsigned wid); 
+
+    protected:
+      static const unsigned pagesize = 8*sizeof(unsigned long);
+      unsigned long *sum_;
+
+      void output_val_(vvp_ipoint_t base, bool push);
+};
 
 /*
- * This class is a mode-42 object for arithmetic operators. Inputs
- * that come in cause the 4-input summation to be calculated, and
- * output functors that are affected cause propagations.
+ * This class is functor for arithmetic sum. Inputs that come
+ * in cause the 4-input summation to be calculated, and output
+ * functors that are affected cause propagations.
  */
-class vvp_arith_div  : public vvp_arith_ {
-
-    public:
-      explicit vvp_arith_div(vvp_ipoint_t b, unsigned wid);
-
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
-      vvp_arith_div(const vvp_arith_div&);
-      vvp_arith_div& operator= (const vvp_arith_div&);
-};
-
 class vvp_arith_mult  : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_mult(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_arith_mult(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
-      vvp_arith_mult(const vvp_arith_mult&);
-      vvp_arith_mult& operator= (const vvp_arith_mult&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void wide(vvp_ipoint_t base, bool push);
 };
 
-class vvp_arith_sum  : public vvp_arith_ {
+class vvp_arith_div : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_sum(vvp_ipoint_t b, unsigned wid);
-      virtual ~vvp_arith_sum();
+      explicit vvp_arith_div(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private:
-      unsigned long*sum_;
-      static const unsigned pagesize = 8*sizeof(unsigned long);
-
-    private: // not implemented
-      vvp_arith_sum(const vvp_arith_sum&);
-      vvp_arith_sum& operator= (const vvp_arith_sum&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void wide(vvp_ipoint_t base, bool push);
 };
 
-class vvp_arith_sub  : public vvp_arith_ {
+class vvp_arith_sum  : public vvp_wide_arith_ {
 
     public:
-      explicit vvp_arith_sub(vvp_ipoint_t b, unsigned wid);
-      virtual ~vvp_arith_sub();
+      explicit vvp_arith_sum(unsigned wid) : vvp_wide_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+};
 
-    private:
-      unsigned long*sum_;
-      static const unsigned pagesize = 8*sizeof(unsigned long);
+class vvp_arith_sub  : public vvp_wide_arith_ {
 
-    private: // not implemented
-      vvp_arith_sub(const vvp_arith_sub&);
-      vvp_arith_sub& operator= (const vvp_arith_sub&);
+    public:
+      explicit vvp_arith_sub(unsigned wid) : vvp_wide_arith_(wid) {}
+
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
 class vvp_cmp_ge  : public vvp_arith_ {
 
     public:
-      explicit vvp_cmp_ge(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_cmp_ge(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
-      vvp_cmp_ge(const vvp_cmp_ge&);
-      vvp_cmp_ge& operator= (const vvp_cmp_ge&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
 class vvp_cmp_gt  : public vvp_arith_ {
 
     public:
-      explicit vvp_cmp_gt(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_cmp_gt(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
-      vvp_cmp_gt(const vvp_cmp_gt&);
-      vvp_cmp_gt& operator= (const vvp_cmp_gt&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
 class vvp_shiftl  : public vvp_arith_ {
 
     public:
-      explicit vvp_shiftl(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_shiftl(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private:
-      unsigned amount_;
-
-    private: // not implemented
-      vvp_shiftl(const vvp_shiftl&);
-      vvp_shiftl& operator= (const vvp_shiftl&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
 class vvp_shiftr  : public vvp_arith_ {
 
     public:
-      explicit vvp_shiftr(vvp_ipoint_t b, unsigned wid);
+      explicit vvp_shiftr(unsigned wid) : vvp_arith_(wid) {}
 
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private:
-      unsigned amount_;
-
-    private: // not implemented
-      vvp_shiftr(const vvp_shiftr&);
-      vvp_shiftr& operator= (const vvp_shiftr&);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.11  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.10  2001/10/27 03:22:26  steve
  *  Minor rework of summation carry propagation (Stephan Boettcher)
  *

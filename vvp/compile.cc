@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.109 2001/10/18 17:30:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.110 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -522,80 +522,65 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
 	    functor_t iobj = functor_index(ifdx);
 
-	    if (strcmp(argv[idx].text, "C<0>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 0, St0);
+	    if (strcmp(argv[idx].text, "C<0>") == 0) 
+		  iobj->set(ifdx, false, 0, St0);
+
+	    else if (strcmp(argv[idx].text, "C<pu0>") == 0)
+		  iobj->set(ifdx, false, 0, Pu0);
+
+	    else if (strcmp(argv[idx].text, "C<su0>") == 0)
+		  iobj->set(ifdx, false, 0, Su0);
+
+	    else if (strcmp(argv[idx].text, "C<1>") == 0)
+		  iobj->set(ifdx, false, 1, St1);
+
+	    else if (strcmp(argv[idx].text, "C<pu1>") == 0)
+		  iobj->set(ifdx, false, 1, Pu1);
+
+	    else if (strcmp(argv[idx].text, "C<su1>") == 0)
+		  iobj->set(ifdx, false, 1, Su1);
+
+	    else if (strcmp(argv[idx].text, "C<x>") == 0)
+		  iobj->set(ifdx, false, 2, StX);
+
+	    else if (strcmp(argv[idx].text, "C<z>") == 0)
+		  iobj->set(ifdx, false, 3, HiZ);
+
+	    else {
+		  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
 		  continue;
 	    }
 
-	    if (strcmp(argv[idx].text, "C<pu0>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 0, Pu0);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<su0>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 0, Su0);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<1>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 1, St1);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<pu1>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 1, Pu1);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<su1>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 1, Su1);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<x>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 2, StX);
-		  continue;
-	    }
-
-	    if (strcmp(argv[idx].text, "C<z>") == 0) {
-		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 3, HiZ);
-		  continue;
-	    }
-
-	    postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
+	    free(argv[idx].text);
       }
 }
 
 
-/* Lookup a functor[idx] and save the ipoint in *ref. */
+struct const_functor_s: public functor_s {
+      const_functor_s(unsigned str0, unsigned str1) 
+	    { odrive0 = str0; odrive1 = str1; }
+      virtual void set(vvp_ipoint_t, bool, unsigned, unsigned);   
+};
+void const_functor_s::set(vvp_ipoint_t, bool, unsigned, unsigned) 
+{
+      assert(! "const_functor_s::set: don't do that");
+}
+
 
 static vvp_ipoint_t make_const_functor(unsigned val, 
 				       unsigned str0, 
 				       unsigned str1)
 {
       vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-      
-      obj->table   = ft_var;
-      obj->ival    = val;
-      obj->oval    = val;
-      obj->odrive0 = str0;
-      obj->odrive1 = str1;
-      obj->mode    = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
-      schedule_functor(fdx, 0);
+      functor_t obj = new const_functor_s(str0, str1);
+      functor_define(fdx, obj);
+
+      obj->put_oval(fdx, false, val);
+
       return fdx;
 }
+
+/* Lookup a functor[idx] and save the ipoint in *ref. */
 
 static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 {
@@ -639,107 +624,103 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
  * functor, and map the name to the vvp_ipoint_t address for the
  * functor. Also resolve the inputs to the functor.
  */
+
 void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
-      define_functor_symbol(label, fdx);
-
-      assert(argc <= 4);
-
-      obj->ival = 0xaa;
-      obj->oval = 2;
-      obj->odrive0 = 6;
-      obj->odrive1 = 6;
-      obj->mode = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
+      functor_t obj;
 
       if (strcmp(type, "OR") == 0) {
-	    obj->table = ft_OR;
+	    obj = new table_functor_s(ft_OR);
 
       } else if (strcmp(type, "AND") == 0) {
-	    obj->table = ft_AND;
+	    obj = new table_functor_s(ft_AND);
 
       } else if (strcmp(type, "BUF") == 0) {
-	    obj->table = ft_BUF;
+	    obj = new table_functor_s(ft_BUF);
 
       } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj->obj = new vvp_bufif0_s;
-	    obj->mode = M42;
+	    obj = new vvp_bufif0_s;
 
       } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj->obj = new vvp_bufif1_s;
-	    obj->mode = M42;
+	    obj = new vvp_bufif1_s;
 
       } else if (strcmp(type, "PMOS") == 0) {
-	    obj->obj = new vvp_pmos_s;
-	    obj->mode = M42;
+	    obj = new vvp_pmos_s;
 
       } else if (strcmp(type, "NMOS") == 0) {
-	    obj->obj = new vvp_nmos_s;
-	    obj->mode = M42;
+	    obj= new vvp_nmos_s;
 
       } else if (strcmp(type, "RPMOS") == 0) {
-	    obj->obj = new vvp_rpmos_s;
-	    obj->mode = M42;
+	    obj = new vvp_rpmos_s;
 
       } else if (strcmp(type, "RNMOS") == 0) {
-	    obj->obj = new vvp_rnmos_s;
-	    obj->mode = M42;
+	    obj = new vvp_rnmos_s;
 
       } else if (strcmp(type, "MUXZ") == 0) {
-	    obj->table = ft_MUXZ;
+	    obj = new table_functor_s(ft_MUXZ);
 
       } else if (strcmp(type, "EEQ") == 0) {
-	    obj->table = ft_EEQ;
+	    obj = new table_functor_s(ft_EEQ);
 
       } else if (strcmp(type, "NAND") == 0) {
-	    obj->table = ft_NAND;
+	    obj = new table_functor_s(ft_NAND);
 
       } else if (strcmp(type, "NOR") == 0) {
-	    obj->table = ft_NOR;
+	    obj = new table_functor_s(ft_NOR);
 
       } else if (strcmp(type, "NOT") == 0) {
-	    obj->table = ft_NOT;
+	    obj = new table_functor_s(ft_NOT);
 
       } else if (strcmp(type, "XNOR") == 0) {
-	    obj->table = ft_XNOR;
+	    obj = new table_functor_s(ft_XNOR);
 
       } else if (strcmp(type, "XOR") == 0) {
-	    obj->table = ft_XOR;
+	    obj = new table_functor_s(ft_XOR);
 
       } else {
 	    yyerror("invalid functor type.");
+	    free(type);
+	    free(argv);
+	    free(label);
+	    return;
       }
+
+      free(type);
+
+      assert(argc <= 4);
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_define(fdx, obj);
+      define_functor_symbol(label, fdx);
+      free(label);
 
 	/* Connect the inputs of this functor to the given symbols. If
 	   there are C<X> inputs, set the ival appropriately. */
       inputs_connect(fdx, argc, argv);
       free(argv);
-
-	/* Recalculate the output based on the given ival. if the oval
-	   turns out to *not* be x, then schedule the functor so that
-	   the value gets propagated. */
-      if (obj->mode == M42) {
-	    obj->obj->set(fdx, obj, false);
-      } else {
-	    unsigned char out = obj->table[obj->ival >> 2];
-	    obj->oval = 3 & (out >> 2 * (obj->ival&3));
-	    if (obj->oval != 2)
-		  schedule_functor(fdx, 0);
-      }
-
-      free(label);
-      free(type);
 }
 
-static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
-				 vvp_arith_* arith,
-				 unsigned argc, struct symb_s*argv)
+static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
 {
+      for (unsigned i=1;  i < wid;  i++) {
+	    extra_outputs_functor_s *fu = new extra_outputs_functor_s;
+	    vvp_ipoint_t ipt = ipoint_index(fdx, i);
+	    functor_define(ipt, fu);
+	    fu->base_ = fdx;
+      }
+}
+
+static void make_arith(vvp_arith_ *arith,
+		       char*label, long wid, 
+		       unsigned argc, struct symb_s*argv)
+{
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      functor_define(fdx, arith);
+
+      define_functor_symbol(label, fdx);
+      free(label);
+
+      make_extra_outputs(fdx, wid);
+
       unsigned opcount = argc / wid;
 
       struct symb_s tmp_argv[4];
@@ -748,23 +729,12 @@ static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
 	    functor_t obj = functor_index(ptr);
 
 	    obj->ival = 0xaa >> 2*(4 - opcount);
-	    obj->oval = 2;
-	    obj->odrive0 = 6;
-	    obj->odrive1 = 6;
-	    obj->mode = M42;
-	    obj->obj  = arith;
-#if defined(WITH_DEBUG)
-	    obj->breakpoint = 0;
-#endif
 
 	    for (unsigned cdx = 0 ;  cdx < opcount ;  cdx += 1)
 		  tmp_argv[cdx] = argv[idx + wid*cdx];
 
 	    inputs_connect(ptr, opcount, tmp_argv);
       }
-
-	/* This runs a calculation, so that the output is propagated. */
-      arith->set(fdx, functor_index(fdx), false);
 
       free(argv);
 }
@@ -777,16 +747,12 @@ void compile_arith_div(char*label, long wid,
       if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_arith_div(wid);
 
-      vvp_arith_div*arith = new vvp_arith_div(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, arith, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_arith_mult(char*label, long wid,
@@ -797,16 +763,12 @@ void compile_arith_mult(char*label, long wid,
       if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_arith_mult(wid);
 
-      vvp_arith_mult*arith = new vvp_arith_mult(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, arith, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -816,7 +778,6 @@ void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((argc % wid) != 0) {
 	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
@@ -824,16 +785,12 @@ void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
       if (opcount > 4) {
 	    fprintf(stderr, "%s; .arith has too many operands.\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_arith_sub(wid);
 
-      vvp_arith_sub*arith = new vvp_arith_sub(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, arith, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -843,7 +800,6 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((argc % wid) != 0) {
 	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
@@ -851,16 +807,12 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       if (opcount > 4) {
 	    fprintf(stderr, "%s; .arith has too many operands.\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_arith_sum(wid);
 
-      vvp_arith_sum*arith = new vvp_arith_sum(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, arith, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -870,16 +822,12 @@ void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_cmp_ge(wid);
 
-      vvp_cmp_ge*cmp = new vvp_cmp_ge(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, cmp, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -889,21 +837,26 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((long)argc != 2*wid) {
 	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_cmp_gt(wid);
 
-      vvp_cmp_gt*cmp = new vvp_cmp_gt(fdx, wid);
-
-      connect_arith_inputs(fdx, wid, cmp, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
-static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
-				 long wid, unsigned argc, struct symb_s*argv)
+static void make_shift(vvp_arith_*arith,
+		       char*label, long wid,
+		       unsigned argc, struct symb_s*argv)
 {
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      functor_define(fdx, arith);
+
+      define_functor_symbol(label, fdx);
+      free(label);
+
+      make_extra_outputs(fdx, wid);
+
       for (int idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
@@ -912,15 +865,6 @@ static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
 		  obj->ival = 0x02;
 	    else
 		  obj->ival = 0x0a;
-
-	    obj->oval = 2;
-	    obj->odrive0 = 6;
-	    obj->odrive1 = 6;
-	    obj->mode = M42;
-	    obj->obj  = dev;
-#if defined(WITH_DEBUG)
-	    obj->breakpoint = 0;
-#endif
 
 	    struct symb_s tmp_argv[3];
 	    unsigned tmp_argc = 1;
@@ -932,6 +876,8 @@ static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
 
 	    inputs_connect(ptr, tmp_argc, tmp_argv);
       }
+
+      free(argv);
 }
 
 /*
@@ -946,25 +892,18 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((long)argc < (wid+1)) {
 	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
       if ((long)argc > (wid*2)) {
 	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
+      vvp_arith_ *arith = new vvp_shiftl(wid);
 
-      vvp_shiftl*dev = new vvp_shiftl(fdx, wid);
-
-      compile_shift_inputs(dev, fdx, wid, argc, argv);
-
-      free(argv);
+      make_shift(arith, label, wid, argc, argv);
 }
 
 void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -974,65 +913,45 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
       if ((long)argc < (wid+1)) {
 	    fprintf(stderr, "%s; .shift/r has too few symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
       if ((long)argc > (wid*2)) {
 	    fprintf(stderr, "%s; .shift/r has too many symbols\n", label);
 	    compile_errors += 1;
-	    free(label);
 	    return;
       }
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
-
-      vvp_shiftr*dev = new vvp_shiftr(fdx, wid);
-
-      compile_shift_inputs(dev, fdx, wid, argc, argv);
-
-      free(argv);
+      vvp_arith_ *arith = new vvp_shiftr(wid);
+      
+      make_shift(arith, label, wid, argc, argv);
 }
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
-      define_functor_symbol(label, fdx);
-
       assert(argc <= 4);
 
-      obj->ival = 0xaa;
-      obj->oval = 2;
-      obj->odrive0 = 6;
-      obj->odrive1 = 6;
-      obj->mode = M42;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
+      functor_t obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj->obj = new vvp_resolv_s;
+	    obj = new resolv_functor_s;
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
 	    compile_errors += 1;
       }
 
-	/* Connect the inputs of this functor to the given symbols. If
-	   there are C<X> inputs, set the ival appropriately. */
-      inputs_connect(fdx, argc, argv);
-      free(argv);
+      if (obj) {
+	    vvp_ipoint_t fdx = functor_allocate(1);
+	    functor_define(fdx, obj);
+	    define_functor_symbol(label, fdx);
+	    
+	    inputs_connect(fdx, argc, argv);
+      }
 
-	/* This causes the output value to be set from the existing
-	   inputs, and if the output is not x, a propagation event is
-	   created. */
-      obj->obj->set(fdx, obj, false);
-
-      free(label);
       free(type);
+      free(label);
+      free(argv);
 }
 
 void compile_udp_def(int sequ, char *label, char *name,
@@ -1066,46 +985,31 @@ char **compile_udp_table(char **table, char *row)
 void compile_udp_functor(char*label, char*type,
 			 unsigned argc, struct symb_s*argv)
 {
-  struct vvp_udp_s *u = udp_find(type);
-  assert (argc == u->nin);
+      struct vvp_udp_s *u = udp_find(type);
+      assert (argc == u->nin);
+      
+      functor_t udp = new udp_functor_s(u);
+      
+      unsigned nfun = (argc+3)/4;
+      vvp_ipoint_t fdx = functor_allocate(nfun);
+      functor_define(fdx, udp);
+      define_functor_symbol(label, fdx);
+      free(label);  
+      
+      if (nfun > 1) {
+	    for (unsigned i=0;  i < nfun-1;  i++) {
+		  functor_t fu = new edge_inputs_functor_s;
+		  vvp_ipoint_t ipt = ipoint_index(fdx, i+1);
+		  functor_define(ipt, fu);
+		  fu->out = fdx;
+	    }
+      }
 
-  int nfun = (argc+3)/4;
-
-  vvp_ipoint_t fdx = functor_allocate(nfun);
-  functor_t obj = functor_index(fdx);
-
-  define_functor_symbol(label, fdx);
-  free(label);  
-
-  for (unsigned idx = 0;  idx < argc;  idx += 4) 
-    {
-      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
-      functor_t iobj = functor_index(ifdx);
-
-      iobj->ival = 0xaa;
-      iobj->old_ival = obj->ival;
-      iobj->oval = u->init;
-      iobj->mode = M42;
-#if defined(WITH_DEBUG)
-      iobj->breakpoint = 0;
-#endif
-      if (idx)
-	{
-	  iobj->out = fdx;
-	  iobj->obj = 0;
-	}
-      else
-	{
-	  iobj->obj = u;
-	}
-    }
-
-  inputs_connect(fdx, argc, argv);
-  free(argv);
-
-    // Propagate the initial value if the UDP has one and it isn't x.
-  if (u->init != 2)
-	schedule_functor(fdx, 0);
+      inputs_connect(fdx, argc, argv);
+      free(argv);
+      
+      if (u->sequ)
+	    udp->put_oval(fdx, false, u->init);
 }
 
 
@@ -1138,29 +1042,13 @@ void compile_memory_port(char *label, char *memid,
 
   bool writable = argc >= (naddr + 2 + nbits);
 
-  unsigned nfun = naddr;
-  if (writable)
-	nfun += 2 + nbits;
-  assert(nfun == argc);
-  nfun = (nfun+3)/4;
-  if (nfun < nbits)
-    nfun = nbits;
-      
-  vvp_ipoint_t ix = functor_allocate(nfun);
+  vvp_ipoint_t ix = memory_port_new(mem, nbits, lsb, naddr, writable);
 
   define_functor_symbol(label, ix);
   free(label);
 
-  for (unsigned i=0; i<nfun; i++) {
-        vvp_ipoint_t iix = ipoint_index(ix, i);
-	functor_t ip = functor_index(iix);
-	ip->ival = 0xaa;
-  }
-
   inputs_connect(ix, argc, argv);
   free(argv);
-
-  memory_port_new(mem, ix, nbits, lsb, naddr, writable);
 }
 
 void compile_memory_init(char *memid, unsigned i, unsigned char val)
@@ -1178,16 +1066,41 @@ void compile_memory_init(char *memid, unsigned i, unsigned char val)
   idx++;
 }
 
+/*
+**  Create an event functor
+**  edge:  compile_event(label, type, argc, argv)
+**  or:    compile_event(label, NULL, argc, argv)
+**  name:  compile_event(label, name, NULL, NULL)
+*/
 
 void compile_event(char*label, char*type,
 		   unsigned argc, struct symb_s*argv)
 {
+      event_functor_s::edge_t edge = vvp_edge_none;
+
+      if (argc && type) {
+	    if (strcmp(type,"posedge") == 0)
+		  edge = vvp_edge_posedge;
+	    else if (strcmp(type,"negedge") == 0)
+		  edge = vvp_edge_negedge;
+	    else if (strcmp(type,"edge") == 0)
+		  edge = vvp_edge_anyedge;
+
+	    assert(argc <= 4 || edge == vvp_edge_none);
+      }
+      
+      if (!argc && type) {
+	    // "type" is the name of the named event
+      }
+
+      free(type);
+
+      functor_t obj = new event_functor_s(edge);
+
       vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
+      functor_define(fdx, obj);
       define_functor_symbol(label, fdx);
-
-      assert(argc <= 4);
+      free(label);
 
 	/* Run through the arguments looking for the functors that are
 	   connected to my input ports. For each source functor that I
@@ -1197,107 +1110,22 @@ void compile_event(char*label, char*type,
 
 	   If the source functor is not declared yet, then don't do
 	   the link yet. Save the reference to be resolved later. */
-
-      inputs_connect(fdx, argc, argv);
-      free(argv);
-
-      obj->ival = 0xaa;
-      obj->oval = 2;
-      obj->odrive0 = 6;
-      obj->odrive0 = 6;
-      obj->mode = 1;
-      obj->out  = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
-
-      obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
-      obj->event->threads = 0;
-      obj->old_ival = obj->ival;
-
-      if (strcmp(type,"posedge") == 0)
-	    obj->event->vvp_edge_tab = vvp_edge_posedge;
-      else if (strcmp(type,"negedge") == 0)
-	    obj->event->vvp_edge_tab = vvp_edge_negedge;
-      else if (strcmp(type,"edge") == 0)
-	    obj->event->vvp_edge_tab = vvp_edge_anyedge;
+      
+      if (edge != vvp_edge_none)
+	    inputs_connect(fdx, argc, argv);
       else
-	    obj->event->vvp_edge_tab = 0;
-
-      free(type);
-      free(label);
-}
-
-void compile_named_event(char*label, char*name)
-{
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
-      define_functor_symbol(label, fdx);
-
-      obj->ival = 0xaa;
-      obj->oval = 2;
-      obj->odrive0 = 6;
-      obj->odrive1 = 6;
-      obj->mode = 1;
-      obj->out  = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
-
-      obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
-      obj->event->threads = 0;
-      obj->event->vvp_edge_tab = 0;
-      obj->old_ival = obj->ival;
-
-      free(label);
-      free(name);
-}
-
-void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
-{
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
-      define_functor_symbol(label, fdx);
-
-      obj->ival = 0xaa;
-      obj->oval = 2;
-      obj->odrive0 = 6;
-      obj->odrive1 = 6;
-      obj->mode = 1;
-      obj->out  = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
-
-      obj->event = new struct vvp_event_s;
-      obj->event->threads = 0;
-      obj->old_ival = obj->ival;
-      obj->event->vvp_edge_tab = 0;
-
-	/* Link the outputs of the named events to me. */
-
-      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    vvp_ipoint_t tmp = lookup_functor_symbol(argv[idx].text);
-	    assert(tmp);
-	    tmp = ipoint_index(tmp, argv[idx].idx);
-
-	    functor_t fport = functor_index(tmp);
-	    assert(fport);
-	    assert(fport->out == 0);
-	    fport->out = fdx;
-	    
-	    free(argv[idx].text);
-
-      }
+	    // Are we sure that we have those .event/or 
+	    // drivers exclusively?
+	    for (unsigned i=0; i<argc; i++) {
+		  inputs_connect(fdx, 1, argv+i);
+	    }
 
       free(argv);
-      free(label);
 }
+
 
 /*
- * The parser uses this function to compile an link an executable
+ * The parser uses this function to compile and link an executable
  * opcode. I do this by looking up the opcode in the opcode_table. The
  * table gives the operand structure that is acceptible, so I can
  * process the operands here as well.
@@ -1537,25 +1365,17 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 		      bool signed_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
-      vvp_ipoint_t fdx = functor_allocate(wid);
 
-      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
+      vvp_ipoint_t fdx = functor_allocate(wid);
       define_functor_symbol(label, fdx);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    functor_t obj = functor_index(ipoint_index(fdx,idx));
-	    obj->table = ft_var;
-	    obj->ival  = 0x22;
-	    obj->oval  = 0x02;
-	    obj->odrive0 = 6;
-	    obj->odrive1 = 6;
-	    obj->mode  = 0;
-#if defined(WITH_DEBUG)
-	    obj->breakpoint = 0;
-#endif
+	    functor_t fu = new var_functor_s;
+	    functor_define(ipoint_index(fdx, idx), fu);
       }
 
 	/* Make the vpiHandle for the reg. */
+      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
       vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, vec);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
@@ -1602,6 +1422,11 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.110  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.109  2001/10/18 17:30:25  steve
  *  Support rnpmos devices. (Philip Blundell)
  *

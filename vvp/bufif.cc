@@ -17,129 +17,79 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.1 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: bufif.cc,v 1.2 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "bufif.h"
 # include  "functor.h"
 # include  "schedule.h"
 
-void vvp_bufif0_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
+void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 {
-      unsigned in0 = fp->ival & 0x03;
-      unsigned in1 = (fp->ival >> 2) & 0x03;
+      put(ptr, v);
 
-      unsigned char out0 = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-      unsigned char out1 = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-      unsigned char outX = 0x80 | (fp->odrive1<<0) | (fp->odrive0<<4);
-      unsigned char outH = 0x88 | (fp->odrive1<<4) | (0);
-      unsigned char outL = 0x00 | (fp->odrive1<<0) | (0);
+      unsigned in0 = ival & 0x03;
+      unsigned in1 = (ival >> 2) & 0x03;
 
-      switch (in1) {
+      unsigned char out0 = 0x00 | (odrive0<<0) | (odrive0<<4);
+      unsigned char out1 = 0x88 | (odrive1<<0) | (odrive1<<4);
+      unsigned char outX = 0x80 | (odrive1<<0) | (odrive0<<4);
+      unsigned char outH = 0x88 | (0)          | (odrive1<<4);
+      unsigned char outL = 0x00 | (odrive1<<0) | (0);
 
-	  case 0:
-	    switch (in0) {
-		case 0:
-		  fp->oval = 0;
-		  fp->ostr = out0;
-		  break;
-		case 1:
-		  fp->oval = 1;
-		  fp->ostr = out1;
-		  break;
-		default:
-		  fp->oval = 2;
-		  fp->ostr = outX;
-		  break;
-	    }
-	    break;
+      unsigned val;
+      unsigned str;
 
-	  case 1:
-	    fp->oval = 3;
-	    fp->ostr = HiZ;
-	    break;
-
-	  default:
-	    fp->oval = 2;
-	    switch (in0) {
-		case 0:
-		  fp->ostr = outL;
-		  break;
-		case 1:
-		  fp->ostr = outH;
-		  break;
-		default:
-		  fp->ostr = outX;
-		  break;
-	    }
-	    break;
-      }
-
-      if (push)
-	    functor_propagate(ptr);
-      else
-	    schedule_functor(ptr, 0);
-}
-
-void vvp_bufif1_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-      unsigned in0 = fp->ival & 0x03;
-      unsigned in1 = (fp->ival >> 2) & 0x03;
-
-      unsigned char out0 = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-      unsigned char out1 = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-      unsigned char outX = 0x80 | (fp->odrive1<<0) | (fp->odrive0<<4);
-      unsigned char outH = 0x88 | (fp->odrive1<<4) | (0);
-      unsigned char outL = 0x00 | (fp->odrive1<<0) | (0);
-
-      switch (in1) {
+      switch (in1 ^ pol) {
 
 	  case 1:
 	    switch (in0) {
 		case 0:
-		  fp->oval = 0;
-		  fp->ostr = out0;
+		  val = 0;
+		  str = out0;
 		  break;
 		case 1:
-		  fp->oval = 1;
-		  fp->ostr = out1;
+		  val = 1;
+		  str = out1;
 		  break;
 		default:
-		  fp->oval = 2;
-		  fp->ostr = outX;
+		  val = 2;
+		  str = outX;
 		  break;
 	    }
 	    break;
 
 	  case 0:
-	    fp->oval = 3;
-	    fp->ostr = HiZ;
+	    val = 3;
+	    str = HiZ;
 	    break;
 
 	  default:
-	    fp->oval = 2;
+	    val = 2;
 	    switch (in0) {
 		case 0:
-		  fp->ostr = outL;
+		  str = outL;
 		  break;
 		case 1:
-		  fp->ostr = outH;
+		  str = outH;
 		  break;
 		default:
-		  fp->ostr = outX;
+		  str = outX;
 		  break;
 	    }
 	    break;
       }
 
-      if (push)
-	    functor_propagate(ptr);
-      else
-	    schedule_functor(ptr, 0);
+      put_ostr(ptr, push, val, str);
 }
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.2  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.1  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.

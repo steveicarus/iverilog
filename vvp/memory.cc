@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.11 2001/10/14 01:36:12 steve Exp $"
+#ident "$Id: memory.cc,v 1.12 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -65,9 +65,9 @@ struct vvp_memory_index_s
   unsigned size;   // number of valid addresses
 };
 
-struct vvp_memory_port_s : public vvp_fobj_s
+struct vvp_memory_port_s : public functor_s
 {
-      void set(vvp_ipoint_t i, functor_t f, bool push);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
       vvp_memory_t mem;
       vvp_ipoint_t ix;
@@ -82,7 +82,6 @@ struct vvp_memory_port_s : public vvp_fobj_s
 
       bool writable;
 };
-
 
 unsigned memory_size(vvp_memory_t mem)
 {
@@ -168,22 +167,10 @@ void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
 
 static void update_addr(vvp_memory_port_t addr);
 
-void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix, 
-		     unsigned nbits, unsigned bitoff,
-		     unsigned naddr, bool writable)
+vvp_ipoint_t memory_port_new(vvp_memory_t mem,
+			     unsigned nbits, unsigned bitoff,
+			     unsigned naddr, bool writable)
 {
-  vvp_memory_port_t a = new struct vvp_memory_port_s;
-  
-  a->mem = mem;
-  a->ix = ix;
-  a->naddr = naddr;
-  a->writable = writable;
-  a->nbits = nbits;
-  a->bitoff = bitoff;
-  
-  a->next = mem->addr_root;
-  mem->addr_root = a;
-  
   unsigned nfun = naddr;
   if (writable)
 	nfun += 2 + nbits;
@@ -191,21 +178,32 @@ void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix,
   if (nfun < nbits)
     nfun = nbits;
 
-  for (unsigned idx = 0;  idx < nfun;  idx ++) 
+  vvp_memory_port_t a = new struct vvp_memory_port_s;
+  
+  a->mem = mem;
+  a->naddr = naddr;
+  a->writable = writable;
+  a->nbits = nbits;
+  a->bitoff = bitoff;
+  a->next = mem->addr_root;
+  mem->addr_root = a;
+  
+  a->ix = functor_allocate(nfun);
+  functor_define(a->ix, a);
+
+  if (nfun > 1) 
     {
-      vvp_ipoint_t ifdx = ipoint_index(ix, idx);
-      functor_t iobj = functor_index(ifdx);
-	  
-      iobj->oval = 0x02;
-      iobj->mode = M42;
-      iobj->out = 0;
-      iobj->obj = a;
+      extra_ports_functor_s *fu = new extra_ports_functor_s[nfun-1];
+      for (unsigned i = 0; i< nfun - 1; i++) {
+	fu[i].base_ = a->ix;
+	functor_define(ipoint_index(a->ix, i+1), fu+i);
+      }
     }
 
   a->cur_addr = VVP_MEMORY_NO_ADDR;
   a->cur_bits = 0x0;
 
-  update_addr(a);
+  return a->ix;
 }
 
 void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val)
@@ -319,11 +317,7 @@ void update_data(vvp_memory_port_t data)
       vvp_ipoint_t dx = ipoint_index(data->ix, i);
       functor_t df = functor_index(dx);
       unsigned char out = get_bit(data->cur_bits, i + data->bitoff);
-      if (out != df->oval)
-	{
-	  df->oval = out;
-	  functor_propagate(dx);
-	}
+      df->put_oval(dx, false, out);
     }
 }
 
@@ -344,11 +338,7 @@ void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
 	    {
 	      vvp_ipoint_t ix = ipoint_index(a->ix, i);
 	      functor_t df = functor_index(ix);
-	      if (df->oval != val)
-		{
-		  df->oval = val;
-		  functor_propagate(ix);
-		}
+	      df->put_oval(ix, false, val);
 	    }
 	}
       a = a->next;
@@ -382,17 +372,22 @@ void write_event(vvp_memory_port_t p)
     }
 }
 
-void vvp_memory_port_s::set(vvp_ipoint_t i, functor_t f, bool push)
+void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
 {
+  // !attention! "i" may not corespont to "this"
+  functor_t ifu = functor_index(i);
+  ifu->put(i, val);
+
   if (i < ix+naddr)
     {
       if (update_addr_bit(this, i))
 	update_data(this);
     }
 
-  // An event at ix+naddr always sets the value 0, and triggeres a write.
-  // If the write event port is 3, then it's not connected, and the
-  // write port is transparent, controlled by ix+naddr+1, the write enable.
+  // port ix+naddr is the write clock.  If it's input value is
+  // undefined, we do assynchronous write.  Else any event on ix+naddr
+  // is a valid write clock edge.  Connect an appropriate edge event
+  // functor.
   
   if (i == ix+naddr
       || (writable && functor_get_input(ix+naddr) == 3))

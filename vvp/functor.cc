@@ -17,17 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.28 2001/10/27 03:43:56 steve Exp $"
+#ident "$Id: functor.cc,v 1.29 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "functor.h"
-# include  "udp.h"
 # include  "schedule.h"
 # include  "vthread.h"
 # include  "vpi_priv.h"
 # include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
+# include  <malloc.h>
 
 /*
  * Functors are created as the source design is read in. Each is
@@ -45,21 +45,9 @@
  * tables are allocated as needed.
  */
 
-const unsigned functor_index0_size = 2 <<  9;
-const unsigned functor_index1_size = 2 << 11;
-const unsigned functor_index2_size = 2 << 10;
-
-struct functor_index0 {
-      struct functor_s table[functor_index0_size];
-};
-
-struct functor_index1 {
-      struct functor_index0* table[functor_index1_size];
-};
-
-static vvp_ipoint_t functor_count = 0;
-static struct functor_index1*functor_table[functor_index2_size] = { 0 };
-
+functor_t **functor_list = 0x0;
+static unsigned functor_count = 0; 
+static unsigned functors_allocated = 0; 
 
 /*
  * This function initializes the functor address space by creating the
@@ -68,294 +56,156 @@ static struct functor_index1*functor_table[functor_index2_size] = { 0 };
  */
 void functor_init(void)
 {
-      functor_table[0] = new struct functor_index1;
-      memset(functor_table[0], 0, sizeof(struct functor_index1));
-
-      functor_table[0]->table[0] = new struct functor_index0;
-      memset(functor_table[0]->table[0], 0, sizeof(struct functor_index0));
-
-      functor_count = 1;
+	// allocate the ZERO functor.
+      functor_allocate(1);
 }
 
 /*
  * Allocate normally is just a matter of incrementing the functor_count
  * and returning a pointer to the next unallocated functor. However,
- * if we overrun a chunk or an index, we need to allocate the needed
+ * if we overrun an allocated chunk, we need to allocate the needed
  * bits first.
  */
-static vvp_ipoint_t functor_allocate_(void)
-{
-      vvp_ipoint_t idx = functor_count;
-
-      idx /= functor_index0_size;
-
-      unsigned index1 = idx % functor_index1_size;
-      idx /= functor_index1_size;
-
-      assert( idx < functor_index2_size);
-
-      if (functor_table[idx] == 0) {
-	    functor_table[idx] = new struct functor_index1;
-	    memset(functor_table[idx], 0, sizeof(struct functor_index1));
-      }
-
-      if (functor_table[idx]->table[index1] == 0) {
-	    functor_table[idx]->table[index1] = new struct functor_index0;
-	    memset(functor_table[idx]->table[index1], 
-		   0, sizeof(struct functor_index0));
-      }
-
-      vvp_ipoint_t res = functor_count;
-      functor_count += 1;
-      return res * 4;
-}
-
 vvp_ipoint_t functor_allocate(unsigned wid)
 {
-      assert(wid > 0);
-      vvp_ipoint_t res = functor_allocate_();
+      vvp_ipoint_t idx = functor_count*4;
+      functor_count += wid;
 
-      wid -= 1;
-      while (wid > 0) {
-	    functor_allocate_();
-	    wid -= 1;
-      }
+      if (functor_count > functors_allocated*functor_chunks) {
 
-      return res;
-}
+	      // enlarge the list of chunks
+	    unsigned fa = (functor_count + functor_chunks - 1)/functor_chunks;
+	    functor_list = (functor_t **)
+		  realloc(functor_list, fa*sizeof(functor_t*));
+	    assert(functor_list);
 
-/*
- * Given a vvp_ipoint_t pointer, return a pointer to the detailed
- * functor structure. This does not use the low 2 bits, which address
- * a specific port of the functor.
- */
-functor_t functor_index(vvp_ipoint_t point)
-{
-      point /= 4;
+	      // allocate the chunks of functor pointers.
+	    while (fa > functors_allocated) {
 
-      assert(point < functor_count);
-      assert(point > 0);
+		  functor_list[functors_allocated] = (functor_t *)
+			malloc(functor_chunks * sizeof(functor_t));
+		  assert(functor_list[functors_allocated]);
 
-      unsigned index0 = point % functor_index0_size;
-      point /= functor_index0_size;
+		  memset(functor_list[functors_allocated],
+			 0,
+			 functor_chunks * sizeof(functor_t));
 
-      unsigned index1 = point % functor_index1_size;
-      point /= functor_index1_size;
-
-      return functor_table[point]->table[index1]->table + index0;
-}
-
-void functor_put_input(functor_t fp, unsigned pp, unsigned val, unsigned str)
-{
-	/* Change the bits of the input. */
-      static const unsigned char ival_mask[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
-      unsigned char imask = ival_mask[pp];
-      fp->ival = (fp->ival & imask) | ((val & 3) << (2*pp));
-
-	/* Save the strength aware input value. */
-      fp->istr[pp] = str;
-}
-
-static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-	/* Locate the new output value in the table. */
-      unsigned char out = fp->table[fp->ival >> 2];
-      out >>= 2 * (fp->ival&0x03);
-      out &= 0x03;
-
-	/* If the output changes, then create a propagation event. */
-      if (out != fp->oval) {
-	    fp->oval = out;
-
-	    switch (out) {
-		case 0:
-		  fp->ostr = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-		  break;
-		case 1:
-		  fp->ostr = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-		  break;
-		case 2:
-		  fp->ostr = 0x80 | (fp->odrive0<<0) | (fp->odrive1<<4);
-		  break;
-		case 3:
-		  fp->ostr = 0x00;
-		  break;
+		  functors_allocated += 1;
 	    }
-
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
       }
+
+      return idx;
 }
 
-const unsigned char vvp_edge_posedge[16] = {
-      0, 1, 1, 1, // 0 -> ...
-      0, 0, 0, 0, // 1 -> ...
-      0, 1, 0, 0, // x -> ...
-      0, 1, 0, 0  // z -> ...
-};
+void functor_define(vvp_ipoint_t point, functor_t obj)
+{
+      unsigned index1 = point/4/functor_chunks;
+      unsigned index2 = (point/4) % functor_chunks;
+      functor_list[index1][index2] = obj;
+}
 
-const unsigned char vvp_edge_negedge[16] = {
-      0, 0, 0, 0, // 0 -> ...
-      1, 0, 1, 1, // 1 -> ...
-      1, 0, 0, 0, // x -> ...
-      1, 0, 0, 0  // z -> ...
-};
+void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
+{
+      put(ptr, v);
 
-const unsigned char vvp_edge_anyedge[16] = {
-      0, 1, 1, 1, // 0 -> ...
-      1, 0, 1, 1, // 1 -> ...
-      1, 1, 0, 1, // x -> ...
-      1, 1, 1, 0  // z -> ...
-};
+	/* Locate the new output value in the table. */
+      unsigned char val = table[ival >> 2];
+      val >>= 2 * (ival&0x03);
+      val &= 0x03;
+
+      put_oval(ptr, push, val);
+}
 
 /*
- * A mode1 functor is a probe of some sort that is looking for an edge
+ * An event functor is a probe of some sort that is looking for an edge
  * of some specified type on any of its inputs. If it finds the right
  * kind of edge, then it awakens all the threads that are waiting on
  * this functor *and* it schedules an assign for any output it might
  * have. The latter is to support wider event/or then a single functor
  * can support.
  */
-static void functor_set_mode1(vvp_ipoint_t iptr, functor_t fp)
-{
-      vvp_event_t ep = fp->event;
 
+void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
+{
+      old_ival = ival;
+      put(ptr, val);
 	/* Only go through the effort if there is someone interested
 	   in the results... */
+      if (threads || out) {
 
-      if (ep->threads || fp->out) {
+	    bool edge_p = true;
 
-	    unsigned char edge_p = 1;
-	    
-	    if (ep->vvp_edge_tab) {
+	    if (edge) {
 		  
-		  vvp_ipoint_t idx = ipoint_port(iptr);
+		  unsigned pp = ipoint_port(ptr);
 		  
-		  unsigned oval = (fp->old_ival >> 2*idx) & 3;
-		  unsigned nval = (fp->ival     >> 2*idx) & 3;
+		  unsigned oval = (old_ival >> 2*pp) & 3;
+		  unsigned nval = (ival     >> 2*pp) & 3;
 		  
 		  unsigned val = (oval << 2) | nval;
-		  edge_p = ep->vvp_edge_tab[val];
+		  edge_p = ((edge>>val) & 1) != 0;
 	    }
 
 	    if (edge_p) {
-		  vthread_t tmp = ep->threads;
-		  ep->threads = 0;
+		  vthread_t tmp = threads;
+		  threads = 0;
 		  vthread_schedule_list(tmp);
 		  
-		  if (fp->out)
-			schedule_assign(fp->out, 0, 0);
+		  if (out)
+			// only one output?  Why not propagate?
+			schedule_assign(out, 0, 0);
 	    }
       }
-
-	/* the new value is the new old value. */
-      fp->old_ival = fp->ival;
 }
 
-/*
- * Set the addressed bit of the functor, and recalculate the
- * output. If the output changes any, then generate the necessary
- * propagation events to pass the output on.
+/* 
+ *  Variable functors receive %assign-ed values at port[0].
+ *  Continuous assignments are connected to port[1].
  */
-void functor_set(vvp_ipoint_t ptr, unsigned bit, unsigned str, bool push)
+
+void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
 {
-      functor_t fp = functor_index(ptr);
       unsigned pp = ipoint_port(ptr);
-      assert(fp);
-
-	/* Store the value and strengths in the input bits. */
-      functor_put_input(fp, pp, bit, str);
-
-      assert(fp->mode != 2);
-
-      switch (fp->mode) {
-	  case 0:
-	    functor_set_mode0(ptr, fp, push);
-	    break;
-	  case 1:
-	    functor_set_mode1(ptr, fp);
-	    break;
-          case M42:
-            if (!fp->obj) {
-		  ptr = fp->out;
-		  fp = functor_index(ptr);
-		  assert(fp->mode == M42);
-	    }
-	    fp->obj->set(ptr, fp, push);
-	    break;
-      }
-
-#if defined(WITH_DEBUG)
-      if (fp->breakpoint)
-	    breakpoint();
-#endif
-}
-
-unsigned functor_get(vvp_ipoint_t ptr)
-{
-      functor_t fp = functor_index(ptr);
-      assert(fp);
-      if ((fp->mode == M42) && fp->obj)
-	    return fp->obj->get(ptr, fp);
-      return fp->oval;
-}
-
-unsigned vvp_fobj_s::get(vvp_ipoint_t, functor_t fp)
-{
-      return fp->oval;
-}
-
-
-/*
- * This function is used by the scheduler to implement the propagation
- * event. The input is the pointer to the functor who's output is to
- * be propagated. Pass the output to the inputs of all the connected
- * functors.
- */
-void functor_propagate(vvp_ipoint_t ptr, bool push)
-{
-      functor_t fp = functor_index(ptr);
-      unsigned char oval = fp->oval;
-      unsigned char ostr = fp->ostr;
-
-      vvp_ipoint_t idx = fp->out;
-      while (idx) {
-	    functor_t idxp = functor_index(idx);
-	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
-
-	    functor_set(idx, oval, ostr, push);
-	    idx = next;
+      
+      if (assigned && pp==1  ||  !assigned && pp==0) {
+	    put_oval(ptr, push, val);
       }
 }
 
-/*
- * The variable functor is special. This is the truth table for it.
- */
-const unsigned char ft_var[16] = {
-      0xe4, /* 0 0: 11, 10, 01, 00 */
-      0xe4, /* 0 1: 11, 10, 01, 00 */
-      0xe4, /* 0 x: 11, 10, 01, 00 */
-      0xe4, /* 0 z: 11, 10, 01, 00 */
-      0x00, /* 1 0: 00, 00, 00, 00 */
-      0x55, /* 1 1: 01, 01, 01, 01 */
-      0xaa, /* 1 x: 10, 10, 10, 10 */
-      0xff, /* 1 z: 11, 11, 11, 11 */
-      0xe4,
-      0xe4,
-      0xe4,
-      0xe4,
-      0xe4,
-      0xe4,
-      0xe4,
-      0xe4
-};
 
+void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push, 
+				  unsigned val, unsigned)
+{
+      put(i, val);
+      functor_t base = functor_index(base_);
+      val = base->ival & 3; // yes, this is ugly
+      base->set(base_, push, val);
+}
+
+void extra_ports_functor_s::set(vvp_ipoint_t i, bool push, 
+			       unsigned val, unsigned str)
+{
+      functor_t base = functor_index(base_);
+      base->set(i, push, val, str);
+}
+
+void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push, 
+				 unsigned val, unsigned)
+{
+      put(i, val);
+      functor_t base = functor_index(out);
+      val = base->ival & 3; // yes, this is ugly
+      base->set(ipoint_make(out,0), push, val);
+}
 
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.29  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.28  2001/10/27 03:43:56  steve
  *  Propagate functor push, to make assign better.
  *

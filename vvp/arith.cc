@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.17 2001/10/27 03:22:26 steve Exp $"
+#ident "$Id: arith.cc,v 1.18 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -25,137 +25,141 @@
 # include  <limits.h>
 # include  <stdio.h>
 # include  <assert.h>
+# include  <malloc.h>
 
-
-
-vvp_arith_::vvp_arith_(vvp_ipoint_t b, unsigned w)
-: base_(b), wid_(w)
-{
-}
-
-void vvp_arith_::output_x_(bool push)
+void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
 {
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
+	    functor_t obj = functor_index(ptr);
+	    
+	    obj->put_oval(ptr, push, val);
+      }
+}
+
+void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
+{
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
+	    functor_t obj = functor_index(ptr);
+	    
+	    unsigned val = sum & 1;
+	    sum >>= 1;
+	    
+	    obj->put_oval(ptr, push, val);
+      }
+}
+
+// Make sure the static sum_ scratch space is large enough for everybody
+
+vvp_wide_arith_::vvp_wide_arith_(unsigned wid)
+      : vvp_arith_(wid)
+{
+      unsigned np = (wid + pagesize - 1)/pagesize;
+      sum_ = (unsigned long *)malloc(np*sizeof(unsigned long));
+      assert(sum_);
+}
+
+void vvp_wide_arith_::output_val_(vvp_ipoint_t base, bool push)
+{
+      unsigned page = 0;
+      unsigned pbit = 0;
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    if (obj->oval == 2)
-		  continue;
+	    unsigned val = (sum_[page] >> pbit) & 1;
 
-	    obj->oval = 2;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
+	    pbit += 1;
+	    if (pbit == pagesize) {
+		  pbit = 0;
+		  page += 1;
+	    }
+
+	    obj->put_oval(ptr, push, val);
       }
 }
 
-vvp_arith_div::vvp_arith_div(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
+
+// Division
+
+inline void vvp_arith_div::wide(vvp_ipoint_t base, bool push)
 {
+      assert(0);
 }
 
-void vvp_arith_div::set(vvp_ipoint_t i, functor_t f, bool push)
+
+void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-      if (wid_ <= 8*sizeof(unsigned long)) {
-	    unsigned long a = 0, b = 0;
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
 
-	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-		  vvp_ipoint_t ptr = ipoint_index(base_,idx);
-		  functor_t obj = functor_index(ptr);
+      if(wid_ > 8*sizeof(unsigned long)) {
+	    wide(base, push);
+	    return;
+      }
 
-		  unsigned ival = obj->ival;
-		  if (ival & 0xaa) {
-			fprintf(stderr, "Division by 0 error: "
-				"returning X value\n");
-			output_x_(push);
-			return;
-		  }
-
-		  if (ival & 0x01)
-			a += 1 << idx;
-		  if (ival & 0x04)
-			b += 1 << idx;
-
-	    }
-
-	    if (b == 0) {
-		  output_x_(push);
+      unsigned long a = 0, b = 0;
+      
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
+	    functor_t obj = functor_index(ptr);
+	    
+	    unsigned val = obj->ival;
+	    if (val & 0xaa) {
+		  output_x_(base, push);
 		  return;
 	    }
-
-	    unsigned long sum = a / b;
-
-	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-		  vvp_ipoint_t ptr = ipoint_index(base_,idx);
-		  functor_t obj = functor_index(ptr);
-
-		  unsigned oval = sum & 1;
-		  sum >>= 1;
-
-		  if (obj->oval == oval)
-			continue;
-
-
-		  obj->oval = oval;
-		  if (push)
-			functor_propagate(ptr);
-		  else
-			schedule_functor(ptr, 0);
-	    }
-
-      } else {
-	    assert(0);
+	    
+	    if (val & 0x01)
+		  a += 1 << idx;
+	    if (val & 0x04)
+		  b += 1 << idx;
       }
+
+      if (b == 0) {
+	    output_x_(base, push);
+	    return;
+      }
+
+      output_val_(base, push, a/b);
 }
 
-vvp_arith_mult::vvp_arith_mult(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
-{
-}
+// Multiplication
 
-void vvp_arith_mult::set(vvp_ipoint_t i, functor_t f, bool push)
+void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-if(wid_ <= 8*sizeof(unsigned long)) {
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      if(wid_ > 8*sizeof(unsigned long)) {
+	    wide(base, push);
+	    return;
+      }
+
       unsigned long a = 0, b = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned ival = obj->ival;
-	    if (ival & 0xaa) {
-		  output_x_(push);
+	    unsigned val = obj->ival;
+	    if (val & 0xaa) {
+		  output_x_(base, push);
 		  return;
 	    }
 
-	    if (ival & 0x01)
+	    if (val & 0x01)
 		  a += 1 << idx;
-	    if (ival & 0x04)
+	    if (val & 0x04)
 		  b += 1 << idx;
-
       }
 
-      unsigned long sum = a * b;
+      output_val_(base, push, a*b);
+}
 
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned oval = sum & 1;
-	    sum >>= 1;
-
-	    if (obj->oval == oval)
-		  continue;
-
-
-	    obj->oval = oval;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
-      }
-} else {	/* long form only used if > machine length long */
+void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
+{
       unsigned char *a, *b, *sum;
       a = new unsigned char[wid_];
       b = new unsigned char[wid_];
@@ -165,12 +169,12 @@ if(wid_ <= 8*sizeof(unsigned long)) {
       int mxb = -1;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx);
 	    functor_t obj = functor_index(ptr);
 
 	    unsigned ival = obj->ival;
 	    if (ival & 0xaa) {
-		  output_x_(push);
+		  output_x_(base, push);
 		  delete[]sum;
 		  delete[]b;
 		  delete[]a;
@@ -201,41 +205,27 @@ if(wid_ <= 8*sizeof(unsigned long)) {
 		}
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned oval = sum[idx];
+	    unsigned val = sum[idx];
 
-	    if (obj->oval == oval)
-		  continue;
-
-	    obj->oval = oval;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
+	    obj->put_oval(ptr, push, val);
       }
 
-delete[]sum;
-delete[]b;
-delete[]a;
+      delete[]sum;
+      delete[]b;
+      delete[]a;
 }
 
-}
 
-vvp_arith_sum::vvp_arith_sum(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
+// Addition
+
+void vvp_arith_sum::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-      sum_ = new unsigned long[(w+1) / 8*sizeof(unsigned long) + 1];
-}
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
 
-vvp_arith_sum::~vvp_arith_sum()
-{
-      delete[]sum_;
-}
-
-void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
-{
       unsigned page = 0;
       unsigned pbit = 0;
       unsigned long carry = 0;
@@ -243,116 +233,24 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
       sum_[0] = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned ival = obj->ival;
-	    if (ival & 0xaa) {
-		  output_x_(push);
+	    unsigned val = obj->ival;
+	    if (val & 0xaa) {
+		  output_x_(base, push);
 		  return;
 	    }
 
 	      // Accumulate the sum of the input bits.
 	    unsigned long tmp = 0;
-	    if (ival & 0x01)
+	    if (val & 0x01)
 		  tmp += 1;
-	    if (ival & 0x04)
+	    if (val & 0x04)
 		  tmp += 1;
-	    if (ival & 0x10)
+	    if (val & 0x10)
 		  tmp += 1;
-	    if (ival & 0x40)
-		  tmp += 1;
-
-	    // Save carry bits
-	    if (pbit >= pagesize - 2)
-		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
-
-	    // Put the next bit into the sum,
-	    sum_[page] += tmp << pbit;
-
-	    pbit += 1;
-	    if (pbit >= pagesize) {
-		  pbit = 0;
-		  page += 1;
-		  sum_[page] = carry;
-		  carry = 0;
-	    }
-      }
-
-      page = 0;
-      pbit = 0;
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned oval = (sum_[page] >> pbit) & 1;
-
-	    pbit += 1;
-	    if (pbit == 8 * sizeof sum_[page]) {
-		  pbit = 0;
-		  page += 1;
-	    }
-
-	    if (obj->oval == oval)
-		  continue;
-
-
-	    obj->oval = oval;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
-      }
-}
-
-vvp_arith_sub::vvp_arith_sub(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
-{
-      sum_ = new unsigned long[(w+1) / 8*sizeof(unsigned long) + 1];
-}
-
-vvp_arith_sub::~vvp_arith_sub()
-{
-      delete[]sum_;
-}
-
-/*
- * Subtraction works by adding the 2s complement of the B, C and D
- * inputs from the A input. The 2s complement is the 1s complement
- * plus one, so we further reduce the operation to adding in the
- * inverted value and adding a correction.
- */
-void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
-{
-      unsigned page = 0;
-      unsigned pbit = 0;
-      unsigned long carry = 0;
-
-	/* There are 3 values subtracted from the first parameter, so
-	   there are three 2s complements, so three ~X +1. That's why
-	   the sum_ starts with 3. */
-      sum_[0] = 3;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned ival = obj->ival;
-	    if (ival & 0xaa) {
-		  output_x_(push);
-		  return;
-	    }
-
-	      // Accumulate the sum of the input bits. Add in the
-	      // first value, and the ones complement of the other values.
-	    unsigned long tmp = 0;
-	    if (ival & 0x01)
-		  tmp += 1;
-	    if (! (ival & 0x04))
-		  tmp += 1;
-	    if (! (ival & 0x10))
-		  tmp += 1;
-	    if (! (ival & 0x40))
+	    if (val & 0x40)
 		  tmp += 1;
 
 	    // Save carry bits
@@ -371,55 +269,91 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 	    }
       }
 
-      page = 0;
-      pbit = 0;
+      output_val_(base, push);
+}
+
+
+/*
+ * Subtraction works by adding the 2s complement of the B, C and D
+ * inputs from the A input. The 2s complement is the 1s complement
+ * plus one, so we further reduce the operation to adding in the
+ * inverted value and adding a correction.
+ */
+void vvp_arith_sub::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+{
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      unsigned page = 0;
+      unsigned pbit = 0;
+      unsigned long carry = 0;
+
+	/* There are 3 values subtracted from the first parameter, so
+	   there are three 2s complements, so three ~X +1. That's why
+	   the sum_ starts with 3. */
+      sum_[0] = 3;
+
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned oval = (sum_[page] >> pbit) & 1;
-
-	    pbit += 1;
-	    if (pbit == 8 * sizeof sum_[page]) {
-		  pbit = 0;
-		  page += 1;
+	    unsigned val = obj->ival;
+	    if (val & 0xaa) {
+		  output_x_(base, push);
+		  return;
 	    }
 
-	    if (obj->oval == oval)
-		  continue;
+	      // Accumulate the sum of the input bits. Add in the
+	      // first value, and the ones complement of the other values.
+	    unsigned long tmp = 0;
+	    if (val & 0x01)
+		  tmp += 1;
+	    if (! (val & 0x04))
+		  tmp += 1;
+	    if (! (val & 0x10))
+		  tmp += 1;
+	    if (! (val & 0x40))
+		  tmp += 1;
 
+	    // Save carry bits
+	    if (pbit >= pagesize - 2)
+		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
 
-	    obj->oval = oval;
-	    if (push)
-		  functor_propagate(ptr);
-	    else
-		  schedule_functor(ptr, 0);
+	    // Put the next bits into the sum,
+	    sum_[page] += tmp << pbit;
+
+	    pbit += 1;
+	    if (pbit >= pagesize) {
+		  pbit = 0;
+		  page += 1;
+		  sum_[page] = carry;
+		  carry = 0;
+	    }
       }
 
+      output_val_(base, push);
 }
 
-vvp_cmp_ge::vvp_cmp_ge(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
-{
-}
 
-void vvp_cmp_ge::set(vvp_ipoint_t i, functor_t f, bool push)
+void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-      functor_t base_obj = functor_index(base_);
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
       unsigned out_val = 1;
 
       for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx-1);
+	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned ival = obj->ival;
-	    if (ival & 0x0a) {
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
 		  out_val = 2;
 		  break;
 	    }
 
-	    unsigned a = (ival & 0x01)? 1 : 0;
-	    unsigned b = (ival & 0x04)? 1 : 0;
+	    unsigned a = (val & 0x01)? 1 : 0;
+	    unsigned b = (val & 0x04)? 1 : 0;
 
 	    if (a > b) {
 		  out_val = 1;
@@ -432,37 +366,28 @@ void vvp_cmp_ge::set(vvp_ipoint_t i, functor_t f, bool push)
 	    }
       }
 
-      if (out_val != base_obj->oval) {
-	    base_obj->oval = out_val;
-	    if (push)
-		  functor_propagate(base_);
-	    else
-		  schedule_functor(base_, 0);
-      }
+      put_oval(base, push, out_val);
 }
 
-vvp_cmp_gt::vvp_cmp_gt(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
+void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-}
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
 
-void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
-{
-      functor_t base_obj = functor_index(base_);
       unsigned out_val = 0;
-
+      
       for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_,idx-1);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx-1);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned ival = obj->ival;
-	    if (ival & 0x0a) {
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
 		  out_val = 2;
 		  break;
 	    }
 
-	    unsigned a = (ival & 0x01)? 1 : 0;
-	    unsigned b = (ival & 0x04)? 1 : 0;
+	    unsigned a = (val & 0x01)? 1 : 0;
+	    unsigned b = (val & 0x04)? 1 : 0;
 
 	    if (a > b) {
 		  out_val = 1;
@@ -475,26 +400,19 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
 	    }
       }
 
-      if (out_val != base_obj->oval) {
-	    base_obj->oval = out_val;
-	    if (push)
-		  functor_propagate(base_);
-	    else
-		  schedule_functor(base_, 0);
-      }
+      put_oval(base, push, out_val);
 }
 
-vvp_shiftl::vvp_shiftl(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
-{
-      amount_ = 0;
-}
 
-void vvp_shiftl::set(vvp_ipoint_t i, functor_t f, bool push)
+void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-      amount_ = 0;
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      unsigned amount = 0;
+
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_, idx);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx);
 	    functor_t fp = functor_index(ptr);
 
 	    unsigned val = (fp->ival >> 2) & 0x03;
@@ -502,73 +420,48 @@ void vvp_shiftl::set(vvp_ipoint_t i, functor_t f, bool push)
 		case 0:
 		  break;
 		case 1:
-		  amount_ |= 1 << idx;
+		  amount |= 1 << idx;
 		  break;
 		default:
-		  output_x_(push);
+		  output_x_(base, push);
 		  return;
 	    }
       }
 
-      if (amount_ >= wid_) {
-	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-		  vvp_ipoint_t optr = ipoint_index(base_, idx);
-		  functor_t ofp = functor_index(optr);
-		  if (ofp->oval != 0) {
-			ofp->oval = 0;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
-	    }
+      if (amount >= wid_) {
+	    output_x_(base, push, 0);
+	    return;
 
       } else {
 	    vvp_ipoint_t optr, iptr;
 	    functor_t ofp, ifp;
 
-	    for (unsigned idx = 0 ;  idx < amount_ ;  idx += 1) {
-		  optr = ipoint_index(base_, idx);
+	    for (unsigned idx = 0 ;  idx < amount ;  idx += 1) {
+		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  if (ofp->oval != 0) {
-			ofp->oval = 0;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
+		  ofp->put_oval(optr, push, 0);
 	    }
 
-	    for (unsigned idx = amount_ ;  idx < wid_ ;  idx += 1) {
-		  optr = ipoint_index(base_, idx);
+	    for (unsigned idx = amount ;  idx < wid_ ;  idx += 1) {
+		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  iptr = ipoint_index(base_, idx - amount_);
+		  iptr = ipoint_index(base, idx - amount);
 		  ifp = functor_index(iptr);
 
-		  if (ofp->oval != (ifp->ival&3)) {
-			ofp->oval = ifp->ival&3;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
+		  ofp->put_oval(optr, push, ifp->ival & 3);
 	    }
-
       }
 }
 
-vvp_shiftr::vvp_shiftr(vvp_ipoint_t b, unsigned w)
-: vvp_arith_(b, w)
+void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-      amount_ = 0;
-}
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
 
+      unsigned amount = 0;
 
-void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
-{
-      amount_ = 0;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base_, idx);
+	    vvp_ipoint_t ptr = ipoint_index(base, idx);
 	    functor_t fp = functor_index(ptr);
 
 	    unsigned val = (fp->ival >> 2) & 0x03;
@@ -576,56 +469,35 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 		case 0:
 		  break;
 		case 1:
-		  amount_ |= 1 << idx;
+		  amount |= 1 << idx;
 		  break;
 		default:
-		  output_x_(push);
+		  output_x_(base, push);
 		  return;
 	    }
       }
 
-      if (amount_ >= wid_) {
-	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-		  vvp_ipoint_t optr = ipoint_index(base_, idx);
-		  functor_t ofp = functor_index(optr);
-		  if (ofp->oval != 0) {
-			ofp->oval = 0;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
-	    }
+      if (amount >= wid_) {
+	    output_x_(base, push, 0);
+	    return;
 
       } else {
 	    vvp_ipoint_t optr, iptr;
 	    functor_t ofp, ifp;
 
-	    for (unsigned idx = 0 ;  idx < (wid_-amount_) ;  idx += 1) {
-		  optr = ipoint_index(base_, idx);
+	    for (unsigned idx = 0 ;  idx < (wid_-amount) ;  idx += 1) {
+		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  iptr = ipoint_index(base_, idx + amount_);
+		  iptr = ipoint_index(base, idx + amount);
 		  ifp = functor_index(iptr);
 
-		  if (ofp->oval != (ifp->ival&3)) {
-			ofp->oval = ifp->ival&3;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
+		  ofp->put_oval(optr, push, ifp->ival & 3);
 	    }
 
-	    for (unsigned idx = wid_-amount_; idx < wid_ ;  idx += 1) {
-		  optr = ipoint_index(base_, idx);
+	    for (unsigned idx = wid_-amount; idx < wid_ ;  idx += 1) {
+		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  if (ofp->oval != 0) {
-			ofp->oval = 0;
-			if (push)
-			      functor_propagate(optr);
-			else
-			      schedule_functor(optr, 0);
-		  }
+		  ofp->put_oval(optr, push, 0);
 	    }
       }
 }
@@ -633,6 +505,11 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.18  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.17  2001/10/27 03:22:26  steve
  *  Minor rework of summation carry propagation (Stephan Boettcher)
  *

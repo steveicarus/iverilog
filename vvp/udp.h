@@ -20,40 +20,53 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.9 2001/08/09 19:38:23 steve Exp $"
+#ident "$Id: udp.h,v 1.10 2001/10/31 04:27:47 steve Exp $"
 #endif
 
-#include "pointers.h"
 #include "functor.h"
+
+// UDP implementation:
 
 typedef struct udp_table_entry_s *udp_table_entry_t;
 
-class vvp_udp_s : public vvp_fobj_s
+struct vvp_udp_s
 {
-    public:
-      void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    public:
       char *name;
       udp_table_entry_t table;
       unsigned short ntable;
       unsigned short sequ;
       unsigned short nin;
-      unsigned char  init;
-
+      unsigned char init;
+  
       void compile_table(char **tab);
-
- private:
+      unsigned char propagate(functor_t fu, vvp_ipoint_t i);
+  
+    private:
       void compile_row_(udp_table_entry_t, char *);
-      unsigned char propagate_(vvp_ipoint_t i);
 };
 
 struct vvp_udp_s *udp_create(char *label);
 struct vvp_udp_s *udp_find(char *label);
 
 
+// UDP instances:
+
+class udp_functor_s : public edge_inputs_functor_s
+{
+public:
+      explicit udp_functor_s(vvp_udp_s *u) : udp(u) {}
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      vvp_udp_s *udp;
+};
+
+
 /*
  * $Log: udp.h,v $
+ * Revision 1.10  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.9  2001/08/09 19:38:23  steve
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.

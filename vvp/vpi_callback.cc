@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.8 2001/10/25 04:19:53 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.9 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 /*
@@ -51,6 +51,27 @@ const struct __vpirt callback_rt = {
       0
 };
 
+/*
+ * Callback handles are created when the VPI function registers a
+ * callback. The handle is stored by the run time, and it triggered
+ * when the run-time thing that it is waiting for happens.
+ */
+
+struct __vpiCallback {
+      struct __vpiHandle base;
+
+      struct t_cb_data cb_data;
+      struct t_vpi_time cb_time;
+
+      struct sync_cb* cb_sync;
+
+      struct __vpiCallback*next;
+};
+
+struct sync_cb  : public vvp_gen_event_s {
+      struct __vpiCallback*handle;
+};
+
 static struct __vpiCallback* free_callback_root = 0x0;
 
 inline static struct __vpiCallback* new_vpi_callback()
@@ -74,54 +95,66 @@ inline static void free_vpi_callback(struct __vpiCallback* obj)
 }
 
 /*
- * A signal get equipped with an M42 event functor to trigger 
+ * A signal get equipped with a callback_functor_s to trigger 
  * callbacks.
  */
 
-struct vvp_cb_fobj_s *vvp_fvector_make_callback(vvp_fvector_t vec,
-						const unsigned char *edge)
-{
-      struct vvp_cb_fobj_s *obj = new vvp_cb_fobj_s;
-      unsigned nvec = vvp_fvector_size(vec);
-      unsigned nfun = (nvec+3)/4;
+struct callback_functor_s: public functor_s {
+      callback_functor_s() : permanent(0) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      struct __vpiCallback *cb_handle;
+      unsigned permanent : 1;
+};
 
-      if (edge)
+struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
+						     event_functor_s::edge_t edge)
+{
+      // Let's make a callback functor.
+      struct callback_functor_s *obj = new callback_functor_s;
+
+      // We want to connect nvec inputs
+      unsigned nvec = vvp_fvector_size(vec);
+
+      // We require a total of nfun functors.  If there's an edge to
+      // look for, then all inputs must go to extra event functors.
+      // Otherwise we just make sure we have one input left on the base
+      // functor to connect the extras to, if there are any.
+      unsigned nfun = (nvec+3)/4;
+      if (edge != vvp_edge_none)
 	    nfun ++ ;
       else if (nfun > 1  &&  4*nfun == nvec)
 	    nfun ++;
       
       vvp_ipoint_t fdx = functor_allocate(nfun);
-      unsigned vi = 0;
-      for (unsigned i = 0; i<nfun; i++) {
-	    vvp_ipoint_t ipt = ipoint_index(fdx, i);
-	    functor_t fu = functor_index(ipt);
-	    fu->ival = 0xaa;
-	    fu->oval = 2;
-	    fu->odrive0 = 6;
-	    fu->odrive0 = 6;
-	    fu->out  = 0;
-#if defined(WITH_DEBUG)
-	    fu->breakpoint = 0;
-#endif
-	    if (i == nfun-1) {
-		  fu->mode = M42;
-		  fu->obj = obj;
-	    } else {
-		  fu->mode = 1;
-		  fu->event = (struct vvp_event_s*) 
-			malloc(sizeof (struct vvp_event_s));
-		  fu->event->threads = 0;
-		  fu->old_ival = fu->ival;
-		  fu->event->vvp_edge_tab = edge;
-		  fu->out = ipoint_input_index(ipoint_index(fdx, nfun-1), 3);
-	    }
-	    for (unsigned j=0; j<4 && vi < nvec; j++, vi++) {
-		  vvp_ipoint_t vipt = vvp_fvector_get(vec, vi);
-		  functor_t vfu = functor_index(vipt);
-		  fu->port[j] = vfu->out;
-		  vfu->out = ipoint_input_index(ipt, j);
-	    }
+      functor_define(fdx, obj);
+
+      for (unsigned i=1; i<nfun; i++) {
+	functor_t fu = new event_functor_s(edge);
+	functor_define(ipoint_index(fdx, i), fu);
+	fu->out = fdx;
       }
+
+      unsigned i;
+
+      if (edge != vvp_edge_none)
+	    i = 4;
+      else if (nvec > 4)
+	    i = 1;
+      else 
+	    i = 0;
+
+      for (unsigned vi = 0;  vi < nvec;  vi++, i++) {
+	    vvp_ipoint_t vipt = vvp_fvector_get(vec, vi);
+	    functor_t vfu = functor_index(vipt);
+
+	    vvp_ipoint_t ipt = ipoint_input_index(fdx, i);
+	    functor_t fu = functor_index(ipt);
+	    unsigned pp = ipoint_port(ipt);
+
+	    fu->port[pp] = vfu->out;
+	    vfu->out = ipt;
+      }
+
       obj->permanent = 0;
       obj->cb_handle = 0;
       return obj;
@@ -156,10 +189,6 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 
       return obj;
 }
-
-struct sync_cb  : public vvp_gen_event_s {
-      struct __vpiCallback*handle;
-};
 
 static void make_sync_run(vvp_gen_event_t obj, unsigned char)
 {
@@ -235,7 +264,7 @@ int vpi_remove_cb(vpiHandle ref)
  * A callback event happened.
  */
 
-void vvp_cb_fobj_s::set(vvp_ipoint_t i, functor_t f, bool push)
+void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 {
       struct __vpiCallback *next = cb_handle;
       if (!permanent)
@@ -246,7 +275,7 @@ void vvp_cb_fobj_s::set(vvp_ipoint_t i, functor_t f, bool push)
 	    if (cur->cb_data.value) {
 		  switch (cur->cb_data.value->format) {
 		  case vpiScalarVal:
-			cur->cb_data.value->value.scalar = f->ival & 3;
+			cur->cb_data.value->value.scalar = val;
 			break;
 		  case vpiSuppressVal:
 			break;
@@ -271,6 +300,11 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.9  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.8  2001/10/25 04:19:53  steve
  *  VPI support for callback to return values.
  *

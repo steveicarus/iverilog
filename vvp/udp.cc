@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.11 2001/09/19 04:10:40 steve Exp $"
+#ident "$Id: udp.cc,v 1.12 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -31,30 +31,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
+void udp_functor_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
 {
-  unsigned char out = propagate_(ptr);
-
-  switch (out) {
-      case 0:
-	fp->ostr = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-	break;
-      case 1:
-	fp->ostr = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-	break;
-      case 2:
-	fp->ostr = 0x80 | (fp->odrive0<<0) | (fp->odrive1<<4);
-	break;
-      case 3:
-	fp->ostr = 0x00;
-	break;
-  }
-
-  if (out != fp->oval) 
-    {
-      fp->oval = out;
-      schedule_functor(ptr, 0);
-    }
+  // old_ival is set on the way out
+  put(i, val);
+  unsigned char out = udp->propagate(this, i);
+  put_oval(i, false, out);
 }
 
 
@@ -67,7 +49,7 @@ struct vvp_udp_s *udp_create(char *label)
 
   assert(!udp_find(label));
 
-  struct vvp_udp_s *u = new struct vvp_udp_s;
+  struct vvp_udp_s *u = new vvp_udp_s;
   
   symbol_value_t v;
   v.ptr = u;
@@ -106,9 +88,9 @@ enum edge_type_e
   EDGE_any = 0x0f,
 };
 
-unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
+unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
 {
-  functor_t fu = functor_index(uix);
+  vvp_ipoint_t base = ipoint_make(uix, 0);
 
   unsigned char ret = 2;
 
@@ -119,8 +101,10 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 
   for (int i=0;  i < nin;  i+=4)
     {
-      int idx = ipoint_input_index(uix, i);
-      functor_t pfun = functor_index(idx);
+      int idx = ipoint_input_index(base, i);
+      edge_inputs_functor_s *pfun = 
+	    dynamic_cast<edge_inputs_functor_s *>(functor_index(idx));
+      assert(pfun);
 
       invec |= pfun->ival << (2*i);
 
@@ -144,10 +128,10 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 
   if (sequ)
     {
-      invec <<= 2;
-      invec |= (fu->oval&3);
       if (edge_type == 0)
-           return fu->oval;
+           return fu->get();
+      invec <<= 2;
+      invec |= (fu->get() & 3);
     }
 
   udp_vec_t inx  =  invec & 0xaaaaaaaaU; // all 'x'/'z'
@@ -179,7 +163,7 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
     }
 
   if (ret>2)
-    ret = fu->oval;
+    ret = fu->get();
 
   return ret;
 }
@@ -201,7 +185,7 @@ void vvp_udp_s::compile_table(char **tab)
 void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 {
   row->not_0  = 0;     // all inputs that must not be 0
-  row->not_1x = 0;     // all inputs that bust not be 1 or x
+  row->not_1x = 0;     // all inputs that must not be 1 or x
   row->edge_idx = 0;   // input index of the edge
   row->edge_type = 0;  // permissible transitions. 0: no edge.
 
@@ -366,6 +350,11 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.12  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.11  2001/09/19 04:10:40  steve
  *  Change UDP output only if table matches.
  *

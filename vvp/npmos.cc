@@ -17,89 +17,81 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: npmos.cc,v 1.4 2001/10/24 03:18:52 steve Exp $"
+#ident "$Id: npmos.cc,v 1.5 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "npmos.h"
-# include  "functor.h"
 # include  "schedule.h"
 
-/* from IEEE 1384-1995 Table 7-8 */
-static unsigned char rmos_table[8] = { 0, 1, 1, 2, 2, 3, 5, 5 };
-/* just reduce SUPPLY to STRONG */
-static unsigned char mos_table[8] = { 0, 1, 2, 3, 4, 5, 6, 6 };
-
-static inline unsigned reduce_strength(unsigned is0, unsigned char *table)
+void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
 {
-      unsigned vals = is0 & 0x88;
-      unsigned s1 = table[is0 & 0x7];
-      unsigned s2 = table[(is0 & 0x70) >> 4];
+      put(ptr, v);
 
-      return vals | s1 | (s2 << 4);
-}
+      unsigned pp = ipoint_port(ptr);
+      if (pp == 0) {
 
-static void mos_set(vvp_ipoint_t ptr, functor_t fp, bool push, unsigned in1_on, unsigned char *table)
-{
-      unsigned in0 = fp->ival & 0x03;
-      unsigned in1 = (fp->ival >> 2) & 0x03;
-      unsigned is0 = reduce_strength(fp->istr[0], table);
-  
-      unsigned char outH = 0x88 | ((is0 & 7)<<4) | (0);
-      unsigned char outL = 0x00 | ((is0 & 7)<<0) | (0);
-      unsigned char outX = 0x80 | (is0 & 7) | (is0 & 0x70);
+	    /* from IEEE 1384-1995 Table 7-8 */
+	    static const unsigned char rmos_table[8] 
+		  = { 0, 1, 1, 2, 2, 3, 5, 5 };
+	    /* just reduce SUPPLY to STRONG */
+	    static const unsigned char mos_table[8]
+		  = { 0, 1, 2, 3, 4, 5, 6, 6 };
+	    
+	    const unsigned char *table = res ? rmos_table : mos_table;
+	    
+	    unsigned vals = s & 0x88;
+	    unsigned s1 = table[s & 0x7];
+	    unsigned s2 = table[(s & 0x70) >> 4];
+	    
+	    istr =  vals | s1 | (s2 << 4);
+      }
 
-      if (in1 == in1_on) {
+      unsigned in0 = ival & 0x03;
+      unsigned in1 = (ival >> 2) & 0x03;
+
+      unsigned char outH = 0x88 | ((istr & 7)<<4) | (0);
+      unsigned char outL = 0x00 | ((istr & 7)<<0) | (0);
+      unsigned char outX = 0x80 | (istr & 7) | (istr & 0x70);
+
+      in1 ^= pol;
+
+      unsigned char val;
+      unsigned char str;
+
+      if (in0 == 3 || in1 == 0) {
 	    // gate on; output follows input
-	    fp->oval = in0;
-	    fp->ostr = is0;
+	    val = in0;
+	    str = istr;
       } else if (in1 == 2 || in1 == 3) {
 	    // gate X or Z; output is undefined
-	    fp->oval = 2;
+	    val = 2;
 	    switch (in0) {
 		case 0:
-		  fp->ostr = outL;
+		  str = outL;
 		  break;
 		case 1:
-		  fp->ostr = outH;
+		  str = outH;
 		  break;
 		default:
-		  fp->ostr = outX;
+		  str = outX;
 		  break;
 	    }
       } else {
 	    // gate off; output is high impedance
-	    fp->oval = 3;
-	    fp->ostr = HiZ;
+	    val = 3;
+	    str = HiZ;
       }
 
-      if (push)
-	    functor_propagate(ptr);
-      else
-	    schedule_functor(ptr, 0);
-}
-
-void vvp_pmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-      mos_set(ptr, fp, push, 0, mos_table);
-}
-
-void vvp_nmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-      mos_set(ptr, fp, push, 1, mos_table);
-}
-
-void vvp_rpmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-      mos_set(ptr, fp, push, 0, rmos_table);
-}
-
-void vvp_rnmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
-{
-      mos_set(ptr, fp, push, 1, rmos_table);
+      put_ostr(ptr, push, val, str);
 }
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.5  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.4  2001/10/24 03:18:52  steve
  *  npmos outputs have 3bit strengths, not 2.
  *

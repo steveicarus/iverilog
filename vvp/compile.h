@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.34 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: compile.h,v 1.35 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -138,10 +138,6 @@ extern void compile_memory_init(char *memid, unsigned idx, unsigned char val);
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
 
-extern void compile_named_event(char*label, char*name);
-
-extern void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
-
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
  * are a few lexical types that the parser recognizes of the operands,
@@ -206,6 +202,11 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.35  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.34  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *

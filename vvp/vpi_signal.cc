@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.27 2001/10/18 04:52:31 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.28 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 /*
@@ -136,7 +136,7 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, wid-idx-1);
 	    val *= 2;
-	    switch (functor_oval(fptr)) {
+	    switch (functor_get(fptr)) {
 		case 0:
 		  break;
 		case 1:
@@ -210,7 +210,7 @@ static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    for (bdx = 8 ;  bdx > 0 ;  bdx -= 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx-8+bdx-1);
 		  tmp <<= 1;
-		  switch (functor_oval(fptr)) {
+		  switch (functor_get(fptr)) {
 		      case 0:
 			break;
 		      case 1:
@@ -248,7 +248,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.integer = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		  switch (functor_oval(fptr)) {
+		  switch (functor_get(fptr)) {
 		      case 0:
 			break;
 		      case 1:
@@ -265,7 +265,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiBinStrVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		  buf[wid-idx-1] = "01xz"[functor_oval(fptr)];
+		  buf[wid-idx-1] = "01xz"[functor_get(fptr)];
 	    }
 	    buf[wid] = 0;
 	    vp->value.str = buf;
@@ -278,7 +278,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		      hval = hval | (functor_oval(fptr) << 2*(idx % 4));
+		      hval = hval | (functor_get(fptr) << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
@@ -313,7 +313,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		      hval = hval | (functor_oval(fptr) << 2*(idx % 3));
+		      hval = hval | (functor_get(fptr) << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
@@ -357,7 +357,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      unsigned int obit = 0;
 	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		switch (functor_oval(fptr)) {
+		switch (functor_get(fptr)) {
 		case 0:
 		  op->aval &= ~(1 << obit);
 		  op->bval &= ~(1 << obit);
@@ -404,9 +404,7 @@ static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
 {
       vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
       functor_t fu = functor_index(ptr);
-      fu->oval = val;
-      fu->ostr = str;
-      functor_propagate(ptr);
+      fu->put_ostr(ptr, true, val, str);
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
@@ -554,6 +552,11 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.28  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.27  2001/10/18 04:52:31  steve
  *  Support vpiVectorVal for signals. (Philip Blundell)
  *

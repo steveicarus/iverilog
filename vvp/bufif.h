@@ -19,29 +19,33 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.h,v 1.1 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: bufif.h,v 1.2 2001/10/31 04:27:46 steve Exp $"
 #endif
 
 # include  "functor.h"
 
-class vvp_bufif0_s  : public vvp_fobj_s {
+class vvp_bufif1_s  : public functor_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_bufif1_s() : pol(0) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+    protected:
+      unsigned pol : 1;
 };
 
-class vvp_bufif1_s  : public vvp_fobj_s {
+class vvp_bufif0_s  : public vvp_bufif1_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_bufif0_s() { pol = 1; }
 };
 
 /*
  * $Log: bufif.h,v $
+ * Revision 1.2  2001/10/31 04:27:46  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.1  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.

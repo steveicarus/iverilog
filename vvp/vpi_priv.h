@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.23 2001/10/15 01:49:50 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.24 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -110,31 +110,13 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
 	/* The represented value is here. */
       vvp_fvector_t bits;
-        /* This is the callback event finctor object */
-      struct vvp_cb_fobj_s *callback;
+        /* This is the callback event functor */
+      struct callback_functor_s *callback;
 };
 extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_fvector_t vec);
 extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_fvector_t vec);
-
-/*
- * Callback handles are created when the VPI function registers a
- * callback. The handle is stored by the run time, and it triggered
- * when the run-time thing that it is waiting for happens.
- */
-
-struct sync_cb;
-struct __vpiCallback {
-      struct __vpiHandle base;
-
-      struct t_cb_data cb_data;
-      struct t_vpi_time cb_time;
-
-      struct sync_cb* cb_sync;
-
-      struct __vpiCallback*next;
-};
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -259,6 +241,11 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.24  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.23  2001/10/15 01:49:50  steve
  *  Support getting scope of scope, and scope of signals.
  *

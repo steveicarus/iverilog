@@ -19,45 +19,48 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: npmos.h,v 1.2 2001/10/18 17:30:26 steve Exp $"
+#ident "$Id: npmos.h,v 1.3 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "functor.h"
 
-class vvp_pmos_s  : public vvp_fobj_s {
+class vvp_pmos_s  : public functor_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_pmos_s() : istr(StX), pol(0), res(0) {}
+      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      
+    protected:
+      unsigned char istr;
+      unsigned pol : 1;
+      unsigned res : 1;
 };
 
-class vvp_nmos_s  : public vvp_fobj_s {
+class vvp_nmos_s  : public vvp_pmos_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_nmos_s() { pol = 1; res = 0; }
 };
 
-class vvp_rpmos_s  : public vvp_fobj_s {
+class vvp_rpmos_s  : public vvp_pmos_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_rpmos_s() { pol = 0; res = 1; }
 };
 
-class vvp_rnmos_s  : public vvp_fobj_s {
+class vvp_rnmos_s  : public vvp_pmos_s {
 
     public:
-      virtual void set(vvp_ipoint_t i, functor_t f, bool push);
-
-    private: // not implemented
+      vvp_rnmos_s() { pol = 1; res = 1; }
 };
 
 /*
  * $Log: npmos.h,v $
+ * Revision 1.3  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.2  2001/10/18 17:30:26  steve
  *  Support rnpmos devices. (Philip Blundell)
  * Revision 1.1 2001/10/09 02:28:17 steve Add the

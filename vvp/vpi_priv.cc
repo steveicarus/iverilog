@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.9 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.10 2001/10/31 04:27:47 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -75,7 +75,7 @@ char* vpi_get_str(int property, vpiHandle ref)
       if (ref->vpi_type->vpi_get_str_ == 0)
 	    return 0;
 
-      return (ref->vpi_type->vpi_get_str_)(property, ref);
+      return (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
 }
 
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
@@ -154,6 +154,11 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.10  2001/10/31 04:27:47  steve
+ *  Rewrite the functor type to have fewer functor modes,
+ *  and use objects to manage the different types.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.9  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
