@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.4 2004/02/20 03:20:04 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.5 2004/08/24 16:16:23 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -306,7 +306,7 @@ static int sys_fgets_calltf(char *name)
       txt_len = vpi_get(vpiSize, str) / 8;
       txt = malloc(txt_len + 1);
 
-      if (fgets(txt, txt_len, fd) == 0) {
+      if (fgets(txt, txt_len+1, fd) == 0) {
 	    rval.format = vpiIntVal;
 	    rval.value.integer = 0;
 	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
@@ -480,6 +480,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.5  2004/08/24 16:16:23  steve
+ *  Fix read count passed to fgets.
+ *
  * Revision 1.4  2004/02/20 03:20:04  steve
  *  unused variable warning.
  *
