@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.142 2000/02/06 23:13:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.143 2000/02/14 00:11:11 steve Exp $"
 #endif
 
 /*
@@ -1291,6 +1291,7 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
       NetProc*e = else_? else_->elaborate(des, path) : 0;
 
       NetCondit*res = new NetCondit(expr, i, e);
+      res->set_line(*this);
       return res;
 }
 
@@ -2002,6 +2003,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.143  2000/02/14 00:11:11  steve
+ *  Mark the line numbers of NetCondit nodes.
+ *
  * Revision 1.142  2000/02/06 23:13:14  steve
  *  Include the scope in named gates.
  *
