@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.23 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: memory.cc,v 1.24 2005/03/05 05:44:32 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -178,6 +178,13 @@ vvp_vector4_t memory_get_word(vvp_memory_t mem, unsigned addr)
 	// XXXX For now, assume this can't happen
       assert(addr <= mem->word_count);
 
+      if (mem->words[addr].size() == 0) {
+	    vvp_vector4_t tmp (mem->width);
+	    for (unsigned idx = 0 ;  idx < mem->width ;  idx += 1)
+		  tmp.set_bit(idx, BIT4_X);
+	    mem->words[addr] = tmp;
+      }
+
       return mem->words[addr];
 }
 
@@ -186,6 +193,7 @@ void memory_init_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
       if (addr >= mem->word_count)
 	    return;
 
+      assert(val.size() == mem->width);
       mem->words[addr] = val;
 }
 
@@ -518,6 +526,9 @@ static void run_mem_assign(vvp_gen_event_t obj, unsigned char val)
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.24  2005/03/05 05:44:32  steve
+ *  Get read width of unitialized memory words right.
+ *
  * Revision 1.23  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
