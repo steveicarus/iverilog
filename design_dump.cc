@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.61 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.62 1999/12/05 02:24:08 steve Exp $"
 #endif
 
 /*
@@ -428,9 +428,7 @@ void NetAssignMem::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       o << "/* " << get_line() << " */" << endl;
       o << setw(ind) << "";
-      o << memory()->name() << "[";
-      index()->dump(o);
-      o << "] = ";
+      o << memory()->name() << "[" << index()->name() << "] = ";
       rval()->dump(o);
       o << ";" << endl;
 }
@@ -440,9 +438,7 @@ void NetAssignMemNB::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       o << "/* " << get_line() << " */" << endl;
       o << setw(ind) << "";
-      o << memory()->name() << "[";
-      index()->dump(o);
-      o << "] <= ";
+      o << memory()->name() << "[" << index()->name() << "] <= ";
       rval()->dump(o);
       o << ";" << endl;
 }
@@ -866,6 +862,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.62  1999/12/05 02:24:08  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.61  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

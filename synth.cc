@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: synth.cc,v 1.3 1999/12/01 06:06:16 steve Exp $"
+#ident "$Id: synth.cc,v 1.4 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,14 @@
  *    always @(posedge CLK) if (CE) Q = D;
  *    always @(negedge CLK) if (CE) Q = D;
  *
+ * These are memory assignments:
+ *
+ *    always @(posedge CLK) M[a] = D
+ *    always @(negedge CLK) M[a] = D
+ *
+ *    always @(posedge CLK) if (CE) M[a] = D;
+ *    always @(negedge CLK) if (CE) M[a] = D;
+ *
  * The r-value of the assignments must be identifiers (i.e. wires or
  * registers) and the CE must be single-bit identifiers. The generated
  * device will be wide enough to accomodate Q and D.
@@ -48,7 +56,7 @@ class match_dff : public proc_match_t {
     public:
       match_dff(Design*d, NetProcTop*t)
       : des_(d), top_(t), pclk_(0), nclk_(0), con_(0), ce_(0),
-	asn_(0), d_(0)
+	asn_(0), asm_(0), d_(0)
       { }
 
       ~match_dff() { }
@@ -56,7 +64,11 @@ class match_dff : public proc_match_t {
       void make_it();
 
     private:
+      void make_dff_();
+      void make_ram_();
+
       virtual int assign(NetAssign*);
+      virtual int assign_mem(NetAssignMem*);
       virtual int condit(NetCondit*);
       virtual int pevent(NetPEvent*);
 
@@ -67,7 +79,9 @@ class match_dff : public proc_match_t {
 
       NetCondit *con_;
       NetNet*ce_;
+
       NetAssign *asn_;
+      NetAssignMem*asm_;
 
       NetNet*d_;
 };
@@ -76,7 +90,7 @@ int match_dff::assign(NetAssign*as)
 {
       if (!pclk_)
 	    return 0;
-      if (asn_)
+      if (asn_ || asm_)
 	    return 0;
 
       asn_ = as;
@@ -87,11 +101,26 @@ int match_dff::assign(NetAssign*as)
       return 1;
 }
 
+int match_dff::assign_mem(NetAssignMem*as)
+{
+      if (!pclk_)
+	    return 0;
+      if (asn_ || asm_)
+	    return 0;
+
+      asm_ = as;
+      d_ = asm_->rval()->synthesize(des_);
+      if (d_ == 0)
+	    return 0;
+
+      return 1;
+}
+
 int match_dff::condit(NetCondit*co)
 {
       if (!pclk_)
 	    return 0;
-      if (con_ || asn_)
+      if (con_ || asn_ || asm_)
 	    return 0;
 
       con_ = co;
@@ -106,7 +135,7 @@ int match_dff::condit(NetCondit*co)
 
 int match_dff::pevent(NetPEvent*pe)
 {
-      if (pclk_ || con_ || asn_)
+      if (pclk_ || con_ || asn_ || asm_)
 	    return 0;
 
       pclk_ = pe;
@@ -126,6 +155,17 @@ int match_dff::pevent(NetPEvent*pe)
 
 void match_dff::make_it()
 {
+      if (asn_) {
+	    assert(asm_ == 0);
+	    make_dff_();
+      } else {
+	    assert(asm_);
+	    make_ram_();
+      }
+}
+
+void match_dff::make_dff_()
+{
       NetFF*ff = new NetFF(asn_->name(), asn_->pin_count());
 
       for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
@@ -141,6 +181,28 @@ void match_dff::make_it()
 	    ff->attribute("Clock:LPM_Polarity", "INVERT");
 
       des_->add_node(ff);
+}
+
+void match_dff::make_ram_()
+{
+      NetMemory*mem = asm_->memory();
+      NetNet*adr = asm_->index();
+      NetRamDq*ram = new NetRamDq(des_->local_symbol(mem->name()), mem,
+				  adr->pin_count());
+      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
+	    connect(adr->pin(idx), ram->pin_Address(idx));
+
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1)
+	    connect(ram->pin_Data(idx), d_->pin(idx));
+
+      if (ce_)
+	    connect(ram->pin_WE(), ce_->pin(0));
+
+      assert(nclk_->type() == NetNEvent::POSEDGE);
+      connect(ram->pin_InClock(), nclk_->pin(0));
+
+      ram->absorb_partners();
+      des_->add_node(ram);
 }
 
 class synth_f  : public functor_t {
@@ -191,6 +253,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.4  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.3  1999/12/01 06:06:16  steve
  *  Redo synth to use match_proc_t scanner.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.132 1999/12/02 04:08:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.133 1999/12/05 02:24:08 steve Exp $"
 #endif
 
 /*
@@ -860,7 +860,7 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       assert(rv);
 
       rv->set_width(mem->width());
-      NetExpr*idx = ix->elaborate_expr(des, path);
+      NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
       assert(idx);
 
       NetAssignMem*am = new NetAssignMem(mem, idx, rv);
@@ -1170,7 +1170,7 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
       rv->set_width(mem->width());
 
 	/* Elaborate the expression to calculate the index, ... */
-      NetExpr*idx = ix->elaborate_expr(des, path);
+      NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
       assert(idx);
 
 	/* And connect them together in an assignment NetProc. */
@@ -2090,6 +2090,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.133  1999/12/05 02:24:08  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.132  1999/12/02 04:08:10  steve
  *  Elaborate net repeat concatenations.
  *

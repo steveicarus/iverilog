@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.87 1999/12/02 16:58:58 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.88 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1466,7 +1466,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
  */
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
-      string index = emit_proc_rval(defn, 8, amem->index());
+      string index = mangle(amem->index()->name()) + "_bits";
       string rval = emit_proc_rval(defn, 8, amem->rval());
       const NetMemory*mem = amem->memory();
 
@@ -1958,6 +1958,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.88  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.87  1999/12/02 16:58:58  steve
  *  Update case comparison (Eric Aardoom).
  *

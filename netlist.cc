@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.97 1999/12/02 16:58:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.98 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1052,10 +1052,25 @@ NetRamDq::NetRamDq(const string&n, NetMemory*mem, unsigned awid)
 	    pin(3+awidth_+width()+idx).set_dir(NetObj::Link::OUTPUT);
 	    pin(3+awidth_+width()+idx).set_name("Q", idx);
       }
+
+      next_ = mem_->ram_list_;
+      mem_->ram_list_ = this;
 }
 
 NetRamDq::~NetRamDq()
 {
+      if (mem_->ram_list_ == this) {
+	    mem_->ram_list_ = next_;
+
+      } else {
+	    NetRamDq*cur = mem_->ram_list_;
+	    while (cur->next_ != this) {
+		  assert(cur->next_);
+		  cur = cur->next_;
+	    }
+	    assert(cur->next_ == this);
+	    cur->next_ = next_;
+      }
 }
 
 unsigned NetRamDq::width() const
@@ -1076,6 +1091,73 @@ unsigned NetRamDq::size() const
 const NetMemory* NetRamDq::mem() const
 {
       return mem_;
+}
+
+void NetRamDq::absorb_partners()
+{
+      NetRamDq*cur, *tmp;
+      for (cur = mem_->ram_list_, tmp = 0
+		 ;  cur||tmp ;  cur = cur? cur->next_ : tmp) {
+	    tmp = 0;
+	    if (cur == this) continue;
+
+	    bool ok_flag = true;
+	    for (unsigned idx = 0 ;  idx < awidth() ;  idx += 1)
+		  ok_flag &= pin_Address(idx).is_linked(cur->pin_Address(idx));
+
+	    if (!ok_flag) continue;
+
+	    if (pin_InClock().is_linked()
+		&& cur->pin_InClock().is_linked()
+		&& ! pin_InClock().is_linked(cur->pin_InClock()))
+		  continue;
+
+	    if (pin_OutClock().is_linked()
+		&& cur->pin_OutClock().is_linked()
+		&& ! pin_OutClock().is_linked(cur->pin_OutClock()))
+		  continue;
+
+	    if (pin_WE().is_linked()
+		&& cur->pin_WE().is_linked()
+		&& ! pin_WE().is_linked(cur->pin_WE()))
+		  continue;
+
+	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+		  if (!pin_Data(idx).is_linked()) continue;
+		  if (! cur->pin_Data(idx).is_linked()) continue;
+
+		  ok_flag &= pin_Data(idx).is_linked(cur->pin_Data(idx));
+	    }
+
+	    if (! ok_flag) continue;
+
+	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+		  if (!pin_Q(idx).is_linked()) continue;
+		  if (! cur->pin_Q(idx).is_linked()) continue;
+
+		  ok_flag &= pin_Q(idx).is_linked(cur->pin_Q(idx));
+	    }
+
+	    if (! ok_flag) continue;
+
+	      // I see no other reason to reject cur, so link up all
+	      // my pins and delete it.
+	    connect(pin_InClock(), cur->pin_InClock());
+	    connect(pin_OutClock(), cur->pin_OutClock());
+	    connect(pin_WE(), cur->pin_WE());
+
+	    for (unsigned idx = 0 ;  idx < awidth() ;  idx += 1)
+		  connect(pin_Address(idx), cur->pin_Address(idx));
+
+	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+		  connect(pin_Data(idx), cur->pin_Data(idx));
+		  connect(pin_Q(idx), cur->pin_Q(idx));
+	    }
+
+	    tmp = cur->next_;
+	    delete cur;
+	    cur = 0;
+      }
 }
 
 NetObj::Link& NetRamDq::pin_InClock()
@@ -1249,16 +1331,18 @@ NetAssignNB::~NetAssignNB()
 }
 
 
-NetAssignMem_::NetAssignMem_(NetMemory*m, NetExpr*i, NetExpr*r)
+NetAssignMem_::NetAssignMem_(NetMemory*m, NetNet*i, NetExpr*r)
 : mem_(m), index_(i), rval_(r)
 {
+      index_->incr_eref();
 }
 
 NetAssignMem_::~NetAssignMem_()
 {
+      index_->decr_eref();
 }
 
-NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
+NetAssignMem::NetAssignMem(NetMemory*m, NetNet*i, NetExpr*r)
 : NetAssignMem_(m, i, r)
 {
 }
@@ -1267,7 +1351,7 @@ NetAssignMem::~NetAssignMem()
 {
 }
 
-NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetExpr*i, NetExpr*r)
+NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetNet*i, NetExpr*r)
 : NetAssignMem_(m, i, r)
 {
 }
@@ -1757,7 +1841,7 @@ NetEMemory::~NetEMemory()
 }
 
 NetMemory::NetMemory(const string&n, long w, long s, long e)
-: name_(n), width_(w), idxh_(s), idxl_(e)
+: name_(n), width_(w), idxh_(s), idxl_(e), ram_list_(0)
 {
 }
 
@@ -2641,6 +2725,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.98  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.97  1999/12/02 16:58:58  steve
  *  Update case comparison (Eric Aardoom).
  *

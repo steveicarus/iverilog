@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.30 1999/12/02 16:58:58 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.31 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -504,6 +504,15 @@ class vvm_nor  : private vvm_1bit_out {
       vpip_bit_t input_[WIDTH];
 };
 
+/*
+ * This object implements a LPM_RAM_DQ device, except for the actual
+ * contents of the memory, which are stored in a vvm_memory_t
+ * object. Note that there may be many vvm_ram_dq items referencing
+ * the same memory.
+ *
+ * XXXX Only asynchronous reads are supported.
+ * XXXX Only *synchronous* writes with WE are supported.
+ */
 template <unsigned WIDTH, unsigned AWIDTH, unsigned SIZE>
 class vvm_ram_dq  : protected vvm_ram_callback {
 
@@ -520,11 +529,34 @@ class vvm_ram_dq  : protected vvm_ram_callback {
       void init_Address(unsigned idx, vpip_bit_t val)
 	    { addr_[idx] = val; }
 
+      void init_Data(unsigned idx, vpip_bit_t val)
+	    { data_[idx] = val; }
+
+      void init_WE(unsigned, vpip_bit_t val)
+	    { we_ = val; }
+
+      void init_InClock(unsigned, vpip_bit_t val)
+	    { iclk_ = val; }
+
       void set_Address(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (addr_[idx] == val) return;
 	      addr_[idx] = val;
 	      compute_();
 	      send_out_(sim);
+	    }
+
+      void set_Data(vvm_simulation*, unsigned idx, vpip_bit_t val)
+	    { data_[idx] = val; }
+
+      void set_WE(vvm_simulation*, unsigned, vpip_bit_t val)
+	    { we_ = val; }
+
+      void set_InClock(vvm_simulation*sim, unsigned, vpip_bit_t val)
+	    { if (val == iclk_) return;
+	      vpip_bit_t tmp = iclk_;
+	      iclk_ = val;
+	      if (we_ != V1) return;
+	      if (posedge(tmp, val)) mem_->set_word(sim, addr_val_, data_);
 	    }
 
       void handle_write(vvm_simulation*sim, unsigned idx)
@@ -535,7 +567,12 @@ class vvm_ram_dq  : protected vvm_ram_callback {
 
     private:
       vvm_memory_t<WIDTH,SIZE>*mem_;
+
       vpip_bit_t addr_[AWIDTH];
+      vpip_bit_t data_[WIDTH];
+      vpip_bit_t we_;
+      vpip_bit_t iclk_;
+
       vvm_out_event::action_t out_[WIDTH];
 
       unsigned long addr_val_;
@@ -897,6 +934,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.31  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.30  1999/12/02 16:58:58  steve
  *  Update case comparison (Eric Aardoom).
  *

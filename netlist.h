@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.97 1999/12/01 06:06:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.98 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 /*
@@ -480,6 +480,9 @@ class NetMemory  {
       long idxl_;
 
       map<string,string> attributes_;
+
+      friend class NetRamDq;
+      NetRamDq* ram_list_;
 };
 
 /*
@@ -561,8 +564,12 @@ class NetRamDq  : public NetNode {
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
 
+	// Use this method to absorb other NetRamDq objects that are
+	// connected to the same memory, and have compatible pin
+	// connections.
+      void absorb_partners();
+
     private:
-      friend class NetMemory;
       NetMemory*mem_;
       NetRamDq*next_;
       unsigned awidth_;
@@ -957,25 +964,29 @@ class NetAssignNB  : public NetAssign_ {
 class NetAssignMem_ : public NetProc {
 
     public:
-      explicit NetAssignMem_(NetMemory*, NetExpr*idx, NetExpr*rv);
+      explicit NetAssignMem_(NetMemory*, NetNet*idx, NetExpr*rv);
       ~NetAssignMem_();
 
+      NetMemory*memory() { return mem_; }
+      NetNet*index()     { return index_; }
+
       const NetMemory*memory()const { return mem_; }
-      const NetExpr*index()const { return index_; }
-      const NetExpr*rval()const { return rval_; }
+      const NetNet*index()const     { return index_; }
+      const NetExpr*rval()const     { return rval_; }
 
     private:
       NetMemory*mem_;
-      NetExpr* index_;
+      NetNet * index_;
       NetExpr* rval_;
 };
 
 class NetAssignMem : public NetAssignMem_ {
 
     public:
-      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
+      explicit NetAssignMem(NetMemory*, NetNet*idx, NetExpr*rv);
       ~NetAssignMem();
 
+      virtual int match_proc(struct proc_match_t*);
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -985,7 +996,7 @@ class NetAssignMem : public NetAssignMem_ {
 class NetAssignMemNB : public NetAssignMem_ {
 
     public:
-      explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
+      explicit NetAssignMemNB(NetMemory*, NetNet*idx, NetExpr*rv);
       ~NetAssignMemNB();
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
@@ -2051,6 +2062,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.98  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.97  1999/12/01 06:06:16  steve
  *  Redo synth to use match_proc_t scanner.
  *

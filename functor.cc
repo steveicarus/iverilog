@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.5 1999/12/01 06:06:16 steve Exp $"
+#ident "$Id: functor.cc,v 1.6 1999/12/05 02:24:08 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -99,6 +99,16 @@ int NetAssign::match_proc(proc_match_t*that)
       return that->assign(this);
 }
 
+int proc_match_t::assign_mem(NetAssignMem*)
+{
+      return 0;
+}
+
+int NetAssignMem::match_proc(proc_match_t*that)
+{
+      return that->assign_mem(this);
+}
+
 int proc_match_t::condit(NetCondit*)
 {
       return 0;
@@ -121,6 +131,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.6  1999/12/05 02:24:08  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.5  1999/12/01 06:06:16  steve
  *  Redo synth to use match_proc_t scanner.
  *

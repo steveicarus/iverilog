@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.24 1999/12/02 03:36:01 steve Exp $"
+#ident "$Id: vvm.h,v 1.25 1999/12/05 02:24:09 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -271,6 +271,14 @@ class vvm_memory_t : public __vpiMemory {
 	      call_list_(sim, addr);
 	    }
 
+      void set_word(vvm_simulation*sim, unsigned addr,
+		    const vpip_bit_t val[WIDTH])
+	    { unsigned base = WIDTH * addr;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    bits[base+idx] = val[idx];
+	      call_list_(sim, addr);
+	    }
+
       vvm_bitset_t<WIDTH> get_word(unsigned addr) const
 	    { vvm_bitset_t<WIDTH> val;
 	      unsigned base = WIDTH * addr;
@@ -294,6 +302,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.25  1999/12/05 02:24:09  steve
+ *  Synthesize LPM_RAM_DQ for writes into memories.
+ *
  * Revision 1.24  1999/12/02 03:36:01  steve
  *  shiftl and shiftr take unsized second parameter.
  *
