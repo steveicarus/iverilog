@@ -49,7 +49,7 @@ valid options include:
 	    flags as needed.
 
 	-L
-	    Generate #line directives. The ivl compiler understands
+	    Generate `line directives. The ivl compiler understands
 	    these directives and uses them to keep track of the
 	    current line of the original source file. This makes error
 	    messages more meaningful.
@@ -89,17 +89,17 @@ proper will not reflect the actual line numbers in the source file.
 To handle this situation, the preprocessor can generate line
 directives. These directives are lines of the form:
 
-	#line <name> <num>
+	`line <num> <name> <level>
 
 where <name> is the file name in double-quotes and <num> is the line
 number in the file. The parser changes the filename and line number
-counters in such a way that the next line is line number <num>+1 in
+counters in such a way that the next line is line number <num> in
 the file named <name>. For example:
 
-	#line "foo.vl" 5
+	`line 6 "foo.vl" 0
 	// I am on line 6 in file foo.vl.
 
-The preprocessor generates a #line directive every time it switches
-files. That includes starting an included file (#line "foo.vlh" 0) or
+The preprocessor generates a `line directive every time it switches
+files. That includes starting an included file (`line 1 "foo.vlh" 1) or
 returning to the including file.
 

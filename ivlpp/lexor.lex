@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.26 2001/10/30 20:48:55 steve Exp $"
+#ident "$Id: lexor.lex,v 1.27 2001/10/30 21:53:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -495,7 +495,7 @@ static void def_undefine()
 static void output_init()
 {
       if (line_direct_flag)
-	    fprintf(yyout, "#line \"%s\" 0\n", istack->path);
+	    fprintf(yyout, "`line 1 \"%s\" 0\n", istack->path);
 }
 
 static void include_filename()
@@ -539,8 +539,8 @@ static void do_include()
       yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
       if (line_direct_flag && istack->path)
-	    fprintf(yyout, "\n#line \"%s\" %u\n",
-		    istack->path, istack->lineno);
+	    fprintf(yyout, "\n`line %u \"%s\" 1\n",
+		    istack->lineno+1, istack->path);
 }
 
 /*
@@ -592,7 +592,7 @@ static int yywrap()
 	    }
 
 	    if (line_direct_flag)
-		  fprintf(yyout, "\n#line \"%s\" 0\n", istack->path);
+		  fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
 
 	    yyrestart(istack->file);
 	    return 0;
@@ -605,8 +605,8 @@ static int yywrap()
       yy_switch_to_buffer(istack->yybs);
 
       if (line_direct_flag && istack->path && !line_mask_flag)
-	    fprintf(yyout, "\n#line \"%s\" %u\n",
-		    istack->path, istack->lineno);
+	    fprintf(yyout, "\n`line %u \"%s\" 2\n",
+		    istack->lineno+1, istack->path);
 
       return 0;
 }
