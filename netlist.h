@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.262 2002/09/16 00:30:33 steve Exp $"
+#ident "$Id: netlist.h,v 1.263 2002/09/26 01:13:14 steve Exp $"
 #endif
 
 /*
@@ -51,6 +51,7 @@ class NetProc;
 class NetProcTop;
 class NetRelease;
 class NetScope;
+class NetEvProbe;
 class NetExpr;
 class NetESignal;
 class NetFuncDef;
@@ -1223,7 +1224,8 @@ class NetProc : public LineInfo {
 			       const NetNet*nex_map, NetNet*nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out);
+			      const NetNet*nex_map, NetNet*nex_out,
+			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1538,7 +1540,8 @@ class NetCondit  : public NetProc {
 		       const NetNet*nex_map, NetNet*nex_out);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-		      const NetNet*nex_map, NetNet*nex_out);
+		      const NetNet*nex_map, NetNet*nex_out,
+		      const svector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -1755,7 +1758,8 @@ class NetEvWait  : public NetProc {
 			       const NetNet*nex_map, NetNet*nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out);
+			      const NetNet*nex_map, NetNet*nex_out,
+			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3051,6 +3055,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.263  2002/09/26 01:13:14  steve
+ *  Synthesize async set/reset is certain cases.
+ *
  * Revision 1.262  2002/09/16 00:30:33  steve
  *  Add to synth2 support for synthesis of
  *  synchronous logic. This includes DFF enables

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.11 2002/09/24 00:58:35 steve Exp $"
+#ident "$Id: synth2.cc,v 1.12 2002/09/26 01:13:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,8 +34,15 @@ bool NetProc::synth_async(Design*des, NetScope*scope,
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			 const NetNet*nex_map, NetNet*nex_out)
+			 const NetNet*nex_map, NetNet*nex_out,
+			 const svector<NetEvProbe*>&events)
 {
+      if (events.count() > 0) {
+	    cerr << get_line() << ": error: Events are unaccounted"
+		 << " for in process synthesis." << endl;
+	    des->errors += 1;
+      }
+
 	/* Synthesize the input to the DFF. */
       return synth_async(des, scope, nex_map, nex_out);
 }
@@ -278,8 +285,64 @@ bool NetProcTop::synth_async(Design*des)
 }
 
 bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out)
+			   const NetNet*nex_map, NetNet*nex_out,
+			   const svector<NetEvProbe*>&events_in)
 {
+	/* Synthesize the enable expression. */
+      NetNet*ce = expr_->synthesize(des);
+      assert(ce->pin_count() == 1);
+
+	/* Try first to turn the ce into an asynchronous set/reset
+	   input. If the ce is linked to a probe, then that probe is a
+	   set/reset input. */
+      for (unsigned idx = 0 ;  idx < events_in.count() ;  idx += 1) {
+	    NetEvProbe*ev = events_in[idx];
+
+	    if (connected(ce->pin(0), ev->pin(0))) {
+
+		  assert(ev->edge() == NetEvProbe::POSEDGE);
+
+		    /* Synthesize the true clause to figure out what
+		       kind of set/reset we have. */
+		  NetNet*asig = new NetNet(scope, scope->local_hsymbol(),
+					   NetNet::WIRE, nex_map->pin_count());
+		  asig->local_flag(true);
+		  if_->synth_async(des, scope, nex_map, asig);
+
+		  assert(asig->pin_count() == 1);
+		  assert(asig->pin(0).nexus()->drivers_constant());
+		  switch (asig->pin(0).nexus()->driven_value()) {
+		      case verinum::V0:
+			cerr << get_line() << ": debug: Detected an"
+			     << " asynchronous reset." << endl;
+			connect(ff->pin_Aclr(), ce->pin(0));
+			break;
+		      case verinum::V1:
+			cerr << get_line() << ": debug: Detected an"
+			     << " asynchronous set." << endl;
+			connect(ff->pin_Aset(), ce->pin(0));
+			break;
+		      default:
+			assert(0);
+		  }
+
+		  delete asig;
+
+		  assert(events_in.count() == 1);
+		  return else_->synth_sync(des, scope, ff, nex_map,
+					   nex_out, svector<NetEvProbe*>(0));
+	    }
+
+      }
+
+	/* Failed to find an asynchronous set/reset, so any events
+	   input are probably in error. */
+      if (events_in.count() > 0) {
+	    cerr << get_line() << ": error: Events are unaccounted"
+		 << " for in process synthesis." << endl;
+	    des->errors += 1;
+      }
+
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
@@ -296,24 +359,30 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       assert(expr_);
 
-	/* Synthesize the enable expression. */
-      NetNet*ce = expr_->synthesize(des);
-      assert(ce->pin_count() == 1);
-
       connect(ff->pin_Enable(), ce->pin(0));
 
       return true;
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out)
+			   const NetNet*nex_map, NetNet*nex_out,
+			   const svector<NetEvProbe*>&events_in)
 {
+      if (events_in.count() > 0) {
+	    cerr << get_line() << ": error: Events are unaccounted"
+		 << " for in process synthesis." << endl;
+	    des->errors += 1;
+      }
+
+      assert(events_in.count() == 0);
+
 	/* This can't be other then one unless there are named events,
 	   which I cannot synthesize. */
       assert(nevents_ == 1);
       NetEvent*ev = events_[0];
 
       assert(ev->nprobe() >= 1);
+      svector<NetEvProbe*>events (ev->nprobe() - 1);
 
 	/* Get the input set from the substatement. This will be used
 	   to figure out which of the probes in the clock. */
@@ -322,6 +391,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	/* Search for a clock input. The clock input is the edge event
 	   that is not also an input to the substatement. */
       NetEvProbe*pclk = 0;
+      unsigned event_idx = 0;
       for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
 	    NetEvProbe*tmp = ev->probe(idx);
 	    assert(tmp->pin_count() == 1);
@@ -338,6 +408,9 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			des->errors += 1;
 		  }
 		  pclk = tmp;
+
+	    } else {
+		  events[event_idx++] = tmp;
 	    }
       }
 
@@ -353,15 +426,18 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       if (pclk->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
 
+#if 0
       if (ev->nprobe() > 1) {
 	    cerr << get_line() << ": sorry: I don't know how "
 		 << "to synthesize asynchronous DFF controls."
 		 << endl;
 	    return false;
       }
+#endif
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope, ff, nex_map, nex_out);
+      bool flag = statement_->synth_sync(des, scope, ff,
+					 nex_map, nex_out, events);
 
       return flag;
 }
@@ -396,7 +472,9 @@ bool NetProcTop::synth_sync(Design*des)
       }
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope(), ff, nex_q, nex_d);
+      bool flag = statement_->synth_sync(des, scope(), ff,
+					 nex_q, nex_d,
+					 svector<NetEvProbe*>());
 
       delete nex_q;
 
@@ -474,6 +552,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.12  2002/09/26 01:13:14  steve
+ *  Synthesize async set/reset is certain cases.
+ *
  * Revision 1.11  2002/09/24 00:58:35  steve
  *  More detailed check of process edge events.
  *
