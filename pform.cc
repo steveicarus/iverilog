@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.70 2001/01/06 06:31:59 steve Exp $"
+#ident "$Id: pform.cc,v 1.71 2001/01/10 05:32:44 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -337,7 +337,7 @@ static void pform_set_net_range(const char*name,
 
       PWire*cur = pform_cur_module->get_wire(scoped_name(name));
       if (cur == 0) {
-	    VLerror(" error: name is not a valid net.");
+	    VLerror("error: name is not a valid net.");
 	    return;
       }
 
@@ -845,9 +845,9 @@ void pform_set_type_attrib(const string&name, const string&key,
  */
 void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 {
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
       if (cur == 0) {
-	    VLerror(" error: name is not a valid net.");
+	    VLerror("internal error: name is not a valid memory for index.");
 	    return;
       }
 
@@ -1010,6 +1010,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.71  2001/01/10 05:32:44  steve
+ *  Match memories within task scopes. (PR#101)
+ *
  * Revision 1.70  2001/01/06 06:31:59  steve
  *  declaration initialization for time variables.
  *
