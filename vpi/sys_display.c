@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.21 2000/12/02 02:40:56 steve Exp $"
+#ident "$Id: sys_display.c,v 1.22 2001/02/10 19:50:33 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -432,7 +432,7 @@ static int sys_fopen_calltf(char *name)
       }
 
       if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_printf("ERROR: %s parameter must be a string.\n", name);
 	    vpi_free_object(argv);
 	    return 0;
       }
@@ -600,6 +600,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.22  2001/02/10 19:50:33  steve
+ *  Slightly more specific error message.
+ *
  * Revision 1.21  2000/12/02 02:40:56  steve
  *  Support for %s in $display (PR#62)
  *
