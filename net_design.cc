@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.15 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: net_design.cc,v 1.16 2000/09/24 17:41:13 steve Exp $"
 #endif
 
 /*
@@ -387,12 +387,11 @@ void Design::find_symbol(NetScope*scope, const string&name,
       }
 }
 
-NetFuncDef* Design::find_function(const string&path, const string&name)
+NetFuncDef* Design::find_function(NetScope*scope, const string&name)
 {
-      NetScope*scope = find_scope(path);
       assert(scope);
       NetScope*func = find_scope(scope, name);
-      if (func->type() == NetScope::FUNC)
+      if (func && (func->type() == NetScope::FUNC))
 	    return func->func_def();
 
       return 0;
@@ -407,12 +406,10 @@ NetFuncDef* Design::find_function(const string&key)
       return 0;
 }
 
-NetTaskDef* Design::find_task(const string&path, const string&name)
+NetTaskDef* Design::find_task(NetScope*scope, const string&name)
 {
-      NetScope*scope = find_scope(path);
-      assert(scope);
       NetScope*task = find_scope(scope, name);
-      if (task->type() == NetScope::TASK)
+      if (task && (task->type() == NetScope::TASK))
 	    return task->task_def();
 
       return 0;
@@ -489,6 +486,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.16  2000/09/24 17:41:13  steve
+ *  fix null pointer when elaborating undefined task.
+ *
  * Revision 1.15  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

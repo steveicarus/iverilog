@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.27 2000/08/26 01:31:29 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.28 2000/09/24 17:41:13 steve Exp $"
 #endif
 
 
@@ -164,7 +164,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       if (name_[0] == '$')
 	    return elaborate_sfunc_(des, scope);
 
-      NetFuncDef*def = des->find_function(scope->name(), name_);
+      NetFuncDef*def = des->find_function(scope, name_);
       if (def == 0) {
 	    cerr << get_line() << ": error: No function " << name_ <<
 		  " in this context (" << scope->name() << ")." << endl;
@@ -507,6 +507,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.28  2000/09/24 17:41:13  steve
+ *  fix null pointer when elaborating undefined task.
+ *
  * Revision 1.27  2000/08/26 01:31:29  steve
  *  Handle out of range part select expressions.
  *

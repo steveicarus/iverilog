@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.165 2000/09/24 15:44:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.166 2000/09/24 17:41:13 steve Exp $"
 #endif
 
 /*
@@ -2709,11 +2709,11 @@ class Design {
 		       NetNet*&sig, NetMemory*&mem);
 
 	// Functions
-      NetFuncDef* find_function(const string&path, const string&key);
+      NetFuncDef* find_function(NetScope*scope, const string&key);
       NetFuncDef* find_function(const string&path);
 
 	// Tasks
-      NetTaskDef* find_task(const string&path, const string&name);
+      NetTaskDef* find_task(NetScope*scope, const string&name);
       NetTaskDef* find_task(const string&key);
 
 	// NODES
@@ -2799,6 +2799,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.166  2000/09/24 17:41:13  steve
+ *  fix null pointer when elaborating undefined task.
+ *
  * Revision 1.165  2000/09/24 15:44:44  steve
  *  Move some NetNet method out of the header file.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.190 2000/09/20 02:53:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.191 2000/09/24 17:41:13 steve Exp $"
 #endif
 
 /*
@@ -1262,10 +1262,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetTaskDef*def = des->find_task(path, name_);
+      NetTaskDef*def = des->find_task(scope, name_);
       if (def == 0) {
 	    cerr << get_line() << ": error: Enable of unknown task ``" <<
-		  path << "." << name_ << "''." << endl;
+		  scope->name() << "." << name_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -2257,6 +2257,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.191  2000/09/24 17:41:13  steve
+ *  fix null pointer when elaborating undefined task.
+ *
  * Revision 1.190  2000/09/20 02:53:14  steve
  *  Correctly measure comples l-values of assignments.
  *
