@@ -19,13 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.4 2000/08/20 17:49:04 steve Exp $"
+#ident "$Id: globals.h,v 1.5 2000/09/13 22:33:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
 
 extern void reset_lexor(FILE*out, char*paths[]);
-extern void define_macro(const char*name, const char*value);
+extern void define_macro(const char*name, const char*value, int keyword);
 
 /* These variables contain the include directories to be searched when
    an include directive in encountered. */
@@ -42,6 +42,9 @@ extern int yyparse();
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.5  2000/09/13 22:33:13  steve
+ *  undefined macros are null (with warnings.)
+ *
  * Revision 1.4  2000/08/20 17:49:04  steve
  *  Clean up warnings and portability issues.
  *

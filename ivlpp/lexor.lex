@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.20 2000/08/20 17:49:04 steve Exp $"
+#ident "$Id: lexor.lex,v 1.21 2000/09/13 22:33:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -216,6 +216,8 @@ W [ \t\b\f]+
 struct define_t {
       char*name;
       char*value;
+	/* keywords don't get rescanned for fresh values. */
+      int keyword;
 
       struct define_t*left, *right, *up;
 };
@@ -255,8 +257,14 @@ static void def_match()
       struct define_t*cur = def_lookup(yytext+1);
 
       if (cur) {
-	    struct include_stack_t*isp
-		  = calloc(1, sizeof(struct include_stack_t));
+	    struct include_stack_t*isp;
+
+	    if (cur->keyword) {
+		  fprintf(yyout, "%s", cur->value);
+		  return;
+	    }
+
+	    isp = calloc(1, sizeof(struct include_stack_t));
 	    isp->str = cur->value;
 	    isp->next = istack;
 	    istack->yybs = YY_CURRENT_BUFFER;
@@ -264,7 +272,9 @@ static void def_match()
 	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
       } else {
-	    fprintf(yyout, "%s", yytext);
+	    fprintf(stderr, "%s:%u: warning: macro %s undefined "
+		    "(and assumed null) at this point.\n",
+		    istack->path, istack->lineno, yytext);
       }
 }
 
@@ -275,11 +285,12 @@ static void def_start()
       sscanf(yytext, "`define %s", def_name);
 }
 
-void define_macro(const char*name, const char*value)
+void define_macro(const char*name, const char*value, int keyword)
 {
       struct define_t*def = malloc(sizeof(struct define_t));
       def->name = strdup(name);
       def->value = strdup(value);
+      def->keyword = keyword;
       def->left = 0;
       def->right = 0;
       def->up = 0;
@@ -339,14 +350,14 @@ static void do_define()
 	    *cp = 0;
       }
 
-      define_macro(def_name, yytext);
+      define_macro(def_name, yytext, 0);
       def_name[0] = 0;
 }
 
 static void def_finish()
 {
       if (def_name[0])
-	    define_macro(def_name, "1");
+	    define_macro(def_name, "1", 0);
 }
 
 static void def_undefine()

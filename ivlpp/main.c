@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.6 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: main.c,v 1.7 2000/09/13 22:33:13 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -61,11 +61,29 @@ int main(int argc, char*argv[])
       char*out_path = 0;
       FILE*out;
 
+	/* Define preprocessor keywords that I plan to just pass. */
+      define_macro("celldefine",          "`celldefine", 1);
+      define_macro("default_nettype",     "`default_nettype", 1);
+      define_macro("delay_mode_distributed", "`delay_mode_distributed", 1);
+      define_macro("delay_mode_unit",     "`delay_mode_unit", 1);
+      define_macro("delay_mode_path",     "`delay_mode_path", 1);
+      define_macro("disable_portfaults",  "`enable_portfaults", 1);
+      define_macro("endcelldefine",       "`endcelldefine", 1);
+      define_macro("endprotect",          "`endprotect", 1);
+      define_macro("nosuppress_faults",   "`nosuppress_faults", 1);
+      define_macro("nounconnected_drive", "`nounconnected_drive", 1);
+      define_macro("protect",             "`protect", 1);
+      define_macro("resetall",            "`resetall", 1);
+      define_macro("suppress_faults",     "`suppress_faults", 1);
+      define_macro("timescale",           "`timescale", 1);
+      define_macro("unconnected_drive",   "`unconnected_drive", 1);
+      define_macro("uselib",              "`uselib", 1);
+
       include_dir = malloc(sizeof(char*));
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
-      while ((opt = getopt(argc, argv, "D:I:Lo:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "D:I:K:Lo:v")) != EOF) switch (opt) {
 
 	  case 'D': {
 		char*tmp = strdup(optarg);
@@ -75,7 +93,7 @@ int main(int argc, char*argv[])
 		else
 		      val = "1";
 
-		define_macro(tmp, val);
+		define_macro(tmp, val, 0);
 		free(tmp);
 		break;
 	  }
@@ -85,6 +103,15 @@ int main(int argc, char*argv[])
 	    include_dir[include_cnt] = strdup(optarg);
 	    include_cnt += 1;
 	    break;
+
+	  case 'K': {
+		char*buf = malloc(strlen(optarg) + 2);
+		buf[0] = '`';
+		strcpy(buf+1, optarg);
+		define_macro(optarg, buf, 1);
+		free(buf);
+		break;
+	  }
 
 	  case 'L':
 	    line_direct_flag = 1;
@@ -117,6 +144,7 @@ int main(int argc, char*argv[])
 	    fprintf(stderr, "\nUsage: %s [-v][-L][-I<dir>][-D<def>] <file>...\n"
 		    "    -D<def> - Predefine a value.\n"
 		    "    -I<dir> - Add an include file search directory\n"
+		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
 		    "    -o<fil> - Send the output to <fil>\n"
 		    "    -v      - Print version information\n",
@@ -148,6 +176,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.7  2000/09/13 22:33:13  steve
+ *  undefined macros are null (with warnings.)
+ *
  * Revision 1.6  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *
