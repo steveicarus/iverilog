@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2003/11/18 06:31:46 $" Version "$Date: 2003/11/18 06:31:46 $"
+.TH iverilog 1 "$Date: 2003/11/26 01:36:25 $" Version "$Date: 2003/11/26 01:36:25 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -120,7 +120,11 @@ Use this switch to specify the target output format. See the
 Turn on verbose messages. This will print the command lines that are
 executed to perform the actual compilation, along with version
 information from the various components, as well as the version of the
-product as a whole.
+product as a whole.  You will notice that the command lines include
+a reference to a key temporary file that passes information to the
+compiler proper.  To keep that file from being deleted at the end
+of the process, provide a file name of your own in the environment
+variable \fBIVERILOG_ICONFIG\fP.
 .TP 8
 .B -V
 Print the version of the compiler, and exit.
