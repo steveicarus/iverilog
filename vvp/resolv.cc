@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.19 2004/12/31 06:00:06 steve Exp $"
+#ident "$Id: resolv.cc,v 1.20 2005/01/09 20:11:16 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -39,6 +39,24 @@ resolv_functor::~resolv_functor()
 void resolv_functor::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
       recv_vec8(port, vvp_vector8_t(bit, 6 /* STRONG */));
+}
+
+void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+      vvp_vector4_t res (vwid);
+
+      for (unsigned idx = 0 ;  idx < base ;  idx += 1)
+	    res.set_bit(idx, BIT4_Z);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+	    res.set_bit(idx+base, bit.value(idx));
+
+      for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
+	    res.set_bit(idx, BIT4_Z);
+
+      recv_vec4(port, res);
 }
 
 void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
@@ -65,6 +83,9 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.20  2005/01/09 20:11:16  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.19  2004/12/31 06:00:06  steve
  *  Implement .resolv functors, and stub signals recv_vec8 method.
  *

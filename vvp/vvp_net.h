@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.5 2005/01/01 02:12:34 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.6 2005/01/09 20:11:16 steve Exp $"
 
 # include  <assert.h>
 
@@ -267,6 +267,12 @@ extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 
 /*
+ * Part-vector versions of above functions.
+ */
+extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
+			     unsigned base, unsigned wid, unsigned vwid);
+
+/*
  * Instances of this class represent the functionality of a
  * node. vvp_net_t objects hold pointers to the vvp_net_fun_t
  * associated with it. Objects of this type take inputs that arrive at
@@ -292,6 +298,10 @@ class vvp_net_fun_t {
       virtual void recv_real(vvp_net_ptr_t port, double bit);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
 
+	// Part select variants of above
+      virtual void recv_vec4_pv(vvp_net_ptr_t p, vvp_vector4_t bit,
+				unsigned base, unsigned wid, unsigned vwid);
+
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
       vvp_net_fun_t& operator= (const vvp_net_fun_t&);
@@ -301,9 +311,9 @@ class vvp_net_fun_t {
 
 /* vvp_fun_concat
  * This node function creates vectors (vvp_vector4_t) from the
- * concatenation of the inputs. The inputs (4) may be scalers or other
- * vectors. Scalers are turned into vectors of size==1 before
- * concatenating.
+ * concatenation of the inputs. The inputs (4) may be vector or
+ * vector8 objects, but they are reduced to vector4 values and
+ * strength information lost.
  *
  * The expected widths of the input vectors must be given up front so
  * that the positions in the output vector (and also the size of the
@@ -318,6 +328,7 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       ~vvp_fun_concat();
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
     private:
       unsigned wid_[4];
@@ -363,6 +374,26 @@ class vvp_fun_part  : public vvp_net_fun_t {
     private:
       unsigned base_;
       unsigned wid_;
+};
+
+/* vvp_fun_part_pv
+ * This node takes a vector input and turns it into the part select of
+ * a wider output network. It used the recv_vec4_pv methods of the
+ * destination nodes to propagate the part select.
+ */
+class vvp_fun_part_pv  : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_part_pv(unsigned base, unsigned wid, unsigned vec_wid);
+      ~vvp_fun_part_pv();
+
+    public:
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      unsigned base_;
+      unsigned wid_;
+      unsigned vwid_;
 };
 
 /* vvp_fun_signal
@@ -454,6 +485,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.6  2005/01/09 20:11:16  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.5  2005/01/01 02:12:34  steve
  *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
  *

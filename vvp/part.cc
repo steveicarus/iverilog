@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.2 2004/12/29 23:44:39 steve Exp $"
+#ident "$Id: part.cc,v 1.3 2005/01/09 20:11:16 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -51,11 +51,28 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
       vvp_send_vec4(port.ptr()->out, res);
 }
 
-void compile_part_select(char*label, char*source,
-			 unsigned base, unsigned wid)
+vvp_fun_part_pv::vvp_fun_part_pv(unsigned b, unsigned w, unsigned v)
+: base_(b), wid_(w), vwid_(v)
 {
-      vvp_fun_part*fun = new vvp_fun_part(base, wid);
+}
 
+vvp_fun_part_pv::~vvp_fun_part_pv()
+{
+}
+
+void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      assert(port.port() == 0);
+      assert(bit.size() == wid_);
+      vvp_send_vec4_pv(port.ptr()->out, bit, base_, wid_, vwid_);
+}
+
+/*
+ * Given a node functor, create a network node and link it into the
+ * netlist. This form assumes nodes with a single input.
+ */
+void link_node_1(char*label, char*source, vvp_net_fun_t*fun)
+{
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
 
@@ -65,8 +82,26 @@ void compile_part_select(char*label, char*source,
       input_connect(net, 0, source);
 }
 
+void compile_part_select(char*label, char*source,
+			 unsigned base, unsigned wid)
+{
+      vvp_fun_part*fun = new vvp_fun_part(base, wid);
+      link_node_1(label, source, fun);
+}
+
+void compile_part_select_pv(char*label, char*source,
+			    unsigned base, unsigned wid,
+			    unsigned vector_wid)
+{
+      vvp_fun_part_pv*fun = new vvp_fun_part_pv(base, wid, vector_wid);
+      link_node_1(label, source, fun);
+}
+
 /*
  * $Log: part.cc,v $
+ * Revision 1.3  2005/01/09 20:11:16  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.2  2004/12/29 23:44:39  steve
  *  Fix missing output propagation of part node.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.58 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: compile.h,v 1.59 2005/01/09 20:11:15 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -100,6 +100,9 @@ extern void compile_concat(char*label, unsigned w0, unsigned w1,
  */
 extern void compile_part_select(char*label, char*src,
 				unsigned base, unsigned wid);
+extern void compile_part_select_pv(char*label, char*src,
+				   unsigned base, unsigned wid,
+				   unsigned vec_wid);
 
 /*
  * This is called by the parser to make force functors.
@@ -282,6 +285,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.59  2005/01/09 20:11:15  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.58  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *

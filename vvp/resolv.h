@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.11 2005/01/01 02:12:34 steve Exp $"
+#ident "$Id: resolv.h,v 1.12 2005/01/09 20:11:16 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -46,6 +46,9 @@ class resolv_functor : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+			unsigned base, unsigned wid, unsigned vwid);
+
     private:
       vvp_vector8_t val_[4];
       vvp_scaler_t hiz_;
@@ -53,6 +56,9 @@ class resolv_functor : public vvp_net_fun_t {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.12  2005/01/09 20:11:16  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.11  2005/01/01 02:12:34  steve
  *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
  *

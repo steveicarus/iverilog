@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.4 2005/01/01 02:12:34 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.5 2005/01/09 20:11:16 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -57,6 +57,19 @@ void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
 
 	    if (cur->fun)
 		  cur->fun->recv_vec4(ptr, val);
+
+	    ptr = next;
+      }
+}
+
+void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
+		      unsigned base, unsigned wid, unsigned vwid)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid);
 
 	    ptr = next;
       }
@@ -292,6 +305,14 @@ vvp_net_fun_t::~vvp_net_fun_t()
 void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, vvp_vector4_t)
 {
       fprintf(stderr, "internal error: %s: recv_vec4 not implemented\n",
+	      typeid(*this).name());
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, vvp_vector4_t,
+				 unsigned, unsigned, unsigned)
+{
+      fprintf(stderr, "internal error: %s: recv_vec4_pv not implemented\n",
 	      typeid(*this).name());
       assert(0);
 }
@@ -644,6 +665,9 @@ vvp_vector4_t reduce4(const vvp_vector8_t&that)
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.5  2005/01/09 20:11:16  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.4  2005/01/01 02:12:34  steve
  *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
  *

@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.62 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: parse.y,v 1.63 2005/01/09 20:11:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -61,7 +61,7 @@ extern FILE*yyin;
 %token K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT
-%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART
+%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
@@ -187,6 +187,9 @@ statement
 
 	| T_LABEL K_PART T_SYMBOL ',' T_NUMBER ',' T_NUMBER ';'
 		{ compile_part_select($1, $3, $5, $7); }
+
+	| T_LABEL K_PART_PV T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' T_NUMBER ';'
+		{ compile_part_select_pv($1, $3, $5, $7, $9); }
 
         | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
 	  symbols ';'
@@ -642,6 +645,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.63  2005/01/09 20:11:15  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.62  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.45 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.46 2005/01/09 20:11:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -103,6 +103,7 @@
 ".net/s"    { return K_NET_S; }
 ".param"    { return K_PARAM; }
 ".part"     { return K_PART; }
+".part/pv"  { return K_PART_PV; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
@@ -184,6 +185,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.46  2005/01/09 20:11:15  steve
+ *  Add the .part/pv node and related functionality.
+ *
  * Revision 1.45  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *
