@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.173 2003/02/27 06:45:11 steve Exp $"
+#ident "$Id: parse.y,v 1.174 2003/03/18 01:36:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2818,6 +2818,7 @@ udp_input_sym
 	| 'p' { $$ = 'p'; }
 	| 'P' { $$ = 'P'; }
 	| 'Q' { $$ = 'Q'; }
+	| 'q' { $$ = 'q'; }
 	| '_' { $$ = '_'; }
 	| '+' { $$ = '+'; }
 	;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.76 2003/02/02 18:58:36 steve Exp $"
+#ident "$Id: lexor.lex,v 1.77 2003/03/18 01:36:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -174,6 +174,7 @@ W [ \t\b\f\r]+
 <UDPTABLE>\(\?\?\)  { return '*'; }
 <UDPTABLE>\(01\)    { return 'r'; }
 <UDPTABLE>\(0[xX]\) { return 'Q'; }
+<UDPTABLE>\(b[xX]\) { return 'q'; }
 <UDPTABLE>\(0\?\)   { return 'P'; }
 <UDPTABLE>\(10\)    { return 'f'; }
 <UDPTABLE>\(1[xX]\) { return 'M'; }
