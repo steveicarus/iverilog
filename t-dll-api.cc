@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.8 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.9 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -41,6 +41,24 @@ extern "C" const char*ivl_get_root_name(ivl_design_t des)
       return des->root_->self->basename();
 }
 
+extern "C" const char*ivl_const_bits(ivl_net_const_t net)
+{
+      assert(net);
+      return net->bits_;
+}
+
+extern "C" unsigned ivl_const_pins(ivl_net_const_t net)
+{
+      assert(net);
+      return net->width_;
+}
+
+extern "C" int ivl_const_signed(ivl_net_const_t net)
+{
+      assert(net);
+      return net->signed_ == 1;
+}
+
 extern "C" const char* ivl_expr_bits(ivl_expr_t net)
 {
       assert(net && (net->type_ == IVL_EX_NUMBER));
@@ -49,8 +67,18 @@ extern "C" const char* ivl_expr_bits(ivl_expr_t net)
 
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
-      assert(net->type_ == IVL_EX_SIGNAL);
-      return net->u_.subsig_.name_;
+      switch (net->type_) {
+
+	  case IVL_EX_SFUNC:
+	    return net->u_.sfunc_.name_;
+
+	  case IVL_EX_SIGNAL:
+	    return net->u_.subsig_.name_;
+
+	  default:
+	    assert(0);
+      }
+      return 0;
 }
 
 extern "C" char ivl_expr_opcode(ivl_expr_t net)
@@ -112,40 +140,42 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
       return net->width_;
 }
 
-extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
+extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
 {
       switch (net->dev_->type()) {
 	  case NetLogic::AND:
 	    return IVL_LO_AND;
 	  case NetLogic::OR:
 	    return IVL_LO_OR;
+	  case NetLogic::XOR:
+	    return IVL_LO_XOR;
       }
       assert(0);
       return IVL_LO_NONE;
 }
 
-extern "C" unsigned ivl_get_logic_pins(ivl_net_logic_t net)
+extern "C" unsigned ivl_logic_pins(ivl_net_logic_t net)
 {
       return net->dev_->pin_count();
 }
 
-extern "C" ivl_nexus_t ivl_get_logic_pin(ivl_net_logic_t net, unsigned pin)
+extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
 {
       return (ivl_nexus_t) (net->dev_->pin(pin).nexus());
 }
 
-extern "C" const char* ivl_get_nexus_name(ivl_nexus_t net)
+extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
 {
       const Nexus*nex = (const Nexus*)net;
       return nex->name();
 }
 
-extern "C" ivl_process_type_t ivl_get_process_type(ivl_process_t net)
+extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
 }
 
-extern "C" ivl_statement_t ivl_get_process_stmt(ivl_process_t net)
+extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
 {
       return net->stmt_;
 }
@@ -322,6 +352,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.9  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.8  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

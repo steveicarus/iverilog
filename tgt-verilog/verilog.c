@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.6 2000/10/04 02:24:20 steve Exp $"
+#ident "$Id: verilog.c,v 1.7 2000/10/05 05:03:02 steve Exp $"
 #endif
 
 /*
@@ -77,24 +77,27 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
 {
       unsigned npins, idx;
 
-      switch (ivl_get_logic_type(net)) {
+      switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
 	    fprintf(out, "      and %s (%s", name,
-		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
 	    fprintf(out, "      or %s (%s", name,
-		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_XOR:
+	    fprintf(out, "      xor %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  default:
 	    fprintf(out, "STUB: %s: unsupported gate\n", name);
 	    return -1;
       }
 
-      npins = ivl_get_logic_pins(net);
+      npins = ivl_logic_pins(net);
       for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s",
-		    ivl_get_nexus_name(ivl_get_logic_pin(net,idx)));
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
 
       fprintf(out, ");\n");
 
@@ -153,6 +156,10 @@ static void show_expression(ivl_expr_t net)
 		      fprintf(out, "%c", bits[idx-1]);
 		break;
 	  }
+
+	  case IVL_EX_SFUNC:
+	    fprintf(out, "%s", ivl_expr_name(net));
+	    break;
 
 	  case IVL_EX_STRING:
 	    fprintf(out, "\"%s\"", ivl_expr_string(net));
@@ -251,7 +258,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 int target_process(ivl_process_t net)
 {
-      switch (ivl_get_process_type(net)) {
+      switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
 	    fprintf(out, "      initial\n");
 	    break;
@@ -260,13 +267,16 @@ int target_process(ivl_process_t net)
 	    break;
       }
 
-      show_statement(ivl_get_process_stmt(net), 8);
+      show_statement(ivl_process_stmt(net), 8);
 
       return 0;
 }
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.7  2000/10/05 05:03:02  steve
+ *  xor and constant devices.
+ *
  * Revision 1.6  2000/10/04 02:24:20  steve
  *  print reg signals.
  *

@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.9 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.10 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  <dlfcn.h>
+# include  <malloc.h>
 
 static struct dll_target dll_target_obj;
 
@@ -110,12 +111,30 @@ void dll_target::logic(const NetLogic*net)
 
 bool dll_target::net_const(const NetConst*net)
 {
-      struct ivl_net_const_s obj;
+      unsigned idx;
+      ivl_net_const_t obj = (ivl_net_const_t)
+	    calloc(1, sizeof(struct ivl_net_const_s));
 
-      obj.con_ = net;
+      obj->width_ = net->pin_count();
+      obj->bits_ = (char*)malloc(obj->width_);
+      for (idx = 0 ;  idx < obj->width_ ;  idx += 1)
+	    switch (net->value(idx)) {
+		case verinum::V0:
+		  obj->bits_[idx] = '0';
+		  break;
+		case verinum::V1:
+		  obj->bits_[idx] = '1';
+		  break;
+		case verinum::Vx:
+		  obj->bits_[idx] = 'x';
+		  break;
+		case verinum::Vz:
+		  obj->bits_[idx] = 'z';
+		  break;
+	    }
 
       if (net_const_) {
-	    int rc = (net_const_)(net->name(), &obj);
+	    int rc = (net_const_)(net->name(), obj);
 	    return rc == 0;
 
       } else {
@@ -202,6 +221,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.10  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.9  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.6 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.7 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -213,7 +213,8 @@ void dll_target::proc_stask(const NetSTask*net)
 
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    expr_ = 0;
-	    net->parm(idx)->expr_scan(this);
+	    if (net->parm(idx))
+		  net->parm(idx)->expr_scan(this);
 	    stmt_cur_->u_.stask_.parms_[idx] = expr_;
       }
 
@@ -268,6 +269,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.7  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.6  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

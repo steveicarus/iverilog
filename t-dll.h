@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.7 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: t-dll.h,v 1.8 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -85,6 +85,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       struct ivl_expr_s*expr_;
       void expr_binary(const NetEBinary*);
       void expr_const(const NetEConst*);
+      void expr_sfunc(const NetESFunc*);
       void expr_signal(const NetESignal*);
 };
 
@@ -116,6 +117,10 @@ struct ivl_expr_s {
 	    } number_;
 
 	    struct {
+		  char*name_;
+	    } sfunc_;
+
+	    struct {
 		  char*value_;
 	    } string_;
 
@@ -128,7 +133,9 @@ struct ivl_expr_s {
 };
 
 struct ivl_net_const_s {
-      const NetConst*con_;
+      unsigned width_  :24;
+      unsigned signed_ : 1;
+      char *bits_;
 };
 
 struct ivl_net_logic_s {
@@ -200,6 +207,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.8  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.7  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

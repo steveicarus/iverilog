@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.14 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.15 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -56,8 +56,43 @@ _BEGIN_DECL
  *
  * The following typedefs list the various cookies that may be passed
  * around.
+ *
+ * ivl_design_t
+ *    This object represents the entire elaborated design. Various
+ *    global properties and methods are available from this.
+ *
+ * ivl_expr_t
+ *    This object represents a node of an expression. If the
+ *    expression has sub-expressions, they can be accessed from
+ *    various method described below. The ivl_expr_type method in
+ *    particular gets the type of the node in the form of an
+ *    ivl_expr_type_t enumeration value.
+ *
+ *    Objects of this type represent expressions in
+ *    processes. Structural expressions are instead treated as logic
+ *    gates.
+ *
+ * ivl_process_t
+ *    A Verilog process is represented by one of these. A process may
+ *    be an "initial" or an "always" process. These come from initial
+ *    or always statements from the verilog source.
+ *
+ * ivl_scope_t
+ *    Elaborated scopes within a design are represented by this type.
+ *
+ * ivl_statement_t
+ *    Statements within processes are represented by one of these. The
+ *    ivl_process_t object holds one of these, but a statement may in
+ *    turn contain other statements.
+ *
+ * -- A Note About Bit Sets --
+ * Some objects hold a value as an array of bits. In these cases there
+ * is some method that retrieves the width of the value and another
+ * that returns a "char*". The latter is a pointer to the least
+ * significant bit value. Bit values are represented by the characters
+ * '0', '1', 'x' and 'z'. Strengths are stored elsewhere.
  */
-typedef struct ivl_design_s *ivl_design_t;
+typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
@@ -81,6 +116,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_BINARY,
       IVL_EX_NUMBER,
+      IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
@@ -168,6 +204,14 @@ extern const char* ivl_get_flag(ivl_design_t, const char*key);
 /* Get the name of the root module. This can be used as the design name. */
 extern const char* ivl_get_root_name(ivl_design_t net);
 
+/*
+ * These methods apply to ivl_net_const_t objects.
+ */
+extern const char* ivl_const_bits(ivl_net_const_t net);
+extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx);
+extern unsigned    ivl_const_pins(ivl_net_const_t net);
+extern int         ivl_const_signed(ivl_net_const_t net);
+
 /* EXPRESSION
  * These methods operate on expression objects from the
  * design. Expressions mainly exist in behavioral code. The
@@ -176,14 +220,23 @@ extern const char* ivl_get_root_name(ivl_design_t net);
  */
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
+  /* IVL_EX_NUMBER */
 extern const char* ivl_expr_bits(ivl_expr_t net);
+  /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
 extern const char* ivl_expr_name(ivl_expr_t net);
+  /* IVL_EX_BINARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
+  /* IVL_EX_BINARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
+  /* IVL_EX_BINARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
+  /* */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
+  /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
+  /* */
 extern const char* ivl_expr_string(ivl_expr_t net);
+  /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
 /* LOGIC
@@ -193,16 +246,16 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  * provide access to the bits of information for a given logic device.
  */
 
-extern ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net);
-extern ivl_nexus_t ivl_get_logic_pin(ivl_net_logic_t net, unsigned pin);
-extern unsigned    ivl_get_logic_pins(ivl_net_logic_t net);
+extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
+extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
+extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
  * nexus. These functions manage the ivl_nexus_t object.
  */
 
-extern const char* ivl_get_nexus_name(ivl_nexus_t net);
+extern const char* ivl_nexus_name(ivl_nexus_t net);
 
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
@@ -223,16 +276,16 @@ extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
  * is translated into a type and a single statement. (The statement
  * may be a compound statement.)
  *
- * The ivl_get_process_type function gets the type of the process,
+ * The ivl_process_type function gets the type of the process,
  * an "inital" or "always" statement.
  *
- * The ivl_get_process_stmt function gets the statement that forms the
+ * The ivl_process_stmt function gets the statement that forms the
  * process. See the statement related functions for how to manipulate
  * statements.
  */
-extern ivl_process_type_t ivl_get_process_type(ivl_process_t net);
+extern ivl_process_type_t ivl_process_type(ivl_process_t net);
 
-extern ivl_statement_t ivl_get_process_stmt(ivl_process_t net);
+extern ivl_statement_t ivl_process_stmt(ivl_process_t net);
 
 /*
  * These functions manage statements of various type. This includes
@@ -259,7 +312,9 @@ extern unsigned ivl_stmt_block_count(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
+  /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
+  /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
@@ -378,6 +433,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.15  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.14  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

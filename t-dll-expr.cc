@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.4 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.5 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -96,6 +96,18 @@ void dll_target::expr_const(const NetEConst*net)
       }
 }
 
+void dll_target::expr_sfunc(const NetESFunc*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_SFUNC;
+      expr_->width_= net->expr_width();
+      expr_->u_.sfunc_.name_ = strdup(net->name());
+}
+
 void dll_target::expr_signal(const NetESignal*net)
 {
       assert(expr_ == 0);
@@ -110,6 +122,9 @@ void dll_target::expr_signal(const NetESignal*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.5  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.4  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.

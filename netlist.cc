@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.139 2000/09/26 05:05:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.140 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2053,8 +2053,10 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESFunc::NetESFunc(const string&n, unsigned width, unsigned np)
-: name_(n)
+: name_(0)
 {
+      name_ = new char [n.length()+1];
+      strcpy(name_, n.c_str());
       expr_width(width);
       nparms_ = np;
       parms_ = new NetExpr*[np];
@@ -2068,9 +2070,10 @@ NetESFunc::~NetESFunc()
 	    if (parms_[idx]) delete parms_[idx];
 
       delete[]parms_;
+      delete[]name_;
 }
 
-const string& NetESFunc::name() const
+const char* NetESFunc::name() const
 {
       return name_;
 }
@@ -2420,6 +2423,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.140  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.139  2000/09/26 05:05:58  steve
  *  Detect indefinite widths where definite widths are required.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.170 2000/10/04 16:30:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.171 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 /*
@@ -2309,7 +2309,7 @@ class NetESFunc  : public NetExpr {
       NetESFunc(const string&name, unsigned width, unsigned nprms);
       ~NetESFunc();
 
-      const string& name() const;
+      const char* name() const;
 
       unsigned nparms() const;
       void parm(unsigned idx, NetExpr*expr);
@@ -2323,7 +2323,7 @@ class NetESFunc  : public NetExpr {
       virtual NetESFunc*dup_expr() const;
 
     private:
-      string name_;
+      char* name_;
       unsigned nparms_;
       NetExpr**parms_;
 
@@ -2796,6 +2796,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.171  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.170  2000/10/04 16:30:39  steve
  *  Use char8 instead of string to store name.
  *

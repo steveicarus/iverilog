@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.12 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: stub.c,v 1.13 2000/10/05 05:03:01 steve Exp $"
 #endif
 
 /*
@@ -45,7 +45,7 @@ int target_start_design(ivl_design_t des)
 	    return -2;
       }
 
-      fprintf(out, "STUB: root module = %s;\n", ivl_get_root_name(des));
+      fprintf(out, "root module = %s;\n", ivl_get_root_name(des));
       return 0;
 }
 
@@ -62,7 +62,18 @@ int target_net_bufz(const char*name, ivl_net_bufz_t net)
 
 int target_net_const(const char*name, ivl_net_const_t net)
 {
-      fprintf(out, "STUB: %s: constant\n", name);
+      unsigned idx;
+      unsigned wid = ivl_const_pins(net);
+      const char*bits = ivl_const_bits(net);
+
+      fprintf(out, "LPM_CONSTANT %s: %s%u'b", name,
+	      ivl_const_signed(net)? "+- ":"",
+	      wid);
+
+      for (idx = 0 ;  idx < wid ;  idx += 1)
+	    fprintf(out, "%c", bits[wid-1-idx]);
+
+      fprintf(out, "\n");
       return 0;
 }
 
@@ -76,24 +87,27 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
 {
       unsigned npins, idx;
 
-      switch (ivl_get_logic_type(net)) {
+      switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
-	    fprintf(out, "      and %s (%s", name,
-		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
+	    fprintf(out, "and %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
-	    fprintf(out, "      or %s (%s", name,
-		    ivl_get_nexus_name(ivl_get_logic_pin(net, 0)));
+	    fprintf(out, "or %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_XOR:
+	    fprintf(out, "xor %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  default:
-	    fprintf(out, "STUB: %s: unsupported gate\n", name);
+	    fprintf(out, "unsupported gate %s: \n", name);
 	    return -1;
       }
 
-      npins = ivl_get_logic_pins(net);
+      npins = ivl_logic_pins(net);
       for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s",
-		    ivl_get_nexus_name(ivl_get_logic_pin(net,idx)));
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
 
       fprintf(out, ");\n");
 
@@ -135,7 +149,7 @@ int target_net_signal(const char*name, ivl_signal_t net)
 	    break;
       }
 
-      fprintf(out, "STUB: %s %s[%u] %s\n", type, port,
+      fprintf(out, "%s %s[%u] %s\n", type, port,
 	      ivl_signal_pins(net), name);
 
       return 0;
@@ -164,6 +178,11 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_EX_STRING:
 	    fprintf(out, "%*s<string=\"%s\", width=%u>\n", ind, "",
 		    ivl_expr_string(net), ivl_expr_width(net));
+	    break;
+
+	  case IVL_EX_SFUNC:
+	    fprintf(out, "%*s<function=\"%s\", width=%u>\n", ind, "",
+		    ivl_expr_name(net), ivl_expr_width(net));
 	    break;
 
 	  case IVL_EX_SIGNAL:
@@ -256,7 +275,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 int target_process(ivl_process_t net)
 {
-      switch (ivl_get_process_type(net)) {
+      switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
 	    fprintf(out, "initial\n");
 	    break;
@@ -265,13 +284,16 @@ int target_process(ivl_process_t net)
 	    break;
       }
 
-      show_statement(ivl_get_process_stmt(net), 4);
+      show_statement(ivl_process_stmt(net), 4);
 
       return 0;
 }
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.13  2000/10/05 05:03:01  steve
+ *  xor and constant devices.
+ *
  * Revision 1.12  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *
