@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.157 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.158 2005/03/19 06:59:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -833,7 +833,6 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       }
 
       NetLogic*gate;
-      NetLogic*gate_t;
       switch (op_) {
 	  case 'a':
 	    gate = new NetLogic(scope, scope->local_symbol(),
@@ -851,13 +850,12 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       gate->decay_time(decay);
 
 	// The first OR gate returns 1 if the left value is true...
-      if (lsig->pin_count() > 1) {
-	    gate_t = new NetLogic(scope, scope->local_symbol(),
-				  1+lsig->pin_count(), NetLogic::OR, 1);
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-		  connect(gate_t->pin(idx+1), lsig->pin(idx));
-
-	    connect(gate->pin(1), gate_t->pin(0));
+      if (lsig->vector_width() > 1) {
+	    NetUReduce*gate_tmp = new NetUReduce(scope, scope->local_symbol(),
+						 NetUReduce::OR,
+						 lsig->vector_width());
+	    connect(gate_tmp->pin(1), lsig->pin(0));
+	    connect(gate->pin(1), gate_tmp->pin(0));
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
@@ -866,19 +864,19 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 	    tmp->local_flag(true);
 	    connect(gate->pin(1), tmp->pin(0));
 
-	    des->add_node(gate_t);
+	    des->add_node(gate_tmp);
 
       } else {
 	    connect(gate->pin(1), lsig->pin(0));
       }
 
 	// The second OR gate returns 1 if the right value is true...
-      if (rsig->pin_count() > 1) {
-	    gate_t = new NetLogic(scope, scope->local_symbol(),
-				  1+rsig->pin_count(), NetLogic::OR, 1);
-	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-		  connect(gate_t->pin(idx+1), rsig->pin(idx));
-	    connect(gate->pin(2), gate_t->pin(0));
+      if (rsig->vector_width() > 1) {
+	    NetUReduce*gate_tmp = new NetUReduce(scope, scope->local_symbol(),
+						 NetUReduce::OR,
+						 rsig->vector_width());
+	    connect(gate_tmp->pin(1), rsig->pin(0));
+	    connect(gate->pin(2), gate_tmp->pin(0));
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
@@ -887,7 +885,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 	    tmp->local_flag(true);
 	    connect(gate->pin(2), tmp->pin(0));
 
-	    des->add_node(gate_t);
+	    des->add_node(gate_tmp);
 
       } else {
 	    connect(gate->pin(2), rsig->pin(0));
@@ -2494,6 +2492,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.158  2005/03/19 06:59:53  steve
+ *  Handle wide operands to logical AND.
+ *
  * Revision 1.157  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *

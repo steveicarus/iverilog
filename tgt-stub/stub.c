@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.118 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: stub.c,v 1.119 2005/03/19 06:59:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -536,6 +536,9 @@ static void show_lpm_re(ivl_lpm_t net)
 	  case IVL_LPM_RE_AND:
 	    type = "AND";
 	    break;
+	  case IVL_LPM_RE_OR:
+	    type = "OR";
+	    break;
 	  default:
 	    break;
       }
@@ -699,6 +702,10 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_RE_AND:
+	    show_lpm_re(net);
+	    break;
+
+	  case IVL_LPM_RE_OR:
 	    show_lpm_re(net);
 	    break;
 
@@ -1223,6 +1230,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.119  2005/03/19 06:59:53  steve
+ *  Handle wide operands to logical AND.
+ *
  * Revision 1.118  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *
