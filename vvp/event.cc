@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.4 2002/01/24 04:17:46 steve Exp $"
+#ident "$Id: event.cc,v 1.5 2002/03/17 03:24:34 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -63,9 +63,7 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		  
 		  unsigned oval = (old_ival >> 2*pp) & 3;
 		  unsigned nval = (ival     >> 2*pp) & 3;
-		  
-		  unsigned val = (oval << 2) | nval;
-		  edge_p = ((edge>>val) & 1) != 0;
+		  edge_p = edge & VVP_EDGE(oval,nval);
 	    }
 
 	      /* If we detect an edge, then schedule any threads that
@@ -148,6 +146,9 @@ void compile_event(char*label, char*type,
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.5  2002/03/17 03:24:34  steve
+ *  Clean up edge detection code.
+ *
  * Revision 1.4  2002/01/24 04:17:46  steve
  *  Spelling in comment.
  *
