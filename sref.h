@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sref.h,v 1.3 1999/07/18 21:17:51 steve Exp $"
+#ident "$Id: sref.h,v 1.4 1999/08/05 04:58:17 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -103,7 +103,7 @@ svector<const T2*>* sref_back<T1,T2>::back_list() const
 }
 
 template <class T1,class T2>
-svector<class T2*>* sref_back<T1,T2>::back_list()
+svector<T2*>* sref_back<T1,T2>::back_list() 
 {
       if (sback_ == 0) return 0;
       unsigned cnt = 1;
@@ -113,12 +113,12 @@ svector<class T2*>* sref_back<T1,T2>::back_list()
 	    cur = cur->next_;
       }
 
-      svector<class T2*>* result = new svector<class T2*>(cnt);
-      (*result)[0] = dynamic_cast<class T2*>(sback_);
+      svector<T2*>* result = new svector<T2*>(cnt);
+      (*result)[0] = dynamic_cast<T2*>(sback_);
       cur = sback_->next_;
       cnt = 1;
       while (cur != sback_) {
-	    (*result)[cnt] = dynamic_cast<class T2*>(cur);
+	    (*result)[cnt] = dynamic_cast<T2*>(cur);
 	    cnt += 1;
 	    cur = cur->next_;
       }
@@ -146,6 +146,9 @@ template <class T1, class T2> void sref_back<T1,T2>::desert_(sref<T1,T2>*item)
 
 /*
  * $Log: sref.h,v $
+ * Revision 1.4  1999/08/05 04:58:17  steve
+ *  Fix compile error with gcc 2.95
+ *
  * Revision 1.3  1999/07/18 21:17:51  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

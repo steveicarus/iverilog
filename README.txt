@@ -291,6 +291,7 @@ especially testing from many people, including (in alphabetical order):
 	Ed Carter <r47652@email.sps.mot.com>
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
+	Jason Schonberg <schon@mips.com>
 	Stuart Sutherland <stuart@sutherland.com>
 	Stephen Tell <tell@cs.unc.edu>
         Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
