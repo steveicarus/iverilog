@@ -101,15 +101,15 @@ line. The code generator needs to know the type of part to generate
 code for, so the ``-fpart=<type>'' flag is also needed. For example,
 to generate code for the 4010E the command line might start out as:
 
-	 ivl -txnf -fpart=4010e -Fxnfsyn -Fsigfold -Fxnfio [...]
+	 ivl -txnf -fpart=4010e -Fsynth -Fsigfold -Fxnfio [...]
 
-Icarus Verilog includes the functions ``xnfsyn'' and ``xnfio'' to
+Icarus Verilog includes the functions ``synth'' and ``xnfio'' to
 perform transformations and optimizations on the design before code is
-generated. The xnfsyn function matches certain behavioral constructs
-to XNF components, and the xnfio function generates pads and fills the
-IOBs.
+generated. The ``synth'' function matches certain behavioral constructs
+to structural components, and the xnfio function generates pads and
+fills the IOBs.
 
-XNFSYN FUNCTION
+THE SYNTH FUNCTION
 
 This function does synthesis transformations on the entered design,
 making it possible to generate XNF netlist components from certain
@@ -117,13 +117,13 @@ behavioral constructs. This is needed in Verilog for example to model
 some of the synchronous components of the XNF library.
 
 It is a bit much to expect a Verilog compiler in general to generate
-components from arbitrary behavioral descriptions, so the xnfsyn
+components from arbitrary behavioral descriptions, so the synth
 function works by matching statements that have some documented
 structure, and substituting them for the equivalent XNF component. A
 fully synthesize-able design, then, is one where the behavioral
-statements can all be matched and substituted by the xnfsyn function.
+statements can all be matched and substituted by the synth function.
 
-XNFIO FUNCTION
+THE XNFIO FUNCTION
 
 The "xnfio" function transforms the netlist where the IOBs are
 concerned. The signals with PAD attributes are checked, and
@@ -162,6 +162,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.7  1999/11/03 05:18:18  steve
+  XNF synthesis now uses the synth functor.
+
  Revision 1.6  1999/11/02 01:43:55  steve
   Fix iobuf and iobufif handling.
 
