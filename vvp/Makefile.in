@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.49 2003/04/20 02:49:07 steve Exp $"
+#ident "$Id: Makefile.in,v 1.50 2003/08/10 00:39:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -125,8 +125,8 @@ vvp.pdf: $(srcdir)/vvp.man
 	man -t $(srcdir)/vvp.man | ps2pdf - vvp.pdf
 
 ifeq (@WIN32@,yes)
-INSTALL_DOC = $(prefix)/vvp.pdf
-INSTALL_DOCDIR =
+INSTALL_DOC = $(prefix)/vvp.pdf $(mandir)/man1/vvp.1
+INSTALL_DOCDIR = $(mandir)/man1
 all: vvp.pdf
 else
 INSTALL_DOC = $(mandir)/man1/vvp.1
