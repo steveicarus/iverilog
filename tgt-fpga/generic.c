@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifndef HAVE_CVS_IDENT
-#ident "$Id: generic.c,v 1.1 2003/06/25 02:55:57 steve Exp $"
+#ident "$Id: generic.c,v 1.2 2003/07/03 17:46:33 steve Exp $"
 #endif
 
 # include  "generic.h"
@@ -30,10 +30,15 @@ edif_cell_t cell_1 = 0;
 
 edif_cell_t cell_ipad = 0;
 edif_cell_t cell_opad = 0;
+edif_cell_t cell_iopad = 0;
+
 
 
 /*
  * $Log: generic.c,v $
+ * Revision 1.2  2003/07/03 17:46:33  steve
+ *  IOPAD support.
+ *
  * Revision 1.1  2003/06/25 02:55:57  steve
  *  Virtex and Virtex2 share much code.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.6 2003/07/02 03:02:15 steve Exp $"
+#ident "$Id: xilinx.c,v 1.7 2003/07/03 17:46:33 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -371,7 +371,12 @@ void xilinx_pad(ivl_signal_t sig, const char*str)
 
       if (cell_opad == 0) {
 	    cell_opad = edif_xcell_create(xlib, "OPAD", 1);
-	    edif_cell_portconfig(cell_opad, 0, "OPAD", IVL_SIP_OUTPUT);
+	    edif_cell_portconfig(cell_opad, 0, "OPAD", IVL_SIP_INPUT);
+      }
+
+      if (cell_iopad == 0) {
+	    cell_iopad = edif_xcell_create(xlib, "IOPAD", 1);
+	    edif_cell_portconfig(cell_iopad, 0, "IOPAD", IVL_SIP_INOUT);
       }
 
 	/* Collect an array of pin assignments from the attribute
@@ -894,6 +899,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.7  2003/07/03 17:46:33  steve
+ *  IOPAD support.
+ *
  * Revision 1.6  2003/07/02 03:02:15  steve
  *  More xilinx common code.
  *
