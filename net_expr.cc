@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.13 2003/02/06 17:50:23 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.14 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
+# include  "compiler.h"
 # include  <iostream>
 
 NetExpr::TYPE NetExpr::expr_type() const
@@ -349,11 +350,10 @@ bool NetESelect::set_width(unsigned w)
 	    return false;
 }
 
-NetESFunc::NetESFunc(const string&n, unsigned width, unsigned np)
+NetESFunc::NetESFunc(const char*n, unsigned width, unsigned np)
 : name_(0)
 {
-      name_ = new char [n.length()+1];
-      strcpy(name_, n.c_str());
+      name_ = lex_strings.add(n);
       expr_width(width);
       nparms_ = np;
       parms_ = new NetExpr*[np];
@@ -367,7 +367,7 @@ NetESFunc::~NetESFunc()
 	    if (parms_[idx]) delete parms_[idx];
 
       delete[]parms_;
-      delete[]name_;
+	/* name_ string ls lex_strings allocated. */
 }
 
 const char* NetESFunc::name() const
@@ -410,6 +410,12 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.14  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.13  2003/02/06 17:50:23  steve
  *  Real constants have no defined vector width
  *

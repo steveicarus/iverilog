@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.4 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: StringHeap.cc,v 1.5 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -64,8 +64,71 @@ const char* StringHeap::add(const char*text)
       return res;
 }
 
+
+StringHeapLex::StringHeapLex()
+{
+      hit_count_ = 0;
+      add_count_ = 0;
+
+      for (unsigned idx = 0 ;  idx < HASH_SIZE ;  idx += 1)
+	    hash_table_[idx] = 0;
+}
+
+StringHeapLex::~StringHeapLex()
+{
+}
+
+unsigned StringHeapLex::add_hit_count() const
+{
+      return hit_count_;
+}
+
+unsigned StringHeapLex::add_count() const
+{
+      return add_count_;
+}
+
+static unsigned hash_string(const char*text)
+{
+      unsigned h = 0;
+
+      while (*text) {
+	    h = (h << 4) ^ (h >> 28) ^ *text;
+	    text += 1;
+      }
+      return h;
+}
+
+const char* StringHeapLex::add(const char*text)
+{
+      unsigned hash_value = hash_string(text) % HASH_SIZE;
+
+	/* If we easily find the string in the hash table, then return
+	   that and be done. */
+      if (hash_table_[hash_value]
+	  && (strcmp(hash_table_[hash_value], text) == 0)) {
+	    hit_count_ += 1;
+	    return hash_table_[hash_value];
+      }
+
+	/* The existing hash entry is not a match. Replace it with the
+	   newly allocated value, and return the new pointer as the
+	   result to the add. */
+      const char*res = StringHeap::add(text);
+      hash_table_[hash_value] = res;
+      add_count_ += 1;
+
+      return res;
+}
+
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.5  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.4  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.24 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.25 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
+# include "compiler.h"
 
 # include  "netlist.h"
 # include  <sstream>
@@ -65,8 +66,7 @@ NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
 	    module_name_ = 0;
 	    break;
       }
-      name_ = new char[strlen(n)+1];
-      strcpy(name_, n);
+      name_ = lex_strings.add(n);
 }
 
 NetScope::~NetScope()
@@ -74,9 +74,8 @@ NetScope::~NetScope()
       assert(sib_ == 0);
       assert(sub_ == 0);
       lcounter_ = 0;
-      delete[]name_;
-      if ((type_ == MODULE) && module_name_)
-	    free(module_name_);
+
+	/* name_ and module_name_ are perm-allocated. */
 }
 
 NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
@@ -186,7 +185,7 @@ const NetFuncDef* NetScope::func_def() const
 void NetScope::set_module_name(const char*n)
 {
       assert(type_ == MODULE);
-      module_name_ = strdup(n);
+      module_name_ = lex_strings.add(n);
 }
 
 const char* NetScope::module_name() const
@@ -450,6 +449,12 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.25  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.24  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

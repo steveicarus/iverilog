@@ -1,7 +1,7 @@
 #ifndef __StringHeap_H
 #define __StringHeap_H
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,9 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.h,v 1.3 2003/01/16 21:44:46 steve Exp $"
+#ident "$Id: StringHeap.h,v 1.4 2003/03/01 06:25:30 steve Exp $"
 #endif
 
+/*
+ * The string heap is a way to permanently allocate strings
+ * efficiently. They only take up the space of the string characters
+ * and the terminating nul, there is no malloc overhead.
+ */
 class StringHeap {
 
     public:
@@ -43,7 +48,42 @@ class StringHeap {
 };
 
 /*
+ * A lexical string heap is a string heap that makes an effort to
+ * return the same pointer for identical strings. This saves further
+ * space by not allocating duplicate strings, so in a system with lots
+ * of identifiers, this can theoretically save more space.
+ */
+class StringHeapLex  : private StringHeap {
+
+    public:
+      StringHeapLex();
+      ~StringHeapLex();
+
+      const char*add(const char*);
+
+      unsigned add_count() const;
+      unsigned add_hit_count() const;
+
+    private:
+      enum { HASH_SIZE = 4096 };
+      const char*hash_table_[HASH_SIZE];
+
+      unsigned add_count_;
+      unsigned hit_count_;
+
+    private: // not implemented
+      StringHeapLex(const StringHeapLex&);
+      StringHeapLex& operator= (const StringHeapLex&);
+};
+
+/*
  * $Log: StringHeap.h,v $
+ * Revision 1.4  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.3  2003/01/16 21:44:46  steve
  *  Keep some debugging status.
  *

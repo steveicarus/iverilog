@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.205 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.206 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,8 +26,10 @@
 
 # include  <cassert>
 # include  <typeinfo>
+# include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+
 
 ostream& operator<< (ostream&o, NetNet::Type t)
 {
@@ -1638,11 +1640,10 @@ const NetNet* NetFuncDef::port(unsigned idx) const
       return ports_[idx];
 }
 
-NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
+NetSTask::NetSTask(const char*na, const svector<NetExpr*>&pa)
 : name_(0), parms_(pa)
 {
-      name_ = new char[na.length() + 1];
-      strcpy(name_, na.c_str());
+      name_ = lex_strings.add(na);
       assert(name_[0] == '$');
 }
 
@@ -1651,7 +1652,7 @@ NetSTask::~NetSTask()
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    delete parms_[idx];
 
-      delete[]name_;
+	/* The name_ string is perm-allocated in lex_strings. */
 }
 
 const char*NetSTask::name() const
@@ -2195,6 +2196,12 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.206  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.205  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

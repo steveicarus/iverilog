@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.274 2003/02/22 04:12:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.275 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1806,7 +1806,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	      /* Create a NetEvent object to manage this event. Note
 		 that the NetEvent object's name has no hierarchy. */
-	    NetEvent*ev = new NetEvent(scope->local_symbol());
+	    NetEvent*ev = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
 	    scope->add_event(ev);
 
 	    NetEvWait*we = new NetEvWait(0);
@@ -1866,7 +1866,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	   list. The NetEvProbe objects all refer back to the NetEvent
 	   object. */
 
-      NetEvent*ev = new NetEvent(scope->local_symbol());
+      NetEvent*ev = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
       ev->set_line(*this);
       unsigned expr_count = 0;
 
@@ -2502,6 +2502,12 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.275  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.274  2003/02/22 04:12:49  steve
  *  Add the portbind warning.
  *

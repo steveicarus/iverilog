@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.33 2003/02/02 00:19:27 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.34 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -343,7 +343,8 @@ void dll_target::expr_sfunc(const NetESFunc*net)
 	    break;
       }
       expr->width_= net->expr_width();
-      expr->u_.sfunc_.name_ = strdup(net->name());
+	/* system function names are lex_strings strings. */
+      expr->u_.sfunc_.name_ = net->name();
 
       unsigned cnt = net->nparms();
       expr->u_.sfunc_.parms = cnt;
@@ -563,6 +564,12 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.34  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.33  2003/02/02 00:19:27  steve
  *  Terminate bits string from ivl_expr_bits.
  *

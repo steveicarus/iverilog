@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.65 2003/02/22 04:12:49 steve Exp $"
+#ident "$Id: main.cc,v 1.66 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,6 +98,12 @@ bool error_implicit = false;
  * Verbose messages enabled.
  */
 bool verbose_flag = false;
+
+/*
+ * Keep a heap of identifier strings that I encounter. This is a more
+ * efficient way to allocate those strings.
+ */
+StringHeapLex lex_strings;
 
 /*
  * In library searches, Windows file names are never case sensitive.
@@ -600,8 +606,17 @@ int main(int argc, char*argv[])
 		  times(cycles+4);
 		  cerr<<" ... done, "
 		      <<cycles_diff(cycles+4, cycles+3)<<" seconds."<<endl;
-	    } else
+	    } else {
 		  cout << "DONE." << endl;
+	    }
+      }
+
+      if (verbose_flag) {
+	    cout << "STATISTICS" << endl;
+	    cout << "lex_string:"
+		 << " add_count=" << lex_strings.add_count()
+		 << " hit_count=" << lex_strings.add_hit_count()
+		 << endl;
       }
 
       return 0;
@@ -609,6 +624,12 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.66  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.65  2003/02/22 04:12:49  steve
  *  Add the portbind warning.
  *
@@ -645,86 +666,5 @@ int main(int argc, char*argv[])
  *
  * Revision 1.55  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
- *
- * Revision 1.54  2002/04/22 00:53:39  steve
- *  Do not allow implicit wires in sensitivity lists.
- *
- * Revision 1.53  2002/04/15 00:04:22  steve
- *  Timescale warnings.
- *
- * Revision 1.52  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.51  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
- *
- * Revision 1.50  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.49  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.48  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.47  2001/07/30 02:44:05  steve
- *  Cleanup defines and types for mingw compile.
- *
- * Revision 1.46  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.45  2001/07/16 18:14:56  steve
- *  Reshuffle -v and -V flags of ivl. (Stephan Boettcher)
- *
- * Revision 1.44  2001/07/03 04:09:24  steve
- *  Generate verbuse status messages (Stephan Boettcher)
- *
- * Revision 1.43  2001/07/02 01:57:27  steve
- *  Add the -V flag, and some verbose messages.
- *
- * Revision 1.42  2001/06/23 18:41:02  steve
- *  Include stdlib.h
- *
- * Revision 1.41  2001/05/20 17:35:05  steve
- *  declare getopt by hand in mingw32 compile.
- *
- * Revision 1.40  2001/01/20 19:02:05  steve
- *  Switch hte -f flag to the -p flag.
- *
- * Revision 1.39  2000/11/22 20:48:32  steve
- *  Allow sole module to be a root.
- *
- * Revision 1.38  2000/09/12 01:17:40  steve
- *  Version information for vlog_vpi_info.
- *
- * Revision 1.37  2000/08/09 03:43:45  steve
- *  Move all file manipulation out of target class.
- *
- * Revision 1.36  2000/07/29 17:58:21  steve
- *  Introduce min:typ:max support.
- *
- * Revision 1.35  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.34  2000/05/13 20:55:47  steve
- *  Use yacc based synthesizer.
- *
- * Revision 1.33  2000/05/08 05:29:43  steve
- *  no need for nobufz functor.
- *
- * Revision 1.32  2000/05/03 22:14:31  steve
- *  More features of ivl available through iverilog.
- *
- * Revision 1.31  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.276 2003/02/07 02:47:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.277 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 /*
@@ -1707,7 +1707,10 @@ class NetEvent : public LineInfo {
       friend class NetEvWait;
 
     public:
-      explicit NetEvent (const string&n);
+	// The name of the event is the basename, and should not
+	// include the scope. Also, the name passed here should be
+	// perm-allocated.
+      explicit NetEvent (const char*n);
       ~NetEvent();
 
       const char* name() const;
@@ -1743,7 +1746,7 @@ class NetEvent : public LineInfo {
       NexusSet*nex_async_();
 
     private:
-      char* name_;
+      const char* name_;
 
 	// The NetScope class uses these to list the events.
       NetScope*scope_;
@@ -2035,7 +2038,7 @@ class NetRelease : public NetProc {
 class NetSTask  : public NetProc {
 
     public:
-      NetSTask(const string&na, const svector<NetExpr*>&);
+      NetSTask(const char*na, const svector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
@@ -2049,7 +2052,7 @@ class NetSTask  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      char* name_;
+      const char* name_;
       svector<NetExpr*>parms_;
 };
 
@@ -2637,7 +2640,7 @@ class NetEScope  : public NetExpr {
 class NetESFunc  : public NetExpr {
 
     public:
-      NetESFunc(const string&name, unsigned width, unsigned nprms);
+      NetESFunc(const char*name, unsigned width, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;
@@ -2656,7 +2659,7 @@ class NetESFunc  : public NetExpr {
       virtual NetESFunc*dup_expr() const;
 
     private:
-      char* name_;
+      const char* name_;
       unsigned nparms_;
       NetExpr**parms_;
 
@@ -2995,7 +2998,7 @@ class NetScope {
 
     private:
       TYPE type_;
-      char* name_;
+      const char* name_;
 
       signed char time_unit_, time_prec_;
 
@@ -3016,7 +3019,7 @@ class NetScope {
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
-	    char*module_name_;
+	    const char*module_name_;
       };
 
       NetScope*up_;
@@ -3198,6 +3201,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.277  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.276  2003/02/07 02:47:57  steve
  *  NetEBDiv handles real value constant expressions.
  *

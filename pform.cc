@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.109 2003/02/27 06:45:11 steve Exp $"
+#ident "$Id: pform.cc,v 1.110 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -540,7 +540,7 @@ void pform_set_net_range(list<char*>*names,
  */
 static void pform_make_event(const char*name, const char*fn, unsigned ln)
 {
-      PEvent*event = new PEvent(name);
+      PEvent*event = new PEvent(lex_strings.add(name));
       event->set_file(fn);
       event->set_lineno(ln);
       pform_cur_module->events[name] = event;
@@ -1412,6 +1412,12 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.110  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.109  2003/02/27 06:45:11  steve
  *  specparams as far as pform.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PEvent.h,v 1.7 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: PEvent.h,v 1.8 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -36,15 +36,16 @@ class NetScope;
 class PEvent : public LineInfo {
 
     public:
-      explicit PEvent(const string&name);
+	// The name is a perm-allocated string.
+      explicit PEvent(const char*name);
       ~PEvent();
 
-      string name() const;
+      const char* name() const;
 
       void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
-      string name_;
+      const char* name_;
 
     private: // not implemented
       PEvent(const PEvent&);
@@ -53,6 +54,12 @@ class PEvent : public LineInfo {
 
 /*
  * $Log: PEvent.h,v $
+ * Revision 1.8  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.7  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.15 2003/02/22 04:12:49 steve Exp $"
+#ident "$Id: compiler.h,v 1.16 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include  <list>
+# include  "StringHeap.h"
 
 /*
  * This defines constants and defaults for the compiler in general.
@@ -96,8 +97,17 @@ extern generation_t generation_flag;
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
 
+
+extern StringHeapLex lex_strings;
+
 /*
  * $Log: compiler.h,v $
+ * Revision 1.16  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.15  2003/02/22 04:12:49  steve
  *  Add the portbind warning.
  *

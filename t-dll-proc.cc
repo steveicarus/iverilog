@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.56 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.57 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -672,7 +672,8 @@ void dll_target::proc_stask(const NetSTask*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_STASK;
-      stmt_cur_->u_.stask_.name_ = strdup(net->name());
+	/* System task names are lex_strings strings. */
+      stmt_cur_->u_.stask_.name_ = net->name();
       stmt_cur_->u_.stask_.nparm_= nparms;
       stmt_cur_->u_.stask_.parms_= (ivl_expr_t*)
 	    calloc(nparms, sizeof(ivl_expr_t));
@@ -827,6 +828,12 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.57  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.56  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

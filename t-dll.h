@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.98 2003/02/06 16:43:20 steve Exp $"
+#ident "$Id: t-dll.h,v 1.99 2003/03/01 06:25:30 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -219,7 +219,7 @@ struct ivl_expr_s {
 	    } signal_;
 
 	    struct {
-		  char*name_;
+		  const char    *name_;
 		  ivl_expr_t    *parm;
 		  unsigned short parms;
 	    } sfunc_;
@@ -615,8 +615,8 @@ struct ivl_statement_s {
 	    } forever_;
 
 	    struct { /* IVL_ST_STASK */
-		  char* name_;
-		  unsigned nparm_;
+		  const char*name_;
+		  unsigned   nparm_;
 		  ivl_expr_t*parms_;
 	    } stask_;
 
@@ -651,6 +651,12 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.99  2003/03/01 06:25:30  steve
+ *  Add the lex_strings string handler, and put
+ *  scope names and system task/function names
+ *  into this table. Also, permallocate event
+ *  names from the beginning.
+ *
  * Revision 1.98  2003/02/06 16:43:20  steve
  *  Satisfy declaration requirements of some picky compilers.
  *
