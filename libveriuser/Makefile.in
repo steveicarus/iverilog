@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.26 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: Makefile.in,v 1.27 2003/08/22 04:27:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -32,8 +32,8 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-CC = @CC@ -I$(srcdir) -I$(srcdir)/..
-CXX = @CXX@ -I$(srcdir) -I$(srcdir)/..
+CC = @CC@ -I. -I.. -I$(srcdir) -I$(srcdir)/..
+CXX = @CXX@ -I. -I.. -I$(srcdir) -I$(srcdir)/..
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@

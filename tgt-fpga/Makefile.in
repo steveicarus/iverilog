@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.12 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: Makefile.in,v 1.13 2003/08/22 04:27:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -50,7 +50,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall @ident_support@ -I.. -I$(srcdir) -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 D = d-generic.o d-generic-edif.o d-lpm.o d-virtex.o d-virtex2.o

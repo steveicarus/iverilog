@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.50 2003/08/10 00:39:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.51 2003/08/22 04:27:11 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,7 +43,7 @@ RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
 
-CPPFLAGS = -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
+CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
@@ -101,8 +101,8 @@ dep:
 	$(CXX) @ident_support@ $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
-tables.cc: draw_tt.c
-	$(CC) -o draw_tt draw_tt.c
+tables.cc: $(srcdir)/draw_tt.c
+	$(CC) -o draw_tt $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
 
