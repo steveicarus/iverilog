@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.15 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.16 2002/06/02 19:05:50 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -40,6 +40,7 @@ struct __vpiSysTaskCall*vpip_cur_task = 0;
 
 int vpi_free_object(vpiHandle ref)
 {
+      assert(ref);
       assert(ref->vpi_type->vpi_free_object_);
       return ref->vpi_type->vpi_free_object_(ref);
 }
@@ -74,6 +75,7 @@ int vpi_get(int property, vpiHandle ref)
 
 char* vpi_get_str(int property, vpiHandle ref)
 {
+      assert(ref);
       if (ref->vpi_type->vpi_get_str_ == 0)
 	    return 0;
 
@@ -82,8 +84,9 @@ char* vpi_get_str(int property, vpiHandle ref)
 
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
-	// XXXX Cheat. Ignore timescale for the scope.
+      assert(vp);
 
+	// XXXX Cheat. Ignore timescale for the scope.
       vp->type = vpiSimTime;
       vp->high = 0;
       vp->low = schedule_simtime();
@@ -111,6 +114,8 @@ void vpi_set_vlog_info(int argc, char** argv)
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
+      assert(expr);
+      assert(vp);
       if (expr->vpi_type->vpi_get_value_) {
 	    (expr->vpi_type->vpi_get_value_)(expr, vp);
 	    return;
@@ -122,6 +127,7 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 			s_vpi_time*tp, int flags)
 {
+      assert(obj);
       if (obj->vpi_type->vpi_put_value_)
 	    return (obj->vpi_type->vpi_put_value_)(obj, vp, tp, flags);
       else
@@ -135,6 +141,7 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
 	    return &vpip_cur_task->base;
       }
 
+      assert(ref);
       assert(ref->vpi_type->handle_);
       return (ref->vpi_type->handle_)(type, ref);
 }
@@ -175,6 +182,7 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
 
 vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
 {
+      assert(ref);
       assert(ref->vpi_type->index_);
       return (ref->vpi_type->index_)(ref, idx);
 }
@@ -199,6 +207,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.16  2002/06/02 19:05:50  steve
+ *  Check for null pointers from users.
+ *
  * Revision 1.15  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

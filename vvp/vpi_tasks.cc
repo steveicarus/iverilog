@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.14 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.15 2002/06/02 19:05:50 steve Exp $"
 #endif
 
 /*
@@ -326,6 +326,7 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 void vpi_register_systf(const struct t_vpi_systf_data*ss)
 {
       struct __vpiUserSystf*cur = allocate_def();
+      assert(ss);
       switch (ss->type) {
 	  case vpiSysTask:
 	    cur->base.vpi_type = &vpip_systask_def_rt;
@@ -343,6 +344,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.15  2002/06/02 19:05:50  steve
+ *  Check for null pointers from users.
+ *
  * Revision 1.14  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

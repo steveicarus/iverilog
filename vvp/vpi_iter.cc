@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_iter.cc,v 1.3 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_iter.cc,v 1.4 2002/06/02 19:05:50 steve Exp $"
 #endif
 
 /*
@@ -74,6 +74,7 @@ vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 vpiHandle vpi_scan(vpiHandle ref)
 {
       struct __vpiIterator*hp = (struct __vpiIterator*)ref;
+      assert(ref);
       assert(ref->vpi_type->type_code == vpiIterator);
 
       if (ref->vpi_type->index_)
@@ -89,6 +90,9 @@ vpiHandle vpi_scan(vpiHandle ref)
 
 /*
  * $Log: vpi_iter.cc,v $
+ * Revision 1.4  2002/06/02 19:05:50  steve
+ *  Check for null pointers from users.
+ *
  * Revision 1.3  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *

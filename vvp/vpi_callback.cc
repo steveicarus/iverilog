@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.18 2002/05/28 22:55:20 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.19 2002/06/02 19:05:50 steve Exp $"
 #endif
 
 /*
@@ -372,6 +372,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
 {
       struct __vpiCallback*obj = 0;
 
+      assert(data);
       switch (data->reason) {
 
 	  case cbValueChange:
@@ -459,6 +460,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.19  2002/06/02 19:05:50  steve
+ *  Check for null pointers from users.
+ *
  * Revision 1.18  2002/05/28 22:55:20  steve
  *  Callbacks can happen during calltf functions.
  *
