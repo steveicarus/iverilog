@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.3 1999/05/30 01:11:46 steve Exp $"
+#ident "$Id: eval.cc,v 1.4 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -71,8 +71,17 @@ verinum* PENumber::eval_const(const Design*, const string&) const
       return new verinum(value());
 }
 
+verinum* PETernary::eval_const(const Design*, const string&) const
+{
+      assert(0);
+}
+
+
 /*
  * $Log: eval.cc,v $
+ * Revision 1.4  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.3  1999/05/30 01:11:46  steve
  *  Exressions are trees that can duplicate, and not DAGS.
  *

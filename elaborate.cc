@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.56 1999/07/17 18:06:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.57 1999/07/17 19:50:59 steve Exp $"
 #endif
 
 /*
@@ -818,6 +818,24 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path) const
 
       des->add_signal(net);
       return net;
+}
+
+NetNet* PETernary::elaborate_net(Design*des, const string&) const
+{
+      cerr << get_line() << ": Sorry, I cannot elaborate ?: as a net."
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
+{
+      NetExpr*con = expr_->elaborate_expr(des, path);
+      NetExpr*tru = tru_->elaborate_expr(des, path);
+      NetExpr*fal = fal_->elaborate_expr(des, path);
+
+      NetETernary*res = new NetETernary(con, tru, fal);
+      return res;
 }
 
 NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
@@ -1844,6 +1862,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.57  1999/07/17 19:50:59  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.56  1999/07/17 18:06:02  steve
  *  Better handling of bit width of + operators.
  *

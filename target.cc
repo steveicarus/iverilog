@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.14 1999/07/17 03:39:11 steve Exp $"
+#ident "$Id: target.cc,v 1.15 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -221,6 +221,12 @@ void expr_scan_t::expr_subsignal(const NetESubSignal*)
 	    "unhandled expr_subsignal." << endl;
 }
 
+void expr_scan_t::expr_ternary(const NetETernary*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_ternary." << endl;
+}
+
 void expr_scan_t::expr_unary(const NetEUnary*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -235,6 +241,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.15  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.14  1999/07/17 03:39:11  steve
  *  simplified process scan for targets.
  *

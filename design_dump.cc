@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.31 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.32 1999/07/17 19:50:59 steve Exp $"
 #endif
 
 /*
@@ -609,6 +609,12 @@ void NetESignal::dump_node(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
+void NetETernary::dump(ostream&o) const
+{
+      o << "(" << *cond_ << ")? (" << *true_val_ << ") : (" <<
+	    false_val_ << ")";
+}
+
 void NetEUnary::dump(ostream&o) const
 {
       o << op_ << "(";
@@ -678,6 +684,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.32  1999/07/17 19:50:59  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.31  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.13 1999/06/16 03:13:29 steve Exp $"
+#ident "$Id: PExpr.h,v 1.14 1999/07/17 19:50:59 steve Exp $"
 #endif
 
 # include  <string>
@@ -208,9 +208,15 @@ class PEBinary : public PExpr {
 class PETernary : public PExpr {
 
     public:
-      explicit PETernary(PExpr*e, PExpr*t, PExpr*f)
-      : expr_(e), tru_(t), fal_(f) { }
+      explicit PETernary(PExpr*e, PExpr*t, PExpr*f);
       ~PETernary();
+
+      virtual bool is_constant(Module*) const;
+
+      virtual void dump(ostream&out) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
       PExpr*expr_;
@@ -220,6 +226,9 @@ class PETernary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.14  1999/07/17 19:50:59  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.13  1999/06/16 03:13:29  steve
  *  More syntax parse with sorry stubs.
  *

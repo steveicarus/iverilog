@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.27 1999/07/12 00:59:36 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.28 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 /*
@@ -99,6 +99,11 @@ void PEIdent::dump(ostream&out) const
 void PEString::dump(ostream&out) const
 {
       out << "\"" << text_ << "\"";
+}
+
+void PETernary::dump(ostream&out) const
+{
+      out << "(" << *expr_ << ")?(" << *tru_ << "):(" << *fal_ << ")";
 }
 
 void PEUnary::dump(ostream&out) const
@@ -525,6 +530,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.28  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.27  1999/07/12 00:59:36  steve
  *  procedural blocking assignment delays.
  *

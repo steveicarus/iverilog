@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.5 1999/06/16 03:13:29 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.6 1999/07/17 19:50:59 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -77,12 +77,25 @@ bool PEString::is_constant(Module*) const
       return true;
 }
 
+PETernary::PETernary(PExpr*e, PExpr*t, PExpr*f)
+: expr_(e), tru_(t), fal_(f)
+{
+}
+
 PETernary::~PETernary()
 {
 }
 
+bool PETernary::is_constant(Module*) const
+{
+      return false;
+}
+
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.6  1999/07/17 19:50:59  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.5  1999/06/16 03:13:29  steve
  *  More syntax parse with sorry stubs.
  *

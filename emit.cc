@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.17 1999/07/17 03:39:11 steve Exp $"
+#ident "$Id: emit.cc,v 1.18 1999/07/17 19:50:59 steve Exp $"
 #endif
 
 /*
@@ -284,6 +284,11 @@ void NetESubSignal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_subsignal(this);
 }
 
+void NetETernary::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_ternary(this);
+}
+
 void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_unary(this);
@@ -303,6 +308,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.18  1999/07/17 19:50:59  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.17  1999/07/17 03:39:11  steve
  *  simplified process scan for targets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.44 1999/07/17 18:06:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.45 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -488,14 +488,20 @@ NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 	  case '|':
 	  case '%':
 	  case '/':
-	    if (l->expr_width() >= r->expr_width()) {
-		  expr_width(l->expr_width());
-		  r->set_width(expr_width());
-	    } else {
-		  expr_width(r->expr_width());
-		  l->set_width(expr_width());
-	    }
+	    if (l->expr_width() > r->expr_width())
+		  r->set_width(l->expr_width());
+
+	    if (r->expr_width() > l->expr_width())
+		  l->set_width(r->expr_width());
+
+	    if (l->expr_width() < r->expr_width())
+		  r->set_width(l->expr_width());
+
+	    if (r->expr_width() < l->expr_width())
+		  l->set_width(r->expr_width());
+
 	    assert(l->expr_width() == r->expr_width());
+	    expr_width(l->expr_width());
 	    break;
       }
 }
@@ -782,6 +788,33 @@ bool NetESubSignal::set_width(unsigned w)
 {
       if (w != 1) return false;
       return true;
+}
+
+NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
+: cond_(c), true_val_(t), false_val_(f)
+{
+      expr_width(true_val_->expr_width());
+}
+
+NetETernary::~NetETernary()
+{
+      delete cond_;
+      delete true_val_;
+      delete false_val_;
+}
+
+NetETernary* NetETernary::dup_expr() const
+{
+      assert(0);
+}
+
+bool NetETernary::set_width(unsigned w)
+{
+      bool flag = true;
+      flag = flag && true_val_->set_width(w);
+      flag = flag && false_val_->set_width(w);
+      expr_width(true_val_->expr_width());
+      return flag;
 }
 
 NetEUnary::~NetEUnary()
@@ -1356,6 +1389,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.45  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.44  1999/07/17 18:06:02  steve
  *  Better handling of bit width of + operators.
  *

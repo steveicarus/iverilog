@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.46 1999/07/17 03:08:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.47 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 /*
@@ -1066,7 +1066,31 @@ class NetEConst  : public NetExpr {
 };
 
 /*
- * This class represents a unaru operator, with the single operand
+ * This class represents the ternary (?:) operator. It has 3
+ * expressions, one of which is a condition used to select which of
+ * the other two expressions is the result.
+ */
+class NetETernary  : public NetExpr {
+
+    public:
+      NetETernary(NetExpr*c, NetExpr*t, NetExpr*f);
+      ~NetETernary();
+
+      virtual bool set_width(unsigned w);
+
+      virtual NetETernary* dup_expr() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+      NetExpr*cond_;
+      NetExpr*true_val_;
+      NetExpr*false_val_;
+};
+
+/*
+ * This class represents a unary operator, with the single operand
  * and a single character for the operator. The operator values are:
  *
  *   ~  -- Bit-wise negation
@@ -1342,6 +1366,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.47  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.46  1999/07/17 03:08:32  steve
  *  part select in expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.14 1999/07/17 03:39:11 steve Exp $"
+#ident "$Id: target.h,v 1.15 1999/07/17 19:51:00 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -108,6 +108,7 @@ struct expr_scan_t {
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*);
+      virtual void expr_ternary(const NetETernary*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
 };
@@ -129,6 +130,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.15  1999/07/17 19:51:00  steve
+ *  netlist support for ternary operator.
+ *
  * Revision 1.14  1999/07/17 03:39:11  steve
  *  simplified process scan for targets.
  *
