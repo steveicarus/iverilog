@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.18 2005/01/29 17:53:25 steve Exp $"
+#ident "$Id: schedule.h,v 1.19 2005/02/12 03:26:14 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -50,11 +50,12 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 
 /*
  * This is very similar to schedule_assign_vector, but generates an
- * even in the active queue. It is used at link time to set an initial
+ * event in the active queue. It is used at link time to set an initial
  * value (a compile time constant) to the input of a functor. This
  * creates an event in the active queue.
  */
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 
 
 /*
@@ -120,6 +121,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.19  2005/02/12 03:26:14  steve
+ *  Support scheduling vvp_vector8_t objects.
+ *
  * Revision 1.18  2005/01/29 17:53:25  steve
  *  Use scheduler to initialize constant functor inputs.
  *

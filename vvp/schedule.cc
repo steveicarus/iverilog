@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.30 2005/01/29 17:53:25 steve Exp $"
+#ident "$Id: schedule.cc,v 1.31 2005/02/12 03:26:14 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -94,6 +94,18 @@ void assign_vector4_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_vec4(ptr, val);
+}
+
+struct assign_vector8_event_s  : public event_s {
+      vvp_net_ptr_t ptr;
+      vvp_vector8_t val;
+      void run_run(void);
+};
+
+void assign_vector8_event_s::run_run(void)
+{
+      count_assign_events += 1;
+      vvp_send_vec8(ptr, val);
 }
 
 struct generic_event_s : public event_s {
@@ -420,6 +432,14 @@ void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
+void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      schedule_event_(cur, 0, SEQ_ACTIVE);
+}
+
 void schedule_generic(vvp_gen_event_t obj, unsigned char val,
 		      vvp_time64_t delay, bool sync_flag)
 {
@@ -558,6 +578,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.31  2005/02/12 03:26:14  steve
+ *  Support scheduling vvp_vector8_t objects.
+ *
  * Revision 1.30  2005/01/29 17:53:25  steve
  *  Use scheduler to initialize constant functor inputs.
  *
