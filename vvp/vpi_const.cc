@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.26 2003/03/14 05:02:13 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.27 2003/03/15 05:44:50 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -91,7 +91,6 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 		  uint_value += (unsigned char)(rfp->value[i]);
 	      }
 	      sprintf(rbuf, "%u", uint_value);
-	      vp->format = vpiDecStrVal;
 	      vp->value.str = rbuf;
 	      break;
 
@@ -634,6 +633,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.27  2003/03/15 05:44:50  steve
+ *  Remove excess assignment.
+ *
  * Revision 1.26  2003/03/14 05:02:13  steve
  *  Streamline parameter string value, get paramete scope.
  *
