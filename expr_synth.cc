@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.51 2003/10/27 06:04:21 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.52 2003/11/10 19:39:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -816,7 +816,7 @@ NetNet* NetESignal::synthesize(Design*des)
       assert(scope);
 
       string name = scope->local_symbol();
-      NetNet*tmp = new NetNet(scope, name, NetNet::NetNet::WIRE, wid);
+      NetNet*tmp = new NetNet(scope, name, NetNet::WIRE, wid);
       tmp->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -827,6 +827,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.52  2003/11/10 19:39:20  steve
+ *  Remove redundant scope tokens.
+ *
  * Revision 1.51  2003/10/27 06:04:21  steve
  *  More flexible width handling for synthesized add.
  *
