@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.1 2000/04/21 06:41:03 steve Exp $"
+#ident "$Id: iverilog.c,v 1.2 2000/04/21 22:51:38 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -35,6 +35,24 @@ const char*targ  = "vvm";
 int verbose_flag = 0;
 
 static char cmdline[4096];
+
+static int t_null()
+{
+      int rc;
+
+      strcat(cmdline, " | ");
+      strcat(cmdline, base);
+      strcat(cmdline, "/ivl ");
+      if (verbose_flag)
+	    strcat(cmdline, "-v ");
+      strcat(cmdline, "-- -");
+
+      if (verbose_flag)
+	    printf("translate: %s\n", cmdline);
+
+      rc = system(cmdline);
+      return rc;
+}
 
 /*
  * This function handles the vvm target. After preprocessing, run the
@@ -155,7 +173,9 @@ int main(int argc, char **argv)
 	    return system(cmdline);
       }
 
-      if (strcmp(targ,"vvm") == 0)
+      if (strcmp(targ,"null") == 0)
+	    return t_null();
+      else if (strcmp(targ,"vvm") == 0)
 	    return t_vvm();
       else if (strcmp(targ,"xnf") == 0)
 	    return t_xnf();
@@ -169,6 +189,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.2  2000/04/21 22:51:38  steve
+ *  Support the -tnull target type.
+ *
  * Revision 1.1  2000/04/21 06:41:03  steve
  *  Add the iverilog driver program.
  *
