@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.106 2000/09/23 03:04:10 steve Exp $"
+#ident "$Id: parse.y,v 1.107 2000/10/14 02:23:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -732,7 +732,7 @@ expression_list
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
 		  delete $1;
 		  $$ = tmp;
-		  }
+		}
 	;
 
 
@@ -803,8 +803,8 @@ expr_primary
 		{ $$ = $2; }
 	| '{' expression_list '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $2;
 		  $$ = tmp;
 		}

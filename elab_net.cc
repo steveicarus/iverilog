@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.50 2000/10/08 04:59:36 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.51 2000/10/14 02:23:02 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -925,6 +925,13 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 
+	    if (parms_[idx] == 0) {
+		  cerr << get_line() << ": error: Empty expressions "
+		       << "not allowed in concatenations." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
 	      /* Look for the special case of an unsized number in a
 		 concatenation expression. Mark this as an error, but
 		 allow elaboration to continue to see if I can find
@@ -1745,6 +1752,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.51  2000/10/14 02:23:02  steve
+ *  Check for missing concat subexpressions (PR#11)
+ *
  * Revision 1.50  2000/10/08 04:59:36  steve
  *  Fix repeat concatenation with multiple expressions (PR#10)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.61 2000/07/26 05:08:07 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.62 2000/10/14 02:23:02 steve Exp $"
 #endif
 
 /*
@@ -83,9 +83,12 @@ void PEConcat::dump(ostream&out) const
 	    return;
       }
 
-      out << "{" << *parms_[0];
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1)
-	    out << ", " << *parms_[idx];
+      out << "{";
+      if (parms_[0]) out << *parms_[0];
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    out << ", ";
+	    if (parms_[idx]) out << *parms_[idx];
+      }
 
       out << "}";
 
@@ -97,10 +100,10 @@ void PECallFunction::dump(ostream &out) const
       out << name_ << "(";
 
       if (parms_.count() > 0) {
-	    parms_[0]->dump(out);
+	    if (parms_[0]) parms_[0]->dump(out);
 	    for (unsigned idx = 1; idx < parms_.count(); ++idx) {
 		  out << ", ";
-		  parms_[idx]->dump(out);
+		  if (parms_[idx]) parms_[idx]->dump(out);
 	    }
       }
       out << ")";
@@ -780,6 +783,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.62  2000/10/14 02:23:02  steve
+ *  Check for missing concat subexpressions (PR#11)
+ *
  * Revision 1.61  2000/07/26 05:08:07  steve
  *  Parse disable statements to pform.
  *
