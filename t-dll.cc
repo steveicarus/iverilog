@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.78 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.79 2002/01/23 04:54:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,7 +68,7 @@ const char *dlerror(void)
 }
 #elif defined(HAVE_DLFCN_H)
 inline ivl_dll_t ivl_dlopen(const char*name)
-{ return dlopen(name,RTLD_NOW); }
+{ return dlopen(name,RTLD_LAZY); }
 
 inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 { return dlsym(dll, nm); }
@@ -1876,6 +1876,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.79  2002/01/23 04:54:37  steve
+ *  Load modules with RTLD_LAZY
+ *
  * Revision 1.78  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_dlfcn.h,v 1.3 2001/05/22 02:14:47 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.4 2002/01/23 04:54:38 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -49,7 +49,7 @@ inline const char *dlerror(void)
 
 #elif defined(HAVE_DLFCN_H)
 inline ivl_dll_t ivl_dlopen(const char*name)
-{ return dlopen(name,RTLD_NOW); }
+{ return dlopen(name,RTLD_LAZY); }
 
 inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 { return dlsym(dll, nm); }
@@ -77,6 +77,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.4  2002/01/23 04:54:38  steve
+ *  Load modules with RTLD_LAZY
+ *
  * Revision 1.3  2001/05/22 02:14:47  steve
  *  Update the mingw build to not require cygwin files.
  *
