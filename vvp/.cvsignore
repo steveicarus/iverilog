@@ -1,9 +1,11 @@
+a.out
 configure
 config.cache
 config.log
 config.status
 config.h
 dep
+foo.*
 Makefile
 lexor.cc
 parse.cc
