@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.1 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.2 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -333,7 +333,55 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 }
 
 /*
+ * Elaborate the ternary operator in a netlist by creating a LPM_MUX
+ * with width matching the result, size == 2 and 1 select input.
+ */
+NetNet* PETernary::elaborate_net(Design*des, const string&path,
+				 unsigned width,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const
+{
+      NetNet* expr_sig = expr_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet* tru_sig = tru_->elaborate_net(des, path, width, 0, 0, 0);
+      NetNet* fal_sig = fal_->elaborate_net(des, path, width, 0, 0, 0);
+      if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(tru_sig->pin_count() == fal_sig->pin_count());
+      assert(width == tru_sig->pin_count());
+      assert(expr_sig->pin_count() == 1);
+
+      NetNet*sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+		       tru_sig->pin_count());
+      sig->local_flag(true);
+
+      NetMux*mux = new NetMux(des->local_symbol(path), width, 2, 1);
+      connect(mux->pin_Sel(0), expr_sig->pin(0));
+
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+	    connect(mux->pin_Result(idx), sig->pin(idx));
+	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
+	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
+      }
+}
+
+/*
  * $Log: elab_net.cc,v $
+ * Revision 1.2  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.1  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

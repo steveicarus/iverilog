@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.10 1999/11/02 04:55:34 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.11 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -72,6 +72,7 @@ class target_xnf  : public target_t {
       void signal(ostream&os, const NetNet*);
 
       void lpm_ff(ostream&os, const NetFF*);
+      void lpm_mux(ostream&os, const NetMux*);
 
       void logic(ostream&os, const NetLogic*);
       void bufz(ostream&os, const NetBUFZ*);
@@ -288,6 +289,34 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 }
 
 /*
+ * Generate an LPM_MUX.
+ *
+ *   XXXX NOTE: For now, this only supports combinational LPM_MUX
+ *   devices that have a single select input. These are typically
+ *   generated from ?: expressions.
+ */
+void target_xnf::lpm_mux(ostream&os, const NetMux*net)
+{
+      assert(net->sel_width() == 1);
+      assert(net->size() == 2);
+
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
+
+	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">"
+	       << " EQN, EQN=(I0 * I2) + (~I0 * I1)" << endl;
+
+	    draw_pin(os, "I0", net->pin_Sel(0));
+	    draw_pin(os, "I1", net->pin_Data(idx,0));
+	    draw_pin(os, "I2", net->pin_Data(idx,1));
+	    draw_pin(os, "O",  net->pin_Result(idx));
+
+	    os << "END" << endl;
+      }
+
+}
+
+
+/*
  * The logic gates I know so far can be translated directly into XNF
  * standard symbol types. This is a fairly obvious transformation.
  */
@@ -382,6 +411,18 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.11  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.10  1999/11/02 04:55:34  steve
  *  Add the synthesize method to NetExpr to handle
  *  synthesis of expressions, and use that method

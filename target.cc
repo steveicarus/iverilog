@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.22 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: target.cc,v 1.23 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -79,6 +79,12 @@ void target_t::lpm_ff(ostream&, const NetFF*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetFF." << endl;
+}
+
+void target_t::lpm_mux(ostream&, const NetMux*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetMux." << endl;
 }
 
 void target_t::net_assign(ostream&os, const NetAssign*)
@@ -281,6 +287,18 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.23  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.22  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

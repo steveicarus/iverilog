@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.84 1999/11/04 01:12:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.85 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 /*
@@ -357,6 +357,7 @@ class NetFF  : public NetNode {
       virtual void functor_node(Design*des, functor_t*fun);
 };
 
+
 /*
  * This class represents the declared memory object. The parser
  * creates one of these for each declared memory in the elaborated
@@ -393,6 +394,49 @@ class NetMemory  {
       long idxl_;
 
       map<string,string> attributes_;
+};
+
+/*
+ * This class represents an LPM_MUX device. This device has some
+ * number of Result points (the width of the device) and some number
+ * of input choices. There is also a selector of some width. The
+ * parameters are:
+ *
+ *      width  -- Width of the result and each possible Data input
+ *      size   -- Number of Data input (each of width)
+ *      selw   -- Width in bits of the select input
+ */
+class NetMux  : public NetNode {
+
+    public:
+      NetMux(const string&n, unsigned width, unsigned size, unsigned selw);
+      ~NetMux();
+
+      unsigned width() const;
+      unsigned size() const;
+      unsigned sel_width() const;
+
+      NetObj::Link& pin_Aclr();
+      NetObj::Link& pin_Clock();
+
+      NetObj::Link& pin_Result(unsigned);
+      NetObj::Link& pin_Data(unsigned wi, unsigned si);
+      NetObj::Link& pin_Sel(unsigned);
+
+      const NetObj::Link& pin_Aclr() const;
+      const NetObj::Link& pin_Clock() const;
+
+      const NetObj::Link& pin_Result(unsigned) const;
+      const NetObj::Link& pin_Data(unsigned, unsigned) const;
+      const NetObj::Link& pin_Sel(unsigned) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      unsigned width_;
+      unsigned size_;
+      unsigned swidth_;
 };
 
 /* =========
@@ -1509,6 +1553,7 @@ class NetETernary  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
+      virtual NetNet*synthesize(Design*);
 
     private:
       NetExpr*cond_;
@@ -1527,9 +1572,9 @@ class NetETernary  : public NetExpr {
  *   ^  -- Reduction XOR
  *   +  --
  *   -  --
- *   A  -- Reduciton NAND (~&)
- *   N  -- Reduciton NOR (~|)
- *   X  -- Reduciton NXOR (~^ or ^~)
+ *   A  -- Reduction NAND (~&)
+ *   N  -- Reduction NOR (~|)
+ *   X  -- Reduction NXOR (~^ or ^~)
  */
 class NetEUnary  : public NetExpr {
 
@@ -1547,9 +1592,19 @@ class NetEUnary  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
-    private:
+    protected:
       char op_;
       NetExpr* expr_;
+};
+
+class NetEUBits : public NetEUnary {
+
+    public:
+      NetEUBits(char op, NetExpr*ex);
+      ~NetEUBits();
+
+      virtual NetNet* synthesize(Design*);
+
 };
 
 /* System identifiers are represented here. */
@@ -1799,6 +1854,18 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.85  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.84  1999/11/04 01:12:42  steve
  *  Elaborate combinational UDP devices.
  *

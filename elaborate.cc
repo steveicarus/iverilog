@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.120 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.121 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 /*
@@ -935,69 +935,6 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       return net;
 }
 
-NetNet* PETernary::elaborate_net(Design*des, const string&path,
-				 unsigned width,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const
-{
-      NetNet* expr_sig = expr_->elaborate_net(des, path, 0, 0, 0, 0);
-      NetNet* tru_sig = tru_->elaborate_net(des, path, width, 0, 0, 0);
-      NetNet* fal_sig = fal_->elaborate_net(des, path, width, 0, 0, 0);
-      if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) {
-	    des->errors += 1;
-	    return 0;
-      }
-
-      NetNet* sig;
-      NetLogic*exprinv;
-      NetLogic*and_tru;
-      NetLogic*and_fal;
-      NetLogic*gate;
-
-      assert(tru_sig->pin_count() == fal_sig->pin_count());
-      assert(expr_sig->pin_count() == 1);
-
-      sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
-		       tru_sig->pin_count());
-      sig->local_flag(true);
-
-      for (unsigned idx = 0 ;  idx < tru_sig->pin_count() ;  idx += 1) {
-	    exprinv = new NetLogic(des->local_symbol(path), 2, NetLogic::NOT);
-	    and_tru = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
-	    and_fal = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::OR);
-
-	    connect(exprinv->pin(1), expr_sig->pin(0));
-	    connect(and_tru->pin(1), expr_sig->pin(0));
-	    connect(and_fal->pin(1), exprinv->pin(0));
-	    connect(and_tru->pin(2), tru_sig->pin(idx));
-	    connect(and_fal->pin(2), fal_sig->pin(idx));
-	    connect(gate->pin(1), and_tru->pin(0));
-	    connect(gate->pin(2), and_fal->pin(0));
-	    connect(gate->pin(0), sig->pin(idx));
-
-	    des->add_node(exprinv);
-	    des->add_node(and_tru);
-	    des->add_node(and_fal);
-	    des->add_node(gate);
-
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-      }
-
-      des->add_signal(sig);
-
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(expr_sig))
-	    delete tmp;
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(tru_sig))
-	    delete tmp;
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(fal_sig))
-	    delete tmp;
-
-      return sig;
-}
 
 NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned width,
@@ -1172,8 +1109,24 @@ NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
 {
-      NetEUnary*tmp = new NetEUnary(op_, expr_->elaborate_expr(des, path));
-      tmp->set_line(*this);
+      NetExpr*ip = expr_->elaborate_expr(des, path);
+      if (ip == 0) return 0;
+
+      /* Should we evaluate expressions ahead of time,
+       * just like in PEBinary::elaborate_expr() ?
+       */
+
+      NetEUnary*tmp;
+      switch (op_) {
+	  default:
+	    tmp = new NetEUnary(op_, ip);
+	    tmp->set_line(*this);
+	    break;
+	  case '~':
+	    tmp = new NetEUBits(op_, ip);
+	    tmp->set_line(*this);
+	    break;
+      }
       return tmp;
 }
 
@@ -2404,6 +2357,18 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.121  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.120  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

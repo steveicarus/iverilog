@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.54 1999/11/04 01:12:41 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.55 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 /*
@@ -126,6 +126,13 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetMux::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Multiplexer (NetMux): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -709,8 +716,8 @@ void NetESignal::dump_node(ostream&o, unsigned ind) const
 
 void NetETernary::dump(ostream&o) const
 {
-      o << "(" << *cond_ << ")? (" << *true_val_ << ") : (" <<
-	    false_val_ << ")";
+      o << "(" << *cond_ << ") ? (" << *true_val_ << ") : (" <<
+	    *false_val_ << ")";
 }
 
 void NetEUFunc::dump(ostream&o) const
@@ -811,6 +818,18 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.55  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.54  1999/11/04 01:12:41  steve
  *  Elaborate combinational UDP devices.
  *

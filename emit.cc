@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.25 1999/11/01 02:07:40 steve Exp $"
+#ident "$Id: emit.cc,v 1.26 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 /*
@@ -73,6 +73,11 @@ void NetConst::emit_node(ostream&o, struct target_t*tgt) const
 void NetFF::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->lpm_ff(o, this);
+}
+
+void NetMux::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_mux(o, this);
 }
 
 void NetNEvent::emit_node(ostream&o, struct target_t*tgt) const
@@ -362,6 +367,18 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.26  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.25  1999/11/01 02:07:40  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

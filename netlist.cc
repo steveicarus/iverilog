@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.81 1999/11/04 01:12:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.82 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -575,6 +575,118 @@ const NetObj::Link& NetAddSub::pin_Result(unsigned idx) const
       assert(idx < pin_count());
       return pin(idx);
 }
+
+/*
+ * The NetMux class represents an LPM_MUX device. The pinout is assigned
+ * like so:
+ *    0   -- Aclr (optional)
+ *    1   -- Clock (optional)
+ *    2   -- Result[0]
+ *    2+N -- Result[N]
+ */
+
+NetMux::NetMux(const string&n, unsigned wi, unsigned si, unsigned sw)
+: NetNode(n, 2+wi+sw+wi*si), width_(wi), size_(si), swidth_(sw)
+{
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr",  0);
+      pin(1).set_dir(NetObj::Link::INPUT); pin(0).set_name("Clock", 0);
+
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin_Result(idx).set_name("Result", idx);
+
+	    for (unsigned jdx = 0 ;  jdx < size_ ;  jdx += 1) {
+		  pin_Data(idx,jdx).set_dir(Link::INPUT);
+		  pin_Data(idx,jdx).set_name("Data", jdx*width_+idx);
+	    }
+      }
+
+      for (unsigned idx = 0 ;  idx < swidth_ ;  idx += 1) {
+	    pin_Sel(idx).set_dir(Link::OUTPUT);
+	    pin_Sel(idx).set_name("Sel", idx);
+      }
+}
+
+NetMux::~NetMux()
+{
+}
+
+unsigned NetMux::width()const
+{
+      return width_;
+}
+
+unsigned NetMux::size() const
+{
+      return size_;
+}
+
+unsigned NetMux::sel_width() const
+{
+      return swidth_;
+}
+
+NetObj::Link& NetMux::pin_Aclr()
+{
+      return pin(0);
+}
+
+const NetObj::Link& NetMux::pin_Aclr() const
+{
+      return pin(0);
+}
+
+NetObj::Link& NetMux::pin_Clock()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetMux::pin_Clock() const
+{
+      return pin(1);
+}
+
+NetObj::Link& NetMux::pin_Result(unsigned w)
+{
+      assert(w < width_);
+      return pin(2+w);
+}
+
+const NetObj::Link& NetMux::pin_Result(unsigned w) const
+{
+      assert(w < width_);
+      return pin(2+w);
+}
+
+NetObj::Link& NetMux::pin_Sel(unsigned w)
+{
+      assert(w < swidth_);
+      return pin(2+width_+w);
+}
+
+const NetObj::Link& NetMux::pin_Sel(unsigned w) const
+{
+      assert(w < swidth_);
+      return pin(2+width_+w);
+}
+
+NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s)
+{
+      assert(w < width_);
+      assert(s < size_);
+      return pin(2+width_+swidth_+s*width_+w);
+}
+
+const NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s) const
+{
+      assert(w < width_);
+      assert(s < size_);
+      return pin(2+width_+swidth_+s*width_+w);
+}
+
+/*
+ * NetAssign
+ */
 
 NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w), rval_(0), bmux_(0)
@@ -1340,6 +1452,15 @@ NetEUnary* NetEUnary::dup_expr() const
       assert(0);
 }
 
+NetEUBits::NetEUBits(char op, NetExpr*ex)
+: NetEUnary(op, ex)
+{
+}
+
+NetEUBits::~NetEUBits()
+{
+}
+
 NetForever::NetForever(NetProc*p)
 : statement_(p)
 {
@@ -1969,6 +2090,18 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.82  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.81  1999/11/04 01:12:42  steve
  *  Elaborate combinational UDP devices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.21 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: target.h,v 1.22 1999/11/04 03:53:26 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -68,6 +68,7 @@ struct target_t {
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_ff(ostream&os, const NetFF*);
+      virtual void lpm_mux(ostream&os, const NetMux*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
@@ -138,6 +139,18 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.22  1999/11/04 03:53:26  steve
+ *  Patch to synthesize unary ~ and the ternary operator.
+ *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
+ *
+ *  Add the LPM_MUX device, and integrate it with the
+ *  ternary synthesis from Larry. Replace the lpm_mux
+ *  generator in t-xnf.cc to use XNF EQU devices to
+ *  put muxs into function units.
+ *
+ *  Rewrite elaborate_net for the PETernary class to
+ *  also use the LPM_MUX device.
+ *
  * Revision 1.21  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of
