@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.1 2000/12/09 01:17:38 steve Exp $"
+#ident "$Id: imain.c,v 1.2 2000/12/09 03:42:52 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,8 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
+
+extern void dump_final_design(FILE*out);
 
 /*
  * As processing proceeds, this variable is incremented as errors are
@@ -49,29 +51,6 @@ pal_t pal = 0;
  */
 unsigned pins = 0;
 struct pal_bind_s* bind_pin = 0;
-
-static void dump_final_design(FILE*out)
-{
-      unsigned idx;
-      for (idx = 0 ;  idx < pins ;  idx += 1) {
-	    if (bind_pin[idx].sop) {
-		  fprintf(out, "Output pin %u:\n", idx+1);
-		  fprintf(out, "    pin nexus=%s\n",
-			  bind_pin[idx].nexus?
-			  ivl_nexus_name(bind_pin[idx].nexus) : "");
-		  fprintf(out, "    pin enable=%s\n",
-			  bind_pin[idx].enable ?
-			  ivl_logic_name(bind_pin[idx].enable) : "1");
-
-	    } else {
-		  fprintf(out, "Input pin %u:\n", idx+1);
-		  fprintf(out, "    pin nexus=%s\n",
-			  bind_pin[idx].nexus?
-			  ivl_nexus_name(bind_pin[idx].nexus) : "");
-	    }
-      }
-}
-
 
 
 /*
@@ -120,7 +99,7 @@ int target_design(ivl_design_t des)
       get_pad_bindings(root);
 
       if (pal_errors) {
-	    fprintf(stderr, "code generator failed.\n");
+	    fprintf(stderr, "PAD assignment failed.\n");
 	    pal_free(pal);
 	    return -1;
       }
@@ -128,6 +107,16 @@ int target_design(ivl_design_t des)
 	/* Run through the assigned output pins and absorb the output
 	   enables that are connected to them. */
       absorb_pad_enables();
+
+	/* Scan all the registers, and assign them to
+	   macro-cells. */
+      root = ivl_design_root(des);
+      fit_registers(root);
+      if (pal_errors) {
+	    fprintf(stderr, "Register fitting failed.\n");
+	    pal_free(pal);
+	    return -1;
+      }
 
 
       dump_final_design(stdout);
@@ -143,6 +132,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.2  2000/12/09 03:42:52  steve
+ *  Stuff registers into macrocells.
+ *
  * Revision 1.1  2000/12/09 01:17:38  steve
  *  Add the pal loadable target.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: priv.h,v 1.1 2000/12/09 01:17:38 steve Exp $"
+#ident "$Id: priv.h,v 1.2 2000/12/09 03:42:52 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -41,6 +41,9 @@ struct pal_bind_s {
       pal_sop_t sop;
 	/* If the output has an enable, this is it. */
       ivl_net_logic_t enable;
+	/* If there is a register here, this is it. */
+      ivl_lpm_ff_t reg;
+      unsigned reg_q;
 };
 
 extern unsigned pins;
@@ -50,8 +53,13 @@ extern int get_pad_bindings(ivl_scope_t net);
 
 extern void absorb_pad_enables(void);
 
+extern int fit_registers(ivl_scope_t scope);
+
 /*
  * $Log: priv.h,v $
+ * Revision 1.2  2000/12/09 03:42:52  steve
+ *  Stuff registers into macrocells.
+ *
  * Revision 1.1  2000/12/09 01:17:38  steve
  *  Add the pal loadable target.
  *

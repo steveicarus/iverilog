@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: enables.c,v 1.1 2000/12/09 01:17:38 steve Exp $"
+#ident "$Id: enables.c,v 1.2 2000/12/09 03:42:52 steve Exp $"
 
 # include  <ivl_target.h>
 # include  <assert.h>
@@ -25,7 +25,8 @@
 
 /*
  * Given a pin index, look at the nexus for a bufif device that is
- * driving it, if any.
+ * driving it, if any. Save that device in the enable slot for the
+ * cell. We'll try to fit it later.
  */
 static void absorb_pad_enable(unsigned idx)
 {
@@ -76,6 +77,9 @@ void absorb_pad_enables(void)
 
 /*
  * $Log: enables.c,v $
+ * Revision 1.2  2000/12/09 03:42:52  steve
+ *  Stuff registers into macrocells.
+ *
  * Revision 1.1  2000/12/09 01:17:38  steve
  *  Add the pal loadable target.
  *
