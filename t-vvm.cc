@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.95 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.96 2000/01/13 05:11:25 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -715,7 +715,20 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       if (vpi_module_path.length() > 0)
 	    os << "      vvm_set_module_path(\"" << vpi_module_path <<
 		  "\");" << endl;
-      os << "      vvm_load_vpi_module(\"system.vpi\");" << endl;
+
+      string vpi_module_list = mod->get_flag("VPI_MODULE_LIST");
+      while (vpi_module_list.length()) {
+	    string name;
+	    unsigned pos = vpi_module_list.find(',');
+	    if (pos < vpi_module_list.length()) {
+		  name = vpi_module_list.substr(0, pos);
+		  vpi_module_list = vpi_module_list.substr(pos+1);
+	    } else {
+		  name = vpi_module_list;
+		  vpi_module_list = "";
+	    }
+	    os << "      vvm_load_vpi_module(\"" << name << ".vpi\");" << endl;
+      }
       os << "      design_init();" << endl;
       os << "      design_start();" << endl;
 
@@ -2023,6 +2036,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.96  2000/01/13 05:11:25  steve
+ *  Support for multiple VPI modules.
+ *
  * Revision 1.95  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

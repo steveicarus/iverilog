@@ -166,6 +166,17 @@ Usage: ivl <options>... file
 	target specific information to the target back-end, or
 	options/parameters to optimization functions, if any are defined.
 
+-m <module>
+	Cause a named VPI module to be included in the module
+	list. This parameter appends the named module to the end of
+	the VPI_MODULE_LIST. This is an ordered list of modules to be
+	loaded into the simulation at runtime.
+
+	This list can also be set with -fVPI_MODULE_LIST=<list> which
+	sets the list completely. Then, -m after this will append
+	module names to the list sp specified. The default list
+	includes "system".
+
 -N <file>
 	Dump the elaborated netlist to the named file. The netlist is
 	the folly elaborated netlist, after all the function modules

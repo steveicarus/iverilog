@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.27 1999/12/30 17:37:14 steve Exp $"
+#ident "$Id: main.cc,v 1.28 2000/01/13 05:11:25 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -122,7 +122,9 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "F:f:hN:o:P:s:t:v")) != EOF) switch (opt) {
+      flags["VPI_MODULE_LIST"] = "system";
+
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:s:t:v")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -139,6 +141,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'h':
 	    help_flag = true;
+	    break;
+	  case 'm':
+	    flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+optarg;
 	    break;
 	  case 'N':
 	    net_path = optarg;
@@ -282,6 +287,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.28  2000/01/13 05:11:25  steve
+ *  Support for multiple VPI modules.
+ *
  * Revision 1.27  1999/12/30 17:37:14  steve
  *  Remove the now useless sigfold functor.
  *
