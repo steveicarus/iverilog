@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.1 2003/03/24 00:47:54 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.2 2003/03/24 02:29:04 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -263,6 +263,7 @@ static void virtex2_show_header(ivl_design_t des)
       ivl_scope_t root = ivl_design_root(des);
       unsigned sig_cnt = ivl_scope_sigs(root);
       unsigned nports = 0, pidx;
+      const char*part_str = 0;
 
 	/* Count the ports I'm going to use. */
       for (idx = 0 ;  idx < sig_cnt ;  idx += 1) {
@@ -304,8 +305,8 @@ static void virtex2_show_header(ivl_design_t des)
 
       xlib = edif_xlibrary_create(edf, "VIRTEX2");
 
-      if (ivl_design_flag(des, "part")) {
-	    edif_pstring(edf, "PART", ivl_design_flag(des, "part"));
+      if ( (part_str = ivl_design_flag(des, "part")) && (part_str[0] != 0) ) {
+	    edif_pstring(edf, "PART", part_str);
       }
 
       cell_0 = edif_xcell_create(xlib, "GND", 1);
@@ -393,6 +394,13 @@ static void virtex2_pad(ivl_signal_t sig, const char*str)
 	    edif_joint_t jnt;
 	    edif_cellref_t pad, buf;
 
+	    const char*name_str = ivl_signal_basename(sig);
+	    if (ivl_signal_pins(sig) > 1) {
+		  char name_buf[128];
+		  sprintf(name_buf, "%s[%u]", name_str, idx);
+		  name_str = strdup(name_buf);
+	    }
+
 	    switch (ivl_signal_port(sig)) {
 		case IVL_SIP_INPUT:
 		  check_cell_ibuf();
@@ -400,6 +408,7 @@ static void virtex2_pad(ivl_signal_t sig, const char*str)
 		  buf = edif_cellref_create(edf, cell_ibuf);
 
 		  jnt = edif_joint_create(edf);
+		  edif_joint_rename(jnt, name_str);
 		  edif_add_to_joint(jnt, pad, 0);
 		  edif_add_to_joint(jnt, buf, BUF_I);
 
@@ -413,6 +422,7 @@ static void virtex2_pad(ivl_signal_t sig, const char*str)
 		  buf = edif_cellref_create(edf, cell_obuf);
 
 		  jnt = edif_joint_create(edf);
+		  edif_joint_rename(jnt, name_str);
 		  edif_add_to_joint(jnt, pad, 0);
 		  edif_add_to_joint(jnt, buf, BUF_O);
 
@@ -1131,6 +1141,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.2  2003/03/24 02:29:04  steve
+ *  Give proper basenames to PAD signals.
+ *
  * Revision 1.1  2003/03/24 00:47:54  steve
  *  Add new virtex2 architecture family, and
  *  also the new edif.h EDIF management functions.

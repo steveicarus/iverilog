@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.1 2003/03/24 00:47:54 steve Exp $"
+#ident "$Id: edif.c,v 1.2 2003/03/24 02:29:04 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -89,6 +89,7 @@ struct joint_cell_ {
 };
 
 struct edif_joint_s {
+      const char*name;
       struct joint_cell_*links;
       struct edif_joint_s*next;
 };
@@ -234,6 +235,7 @@ edif_joint_t edif_joint_create(edif_t edf)
 {
       edif_joint_t jnt = malloc(sizeof(struct edif_joint_s));
 
+      jnt->name = 0;
       jnt->links = 0;
       jnt->next  = edf->nexa;
       edf->nexa  = jnt;
@@ -253,6 +255,12 @@ edif_joint_t edif_joint_of_nexus(edif_t edf, ivl_nexus_t nex)
 
       jnt = (edif_joint_t) tmp;
       return jnt;
+}
+
+void edif_joint_rename(edif_joint_t jnt, const char*name)
+{
+      assert(jnt->name == 0);
+      jnt->name = name;
 }
 
 void edif_add_to_joint(edif_joint_t jnt, edif_cellref_t cell, unsigned port)
@@ -388,7 +396,13 @@ void edif_print(FILE*fd, edif_t edf)
       idx = 0;
       for (jnt = edf->nexa ;  jnt ;  jnt = jnt->next, idx += 1) {
 	    struct joint_cell_*jc;
-	    fprintf(fd, "(net N%u (joined", idx);
+
+	    fprintf(fd, "(net ");
+	    if (jnt->name != 0)
+		  fprintf(fd, "(rename N%u \"%s\")", idx, jnt->name);
+	    else
+		  fprintf(fd, "N%u", idx);
+	    fprintf(fd, " (joined");
 
 	    for (jc = jnt->links ;  jc ;  jc = jc->next) {
 		  if (jc->cell)
@@ -427,6 +441,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.2  2003/03/24 02:29:04  steve
+ *  Give proper basenames to PAD signals.
+ *
  * Revision 1.1  2003/03/24 00:47:54  steve
  *  Add new virtex2 architecture family, and
  *  also the new edif.h EDIF management functions.

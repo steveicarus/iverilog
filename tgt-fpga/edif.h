@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.1 2003/03/24 00:47:54 steve Exp $"
+#ident "$Id: edif.h,v 1.2 2003/03/24 02:29:04 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -180,6 +180,10 @@ extern edif_joint_t edif_joint_of_nexus(edif_t edf, ivl_nexus_t nex);
    anonymous joint. */
 extern edif_joint_t edif_joint_create(edif_t edf);
 
+/* Renaming a joint causes it to take on a name when external tools
+   view the EDIF file. */
+extern void edif_joint_rename(edif_joint_t jnt, const char*name);
+
 /* Given a joint, this function adds the cell reference. */
 extern void edif_add_to_joint(edif_joint_t jnt,
 			      edif_cellref_t cell,
@@ -193,6 +197,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.2  2003/03/24 02:29:04  steve
+ *  Give proper basenames to PAD signals.
+ *
  * Revision 1.1  2003/03/24 00:47:54  steve
  *  Add new virtex2 architecture family, and
  *  also the new edif.h EDIF management functions.
