@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.19 2002/11/09 20:22:57 steve Exp $"
+#ident "$Id: synth2.cc,v 1.20 2002/11/09 23:29:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -440,6 +440,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
+
 	/* Synthesize the enable expression. */
       NetNet*ce = expr_->synthesize(des);
       assert(ce->pin_count() == 1);
@@ -452,6 +453,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    if (connected(ce->pin(0), ev->pin(0))) {
 
+		  bool flag = true;
 		  assert(ev->edge() == NetEvProbe::POSEDGE);
 
 		    /* Synthesize the true clause to figure out what
@@ -459,7 +461,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  NetNet*asig = new NetNet(scope, scope->local_hsymbol(),
 					   NetNet::WIRE, nex_map->pin_count());
 		  asig->local_flag(true);
-		  if_->synth_async(des, scope, nex_map, asig);
+		  flag = if_->synth_async(des, scope, nex_map, asig) && flag;
 
 		  assert(asig->pin_count() == ff->width());
 
@@ -487,7 +489,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 		  assert(events_in.count() == 1);
 		  return else_->synth_sync(des, scope, ff, nex_map,
-					   nex_out, svector<NetEvProbe*>(0));
+					   nex_out, svector<NetEvProbe*>(0))
+			&& flag;
 	    }
 
       }
@@ -509,14 +512,47 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       assert(if_);
       assert(!else_);
 
-	/* Synthesize the input to the DFF. */
-      bool flag = if_->synth_async(des, scope, nex_map, nex_out);
+	/* What's left, is a synchronous CE statement like this:
+
+	     if (expr_) <true statement>;
+
+	   The expr_ expression has alreacy been synthesized to the ce
+	   net, so we connect it here to the FF. What's left is to
+	   synthesize the substatement as a combinational
+	   statement.
+
+	   Watch out for the special case that there is already a CE
+	   connected to this FF. This can be caused by code like this:
+
+	     if (a) if (b) <statement>;
+
+	   In this case, we are working on the inner IF, so we AND the
+	   a and b expressions to make a new CE. */
+
+      if (ff->pin_Enable().is_linked()) {
+	    NetLogic*ce_and = new NetLogic(scope,
+					   scope->local_hsymbol(), 3,
+					   NetLogic::AND);
+	    des->add_node(ce_and);
+	    connect(ff->pin_Enable(), ce_and->pin(1));
+	    connect(ce->pin(0), ce_and->pin(2));
+
+	    ff->pin_Enable().unlink();
+	    connect(ff->pin_Enable(), ce_and->pin(0));
+
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
+	    tmp->local_flag(true);
+	    connect(ff->pin_Enable(), tmp->pin(0));
+
+      } else {
+
+	    connect(ff->pin_Enable(), ce->pin(0));
+      }
+
+      bool flag = if_->synth_sync(des, scope, ff, nex_map, nex_out, events_in);
       if (flag == false)
 	    return flag;
-
-      assert(expr_);
-
-      connect(ff->pin_Enable(), ce->pin(0));
 
       return true;
 }
@@ -702,6 +738,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.20  2002/11/09 23:29:29  steve
+ *  Handle nested-if chip enables.
+ *
  * Revision 1.19  2002/11/09 20:22:57  steve
  *  Detect synthesis conflicts blocks statements share outputs.
  *
