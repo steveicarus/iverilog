@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.28 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.29 2003/07/15 03:49:22 steve Exp $"
 #endif
 
 
@@ -391,7 +391,7 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
  * manner of the $display system task.
  */
 
-  /* Format a scaler a la %v. The str points to a 4byte character
+  /* Format a scalar a la %v. The str points to a 4byte character
      buffer. The value must be a vpiStrengthVal. */
 extern void vpip_format_strength(char*str, s_vpi_value*value);
 
@@ -399,6 +399,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.29  2003/07/15 03:49:22  steve
+ *  Spelling fixes.
+ *
  * Revision 1.28  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

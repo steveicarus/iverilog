@@ -51,7 +51,7 @@ be accounted for as well.
 XNF PADS IN VERILOG SOURCE
 
 You can assign wires to pads using the Icarus Verilog $attribute
-extension. Attach to a scaler signal (wire or register) the PAD
+extension. Attach to a scalar signal (wire or register) the PAD
 attribute with the value that specifies the direction and pin
 number. For example:
 
@@ -245,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.16  2003/07/15 03:49:22  steve
+  Spelling fixes.
+
  Revision 1.15  2003/01/30 16:23:08  steve
   Spelling fixes.
 

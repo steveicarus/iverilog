@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: dosify.c,v 1.3 2002/08/12 01:34:58 steve Exp $"
+#ivied HAVE_CVS_IDENT
+#ident "$Id: dosify.c,v 1.4 2003/07/15 03:49:22 steve Exp $"
 #endif
 
 /*
@@ -69,6 +69,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: dosify.c,v $
+ * Revision 1.4  2003/07/15 03:49:22  steve
+ *  Spelling fixes.
+ *
  * Revision 1.3  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -435,7 +435,7 @@ bit and part selects.
 
 * EDGES OF VECTORS
 
-Consider this exapmle:
+Consider this example:
 
    reg [ 5:0] clock;
    always @(posedge clock) [do stuff]
@@ -498,8 +498,11 @@ of 4-value behavior in the dead zone, and appears more user friendly
 when viewed by reasonable viewers.
 
 
-$Id: ieee1364-notes.txt,v 1.16 2003/04/14 03:40:21 steve Exp $
+$Id: ieee1364-notes.txt,v 1.17 2003/07/15 03:49:22 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.17  2003/07/15 03:49:22  steve
+ Spelling fixes.
+
 Revision 1.16  2003/04/14 03:40:21  steve
  Make some effort to preserve bits while
  operating on constant values.

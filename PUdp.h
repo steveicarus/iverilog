@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.8 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: PUdp.h,v 1.9 2003/07/15 03:49:22 steve Exp $"
 #endif
 
 # include  <map>
@@ -38,7 +38,7 @@ svector<string>::svector<string>(unsigned size)
  * This class represents a parsed UDP. This is a much simpler object
  * then a module or macromodule.
  *
- *   - all ports are scaler,
+ *   - all ports are scalar,
  *   - pin 0 (the first port) is always output,
  *     and the remaining pins are input.
  *
@@ -84,6 +84,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.9  2003/07/15 03:49:22  steve
+ *  Spelling fixes.
+ *
  * Revision 1.8  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

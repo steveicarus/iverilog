@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "$Date: 2002/11/23 00:51:53 $" Version "$Date: 2002/11/23 00:51:53 $"
+.TH iverilog-vpi 1 "$Date: 2003/07/15 03:49:22 $" Version "$Date: 2003/07/15 03:49:22 $"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
@@ -44,7 +44,7 @@ the program locate parts that it needs.
 Tell the program the root of the Mingw compiler tool suite. The
 \fBvvp\fP runtime is compiled with this compiler, and this is the
 compiler that \fIiverilog-vpi\fP expects to use to compile your source
-code. This is notmally not needed, and if you do use it, it is only
+code. This is normally not needed, and if you do use it, it is only
 needed once. The compiler will save the \fIpath\fP in the registry for
 use later.
 

@@ -22,7 +22,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Icarus Verilog\0"
-            VALUE "FileDescription", "Icarus Veriog VPI Tool\0"
+            VALUE "FileDescription", "Icarus Verilog VPI Tool\0"
             VALUE "FileVersion", "2002, 11, 13, 0\0"
             VALUE "InternalName", "iverilog-vpi\0"
             VALUE "LegalCopyright", "Copyright 2002 Gus Baldauf\0"

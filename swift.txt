@@ -20,7 +20,7 @@ in your SWIFT model documentation.
 
 * Compilation
 
-When compiling your Veriog design to include a SWIFT model, you need
+When compiling your Verilog design to include a SWIFT model, you need
 to include wrappers for the model you intend to use. You may choose to
 use ncverilog or verilogxl compatible wrappers, they work the
 same. Locate your smartmodel directory, and include it in your command

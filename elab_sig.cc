@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.30 2003/06/24 01:38:02 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.31 2003/07/15 03:49:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -391,7 +391,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    svector<long>mnum (msb_.count());
 	    svector<long>lnum (msb_.count());
 	      /* There may be places where the signal is declared as a
-		 scaler. Count those here, for consistency check
+		 scalar. Count those here, for consistency check
 		 later. */
 	    unsigned count_scalars = 0;
 
@@ -524,6 +524,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.31  2003/07/15 03:49:22  steve
+ *  Spelling fixes.
+ *
  * Revision 1.30  2003/06/24 01:38:02  steve
  *  Various warnings fixed.
  *

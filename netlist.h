@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.293 2003/07/02 04:19:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.294 2003/07/15 03:49:22 steve Exp $"
 #endif
 
 /*
@@ -343,7 +343,7 @@ class NetNode  : public NetObj {
 /*
  * NetNet is a special kind of NetObj that doesn't really do anything,
  * but carries the properties of the wire/reg/trireg, including its
- * name. A scaler wire is a NetNet with one pin, a vector a wider
+ * name. A scalar wire is a NetNet with one pin, a vector a wider
  * NetNet. NetNet objects also appear as side effects of synthesis or
  * other abstractions.
  *
@@ -3309,6 +3309,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.294  2003/07/15 03:49:22  steve
+ *  Spelling fixes.
+ *
  * Revision 1.293  2003/07/02 04:19:16  steve
  *  Elide empty begin-end in conditionals.
  *

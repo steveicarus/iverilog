@@ -26,7 +26,7 @@ of any support for software development. Everything needed to compile
 Icarus Verilog must be collected from various sources and stitched
 together by hand. Normal human beings with a basic understanding of
 software development can do this, but some patience (and access to the
-internet) is required. You may choose to print these instructions.
+Internet) is required. You may choose to print these instructions.
 
 I have no plans to intentionally support MSVC++ compilation. Don't ask.
 
@@ -229,7 +229,7 @@ details. Run these commands:
 
       Your PATH variable was set in the previous step.
 
-      Use forward slashes as directory charactors. All the various
+      Use forward slashes as directory characters. All the various
       tools prefer the forward slash.
 
 Substitute your chosen directory for the prefix. This will cause the
@@ -264,7 +264,7 @@ This is part of what the configure program did for you. The Makefiles
 now know to put the files under the D:\iverilog directory (or whatever
 directory you chose) and away you go.
 
-You may find that you need to put some of the prerequisite DLLS into
+You may find that you need to put some of the prerequisite DLLs into
 the d:\iverilog\bin directory. These include:
 
       d:\mingw-2.0.0\bin\mingw10.dll

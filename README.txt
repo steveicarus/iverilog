@@ -76,7 +76,7 @@ with the commands:
   ./configure
   make
 
-Normally, this command automatically figures out every thing it needs
+Normally, this command automatically figures out everything it needs
 to know. It generally works pretty well. There are a few flags to the
 configure script that modify its behavior:
 
@@ -138,14 +138,14 @@ only sees a single input file. See ivlpp/ivlpp.txt for details.
 3.2 Parse
 
 The Verilog compiler starts by parsing the Verilog source file. The
-output of the parse in a list of Module objects in PFORM. The pform
+output of the parse is a list of Module objects in "pform". The pform
 (see pform.h) is mostly a direct reflection of the compilation
 step. There may be dangling references, and it is not yet clear which
 module is the root.
 
-One can see a human readable version of the final PFORM by using the
+One can see a human readable version of the final pform by using the
 ``-P <path>'' flag to the compiler. This will cause iverilog to dump
-the PFORM into the file named <path>.
+the pform into the file named <path>.
 
 3.3 Elaboration
 
@@ -407,7 +407,7 @@ language that are defined.
 	completely specify the format.
 
 	Icarus Verilog allows the programmer to specify the field
-	with. The "%t" format in Icarus Verilog works exactly as it
+	width. The "%t" format in Icarus Verilog works exactly as it
 	does in standard Verilog. However, if the programmer chooses
 	to specify a minimum width (i.e., "%5t"), then for that display
 	Icarus Verilog will override the $timeformat minimum width and

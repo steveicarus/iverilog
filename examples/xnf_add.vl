@@ -72,7 +72,7 @@ module main;
    // These attribute commands assign pins to the listed wires.
    // This can be done to wires and registers, as internally both
    // are treated as named signals. It doesn't work (yet) on vectors,
-   // though, so break out the vectors with scaler assignments.
+   // though, so break out the vectors with scalar assignments.
    
    assign a[0] = a0;
    assign a[1] = a1;
