@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.19 2002/06/02 19:05:50 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.20 2002/06/11 03:47:34 steve Exp $"
 #endif
 
 /*
@@ -222,6 +222,12 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
 	    obj->next = nev->callbacks;
 	    nev->callbacks = obj;
+	    break;
+
+	  case vpiModule:
+	  case vpiConstant:
+	      /* These are constant, so there are no value change
+		 lists to put them in. */
 	    break;
 
 	  default:
@@ -460,6 +466,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.20  2002/06/11 03:47:34  steve
+ *  Stub value change callbacks for consts and modules.
+ *
  * Revision 1.19  2002/06/02 19:05:50  steve
  *  Check for null pointers from users.
  *
