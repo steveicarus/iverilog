@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.13 2001/11/21 02:20:35 steve Exp $"
+#ident "$Id: main.c,v 1.14 2001/11/21 02:59:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,6 @@ static unsigned source_cnt = 0;
 
 void add_source_file(const char*name)
 {
-      fprintf(stderr, "add_source_file: %s\n", name);
       if (source_list == 0) {
 	    source_list = calloc(2, sizeof(char*));
 	    source_list[0] = strdup(name);
@@ -266,6 +265,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.14  2001/11/21 02:59:27  steve
+ *  Remove diag print.
+ *
  * Revision 1.13  2001/11/21 02:20:35  steve
  *  Pass list of file to ivlpp via temporary file.
  *
