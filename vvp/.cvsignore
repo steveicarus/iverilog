@@ -3,6 +3,7 @@ configure
 config.cache
 config.log
 config.status
+autom4te.cache
 config.h
 dep
 foo.*
@@ -16,3 +17,4 @@ tables.cc
 vvp
 vvp.exp
 vvp.pdf
+work
