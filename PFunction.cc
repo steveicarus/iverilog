@@ -17,16 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PFunction.cc,v 1.6 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PFunction.cc,v 1.7 2004/05/31 23:34:36 steve Exp $"
 #endif
 
 # include "config.h"
 
 #include "PTask.h"
 
-PFunction::PFunction()
-: out_(0), ports_(0), statement_(0)
+PFunction::PFunction(perm_string name)
+: name_(name), ports_(0), statement_(0)
 {
+      return_type_.type = PTF_NONE;
 }
 
 PFunction::~PFunction()
@@ -46,14 +47,18 @@ void PFunction::set_statement(Statement*s)
       statement_ = s;
 }
 
-void PFunction::set_output(PWire*o)
+void PFunction::set_return(PTaskFuncArg t)
 {
-      assert(out_ == 0);
-      out_ = o;
+      return_type_ = t;
 }
 
 /*
  * $Log: PFunction.cc,v $
+ * Revision 1.7  2004/05/31 23:34:36  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.6  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.301 2004/05/25 03:42:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.302 2004/05/31 23:34:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1101,6 +1101,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       assert(rval());
       NetExpr*rv = elab_and_eval(des, scope, rval());
+      if (rv == 0) return 0;
       assert(rv);
 
 
@@ -2313,6 +2314,13 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 void PFunction::elaborate(Design*des, NetScope*scope) const
 {
       NetFuncDef*def = scope->func_def();
+      if (def == 0) {
+	    cerr << get_line() << ": internal error: "
+		 << "No function definition for function "
+		 << scope->name() << endl;
+	    return;
+      }
+
       assert(def);
 
       NetProc*st = statement_->elaborate(des, scope);
@@ -2700,6 +2708,11 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.302  2004/05/31 23:34:37  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.301  2004/05/25 03:42:58  steve
  *  Handle wait with constant-false expression.
  *

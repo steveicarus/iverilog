@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.64 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: target.h,v 1.65 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -73,7 +73,7 @@ struct target_t {
 
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
-      virtual void func_def(const NetScope*);
+      virtual bool func_def(const NetScope*);
 
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(const NetAddSub*);
@@ -170,6 +170,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.65  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.64  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

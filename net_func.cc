@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.5 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_func.cc,v 1.6 2004/05/31 23:34:37 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -28,7 +28,9 @@
 
 static unsigned count_def_pins(const NetFuncDef*def)
 {
-      unsigned sum = 0;
+      assert(def->return_sig());
+
+      unsigned sum = def->return_sig()->pin_count();
       for (unsigned idx = 0 ;  idx < def->port_count() ;  idx += 1)
 	    sum += def->port(idx)->pin_count();
 
@@ -50,7 +52,7 @@ NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d)
       unsigned pin_base = port_wid;
       for (unsigned idx = 1 ;  idx < port_count() ;  idx += 1) {
 
-	    const NetNet*port_sig = def->port(idx);
+	    const NetNet*port_sig = def->port(idx-1);
 	    unsigned bits = port_width(idx);
 	    for (unsigned bit = 0; bit < bits; bit += 1) {
 		  pin(pin_base+bit).set_dir(Link::INPUT);
@@ -69,13 +71,21 @@ NetUserFunc::~NetUserFunc()
 
 unsigned NetUserFunc::port_count() const
 {
-      return def_->func_def()->port_count();
+      return def_->func_def()->port_count() + 1;
 }
 
 unsigned NetUserFunc::port_width(unsigned port) const
 {
       NetFuncDef*def = def_->func_def();
 
+	/* Port 0 is the return port. */
+      if (port == 0) {
+	    const NetNet*sig = def->return_sig();
+	    assert(sig);
+	    return sig->pin_count();
+      }
+
+      port -= 1;
       assert(port < def->port_count());
       const NetNet*port_sig = def->port(port);
 
@@ -87,6 +97,13 @@ Link& NetUserFunc::port_pin(unsigned port, unsigned idx)
       NetFuncDef*def = def_->func_def();
       unsigned pin_base = 0;
       const NetNet*port_sig;
+
+      if (port == 0)
+	    return pin(idx);
+
+      port_sig = def->return_sig();
+      pin_base += port_sig->pin_count();
+      port -= 1;
 
       assert(port < def->port_count());
 
@@ -133,10 +150,10 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 	    return false;
       }
 
-      if ((parms_count+1) != dscope->func_def()->port_count()) {
+      if (parms_count != dscope->func_def()->port_count()) {
 	    cerr << get_line() << ": error: Function " << dscope->name()
 		 << " expects " << (dscope->func_def()->port_count()-1)
-		 << " parameters, you passed " << parms_count << "."
+		 << " arguments, you passed " << parms_count << "."
 		 << endl;
 	    des->errors += 1;
 	    return false;
@@ -147,6 +164,11 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.6  2004/05/31 23:34:37  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.5  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

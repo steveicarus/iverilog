@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.195 2004/05/25 19:21:06 steve Exp $"
+#ident "$Id: parse.y,v 1.196 2004/05/31 23:34:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,7 +114,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
       Statement*statement;
       svector<Statement*>*statement_list;
 
-      struct { svector<PExpr*>*range; NetNet::Type ntype; } range_type;
+      PTaskFuncArg function_type;
 
       struct { svector<PExpr*>*range; svector<PExpr*>*delay; } range_delay;
       net_decl_assign_t*net_decl_assign;
@@ -204,7 +204,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <porttype> port_type
 %type <parmvalue> parameter_value_opt
 
-%type <range_type> range_or_type_opt
+%type <function_type> function_range_or_type_opt
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
@@ -1667,16 +1667,18 @@ module_item
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 
-        | K_function range_or_type_opt IDENTIFIER ';'
+        | K_function function_range_or_type_opt IDENTIFIER ';'
                 { pform_push_scope($3); }
           function_item_list statement
           K_endfunction
-		{ PFunction *tmp = new PFunction;
+		{ perm_string name = lex_strings.make($3);
+		  PFunction *tmp = new PFunction(name);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_ports($6);
 		  tmp->set_statement($7);
-		  pform_set_function($3, $2.ntype, $2.range, tmp);
+		  tmp->set_return($2);
+		  pform_set_function(name, tmp);
 		  pform_pop_scope();
 		  delete $3;
 		}
@@ -2155,13 +2157,13 @@ range_opt
 	;
 
   /* This is used to express the return type of a function. */
-range_or_type_opt
-	: range      { $$.range = $1; $$.ntype = NetNet::REG; }
-	| K_integer  { $$.range = 0;  $$.ntype = NetNet::INTEGER; }
-	| K_real     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
-	| K_realtime { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
-	| K_time     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
-	|            { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
+function_range_or_type_opt
+	: range      { $$.range = $1; $$.type = PTF_REG; }
+	| K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
+	| K_real     { $$.range = 0;  $$.type = PTF_REAL; }
+	| K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
+	| K_time     { $$.range = 0;  $$.type = PTF_TIME; }
+	|            { $$.range = 0;  $$.type = PTF_REG; }
 	;
 
   /* The register_variable rule is matched only when I am parsing

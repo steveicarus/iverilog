@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.68 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: target.cc,v 1.69 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,10 +53,11 @@ void target_t::variable(const NetVariable*that)
 	   <<  "): Unhandled variable <" << that->basename() << ">." << endl;
 }
 
-void target_t::func_def(const NetScope*)
+bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled function definition." << endl;
+      return false;
 }
 
 void target_t::task_def(const NetScope*)
@@ -419,6 +420,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.69  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.68  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

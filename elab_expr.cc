@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.85 2004/03/09 04:29:42 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.86 2004/05/31 23:34:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -344,20 +344,24 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
 	   dscope, in this case, is the scope of the function, so the
 	   return value is the name within that scope. */
 
-      NetNet*res = dscope->find_signal(dscope->basename());
-      if (res == 0) {
-	    cerr << get_line() << ": internal error: Unable to locate "
-		  "function return value for " << path_ << " in " <<
-		  def->name() << "." << endl;
-	    des->errors += 1;
-	    return 0;
+      if (NetNet*res = dscope->find_signal(dscope->basename())) {
+	    NetESignal*eres = new NetESignal(res);
+	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    return func;
       }
 
-      assert(res);
-      NetESignal*eres = new NetESignal(res);
-      assert(eres);
-      NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
-      return func;
+      if (NetVariable*res = dscope->find_variable(dscope->basename())) {
+	    NetEVariable*eres = new NetEVariable(res);
+	    eres->set_line(*res);
+	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    return func;
+      }
+
+      cerr << get_line() << ": internal error: Unable to locate "
+	    "function return value for " << path_
+	   << " in " << def->name() << "." << endl;
+      des->errors += 1;
+      return 0;
 }
 
 
@@ -951,6 +955,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.86  2004/05/31 23:34:36  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.85  2004/03/09 04:29:42  steve
  *  Separate out the lookup_sys_func table, for eventual
  *  support for function type tables.

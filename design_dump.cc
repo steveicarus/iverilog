@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.147 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.148 2004/05/31 23:34:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -645,6 +645,13 @@ void NetForever::dump(ostream&o, unsigned ind) const
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "function " << scope_->name() << endl;
+      if (result_sig_)
+	    o << setw(ind+2) << "" << "Return signal: "
+	      << result_sig_->name() << endl;
+      if (result_var_)
+	    o << setw(ind+2) << "" << "Return variable: "
+	      << result_var_->basename() << endl;
+
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
@@ -781,7 +788,10 @@ void NetScope::dump(ostream&o) const
 
       switch (type_) {
 	  case FUNC:
-	    func_def()->dump(o, 4);
+	    if (func_def())
+		  func_def()->dump(o, 4);
+	    else
+		  o << "    MISSING FUNCTION DEFINITION" << endl;
 	    break;
 	  case TASK:
 	    task_def()->dump(o, 4);
@@ -1079,6 +1089,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.148  2004/05/31 23:34:36  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.147  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

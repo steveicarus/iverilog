@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.78 2004/05/25 19:21:07 steve Exp $"
+#ident "$Id: pform.h,v 1.79 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -203,8 +203,7 @@ extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
 extern void pform_set_task(perm_string name, PTask*);
-extern void pform_set_function(const char*, NetNet::Type,
-			       svector<PExpr*>*, PFunction*);
+extern void pform_set_function(perm_string name, PFunction*);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
@@ -291,6 +290,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.79  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.78  2004/05/25 19:21:07  steve
  *  More identifier lists use perm_strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.125 2004/02/20 18:53:34 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.126 2004/05/31 23:34:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1062,7 +1062,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
 /*
  * This method elaborates a call to a function in the context of a
- * continuous assignment.
+ * continuous assignment. The definition of the function contains a
+ * list of the ports, and an output port. The NetEUFunc that I create
+ * here has a port for all the input ports and the output port. The
+ * ports are connected by pins.
  */
 NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 				      unsigned width,
@@ -1107,6 +1110,9 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       NetScope*dscope = def->scope();
       assert(dscope);
 
+	/* This must be a ufuction that returns a signal. */
+      assert(def->return_sig());
+
 	/* check the validity of the parameters. */
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
@@ -1115,9 +1121,9 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	   and collect the resulting NetNet objects. All the
 	   parameters take on the size of the target port. */
 
-      svector<NetNet*> eparms (def->port_count()-1);
+      svector<NetNet*> eparms (def->port_count());
       for (unsigned idx = 0 ;  idx < eparms.count() ;  idx += 1) {
-	    const NetNet* port_reg = def->port(idx+1);
+	    const NetNet* port_reg = def->port(idx);
 	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope,
 						    port_reg->pin_count(),
 						    0, 0, 0,
@@ -1148,7 +1154,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	   of the function net. */
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE,
-			       def->port(0)->pin_count());
+			       def->return_sig()->pin_count());
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
@@ -1156,7 +1162,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 
 	/* Connect the parameter pins to the parameter expressions. */
       for (unsigned idx = 0 ; idx < eparms.count() ; idx += 1) {
-	    const NetNet* port = def->port(idx+1);
+	    const NetNet* port = def->port(idx);
 	    NetNet*cur = eparms[idx];
 
 	    NetNet*tmp = pad_to_width(des, cur, port->pin_count());
@@ -2426,6 +2432,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.126  2004/05/31 23:34:36  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.125  2004/02/20 18:53:34  steve
  *  Addtrbute keys are perm_strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.16 2003/10/31 02:47:11 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.17 2004/05/31 23:34:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,8 +109,13 @@ NetEUFunc* NetEUFunc::dup_expr() const
 	    tmp_parms[idx] = parms_[idx]->dup_expr();
       }
 
-      tmp = new NetEUFunc(func_, result_->dup_expr(), tmp_parms);
+      tmp = 0;
+      if (result_sig_)
+	    tmp = new NetEUFunc(func_, result_sig_->dup_expr(), tmp_parms);
+      if (result_var_)
+	    tmp = new NetEUFunc(func_, result_var_->dup_expr(), tmp_parms);
 
+      assert(tmp);
       return tmp;
 }
 
@@ -136,6 +141,11 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.17  2004/05/31 23:34:36  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.16  2003/10/31 02:47:11  steve
  *  NetEUReduce has its own dup_expr method.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.125 2004/05/25 19:21:07 steve Exp $"
+#ident "$Id: pform.cc,v 1.126 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1302,42 +1302,10 @@ void pform_set_task(perm_string name, PTask*task)
       pform_cur_module->add_task(name, task);
 }
 
-/*
- * This function is called to fill out the definition of the function
- * with the trappings that are discovered after the basic function
- * name is parsed.
- */
-void pform_set_function(const char*name, NetNet::Type ntype,
-			svector<PExpr*>*ra, PFunction *func)
+
+void pform_set_function(perm_string name, PFunction*func)
 {
-      if (ntype == NetNet::IMPLICIT)
-	    ntype = NetNet::REG;
-
-	/* Form into path_return a hierarchical name for the synthetic
-	   return value for the function. The return value is the same
-	   name as the function, so if the function name is "foo", the
-	   wire is "foo.foo". */
-      hname_t path_return (name);
-      path_return.append(name);
-
-      PWire*out = new PWire(path_return, ntype, NetNet::POUTPUT);
-      if (ra) {
-	    assert(ra->count() == 2);
-	    out->set_range((*ra)[0], (*ra)[1]);
-	    delete ra;
-      }
-
-	/* If the return type of the function is INTEGER, then
-	   generate a range for it. */
-      if (ntype == NetNet::INTEGER) {
-	    out->set_signed(true);
-	    out->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
-			   new PENumber(new verinum(0UL, INTEGER_WIDTH)));
-      }
-
-      pform_cur_module->add_wire(out);
-      func->set_output(out);
-      pform_cur_module->add_function(lex_strings.make(name), func);
+      pform_cur_module->add_function(name, func);
 }
 
 void pform_set_attrib(perm_string name, perm_string key, char*value)
@@ -1598,6 +1566,11 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.126  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.125  2004/05/25 19:21:07  steve
  *  More identifier lists use perm_strings.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.33 2004/02/18 17:11:55 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.34 2004/05/31 23:34:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -231,7 +231,10 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 }
 
 /*
- * A function definition exists within an elaborated module.
+ * A function definition exists within an elaborated module. This
+ * matters when elaborating signals, as the ports of the function are
+ * created as signals/variables for each instance of the
+ * function. That is why PFunction has an elaborate_sig method.
  */
 void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 {
@@ -249,20 +252,72 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    des->errors += 1;
       }
 
-      svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
+      NetNet*ret_sig = 0;
+      NetVariable*ret_real = 0;
 
-	/* Get the reg for the return value. I know the name of the
-	   reg variable, and I know that it is in this scope, so look
-	   it up directly. */
-      ports[0] = scope->find_signal(scope->basename());
-      if (ports[0] == 0) {
-	    cerr << get_line() << ": internal error: function scope "
-		 << scope->name() << " is missing return reg "
-		 << fname << "." << endl;
-	    scope->dump(cerr);
-	    des->errors += 1;
-	    return;
+	/* Create the signals/variables of the return value and write
+	   them into the function scope. */
+      switch (return_type_.type) {
+
+	  case PTF_REG:
+	    if (return_type_.range) {
+		  NetExpr*me = elab_and_eval(des, scope,
+					     (*return_type_.range)[0]);
+		  assert(me);
+		  NetExpr*le = elab_and_eval(des, scope,
+					     (*return_type_.range)[1]);
+		  assert(le);
+
+		  long mnum = 0, lnum = 0;
+		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(me)) {
+			mnum = tmp->value().as_long();
+		  } else {
+			cerr << me->get_line() << ": error: "
+			      "Unable to evaluate constant expression "
+			     << *me << "." << endl;
+			des->errors += 1;
+		  }
+
+		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(le)) {
+			lnum = tmp->value().as_long();
+		  } else {
+			cerr << le->get_line() << ": error: "
+			      "Unable to evaluate constant expression "
+			     << *le << "." << endl;
+			des->errors += 1;
+		  }
+
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, mnum, lnum);
+
+	    } else {
+		  ret_sig = new NetNet(scope, fname, NetNet::REG);
+	    }
+	    ret_sig->set_line(*this);
+	    ret_sig->port_type(NetNet::POUTPUT);
+	    break;
+
+	  case PTF_INTEGER:
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, INTEGER_WIDTH);
+	    ret_sig->set_line(*this);
+	    ret_sig->set_signed(true);
+	    ret_sig->set_isint(true);
+	    ret_sig->port_type(NetNet::POUTPUT);
+	    break;
+
+	  case PTF_REAL:
+	  case PTF_REALTIME:
+	    ret_real = new NetVariable(fname);
+	    ret_real->set_line(*this);
+	    scope->add_variable(ret_real);
+	    break;
+
+	  default:
+	    cerr << get_line() << ": internal error: I don't know how "
+		 << "to deal with return type of function "
+		 << scope->basename() << "." << endl;
       }
+
+      svector<NetNet*>ports (ports_? ports_->count() : 0);
 
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
@@ -289,14 +344,19 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			     << scope->name() << " is missing port "
 			     << pname << "." << endl;
 			scope->dump(cerr);
+			cerr << get_line() << ": Continuing..." << endl;
 			des->errors += 1;
 		  }
 
-		  ports[idx+1] = tmp;
+		  ports[idx] = tmp;
 	    }
 
 
-      NetFuncDef*def = new NetFuncDef(scope, ports);
+      NetFuncDef*def = 0;
+      if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports);
+      if (ret_real) def = new NetFuncDef(scope, ret_real, ports);
+
+      assert(def);
       scope->set_func_def(def);
 }
 
@@ -367,6 +427,7 @@ bool PGate::elaborate_sig(Design*des, NetScope*scope) const
  */
 void PWire::elaborate_sig(Design*des, NetScope*scope) const
 {
+
 	/* The parser may produce hierarchical names for wires. I here
 	   follow the scopes down to the base where I actually want to
 	   elaborate the NetNet object. */
@@ -374,7 +435,13 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
         free(tmp_path.remove_tail_name());
 	for (unsigned idx = 0 ;  tmp_path.peek_name(idx) ;  idx += 1) {
 	      scope = scope->child(tmp_path.peek_name(idx));
-	      assert(scope);
+
+	      if (scope == 0) {
+		    cerr << get_line() << ": internal error: "
+			 << "Bad scope component for name "
+			 << hname_ << endl;
+		    assert(scope);
+	      }
 	}
       }
 
@@ -540,6 +607,11 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.34  2004/05/31 23:34:37  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.33  2004/02/18 17:11:55  steve
  *  Use perm_strings for named langiage items.
  *

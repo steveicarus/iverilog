@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.86 2004/05/25 19:21:07 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.87 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -600,7 +600,35 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 
 void PFunction::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "output " << out_->path() << ";" << endl;
+      out << setw(ind) << "" << "function ";
+      switch (return_type_.type) {
+	  case PTF_NONE:
+	    out << "?none? ";
+	    break;
+	  case PTF_REG:
+	    out << "reg ";
+	    break;
+	  case PTF_INTEGER:
+	    out << "integer ";
+	    break;
+	  case PTF_REAL:
+	    out << "real ";
+	    break;
+	  case PTF_REALTIME:
+	    out << "realtime ";
+	    break;
+	  case PTF_TIME:
+	    out << "time ";
+	    break;
+      }
+
+      if (return_type_.range) {
+	    out << "[";
+	    out << "] ";
+      }
+
+      out << name_ << ";" << endl;
+
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 		  out << setw(ind) << "";
@@ -881,6 +909,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.87  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.86  2004/05/25 19:21:07  steve
  *  More identifier lists use perm_strings.
  *

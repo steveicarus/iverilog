@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.311 2004/02/20 06:22:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.312 2004/05/31 23:34:38 steve Exp $"
 #endif
 
 /*
@@ -57,6 +57,7 @@ class NetVariable;
 class NetEvProbe;
 class NetExpr;
 class NetESignal;
+class NetEVariable;
 class NetFuncDef;
 
 
@@ -1996,7 +1997,8 @@ class NetForever : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(NetScope*, const svector<NetNet*>&po);
+      NetFuncDef(NetScope*, NetNet*result, const svector<NetNet*>&po);
+      NetFuncDef(NetScope*, NetVariable*result, const svector<NetNet*>&po);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
@@ -2008,11 +2010,16 @@ class NetFuncDef {
       unsigned port_count() const;
       const NetNet*port(unsigned idx) const;
 
+      const NetNet*return_sig() const;
+      const NetVariable*return_var() const;
+
       void dump(ostream&, unsigned ind) const;
 
     private:
       NetScope*scope_;
       NetProc*statement_;
+      NetNet*result_sig_;
+      NetVariable*result_var_;
       svector<NetNet*>ports_;
 };
 
@@ -2205,18 +2212,22 @@ class NetVariable : public LineInfo {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetESignal*, svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetESignal*,   svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetEVariable*, svector<NetExpr*>&);
       ~NetEUFunc();
 
       const string name() const;
 
-      const NetESignal*result() const;
+      const NetESignal*result_sig() const;
+      const NetEVariable*result_var() const;
+
       unsigned parm_count() const;
       const NetExpr* parm(unsigned idx) const;
 
       const NetScope* func() const;
 
       virtual bool set_width(unsigned);
+      virtual TYPE expr_type() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2225,7 +2236,8 @@ class NetEUFunc  : public NetExpr {
 
     private:
       NetScope*func_;
-      NetESignal*result_;
+      NetESignal*result_sig_;
+      NetEVariable*result_var_;
       svector<NetExpr*> parms_;
 
     private: // not implemented
@@ -3103,7 +3115,7 @@ class NetScope : public Attrib {
 
       void dump(ostream&) const;
       void emit_scope(struct target_t*tgt) const;
-      void emit_defs(struct target_t*tgt) const;
+      bool emit_defs(struct target_t*tgt) const;
 
 	/* This method runs the functor on me. Recurse through the
 	   children of this node as well. */
@@ -3315,6 +3327,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.312  2004/05/31 23:34:38  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.311  2004/02/20 06:22:57  steve
  *  parameter keys are per_strings.
  *

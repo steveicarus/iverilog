@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.63 2004/05/19 03:18:40 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.64 2004/05/31 23:34:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,7 +99,7 @@ void dll_target::task_def(const NetScope*net)
 
 }
 
-void dll_target::func_def(const NetScope*net)
+bool dll_target::func_def(const NetScope*net)
 {
       ivl_scope_t scope = lookup_scope_(net);
       const NetFuncDef*def = net->func_def();
@@ -113,12 +113,35 @@ void dll_target::func_def(const NetScope*net)
       scope->def = stmt_cur_;
       stmt_cur_ = 0;
 
-      scope->ports = def->port_count();
+      scope->ports = def->port_count() + 1;
       if (scope->ports > 0) {
 	    scope->port = new ivl_signal_t[scope->ports];
-	    for (unsigned idx = 0 ;  idx < scope->ports ;  idx += 1)
-		  scope->port[idx] = find_signal(des_, def->port(idx));
+	    for (unsigned idx = 1 ;  idx < scope->ports ;  idx += 1)
+		  scope->port[idx] = find_signal(des_, def->port(idx-1));
       }
+
+	/* FIXME: the ivl_target API expects port-0 to be the output
+	   port. This assumes that the return value is a signal, which
+	   is *not* correct. Someday, I'm going to have to change
+	   this, but that will break code generators that use this
+	   result. */
+      if (const NetNet*ret_sig = def->return_sig()) {
+	    scope->port[0] = find_signal(des_, ret_sig);
+	    return true;
+      }
+
+      if (const NetVariable*ret_var = def->return_var()) {
+	    cerr << ret_var->get_line() << ": internal error: "
+		 << "Function " << net->name() << " has an unsupported "
+		 << "return type." << endl;
+	    return false;
+      }
+
+      cerr << "?:0" << ": internal error: "
+	   << "Function " << net->name() << " has a return type"
+	   << " that I do not understand." << endl;
+
+      return false;
 }
 
 /*
@@ -849,6 +872,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.64  2004/05/31 23:34:39  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.63  2004/05/19 03:18:40  steve
  *  Add ivl_target support for non-blocking assign of real.
  *

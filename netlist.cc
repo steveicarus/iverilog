@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.222 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: netlist.cc,v 1.223 2004/05/31 23:34:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -237,6 +237,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 
       switch (t) {
 	  case REG:
+	  case INTEGER:
 	  case IMPLICIT_REG:
 	    init_value = verinum::Vx;
 	    dir = Link::OUTPUT;
@@ -1658,8 +1659,13 @@ verinum::V NetConst::value(unsigned idx) const
       return value_[idx];
 }
 
-NetFuncDef::NetFuncDef(NetScope*s, const svector<NetNet*>&po)
-: scope_(s), statement_(0), ports_(po)
+NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
+: scope_(s), statement_(0), result_sig_(result), result_var_(0), ports_(po)
+{
+}
+
+NetFuncDef::NetFuncDef(NetScope*s, NetVariable*result, const svector<NetNet*>&po)
+: scope_(s), statement_(0), result_sig_(0), result_var_(result), ports_(po)
 {
 }
 
@@ -1700,6 +1706,16 @@ const NetNet* NetFuncDef::port(unsigned idx) const
       return ports_[idx];
 }
 
+const NetNet* NetFuncDef::return_sig() const
+{
+      return result_sig_;
+}
+
+const NetVariable* NetFuncDef::return_var() const
+{
+      return result_var_;
+}
+
 NetSTask::NetSTask(const char*na, const svector<NetExpr*>&pa)
 : name_(0), parms_(pa)
 {
@@ -1731,9 +1747,14 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 }
 
 NetEUFunc::NetEUFunc(NetScope*def, NetESignal*res, svector<NetExpr*>&p)
-: func_(def), result_(res), parms_(p)
+: func_(def), result_sig_(res), result_var_(0), parms_(p)
 {
-      expr_width(result_->expr_width());
+      expr_width(result_sig_->expr_width());
+}
+
+NetEUFunc::NetEUFunc(NetScope*def, NetEVariable*res, svector<NetExpr*>&p)
+: func_(def), result_sig_(0), result_var_(res), parms_(p)
+{
 }
 
 NetEUFunc::~NetEUFunc()
@@ -1747,9 +1768,14 @@ const string NetEUFunc::name() const
       return func_->name();
 }
 
-const NetESignal*NetEUFunc::result() const
+const NetESignal*NetEUFunc::result_sig() const
 {
-      return result_;
+      return result_sig_;
+}
+
+const NetEVariable*NetEUFunc::result_var() const
+{
+      return result_var_;
 }
 
 unsigned NetEUFunc::parm_count() const
@@ -1766,6 +1792,16 @@ const NetExpr* NetEUFunc::parm(unsigned idx) const
 const NetScope* NetEUFunc::func() const
 {
       return func_;
+}
+
+NetExpr::TYPE NetEUFunc::expr_type() const
+{
+      if (result_sig_)
+	    return result_sig_->expr_type();
+      if (result_var_)
+	    return result_var_->expr_type();
+
+      return ET_VOID;
 }
 
 NetUTask::NetUTask(NetScope*def)
@@ -2218,6 +2254,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.223  2004/05/31 23:34:37  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.222  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.75 2003/09/13 01:30:07 steve Exp $"
+#ident "$Id: emit.cc,v 1.76 2004/05/31 23:34:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -335,17 +335,18 @@ void NetScope::emit_scope(struct target_t*tgt) const
       }
 }
 
-void NetScope::emit_defs(struct target_t*tgt) const
+bool NetScope::emit_defs(struct target_t*tgt) const
 {
+      bool flag = true;
 
       switch (type_) {
 	  case MODULE:
 	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-		  cur->emit_defs(tgt);
+		  flag &= cur->emit_defs(tgt);
 	    break;
 
 	  case FUNC:
-	    tgt->func_def(this);
+	    flag &= tgt->func_def(this);
 	    break;
 	  case TASK:
 	    tgt->task_def(this);
@@ -354,6 +355,7 @@ void NetScope::emit_defs(struct target_t*tgt) const
 	    break;
       }
 
+      return flag;
 }
 
 void NetWhile::emit_proc_recurse(struct target_t*tgt) const
@@ -388,7 +390,7 @@ bool Design::emit(struct target_t*tgt) const
 	// emit task and function definitions
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
 	   scope != root_scopes_.end(); scope++)
-	    (*scope)->emit_defs(tgt);
+	    rc &= (*scope)->emit_defs(tgt);
 
 
 	// emit the processes
@@ -509,6 +511,11 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.76  2004/05/31 23:34:37  steve
+ *  Rewire/generalize parsing an elaboration of
+ *  function return values to allow for better
+ *  speed and more type support.
+ *
  * Revision 1.75  2003/09/13 01:30:07  steve
  *  Missing case warnings.
  *
