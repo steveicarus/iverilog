@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.20 1999/09/29 01:50:35 steve Exp $"
+#ident "$Id: Makefile.in,v 1.21 1999/10/16 17:03:49 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -77,8 +77,13 @@ Makefile: Makefile.in config.status
 # the configured copy.
 tmp1 = bindir
 tmp2 = libdir
+tmp3 = includedir
+tmp4 = CXX
 verilog: $(srcdir)/verilog.sh
-	sed -e 's;@$(tmp1)@;@bindir@;' -e 's;@$(tmp2)@;@libdir@;' < $< > $@
+	sed -e 's;@$(tmp1)@;@bindir@;' \
+	    -e 's;@$(tmp2)@;@libdir@;' \
+	    -e 's;@$(tmp3)@;@includedir@;' \
+	    -e 's;@$(tmp4)@;@CXX@;' < $< > $@
 
 ivl: $O
 	$(CXX) $(CXXFLAGS) -o ivl $O

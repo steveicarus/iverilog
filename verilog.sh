@@ -24,13 +24,15 @@
 execPath=@bindir@
 execIVLPP=${execPath}/ivlpp
 execIVL=${execPath}/ivl
-execCpp=/usr/bin/g++
+execCpp=@CXX@
 
 tmpDir=/tmp
 tmpPPFile=${tmpDir}/ivl$$.pp
 tmpCCFile=${tmpDir}/ivl$$.cc
 
-VPIModulePath=@libdir@/ivl:.
+includedir=@includedir@
+libdir=@libdir@
+VPIModulePath=@libdir@/ivl
 
 target="vvm"
 targetSuffix=""
@@ -111,7 +113,7 @@ case "${target}" in
 
     "xnf") mv ${tmpCCFile} ${outputFile} ;;
 
-    "vvm")  ${execCpp} -rdynamic ${tmpCCFile} -o ${outputFile} -lvvm -ldl ;
+    "vvm")  ${execCpp} -rdynamic -I${includedir} -L${libdir} ${tmpCCFile} -o ${outputFile} -lvvm -ldl ;
 	    if test $? -ne 0 ; then
 	     echo "C++ compilation failed. Terminating compilation."
 	     rm -f ${tmpCCFile}
