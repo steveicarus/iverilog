@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.11 2001/05/11 02:06:14 steve Exp $"
+#ident "$Id: main.cc,v 1.12 2001/05/11 03:26:31 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -90,8 +90,10 @@ int main(int argc, char*argv[])
 	    return compile_errors;
       }
 
+#if defined(HAVE_DEBUG)
       if (debug_flag)
 	    breakpoint();
+#endif
 
       schedule_simulate();
 
@@ -100,6 +102,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.12  2001/05/11 03:26:31  steve
+ *  No entry breakpoint if debug is compiled out.
+ *
  * Revision 1.11  2001/05/11 02:06:14  steve
  *  Add the --enable-vvp-debug option to the configure
  *  script of vvp, and detect getopt.h.
