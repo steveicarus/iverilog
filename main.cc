@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.37 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: main.cc,v 1.38 2000/09/12 01:17:40 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -306,6 +306,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.38  2000/09/12 01:17:40  steve
+ *  Version information for vlog_vpi_info.
+ *
  * Revision 1.37  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

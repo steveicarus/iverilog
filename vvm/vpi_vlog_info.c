@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_vlog_info.c,v 1.1 2000/08/08 01:47:40 steve Exp $"
+#ident "$Id: vpi_vlog_info.c,v 1.2 2000/09/12 01:17:40 steve Exp $"
 #endif
 
 #include <vpi_user.h>
@@ -43,7 +43,7 @@ vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
 	// AUTOMATICALLY UPDATING THE VERSION NUMBER WOULD BE A GOOD IDEA
 
-	static char* version = "20000805";
+	static char* version = "$Name:  $";
 	static char* product = "Icarus Verilog";
 
 	// CHECK THAT THE USER DIDN'T PASS A NULL POINTER
