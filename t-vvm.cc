@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.185 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.186 2000/11/30 17:31:42 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -27,6 +27,7 @@
 # include  <string>
 # include  <typeinfo>
 # include  <unistd.h>
+# include  <stdio.h>
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "target.h"
@@ -396,7 +397,7 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 		 << expr->expr_width() << ");" << endl;
 
       unsigned pos = 0;
-      for (unsigned rep = 0 ;  rep < expr->repeat() ;  rep += 1)
+      for (unsigned rept = 0 ;  rept < expr->repeat() ;  rept += 1)
 	    for (unsigned idx = 0 ;  idx < expr->nparms() ;  idx += 1) {
 
 		  NetExpr*pp = expr->parm(expr->nparms() - idx - 1);
@@ -414,7 +415,7 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 	/* Check that the positions came out to the right number of
 	   bits. */
       if (pos != expr->expr_width()) {
-	    tgt_->defn << "#error \"" << expr->get_line() << ": vvm eror: "
+	    tgt_->defn << "#error \"" << expr->get_line() << ": vvm error: "
 		       << "width is " << expr->expr_width() << ", but I count "
 		       << pos << " bits.\"" << endl;
       }
@@ -3357,6 +3358,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.186  2000/11/30 17:31:42  steve
+ *  Change LineInfo to store const C strings.
+ *
  * Revision 1.185  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *

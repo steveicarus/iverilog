@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.52 2000/11/04 01:54:01 steve Exp $"
+#ident "$Id: lexor.lex,v 1.53 2000/11/30 17:31:42 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -37,7 +37,41 @@ extern string vl_file;
 
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
+
+/*
+ * Lexical location information is passed in the yylloc variable to th
+ * parser. The file names, strings, are kept in a list so that I can
+ * re-use them. The set_file_name function will return a pointer to
+ * the name as it exists in the list (and delete the passed string.)
+ * If the name is new, it will be added to the list.
+ */
 extern YYLTYPE yylloc;
+
+struct file_name_cell {
+      const char*text;
+      struct file_name_cell*next;
+};
+
+static struct file_name_cell*file_names = 0;
+
+static const char* set_file_name(char*text)
+{
+      struct file_name_cell*cur = file_names;
+      while (cur) {
+	    if (strcmp(cur->text, text) == 0) {
+		  delete[]text;
+		  return cur->text;
+	    }
+
+	    cur = cur->next;
+      }
+
+      cur = new struct file_name_cell;
+      cur->text = text;
+      cur->next = file_names;
+      return text;
+}
+
 
 extern void pform_set_timescale(int, int);
 
@@ -989,8 +1023,7 @@ static void line_directive()
       strncpy(buf, qt1, qt2-qt1);
       buf[qt2-qt1] = 0;
 
-      delete[]yylloc.text;
-      yylloc.text = buf;
+      yylloc.text = set_file_name(buf);
 
       qt2 += 1;
       yylloc.first_line = strtoul(qt2,0,0);
@@ -1017,13 +1050,19 @@ static void line_directive2()
       strncpy(buf, qt1, qt2-qt1);
       buf[qt2-qt1] = 0;
 
-      delete[]yylloc.text;
-      yylloc.text = buf;
+      yylloc.text = set_file_name(buf);
 }
 
 static void reset_lexor()
 {
       yyrestart(vl_input);
       yylloc.first_line = 1;
-      yylloc.text = strdup(vl_file.c_str());
+
+	/* Start the file_names list. From here on, as I get a file
+	   name, I will add it to this list. Only add the name if it
+	   is not already in the list. */
+      file_names = new struct file_name_cell;
+      file_names->text = strdup(vl_file.c_str());
+      file_names->next = 0;
+      yylloc.text = file_names->text;
 }

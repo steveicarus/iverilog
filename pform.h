@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.43 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: pform.h,v 1.44 2000/11/30 17:31:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -99,7 +99,7 @@ struct lgate {
 
       PExpr*range[2];
 
-      string file;
+      const char* file;
       unsigned lineno;
 };
 
@@ -157,7 +157,7 @@ extern svector<PWire*>* pform_make_udp_input_ports(list<char*>*);
 extern bool pform_expression_is_constant(const PExpr*);
 
 extern void pform_make_events(list<char*>*names,
-			      const string&file, unsigned lineno);
+			      const char*file, unsigned lineno);
 
 /*
  * The makegate function creates a new gate (which need not have a
@@ -179,15 +179,14 @@ extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
 extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 				     svector<PExpr*>*del,
 				     struct str_pair_t str,
-				     const string& text,
-				     unsigned lineno);
+				     const char* fn, unsigned lineno);
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     svector<PExpr*>*range,
 					     list<char*>*names,
-					     const string& file,
+					     const char* file,
 					     unsigned lineno);
 
 
@@ -203,6 +202,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.44  2000/11/30 17:31:42  steve
+ *  Change LineInfo to store const C strings.
+ *
  * Revision 1.43  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

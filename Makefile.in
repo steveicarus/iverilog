@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.81 2000/11/29 23:59:29 steve Exp $"
+#ident "$Id: Makefile.in,v 1.82 2000/11/30 17:31:42 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -92,7 +92,8 @@ net_scope.o net_udp.o \
 pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
 set_width.o \
-verinum.o verireal.o target.o targets.o util.o Module.o PDelays.o PEvent.o \
+verinum.o verireal.o target.o targets.o util.o \
+LineInfo.o Module.o PDelays.o PEvent.o \
 PExpr.o PGate.o \
 PTask.o PFunction.o PWire.o Statement.o \
 $(FF) $(TT)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.66 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: pform.cc,v 1.67 2000/11/30 17:31:42 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -364,7 +364,7 @@ void pform_set_net_range(list<char*>*names, svector<PExpr*>*range)
  * This is invoked to make a named event. This is the declaration of
  * the event, and not necessarily the use of it.
  */
-static void pform_make_event(const char*name, const string&fn, unsigned ln)
+static void pform_make_event(const char*name, const char*fn, unsigned ln)
 {
       PEvent*event = new PEvent(name);
       event->set_file(fn);
@@ -372,7 +372,7 @@ static void pform_make_event(const char*name, const string&fn, unsigned ln)
       pform_cur_module->events[name] = event;
 }
 
-void pform_make_events(list<char*>*names, const string&fn, unsigned ln)
+void pform_make_events(list<char*>*names, const char*fn, unsigned ln)
 {
       list<char*>::iterator cur;
       for (cur = names->begin() ;  cur != names->end() ;  cur++) {
@@ -436,7 +436,7 @@ static void pform_make_modgate(const string&type,
 			       struct parmvalue_t*overrides,
 			       svector<PExpr*>*wires,
 			       PExpr*msb, PExpr*lsb,
-			       const string&fn, unsigned ln)
+			       const char*fn, unsigned ln)
 {
       if (name == "") {
 	    cerr << fn << ":" << ln << ": Instantiation of " << type
@@ -474,7 +474,7 @@ static void pform_make_modgate(const string&type,
 			       struct parmvalue_t*overrides,
 			       svector<portname_t*>*bind,
 			       PExpr*msb, PExpr*lsb,
-			       const string&fn, unsigned ln)
+			       const char*fn, unsigned ln)
 {
       if (name == "") {
 	    cerr << fn << ":" << ln << ": Instantiation of " << type
@@ -588,7 +588,7 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
 void pform_make_pgassign_list(svector<PExpr*>*alist,
 			      svector<PExpr*>*del,
 			      struct str_pair_t str,
-			      const string& text,
+			      const char* fn,
 			      unsigned lineno)
 {
 	PGAssign*tmp;
@@ -596,7 +596,7 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 	      tmp = pform_make_pgassign((*alist)[2*idx],
 					(*alist)[2*idx+1],
 					del, str);
-	      tmp->set_file(text);
+	      tmp->set_file(fn);
 	      tmp->set_lineno(lineno);
 	}
 }
@@ -740,7 +740,7 @@ void pform_set_port_type(const string&nm, NetNet::PortType pt)
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      svector<PExpr*>*range,
 				      list<char*>*names,
-				      const string& file,
+				      const char* file,
 				      unsigned lineno)
 {
       assert(names);
@@ -1002,6 +1002,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.67  2000/11/30 17:31:42  steve
+ *  Change LineInfo to store const C strings.
+ *
  * Revision 1.66  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

@@ -19,61 +19,46 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: LineInfo.h,v 1.4 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.5 2000/11/30 17:31:42 steve Exp $"
 #endif
 
-# include  <cstdio>
 # include  <string>
+
+/*
+ * This class holds line information for an internal object.
+ *
+ * Note that the file names are C-style strings that are allocated by
+ * the lexor (which parses the line directives) and are never
+ * deallocated. We can therefore safely store the pointer and never
+ * delete the string, even if LineInfo objects are destroyed.
+ */
 
 class LineInfo {
     public:
-      LineInfo() : lineno_(0) { }
+      LineInfo() : file_(0), lineno_(0) { }
+      ~LineInfo();
 
-      string get_line() const
-	    { char buf[8];
-	      sprintf(buf, "%u", lineno_);
-	      return file_ + ":" + buf;
-	    }
+      string get_line() const;
 
-      void set_line(const LineInfo&that)
-	    { file_ = that.file_;
-	      lineno_ = that.lineno_;
-	    }
+      void set_line(const LineInfo&that);
 
-      void set_file(const string&f) { file_ = f; }
+      void set_file(const char*f) { file_ = f; }
       void set_lineno(unsigned n) { lineno_ = n; }
 
     private:
-      string file_;
+      const char* file_;
       unsigned lineno_;
 };
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.5  2000/11/30 17:31:42  steve
+ *  Change LineInfo to store const C strings.
+ *
  * Revision 1.4  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *
  * Revision 1.3  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
- *
- * Revision 1.2  1999/02/01 00:26:48  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
- *
- * Revision 1.1  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
  */
 #endif
