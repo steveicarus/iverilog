@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.17 2002/06/14 22:05:28 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.18 2002/06/23 18:23:09 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -324,8 +324,9 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		}
 
 		/* sign extend */
-		if (rfp->signed_flag) {
-		    for (unsigned idx = rfp->nbits; idx <sizeof(int)*8; idx++) {
+		if (rfp->signed_flag && bit_val) {
+		    for (unsigned idx = rfp->nbits; idx <sizeof(val)*8; idx++)
+		    {
 			val |= bit_val << idx;
 		    }
 		}
@@ -513,6 +514,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.18  2002/06/23 18:23:09  steve
+ *  trivial performance boost.
+ *
  * Revision 1.17  2002/06/14 22:05:28  steve
  *  sign extend signed vectors vpiIntVal.
  *
