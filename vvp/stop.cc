@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: stop.cc,v 1.13 2005/01/29 06:29:17 steve Exp $"
 #endif
 
 /*
@@ -48,7 +48,31 @@
 
 struct __vpiScope*stop_current_scope = 0;
 
-#ifdef USE_READLINE
+#ifndef USE_READLINE
+static char* readline_stub(const char*prompt)
+{
+      char buf[256];
+
+      if (prompt && prompt[0]) {
+	    fputs(prompt, stdout);
+	    fflush(stdout);
+      }
+
+      if (fgets(buf, sizeof(buf), stdin)) {
+	    char*nl = buf + strlen(buf);
+	    while (nl > buf && isspace(nl[-1])) {
+		  nl -= 1;
+		  nl[0] = 0;
+	    }
+
+	    return strdup(buf);
+      }
+
+      return 0;
+}
+#define readline(x) readline_stub(x)
+#endif
+
 
 static bool interact_flag = true;
 
@@ -478,22 +502,12 @@ void stop_handler(int rc)
       printf("** Continue **\n");
 }
 
-#else
-
-void stop_handler(int rc)
-{
-      printf("** VVP Stop(%d) **\n", rc);
-      printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
-      		schedule_simtime());
-
-      printf("** Interactive mode not supported, exiting simulation.\n");
-      exit(0);
-}
-
-#endif
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.13  2005/01/29 06:29:17  steve
+ *  Support interactive mode even without readline.
+ *
  * Revision 1.12  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
@@ -503,35 +517,5 @@ void stop_handler(int rc)
  *
  * Revision 1.10  2003/11/07 05:58:02  steve
  *  Fix conditional compilation of readline history.
- *
- * Revision 1.9  2003/10/15 02:17:39  steve
- *  Include net objects in list display.
- *
- * Revision 1.8  2003/05/16 03:50:28  steve
- *  Fallback functionality if readline is not present.
- *
- * Revision 1.7  2003/03/13 20:31:40  steve
- *  Warnings about long long time.
- *
- * Revision 1.6  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.5  2003/03/08 20:59:41  steve
- *  Missing include ctype.h.
- *
- * Revision 1.4  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.3  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.2  2003/02/22 06:32:36  steve
- *  Basic support for system task calls.
- *
- * Revision 1.1  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
- *
  */
 
