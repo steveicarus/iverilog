@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.22 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: pform.h,v 1.23 1999/07/10 01:03:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -98,7 +98,7 @@ struct lgate {
 extern void pform_startmodule(const string&, svector<PWire*>*ports);
 extern void pform_endmodule(const string&);
 
-extern void pform_make_udp(string*name, list<string>*parms,
+extern void pform_make_udp(const char*name, list<string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init);
 
@@ -157,6 +157,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.23  1999/07/10 01:03:18  steve
+ *  remove string from lexical phase.
+ *
  * Revision 1.22  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

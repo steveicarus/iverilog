@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.30 1999/07/08 02:06:39 steve Exp $"
+#ident "$Id: lexor.lex,v 1.31 1999/07/10 01:03:18 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -29,6 +29,7 @@
 # include  "parse_misc.h"
 # include  "parse.h"
 # include  <ctype.h>
+# include  <string.h>
 
 extern FILE*vl_input;
 extern string vl_file;
@@ -99,11 +100,12 @@ static int comment_enter;
 \"            { BEGIN(CSTRING); }
 <CSTRING>\\\" { yymore(); }
 <CSTRING>\n   { BEGIN(0);
-                yylval.text = new string(yytext, strlen(yytext));
+                yylval.text = strdup(yytext);
 		VLerror(yylloc, "Missing close quote of string.");
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
-		yylval.text = new string(yytext, strlen(yytext)-1);
+                yylval.text = strdup(yytext);
+		yylval.text[strlen(yytext)-1] = 0;
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
@@ -126,28 +128,28 @@ static int comment_enter;
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = check_identifier(yytext);
       if (rc == IDENTIFIER)
-	    yylval.text = new string(yytext);
+	    yylval.text = strdup(yytext);
       else
 	    yylval.text = 0;
 
       return rc; }
 
 [a-zA-Z_][a-zA-Z0-9$_]*(\.[a-zA-Z_][a-zA-Z0-9$_]*)+ {
-      yylval.text = new string(yytext);
+      yylval.text = strdup(yytext);
       return HIDENTIFIER; }
 
 \\[^ \t\b\f\r]+         {
-      yylval.text = new string(yytext);
+      yylval.text = strdup(yytext);
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
       if (strcmp(yytext,"$attribute") == 0)
 	    return KK_attribute;
-      yylval.text = new string(yytext);
+      yylval.text = strdup(yytext);
       return SYSTEM_IDENTIFIER; }
 
 \.[a-zA-Z_][a-zA-Z0-9$_]* {
-      yylval.text = new string(yytext+1);
+      yylval.text = strdup(yytext+1);
       return PORTNAME; }
 
 [0-9][0-9_]*[ \t]*\'d[ \t]*[0-9][0-9_]* {

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.48 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: parse.y,v 1.49 1999/07/10 01:03:18 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -31,7 +31,7 @@ extern void lex_end_table();
 
 %union {
       char letter;
-      string*text;
+      char*text;
       list<string>*strings;
 
       PCase::Item*citem;
@@ -266,7 +266,7 @@ delay_value
 		  }
 		}
 	| IDENTIFIER
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -288,7 +288,7 @@ description
 	: module
 	| udp_primitive
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
-		{ pform_set_type_attrib(*$3, *$5, *$7);
+		{ pform_set_type_attrib($3, $5, $7);
 		  delete $3;
 		  delete $5;
 		  delete $7;
@@ -568,28 +568,28 @@ expr_primary
 		  $$ = 0;
 		}
 	| STRING
-		{ PEString*tmp = new PEString(*$1);
+		{ PEString*tmp = new PEString($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $1;
 		}
 	| identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $1;
 		}
 	| SYSTEM_IDENTIFIER
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $1;
 		}
 	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
@@ -597,7 +597,7 @@ expr_primary
 		  $$ = tmp;
 		}
 	| identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
@@ -792,13 +792,13 @@ list_of_ports_opt
 list_of_variables
 	: IDENTIFIER
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| list_of_variables ',' IDENTIFIER
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$3);
+		  tmp->push_back($3);
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -809,14 +809,14 @@ list_of_variables
      expression meets the constraints of continuous assignments. */
 lavalue
 	: identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  PExpr*sel = $3;
 		  if (! pform_expression_is_constant(sel)) {
 			yyerror(@2, "Bit select in lvalue must "
@@ -831,7 +831,7 @@ lavalue
 		  $$ = tmp;
 		}
 	| identifier range
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  assert($2->count() == 2);
 		  tmp->msb_ = (*$2)[0];
 		  tmp->lsb_ = (*$2)[1];
@@ -853,14 +853,14 @@ lavalue
      procedural assignment. This rule handles only procedural assignments. */
 lpvalue
 	: identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->msb_ = $3;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -869,7 +869,7 @@ lpvalue
 		  $$ = tmp;
 		}
 	| identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent($1);
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
 		  tmp->set_file(@1.text);
@@ -887,18 +887,18 @@ lpvalue
 
 module
 	: K_module IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule(*$2, $3);
+		{ pform_startmodule($2, $3);
 		}
 	  module_item_list
 	  K_endmodule
-		{ pform_endmodule(*$2);
+		{ pform_endmodule($2);
 		  delete $2;
 		}
 	| K_module IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule(*$2, $3);
+		{ pform_startmodule($2, $3);
 		}
 	  K_endmodule
-		{ pform_endmodule(*$2);
+		{ pform_endmodule($2);
 		  delete $2;
 		}
 	;
@@ -953,7 +953,7 @@ module_item
 		{ pform_makegates($1, $2, $3);
 		}
 	| IDENTIFIER delay_opt gate_instance_list ';'
-		{ pform_make_modgates(*$1, $3);
+		{ pform_make_modgates($1, $3);
 		  delete $1;
 		  if ($2) {
 		      yyerror(@2, "Sorry, parameter override not supported.");
@@ -981,14 +981,14 @@ module_item
 		  tmp->set_lineno(@1.first_line);
 		}
 	| K_task IDENTIFIER ';'
-		{ pform_push_scope(*$2); }
+		{ pform_push_scope($2); }
 	  task_body
 		{ pform_pop_scope(); }
 	  K_endtask
 		{ PTask*tmp = $5;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  pform_set_task(*$2, $5);
+		  pform_set_task($2, $5);
 		  delete $2;
 		}
 	| K_function range_or_type_opt  IDENTIFIER ';' func_body K_endfunction
@@ -998,7 +998,7 @@ module_item
 		{
 		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
-		{ pform_set_attrib(*$3, *$5, *$7);
+		{ pform_set_attrib($3, $5, $7);
 		  delete $3;
 		  delete $5;
 		  delete $7;
@@ -1017,14 +1017,14 @@ module_item_list
      statement. */
 net_decl_assign
 	: IDENTIFIER '=' expression
-		{ PEIdent*id = new PEIdent(*$1);
+		{ PEIdent*id = new PEIdent($1);
 		  PGAssign*tmp = pform_make_pgassign(id, $3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
 		}
 	| delay IDENTIFIER '=' expression
-		{ PEIdent*id = new PEIdent(*$2);
+		{ PEIdent*id = new PEIdent($2);
 		  PGAssign*tmp = pform_make_pgassign(id, $4);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
@@ -1036,13 +1036,13 @@ net_decl_assign
 net_decl_assigns
 	: net_decl_assigns ',' net_decl_assign
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$3);
+		  tmp->push_back($3);
 		  delete $3;
 		  $$ = tmp;
 		}
 	| net_decl_assign
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -1069,7 +1069,7 @@ parameter_assign
 			delete tmp;
 			tmp = 0;
 		  }
-		  pform_set_parameter(*$1, tmp);
+		  pform_set_parameter($1, tmp);
 		  delete $1;
 		}
 	;
@@ -1086,13 +1086,13 @@ parameter_assign_list
 
 port
 	: IDENTIFIER
-		{ $$ = new PWire(*$1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
+		{ $$ = new PWire($1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
 		  $$->set_file(@1.text);
 		  $$->set_lineno(@1.first_line);
 		  delete $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ PWire*tmp = new PWire(*$1, NetNet::IMPLICIT,
+		{ PWire*tmp = new PWire($1, NetNet::IMPLICIT,
 					NetNet::PIMPLICIT);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1110,7 +1110,7 @@ port
 		}
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "invalid port bit select");
-		  $$ = new PWire(*$1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
+		  $$ = new PWire($1, NetNet::IMPLICIT, NetNet::PIMPLICIT);
 		  $$->set_file(@1.text);
 		  $$->set_lineno(@1.first_line);
 		  delete $1;
@@ -1199,22 +1199,22 @@ range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
 	: IDENTIFIER
-		{ pform_makewire(@1, *$1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG);
 		  $$ = $1;
 		}
 	| IDENTIFIER '=' expression
-		{ pform_makewire(@1, *$1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG);
 		  yyerror(@2, "net declaration assignment to reg/integer not allowed.");
 		  delete $3;
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(@1, *$1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))
 			yyerror(@3, "lsb of register range must be constant.");
-		  pform_set_reg_idx(*$1, $3, $5);
+		  pform_set_reg_idx($1, $3, $5);
 		  $$ = $1;
 		}
 	;
@@ -1222,13 +1222,13 @@ register_variable
 register_variable_list
 	: register_variable
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| register_variable_list ',' register_variable
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$3);
+		  tmp->push_back($3);
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -1280,11 +1280,11 @@ statement
 		  $$ = tmp;
 		}
 	| K_begin ':' IDENTIFIER
-		{ pform_push_scope(*$3); }
+		{ pform_push_scope($3); }
 	  block_item_decls_opt
 	  statement_list K_end
 		{ pform_pop_scope();
-		  PBlock*tmp = new PBlock(*$3, PBlock::BL_SEQ, *$6);
+		  PBlock*tmp = new PBlock($3, PBlock::BL_SEQ, *$6);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $3;
@@ -1465,7 +1465,7 @@ statement
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list ')' ';'
-		{ PCallTask*tmp = new PCallTask(*$1, *$3);
+		{ PCallTask*tmp = new PCallTask($1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1474,7 +1474,7 @@ statement
 		}
 	| SYSTEM_IDENTIFIER '(' ')' ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  PCallTask*tmp = new PCallTask($1, pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1482,14 +1482,14 @@ statement
 		}
 	| SYSTEM_IDENTIFIER ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  PCallTask*tmp = new PCallTask($1, pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier '(' expression_list ')' ';'
-		{ PCallTask*tmp = new PCallTask(*$1, *$3);
+		{ PCallTask*tmp = new PCallTask($1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1498,7 +1498,7 @@ statement
 		}
 	| identifier '(' ')' ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  PCallTask*tmp = new PCallTask($1, pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1506,7 +1506,7 @@ statement
 		}
 	| identifier ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  PCallTask*tmp = new PCallTask($1, pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1580,9 +1580,13 @@ udp_entry_list
 
 udp_comb_entry
 	: udp_input_list ':' udp_output_sym ';'
-		{ string*tmp = $1;
-		  *tmp += ':';
-		  *tmp += $3;
+		{ char*tmp = new char[strlen($1)+3];
+		  strcpy(tmp, $1);
+		  char*tp = tmp+strlen(tmp);
+		  *tp++ = ':';
+		  *tp++ = $3;
+		  *tp++ = 0;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	;
@@ -1590,13 +1594,13 @@ udp_comb_entry
 udp_comb_entry_list
 	: udp_comb_entry
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| udp_comb_entry_list udp_comb_entry
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$2);
+		  tmp->push_back($2);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -1605,13 +1609,13 @@ udp_comb_entry_list
 udp_sequ_entry_list
 	: udp_sequ_entry
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| udp_sequ_entry_list udp_sequ_entry
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$2);
+		  tmp->push_back($2);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -1619,11 +1623,14 @@ udp_sequ_entry_list
 
 udp_sequ_entry
 	: udp_input_list ':' udp_input_sym ':' udp_output_sym ';'
-		{ string*tmp = $1;
-		  *tmp += ':';
-		  *tmp += $3;
-		  *tmp += ':';
-		  *tmp += $5;
+		{ char*tmp = new char[strlen($1)+5];
+		  strcpy(tmp, $1);
+		  char*tp = tmp+strlen(tmp);
+		  *tp++ = ':';
+		  *tp++ = $3;
+		  *tp++ = ':';
+		  *tp++ = $5;
+		  *tp++ = 0;
 		  $$ = tmp;
 		}
 	;
@@ -1631,7 +1638,7 @@ udp_sequ_entry
 udp_initial
 	: K_initial IDENTIFIER '=' NUMBER ';'
 		{ PExpr*etmp = new PENumber($4);
-		  PEIdent*itmp = new PEIdent(*$2);
+		  PEIdent*itmp = new PEIdent($2);
 		  PAssign*atmp = new PAssign(itmp, etmp);
 		  atmp->set_file(@2.text);
 		  atmp->set_lineno(@2.first_line);
@@ -1647,13 +1654,18 @@ udp_init_opt
 
 udp_input_list
 	: udp_input_sym
-		{ string*tmp = new string;
-		  *tmp += $1;
+		{ char*tmp = new char[2];
+		  tmp[0] = $1;
+		  tmp[1] = 0;
 		  $$ = tmp;
 		}
 	| udp_input_list udp_input_sym
-		{ string*tmp = $1;
-		  *tmp += $2;
+		{ char*tmp = new char[strlen($1)+2];
+		  strcpy(tmp, $1);
+		  char*tp = tmp+strlen(tmp);
+		  *tp++ = $2;
+		  *tp++ = 0;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	;
@@ -1683,14 +1695,14 @@ udp_port_decl
 	: K_input list_of_variables ';'
 		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire(*$2, NetNet::IMPLICIT, NetNet::POUTPUT);
+		{ PWire*pp = new PWire($2, NetNet::IMPLICIT, NetNet::POUTPUT);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_reg IDENTIFIER ';'
-		{ PWire*pp = new PWire(*$2, NetNet::REG, NetNet::PIMPLICIT);
+		{ PWire*pp = new PWire($2, NetNet::REG, NetNet::PIMPLICIT);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  delete $2;
@@ -1712,13 +1724,13 @@ udp_port_decls
 udp_port_list
 	: IDENTIFIER
 		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
+		  tmp->push_back($1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| udp_port_list ',' IDENTIFIER
 		{ list<string>*tmp = $1;
-		  tmp->push_back(*$3);
+		  tmp->push_back($3);
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -1730,5 +1742,7 @@ udp_primitive
 	    udp_init_opt
 	    udp_body
 	  K_endprimitive
-		{ pform_make_udp($2, $4, $7, $9, $8); }
+		{ pform_make_udp($2, $4, $7, $9, $8);
+		  delete[]$2;
+		}
 	;

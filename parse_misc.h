@@ -19,10 +19,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.3 1999/07/10 01:03:18 steve Exp $"
 #endif
 
-# include  <string>
 # include  <list>
 # include  "pform.h"
 
@@ -54,6 +53,9 @@ extern unsigned error_count, warn_count;
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.3  1999/07/10 01:03:18  steve
+ *  remove string from lexical phase.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

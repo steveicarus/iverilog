@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.31 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: pform.cc,v 1.32 1999/07/10 01:03:18 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -121,7 +121,7 @@ bool pform_expression_is_constant(const PExpr*ex)
       return ex->is_constant(pform_cur_module);
 }
 
-void pform_make_udp(string*name, list<string>*parms,
+void pform_make_udp(const char*name, list<string>*parms,
 		    svector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr)
 {
@@ -232,11 +232,11 @@ void pform_make_udp(string*name, list<string>*parms,
       }
 
 	// Put the primitive into the primitives table
-      if (vl_primitives[*name]) {
+      if (vl_primitives[name]) {
 	    VLerror("UDP primitive already exists.");
 
       } else {
-	    PUdp*udp = new PUdp(*name, parms->size());
+	    PUdp*udp = new PUdp(name, parms->size());
 
 	      // Detect sequential udp.
 	    if (pins[0]->get_wire_type() == NetNet::REG)
@@ -251,11 +251,10 @@ void pform_make_udp(string*name, list<string>*parms,
 	    udp->toutput  = output;
 	    udp->initial  = init;
 
-	    vl_primitives[*name] = udp;
+	    vl_primitives[name] = udp;
       }
 
 	/* Delete the excess tables and lists from the parser. */
-      delete name;
       delete parms;
       delete decl;
       delete table;
@@ -594,6 +593,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.32  1999/07/10 01:03:18  steve
+ *  remove string from lexical phase.
+ *
  * Revision 1.31  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *
