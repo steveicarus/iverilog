@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.24 2001/05/03 04:55:46 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.25 2001/05/06 00:01:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
 # include  <malloc.h>
+# include  <string.h>
 
 /*
  * The draw_scope function draws the major functional items within a
@@ -30,14 +31,36 @@
  * other functions in this file are in support of that task.
  */
 
+/*
+ * NEXUS
+ * ivl builds up the netlist into objects connected together by
+ * ivl_nexus_t objects. The nexus receives all the drivers of the
+ * point in the net and resolves the value. The result is then sent to
+ * all the nets that are connected to the nexus. The nets, then, are
+ * read to get the value of the nexus.
+ *
+ * NETS
+ * Nets are interesting and special, because a nexus may be connected
+ * to several of them at once. This can happen, for example, as an
+ * artifact of module port connects, where the inside and the outside
+ * of the module are connected through an in-out port. (In fact, ivl
+ * will simply connect signals that are bound through a port, because
+ * the input/output/inout properties are enforced as compile time.)
+ *
+ * This case is handled by choosing one to receive the value of the
+ * nexus. This one then feeds to another net at the nexus, and so
+ * on. The last net is selected as the output of the nexus.
+ */
 
 /*
  * This function takes a nexus and looks for an input functor. It then
- * draws to the output a string that represents that functor.
+ * draws to the output a string that represents that functor. What we
+ * are trying to do here is find the input to the net that is attached
+ * to this nexus.
  *
  * XXXX This function does not yet support multiple drivers.
  */
-void draw_nexus_input(ivl_nexus_t nex)
+void draw_net_input(ivl_nexus_t nex)
 {
       ivl_net_const_t cptr;
       ivl_net_logic_t lptr;
@@ -54,7 +77,7 @@ void draw_nexus_input(ivl_nexus_t nex)
 	    lptr = ivl_nexus_ptr_log(nptr);
 	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) &&
 		(nptr_pin == 0)) {
-		  draw_nexus_input(ivl_logic_pin(lptr, 1));
+		  draw_net_input(ivl_logic_pin(lptr, 1));
 
 		  assert(driver == 0);
 		  driver = nptr;
@@ -123,6 +146,42 @@ void draw_nexus_input(ivl_nexus_t nex)
 }
 
 /*
+ * This function looks at the nexus in search for the net to attach
+ * functor inputs to. Sort the signals in the nexus by name, and
+ * choose the lexically earliest one.
+ */
+void draw_input_from_net(ivl_nexus_t nex)
+{
+      unsigned idx;
+      ivl_signal_t sig = 0;
+      unsigned sig_pin = 0;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t tmp = ivl_nexus_ptr_sig(ptr);
+
+	    if (tmp == 0)
+		  continue;
+
+	    if (sig == 0) {
+		  sig = tmp;
+		  sig_pin = ivl_nexus_ptr_pin(ptr);
+		  continue;
+	    }
+
+	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(sig)) < 0) {
+		  sig = tmp;
+		  sig_pin = ivl_nexus_ptr_pin(ptr);
+		  continue;
+	    }
+
+      }
+
+      assert(sig);
+      fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sig), sig_pin);
+}
+
+/*
  * This function draws a reg/int/variable in the scope. This is a very
  * simple device to draw as there are no inputs to connect so no need
  * to scan the nexus.
@@ -140,6 +199,44 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 }
 
 /*
+ * This function takes a nexus and a signal, and finds the next signal
+ * (lexically) that is connected to at the same nexus. Return the
+ * ivl_nexus_ptr_t object to represent that junction.
+ */
+static ivl_nexus_ptr_t find_net_just_after(ivl_nexus_t nex,
+					   ivl_signal_t sig)
+{
+      ivl_nexus_ptr_t res = 0;
+      ivl_signal_t res_sig = 0;
+      unsigned idx;
+
+      for (idx = 0 ; idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t tmp = ivl_nexus_ptr_sig(ptr);
+
+	    if (tmp == 0)
+		  continue;
+
+	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(sig)) <= 0)
+		  continue;
+
+	    if (res == 0) {
+		  res = ptr;
+		  res_sig = tmp;
+		  continue;
+	    }
+
+	    if (strcmp(ivl_signal_name(tmp),ivl_signal_name(res_sig)) < 0) {
+		  res = ptr;
+		  res_sig = tmp;
+	    }
+      }
+
+      return res;
+}
+
+
+/*
  * This function draws a net. This is a bit more complicated as we
  * have to find an appropriate functor to connect to the input.
  */
@@ -155,10 +252,21 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	      ivl_signal_name(sig), signed_flag,
 	      ivl_signal_basename(sig), msb, lsb);
 
+	/* Connect all the pins of the signal to something. */
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr;
 	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
+
 	    fprintf(vvp_out, ", ");
-	    draw_nexus_input(nex);
+
+	    ptr = find_net_just_after(nex, sig);
+	    if (ptr) {
+		  fprintf(vvp_out, "V_%s[%u]",
+			  ivl_signal_name(ivl_nexus_ptr_sig(ptr)),
+			  ivl_nexus_ptr_pin(ptr));
+	    } else {
+		  draw_net_input(nex);
+	    }
       }
 
       fprintf(vvp_out, ";\n");
@@ -231,7 +339,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
     {
       ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
       fprintf(vvp_out, ", ");
-      draw_nexus_input(nex);
+      draw_input_from_net(nex);
     }
   
   fprintf(vvp_out, ";\n");
@@ -318,7 +426,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
 	    fprintf(vvp_out, ", ");
-	    draw_nexus_input(nex);
+	    draw_input_from_net(nex);
       }
 
       for ( ;  pdx < 5 ;  pdx += 1) {
@@ -368,7 +476,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, sub);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -385,7 +493,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, sub);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -402,7 +510,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, sub);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -431,7 +539,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 
 	    } else if (nneg > 0) {
@@ -441,7 +549,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, idx);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 
 	    } else {
@@ -451,7 +559,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
 			fprintf(vvp_out, ", ");
-			draw_nexus_input(nex);
+			draw_input_from_net(nex);
 		  }
 	    }
 
@@ -476,11 +584,11 @@ static void draw_lpm_mux(ivl_lpm_t net)
 	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
 	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
 		    ivl_lpm_name(net), idx);
-	    draw_nexus_input(a);
+	    draw_input_from_net(a);
 	    fprintf(vvp_out, ", ");
-	    draw_nexus_input(b);
+	    draw_input_from_net(b);
 	    fprintf(vvp_out, ", ");
-	    draw_nexus_input(s);
+	    draw_input_from_net(s);
 	    fprintf(vvp_out, ", C<1>;\n");
       }
 
@@ -560,6 +668,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.25  2001/05/06 00:01:02  steve
+ *  Generate code that causes the value of a net to be passed
+ *  passed through all nets of a nexus.
+ *
  * Revision 1.24  2001/05/03 04:55:46  steve
  *  Generate code for the fully general event or.
  *
