@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.6 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: stop.cc,v 1.7 2003/03/13 20:31:40 steve Exp $"
 #endif
 
 /*
@@ -393,7 +393,8 @@ static void invoke_command(char*txt)
 void stop_handler(int rc)
 {
       printf("** VVP Stop(%d) **\n", rc);
-      printf("** Current simulation time is %lu ticks.\n", schedule_simtime());
+      printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
+      		schedule_simtime());
 
       interact_flag = true;
       while (interact_flag) {
@@ -420,6 +421,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.7  2003/03/13 20:31:40  steve
+ *  Warnings about long long time.
+ *
  * Revision 1.6  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

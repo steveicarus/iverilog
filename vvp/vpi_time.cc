@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.13 2003/03/13 04:59:21 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.14 2003/03/13 20:31:41 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
@@ -140,8 +141,8 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiSystemTime*rfp
 	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
-      unsigned long x, num_bits;
-      vvp_time64_t simtime = schedule_simtime();
+      unsigned long num_bits;
+      vvp_time64_t x, simtime = schedule_simtime();
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 
       char*rbuf = need_result_buf(128, RBUF_VAL);
@@ -172,13 +173,13 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiRealVal:
-	    vp->value.real = pow(10, vpi_time_precision-rfp->scope->time_units)
-		  * schedule_simtime();
+	    vp->value.real = pow(10, vpi_time_precision - units);
+	    vp->value.real *= schedule_simtime();
 	    break;
 
-	  case vpiBinStrVal:
+	  case vpiBinStrVal: 
 	    x = simtime;
-	    num_bits = 8 * sizeof(unsigned long);
+	    num_bits = 8 * sizeof(vvp_time64_t);
 
 	    rbuf[num_bits] = 0;
 	    for (unsigned i = 1; i <= num_bits; i++) {
@@ -190,17 +191,17 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(rbuf, "%lu", simtime);
+	    sprintf(rbuf, "%" TIME_FMT "u", simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(rbuf, "%lo", simtime);
+	    sprintf(rbuf, "%" TIME_FMT "o", simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", simtime);
+	    sprintf(rbuf, "%" TIME_FMT "x", simtime);
 	    vp->value.str = rbuf;
 	    break;
 
@@ -268,6 +269,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.14  2003/03/13 20:31:41  steve
+ *  Warnings about long long time.
+ *
  * Revision 1.13  2003/03/13 04:59:21  steve
  *  Use rbufs instead of static buffers.
  *

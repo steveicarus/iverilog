@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.12 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: config.h.in,v 1.13 2003/03/13 20:31:40 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -42,14 +42,18 @@
 
 #if SIZEOF_UNSIGNED >= 8
 typedef unsigned vvp_time64_t;
+# define TIME_FMT ""
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long vvp_time64_t;
+#  define TIME_FMT "l"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
 typedef unsigned long long vvp_time64_t;
+#   define TIME_FMT "ll"
 #  else
 typedef unsigned long vvp_time64_t;
+#   define TIME_FMT "l"
 #  endif
 # endif
 #endif
@@ -79,6 +83,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.13  2003/03/13 20:31:40  steve
+ *  Warnings about long long time.
+ *
  * Revision 1.12  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *
