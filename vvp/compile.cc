@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.16 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.17 2001/03/28 17:24:32 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -30,6 +30,7 @@
 # include  "parse_misc.h"
 # include  <malloc.h>
 # include  <stdlib.h>
+# include  <string.h>
 # include  <assert.h>
 
 unsigned compile_errors = 0;
@@ -662,6 +663,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.17  2001/03/28 17:24:32  steve
+ *  include string.h for strcmp et al.
+ *
  * Revision 1.16  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *
