@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.10 2003/04/20 02:48:39 steve Exp $"
+#ident "$Id: acc_user.h,v 1.11 2003/04/24 18:57:05 steve Exp $"
 #endif
 
 /*
@@ -57,7 +57,10 @@ typedef struct __vpiHandle *handle;
 #define accScope     21
 #define accNet       25
 #define accReg       30
-#define accParameter 220
+#define accStringParam 204
+#define accParameter   220
+#define accIntegerVar  281
+#define accIntVar      281
 #define accScalar    300
 #define accVector    302
 #define accConstant  600
@@ -179,7 +182,8 @@ extern void acc_fetch_timescale_info(handle obj, p_timescale_info info);
 extern PLI_INT32 acc_fetch_size(handle obj);
 
 extern PLI_INT32 acc_fetch_type(handle obj);
-extern char* acc_fetch_type_str(PLI_INT32 type);
+extern PLI_INT32 acc_fetch_fulltype(handle obj);
+extern char*     acc_fetch_type_str(PLI_INT32 type);
 
 extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 
@@ -210,6 +214,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.11  2003/04/24 18:57:05  steve
+ *  Add acc_fetch_fulltype function.
+ *
  * Revision 1.10  2003/04/20 02:48:39  steve
  *  Support value change callbacks.
  *

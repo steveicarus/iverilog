@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.3 2003/04/12 18:57:14 steve Exp $"
+#ident "$Id: a_fetch_type.c,v 1.4 2003/04/24 18:57:06 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -51,8 +51,11 @@ PLI_INT32 acc_fetch_type(handle obj)
 	  case vpiReg:
 	    return accReg;
 
+	  case vpiIntegerVar:
+	    return accIntegerVar;
+
 	  default:
-	    vpi_printf("XXXX acc_fetch_type(%d) returns what?\n",
+	    vpi_printf("acc_fetch_type: vpiType %d is what accType?\n",
 		       vpi_get(vpiType, obj));
 	    return 0;
       }
@@ -60,8 +63,31 @@ PLI_INT32 acc_fetch_type(handle obj)
       return 0;
 }
 
+PLI_INT32 acc_fetch_fulltype(handle obj)
+{
+      switch (vpi_get(vpiType, obj)) {
+	  case vpiConstant:
+	      /* see acc_fetch_type */
+	    if (vpi_get(vpiConstType, obj) == vpiStringConst)
+		  return accStringParam;
+	    else
+		  return accConstant;
+
+	  case vpiIntegerVar:
+	    return accIntegerVar;
+
+	  default:
+	    vpi_printf("acc_fetch_fulltype: vpiType %d is what accType?\n",
+		       vpi_get(vpiType, obj));
+	    return 0;
+      }
+}
+
 /*
  * $Log: a_fetch_type.c,v $
+ * Revision 1.4  2003/04/24 18:57:06  steve
+ *  Add acc_fetch_fulltype function.
+ *
  * Revision 1.3  2003/04/12 18:57:14  steve
  *  More acc_ function stubs.
  *
