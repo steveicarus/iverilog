@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.186 2000/11/30 17:31:42 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.187 2000/12/09 06:17:20 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -375,6 +375,7 @@ class vvm_parm_rval  : public expr_scan_t {
       virtual void expr_scope(const NetEScope*);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
+      virtual void expr_unary(const NetEUnary*);
 
     private:
       target_vvm*tgt_;
@@ -794,6 +795,17 @@ static string emit_proc_rval(target_vvm*tgt, const NetExpr*expr)
 }
 
 void vvm_parm_rval::expr_binary(const NetEBinary*expr)
+{
+      string rval = emit_proc_rval(tgt_, expr);
+
+      string tmp = make_temp();
+      tgt_->defn << "      struct __vpiNumberConst " << tmp << ";" << endl;
+      tgt_->defn << "      vpip_make_number_const(&" << tmp << ", "
+		 << rval << ".bits, " << expr->expr_width() << ");" << endl;
+      result = "&" + tmp + ".base";
+}
+
+void vvm_parm_rval::expr_unary(const NetEUnary*expr)
 {
       string rval = emit_proc_rval(tgt_, expr);
 
@@ -3358,6 +3370,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.187  2000/12/09 06:17:20  steve
+ *  unary expressions as parameters (PR#42, PR#68)
+ *
  * Revision 1.186  2000/11/30 17:31:42  steve
  *  Change LineInfo to store const C strings.
  *
