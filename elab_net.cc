@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.156 2005/03/18 02:56:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.157 2005/03/19 06:23:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1130,8 +1130,12 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       connect(osig->pin(0), gate->pin_Result());
 
 	// Connect the lsig (the left expression) to the Data input,
-	// and pad it if necessary with constant zeros.
-      assert(lsig->vector_width() == lwidth);
+	// and pad it if necessary. The lwidth is the width of the
+	// NetCLShift gate, and the D input must match.
+      if (lsig->vector_width() < lwidth)
+	    lsig = pad_to_width(des, lsig, lwidth);
+
+      assert(lsig->vector_width() <= lwidth);
       connect(lsig->pin(0), gate->pin_Data());
 
 	// Connect the rsig (the shift amount expression) to the
@@ -2490,6 +2494,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.157  2005/03/19 06:23:49  steve
+ *  Handle LPM shifts.
+ *
  * Revision 1.156  2005/03/18 02:56:03  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

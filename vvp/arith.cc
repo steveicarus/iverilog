@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.42 2005/03/12 06:42:28 steve Exp $"
+#ident "$Id: arith.cc,v 1.43 2005/03/19 06:23:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -634,110 +634,78 @@ void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 }
 
 
-#if 0
-void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+vvp_shiftl::vvp_shiftl(unsigned wid)
+: vvp_arith_(wid)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
-
-      unsigned amount = 0;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base, idx);
-	    functor_t fp = functor_index(ptr);
-
-	    unsigned val = (fp->ival >> 2) & 0x03;
-	    switch (val) {
-		case 0:
-		  break;
-		case 1:
-		  amount |= 1 << idx;
-		  break;
-		default:
-		  output_x_(base, push);
-		  return;
-	    }
-      }
-
-      if (amount >= wid_) {
-	    output_x_(base, push, 0);
-	    return;
-
-      } else {
-	    vvp_ipoint_t optr, iptr;
-	    functor_t ofp, ifp;
-
-	    for (unsigned idx = 0 ;  idx < amount ;  idx += 1) {
-		  optr = ipoint_index(base, idx);
-		  ofp = functor_index(optr);
-		  ofp->put_oval(0, push);
-	    }
-
-	    for (unsigned idx = amount ;  idx < wid_ ;  idx += 1) {
-		  optr = ipoint_index(base, idx);
-		  ofp = functor_index(optr);
-		  iptr = ipoint_index(base, idx - amount);
-		  ifp = functor_index(iptr);
-
-		  ofp->put_oval(ifp->ival & 3, push);
-	    }
-      }
 }
-#endif
 
-#if 0
-void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+vvp_shiftl::~vvp_shiftl()
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
-
-      unsigned amount = 0;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base, idx);
-	    functor_t fp = functor_index(ptr);
-
-	    unsigned val = (fp->ival >> 2) & 0x03;
-	    switch (val) {
-		case 0:
-		  break;
-		case 1:
-		  amount |= 1 << idx;
-		  break;
-		default:
-		  output_x_(base, push);
-		  return;
-	    }
-      }
-
-      if (amount >= wid_) {
-	    output_x_(base, push, 0);
-	    return;
-
-      } else {
-	    vvp_ipoint_t optr, iptr;
-	    functor_t ofp, ifp;
-
-	    for (unsigned idx = 0 ;  idx < (wid_-amount) ;  idx += 1) {
-		  optr = ipoint_index(base, idx);
-		  ofp = functor_index(optr);
-		  iptr = ipoint_index(base, idx + amount);
-		  ifp = functor_index(iptr);
-
-		  ofp->put_oval(ifp->ival & 3, push);
-	    }
-
-	    for (unsigned idx = wid_-amount; idx < wid_ ;  idx += 1) {
-		  optr = ipoint_index(base, idx);
-		  ofp = functor_index(optr);
-		  ofp->put_oval(0, push);
-	    }
-      }
 }
-#endif
+
+void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t out (op_a_.size());
+
+      unsigned long shift;
+      if (! vector4_to_value(op_b_, shift)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      if (shift > out.size())
+	    shift = out.size();
+
+      for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
+	    out.set_bit(idx, BIT4_0);
+
+      for (unsigned idx = shift ;  idx < out.size() ;  idx += 1)
+	    out.set_bit(idx, op_a_.value(idx-shift));
+
+      vvp_send_vec4(ptr.ptr()->out, out);
+}
+
+vvp_shiftr::vvp_shiftr(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+vvp_shiftr::~vvp_shiftr()
+{
+}
+
+void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t out (op_a_.size());
+
+      unsigned long shift;
+      if (! vector4_to_value(op_b_, shift)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      if (shift > out.size())
+	    shift = out.size();
+
+      for (unsigned idx = shift ;  idx < out.size() ;  idx += 1)
+	    out.set_bit(idx-shift, op_a_.value(idx));
+
+      for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
+	    out.set_bit(idx+out.size()-shift, BIT4_0);
+
+      vvp_send_vec4(ptr.ptr()->out, out);
+}
+
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.43  2005/03/19 06:23:49  steve
+ *  Handle LPM shifts.
+ *
  * Revision 1.42  2005/03/12 06:42:28  steve
  *  Implement .arith/mod.
  *

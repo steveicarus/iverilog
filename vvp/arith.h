@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.28 2005/03/12 06:42:28 steve Exp $"
+#ident "$Id: arith.h,v 1.29 2005/03/19 06:23:49 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -184,21 +184,24 @@ class vvp_arith_sum  : public vvp_arith_ {
 class vvp_shiftl  : public vvp_arith_ {
 
     public:
-      explicit vvp_shiftl(unsigned wid) : vvp_arith_(wid) {}
-
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      explicit vvp_shiftl(unsigned wid);
+      ~vvp_shiftl();
+      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
 };
 
 class vvp_shiftr  : public vvp_arith_ {
 
     public:
-      explicit vvp_shiftr(unsigned wid) : vvp_arith_(wid) {}
-
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      explicit vvp_shiftr(unsigned wid);
+      ~vvp_shiftr();
+      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
 };
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.29  2005/03/19 06:23:49  steve
+ *  Handle LPM shifts.
+ *
  * Revision 1.28  2005/03/12 06:42:28  steve
  *  Implement .arith/mod.
  *

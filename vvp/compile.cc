@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.193 2005/03/12 06:42:28 steve Exp $"
+#ident "$Id: compile.cc,v 1.194 2005/03/19 06:23:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -849,17 +849,6 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 }
 #endif
 
-#if 0
-static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
-{
-      for (unsigned i=1;  i < wid;  i++) {
-	    extra_outputs_functor_s *fu = new extra_outputs_functor_s;
-	    vvp_ipoint_t ipt = ipoint_index(fdx, i);
-	    functor_define(ipt, fu);
-	    fu->base_ = fdx;
-      }
-}
-#endif
 
 static void make_arith(vvp_arith_ *arith,
 		       char*label, long wid,
@@ -1043,43 +1032,6 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
       make_arith(arith, label, wid, argc, argv);
 }
 
-static void make_shift(vvp_arith_*arith,
-		       char*label, long wid,
-		       unsigned argc, struct symb_s*argv)
-{
-#if 0
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      functor_define(fdx, arith);
-
-      define_functor_symbol(label, fdx);
-      free(label);
-
-      make_extra_outputs(fdx, wid);
-
-      for (int idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    if ((wid+idx) >= (long)argc)
-		  obj->ival = 0x02;
-	    else
-		  obj->ival = 0x0a;
-
-	    struct symb_s tmp_argv[3];
-	    unsigned tmp_argc = 1;
-	    tmp_argv[0] = argv[idx];
-	    if ((wid+idx) < (long)argc) {
-		  tmp_argv[1] = argv[wid+idx];
-		  tmp_argc += 1;
-	    }
-
-	    inputs_connect(ptr, tmp_argc, tmp_argv);
-      }
-#else
-      fprintf(stderr, "XXXX make_shift not implemented\n");
-#endif
-      free(argv);
-}
 
 /*
  * A .shift/l statement creates an array of functors for the
@@ -1090,42 +1042,16 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if ((long)argc < (wid+1)) {
-	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
-      if ((long)argc > (wid*2)) {
-	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
       vvp_arith_ *arith = new vvp_shiftl(wid);
-
-      make_shift(arith, label, wid, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if ((long)argc < (wid+1)) {
-	    fprintf(stderr, "%s; .shift/r has too few symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
-      if ((long)argc > (wid*2)) {
-	    fprintf(stderr, "%s; .shift/r has too many symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
       vvp_arith_ *arith = new vvp_shiftr(wid);
-
-      make_shift(arith, label, wid, argc, argv);
+      make_arith(arith, label, wid, argc, argv);
 }
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
@@ -1661,6 +1587,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.194  2005/03/19 06:23:49  steve
+ *  Handle LPM shifts.
+ *
  * Revision 1.193  2005/03/12 06:42:28  steve
  *  Implement .arith/mod.
  *

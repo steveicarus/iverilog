@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.61 2005/03/18 02:56:04 steve Exp $
+ *  $Id: README.txt,v 1.62 2005/03/19 06:23:49 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -598,11 +598,14 @@ STRUCTURAL SHIFTER STATEMENTS:
 Variable shifts in structural context are implemented with .shift
 statements:
 
-	<label> .shift/sl <wid>, <symbols_list>;
+	<label> .shift/l <wid>, <data symbol>, <shift symbol>;
+	<label> .shift/r <wid>, <data symbol>, <shift symbol>;
 
-The shifter has a width that defines the number of outputs and the
-number of data inputs. The first <wid> symbols in the <symbols_list>
-gives the input data. The remaining hold the shift value, lsb first.
+The shifter has a width that defines the vector width of the output, a
+<data symbol> that is the input data to be shifted and a <shift-symbol>
+that is the amount to shift. The vectors that come from port 0 are the
+data to be shifted and must have exactly the width of the output. The
+input to port 1 is the amount to shift.
 
 
 STRUCTURAL FUNCTION CALLS:

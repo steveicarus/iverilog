@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.117 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: stub.c,v 1.118 2005/03/19 06:23:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -594,6 +594,37 @@ static void show_lpm_repeat(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_shift(ivl_lpm_t net, const char*shift_dir)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_SHIFT%s %s: <width=%u>\n", shift_dir,
+	      ivl_lpm_basename(net), width);
+
+      nex = ivl_lpm_q(net, 0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Q output nexus width=%u "
+		    "does not match part width\n", width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_data(net, 0);
+      fprintf(out, "    D: %s\n", ivl_nexus_name(nex));
+
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Q output nexus width=%u "
+		    "does not match part width\n", width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_data(net, 1);
+      fprintf(out, "    S: %s <width=%u>\n",
+	      ivl_nexus_name(nex), width_of_nexus(nex));
+}
+
 static void show_lpm_sub(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -671,37 +702,13 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_re(net);
 	    break;
 
-	  case IVL_LPM_SHIFTL: {
-		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u %s>\n",
-			ivl_lpm_basename(net), width, ivl_lpm_selects(net),
-			ivl_lpm_signed(net)? "signed" : "unsigned");
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_data(net, idx)));
-		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
-		      fprintf(out, "    Shift %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_select(net, idx)));
-		break;
-	  }
+	  case IVL_LPM_SHIFTL:
+	    show_lpm_shift(net, "L");
+	    break;
 
-	  case IVL_LPM_SHIFTR: {
-		fprintf(out, "  LPM_SHIFTR %s: <width=%u, selects=%u %s>\n",
-			ivl_lpm_basename(net), width, ivl_lpm_selects(net),
-			ivl_lpm_signed(net)? "signed" : "unsigned");
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_data(net, idx)));
-		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
-		      fprintf(out, "    Shift %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_select(net, idx)));
-		break;
-	  }
+	  case IVL_LPM_SHIFTR:
+	    show_lpm_shift(net, "R");
+	    break;
 
 	  case IVL_LPM_SUB:
 	    show_lpm_sub(net);
@@ -1216,6 +1223,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.118  2005/03/19 06:23:49  steve
+ *  Handle LPM shifts.
+ *
  * Revision 1.117  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *
