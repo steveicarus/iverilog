@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.94 2003/03/25 02:15:48 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.95 2003/05/10 02:38:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -440,7 +440,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
+      lv = draw_eval_expr(le, STUFF_OK_XZ);
 
 	/* if the left operand has width, then evaluate the single-bit
 	   logical equivilent. */
@@ -454,7 +454,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
+      rv = draw_eval_expr(re, STUFF_OK_XZ);
 
 	/* if the right operand has width, then evaluate the single-bit
 	   logical equivilent. */
@@ -2002,6 +2002,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.95  2003/05/10 02:38:49  steve
+ *  Proper width handling of || expressions.
+ *
  * Revision 1.94  2003/03/25 02:15:48  steve
  *  Use hash code for scope labels.
  *
