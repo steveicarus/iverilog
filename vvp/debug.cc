@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.2 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: debug.cc,v 1.3 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 /*
@@ -91,15 +91,13 @@ static void cmd_functor(unsigned argc, char*argv[])
 	    }
 
 	    printf("out pointer  = 0x%x\n", fp->out);
-	    printf("input values = %c %c %c %c\n",
-		   bitval_tab[fp->ival&3],
-		   bitval_tab[(fp->ival>>2)&3],
-		   bitval_tab[(fp->ival>>4)&3],
-		   bitval_tab[(fp->ival>>6)&3]);
-	    printf("out value    = %c (%s0 %s1)\n",
-		   bitval_tab[fp->oval],
-		   strength_tab[fp->odrive0],
-		   strength_tab[fp->odrive1]);
+	    printf("input values = %c (%02x) %c (%02x) %c (%02x) %c (%02x)\n",
+		   bitval_tab[fp->ival&3], fp->istr[0],
+		   bitval_tab[(fp->ival>>2)&3], fp->istr[1],
+		   bitval_tab[(fp->ival>>4)&3], fp->istr[2],
+		   bitval_tab[(fp->ival>>6)&3], fp->istr[3]);
+	    printf("out value    = %c (%02x)\n",
+		   bitval_tab[fp->oval], 0 /*xxxx*/);
       }
 }
 
@@ -169,6 +167,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.3  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.2  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

@@ -17,104 +17,104 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.2 2001/05/12 20:38:06 steve Exp $"
+#ident "$Id: resolv.cc,v 1.3 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 # include  "resolv.h"
 # include  "schedule.h"
 
-static void blend(unsigned&val, unsigned&drv0, unsigned drv1,
-		  unsigned inp, unsigned inp0, unsigned inp1)
+/*
+ * A signal value is unambiguous if the top 4 bits and the bottom 4
+ * bits are identical. This means that the VSSSvsss bits of the 8bit
+ * value have V==v and SSS==sss.
+ */
+# define UNAMBIG(v)  (((v) & 0x0f) == (((v) >> 4) & 0x0f))
+
+# define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
+# define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
+
+static unsigned blend(unsigned a, unsigned b)
 {
-      switch (val) {
-	  case 3:
-	    val = inp;
-	    drv0 = inp0;
-	    drv1 = inp1;
-	    break;
+      if (a == HiZ)
+	    return b;
 
-	  case 0:
-	    switch (inp) {
-		case 0:
-		  if (drv0 < inp0)
-			drv0 = inp0;
-		  break;
+      if (b == HiZ)
+	    return a;
 
-		case 1:
-		  if (drv0 < inp1) {
-			val = 1;
-			drv1 = inp1;
-		  }
-		  break;
+      unsigned res = a;
 
-		case 2:
-		  if (drv0 < inp1) {
-			val = 2;
-			if (drv0 < inp0)
-			      drv0 = inp0;
-			if (drv1 < inp1)
-			      drv0 = inp1;
-		  }
-		  break;
+      if (UNAMBIG(a) && UNAMBIG(b)) {
+
+	      /* If both signals are unambiguous, simply choose
+		 the stronger. If they have the same strength
+		 but different values, then this becomes
+		 ambiguous. */
+
+	    if (a == b) {
+
+		    /* values are equal. do nothing. */
+
+	    } else if ((b&0x07) > (res&0x07)) {
+
+		    /* New value is stronger. Take it. */
+		  res = b;
+
+	    } else if ((b&0x77) == (res&0x77)) {
+
+		    /* Strengths are the same. Make value ambiguous. */
+		  res = (res&0x70) | (b&0x07) | 0x80;
+
+	    } else {
+
+		    /* Must be res is the stronger one. */
 	    }
-	    break;
 
-	  case 1:
-	    switch (inp) {
-		case 0:
-		  if (drv1 < inp0) {
-			val = 0;
-			drv1 = inp1;
-		  }
-		  break;
+      } else if (UNAMBIG(res) || UNAMBIG(b)) {
 
-		case 1:
-		  if (drv1 < inp1) {
-			drv1 = inp1;
-		  }
-		  break;
+	      /* If one of the signals is unambiguous, then it
+		 will sweep up the weaker parts of the ambiguous
+		 signal. The result may be ambiguous, or maybe not. */
 
-		case 2:
-		  if (drv1 < inp0) {
-			val = 2;
-			if (drv0 < inp0)
-			      drv0 = inp0;
-			if (drv1 < inp1)
-			      drv0 = inp1;
-		  }
-		  break;
-	    }
-	    break;
+	    unsigned tmp = 0;
 
+	    if ((res&0x70) > (b&0x70))
+		  tmp |= res&0xf0;
+	    else
+		  tmp |= b&0xf0;
 
-	  case 2:
-	    switch (inp) {
-		case 0:
-		  if (drv1 < inp0) {
-			val = 0;
-			drv0 = inp0;
-			drv1 = inp1;
-		  }
-		  break;
+	    if ((res&0x07) > (b&0x07))
+		  tmp |= res&0x0f;
+	    else
+		  tmp |= b&0x0f;
 
-		case 1:
-		  if (drv0 < inp1) {
-			val = 1;
-			drv0 = inp0;
-			drv1 = inp1;
-		  }
-		  break;
+	    res = tmp;
 
-		case 2:
-		  if (drv0 < inp0)
-			drv0 = inp0;
-		  if (drv1 < inp1)
-			drv0 = inp1;
-		  break;
-	    }
-	    break;
+      } else {
 
+	      /* If both signals are ambiguous, then the result
+		 has an even wider ambiguity. */
+
+	    unsigned tmp = 0;
+
+	    if (STREN1(b) > STREN1(res))
+		  tmp |= b&0xf0;
+	    else
+		  tmp |= res&0xf0;
+
+	    if (STREN0(b) < STREN0(res))
+		  tmp |= b&0x0f;
+	    else
+		  tmp |= res&0x0f;
+
+	    res = tmp;
       }
+
+
+	/* Cannonicalize the HiZ value. */
+      if ((res&0x77) == 0)
+	    res = HiZ;
+
+      return res;
 }
 
 /*
@@ -124,31 +124,31 @@ static void blend(unsigned&val, unsigned&drv0, unsigned drv1,
  */
 void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
-      unsigned val = (fp->ival >> 0) & 3;
-      unsigned drv0 = (fp->idrive >> 0) & 7;
-      unsigned drv1 = (fp->idrive >> 3) & 7;
+      unsigned val = fp->istr[0];
 
-      blend(val, drv0, drv1,
-	    (fp->ival >> 2) & 3,
-	    (fp->idrive >> 6) & 7,
-	    (fp->idrive >> 9) & 7);
+      val = blend(val, fp->istr[1]);
+      val = blend(val, fp->istr[2]);
+      val = blend(val, fp->istr[3]);
 
-      blend(val, drv0, drv1,
-	    (fp->ival >> 4) & 3,
-	    (fp->idrive >>12) & 7,
-	    (fp->idrive >>15) & 7);
+      unsigned oval;
+      if (val == HiZ) {
+	    oval = 3;
 
-      blend(val, drv0, drv1,
-	    (fp->ival >> 6) & 3,
-	    (fp->idrive >>18) & 7,
-	    (fp->idrive >>21) & 7);
-
-      fp->odrive0 = drv0;
-      fp->odrive1 = drv1;
+      } else switch (val & 0x88) {
+	  case 0x00:
+	    oval = 0;
+	    break;
+	  case 0x88:
+	    oval = 1;
+	    break;
+	  default:
+	    oval = 2;
+	    break;
+      }
 
 	/* If the output changes, then create a propagation event. */
-      if (val != fp->oval) {
-	    fp->oval = val;
+      if (oval != fp->oval) {
+	    fp->oval = oval;
 	    if (push)
 		  functor_propagate(ptr);
 	    else
@@ -158,6 +158,9 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.3  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.2  2001/05/12 20:38:06  steve
  *  A resolver that understands some simple strengths.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.14 2001/05/22 04:08:49 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.15 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 /*
@@ -301,7 +301,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      functor_set(ipoint_index(rfp->bits,idx), val&1,
-				  6, 6, true);
+				  (val&1)? St1 : St0, true);
 		      val >>= 1;
 		}
 		break;
@@ -310,16 +310,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  functor_set(rfp->bits, 0, 6, 6, true);
+		  functor_set(rfp->bits, 0, St0, true);
 		  break;
 		case vpi1:
-		  functor_set(rfp->bits, 1, 6, 6, true);
+		  functor_set(rfp->bits, 1, St1, true);
 		  break;
 		case vpiX:
-		  functor_set(rfp->bits, 2, 6, 6, true);
+		  functor_set(rfp->bits, 2, StX, true);
 		  break;
 		case vpiZ:
-		  functor_set(rfp->bits, 3, 6, 6, true);
+		  functor_set(rfp->bits, 3, HiZ, true);
 		  break;
 		default:
 		  assert(0);
@@ -336,19 +336,19 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		      switch (bit) {
 			  case 0: /* zero */
 			    functor_set(ipoint_index(rfp->bits,idx),
-					0, 6, 6, true);
+					0, St0, true);
 			    break;
 			  case 1: /* one */
 			    functor_set(ipoint_index(rfp->bits,idx),
-					1, 6, 6, true);
+					1, St1, true);
 			    break;
 			  case 2: /* z */
 			    functor_set(ipoint_index(rfp->bits,idx),
-					3, 6, 6, true);
+					3, HiZ, true);
 			    break;
 			  case 3: /* x */
 			    functor_set(ipoint_index(rfp->bits,idx),
-					2, 6, 6, true);
+					2, StX, true);
 			    break;
 		      }
 		      aval >>= 1;
@@ -432,6 +432,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.15  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.14  2001/05/22 04:08:49  steve
  *  correctly interpret signed decimal values.
  *

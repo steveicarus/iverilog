@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.22 2001/05/12 20:38:06 steve Exp $"
+#ident "$Id: functor.h,v 1.23 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -83,14 +83,14 @@
  * methods for receiving and retrieving values. See the vvp_fobj_s
  * definition below.
  *
- * STRENGTHS:
+ * DRIVE STRENGTHS:
  *
  * The normal functor (modes 0, 1 and 2) is not aware of strengths. It
  * generates strength simply by virtue of having strength
- * specifications.
+ * specifications. The drive strength specification includes a drive0
+ * and drive1 strength, each with 8 possible values (that can be
+ * represented in 3 bits) as given in this table:
  *
- * When the bit value is read out of the functor, only the val bits
- * are read. There are 8 drive values available in the 3 bits:
  *    HiZ    = 0,
  *    SMALL  = 1,
  *    MEDIUM = 2,
@@ -100,7 +100,14 @@
  *    STRONG = 6,
  *    SUPPLY = 7
  *
- * Only mode-42 functors are strength-aware.
+ * OUTPUT STRENGTHS:
+ *
+ * The strength-aware outputs are specified as an 8 bit value, that is
+ * two 4 bit numbers. The value is encoded with two drive strengths (0-7)
+ * and two drive values (0 or 1). Each nibble contains three bits of
+ * strength and one bit of value, like so: VSSS. The high nible has
+ * the strength-value closest to supply1, and the low nibble has the
+ * strength-value closest to supply0.
  */
 
 struct functor_s {
@@ -115,11 +122,11 @@ struct functor_s {
       vvp_ipoint_t out;
 	/* These are the input ports. */
       vvp_ipoint_t port[4];
-	/* These are the input values. */
+	/* Input with strengths, for strength aware functors. */
+      unsigned char istr[4];
+	/* Input values without strengths. */
       unsigned ival       : 8;
-	/* Input strengths, for strength aware functors. */
-      unsigned idrive     : 4*6;
-	/* Output value (low bits, and drive1 and drive0 strength. */
+	/* Output value (low bits) and drive1 and drive0 strength. */
       unsigned oval       : 2;
       unsigned odrive0    : 3;
       unsigned odrive1    : 3;
@@ -136,6 +143,15 @@ struct functor_s {
 };
 
 typedef struct functor_s *functor_t;
+
+enum strength_e {
+      HiZ = 0x00,
+      St0 = 0x66, /* St0-St0 */
+      Pu0 = 0x55, /* Pu0-Pu0 */
+      St1 = 0x66|0x88, /* St1 - St1 */
+      Pu1 = 0x55|0x88, /* Pu1 - Pu1 */
+      StX = 0x66|0x80, /* St0 - St1 */
+};
 
 /*
  * This a an `obj' structute for mode-42 functors.  
@@ -200,9 +216,12 @@ extern vvp_ipoint_t functor_allocate(unsigned wid);
  * This function is used by the compile time to initialize the value
  * of an input, and by the run time to manipulate the bits of the
  * input in a uniform manner.
+ *
+ * The val parameter is the 2bit representation of the input value,
+ * and the str is a strength aware version.
  */
-extern void functor_put_input(functor_t fp, unsigned pp, unsigned val,
-			      unsigned drive0, unsigned drive1);
+extern void functor_put_input(functor_t fp, unsigned pp,
+			      unsigned val, unsigned str);
 
 /*
  * functor_set sets the addressed input to the specified value, and
@@ -210,13 +229,12 @@ extern void functor_put_input(functor_t fp, unsigned pp, unsigned val,
  * propagation events are created. Propagation calls further
  * functor_set methods for the functors connected to the output.
  *
- * The val contains 2 bits two represent the 4-value bit. The drive0
- * and drive1 values are also passed, and typically just stored in the
+ * The val contains 2 bits two represent the 4-value bit. The str
+ * version is also passed, and typically just stored in the
  * functor.
  */
 extern void functor_set(vvp_ipoint_t point, unsigned val,
-			unsigned drive0, unsigned drive1,
-			bool push=false);
+			unsigned str, bool push);
 
 /*
  * Read the value of the functor. In fact, only the *value* is read --
@@ -264,6 +282,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.23  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.22  2001/05/12 20:38:06  steve
  *  A resolver that understands some simple strengths.
  *

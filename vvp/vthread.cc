@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.41 2001/05/24 04:20:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.42 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -879,10 +879,12 @@ bool of_OR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
+
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
-      functor_set(cp->iptr, bit_val, 6, 6, true);
+      functor_set(cp->iptr, bit_val, strong_values[bit_val], true);
 
       return true;
 }
@@ -1045,6 +1047,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.42  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.41  2001/05/24 04:20:10  steve
  *  Add behavioral modulus.
  *

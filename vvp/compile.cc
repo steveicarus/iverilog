@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.68 2001/05/24 04:20:10 steve Exp $"
+#ident "$Id: compile.cc,v 1.69 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -271,37 +271,37 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 
 	    if (strcmp(argv[idx].text, "C<0>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 0, 6, 6);
+		  functor_put_input(iobj, idx, 0, St0);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<pu0>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 0, 5, 5);
+		  functor_put_input(iobj, idx, 0, Pu0);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 1, 6, 6);
+		  functor_put_input(iobj, idx, 1, St1);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<pu1>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 1, 5, 5);
+		  functor_put_input(iobj, idx, 1, Pu1);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<x>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 2, 6, 6);
+		  functor_put_input(iobj, idx, 2, StX);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<z>") == 0) {
 		  free(argv[idx].text);
-		  functor_put_input(iobj, idx, 3, 6, 6);
+		  functor_put_input(iobj, idx, 3, HiZ);
 		  continue;
 	    }
 
@@ -1207,6 +1207,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.69  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.68  2001/05/24 04:20:10  steve
  *  Add behavioral modulus.
  *

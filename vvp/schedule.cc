@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.9 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: schedule.cc,v 1.10 2001/05/30 03:02:35 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -255,7 +255,20 @@ void schedule_simulate(void)
 		  break;
 
 		case TYPE_ASSIGN:
-		  functor_set(cur->fun, cur->val, 6, 6);
+		  switch (cur->val) {
+		      case 0:
+			functor_set(cur->fun, cur->val, St0, false);
+			break;
+		      case 1:
+			functor_set(cur->fun, cur->val, St1, false);
+			break;
+		      case 2:
+			functor_set(cur->fun, cur->val, StX, false);
+			break;
+		      case 3:
+			functor_set(cur->fun, cur->val, HiZ, false);
+			break;
+		  }
 		  break;
 
 		case TYPE_GEN:
@@ -271,6 +284,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.10  2001/05/30 03:02:35  steve
+ *  Propagate strength-values instead of drive strengths.
+ *
  * Revision 1.9  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.
