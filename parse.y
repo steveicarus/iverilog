@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.168 2002/12/10 05:49:51 steve Exp $"
+#ident "$Id: parse.y,v 1.169 2003/01/17 05:48:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,6 +39,17 @@ static bool active_signed = false;
    old behavior back by defining these symbols. */
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYLTYPE_IS_TRIVIAL 1
+
+/* Recent version of bison expect that the user supply a
+   YYLLOC_DEFAULT macro that makes up a yylloc value from existing
+   values. I need to supply an explicit version to account for the
+   text field, that otherwise won't be copied. */
+# define YYLLOC_DEFAULT(Current, Rhs, N)         \
+  Current.first_line   = Rhs[1].first_line;      \
+  Current.first_column = Rhs[1].first_column;    \
+  Current.last_line    = Rhs[N].last_line;       \
+  Current.last_column  = Rhs[N].last_column;     \
+  Current.text         = Rhs[1].text;
 
 /*
  * These are some common strength pairs that are used as defaults when
