@@ -17,6 +17,23 @@ case "${host}" in
 	;;
 esac
 
+AC_MSG_CHECKING("for flag to make position independent code")
+PICFLAG=-fPIC
+case "${host}" in
+
+     *-*-cygwin*)
+	PICFLAG=
+	;;
+
+     *-*-hpux*)
+	PICFLAG=+z
+	;;
+
+esac
+AC_SUBST(PICFLAG)
+AC_MSG_RESULT($PICFLAG)
+
+
 AC_SUBST(EXEEXT)
 AC_SUBST(EXTRALIBS)
 
