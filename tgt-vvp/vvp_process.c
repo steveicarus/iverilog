@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.79 2003/02/03 01:09:20 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.80 2003/02/27 20:38:12 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -164,11 +164,111 @@ static void calculate_into_x1(ivl_expr_t expr)
       clr_vector(vec);
 }
 
+/*
+ * This is a private function to generate %set code for the
+ * statement. At this point, the r-value is evaluated and stored in
+ * the res vector, I just need to generate the %set statements for the
+ * l-values of the assignment.
+ */
+static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
+{
+      ivl_lval_t lval;
+      ivl_memory_t mem;
+
+      unsigned wid = res.wid;
+      unsigned lidx;
+      unsigned cur_rbit = 0;
+
+      for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	    unsigned skip_set = transient_id++;
+	    unsigned skip_set_flag = 0;
+	    unsigned idx;
+	    unsigned bit_limit = wid - cur_rbit;
+	    lval = ivl_stmt_lval(net, lidx);
+
+	      /* If there is a mux for the lval, calculate the
+		 value and write it into index0. */
+	    if (ivl_lval_mux(lval)) {
+		  calculate_into_x0(ivl_lval_mux(lval));
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  skip_set_flag = 1;
+	    }
+
+	    mem = ivl_lval_mem(lval);
+	    if (mem) {
+		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  skip_set_flag = 1;
+	    }
+
+	    if (bit_limit > ivl_lval_pins(lval))
+		  bit_limit = ivl_lval_pins(lval);
+
+	    if (mem) {
+		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			unsigned bidx = res.base < 4
+			      ? res.base
+			      : (res.base+cur_rbit);
+			set_to_memory(mem, idx, bidx);
+			cur_rbit += 1;
+		  }
+
+		  for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
+			set_to_memory(mem, idx, 0);
+
+	    } else {
+
+		  unsigned bidx = res.base < 4
+			? res.base
+			: (res.base+cur_rbit);
+		  set_to_lvariable(lval, 0, bidx, bit_limit);
+		  cur_rbit += bit_limit;
+
+		  if (bit_limit < ivl_lval_pins(lval)) {
+			unsigned cnt = ivl_lval_pins(lval) - bit_limit;
+			set_to_lvariable(lval, bit_limit, 0, cnt);
+		  }
+	    }
+
+
+	    if (skip_set_flag) {
+		  fprintf(vvp_out, "t_%u ;\n", skip_set);
+		  clear_expression_lookaside();
+	    }
+      }
+}
+
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_memory_t mem;
+
+	/* Handle the special case that the expression is a real
+	   value. Evaluate the real expression, then convert the
+	   result to a vector. Then store that vector into the
+	   l-value. */
+      if (ivl_expr_value(rval) == IVL_VT_REAL) {
+	    int word = draw_eval_real(rval);
+	      /* This is the accumulated with of the l-value of the
+		 assignment. */
+	    unsigned wid = ivl_stmt_lwidth(net);
+
+	    struct vector_info vec;
+
+	    vec.base = allocate_vector(wid);
+	    vec.wid = wid;
+
+	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
+		    vec.base, word, vec.wid);
+
+	    clr_word(word);
+
+	    set_vec_to_lval(net, vec);
+
+	    clr_vector(vec);
+	    return 0;
+      }
 
 	/* Handle the special case that the r-value is a constant. We
 	   can generate the %set statement directly, without any worry
@@ -255,68 +355,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
       }
 
       { struct vector_info res = draw_eval_expr(rval, 0);
-        unsigned wid = res.wid;
-	unsigned lidx;
-	unsigned cur_rbit = 0;
-
-	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
-	      unsigned skip_set = transient_id++;
-	      unsigned skip_set_flag = 0;
-	      unsigned idx;
-	      unsigned bit_limit = wid - cur_rbit;
-	      lval = ivl_stmt_lval(net, lidx);
-
-		/* If there is a mux for the lval, calculate the
-		   value and write it into index0. */
-	      if (ivl_lval_mux(lval)) {
-		    calculate_into_x0(ivl_lval_mux(lval));
-		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		    skip_set_flag = 1;
-	      }
-
-	      mem = ivl_lval_mem(lval);
-	      if (mem) {
-		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
-		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		    skip_set_flag = 1;
-	      }
-
-	      if (bit_limit > ivl_lval_pins(lval))
-		    bit_limit = ivl_lval_pins(lval);
-
-	      if (mem) {
-		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			  unsigned bidx = res.base < 4
-				? res.base
-				: (res.base+cur_rbit);
-			  set_to_memory(mem, idx, bidx);
-			  cur_rbit += 1;
-		    }
-
-		    for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
-			  set_to_memory(mem, idx, 0);
-
-	      } else {
-
-		    unsigned bidx = res.base < 4
-			  ? res.base
-			  : (res.base+cur_rbit);
-		    set_to_lvariable(lval, 0, bidx, bit_limit);
-		    cur_rbit += bit_limit;
-
-		    if (bit_limit < ivl_lval_pins(lval)) {
-			  unsigned cnt = ivl_lval_pins(lval) - bit_limit;
-			  set_to_lvariable(lval, bit_limit, 0, cnt);
-		    }
-	      }
-
-
-	      if (skip_set_flag) {
-		    fprintf(vvp_out, "t_%u ;\n", skip_set);
-		    clear_expression_lookaside();
-	      }
-	}
-
+        set_vec_to_lval(net, res);
 	if (res.base > 3)
 	      clr_vector(res);
       }
@@ -1567,6 +1606,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.80  2003/02/27 20:38:12  steve
+ *  Handle assign of real values to vectors.
+ *
  * Revision 1.79  2003/02/03 01:09:20  steve
  *  Allow $display of $simtime.
  *
