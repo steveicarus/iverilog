@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.73 2001/07/22 00:17:49 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.74 2001/07/27 02:41:55 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -732,7 +732,7 @@ extern unsigned     ivl_scope_mems(ivl_scope_t net);
 extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
-extern const char*  ivl_scope_port(ivl_scope_t net, unsigned idx);
+extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
 extern ivl_scope_type_t ivl_scope_type(ivl_scope_t net);
@@ -894,6 +894,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.74  2001/07/27 02:41:55  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.73  2001/07/22 00:17:49  steve
  *  Support the NetESubSignal expressions in vvp.tgt.
  *

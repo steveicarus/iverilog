@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.58 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.59 2001/07/27 02:41:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -905,7 +905,7 @@ extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
       return net->ports;
 }
 
-extern "C" const char* ivl_scope_port(ivl_scope_t net, unsigned idx)
+extern "C" ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx)
 {
       assert(net);
       assert(net->type_ == IVL_SCT_FUNCTION);
@@ -1280,6 +1280,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.59  2001/07/27 02:41:55  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.58  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

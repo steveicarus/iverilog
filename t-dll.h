@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.56 2001/07/22 00:17:50 steve Exp $"
+#ident "$Id: t-dll.h,v 1.57 2001/07/27 02:41:56 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -448,7 +448,7 @@ struct ivl_scope_s {
       ivl_statement_t def;
 
       unsigned ports;
-      char **port;
+      ivl_signal_t*port;
 };
 
 /*
@@ -557,6 +557,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.57  2001/07/27 02:41:56  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.56  2001/07/22 00:17:50  steve
  *  Support the NetESubSignal expressions in vvp.tgt.
  *

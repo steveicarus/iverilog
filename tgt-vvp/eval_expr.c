@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.38 2001/07/22 19:33:51 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.39 2001/07/27 02:41:56 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -983,7 +983,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       unsigned idx;
       unsigned swid = ivl_expr_width(exp);
       ivl_scope_t def = ivl_expr_def(exp);
-      const char*name = ivl_scope_port(def, 0);
+      ivl_signal_t retval = ivl_scope_port(def, 0);
       struct vector_info res;
 
 	/* evaluate the expressions and send the results to the
@@ -991,14 +991,17 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
-	    const char*port = ivl_scope_port(def, idx+1);
+	    ivl_signal_t port = ivl_scope_port(def, idx+1);
 	    unsigned pin, bit;
 
-	    res = draw_eval_expr(ivl_expr_parm(exp, idx));
+	    res = draw_eval_expr_wid(ivl_expr_parm(exp, idx),
+				     ivl_signal_pins(port));
 	    bit = res.base;
+	    assert(res.wid <= ivl_signal_pins(port));
 	    for (pin = 0 ;  pin < res.wid ;  pin += 1) {
 		  fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-			  vvp_mangle_id(port), pin, bit);
+			  vvp_mangle_id(ivl_signal_name(port)),
+			  pin, bit);
 		  if (bit >= 4)
 			bit += 1;
 	    }
@@ -1021,7 +1024,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, vvp_mangle_id(name), idx);
+		    res.base+idx, vvp_mangle_id(ivl_signal_name(retval)), idx);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -1156,6 +1159,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.39  2001/07/27 02:41:56  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.38  2001/07/22 19:33:51  steve
  *  Handle repeat for concatenation expressions.
  *

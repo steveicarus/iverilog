@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.32 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.33 2001/07/27 02:41:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,9 +110,9 @@ void dll_target::func_def(const NetScope*net)
 
       scope->ports = def->port_count();
       if (scope->ports > 0) {
-	    scope->port = new char*[scope->ports];
+	    scope->port = new ivl_signal_t[scope->ports];
 	    for (unsigned idx = 0 ;  idx < scope->ports ;  idx += 1)
-		  scope->port[idx] = strdup(def->port(idx)->name());
+		  scope->port[idx] = find_signal(des_.root_, def->port(idx));
       }
 }
 
@@ -693,6 +693,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.33  2001/07/27 02:41:56  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.32  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

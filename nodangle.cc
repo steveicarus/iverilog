@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.12 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.13 2001/07/27 02:41:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -60,10 +60,14 @@ void nodangle_f::signal(Design*des, NetNet*sig)
       if (sig->get_eref() > 0)
 	    return;
 
-	/* Cannot delete the ports of tasks. There are too many places
-	   where they are referenced. */
+	/* Cannot delete the ports of tasks or functions. There are
+	   too many places where they are referenced. */
       if ((sig->port_type() != NetNet::NOT_A_PORT)
 	  && (sig->scope()->type() == NetScope::TASK))
+	    return;
+
+      if ((sig->port_type() != NetNet::NOT_A_PORT)
+	  && (sig->scope()->type() == NetScope::FUNC))
 	    return;
 
 	/* Check to see if the signal is completely unconnected. If
@@ -126,6 +130,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.13  2001/07/27 02:41:55  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.12  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

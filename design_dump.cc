@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.114 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.115 2001/07/27 02:41:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,6 +77,22 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " (local)";
       if (signed_)
 	    o << " signed";
+      switch (port_type_) {
+	  case NetNet::NOT_A_PORT:
+	    break;
+	  case NetNet::PIMPLICIT:
+	    o << " implicit-port?";
+	    break;
+	  case NetNet::PINPUT:
+	    o << " input";
+	    break;
+	  case NetNet::POUTPUT:
+	    o << " output";
+	    break;
+	  case NetNet::PINOUT:
+	    o << " inout";
+	    break;
+      }
       o << " (eref=" << get_eref() << ")";
       if (scope())
 	    o << " scope=" << scope()->name();
@@ -944,6 +960,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.115  2001/07/27 02:41:55  steve
+ *  Fix binding of dangling function ports. do not elide them.
+ *
  * Revision 1.114  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
