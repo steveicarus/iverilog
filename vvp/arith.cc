@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.15 2001/10/16 03:06:18 steve Exp $"
+#ident "$Id: arith.cc,v 1.16 2001/10/16 03:10:20 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -66,6 +66,8 @@ void vvp_arith_div::set(vvp_ipoint_t i, functor_t f, bool push)
 
 		  unsigned ival = obj->ival;
 		  if (ival & 0xaa) {
+			fprintf(stderr, "Division by 0 error: "
+				"returning X value\n");
 			output_x_(push);
 			return;
 		  }
@@ -123,7 +125,6 @@ if(wid_ <= 8*sizeof(unsigned long)) {
 
 	    unsigned ival = obj->ival;
 	    if (ival & 0xaa) {
-		  fprintf(stderr, "Division by 0 error: returning X value\n");
 		  output_x_(push);
 		  return;
 	    }
@@ -633,6 +634,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.16  2001/10/16 03:10:20  steve
+ *  Get Division error into the division method!
+ *
  * Revision 1.15  2001/10/16 03:06:18  steve
  *  Catch division by zero in .arith/div.
  *
