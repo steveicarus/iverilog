@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.53 2000/11/30 17:31:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.54 2000/12/12 06:13:44 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -510,82 +510,70 @@ static verinum*make_sized_octal(const char*txt)
       assert(tolower(*ptr) == 'o');
       ptr += 1;
 
-	/* We know from the size number how bit to make the verinom
+	/* We know from the size number how bit to make the verinum
 	   array, so make it now. */
-      verinum::V*bits = new verinum::V[size];
+      verinum::V*bits = new verinum::V[(size+2)/3 * 3];
 
 	/* skip white space between size and the base token. */
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
-	/* Find the end of the digits. ptr already points to the start. */
-      char*eptr = ptr + strlen(ptr);
+	/* Get a pointer to the last character of the number string,
+	   then work back from there (the least significant digit)
+	   forward until I run out of digits or space to put them. */
+      char*eptr = ptr + strlen(ptr) - 1;
+      unsigned idx = 0;
 
-      if ((strlen(ptr) * 3) > ((size+2)/3) * 3)
+      while ((eptr >= ptr) && (idx < size)) {
+	    switch (*eptr) {
+		case 'x': case 'X':
+		  bits[idx++] = verinum::Vx;
+		  bits[idx++] = verinum::Vx;
+		  bits[idx++] = verinum::Vx;
+		  break;
+		case 'z': case 'Z': case '?':
+		  bits[idx++] = verinum::Vz;
+		  bits[idx++] = verinum::Vz;
+		  bits[idx++] = verinum::Vz;
+		  break;
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+		    {
+			  unsigned val = *eptr - '0';
+			  bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
+			  bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
+			  bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
+			  break;
+		    }
+		case '_':
+		  break;
+		default:
+		  assert(0);
+	    }
+
+	    eptr -= 1;
+      }
+
+	/* If we filled up all the bits and there are still characters
+	   in the number string, then we overflowed. Report a warning
+	   that we are truncating. */
+      if ((idx >= size) && (eptr >= ptr))
 	    cerr << yylloc.text << ":" << yylloc.first_line <<
 		  ": warning: Numeric octal constant ``" << ptr <<
 		  "'' truncated to " << size << " bits." << endl;
 
-	/* From the last digit and forward, build up the number, least
-	   significant bit first. This loop will not get the last few
-	   bits if the size is not a multiple of 3. */
-      unsigned idx = 0;
-      while ((eptr > ptr) && ((idx/3) < (size/3))) switch (*--eptr) {
 
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  break;
-
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  break;
-
-		default: {
-			unsigned val = *eptr - '0';
-			bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
-			bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
-			bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
-		  }
-      }
-
-      if ((eptr > ptr) && (idx < size)) switch (*--eptr) {
-
+	/* If we did not fill up all the bits from the string, then
+	   zero-extend the number. */
+      while (idx < size) switch (ptr[1]) {
 	  case 'x': case 'X':
-	    for ( ;  idx < size ;  idx += 1)
-		  bits[idx] = verinum::Vx;
+	    bits[idx++] = verinum::Vx;
 	    break;
-
 	  case 'z': case 'Z': case '?':
-	    for ( ;  idx < size ;  idx += 1)
-		  bits[idx] = verinum::Vz;
+	    bits[idx++] = verinum::Vz;
 	    break;
-
-	  default: {
-		  unsigned val = *eptr - '0';
-		  for ( ;  idx < size ;  idx += 1) {
-			bits[idx] = (val&1)? verinum::V1 : verinum::V0;
-			val >>= 1;
-		  }
-		  break;
-	    }
-
-      } else {
-
-	      // zero extend octal numbers
-	    while (idx < size) switch (ptr[1]) {
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  break;
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  break;
-		default:
-		  bits[idx++] = verinum::V0;
-	    }
+	  default:
+	    bits[idx++] = verinum::V0;
       }
 
       verinum*out = new verinum(bits, size, true);
