@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.14 2001/02/07 21:47:13 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.15 2001/02/10 01:57:18 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -136,13 +136,35 @@ void vvm_binop_or(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 	    v[idx] = B_OR(l[idx], r[idx]);
 }
 
+/*
+ * This function adds two vectors to make a result vector. The
+ * operands and the result have their sizes already determined, so we
+ * take those into account.
+ */
 void vvm_binop_plus(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
       vpip_bit_t carry = St0;
-      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+
+      unsigned top = v.nbits;
+      if (l.nbits < top)
+	    top = l.nbits;
+      if (r.nbits < top)
+	    top = r.nbits;
+
+      unsigned idx;
+
+	/* First do the addition for the part of the vector where we
+	   know that the bits from both inputs are present. */
+      for (idx = 0 ;  idx < top ;  idx += 1)
 	    v[idx] = add_with_carry(l[idx], r[idx], carry);
+
+	/* Now continue the addition, padding the shorter vector with
+	   St0 until we fill the result vector. */
+      for (  ;  idx < v.nbits ;  idx += 1) {
+	    vpip_bit_t lv = (idx < l.nbits) ? l[idx] : St0;
+	    vpip_bit_t rv = (idx < r.nbits) ? r[idx] : St0;
+	    v[idx] = add_with_carry(lv, rv, carry);
+      }
 }
 
 void vvm_binop_shiftl(vvm_bitset_t&v,
@@ -607,6 +629,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.15  2001/02/10 01:57:18  steve
+ *  Make the add func resilient to bit widths (PR#141)
+ *
  * Revision 1.14  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
  *
