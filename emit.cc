@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.26 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: emit.cc,v 1.27 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 /*
@@ -63,6 +63,11 @@ void NetAssignNB::emit_node(ostream&o, struct target_t*tgt) const
 void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_case_cmp(o, this);
+}
+
+void NetCLShift::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_clshift(o, this);
 }
 
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
@@ -367,6 +372,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.27  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.26  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.

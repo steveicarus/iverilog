@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.74 1999/11/13 03:46:52 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.75 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -60,6 +60,7 @@ class target_vvm : public target_t {
       virtual void func_def(ostream&os, const NetFuncDef*);
 
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
+      virtual void lpm_clshift(ostream&os, const NetCLShift*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mux(ostream&os, const NetMux*);
 
@@ -865,6 +866,21 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	    init_code << "      " <<  mangle(gate->name()) <<
 		  ".init_Add_Sub(0, V0);" << endl;
 
+      }
+}
+
+void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
+{
+      os << "static vvm_clshift<" << gate->width() << "," <<
+	    gate->width_dist() << "> " << mangle(gate->name()) << ";"
+	 << endl;
+
+      for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
+	    unsigned pin = gate->pin_Result(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
       }
 }
 
@@ -1863,6 +1879,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.75  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.74  1999/11/13 03:46:52  steve
  *  Support the LPM_MUX in vvm.
  *

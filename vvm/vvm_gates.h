@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.20 1999/11/14 18:22:12 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.21 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -150,6 +150,98 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 
       vpip_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
+};
+
+template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
+
+    public:
+      explicit vvm_clshift()
+	    { dir_ = V0;
+	      dist_val_ = WIDTH;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    data_[idx] = Vx;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    out_[idx] = 0;
+	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
+		    dist_[idx] = Vx;
+	    }
+
+      ~vvm_clshift() { }
+
+      void init_Data(unsigned idx, vpip_bit_t val)
+	    { data_[idx] = val;
+	    }
+      void init_Distance(unsigned idx, vpip_bit_t val)
+	    { dist_[idx] = val;
+	      calculate_dist_();
+	    }
+
+      void set_Data(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (data_[idx] == val) return;
+	      data_[idx] = val;
+	      if ((dist_val_ + idx) >= WIDTH) return;
+	      vvm_out_event::action_t out = out_[dist_val_+idx];
+	      if (out == 0) return;
+	      vvm_event*ev = new vvm_out_event(sim, val, out);
+	      sim->active_event(ev);
+	    }
+
+      void set_Distance(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (dist_[idx] == val) return;
+	      dist_[idx] = val;
+	      calculate_dist_();
+	      compute_(sim);
+	    }
+
+      void config_rout(unsigned idx, vvm_out_event::action_t o)
+	    { out_[idx] = o;
+	    }
+
+    private:
+      vpip_bit_t dir_;
+      vpip_bit_t data_[WIDTH];
+      vpip_bit_t dist_[WDIST];
+      vvm_out_event::action_t out_[WIDTH];
+      unsigned dist_val_;
+
+      void calculate_dist_()
+	    { unsigned tmp = 0;
+	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
+		    switch (dist_[idx]) {
+			case V0:
+			  break;
+			case V1:
+			  tmp |= 1<<idx;
+			  break;
+			default:
+			  tmp = WIDTH;
+		    }
+	      if (tmp > WIDTH) tmp = WIDTH;
+	      dist_val_ = tmp;
+	    }
+
+      void compute_(vvm_simulation*sim)
+	    { vvm_event*ev;
+	      if (dist_val_ == WIDTH) {
+		    for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+			  if (out_[idx] == 0) continue;
+			  ev = new vvm_out_event(sim, Vx, out_[idx]);
+			  sim->active_event(ev);
+		    }
+		    return;
+	      }
+	      for (unsigned idx = 0 ;  idx < dist_val_ ;  idx += 1) {
+		    if (out_[idx] == 0) continue;
+		    ev = new vvm_out_event(sim, V0, out_[idx]);
+		    sim->active_event(ev);
+	      }
+	      for (unsigned idx = dist_val_ ; idx < WIDTH ;  idx += 1) {
+		    if (out_[idx] == 0) continue;
+		    ev = new vvm_out_event(sim, data_[idx-dist_val_],
+					   out_[idx]);
+		    sim->active_event(ev);
+	      }
+	    }
 };
 
 /*
@@ -740,6 +832,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.21  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.20  1999/11/14 18:22:12  steve
  *  Fix NAND gate support to use named pins.
  *

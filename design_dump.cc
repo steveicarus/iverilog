@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.55 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.56 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 /*
@@ -126,6 +126,14 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetCLShift::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Combinatorial shift (NetCLShift): " <<
+	    name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -818,6 +826,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.56  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.55  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.

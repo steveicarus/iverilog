@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.84 1999/11/13 03:46:52 steve Exp $"
+#ident "$Id: netlist.cc,v 1.85 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -588,6 +588,116 @@ const NetObj::Link& NetAddSub::pin_Result(unsigned idx) const
       idx = 8 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
+}
+
+/*
+ * The pinout for the NetCLShift is:
+ *    0   -- Direction
+ *    1   -- Underflow
+ *    2   -- Overflow
+ *    3   -- Data(0)
+ *    3+W -- Result(0)
+ *    3+2W -- Distance(0)
+ */
+NetCLShift::NetCLShift(const string&n, unsigned width, unsigned width_dist)
+: NetNode(n, 3+2*width+width_dist), width_(width), width_dist_(width_dist)
+{
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Direction", 0);
+      pin(1).set_dir(NetObj::Link::OUTPUT); pin(1).set_name("Underflow", 0);
+      pin(2).set_dir(NetObj::Link::OUTPUT); pin(2).set_name("Overflow", 0);
+
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+	    pin(3+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+idx).set_name("Data", idx);
+
+	    pin(3+width_+idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(3+width_+idx).set_name("Result", idx);
+      }
+
+      for (unsigned idx = 0 ;  idx < width_dist_ ;  idx += 1) {
+	    pin(3+2*width_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+2*width_+idx).set_name("Distance", idx);
+      }
+}
+
+NetCLShift::~NetCLShift()
+{
+}
+
+unsigned NetCLShift::width() const
+{
+      return width_;
+}
+
+unsigned NetCLShift::width_dist() const
+{
+      return width_dist_;
+}
+
+NetObj::Link& NetCLShift::pin_Direction()
+{
+      return pin(0);
+}
+
+const NetObj::Link& NetCLShift::pin_Direction() const
+{
+      return pin(0);
+}
+
+NetObj::Link& NetCLShift::pin_Underflow()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetCLShift::pin_Underflow() const
+{
+      return pin(1);
+}
+
+NetObj::Link& NetCLShift::pin_Overflow()
+{
+      return pin(2);
+}
+
+const NetObj::Link& NetCLShift::pin_Overflow() const
+{
+      return pin(2);
+}
+
+NetObj::Link& NetCLShift::pin_Data(unsigned idx)
+{
+      assert(idx < width_);
+      return pin(3+idx);
+}
+
+const NetObj::Link& NetCLShift::pin_Data(unsigned idx) const
+{
+      assert(idx < width_);
+      return pin(3+idx);
+}
+
+NetObj::Link& NetCLShift::pin_Result(unsigned idx)
+{
+      assert(idx < width_);
+      return pin(3+width_+idx);
+}
+
+const NetObj::Link& NetCLShift::pin_Result(unsigned idx) const
+{
+      assert(idx < width_);
+      return pin(3+width_+idx);
+}
+
+NetObj::Link& NetCLShift::pin_Distance(unsigned idx)
+{
+      assert(idx < width_dist_);
+      return pin(3+2*width_+idx);
+}
+
+const NetObj::Link& NetCLShift::pin_Distance(unsigned idx) const
+{
+      assert(idx < width_dist_);
+      return pin(3+2*width_+idx);
 }
 
 /*
@@ -2104,6 +2214,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.85  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.84  1999/11/13 03:46:52  steve
  *  Support the LPM_MUX in vvm.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.23 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: target.cc,v 1.24 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -73,6 +73,12 @@ void target_t::lpm_add_sub(ostream&, const NetAddSub*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetAddSub." << endl;
+}
+
+void target_t::lpm_clshift(ostream&, const NetCLShift*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetCLShift." << endl;
 }
 
 void target_t::lpm_ff(ostream&, const NetFF*)
@@ -287,6 +293,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.24  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.23  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.

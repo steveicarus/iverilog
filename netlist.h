@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.86 1999/11/05 04:40:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.87 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 /*
@@ -323,6 +323,40 @@ class NetAddSub  : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+};
+
+/*
+ * This type represents the LPM_CLSHIFT device.
+ */
+class NetCLShift  : public NetNode {
+
+    public:
+      NetCLShift(const string&n, unsigned width, unsigned width_dist);
+      ~NetCLShift();
+
+      unsigned width() const;
+      unsigned width_dist() const;
+
+      NetObj::Link& pin_Direction();
+      NetObj::Link& pin_Underflow();
+      NetObj::Link& pin_Overflow();
+      NetObj::Link& pin_Data(unsigned idx);
+      NetObj::Link& pin_Result(unsigned idx);
+      NetObj::Link& pin_Distance(unsigned idx);
+
+      const NetObj::Link& pin_Direction() const;
+      const NetObj::Link& pin_Underflow() const;
+      const NetObj::Link& pin_Overflow() const;
+      const NetObj::Link& pin_Data(unsigned idx) const;
+      const NetObj::Link& pin_Result(unsigned idx) const;
+      const NetObj::Link& pin_Distance(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      unsigned width_;
+      unsigned width_dist_;
 };
 
 /*
@@ -1858,6 +1892,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.87  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.86  1999/11/05 04:40:40  steve
  *  Patch to synthesize LPM_ADD_SUB from expressions,
  *  Thanks to Larry Doolittle. Also handle constants

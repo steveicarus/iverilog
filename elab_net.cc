@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.4 1999/11/05 23:36:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.5 1999/11/14 20:24:28 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -42,6 +42,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  case 'e':
 	  case 'n':
 	    return elaborate_net_cmp_(des, path, width, rise, fall, decay);
+	  case 'l': // <<
+	  case 'r': // >>
+	    return elaborate_net_shift_(des, path, width, rise, fall, decay);
       }
 
       NetNet*lsig = left_->elaborate_net(des, path, width, 0, 0, 0),
@@ -171,10 +174,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 
 	  case 'l':
 	  case 'r':
-	    cerr << get_line() << ": sorry: combinational shift"
-		  " not supported here." << endl;
-	    des->errors += 1;
-	    osig = 0;
+	    assert(0);
 	    break;
 	  default:
 	    cerr << get_line() << ": internal error: unsupported"
@@ -372,6 +372,91 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
       return osig;
 }
 
+NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
+				       unsigned lwidth,
+				       unsigned long rise,
+				       unsigned long fall,
+				       unsigned long decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0);
+      if (lsig == 0) return 0;
+
+	/* Handle the special case of a constant shift amount. There
+	   is no reason in this case to create a gate at all, just
+	   connect the lsig to the osig with the bit positions
+	   shifted. */
+      if (verinum*rval = right_->eval_const(des, path)) {
+	    assert(rval->is_defined());
+	    unsigned dist = rval->as_ulong();
+	    if (dist > lsig->pin_count())
+		  dist = lsig->pin_count();
+
+	      /* Very special case, constant 0 shift. */
+	    if (dist == 0) return lsig;
+
+	    NetNet*osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+				     lsig->pin_count());
+	    osig->local_flag(true);
+
+	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(zero);
+
+	    if (op_ == 'l') {
+		  unsigned idx;
+		  for (idx = 0 ;  idx < dist ;  idx += 1)
+			connect(osig->pin(idx), zero->pin(0));
+		  for (idx = dist ;  idx < lsig->pin_count() ;  idx += 1)
+			connect(osig->pin(idx), lsig->pin(idx-dist));
+
+	    } else {
+		  assert(op_ == 'r');
+		  unsigned idx;
+		  unsigned keep = lsig->pin_count()-dist;
+		  for (idx = 0 ;  idx < keep ;  idx += 1)
+			connect(osig->pin(idx), lsig->pin(idx+dist));
+		  for (idx = keep ;  idx < lsig->pin_count() ;  idx += 1)
+			connect(osig->pin(idx), zero->pin(0));
+	    }
+
+	    des->add_signal(osig);
+	    return osig;
+      }
+
+      unsigned dwid = 0;
+      while ((1 << dwid) < lsig->pin_count())
+	    dwid += 1;
+
+      NetNet*rsig = right_->elaborate_net(des, path, dwid, 0, 0, 0);
+      if (rsig == 0) return 0;
+
+      NetCLShift*gate = new NetCLShift(des->local_symbol(path),
+				       lsig->pin_count(),
+				       rsig->pin_count());
+
+      NetNet*osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			       lsig->pin_count());
+      osig->local_flag(true);
+
+      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
+	    connect(osig->pin(idx), gate->pin_Result(idx));
+	    connect(lsig->pin(idx), gate->pin_Data(idx));
+      }
+
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+	    connect(rsig->pin(idx), gate->pin_Distance(idx));
+
+      if (op_ == 'r') {
+	    NetConst*dir = new NetConst(des->local_symbol(path), verinum::V1);
+	    connect(dir->pin(0), gate->pin_Direction());
+	    des->add_node(dir);
+      }
+
+      des->add_signal(osig);
+      des->add_node(gate);
+
+      return osig;
+}
+
 /*
  * Elaborate a number as a NetConst object.
  */
@@ -443,6 +528,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.5  1999/11/14 20:24:28  steve
+ *  Add support for the LPM_CLSHIFT device.
+ *
  * Revision 1.4  1999/11/05 23:36:31  steve
  *  Forgot to return the mux for use after elaboration.
  *
