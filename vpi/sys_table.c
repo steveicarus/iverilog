@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.22 2003/09/13 01:28:47 steve Exp $"
+#ident "$Id: sys_table.c,v 1.23 2003/10/30 04:52:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include <string.h>
 
 extern void sys_convert_register();
+extern void sys_fileio_register();
 extern void sys_finish_register();
 extern void sys_deposit_register();
 extern void sys_display_register();
@@ -140,6 +141,7 @@ static void sys_lxt_or_vcd_register()
 
 void (*vlog_startup_routines[])() = {
       sys_convert_register,
+      sys_fileio_register,
       sys_finish_register,
       sys_deposit_register,
       sys_display_register,
@@ -154,6 +156,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.23  2003/10/30 04:52:54  steve
+ *  Call register for fileio functions.
+ *
  * Revision 1.22  2003/09/13 01:28:47  steve
  *  Disable lxt when zlib is missing.
  *
