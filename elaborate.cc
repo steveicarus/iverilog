@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.265 2002/11/26 03:35:13 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.266 2002/12/05 04:15:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1076,6 +1076,12 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
       assert(rv);
 
+	/* Try to evaluate the expression, at least as far as possible. */
+      if (NetExpr*tmp = rv->eval_tree()) {
+	    delete rv;
+	    rv = tmp;
+      }
+
       { unsigned wid = count_lval_width(lv);
         rv->set_width(wid);
 	rv = pad_to_width(rv, wid);
@@ -1351,6 +1357,17 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    PExpr*ex = parm(idx);
 	    eparms[idx] = ex? ex->elaborate_expr(des, scope, true) : 0;
+
+	      /* Attempt to pre-evaluate the parameters. It may be
+		 possible to at least partially reduce the
+		 expression. */
+	    if (eparms[idx] && !dynamic_cast<NetEConst*>(eparms[idx])) {
+		  NetExpr*tmp = eparms[idx]->eval_tree();
+		  if (tmp != 0) {
+			delete eparms[idx];
+			eparms[idx] = tmp;
+		  }
+	    }
       }
 
       NetSTask*cur = new NetSTask(path_.peek_name(0), eparms);
@@ -2472,6 +2489,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.266  2002/12/05 04:15:14  steve
+ *  precalculate r-values of nb assignments and task arguments.
+ *
  * Revision 1.265  2002/11/26 03:35:13  steve
  *  Do not set width if width is already OK.
  *
