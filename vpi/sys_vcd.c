@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.23 2001/10/14 18:32:06 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.24 2001/10/15 01:50:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,21 +57,22 @@ struct vcd_info {
 };
 
 
-static char vcdid[8]={'!',0,0,0,0,0,0,0};
+static char vcdid[8] = "!";
+
 static void gen_new_vcd_id(void)
 {
+      static unsigned value = 0;
+      unsigned v = ++value;
       int i;
-      for(i=0;i<8;i++)        /* increment vcd id for next fac */
-	    {
-		  vcdid[i]++;
-		  if(vcdid[i]!=127) break;
-		  vcdid[i]='!';
-		  if(vcdid[i+1]==0x00)
-			{
-			      vcdid[i+1]='!';
-			      break;
-			}
-	    }
+
+      for (i=0; i < sizeof(vcdid)-1; i++) {
+           vcdid[i] = (char)((v%94)+33); /* for range 33..126 */
+           v /= 94;
+           if(!v) {
+                 vcdid[i+1] = '\0'; 
+                 break;
+           }
+      }
 }
 
 static struct vcd_info*vcd_list = 0;
@@ -395,6 +396,10 @@ static void open_dumpfile(const char*path)
 	    unsigned udx = 0;
 	    time_t walltime;
 
+	    vpi_mcd_printf(4, 
+			   "VCD info: dumpfile %s opened for output.\n", 
+			   path);
+	    
 	    time(&walltime);
 
 	    assert(prec >= -15);
@@ -528,24 +533,22 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct vcd_info* info;
 
       const char* type;
-      const char* fullname;
+      const char* name;
       const char* ident;
       int nexus_id;
 
       switch (vpi_get(vpiType, item)) {
-	  case vpiNet:
-	  case vpiReg:
+
+	  case vpiNet:  type = "wire";    if(0){
+	  case vpiReg:  type = "reg";    }
+
 	    if (skip)
 		  break;
-
-	    fullname = vpi_get_str(vpiFullName, item);
 	    
-	    type = "wire";
-	    if (vpi_get(vpiType, item) == vpiReg)
-		  type = "reg";
+	    name = vpi_get_str(vpiName, item);
 	    
 	    nexus_id = vpi_get(_vpiNexusId, item);
-	    
+
 	    if (nexus_id) {
 		  ident = find_nexus_ident(nexus_id);
 	    } else {
@@ -579,13 +582,15 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    
 	    fprintf(dump_file, "$var %s %u %s %s $end\n",
 		    type, vpi_get(vpiSize, item), ident,
-		    fullname);
+		    name);
 	    break;
 	    
-	  case vpiModule:
-	  case vpiNamedBegin:
-	  case vpiTask:
-	  case vpiFunction:
+	  case vpiModule:      type = "module";      if(0){
+	  case vpiNamedBegin:  type = "begin";      }if(0){
+	  case vpiTask:        type = "task";       }if(0){
+	  case vpiFunction:    type = "function";   }if(0){
+	  case vpiNamedFork:   type = "fork";       }
+
 	    if (depth > 0) {
 		  int nskip;
 		  vpiHandle argv;
@@ -609,16 +614,22 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 				   " ignoring signals"
 				   " in previously scanned scope %s\n",
 				   fullname);
+
+		  name = vpi_get_str(vpiName, item);
+
+		  fprintf(dump_file, "$scope %s %s $end\n", type, name);
 		  
 		  argv = vpi_iterate(vpiInternalScope, item);
 		  if (argv) {
 			for (item = vpi_scan(argv) ;  
 			     item ;  
 			     item = vpi_scan(argv)) {
-
+			      
 			      scan_item(depth-1, item, nskip);
 			}
 		  }
+		  
+		  fprintf(dump_file, "$upscope $end\n");
 	    }
 	    break;
 	    
@@ -627,6 +638,32 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			   "VCD Error: $dumpvars: Unsupported parameter "
 			   "type (%d)\n", vpi_get(vpiType, item));
       }
+}
+
+static int draw_scope(vpiHandle item)
+{
+      int depth;
+      char *name;
+      char *type;
+
+      vpiHandle scope = vpi_handle(vpiScope, item);
+      if (!scope)
+	    return 0;
+      
+      depth = 1 + draw_scope(scope);
+      name = vpi_get_str(vpiName, scope);
+
+      switch (vpi_get(vpiType, item)) {
+	  case vpiNamedBegin:  type = "begin";      break;
+	  case vpiTask:        type = "task";       break;
+	  case vpiFunction:    type = "function";   break;
+	  case vpiNamedFork:   type = "fork";       break;
+      	  default:             type = "module";     break;
+      }
+      
+      fprintf(dump_file, "$scope %s %s $end\n", type, name);
+
+      return depth;
 }
 
 static int sys_dumpvars_calltf(char*name)
@@ -666,22 +703,32 @@ static int sys_dumpvars_calltf(char*name)
 	    depth = 10000;
 
       if (!argv) {
-	    // item = (how do I get the top level scope?);
-	    // assert(item);
-	    // scan_item(depth, item, 0);
-	    // return 0
-      }
+	    // $dumpvars;
+	    // search for the toplevel module
+	    vpiHandle parent = vpi_handle(vpiScope, sys);
+	    while (parent) {
+		  item = parent;
+		  parent = vpi_handle(vpiScope, item);
+	    }
 
-      if (!argv  ||  !item  ||  !(item = vpi_scan(argv))) {
+      } else if (!item  ||  !(item = vpi_scan(argv))) {
+	    // $dumpvars(level);
+	    // $dumpvars();
+	    // dump the current scope
 	    item = vpi_handle(vpiScope, sys);
-	    assert(item);
-	    scan_item(depth, item, 0);
-	    return 0;
+	    argv = 0x0;
       }
 
-      for ( ; item; item = vpi_scan(argv)) {
+      for ( ; item; item = argv ? vpi_scan(argv) : 0x0) {
+
+	    int dep = draw_scope(item);
+
 	    vcd_names_sort();
 	    scan_item(depth, item, 0);
+	    
+	    while (dep--) {
+		  fprintf(dump_file, "$upscope $end\n");
+	    }
       }
 
       return 0;
@@ -734,6 +781,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.24  2001/10/15 01:50:23  steve
+ *  Include scope information in VCD output.
+ *
  * Revision 1.23  2001/10/14 18:32:06  steve
  *  More coverage of $dump related commands.
  *
