@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.14 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.15 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -76,12 +76,15 @@ NetNet* NetEBAdd::synthesize(Design*des)
  */
 NetNet* NetEBBits::synthesize(Design*des)
 {
-      string path = des->local_symbol("SYNTH");
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
 
+      NetScope*scope = lsig->scope();
+      assert(scope);
+      string path = des->local_symbol(scope->name());
+
       assert(lsig->pin_count() == rsig->pin_count());
-      NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT,
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT,
 			       lsig->pin_count());
       osig->local_flag(true);
 
@@ -91,19 +94,19 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 	    switch (op()) {
 		case '&':
-		  gate = new NetLogic(oname, 3, NetLogic::AND);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::AND);
 		  break;
 		case '|':
-		  gate = new NetLogic(oname, 3, NetLogic::OR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::OR);
 		  break;
 		case '^':
-		  gate = new NetLogic(oname, 3, NetLogic::XOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::XOR);
 		  break;
 		case 'O':
-		  gate = new NetLogic(oname, 3, NetLogic::NOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::NOR);
 		  break;
 		case 'X':
-		  gate = new NetLogic(oname, 3, NetLogic::XNOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::XNOR);
 		  break;
 		default:
 		  assert(0);
@@ -121,21 +124,24 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 NetNet* NetEBComp::synthesize(Design*des)
 {
-      string path = des->local_symbol("SYNTH");
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
+
+      NetScope*scope = lsig->scope();
+      assert(scope);
+      string path = des->local_symbol(scope->name());
 
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
 
-      NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, 1);
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
-	    NetLogic*gate = new NetLogic(des->local_symbol(path),
+	    NetLogic*gate = new NetLogic(scope, des->local_symbol(path),
 					 3, NetLogic::XNOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -148,7 +154,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   operation. This is similar to single bit equality, but uses
 	   an XOR instead of an XNOR gate. */
       if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
-	    NetLogic*gate = new NetLogic(des->local_symbol(path),
+	    NetLogic*gate = new NetLogic(scope, des->local_symbol(path),
 					 3, NetLogic::XOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -258,10 +264,13 @@ NetNet* NetEConst::synthesize(Design*des)
  */
 NetNet* NetEUBits::synthesize(Design*des)
 {
-      string path = des->local_symbol("SYNTH");
       NetNet*isig = expr_->synthesize(des);
 
-      NetNet*osig = new NetNet(isig->scope(), path, NetNet::IMPLICIT,
+      NetScope*scope = isig->scope();
+      assert(scope);
+      string path = des->local_symbol(scope->name());
+
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT,
 			       isig->pin_count());
       osig->local_flag(true);
 
@@ -271,7 +280,7 @@ NetNet* NetEUBits::synthesize(Design*des)
 
 	    switch (op()) {
 		case '~':
-		  gate = new NetLogic(oname, 2, NetLogic::NOT);
+		  gate = new NetLogic(scope, oname, 2, NetLogic::NOT);
 		  break;
 		default:
 		  assert(0);
@@ -320,6 +329,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.15  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.14  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

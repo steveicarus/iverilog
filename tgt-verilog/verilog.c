@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.8 2000/10/06 23:46:51 steve Exp $"
+#ident "$Id: verilog.c,v 1.9 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 /*
@@ -53,12 +53,6 @@ void target_end_design(ivl_design_t des)
 {
       fprintf(out, "endmodule\n");
       fclose(out);
-}
-
-int target_net_bufz(const char*name, ivl_net_bufz_t net)
-{
-      fprintf(out, "STUB: %s: BUFZ\n", name);
-      return 0;
 }
 
 int target_net_const(const char*name, ivl_net_const_t net)
@@ -144,8 +138,18 @@ static void show_expression(ivl_expr_t net)
       switch (ivl_expr_type(net)) {
 
 	  case IVL_EX_BINARY: {
+		char code = ivl_expr_opcode(net);
 		show_expression(ivl_expr_oper1(net));
-		fprintf(out, "%c", ivl_expr_opcode(net));
+		switch (code) {
+		    case 'e':
+		      fprintf(out, "==");
+		      break;
+		    case 'n':
+		      fprintf(out, "!=");
+		      break;
+		    default:
+		      fprintf(out, "%c", code);
+		}
 		show_expression(ivl_expr_oper2(net));
 		break;
 	  }
@@ -280,6 +284,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.9  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.8  2000/10/06 23:46:51  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

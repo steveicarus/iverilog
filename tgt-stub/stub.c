@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.14 2000/10/06 23:46:51 steve Exp $"
+#ident "$Id: stub.c,v 1.15 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 /*
@@ -52,12 +52,6 @@ int target_start_design(ivl_design_t des)
 void target_end_design(ivl_design_t des)
 {
       fclose(out);
-}
-
-int target_net_bufz(const char*name, ivl_net_bufz_t net)
-{
-      fprintf(out, "STUB: %s: BUFZ\n", name);
-      return 0;
 }
 
 int target_net_const(const char*name, ivl_net_const_t net)
@@ -98,6 +92,10 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
 	    break;
 	  case IVL_LO_BUF:
 	    fprintf(out, "buf %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUFZ:
+	    fprintf(out, "bufz %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
@@ -301,6 +299,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.15  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.14  2000/10/06 23:46:51  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

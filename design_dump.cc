@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.99 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.100 2000/10/07 19:45:42 steve Exp $"
 #endif
 
 /*
@@ -228,7 +228,8 @@ void NetAssign_::dump_node(ostream&o, unsigned ind) const
 
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "NetBUFZ: " << name() << endl;
+      o << setw(ind) << "" << "NetBUFZ: " << name()
+	<< " scope=" << (scope()? scope()->name() : "") << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -291,6 +292,7 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
       }
       o << " #(" << rise_time()
 	<< "," << fall_time() << "," << decay_time() << ") " << name()
+	<< " scope=" << (scope()? scope()->name() : "")
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -971,6 +973,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.100  2000/10/07 19:45:42  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.99  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.141 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: netlist.cc,v 1.142 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -255,6 +255,11 @@ const Link& NetObj::pin(unsigned idx) const
 
 NetNode::NetNode(const string&n, unsigned npins)
 : NetObj(n, npins), node_next_(0), node_prev_(0), design_(0)
+{
+}
+
+NetNode::NetNode(NetScope*s, const string&n, unsigned npins)
+: NetObj(s, n, npins), node_next_(0), node_prev_(0), design_(0)
 {
 }
 
@@ -1468,8 +1473,8 @@ const NetProc* NetBlock::proc_next(const NetProc*cur) const
       return cur->next_;
 }
 
-NetBUFZ::NetBUFZ(const string&n)
-: NetNode(n, 2)
+NetBUFZ::NetBUFZ(NetScope*s, const string&n)
+: NetNode(s, n, 2)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -2239,8 +2244,8 @@ NetEUBits::~NetEUBits()
 {
 }
 
-NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
-: NetNode(n, pins), type_(t)
+NetLogic::NetLogic(NetScope*s, const string&n, unsigned pins, TYPE t)
+: NetNode(s, n, pins), type_(t)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
@@ -2436,6 +2441,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.142  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.141  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

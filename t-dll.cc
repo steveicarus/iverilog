@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.11 2000/10/06 23:46:51 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.12 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -26,6 +26,46 @@
 # include  <malloc.h>
 
 static struct dll_target dll_target_obj;
+
+/*
+ * This function locates an ivl_scope_t object that matches the
+ * NetScope object. The search works by looking for the parent scope,
+ * then scanning the parent scope for the NetScope object.
+ */
+static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
+{
+      ivl_scope_t parent, tmp;
+
+      if (const NetScope*par = cur->parent()) {
+	    parent = find_scope(root, par);
+
+      } else {
+	    assert(root->self == cur);
+	    return root;
+      }
+
+      for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
+	    if (tmp->self == cur)
+		  return tmp;
+
+      return 0;
+}
+
+void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
+{
+      if (scope->nlog_ == 0) {
+	    scope->nlog_ = 1;
+	    scope->log_ = (ivl_net_logic_t*)malloc(sizeof(ivl_net_logic_t));
+	    scope->log_[0] = net;
+
+      } else {
+	    scope->nlog_ += 1;
+	    scope->log_ = (ivl_net_logic_t*)
+		  realloc(scope->log_, scope->nlog_*sizeof(ivl_net_logic_t));
+	    scope->log_[scope->nlog_-1] = net;
+      }
+
+}
 
 bool dll_target::start_design(const Design*des)
 {
@@ -46,7 +86,6 @@ bool dll_target::start_design(const Design*des)
       start_design_ = (start_design_f)dlsym(dll_, LU "target_start_design" TU);
       end_design_   = (end_design_f)  dlsym(dll_, LU "target_end_design" TU);
 
-      net_bufz_   = (net_bufz_f)  dlsym(dll_, LU "target_net_bufz" TU);
       net_const_  = (net_const_f) dlsym(dll_, LU "target_net_const" TU);
       net_event_  = (net_event_f) dlsym(dll_, LU "target_net_event" TU);
       net_logic_  = (net_logic_f) dlsym(dll_, LU "target_net_logic" TU);
@@ -67,17 +106,36 @@ void dll_target::end_design(const Design*)
 
 bool dll_target::bufz(const NetBUFZ*net)
 {
-      if (net_bufz_) {
-	    int rc = (net_bufz_)(net->name(), 0);
-	    return rc == 0;
+      struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
+
+      assert(net->pin_count() == 2);
+
+      obj->type_ = IVL_LO_BUFZ;
+
+      obj->npins_ = 2;
+      obj->pins_ = new ivl_nexus_t[2];
+
+      assert(net->pin(0).nexus()->t_cookie());
+      obj->pins_[0] = (ivl_nexus_t) net->pin(0).nexus()->t_cookie();
+
+      assert(net->pin(1).nexus()->t_cookie());
+      obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
+
+      assert(net->scope());
+      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      assert(scope);
+
+      scope_add_logic(scope, obj);
+
+      if (net_logic_) {
+	    (net_logic_)(net->name(), obj);
 
       } else {
 	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_bufz function." << endl;
-	    return false;
+		 << "target_net_logic function." << endl;
       }
 
-      return false;
+      return true;
 }
 
 void dll_target::event(const NetEvent*net)
@@ -124,6 +182,12 @@ void dll_target::logic(const NetLogic*net)
 	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
       }
 
+      assert(net->scope());
+      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      assert(scope);
+
+      scope_add_logic(scope, obj);
+
       if (net_logic_) {
 	    (net_logic_)(net->name(), obj);
 
@@ -131,8 +195,6 @@ void dll_target::logic(const NetLogic*net)
 	    cerr << dll_path_ << ": internal error: target DLL lacks "
 		 << "target_net_logic function." << endl;
       }
-
-      return;
 }
 
 bool dll_target::net_const(const NetConst*net)
@@ -213,30 +275,6 @@ void dll_target::net_probe(const NetEvProbe*net)
       return;
 }
 
-/*
- * This function locates an ivl_scope_t object that matches the
- * NetScope object. The search works by looking for the parent scope,
- * then scanning the parent scope for the NetScope object.
- */
-static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
-{
-      ivl_scope_t parent, tmp;
-
-      if (const NetScope*par = cur->parent()) {
-	    parent = find_scope(root, par);
-
-      } else {
-	    assert(root->self == cur);
-	    return root;
-      }
-
-      for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-	    if (tmp->self == cur)
-		  return tmp;
-
-      return 0;
-}
-      
 void dll_target::scope(const NetScope*net)
 {
       ivl_scope_t scope;
@@ -246,7 +284,7 @@ void dll_target::scope(const NetScope*net)
 	    scope = des_.root_;
 
       } else {
-	    scope = (ivl_scope_t)calloc(1, sizeof(struct ivl_scope_s));
+	    scope = new struct ivl_scope_s;
 	    scope->self = net;
 
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
@@ -425,6 +463,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.12  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.11  2000/10/06 23:46:51  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

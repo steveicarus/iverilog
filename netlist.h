@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.172 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.173 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 /*
@@ -270,6 +270,7 @@ class Nexus {
 class NetNode  : public NetObj {
 
     public:
+      explicit NetNode(NetScope*s, const string&n, unsigned npins);
       explicit NetNode(const string&n, unsigned npins);
 
       virtual ~NetNode();
@@ -907,7 +908,7 @@ class NetTmp  : public NetNet {
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(const string&n);
+      explicit NetBUFZ(NetScope*s, const string&n);
       ~NetBUFZ();
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -976,7 +977,7 @@ class NetLogic  : public NetNode {
       enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NOR, NOT, NOTIF0,
 		  NOTIF1, OR, XNOR, XOR };
 
-      explicit NetLogic(const string&n, unsigned pins, TYPE t);
+      explicit NetLogic(NetScope*s, const string&n, unsigned pins, TYPE t);
 
       TYPE type() const { return type_; }
 
@@ -2805,6 +2806,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.173  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.172  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.16 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.17 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -72,6 +72,12 @@ _BEGIN_DECL
  *    processes. Structural expressions are instead treated as logic
  *    gates.
  *
+ * ivl_net_logic_t
+ *    This object represents various built in logic devices. In fact,
+ *    this includes just about every directional device that has a
+ *    single output, including logic gates and nmos, pmos and cmon
+ *    devices. There is also the occasional Icarus Verilog creation.
+ *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
@@ -100,7 +106,6 @@ _BEGIN_DECL
  */
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
-typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
@@ -135,6 +140,7 @@ typedef enum ivl_logic_e {
       IVL_LO_BUF,
       IVL_LO_BUFIF0,
       IVL_LO_BUFIF1,
+      IVL_LO_BUFZ,
       IVL_LO_NAND,
       IVL_LO_NOR,
       IVL_LO_NOT,
@@ -369,13 +375,6 @@ typedef int  (*start_design_f)(ivl_design_t des);
 typedef void (*end_design_f)(ivl_design_t des);
 
 
-/* target_net_bufz
-
-   The "target_net_bufz" function is called for all the BUFZ devices
-   in the netlist. */
-typedef int (*net_bufz_f)(const char*name, ivl_net_bufz_t net);
-
-
 /* target_net_const
 
    The "target_net_const" function is called for structural constant
@@ -443,6 +442,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.17  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.16  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

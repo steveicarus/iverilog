@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.15 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.16 2000/10/07 19:45:43 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -55,6 +55,9 @@ static bool is_a_pad(const NetNet*net)
 
 static NetLogic* make_obuf(Design*des, NetNet*net)
 {
+      NetScope* scope = net->scope();
+      assert(scope);
+
       assert(net->pin_count() == 1);
 
 	/* FIXME: If there is nothing internally driving this PAD, I
@@ -123,7 +126,8 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 
 	// Can't seem to find a way to rearrange the existing netlist,
 	// so I am stuck creating a new buffer, the OBUF.
-      NetLogic*buf = new NetLogic(des->local_symbol("$"), 2, NetLogic::BUF);
+      NetLogic*buf = new NetLogic(scope, des->local_symbol(scope->name()),
+				  2, NetLogic::BUF);
       des->add_node(buf);
 
       map<string,string>attr;
@@ -140,8 +144,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(1)) == 0) {
-	    NetNet*tmp = new NetNet(net->scope(),
-				    des->local_symbol("$"),
+	    NetNet*tmp = new NetNet(scope, des->local_symbol(scope->name()),
 				    NetNet::WIRE);
 	    tmp->local_flag(true);
 	    connect(buf->pin(1), tmp->pin(0));
@@ -235,7 +238,8 @@ static void make_ibuf(Design*des, NetNet*net)
       }
 
 	// I give up, create an IBUF.
-      NetLogic*buf = new NetLogic(des->local_symbol("$"), 2, NetLogic::BUF);
+      NetLogic*buf = new NetLogic(scope, des->local_symbol(scope->name()),
+				  2, NetLogic::BUF);
       des->add_node(buf);
 
       map<string,string>attr;
@@ -309,6 +313,8 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
       if (dev->width() > 4)
 	    return false;
 
+      NetScope*scope = des->find_root_scope();
+
       verinum side (verinum::V0, dev->width());
 
 	/* Is the B side all constant? */
@@ -325,7 +331,7 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 	/* Handle the special case of comparing A to 0. Use an N-input
 	   NOR gate to return 0 if any of the bits is not 0. */
       if ((side.as_ulong() == 0) && (count_inputs(dev->pin_AEB()) > 0)) {
-	    NetLogic*sub = new NetLogic(dev->name(), dev->width()+1,
+	    NetLogic*sub = new NetLogic(scope, dev->name(), dev->width()+1,
 					NetLogic::NOR);
 	    connect(sub->pin(0), dev->pin_AEB());
 	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
@@ -338,7 +344,7 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 	/* Handle the special case of comparing A to 0. Use an N-input
 	   NOR gate to return 0 if any of the bits is not 0. */
       if ((side.as_ulong() == 0) && (count_inputs(dev->pin_ANEB()) > 0)) {
-	    NetLogic*sub = new NetLogic(dev->name(), dev->width()+1,
+	    NetLogic*sub = new NetLogic(scope, dev->name(), dev->width()+1,
 					NetLogic::OR);
 	    connect(sub->pin(0), dev->pin_ANEB());
 	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
@@ -359,6 +365,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.16  2000/10/07 19:45:43  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.15  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

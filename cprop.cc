@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.16 2000/10/06 21:26:34 steve Exp $"
+#ident "$Id: cprop.cc,v 1.17 2000/10/07 19:45:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -108,14 +108,15 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
       if (obj->width() == 1) {
 	    NetLogic*tmp;
 	    if (obj->pin_Cout().is_linked()) {
-		  tmp = new NetLogic(des->local_symbol(obj->name()), 3,
-						       NetLogic::AND);
+		  tmp = new NetLogic(obj->scope(),
+				     des->local_symbol(obj->name()), 3,
+				     NetLogic::AND);
 		  connect(tmp->pin(0), obj->pin_Cout());
 		  connect(tmp->pin(1), obj->pin_DataA(0));
 		  connect(tmp->pin(2), obj->pin_DataB(0));
 		  des->add_node(tmp);
 	    }
-	    tmp = new NetLogic(obj->name(), 3, NetLogic::XOR);
+	    tmp = new NetLogic(obj->scope(), obj->name(), 3, NetLogic::XOR);
 	    connect(tmp->pin(0), obj->pin_Result(0));
 	    connect(tmp->pin(1), obj->pin_DataA(0));
 	    connect(tmp->pin(2), obj->pin_DataB(0));
@@ -246,7 +247,8 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 
 		if (top == 2) {
-		      NetLogic*tmp = new NetLogic(obj->name(), top,
+		      NetLogic*tmp = new NetLogic(obj->scope(),
+						  obj->name(), top,
 						  NetLogic::BUF);
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -259,7 +261,8 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 
 		if (top < obj->pin_count()) {
-		      NetLogic*tmp = new NetLogic(obj->name(), top,
+		      NetLogic*tmp = new NetLogic(obj->scope(),
+						  obj->name(), top,
 						  NetLogic::XOR);
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -307,7 +310,8 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
       if (flag) {
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(des->local_symbol(obj->name()),
+		  NetLogic*tmp = new NetLogic(obj->scope(),
+					      des->local_symbol(obj->name()),
 					      3, NetLogic::BUFIF1);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -338,7 +342,8 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
       if (flag) {
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(des->local_symbol(obj->name()),
+		  NetLogic*tmp = new NetLogic(obj->scope(),
+					      des->local_symbol(obj->name()),
 					      3, NetLogic::BUFIF0);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -428,6 +433,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.17  2000/10/07 19:45:42  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.16  2000/10/06 21:26:34  steve
  *  Eliminate zero inputs to xor.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.192 2000/09/29 22:58:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.193 2000/10/07 19:45:42 steve Exp $"
 #endif
 
 /*
@@ -73,6 +73,9 @@ void PGate::elaborate(Design*des, const string&path) const
  */
 void PGAssign::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       unsigned long rise_time, fall_time, decay_time;
       eval_delays(des, path, rise_time, fall_time, decay_time);
 
@@ -132,7 +135,8 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	    } else {
 		  unsigned idx;
 		  for (idx = 0 ; idx < cnt ;  idx += 1) {
-			NetBUFZ*dev = new NetBUFZ(des->local_symbol(path));
+			NetBUFZ*dev = new NetBUFZ(scope,
+						  des->local_symbol(path));
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
 			dev->pin(0).drive0(drive0);
@@ -198,6 +202,9 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
       unsigned count = 1;
       unsigned low = 0, high = 0;
       string name = get_name();
+
+      NetScope*scope = des->find_scope(path);
+
       if (name == "")
 	    name = des->local_symbol(path);
       else
@@ -270,34 +277,44 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 
 	    switch (type()) {
 		case AND:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::AND);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::AND);
 		  break;
 		case BUF:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUF);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::BUF);
 		  break;
 		case BUFIF0:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUFIF0);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::BUFIF0);
 		  break;
 		case BUFIF1:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUFIF1);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::BUFIF1);
 		  break;
 		case NAND:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NAND);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NAND);
 		  break;
 		case NOR:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NOR);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NOR);
 		  break;
 		case NOT:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NOT);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NOT);
 		  break;
 		case OR:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::OR);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::OR);
 		  break;
 		case XNOR:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::XNOR);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::XNOR);
 		  break;
 		case XOR:
-		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::XOR);
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::XOR);
 		  break;
 		default:
 		  cerr << get_line() << ": internal error: unhandled "
@@ -2265,6 +2282,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.193  2000/10/07 19:45:42  steve
+ *  Put logic devices into scopes.
+ *
  * Revision 1.192  2000/09/29 22:58:57  steve
  *  Do not put noop statements into blocks.
  *
