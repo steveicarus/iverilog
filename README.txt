@@ -294,6 +294,7 @@ especially testing from many people, including (in alphabetical order):
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
 	Stuart Sutherland <stuart@sutherland.com>
+	Stephen Tell <tell@cs.unc.edu>
         Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
 	Steve Wilson <stevew@home.com>
 
