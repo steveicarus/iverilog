@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_simulation.cc,v 1.3 1999/06/07 03:40:03 steve Exp $"
+#ident "$Id: vvm_simulation.cc,v 1.4 1999/06/19 03:31:33 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -168,7 +168,8 @@ void vvm_simulation::run()
 		 step to the next time. */
 	    struct vvm_simulation_cycle*next = sim_->next;
 	    if (next == sim_) {
-		  continue;
+		  going_ = false;
+		  break;
 	    }
 
 	    sim_->next->prev = sim_->prev;
@@ -208,6 +209,9 @@ void vvm_simulation::thread_active(vvm_thread*thr)
 
 /*
  * $Log: vvm_simulation.cc,v $
+ * Revision 1.4  1999/06/19 03:31:33  steve
+ *  End run if events run out.
+ *
  * Revision 1.3  1999/06/07 03:40:03  steve
  *  Allow 0 delays for things like thread yield.
  *
