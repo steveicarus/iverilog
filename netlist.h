@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.253 2002/07/24 16:24:45 steve Exp $"
+#ident "$Id: netlist.h,v 1.254 2002/07/29 00:00:28 steve Exp $"
 #endif
 
 /*
@@ -1381,12 +1381,18 @@ class NetBlock  : public NetProc {
       const NetProc*proc_first() const;
       const NetProc*proc_next(const NetProc*cur) const;
 
+
+	// synthesize as asynchronous logic, and return true.
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out);
+
 	// This version of emit_recurse scans all the statements of
 	// the begin-end block sequentially. It is typically of use
 	// for sequential blocks.
       void emit_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -3000,6 +3006,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.254  2002/07/29 00:00:28  steve
+ *  Asynchronous synthesis of sequential blocks.
+ *
  * Revision 1.253  2002/07/24 16:24:45  steve
  *  Rewrite find_similar_event to support doing
  *  all event matching and replacement in one

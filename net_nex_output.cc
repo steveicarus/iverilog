@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_nex_output.cc,v 1.3 2002/07/07 22:32:15 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.4 2002/07/29 00:00:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,18 @@ void NetAssignBase::nex_output(NexusSet&out)
 
 }
 
+void NetBlock::nex_output(NexusSet&out)
+{
+      if (last_ == 0)
+	    return;
+
+      NetProc*cur = last_;
+      do {
+	    cur = cur->next_;
+	    cur->nex_output(out);
+      } while (cur != last_);
+}
+
 void NetCase::nex_output(NexusSet&out)
 {
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
@@ -73,6 +85,9 @@ void NetEvWait::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.4  2002/07/29 00:00:28  steve
+ *  Asynchronous synthesis of sequential blocks.
+ *
  * Revision 1.3  2002/07/07 22:32:15  steve
  *  Asynchronous synthesis of case statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth2.cc,v 1.4 2002/07/16 04:40:48 steve Exp $"
+#ident "$Id: synth2.cc,v 1.5 2002/07/29 00:00:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,6 +66,51 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       }
 
       return true;
+}
+
+/*
+ * Sequential blocks are translated to asynchronous logic by
+ * translating each statement of the block, in order, into gates. The
+ * nex_out for the block is the union of the nex_out for all the
+ * substatements.
+ */
+bool NetBlock::synth_async(Design*des, NetScope*scope,
+			   const NetNet*nex_map, NetNet*nex_out)
+{
+      if (last_ == 0)
+	    return true;
+
+      bool flag = true;
+      NetProc*cur = last_;
+      do {
+	    cur = cur->next_;
+
+	      /* Create a temporary nex_out for the substatement. */
+	    NexusSet tmp_set;
+	    cur->nex_output(tmp_set);
+	    NetNet*tmp_out = new NetNet(scope, "tmp", NetNet::WIRE,
+					tmp_set.count());
+	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ;  idx += 1)
+		  connect(tmp_set[idx], tmp_out->pin(idx));
+
+	    bool ok_flag = cur->synth_async(des, scope, tmp_out, tmp_out);
+	    flag = flag && ok_flag;
+
+	    if (ok_flag == false)
+		  continue;
+
+	      /* Use tne nex_map to link up the output from the
+		 substatement to the output of the block as a whole. */
+	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
+		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
+	    }
+
+	    delete tmp_out;
+
+      } while (cur != last_);
+
+      return flag;
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
@@ -259,6 +304,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.5  2002/07/29 00:00:28  steve
+ *  Asynchronous synthesis of sequential blocks.
+ *
  * Revision 1.4  2002/07/16 04:40:48  steve
  *  Allow wide rvalues assigned to narrow nex_out.
  *
