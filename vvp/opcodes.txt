@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.51 2003/03/28 02:33:56 steve Exp $
+ *  $Id: opcodes.txt,v 1.52 2003/05/26 04:44:54 steve Exp $
  */
 
 
@@ -518,6 +518,7 @@ sets only a single bit.
 This instruction writes a real word to the specified VPI-like object.
 
 * %set/x0 <var-label>, <bit>, <top>
+* %set/x0/x <var-label>, <bit>, <word>
 
 This sets the bit of a variable functor, the address calculated by
 using the index register 0 to index the functor address of
@@ -528,6 +529,10 @@ converted an unknown value into the register) then the set is not
 performed. Also, if the index value is > the immediate top value, then
 the set is not performed. The 0 and <top> values suffice to provide
 complete bounds checking.
+
+The %set/x0/x instruction is the same, except the bound value is in
+a word register instead of in the opcode. This allows for bounds that
+are larger then 0xffff.
 
 
 * %shiftl/i0 <bit>, <wid>

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.107 2003/05/07 03:39:12 steve Exp $"
+#ident "$Id: vthread.cc,v 1.108 2003/05/26 04:44:54 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2387,6 +2387,31 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SET_X0_X(vthread_t thr, vvp_code_t cp)
+{
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
+      long idx = thr->words[0].w_int;
+      long lim = thr->words[cp->bit_idx[1]].w_int;
+
+	/* If idx < 0, then the index value is probably generated from
+	   an undefined value. At any rate, this is defined to have no
+	   effect so quit now. */
+      if (idx < 0)
+	    return true;
+
+      if (idx > lim)
+	    return true;
+
+	/* Form the functor pointer from the base pointer and the
+	   index from the index register. */
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
+
+	/* Set the value. */
+      functor_set(itmp, bit_val, strong_values[bit_val], true);
+
+      return true;
+}
+
 bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
@@ -2699,6 +2724,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.108  2003/05/26 04:44:54  steve
+ *  Add the set/x0/x instruction.
+ *
  * Revision 1.107  2003/05/07 03:39:12  steve
  *  ufunc calls to functions can have scheduling complexities.
  *

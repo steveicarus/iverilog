@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.60 2003/05/07 03:39:12 steve Exp $"
+#ident "$Id: codes.h,v 1.61 2003/05/26 04:44:54 steve Exp $"
 #endif
 
 
@@ -103,6 +103,7 @@ extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
+extern bool of_SET_X0_X(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
@@ -172,6 +173,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.61  2003/05/26 04:44:54  steve
+ *  Add the set/x0/x instruction.
+ *
  * Revision 1.60  2003/05/07 03:39:12  steve
  *  ufunc calls to functions can have scheduling complexities.
  *
