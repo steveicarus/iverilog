@@ -17,15 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_finish.c,v 1.7 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.8 2003/02/21 03:24:03 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "vpi_user.h"
+# include  <string.h>
 
-static int sys_finish_calltf(char *xx)
+static int sys_finish_calltf(char *name)
 {
+      if (strcmp(name,"$stop") == 0) {
+	    vpi_sim_control(vpiStop, 0);
+	    return 0;
+      }
+
       vpi_sim_control(vpiFinish, 0);
       return 0;
 }
@@ -39,6 +45,7 @@ void sys_finish_register()
       tf_data.calltf    = sys_finish_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
+      tf_data.user_data = "$finish";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
@@ -46,11 +53,15 @@ void sys_finish_register()
       tf_data.calltf    = sys_finish_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
+      tf_data.user_data = "$stop";
       vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.8  2003/02/21 03:24:03  steve
+ *  Make the $stop system task really vpiStop.
+ *
  * Revision 1.7  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *
