@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.108 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: Makefile.in,v 1.109 2001/12/06 02:55:24 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -171,7 +171,7 @@ parse.o: parse.cc
 
 parse.h parse.cc: $(srcdir)/parse.y
 	bison --verbose -t -p VL -d -o parse.cc $(srcdir)/parse.y
-	mv parse.cc.h parse.h
+	mv parse.cc.h parse.h || mv parse.hh parse.h
 
 syn-rules.cc: $(srcdir)/syn-rules.y
 	bison --verbose -p syn_ -o syn-rules.cc $(srcdir)/syn-rules.y
