@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.3 2002/05/24 19:05:30 steve Exp $"
+#ident "$Id: veriuser.h,v 1.4 2002/05/24 20:29:07 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,7 @@ EXTERN_C_START
 
 extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
+extern char* mc_scan_plusargs(char*plusarg);
 
 extern int tf_dofinish(void);
 extern int tf_dostop(void);
@@ -56,6 +57,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.4  2002/05/24 20:29:07  steve
+ *  Implement mc_scan_plusargs.
+ *
  * Revision 1.3  2002/05/24 19:05:30  steve
  *  support GCC __attributes__ for printf formats.
  *
