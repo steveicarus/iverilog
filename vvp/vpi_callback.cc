@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.28 2003/02/17 00:58:38 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.29 2003/03/12 02:50:32 steve Exp $"
 #endif
 
 /*
@@ -231,13 +231,17 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 
 	  case vpiModule:
 	  case vpiConstant:
+	  case vpiParameter:
 	      /* These are constant, so there are no value change
 		 lists to put them in. */
 	    break;
 
 	  default:
-	    assert(0);
-	    break;
+	    fprintf(stderr, "make_value_change: sorry: I cannot callback "
+		    "values on type code=%d\n",
+		    data->obj->vpi_type->type_code);
+	    delete obj;
+	    return 0;
       }
 
       return obj;
@@ -534,6 +538,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.29  2003/03/12 02:50:32  steve
+ *  Add VPI tracing.
+ *
  * Revision 1.28  2003/02/17 00:58:38  steve
  *  Strict correctness of vpi_free_object results.
  *

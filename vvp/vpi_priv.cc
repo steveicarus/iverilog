@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.32 2003/03/06 04:32:00 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.33 2003/03/12 02:50:32 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -32,6 +32,7 @@
 # include  <stdlib.h>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
+FILE*vpi_trace = 0;
 
 static s_vpi_vlog_info  vpi_vlog_info;
 static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
@@ -143,7 +144,7 @@ static int vpip_get_global(int property)
 	  default:
 	    fprintf(stderr, "vpi error: bad global property: %d\n", property);
 	    assert(0);
-	    return -1;
+	    return vpiUndefined;
       }
 }
 
@@ -161,24 +162,46 @@ int vpi_get(int property, vpiHandle ref)
       }
 
       if (ref->vpi_type->vpi_get_ == 0)
-	    return -1;
+	    return vpiUndefined;
 
-      return (ref->vpi_type->vpi_get_)(property, ref);
+      int res = (ref->vpi_type->vpi_get_)(property, ref);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_get(%d, %p) --> %d\n",
+		    property, ref, res);
+	    fflush(vpi_trace);
+      }
+
+      return res;
 }
 
 char* vpi_get_str(int property, vpiHandle ref)
 {
       if (ref == 0) {
-	    fprintf(stderr, "vpi error: vpi_get_str(%d, ...) called "
+	    fprintf(stderr, "vpi error: vpi_get_str(%d, 0) called "
 		    "with null vpiHandle.\n", property);
 	    return 0;
       }
 
       assert(ref);
-      if (ref->vpi_type->vpi_get_str_ == 0)
+      if (ref->vpi_type->vpi_get_str_ == 0) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_get_str(%d, %p) --X\n",
+			  property, ref);
+		  fflush(vpi_trace);
+	    }
 	    return 0;
+      }
 
-      return (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
+      char*res = (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_get_str(%d, %p) --> %s\n",
+		    property, ref, res);
+	    fflush(vpi_trace);
+      }
+
+      return res;
 }
 
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
@@ -207,6 +230,9 @@ void vpi_set_vlog_info(int argc, char** argv)
     vpi_vlog_info.version = "$Name:  $";
     vpi_vlog_info.argc    = argc;
     vpi_vlog_info.argv    = argv;
+
+    if (const char*path = getenv("VPI_TRACE"))
+	  vpi_trace = fopen(path, "w");
 }
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
@@ -215,7 +241,38 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
       assert(vp);
       if (expr->vpi_type->vpi_get_value_) {
 	    (expr->vpi_type->vpi_get_value_)(expr, vp);
+
+	    if (vpi_trace) switch (vp->format) {
+		case vpiStringVal:
+		  fprintf(vpi_trace, "vpi_get_value(%d...) -> string=%s\n",
+			  expr->vpi_type->type_code, vp->value.str);
+		  fflush(vpi_trace);
+		  break;
+
+		case vpiBinStrVal:
+		  fprintf(vpi_trace, "vpi_get_value(%d...) -> binstr=%s\n",
+			  expr->vpi_type->type_code, vp->value.str);
+		  fflush(vpi_trace);
+		  break;
+
+		case vpiIntVal:
+		  fprintf(vpi_trace, "vpi_get_value(%d...) -> int=%d\n",
+			  expr->vpi_type->type_code, vp->value.integer);
+		  fflush(vpi_trace);
+		  break;
+
+		default:
+		  fprintf(vpi_trace, "vpi_get_value(%d...) -> <%d>=?\n",
+			  expr->vpi_type->type_code, vp->format);
+		  fflush(vpi_trace);
+	    }
 	    return;
+      }
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_get_value(%d...) -> <suppress>\n",
+		    expr->vpi_type->type_code);
+	    fflush(vpi_trace);
       }
 
       vp->format = vpiSuppressVal;
@@ -432,6 +489,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.33  2003/03/12 02:50:32  steve
+ *  Add VPI tracing.
+ *
  * Revision 1.32  2003/03/06 04:32:00  steve
  *  Use hashed name strings for identifiers.
  *
