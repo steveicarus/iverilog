@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.13 2001/04/05 01:34:26 steve Exp $
+ *  $Id: README.txt,v 1.14 2001/04/13 03:55:18 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -258,6 +258,42 @@ instruction in vvp, the job is accomplished with %fork/%join in the
 caller and %end in the callee. The %fork, then is simply a
 generalization of a function call, where the caller does not
 necessarily wait for the callee.
+
+For all the behavior of threads and thread parantage to work
+correctly, all %fork statements must have a corresponding %join in the
+parent, and %end in the child. Without this proper matching, the
+hierarchical relationships can get confused. The behavior of erroneous
+code is undefined.
+
+THREADS AND SCOPES:
+
+The Verilog ``disable'' statement deserves some special mention
+because of how it interacts with threads. In particular, threads
+throughout the design can affect (end) other threads in the design
+using the disable statement.
+
+In Verilog, the operand to the disable statement is the name of a
+scope. The behavior of the disable is to cause all threads executing
+in the scope to end. Termination of a thread includes all the children
+of the thread. In vvp, all threads are in a scope, so this is how the
+disable gains access to the desired thread.
+
+It is obvious how initial/always thread join a scope. They become part
+of the scope simply by being declared after a .scope declaration. (See
+vvp.txt for .scope declarations.) The .thread statement placed in the
+assembly source after a .scope statement causes the thread to join the
+named scope.
+
+Transient threads initially inherit the scope of the parent
+thread. Right after the %fork statement, the new thread is created
+within the scope of the thread that executes the %fork
+statement. Transient threads leaf the parent scope and join a new
+scope with the %scope instruction.
+
+A thread normally executes a %scope instruction only once. At any
+rate, a thread is only in a single scope, and does not remember past
+scopes that it might have been a part of. This is how a new thread
+switches out of the parent scope and into its own scope.
 
 TRUTH TABLES
 

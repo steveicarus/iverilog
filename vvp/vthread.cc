@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.22 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: vthread.cc,v 1.23 2001/04/13 03:55:18 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -29,15 +29,54 @@
 # include  <string.h>
 # include  <assert.h>
 
+/*
+ * This vhtread_s structure describes all there is to know about a
+ * thread, including its program counter, all the private bits it
+ * holds, and its place in other lists.
+ *
+ *
+ * ** Notes On The Interactions of %fork/%join/%end:
+ *
+ * The %fork instruction creates a new thread and pushes that onto the
+ * stack of children for the thread. This new thread, then, becomes
+ * the new direct descendent of the thread. This new thread is
+ * therefore also the first thread to be reaped when the parent does a
+ * %join.
+ *
+ * It is a programming error for a thread that created threads to not
+ * %join as many as it created before it %ends. The linear stack for
+ * tracking thread relationships will create a mess otherwise. For
+ * example, if A creates B then C, the stack is:
+ *
+ *       A --> C --> B
+ *
+ * If C then %forks X, the stack is:
+ *
+ *       A --> C --> X --> B
+ *
+ * If C %ends without a join, then the stack is:
+ *
+ *       A --> C(zombie) --> X --> B
+ *
+ * If A then executes 2 %joins, it will read C and X (when it ends)
+ * leaving B in purgatory. What's worse, A will block on the schedules
+ * of X and C instead of C and B, possibly creating incorrect timing.
+ */
+
 struct vthread_s {
 	/* This is the program counter. */
       unsigned long pc;
+	/* These hold the private thread bits. */
       unsigned char *bits;
-      unsigned short nbits;
-	/* This points to the top (youngest) child of the thread. */
+      unsigned nbits :16;
+	/* My parent sets this when it wants me to wake it up. */
+      unsigned schedule_parent_on_end :1;
+      unsigned i_have_ended :1;
+      unsigned waiting_for_event :1;
+	/* This points to the sole child of the thread. */
       struct vthread_s*child;
-	/* This is set if the parent is waiting for me to end. */
-      struct vthread_s*reaper;
+	/* This points to my parent, if I have one. */
+      struct vthread_s*parent;
 	/* This is used for keeping wait queues. */
       struct vthread_s*next;
 };
@@ -76,15 +115,18 @@ static inline void thr_put_bit(struct vthread_s*thr,
 /*
  * Create a new thread with the given start address.
  */
-vthread_t v_newthread(unsigned long pc)
+vthread_t vthread_new(unsigned long pc)
 {
       vthread_t thr = new struct vthread_s;
-      thr->pc = pc;
-      thr->bits = (unsigned char*)malloc(16);
-      thr->nbits = 16*4;
-      thr->child = 0;
-      thr->reaper = 0;
-      thr->next = 0;
+      thr->pc     = pc;
+      thr->bits   = (unsigned char*)malloc(16);
+      thr->nbits  = 16*4;
+      thr->child  = 0;
+      thr->parent = 0;
+      thr->next   = 0;
+
+      thr->schedule_parent_on_end = 0;
+      thr->i_have_ended = 0;
 
       thr_put_bit(thr, 0, 0);
       thr_put_bit(thr, 1, 1);
@@ -97,7 +139,14 @@ static void vthread_reap(vthread_t thr)
 {
       assert(thr->next == 0);
       assert(thr->child == 0);
-      free(thr);
+      free(thr->bits);
+
+      if (thr->child)
+	    thr->child->parent = thr->parent;
+      if (thr->parent)
+	    thr->parent->child = thr->child;
+
+      delete thr;
 }
 
 
@@ -122,14 +171,22 @@ void vthread_run(vthread_t thr)
       }
 }
 
+/*
+ * This is called by an event functor to wait up all the threads on
+ * its list. I in fact created that list in the %wait instruction, and
+ * I also am certain that the waiting_for_event flag is set.
+ */
 void vthread_schedule_list(vthread_t thr)
 {
       while (thr) {
 	    vthread_t tmp = thr;
 	    thr = thr->next;
+	    assert(tmp->waiting_for_event);
+	    tmp->waiting_for_event = 0;
 	    schedule_vthread(tmp, 0);
       }
 }
+
 
 bool of_AND(vthread_t thr, vvp_code_t cp)
 {
@@ -358,19 +415,71 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+/*
+ * This terminates the current thread. If there is a parent who is
+ * waiting for me to die, then I schedule it. At any rate, I mark
+ * myself as a zombie by setting my pc to 0.
+ */
 bool of_END(vthread_t thr, vvp_code_t cp)
 {
-      if (thr->reaper)
-	    schedule_vthread(thr->reaper, 0);
-      thr->reaper = thr;
+      assert(! thr->waiting_for_event);
+
+      thr->i_have_ended = 1;
+      thr->pc = 0;
+
+	/* Reap direct descendents that have already ended. Do
+	   this in a loop until I run out of dead children. */
+
+      while (thr->child && (thr->child->i_have_ended)) {
+	    vthread_t tmp = thr->child;
+	    vthread_reap(tmp);
+      }
+
+
+	/* If I have a parent who is waiting for me, then mark that I
+	   have ended, and schedule that parent. The parent will reap
+	   me, so don't do it here. */
+      if (thr->schedule_parent_on_end) {
+	    assert(thr->parent);
+	    schedule_vthread(thr->parent, 0);
+	    return false;
+      }
+
+	/* If I have no parents, then no one can %join me and there is
+	   no reason to stick around. This can happen, for example if
+	   I am an ``initial'' thread. */
+      if (thr->parent == 0) {
+	    if (thr->child)
+		  fprintf(stderr, "vvp warning: A thread left dangling "
+			  "children. This is probably caused\n"
+			  "           : a missing %%join in this thread.\n");
+	    vthread_reap(thr);
+	    return false;
+      }
+
+	/* If I make it this far, then I have a parent who may wish
+	   to %join me. Remain a zombie so that it can. */
+
       return false;
 }
 
+/*
+ * The %fork instruction causes a new child to be created and pushed
+ * in front of any existing child. This causes the new child to be the
+ * parent of any previous children, and for me to be the parent of the
+ * new child.
+ */
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
-      vthread_t child = v_newthread(cp->cptr);
-      child->child = thr->child;
+      vthread_t child = vthread_new(cp->cptr);
+
+      child->child  = thr->child;
+      child->parent = thr;
       thr->child = child;
+      if (child->child) {
+	    assert(child->child->parent == thr);
+	    child->child->parent = child;
+      }
       schedule_vthread(child, 0);
       return true;
 }
@@ -396,6 +505,11 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * The various JMP instruction work simply by pulling the new program
+ * counter from the instruction and resuming. If the jump is
+ * conditional, then test the bit for the expected value first.
+ */
 bool of_JMP(vthread_t thr, vvp_code_t cp)
 {
       thr->pc = cp->cptr;
@@ -423,16 +537,22 @@ bool of_JMP1(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * The %join instruction causes the thread to wait for the one and
+ * only child to die.  If it is already dead (and a zombie) then I
+ * reap it and go on. Otherwise, I tell the child that I am ready for
+ * it to die, and it will reschedule me when it does.
+ */
 bool of_JOIN(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->child);
-      if (thr->child->reaper == thr->child) {
+      assert(thr->child->parent == thr);
+      if (thr->child->i_have_ended) {
 	    vthread_reap(thr->child);
 	    return true;
       }
 
-      assert(thr->child->reaper == 0);
-      thr->child->reaper = thr;
+      thr->child->schedule_parent_on_end = 1;
       return false;
 }
 
@@ -543,6 +663,8 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
  */
 bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
+      assert(! thr->waiting_for_event);
+      thr->waiting_for_event = 1;
       functor_t fp = functor_index(cp->iptr);
       assert((fp->mode == 1) || (fp->mode == 2));
       vvp_event_t ep = fp->event;
@@ -552,8 +674,17 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+
+bool of_ZOMBIE(vthread_t, vvp_code_t)
+{
+      return false;
+}
+
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.23  2001/04/13 03:55:18  steve
+ *  More complete reap of all threads.
+ *
  * Revision 1.22  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.h,v 1.2 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: vthread.h,v 1.3 2001/04/13 03:55:18 steve Exp $"
 #endif
 
 /*
@@ -40,7 +40,7 @@ typedef struct vthread_s*vthread_t;
  * address. The generated thread is ready to run, but is not yet
  * scheduled.
  */
-extern vthread_t v_newthread(unsigned long sa);
+extern vthread_t vthread_new(unsigned long sa);
 
 /*
  * Cause this thread to execute instructions until in is put to sleep
@@ -50,14 +50,18 @@ extern void vthread_run(vthread_t thr);
 
 /*
  * This function schedules all the threads in the list to be scheduled
- * for execution with delay 0. the thr pointer is taken to be the head
- * of a list.
+ * for execution with delay 0. The thr pointer is taken to be the head
+ * of a list, and all the threads in the list are presumably placed in
+ * the list by the %wait instruction.
  */
 extern void vthread_schedule_list(vthread_t thr);
 
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.3  2001/04/13 03:55:18  steve
+ *  More complete reap of all threads.
+ *
  * Revision 1.2  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

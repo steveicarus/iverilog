@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.6 2001/04/01 06:40:44 steve Exp $"
+#ident "$Id: codes.cc,v 1.7 2001/04/13 03:55:18 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -40,10 +40,20 @@ struct code_index1 {
 static vvp_cpoint_t code_count = 0;
 static struct code_index1*code_table[code_index2_size] = { 0 };
 
-
+/*
+ * This initializes the code space. It sets up a code table and places
+ * at address 0 a ZOMBIE instruction.
+ */
 void codespace_init(void)
 {
-      code_table[0] = 0;
+      code_table[0] = new struct code_index1;
+      memset(code_table[0], 0, sizeof code_table[0]);
+      code_table[0]->table[0] = new struct code_index0;
+      memset(code_table[0]->table[0], 0, sizeof(struct code_index0));
+
+      vvp_code_t cp = code_table[0]->table[0]->table + 0;
+      cp->opcode = &of_ZOMBIE;
+
       code_count = 1;
 }
 
@@ -126,6 +136,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.7  2001/04/13 03:55:18  steve
+ *  More complete reap of all threads.
+ *
  * Revision 1.6  2001/04/01 06:40:44  steve
  *  Support empty statements for hanging labels.
  *

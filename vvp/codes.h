@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.16 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: codes.h,v 1.17 2001/04/13 03:55:18 steve Exp $"
 #endif
 
 
@@ -59,6 +59,8 @@ extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
+
+extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
 /*
  * This is the format of a machine code instruction.
@@ -106,6 +108,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.17  2001/04/13 03:55:18  steve
+ *  More complete reap of all threads.
+ *
  * Revision 1.16  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.30 2001/04/05 01:34:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.31 2001/04/13 03:55:18 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -541,7 +541,7 @@ void compile_thread(char*start_sym)
 	    return;
       }
 
-      vthread_t thr = v_newthread(pc);
+      vthread_t thr = vthread_new(pc);
       schedule_vthread(thr, 0);
       free(start_sym);
 }
@@ -703,7 +703,7 @@ void compile_dump(FILE*fd)
       functor_dump(fd);
       fprintf(fd, "UNRESOLVED PORT INPUTS:\n");
       for (struct resolv_list_s*cur = resolv_list ;  cur ;  cur = cur->next)
-	    fprintf(fd, "    %p: %s\n", (void*)cur->port, cur->source);
+	    fprintf(fd, "    %08x: %s\n", cur->port, cur->source);
 
       fprintf(fd, "CODE SPACE SYMBOL TABLE:\n");
       sym_dump(sym_codespace, fd);
@@ -714,6 +714,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.31  2001/04/13 03:55:18  steve
+ *  More complete reap of all threads.
+ *
  * Revision 1.30  2001/04/05 01:34:26  steve
  *  Add the .var/s and .net/s statements for VPI support.
  *
