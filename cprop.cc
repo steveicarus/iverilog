@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.30 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: cprop.cc,v 1.31 2001/12/31 01:56:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -217,7 +217,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 	   with a simple XOR gate. */
       if (top == 1) {
 	    NetLogic*tmp = new NetLogic(scope, obj->name(), 3,
-					NetLogic::XOR);
+					NetLogic::XNOR);
 	    connect(tmp->pin(0), obj->pin_AEB());
 	    connect(tmp->pin(1), obj->pin_DataA(0));
 	    connect(tmp->pin(2), obj->pin_DataB(0));
@@ -942,6 +942,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.31  2001/12/31 01:56:08  steve
+ *  Get sense of 1-bit == operator right.
+ *
  * Revision 1.30  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *
