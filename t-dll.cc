@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.76 2002/01/06 03:15:43 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.77 2002/01/12 04:03:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -514,12 +514,48 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       assert(net->pin(0).nexus()->t_cookie());
       obj->pins_[0] = (ivl_nexus_t) net->pin(0).nexus()->t_cookie();
-      nexus_log_add(obj->pins_[0], obj, 0);
+      ivl_nexus_ptr_t out_ptr = nexus_log_add(obj->pins_[0], obj, 0);
 
       assert(net->pin(1).nexus()->t_cookie());
       obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
       nexus_log_add(obj->pins_[1], obj, 1);
 
+
+      switch (net->pin(0).drive0()) {
+	  case Link::HIGHZ:
+	    out_ptr->drive0 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    out_ptr->drive0 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    out_ptr->drive0 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    out_ptr->drive0 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    out_ptr->drive0 = IVL_DR_SUPPLY;
+	    break;
+      }
+
+      switch (net->pin(0).drive1()) {
+	  case Link::HIGHZ:
+	    out_ptr->drive1 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    out_ptr->drive1 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    out_ptr->drive1 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    out_ptr->drive1 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    out_ptr->drive1 = IVL_DR_SUPPLY;
+	    break;
+      }
 
 	/* Attach the logic device to the scope that contains it. */
 
@@ -1837,6 +1873,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.77  2002/01/12 04:03:09  steve
+ *  Make BUFZ device strengths available.
+ *
  * Revision 1.76  2002/01/06 03:15:43  steve
  *  Constant values have drive strengths.
  *
