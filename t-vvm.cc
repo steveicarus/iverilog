@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.62 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.63 1999/10/21 02:15:06 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -689,7 +689,7 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       os << "class " << name << "  : public vvm_thread {" << endl;
       os << "    public:" << endl;
       os << "      " << name << "(vvm_simulation*sim, vvm_thread*th)" << endl;
-      os << "      : vvm_thread(sim), back_(th), step_(&step_0_)" << endl;
+      os << "      : vvm_thread(sim), back_(th), step_(&" << name << "::step_0_)" << endl;
       os << "      { }" << endl;
       os << "      ~" << name << "() { }" << endl;
       os << "      bool go() { return (this->*step_)(); }" << endl;
@@ -1744,6 +1744,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.63  1999/10/21 02:15:06  steve
+ *  Make generated code ISO legal.
+ *
  * Revision 1.62  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *
