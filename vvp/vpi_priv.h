@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.26 2002/01/06 17:50:50 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.27 2002/01/31 04:28:17 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -183,6 +183,13 @@ struct __vpiBinaryConst {
 
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
 
+struct __vpiDecConst {
+      struct __vpiHandle base;
+      int value;
+};
+
+vpiHandle vpip_make_dec_const(int value);
+
 /*
  *  This one looks like a constant, but really is a vector in the current 
  *  thread. 
@@ -250,6 +257,9 @@ extern void functor_set_scope(vpiHandle scope);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.27  2002/01/31 04:28:17  steve
+ *  Full support for $readmem ranges (Tom Verbeure)
+ *
  * Revision 1.26  2002/01/06 17:50:50  steve
  *  Support scope for functors. (Stephan Boettcher)
  *

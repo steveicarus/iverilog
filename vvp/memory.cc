@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.14 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: memory.cc,v 1.15 2002/01/31 04:28:17 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -63,6 +63,10 @@ struct vvp_memory_index_s
 {
   int first;       // first memory address
   unsigned size;   // number of valid addresses
+
+  // Added to correctly support vpiLeftRange and vpiRightRange
+  int left;
+  int right;
 };
 
 struct vvp_memory_port_s : public functor_s
@@ -93,6 +97,30 @@ unsigned memory_root(vvp_memory_t mem, unsigned ix)
       if (ix >= mem->a_idxs)
 	    return 0;
       return mem->a_idx[ix].first;
+}
+
+unsigned memory_left_range(vvp_memory_t mem, unsigned ix)
+{
+      if (ix >= mem->a_idxs)
+	    return 0;
+      return mem->a_idx[ix].left;
+}
+
+unsigned memory_right_range(vvp_memory_t mem, unsigned ix)
+{
+      if (ix >= mem->a_idxs)
+	    return 0;
+      return mem->a_idx[ix].right;
+}
+
+unsigned memory_word_left_range(vvp_memory_t mem)
+{
+      return mem->msb;
+}
+
+unsigned memory_word_right_range(vvp_memory_t mem)
+{
+      return mem->lsb;
 }
 
 char *memory_name(vvp_memory_t mem)
@@ -146,6 +174,10 @@ void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
       vvp_memory_index_t x = mem->a_idx + i;
       int msw = *(idx++);
       int lsw = *(idx++);
+
+      x->left = msw;
+      x->right = lsw;
+
       if (msw > lsw) {
 	    x->size  = msw - lsw + 1;
 	    x->first = lsw;

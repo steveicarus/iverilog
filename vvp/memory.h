@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.h,v 1.4 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: memory.h,v 1.5 2002/01/31 04:28:17 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -52,6 +52,10 @@ unsigned memory_size(vvp_memory_t mem);
 char *memory_name(vvp_memory_t mem);
 unsigned memory_data_width(vvp_memory_t mem);
 unsigned memory_root(vvp_memory_t mem, unsigned ix = 0);
+unsigned memory_left_range(vvp_memory_t mem, unsigned ix = 0);
+unsigned memory_right_range(vvp_memory_t mem, unsigned ix = 0);
+unsigned memory_word_left_range(vvp_memory_t mem);
+unsigned memory_word_right_range(vvp_memory_t mem);
 
 /*
 **  Access to the memory symbol table.
@@ -61,6 +65,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.5  2002/01/31 04:28:17  steve
+ *  Full support for $readmem ranges (Tom Verbeure)
+ *
  * Revision 1.4  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

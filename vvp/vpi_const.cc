@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.9 2002/01/25 03:24:19 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.10 2002/01/31 04:28:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -336,10 +336,110 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 }
 
 
+
+static int dec_get(int code, vpiHandle ref)
+{
+
+      switch (code) {
+	  case vpiConstType:
+	    return vpiDecConst;
+
+	  case vpiSigned: 
+	    return 1;
+
+	  case vpiSize:
+	    return 32;
+
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		    "by vpiDecConst\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+
+static void dec_value(vpiHandle ref, p_vpi_value vp)
+{
+      struct __vpiDecConst*rfp = (struct __vpiDecConst*)ref;
+      char* cp;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (vp->format) {
+
+	  case vpiObjTypeVal:
+	  case vpiIntVal: {
+		vp->value.integer = rfp->value;
+		break;
+	  }
+
+          case vpiDecStrVal:
+	      sprintf(buf, "%d", rfp->value);
+
+	      vp->format = vpiDecStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiBinStrVal:
+	      cp = buf;
+	      for(int bit=31; bit<=0;bit--){
+		  *cp++ = "01"[ (rfp->value>>bit)&1 ];
+	      }
+	      *cp = 0;
+
+	      vp->format = vpiBinStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiHexStrVal:
+	      sprintf(buf, "%08x", rfp->value);
+
+	      vp->format = vpiHexStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiOctStrVal:
+	      sprintf(buf, "%011x", rfp->value);
+
+	      vp->format = vpiOctStrVal;
+	      vp->value.str = buf;
+	      break;
+
+	  default:
+	    fprintf(stderr, "vvp error (vpi_const.cc): format %d not supported "
+		    "by vpiDecConst\n", vp->format);
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+static const struct __vpirt vpip_dec_rt = {
+      vpiConstant,
+      dec_get,
+      0,
+      dec_value,
+      0,
+      0,
+      0
+};
+
+vpiHandle vpip_make_dec_const(int value)
+{
+      struct __vpiDecConst*obj;
+
+      obj = (struct __vpiDecConst*)
+	    malloc(sizeof (struct __vpiDecConst));
+      obj->base.vpi_type = &vpip_dec_rt;
+      obj->value = value;
+
+      return &(obj->base);
+}
+
+
 /*
  * $Log: vpi_const.cc,v $
- * Revision 1.9  2002/01/25 03:24:19  steve
- *  Support display of strings with umber formats. (Tom Verbeure)
+ * Revision 1.10  2002/01/31 04:28:17  steve
+ *  Full support for $readmem ranges (Tom Verbeure)
  *
  * Revision 1.8  2002/01/15 03:21:18  steve
  *  Support DesSTrVal for binary constants.

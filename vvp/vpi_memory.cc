@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.3 2001/12/07 23:23:05 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.4 2002/01/31 04:28:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -40,6 +40,8 @@ struct __vpiMemoryWord {
       struct __vpiHandle base;
       struct __vpiMemory*mem;
       int index;
+      struct __vpiDecConst*left_range;
+      struct __vpiDecConst*right_range;
 };
 
 struct __vpiMemory {
@@ -47,7 +49,27 @@ struct __vpiMemory {
 	/* The signal has a name (this points to static memory.) */
       struct __vpiMemoryWord word;
       vvp_memory_t mem;
+      struct __vpiDecConst*left_range;
+      struct __vpiDecConst*right_range;
+    
 };
+
+static vpiHandle memory_get_handle(int code, vpiHandle obj)
+{
+      struct __vpiMemory*rfp = (struct __vpiMemory*)obj;
+
+      assert(obj->vpi_type->type_code==vpiMemory);
+
+      switch(code){
+      case vpiLeftRange:
+	  return &(rfp->left_range->base);
+
+      case vpiRightRange:
+	  return &(rfp->right_range->base);
+      }
+
+      return 0;
+}
 
 static int vpi_memory_get(int code, vpiHandle ref)
 {
@@ -137,6 +159,25 @@ static vpiHandle memory_index(vpiHandle ref, int index)
       if (index < 0) return 0;
       rfp->word.index = index;
       return &rfp->word.base;
+}
+
+//==============================
+
+static vpiHandle memory_word_get_handle(int code, vpiHandle obj)
+{
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)obj;
+
+      assert(obj->vpi_type->type_code==vpiMemoryWord);
+
+      switch(code){
+      case vpiLeftRange:
+	  return &(rfp->left_range->base);
+
+      case vpiRightRange:
+	  return &(rfp->right_range->base);
+      }
+
+      return 0;
 }
 
 static int memory_word_get(int code, vpiHandle ref)
@@ -234,7 +275,7 @@ static const struct __vpirt vpip_memory_rt = {
       memory_get_str,
       0,
       0,
-      0,
+      memory_get_handle,
       memory_iterate,
       memory_index,
 };
@@ -245,7 +286,7 @@ static const struct __vpirt vpip_memory_word_rt = {
       0,
       memory_word_get_value,
       memory_word_put,
-      0,
+      memory_word_get_handle,
       0,
       0,
 };
@@ -256,15 +297,23 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 	    malloc(sizeof(struct __vpiMemory));
 
       obj->base.vpi_type = &vpip_memory_rt;
-      obj->word.base.vpi_type = &vpip_memory_word_rt;
       obj->mem = mem;
+      obj->left_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_left_range(mem));
+      obj->right_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_right_range(mem));
+
+      obj->word.base.vpi_type = &vpip_memory_word_rt;
       obj->word.mem = obj;
+      obj->word.left_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_word_left_range(mem));
+      obj->word.right_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_word_right_range(mem));
 
       return &(obj->base);
 }
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.4  2002/01/31 04:28:17  steve
+ *  Full support for $readmem ranges (Tom Verbeure)
+ *
  * Revision 1.3  2001/12/07 23:23:05  steve
  *  vpi_put_value of vpiIntVal for memory words.
  *
