@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.164 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.165 2000/09/24 15:44:44 steve Exp $"
 #endif
 
 /*
@@ -312,18 +312,17 @@ class NetNet  : public NetObj, public LineInfo {
       NetScope* scope();
       const NetScope* scope() const;
 
-      Type type() const { return type_; }
-	//void type(Type t) { type_ = t; }
+      Type type() const;
 
-      PortType port_type() const { return port_type_; }
-      void port_type(PortType t) { port_type_ = t; }
+      PortType port_type() const;
+      void port_type(PortType t);
 
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
 	   longs, and may be different from pin numbers. For example,
 	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
-      long msb() const { return msb_; }
-      long lsb() const { return lsb_; }
+      long msb() const;
+      long lsb() const;
 
 	/* This method converts a signed index (the type that might be
 	   found in the verilog source) to a pin number. It accounts
@@ -2800,6 +2799,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.165  2000/09/24 15:44:44  steve
+ *  Move some NetNet method out of the header file.
+ *
  * Revision 1.164  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *

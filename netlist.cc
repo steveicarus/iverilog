@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.136 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: netlist.cc,v 1.137 2000/09/24 15:44:44 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -334,6 +334,31 @@ NetNet::~NetNet()
 NetScope* NetNet::scope()
 {
       return scope_;
+}
+
+NetNet::Type NetNet::type() const
+{
+      return type_;
+}
+
+NetNet::PortType NetNet::port_type() const
+{
+      return port_type_;
+}
+
+void NetNet::port_type(NetNet::PortType t)
+{
+      port_type_ = t;
+}
+
+long NetNet::lsb() const
+{
+      return lsb_;
+}
+
+long NetNet::msb() const
+{
+      return msb_;
 }
 
 const NetScope* NetNet::scope() const
@@ -2375,6 +2400,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.137  2000/09/24 15:44:44  steve
+ *  Move some NetNet method out of the header file.
+ *
  * Revision 1.136  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *
