@@ -15,7 +15,7 @@ GENERATE XNF OUTPUT -- THE SHORT STORY
 The easiest way to compile for XNF output is with the "verilog"
 command (man verilog) and the -X switch:
 
-	% verilog -fpart=4010e -fncf=prog.ncf -X prog.v
+	% iverilog -fpart=4010e -fncf=prog.ncf -txnf prog.v
 
 This generates from the prog.v Verilog source file the prog.xnf output
 and the prog.ncf netlist constraints file. The verilog program
@@ -245,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.14  2000/08/01 21:32:40  steve
+  Use the iverilog command in documentation.
+
  Revision 1.13  2000/08/01 02:48:42  steve
   Support <= in synthesis of DFF and ram devices.
 
