@@ -16,11 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt-virtex.v,v 1.1 2002/11/01 03:29:43 steve Exp $"
+ *   $Id: sqrt-virtex.v,v 1.2 2002/11/13 01:49:43 steve Exp $"
  */
 
 /*
- * This module is a synthesizeable sqare-root function. It is also a
+ * This module is a synthesizeable square-root function. It is also a
  * detailed example of how to target Xilinx Virtex parts using
  * Icarus Verilog. In fact, for no particular reason other then to
  * be excessively specific, I will step through the process of
