@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.9 2003/04/05 01:35:40 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.10 2003/04/05 05:53:34 steve Exp $"
 #endif
 
 # include  "device.h"
 # include  "fpga_priv.h"
 # include  "edif.h"
+# include  "xilinx.h"
 # include  <stdlib.h>
 # include  <string.h>
 #ifdef HAVE_MALLOC_H
@@ -45,217 +46,13 @@ static edif_xlibrary_t xlib = 0;
 static edif_cell_t cell_0 = 0;
 static edif_cell_t cell_1 = 0;
 
-static edif_cell_t cell_fdce  = 0;
-static edif_cell_t cell_fdcpe = 0;
-const unsigned FDCE_Q   = 0;
-const unsigned FDCE_C   = 1;
-const unsigned FDCE_D   = 2;
-const unsigned FDCE_CE  = 3;
-const unsigned FDCE_CLR = 4;
-const unsigned FDCE_PRE = 5;
-
 static edif_cell_t cell_ipad = 0;
 static edif_cell_t cell_opad = 0;
 
-static edif_cell_t cell_buf = 0;
-static edif_cell_t cell_inv = 0;
-static edif_cell_t cell_ibuf = 0;
-static edif_cell_t cell_obuf = 0;
-const unsigned BUF_O = 0;
-const unsigned BUF_I = 1;
-
-static edif_cell_t cell_lut2 = 0;
-static edif_cell_t cell_lut3 = 0;
-static edif_cell_t cell_lut4 = 0;
-const unsigned LUT_O = 0;
-const unsigned LUT_I0 = 1;
-const unsigned LUT_I1 = 2;
-const unsigned LUT_I2 = 3;
-const unsigned LUT_I3 = 4;
-
-static edif_cell_t cell_muxcy = 0;
-static edif_cell_t cell_muxcy_l = 0;
-const unsigned MUXCY_O = 0;
-const unsigned MUXCY_DI = 1;
-const unsigned MUXCY_CI = 2;
-const unsigned MUXCY_S  = 3;
-
-static edif_cell_t cell_xorcy = 0;
-const unsigned XORCY_O = 0;
-const unsigned XORCY_CI = 1;
-const unsigned XORCY_LI = 2;
-
-/*
- * The check_cell_* functions can be called in front of any reference
- * to the matching cell_* variable to make sure the cell type has been
- * created. By creating the cell type only when it is needed, we
- * reduce the size of the library declaration, and also better support
- * cross-family code sharing.
- */
-
-static void check_cell_fdce(void)
-{
-      if (cell_fdce != 0)
-	    return;
-
-      cell_fdce = edif_xcell_create(xlib, "FDCE", 5);
-      edif_cell_portconfig(cell_fdce, FDCE_Q,  "Q",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdce, FDCE_D,  "D",   IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_fdce, FDCE_C,  "C",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdce, FDCE_CE, "CE",  IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdce, FDCE_CLR,"CLR", IVL_SIP_INPUT);
-}
-
-static void check_cell_fdcpe(void)
-{
-      if (cell_fdcpe != 0)
-	    return;
-
-      cell_fdcpe = edif_xcell_create(xlib, "FDCPE", 6);
-      edif_cell_portconfig(cell_fdcpe, FDCE_Q,  "Q",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdcpe, FDCE_D,  "D",   IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_fdcpe, FDCE_C,  "C",   IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdcpe, FDCE_CE, "CE",  IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdcpe, FDCE_CLR,"CLR", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_fdcpe, FDCE_PRE,"PRE", IVL_SIP_INPUT);
-}
-
-static void check_cell_buf(void)
-{
-      if (cell_buf != 0)
-	    return;
-
-      cell_buf = edif_xcell_create(xlib, "BUF", 2);
-      edif_cell_portconfig(cell_buf, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_buf, BUF_I, "I", IVL_SIP_INPUT);
-}
-
-static void check_cell_inv(void)
-{
-      if (cell_inv != 0)
-	    return;
-
-      cell_inv = edif_xcell_create(xlib, "INV", 2);
-      edif_cell_portconfig(cell_inv, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_inv, BUF_I, "I", IVL_SIP_INPUT);
-}
-
-static void check_cell_ibuf(void)
-{
-      if (cell_ibuf != 0)
-	    return;
-
-      cell_ibuf = edif_xcell_create(xlib, "IBUF", 2);
-      edif_cell_portconfig(cell_ibuf, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_ibuf, BUF_I, "I", IVL_SIP_INPUT);
-}
-
-static void check_cell_obuf(void)
-{
-      if (cell_obuf != 0)
-	    return;
-
-      cell_obuf = edif_xcell_create(xlib, "OBUF", 2);
-      edif_cell_portconfig(cell_obuf, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_obuf, BUF_I, "I", IVL_SIP_INPUT);
-}
-
-static void check_cell_lut2(void)
-{
-      if (cell_lut2 != 0)
-	    return;
-
-      cell_lut2 = edif_xcell_create(xlib, "LUT2", 3);
-      edif_cell_portconfig(cell_lut2, LUT_O,  "O",  IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_lut2, LUT_I0, "I0", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut2, LUT_I1, "I1", IVL_SIP_INPUT);
-}
-
-static void check_cell_lut3(void)
-{
-      if (cell_lut3 != 0)
-	    return;
-
-      cell_lut3 = edif_xcell_create(xlib, "LUT3", 4);
-      edif_cell_portconfig(cell_lut3, LUT_O,  "O",  IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_lut3, LUT_I0, "I0", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut3, LUT_I1, "I1", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut3, LUT_I2, "I2", IVL_SIP_INPUT);
-}
-
-static void check_cell_lut4(void)
-{
-      if (cell_lut4 != 0)
-	    return;
-
-      cell_lut4 = edif_xcell_create(xlib, "LUT4", 5);
-      edif_cell_portconfig(cell_lut4, LUT_O,  "O",  IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_lut4, LUT_I0, "I0", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut4, LUT_I1, "I1", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut4, LUT_I2, "I2", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_lut4, LUT_I3, "I3", IVL_SIP_INPUT);
-}
-
-static void check_cell_muxcy(void)
-{
-      if (cell_muxcy != 0)
-	    return;
-
-      cell_muxcy = edif_xcell_create(xlib, "MUXCY", 4);
-      edif_cell_portconfig(cell_muxcy, MUXCY_O,  "O",  IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_muxcy, MUXCY_DI, "DI", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_muxcy, MUXCY_CI, "CI", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_muxcy, MUXCY_S,  "S",  IVL_SIP_INPUT);
-}
-
-static void check_cell_muxcy_l(void)
-{
-      if (cell_muxcy_l != 0)
-	    return;
-
-      cell_muxcy_l = edif_xcell_create(xlib, "MUXCY_L", 4);
-      edif_cell_portconfig(cell_muxcy_l, MUXCY_O,  "LO", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_muxcy_l, MUXCY_DI, "DI", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_muxcy_l, MUXCY_CI, "CI", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_muxcy_l, MUXCY_S,  "S",  IVL_SIP_INPUT);
-}
-
-static void check_cell_xorcy(void)
-{
-      if (cell_xorcy != 0)
-	    return;
-
-      cell_xorcy = edif_xcell_create(xlib, "XORCY", 3);
-      edif_cell_portconfig(cell_xorcy, XORCY_O,  "O",  IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_xorcy, XORCY_CI, "CI", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_xorcy, XORCY_LI, "LI", IVL_SIP_INPUT);
-}
-
-
-
-const unsigned MULT_AND_LO = 0;
-const unsigned MULT_AND_I0 = 1;
-const unsigned MULT_AND_I1 = 2;
-static edif_cell_t celltable_mult_and(edif_xlibrary_t xlib)
-{
-      edif_cell_t cell = edif_xcell_create(xlib, "MULT_AND", 3);
-      edif_cell_portconfig(cell, MULT_AND_LO, "LO", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell, MULT_AND_I0, "I0", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell, MULT_AND_I1, "I1", IVL_SIP_INPUT);
-      return cell;
-}
-
-static edif_cell_t celltable_bufg(edif_xlibrary_t xlib)
-{
-      edif_cell_t cell = edif_xcell_create(xlib, "BUFG", 2);
-      edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
-      return cell;
-}
 
 const static struct edif_xlib_celltable virtex2_celltable[] = {
-      { "BUFG",     celltable_bufg },
-      { "MULT_AND", celltable_mult_and },
+      { "BUFG",     xilinx_cell_bufg },
+      { "MULT_AND", xilinx_cell_mult_and },
       { 0, 0}
 };
 	    
@@ -430,9 +227,8 @@ static void virtex2_pad(ivl_signal_t sig, const char*str)
 
 	    switch (ivl_signal_port(sig)) {
 		case IVL_SIP_INPUT:
-		  check_cell_ibuf();
 		  pad = edif_cellref_create(edf, cell_ipad);
-		  buf = edif_cellref_create(edf, cell_ibuf);
+		  buf = edif_cellref_create(edf, xilinx_cell_ibuf(xlib));
 
 		  jnt = edif_joint_create(edf);
 		  edif_joint_rename(jnt, name_str);
@@ -444,9 +240,8 @@ static void virtex2_pad(ivl_signal_t sig, const char*str)
 		  break;
 
 		case IVL_SIP_OUTPUT:
-		  check_cell_obuf();
 		  pad = edif_cellref_create(edf, cell_opad);
-		  buf = edif_cellref_create(edf, cell_obuf);
+		  buf = edif_cellref_create(edf, xilinx_cell_obuf(xlib));
 
 		  jnt = edif_joint_create(edf);
 		  edif_joint_rename(jnt, name_str);
@@ -521,20 +316,17 @@ static void lut_logic(ivl_net_logic_t net, const char*init3,
 
       switch (ivl_logic_pins(net)) {
 	  case 3:
-	    check_cell_lut2();
-	    lut = edif_cellref_create(edf, cell_lut2);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 	    init = init3;
 	    break;
 
 	  case 4:
-	    check_cell_lut3();
-	    lut = edif_cellref_create(edf, cell_lut3);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
 	    init = init4;
 	    break;
 
 	  case 5:
-	    check_cell_lut4();
-	    lut = edif_cellref_create(edf, cell_lut4);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut4(xlib));
 	    init = init5;
 	    break;
       }
@@ -577,9 +369,8 @@ static void virtex2_logic(ivl_net_logic_t net)
 	  case IVL_LO_BUF:
 	  case IVL_LO_BUFZ:
 	    assert(ivl_logic_pins(net) == 2);
-	    check_cell_buf();
 
-	    obj = edif_cellref_create(edf, cell_buf);
+	    obj = edif_cellref_create(edf, xilinx_cell_buf(xlib));
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
 	    edif_add_to_joint(jnt, obj, BUF_O);
@@ -649,11 +440,9 @@ static void virtex2_generic_dff(ivl_lpm_t net)
 	      /* If there is a preset, then select an FDCPE instead of
 		 an FDCE device. */
 	    if (aset && (abits[idx] == '1')) {
-		  check_cell_fdcpe();
-		  obj = edif_cellref_create(edf, cell_fdcpe);
+		  obj = edif_cellref_create(edf, xilinx_cell_fdcpe(xlib));
 	    } else {
-		  check_cell_fdce();
-		  obj = edif_cellref_create(edf, cell_fdce);
+		  obj = edif_cellref_create(edf, xilinx_cell_fdce(xlib));
 	    }
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
@@ -706,9 +495,6 @@ static void virtex2_show_shiftl(ivl_lpm_t net)
       edif_joint_t pad0;
 
 
-      check_cell_lut3();
-      check_cell_lut4();
-
 	/* First, find out how many select inputs we really need. We
 	   can only use the selects that are enough to shift out the
 	   entire width of the device. The excess can be used as an
@@ -756,10 +542,10 @@ static void virtex2_show_shiftl(ivl_lpm_t net)
 	    edif_cell_t lut;
 
 	    if (((sdx+1) == nsel) && (nsel < ivl_lpm_selects(net))) {
-		  lut = cell_lut4;
+		  lut = xilinx_cell_lut4(xlib);
 		  init_string = "00CA";
 	    } else {
-		  lut = cell_lut3;
+		  lut = xilinx_cell_lut3(xlib);
 		  init_string = "CA";
 	    }
 
@@ -884,8 +670,7 @@ static void virtex2_add(ivl_lpm_t net)
 	   then it is an XNOR. */
       if (ivl_lpm_width(net) == 1) {
 
-	    check_cell_lut2();
-	    lut = edif_cellref_create(edf, cell_lut2);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
 	    edif_add_to_joint(jnt, lut, LUT_O);
@@ -902,13 +687,9 @@ static void virtex2_add(ivl_lpm_t net)
 
       assert(ivl_lpm_width(net) > 1);
 
-      check_cell_lut2();
-      check_cell_xorcy();
-      check_cell_muxcy_l();
-
-      lut   = edif_cellref_create(edf, cell_lut2);
-      xorcy = edif_cellref_create(edf, cell_xorcy);
-      muxcy = edif_cellref_create(edf, cell_muxcy_l);
+      lut   = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+      xorcy = edif_cellref_create(edf, xilinx_cell_xorcy(xlib));
+      muxcy = edif_cellref_create(edf, xilinx_cell_muxcy_l(xlib));
       edif_cellref_pstring(lut, "INIT", ha_init);
 
 	/* The bottom carry-in takes a constant that primes the add or
@@ -949,15 +730,15 @@ static void virtex2_add(ivl_lpm_t net)
       for (idx = 1 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 	    edif_cellref_t muxcy0 = muxcy;
 
-	    lut = edif_cellref_create(edf, cell_lut2);
-	    xorcy = edif_cellref_create(edf, cell_xorcy);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+	    xorcy = edif_cellref_create(edf, xilinx_cell_xorcy(xlib));
 	    edif_cellref_pstring(lut, "INIT", ha_init);
 
 	      /* If this is the last bit, then there is no further
 		 propagation in the carry chain, and I can skip the
 		 carry mux MUXCY. */
 	    if ((idx+1) < ivl_lpm_width(net))
-		  muxcy = edif_cellref_create(edf, cell_muxcy_l);
+		  muxcy = edif_cellref_create(edf, xilinx_cell_muxcy_l(xlib));
 	    else
 		  muxcy = 0;
 
@@ -1038,8 +819,7 @@ static void virtex_eq(ivl_lpm_t net)
       switch (ivl_lpm_width(net)) {
 
 	  case 1:
-	    check_cell_lut2();
-	    lut = edif_cellref_create(edf, cell_lut2);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 	    edif_cellref_pstring(lut, "INIT", eq? "9" : "6");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
@@ -1053,8 +833,7 @@ static void virtex_eq(ivl_lpm_t net)
 	    return;
 
 	  case 2:
-	    check_cell_lut4();
-	    lut = edif_cellref_create(edf, cell_lut4);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut4(xlib));
 	    edif_cellref_pstring(lut, "INIT", eq? "9009" : "6FF6");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
@@ -1074,10 +853,6 @@ static void virtex_eq(ivl_lpm_t net)
 	    return;
 
 	  default:
-	    check_cell_lut2();
-	    check_cell_lut4();
-	    check_cell_muxcy();
-
 	    { edif_cellref_t di;
 	      di = edif_cellref_create(edf, eq? cell_0 : cell_1);
 	      jnt_di = edif_joint_create(edf);
@@ -1090,12 +865,12 @@ static void virtex_eq(ivl_lpm_t net)
 		  if ((idx + 1) == ivl_lpm_width(net))
 			subwid = 1;
 
-		  mux = edif_cellref_create(edf, cell_muxcy);
+		  mux = edif_cellref_create(edf, xilinx_cell_muxcy(xlib));
 		  if (subwid == 2) {
-			lut = edif_cellref_create(edf, cell_lut4);
+			lut = edif_cellref_create(edf, xilinx_cell_lut4(xlib));
 			edif_cellref_pstring(lut, "INIT", "9009");
 		  } else {
-			lut = edif_cellref_create(edf, cell_lut2);
+			lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 			edif_cellref_pstring(lut, "INIT", "9");
 		  }
 
@@ -1168,8 +943,7 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 
 		 Connect the A value to I1 and the B value to I0. */
 
-	    check_cell_lut2();
-	    lut = edif_cellref_create(edf, cell_lut2);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 	    edif_cellref_pstring(lut, "INIT", "D");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
@@ -1206,9 +980,8 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 	   The I3-I0 inputs are A1 A0 B1 B0 in that order. */
 
       assert(ivl_lpm_width(net) >= 2);
-      check_cell_lut4();
 
-      lut = edif_cellref_create(edf, cell_lut4);
+      lut = edif_cellref_create(edf, xilinx_cell_lut4(xlib));
       edif_cellref_pstring(lut, "INIT", "F731");
 
       jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 0));
@@ -1257,11 +1030,8 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 	   output of the LUT4 device for the least significant bits,
 	   and use that to generate the initial CI for the chain. */
 
-      check_cell_lut2();
-      check_cell_muxcy();
-      check_cell_muxcy_l();
 
-      muxcy_prev = edif_cellref_create(edf, cell_muxcy_l);
+      muxcy_prev = edif_cellref_create(edf, xilinx_cell_muxcy_l(xlib));
       jnt = edif_joint_create(edf);
 
       edif_add_to_joint(jnt, lut, LUT_O);
@@ -1281,8 +1051,8 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
       for (idx = 2 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 	    edif_cellref_t muxcy;
 
-	    lut = edif_cellref_create(edf, cell_lut2);
-	    muxcy = edif_cellref_create(edf, cell_muxcy);
+	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+	    muxcy = edif_cellref_create(edf, xilinx_cell_muxcy(xlib));
 	    edif_cellref_pstring(lut, "INIT", "9");
 
 	    jnt = edif_joint_create(edf);
@@ -1326,6 +1096,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.10  2003/04/05 05:53:34  steve
+ *  Move library cell management to common file.
+ *
  * Revision 1.9  2003/04/05 01:35:40  steve
  *  Fix LUT function for chained NE.
  *
