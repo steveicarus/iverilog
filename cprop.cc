@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.45 2003/10/31 02:40:06 steve Exp $"
+#ident "$Id: cprop.cc,v 1.46 2003/11/08 17:53:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -994,6 +994,13 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 
 		  assert(tmp->scope());
 
+		    // If the net is a signal name from the source,
+		    // then users will probably want to see it in the
+		    // waveform dump, so unhooking the constant will
+		    // make it look wrong.
+		  if (! tmp->local_flag())
+			return;
+
 		    // If the net has an eref, then there is an
 		    // expression somewhere that reads this signal. So
 		    // the constant does get read.
@@ -1031,6 +1038,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.46  2003/11/08 17:53:34  steve
+ *  Do not remove constants accessible to VPI.
+ *
  * Revision 1.45  2003/10/31 02:40:06  steve
  *  Donot elide FF that has set or clr connections.
  *
