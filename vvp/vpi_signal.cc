@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.26 2001/10/15 01:49:50 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.27 2001/10/18 04:52:31 steve Exp $"
 #endif
 
 /*
@@ -351,6 +351,39 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.str = buf;
 	    break;
 
+          case vpiVectorVal:
+	    {
+	      s_vpi_vecval *op = vp->value.vector;
+	      unsigned int obit = 0;
+	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
+		switch (functor_oval(fptr)) {
+		case 0:
+		  op->aval &= ~(1 << obit);
+		  op->bval &= ~(1 << obit);
+		  break;
+		case 1:
+		  op->aval |= (1 << obit);
+		  op->bval &= ~(1 << obit);
+		  break;
+		case 2:
+		  op->aval &= ~(1 << obit);
+		  op->bval |= (1 << obit);
+		  break;
+		case 3:
+		  op->aval |= (1 << obit);
+		  op->bval |= (1 << obit);
+		  break;
+		}
+		obit++;
+		if (obit == 8*sizeof(op->aval)) {
+		  op++;
+		  obit = 0;
+		}
+	      }
+	    }
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp internal error: signal_get_value: "
 		    "value type %u not implemented.\n", vp->format);
@@ -521,6 +554,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.27  2001/10/18 04:52:31  steve
+ *  Support vpiVectorVal for signals. (Philip Blundell)
+ *
  * Revision 1.26  2001/10/15 01:49:50  steve
  *  Support getting scope of scope, and scope of signals.
  *
