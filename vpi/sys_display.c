@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.62 2003/06/17 16:55:08 steve Exp $"
+#ident "$Id: sys_display.c,v 1.63 2003/07/21 01:19:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -830,6 +830,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
+      char*fmt;
       s_vpi_value value;
       int idx;
       int size;
@@ -848,9 +849,11 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  if (vpi_get(vpiConstType, item) == vpiStringConst) {
 			value.format = vpiStringVal;
 			vpi_get_value(item, &value);
-			idx += format_str(info->scope, mcd, value.value.str,
+			fmt = strdup(value.value.str);
+			idx += format_str(info->scope, mcd, fmt,
 					  info->nitems-idx-1,
 					  info->items+idx+1);
+			free(fmt);
 		  } else {
 			value.format = vpiBinStrVal;
 			vpi_get_value(item, &value);
@@ -1741,6 +1744,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.63  2003/07/21 01:19:58  steve
+ *  Careful to save format string to prevent overwrite.
+ *
  * Revision 1.62  2003/06/17 16:55:08  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens
