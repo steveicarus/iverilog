@@ -216,7 +216,7 @@ endmodule
 
 --------------------------------------------------------------
 
-Insure that "ivl" is on your search path, and the vpi library 
+Insure that "verilog" is on your search path, and the vpi library 
 is available.
 
 For csh - 
@@ -242,11 +242,6 @@ verilog features. This list is not exhaustive, and does not account
 for errors in the compiler. See the Icarus Verilog web page for the
 current state of support for Verilog.
 
-  - Ranges within parameter definitions:
-    Example: parameter [15:0] seed = 16'ha3; 
-
-    [Note: IEEE Std: 1364-1995 does not allow the syntax.]
-
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
   - Non-scalar memories, i.e. other than registers. 
@@ -261,10 +256,14 @@ current state of support for Verilog.
 
   - structural arithmetic operators are in general not supported.
 
+  - multiplicative operators (*, /, %) are not supported.
+
   - event data type is not supported.
 
+  - real data type not supported.
+
   - system functions are not supported. (User defined functions are
-    supported.)
+    supported, and system tasks are supported.)
 
 Specify blocks are parsed but ignored in general.
 
