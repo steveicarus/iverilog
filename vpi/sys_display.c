@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.2 1999/09/29 01:41:18 steve Exp $"
+#ident "$Id: sys_display.c,v 1.3 1999/10/08 17:47:49 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -65,6 +65,17 @@ static void format_m(vpiHandle argv, int fsize)
       if (item == 0) return;
 
       vpi_printf("%s", vpi_get_str(vpiFullName, item));
+}
+
+static void format_time(vpiHandle argv, int fsize)
+{
+      s_vpi_value value;
+      vpiHandle item = vpi_scan(argv);
+      if (item == 0) return;
+
+      value.format = vpiDecStrVal;
+      vpi_get_value(item, &value);
+      vpi_printf("%s", value.value.str);
 }
 
 /*
@@ -118,6 +129,11 @@ static void format(s_vpi_value*fmt, vpiHandle argv)
 			break;
 		      case 'm':
 			format_m(argv, fsize);
+			cp += 1;
+			break;
+		      case 't':
+		      case 'T':
+			format_time(argv, fsize);
 			cp += 1;
 			break;
 		      case '%':
@@ -228,6 +244,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.3  1999/10/08 17:47:49  steve
+ *  Add the %t formatting escape.
+ *
  * Revision 1.2  1999/09/29 01:41:18  steve
  *  Support the $write system task, and have the
  *  vpi_scan function free iterators as needed.
