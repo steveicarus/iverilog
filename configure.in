@@ -95,4 +95,18 @@ AC_SUBST(rdynamic)
 
 AC_MSG_RESULT($rdynamic)
 
+AC_MSG_CHECKING("for shared library build flag")
+shared=-shared
+case "${host}" in
+     *-*-cygwin*)
+        shared="-mdll -Wl,--enable-auto-image-base"
+	;;
+esac
+
+AC_SUBST(shared)
+
+AC_MSG_RESULT($shared)
+
+
+
 AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
