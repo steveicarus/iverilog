@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_config.h.in,v 1.1 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: vpi_config.h.in,v 1.2 2004/01/26 21:52:46 steve Exp $"
 #endif
 
 # undef HAVE_LIBIBERTY_H
@@ -31,10 +31,15 @@
 # undef WORDS_BIGENDIAN
 
 # undef _LARGEFILE_SOURCE
-# undef _LARGEFILE64_SOURCE
+#ifdef _LARGEFILE_SOURCE
+# define _FILE_OFFSET_BITS 64
+#endif
 
 /*
  * $Log: vpi_config.h.in,v $
+ * Revision 1.2  2004/01/26 21:52:46  steve
+ *  Make sure file64 support is on cc -D flags.
+ *
  * Revision 1.1  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

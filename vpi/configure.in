@@ -67,7 +67,11 @@ AC_LANG_C
 AC_C_BIGENDIAN
 
 AC_CANONICAL_HOST
-# Do some operating system specific setup.
+# Do some operating system specific setup. We put the file64_support
+# define in a substitution instead of simply a define because there
+# are source files (namely lxt support files) that don't include any
+# config.h header file.
+file64_support=''
 case "${host}" in
     *-*-darwin*)
 	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
@@ -76,9 +80,10 @@ case "${host}" in
 
     *-*-linux*)
 	AC_DEFINE(_LARGEFILE_SOURCE)
-	AC_DEFINE(_LARGEFILE64_SOURCE)
+	file64_support='-D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64'
 	;;
 esac
+AC_SUBST(file64_support)
 
 # $host
 
