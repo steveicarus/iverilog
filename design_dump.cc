@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.118 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.119 2001/11/19 01:46:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -786,7 +786,7 @@ void NetProc::dump(ostream&o, unsigned ind) const
 /* Dump an expression that noone wrote a dump method for. */
 void NetExpr::dump(ostream&o) const
 {
-      o << "(?)";
+      o << "(?" << typeid(*this).name() << "?)";
 }
 
 void NetEBinary::dump(ostream&o) const
@@ -970,6 +970,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.119  2001/11/19 01:46:38  steve
+ *  Print typename is fallback expression node dump.
+ *
  * Revision 1.118  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *
