@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.35 2002/05/29 16:29:34 steve Exp $
+ *  $Id: opcodes.txt,v 1.36 2002/05/31 20:04:22 steve Exp $
  */
 
 
@@ -321,6 +321,12 @@ This instruction multiplies the left vector by the right vector, the
 vectors having the width <wid>. If any of the bits of either vector
 are x or z, the result is x. Otherwise, the result is the arithmetic
 product.
+
+
+* %muli <bit-l>, <imm>, <wid>
+
+This instruction is the same as %mul, but the second operand is an
+immediate value that is padded to the width of the result.
 
 
 * %nor/r <dst>, <src>, <wid>

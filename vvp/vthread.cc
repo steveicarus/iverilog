@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.76 2002/05/31 04:09:58 steve Exp $"
+#ident "$Id: vthread.cc,v 1.77 2002/05/31 20:04:22 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1613,6 +1613,106 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_MULI(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+	/* If the value fits into a native unsigned long, then make an
+	   unsigned long variable with the numbers, to a native
+	   multiply, and work with that. */
+
+      if(cp->number <= 8*sizeof(unsigned long)) {
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned long lv = 0, rv = cp->bit_idx[1];
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  unsigned lb = thr_get_bit(thr, idx1);
+
+		  if (lb & 2)
+			goto x_out;
+
+		  lv |= lb << idx;
+
+		  idx1 += 1;
+	    }
+
+	    lv *= rv;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  lv >>= 1;
+	    }
+
+	    return true;
+      }
+
+	/* number is too large for local long, so do bitwise
+	   multiply. */
+
+      unsigned idx1; idx1 = cp->bit_idx[0];
+      unsigned imm;  imm  = cp->bit_idx[1];
+
+      unsigned char *a, *b, *sum;
+      a = new unsigned char[cp->number];
+      b = new unsigned char[cp->number];
+      sum = new unsigned char[cp->number];
+
+      int mxa; mxa = -1;
+      int mxb; mxb = -1;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = imm & 1;
+
+	    imm >>= 1;
+
+	    if (lb & 2) {
+                  delete[]sum;
+                  delete[]b;
+                  delete[]a;
+		  goto x_out;
+	    }
+
+	    if((a[idx] = lb)) mxa=idx+1;
+	    if((b[idx] = rb)) mxb=idx;
+            sum[idx]=0;
+
+	    idx1 += 1;
+      }
+
+//    do "unsigned ZZ sum = a * b" the hard way.. 
+      for(int i=0;i<=mxb;i++) {
+	    if(b[i]) {
+		  unsigned char carry=0;
+		  unsigned char temp;
+
+		  for(int j=0;j<=mxa;j++) {
+			if(i+j>=(int)cp->number) break;
+			temp=sum[i+j]+a[j]+carry;
+			sum[i+j]=(temp&1);
+			carry=(temp>>1);
+		  }
+	    }
+      }
+
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]);
+      }
+
+      delete[]sum;
+      delete[]b;
+      delete[]a;
+
+      return true;
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return true;
+}
+
 bool of_NOOP(vthread_t thr, vvp_code_t cp)
 {
       return true;
@@ -2065,6 +2165,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.77  2002/05/31 20:04:22  steve
+ *  Add the %muli instruction.
+ *
  * Revision 1.76  2002/05/31 04:09:58  steve
  *  Slight improvement in %mov performance.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.42 2002/05/31 04:09:58 steve Exp $"
+#ident "$Id: codes.h,v 1.43 2002/05/31 20:04:22 steve Exp $"
 #endif
 
 
@@ -75,6 +75,7 @@ extern bool of_LOAD_X(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
+extern bool of_MULI(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
@@ -154,6 +155,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.43  2002/05/31 20:04:22  steve
+ *  Add the %muli instruction.
+ *
  * Revision 1.42  2002/05/31 04:09:58  steve
  *  Slight improvement in %mov performance.
  *

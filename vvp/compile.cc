@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.128 2002/05/29 16:29:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.129 2002/05/31 20:04:22 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -117,6 +117,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1412,6 +1413,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.129  2002/05/31 20:04:22  steve
+ *  Add the %muli instruction.
+ *
  * Revision 1.128  2002/05/29 16:29:34  steve
  *  Add %addi, which is faster to simulate.
  *
