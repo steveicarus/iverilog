@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.32 2001/06/15 04:14:19 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.33 2001/06/16 02:41:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -115,6 +115,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  }
 	    break;
 
+	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
@@ -619,6 +620,53 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
+inline static void draw_lpm_ram(ivl_lpm_t net)
+{
+      unsigned idx;
+      unsigned width = ivl_lpm_width(net);
+      unsigned awidth = ivl_lpm_selects(net);
+      ivl_memory_t mem = ivl_lpm_memory(net);
+      ivl_nexus_t clk = ivl_lpm_clk(net);
+      ivl_nexus_t pin;
+
+      if (clk) {
+	    fprintf(vvp_out,
+		    "CLK_%s .event posedge, ",
+		    ivl_lpm_name(net));
+	    draw_input_from_net(pin);
+	    fprintf(vvp_out, ";\n");
+      }
+
+      fprintf(vvp_out, 
+	      "L_%s .mem/port M_%s, %d,0, %d,\n  ", 
+	      ivl_lpm_name(net), 
+	      ivl_memory_name(mem),
+	      width-1,
+	      awidth);
+
+      for (idx = 0 ;  idx < awidth ;  idx += 1) {
+	    pin = ivl_lpm_select(net, idx);
+	    if (idx) fprintf(vvp_out, ", ");
+	    draw_input_from_net(pin);
+      }
+      
+      if (clk) {
+	    fprintf(vvp_out, ",\n  CLK_%s, ", ivl_lpm_name(net));
+	    pin = ivl_lpm_enable(net);
+	    if (pin)
+		  draw_input_from_net(pin);
+	    else
+		  fprintf(vvp_out, "C<1>");
+	    for (idx=0; idx<width; idx++) {
+		  pin = ivl_lpm_data(net, idx);
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(pin);
+	    }
+      }
+      
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -724,6 +772,11 @@ static void draw_lpm_mux(ivl_lpm_t net)
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_RAM:
+	    draw_lpm_ram(net);
+	    return;
+
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	    draw_lpm_add(net);
@@ -801,14 +854,14 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_event_in_scope(event);
       }
 
-      for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1) {
-	    ivl_lpm_t lpm = ivl_scope_lpm(net, idx);
-	    draw_lpm_in_scope(lpm);
-      }
-
       for (idx = 0 ;  idx < ivl_scope_mems(net) ;  idx += 1) {
 	    ivl_memory_t mem = ivl_scope_mem(net, idx);
 	    draw_mem_in_scope(mem);
+      }
+
+      for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1) {
+	    ivl_lpm_t lpm = ivl_scope_lpm(net, idx);
+	    draw_lpm_in_scope(lpm);
       }
 
       if (ivl_scope_type(net) == IVL_SCT_TASK)
@@ -823,6 +876,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.33  2001/06/16 02:41:42  steve
+ *  Generate code to support memory access in continuous
+ *  assignment statements. (Stephan Boettcher)
+ *
  * Revision 1.32  2001/06/15 04:14:19  steve
  *  Generate vvp code for GT and GE comparisons.
  *

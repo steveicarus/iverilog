@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.47 2001/06/15 04:14:19 steve Exp $"
+#ident "$Id: t-dll.h,v 1.48 2001/06/16 02:41:42 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -65,6 +65,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_compare(const NetCompare*);
       void lpm_ff(const NetFF*);
       void lpm_mux(const NetMux*);
+      void lpm_ram_dq(const NetRamDq*);
       void net_assign(const NetAssign_*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
@@ -223,7 +224,9 @@ struct ivl_lpm_s {
       union {
 	    struct ivl_lpm_ff_s {
 		  unsigned short width;
+		  unsigned short swid; // ram only
 		  ivl_nexus_t clk;
+		  ivl_nexus_t we; // ram only ??
 		  union {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
@@ -232,6 +235,11 @@ struct ivl_lpm_s {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
 		  } d;
+		  union { // ram only
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } s;
+		  ivl_memory_t mem; // ram only
 	    } ff;
 
 	    struct ivl_lpm_mux_s {
@@ -529,6 +537,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.48  2001/06/16 02:41:42  steve
+ *  Generate code to support memory access in continuous
+ *  assignment statements. (Stephan Boettcher)
+ *
  * Revision 1.47  2001/06/15 04:14:19  steve
  *  Generate vvp code for GT and GE comparisons.
  *

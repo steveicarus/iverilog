@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.47 2001/06/15 05:01:09 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.48 2001/06/16 02:41:42 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -820,6 +820,119 @@ void dll_target::lpm_ff(const NetFF*net)
       }
 }
 
+void dll_target::lpm_ram_dq(const NetRamDq*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_RAM;
+      obj->name  = strdup(net->name());
+      obj->u_.ff.mem = lookup_memory_(net->mem());
+      assert(obj->u_.ff.mem);
+      obj->scope = find_scope(des_.root_, net->mem()->scope());
+      assert(obj->scope);
+
+      obj->u_.ff.width = net->width();
+      obj->u_.ff.swid = net->awidth();
+      
+      scope_add_lpm(obj->scope, obj);
+
+      const Nexus*nex;
+
+      // How do I find out if there is something 
+      // connected to the clock input?
+      bool has_write_port = false;
+
+      // Connect the write clock and write enable
+
+      if (has_write_port) {
+	    nex = net->pin_InClock().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.clk);
+	    nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    nex = net->pin_WE().nexus();
+	    if (nex && nex->t_cookie()) {
+		  obj->u_.ff.we = (ivl_nexus_t) nex->t_cookie();
+		  assert(obj->u_.ff.we);
+		  nexus_lpm_add(obj->u_.ff.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+	    }
+	    else
+		  obj->u_.ff.we = 0x0;
+      }
+      else {
+	    obj->u_.ff.clk = 0x0;
+	    obj->u_.ff.we = 0x0;
+      }
+	    
+      // Connect the address bus
+
+      if (obj->u_.ff.swid == 1) {
+	    nex = net->pin_Address(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.s.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.s.pin, obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+      }
+      else {
+	    obj->u_.ff.s.pins = new ivl_nexus_t [obj->u_.ff.swid];
+	    
+	    for (unsigned idx = 0 ;  idx < obj->u_.ff.swid ;  idx += 1) {
+		  nex = net->pin_Address(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.s.pins[idx], obj, 0,
+				IVL_DR_STRONG, IVL_DR_STRONG);
+	    }
+      }
+      
+      // Connect the data busses
+
+      if (obj->u_.ff.width == 1) {
+	    nex = net->pin_Q(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    if (has_write_port) {
+		  nex = net->pin_Data(0).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.d.pin, obj,
+				0, IVL_DR_HiZ, IVL_DR_HiZ);
+	    }
+      } 
+      else if (has_write_port) {
+	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
+	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
+
+	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
+		  nex = net->pin_Q(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
+				IVL_DR_STRONG, IVL_DR_STRONG);
+		  
+		  nex = net->pin_Data(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+	    }
+      } 
+      else {
+	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width];
+	    
+	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
+		  nex = net->pin_Q(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
+				IVL_DR_STRONG, IVL_DR_STRONG);
+	    }
+      }
+}
+
 void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1180,6 +1293,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.48  2001/06/16 02:41:42  steve
+ *  Generate code to support memory access in continuous
+ *  assignment statements. (Stephan Boettcher)
+ *
  * Revision 1.47  2001/06/15 05:01:09  steve
  *  support LE and LT comparators.
  *

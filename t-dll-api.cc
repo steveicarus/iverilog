@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.49 2001/06/15 04:14:19 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.50 2001/06/16 02:41:41 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -438,7 +438,20 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
 	    return net->u_.ff.clk;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.we;
 	  default:
 	    assert(0);
 	    return 0;
@@ -457,6 +470,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    return net->u_.arith.a[idx];
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.d.pin;
@@ -523,6 +537,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    return net->u_.arith.q[0];
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.q.pin;
@@ -545,6 +560,13 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 {
       switch (net->type) {
+	  case IVL_LPM_RAM:
+	    assert(idx < net->u_.ff.swid);
+	    if (net->u_.ff.swid == 1)
+		  return net->u_.ff.s.pin;
+	    else
+		  return net->u_.ff.s.pins[idx];
+
 	  case IVL_LPM_MUX:
 	    assert(idx < net->u_.mux.swid);
 	    if (net->u_.mux.swid == 1)
@@ -561,6 +583,8 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 {
       switch (net->type) {
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.swid;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
 	  default:
@@ -590,6 +614,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
 	    return net->u_.ff.width;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
@@ -602,6 +627,18 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    assert(0);
 	    return 0;
       }
+}
+
+extern "C" ivl_memory_t ivl_lpm_memory(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.mem;
+	  default:
+	    assert(0);
+	    return 0;
+      }      
 }
 
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
@@ -1186,6 +1223,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.50  2001/06/16 02:41:41  steve
+ *  Generate code to support memory access in continuous
+ *  assignment statements. (Stephan Boettcher)
+ *
  * Revision 1.49  2001/06/15 04:14:19  steve
  *  Generate vvp code for GT and GE comparisons.
  *
