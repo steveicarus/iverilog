@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.226 2001/10/22 23:26:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.227 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -128,7 +128,8 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
 		  if (cnt < lval->pin_count()) {
 			verinum tmpv (0UL, lval->pin_count()-cnt);
-			NetConst*tmp = new NetConst(des->local_symbol(path),
+			NetConst*tmp = new NetConst(scope,
+						    des->local_symbol(path),
 						    tmpv);
 			des->add_node(tmp);
 			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
@@ -151,7 +152,8 @@ void PGAssign::elaborate(Design*des, const string&path) const
 		  }
 
 		  if (cnt < lval->pin_count()) {
-			NetConst*dev = new NetConst(des->local_symbol(path),
+			NetConst*dev = new NetConst(scope,
+						    des->local_symbol(path),
 						    verinum::V0);
 			
 			des->add_node(dev);
@@ -1511,7 +1513,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetCAssign* dev = new NetCAssign(des->local_symbol(path), lval);
+      NetCAssign* dev = new NetCAssign(scope, des->local_symbol(path), lval);
       dev->set_line(*this);
       des->add_node(dev);
 
@@ -1762,7 +1764,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetEvWait*we = new NetEvWait(0);
 	    we->add_event(ev);
 
-	    NetEvProbe*po = new NetEvProbe(path+"."+scope->local_symbol(),
+	    NetEvProbe*po = new NetEvProbe(scope,
+					   path+"."+scope->local_symbol(),
 					   ev, NetEvProbe::POSEDGE, 1);
 	    connect(po->pin(0), ex->pin(0));
 
@@ -1856,17 +1859,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetEvProbe*pr;
 	    switch (expr_[idx]->type()) {
 		case PEEvent::POSEDGE:
-		  pr = new NetEvProbe(des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
 				      NetEvProbe::POSEDGE, pins);
 		  break;
 
 		case PEEvent::NEGEDGE:
-		  pr = new NetEvProbe(des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
 				      NetEvProbe::NEGEDGE, pins);
 		  break;
 
 		case PEEvent::ANYEDGE:
-		  pr = new NetEvProbe(des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
 				      NetEvProbe::ANYEDGE, pins);
 		  break;
 
@@ -1945,7 +1948,7 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetForce* dev = new NetForce(des->local_symbol(path), lval);
+      NetForce* dev = new NetForce(scope, des->local_symbol(path), lval);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
@@ -2401,6 +2404,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.227  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.226  2001/10/22 23:26:37  steve
  *  Better error message for mising root module.
  *

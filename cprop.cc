@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.29 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: cprop.cc,v 1.30 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -153,6 +153,7 @@ void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
 
 void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 {
+      NetScope*scope = obj->scope();
 
 	/* First, look for the case where constant bits on matching A
 	   and B inputs are different. This this is so, the device can
@@ -167,7 +168,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 		driven_value(obj->pin_DataB(idx)))
 		  continue;
 
-	    NetConst*zero = new NetConst(obj->name(), verinum::V0);
+	    NetConst*zero = new NetConst(scope, obj->name(), verinum::V0);
 	    connect(zero->pin(0), obj->pin_AEB());
 	    delete obj;
 	    des->add_node(zero);
@@ -204,7 +205,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 	/* If we wound up disconnecting all the inputs, then remove
 	   the device and replace it with a constant. */
       if (top == 0) {
-	    NetConst*one = new NetConst(obj->name(), verinum::V1);
+	    NetConst*one = new NetConst(scope, obj->name(), verinum::V1);
 	    connect(one->pin(0), obj->pin_AEB());
 	    delete obj;
 	    des->add_node(one);
@@ -215,7 +216,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 	/* If there is only one bit left, then replace the comparator
 	   with a simple XOR gate. */
       if (top == 1) {
-	    NetLogic*tmp = new NetLogic(obj->scope(), obj->name(), 3,
+	    NetLogic*tmp = new NetLogic(scope, obj->name(), 3,
 					NetLogic::XOR);
 	    connect(tmp->pin(0), obj->pin_AEB());
 	    connect(tmp->pin(1), obj->pin_DataA(0));
@@ -230,7 +231,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
       if (top == obj->width())
 	    return;
 
-      NetCompare*tmp = new NetCompare(obj->scope(), obj->name(), top);
+      NetCompare*tmp = new NetCompare(scope, obj->name(), top);
       connect(tmp->pin_AEB(), obj->pin_AEB());
       for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
 	    connect(tmp->pin_DataA(idx), obj->pin_DataA(idx));
@@ -295,6 +296,8 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 
 void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 {
+      NetScope*scope = obj->scope();
+
       switch (obj->type()) {
 
 	  case NetLogic::NAND:
@@ -336,10 +339,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetConst*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::AND:
-			    tmp = new NetConst(obj->name(), verinum::V0);
+			    tmp = new NetConst(scope, obj->name(), verinum::V0);
 			    break;
 			  case NetLogic::NAND:
-			    tmp = new NetConst(obj->name(), verinum::V1);
+			    tmp = new NetConst(scope, obj->name(), verinum::V1);
 			    break;
 			  default:
 			    assert(0);
@@ -361,10 +364,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetConst*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::AND:
-			    tmp = new NetConst(obj->name(), verinum::V1);
+			    tmp = new NetConst(scope, obj->name(), verinum::V1);
 			    break;
 			  case NetLogic::NAND:
-			    tmp = new NetConst(obj->name(), verinum::V0);
+			    tmp = new NetConst(scope, obj->name(), verinum::V0);
 			    break;
 			  default:
 			    assert(0);
@@ -384,7 +387,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     gate with a Vx. */
 		if (xs == (top-1)) {
 		      NetConst*tmp;
-		      tmp = new NetConst(obj->name(), verinum::Vx);
+		      tmp = new NetConst(scope, obj->name(), verinum::Vx);
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -401,12 +404,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetLogic*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::AND:
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::BUF);
 			    break;
 			  case NetLogic::NAND:
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::NOT);
 			    break;
@@ -427,7 +430,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     new [N]OR gate that has the right number of
 		     inputs, connected in the right place. */
 		if (top < obj->pin_count()) {
-		      NetLogic*tmp = new NetLogic(obj->scope(),
+		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
 						  obj->type());
 		      des->add_node(tmp);
@@ -482,10 +485,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetConst*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::OR:
-			    tmp = new NetConst(obj->name(), verinum::V1);
+			    tmp = new NetConst(scope, obj->name(), verinum::V1);
 			    break;
 			  case NetLogic::NOR:
-			    tmp = new NetConst(obj->name(), verinum::V0);
+			    tmp = new NetConst(scope, obj->name(), verinum::V0);
 			    break;
 			  default:
 			    assert(0);
@@ -507,10 +510,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetConst*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::OR:
-			    tmp = new NetConst(obj->name(), verinum::V0);
+			    tmp = new NetConst(scope, obj->name(), verinum::V0);
 			    break;
 			  case NetLogic::NOR:
-			    tmp = new NetConst(obj->name(), verinum::V1);
+			    tmp = new NetConst(scope, obj->name(), verinum::V1);
 			    break;
 			  default:
 			    assert(0);
@@ -532,12 +535,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetLogic*tmp;
 		      switch (obj->type()) {
 			  case NetLogic::OR:
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::BUF);
 			    break;
 			  case NetLogic::NOR:
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::NOT);
 			    break;
@@ -558,7 +561,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     new [N]OR gate that has the right number of
 		     inputs, connected in the right place. */
 		if (top < obj->pin_count()) {
-		      NetLogic*tmp = new NetLogic(obj->scope(),
+		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
 						  obj->type());
 		      des->add_node(tmp);
@@ -653,7 +656,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      verinum::V out = obj->type()==NetLogic::XNOR
 			    ? verinum::V1
 			    : verinum::V0;
-		      NetConst*tmp = new NetConst(obj->name(), out);
+		      NetConst*tmp = new NetConst(scope, obj->name(), out);
 
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -681,11 +684,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetLogic*tmp;
 
 		      if (obj->type() == NetLogic::XOR)
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::NOT);
 		      else
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::BUF);
 
@@ -706,11 +709,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetLogic*tmp;
 
 		      if (obj->type() == NetLogic::XOR)
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::BUF);
 		      else
-			    tmp = new NetLogic(obj->scope(),
+			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::NOT);
 
@@ -728,7 +731,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     new XOR gate that has the right number of
 		     inputs, connected in the right place. */
 		if (top < obj->pin_count()) {
-		      NetLogic*tmp = new NetLogic(obj->scope(),
+		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
 						  obj->type());
 		      des->add_node(tmp);
@@ -939,6 +942,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.30  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.29  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

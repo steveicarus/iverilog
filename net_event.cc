@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.15 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_event.cc,v 1.16 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -283,9 +283,9 @@ const NetEvent* NetEvTrig::event() const
       return event_;
 }
 
-NetEvProbe::NetEvProbe(const string&n, NetEvent*tgt,
+NetEvProbe::NetEvProbe(NetScope*s, const string&n, NetEvent*tgt,
 		       edge_t t, unsigned p)
-: NetNode(n, p), event_(tgt), edge_(t)
+: NetNode(s, n, p), event_(tgt), edge_(t)
 {
       for (unsigned idx = 0 ;  idx < p ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
@@ -451,6 +451,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.16  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.15  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.173 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: netlist.cc,v 1.174 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -163,19 +163,6 @@ Link* find_next_output(Link*lnk)
       return 0;
 }
 
-NetObj::NetObj(const string&n, unsigned np)
-: scope_(0), npins_(np), delay1_(0), delay2_(0), delay3_(0)
-{
-      name_ = new char[n.length()+1];
-      strcpy(name_, n.c_str());
-
-      pins_ = new Link[npins_];
-      for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
-	    pins_[idx].node_ = this;
-	    pins_[idx].pin_  = idx;
-      }
-}
-
 NetObj::NetObj(NetScope*s, const string&n, unsigned np)
 : scope_(s), npins_(np), delay1_(0), delay2_(0), delay3_(0)
 {
@@ -264,11 +251,6 @@ const Link& NetObj::pin(unsigned idx) const
 {
       assert(idx < npins_);
       return pins_[idx];
-}
-
-NetNode::NetNode(const string&n, unsigned npins)
-: NetObj(n, npins), node_next_(0), node_prev_(0), design_(0)
-{
 }
 
 NetNode::NetNode(NetScope*s, const string&n, unsigned npins)
@@ -1277,8 +1259,8 @@ const Link& NetMux::pin_Data(unsigned w, unsigned s) const
 }
 
 
-NetRamDq::NetRamDq(const string&n, NetMemory*mem, unsigned awid)
-: NetNode(n, 3+2*mem->width()+awid), mem_(mem), awidth_(awid)
+NetRamDq::NetRamDq(NetScope*s, const string&n, NetMemory*mem, unsigned awid)
+: NetNode(s, n, 3+2*mem->width()+awid), mem_(mem), awidth_(awid)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("InClock", 0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("OutClock", 0);
@@ -1589,8 +1571,8 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 	    items_[idx].guard->set_width(expr_->expr_width());
 }
 
-NetCaseCmp::NetCaseCmp(const string&n)
-: NetNode(n, 3)
+NetCaseCmp::NetCaseCmp(NetScope*s, const string&n)
+: NetNode(s, n, 3)
 {
       pin(0).set_dir(Link::OUTPUT); pin(0).set_name("O",0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("I",0);
@@ -1639,8 +1621,8 @@ NetProc* NetCondit::else_clause()
       return else_;
 }
 
-NetConst::NetConst(const string&n, verinum::V v)
-: NetNode(n, 1)
+NetConst::NetConst(NetScope*s, const string&n, verinum::V v)
+: NetNode(s, n, 1)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
@@ -1648,8 +1630,8 @@ NetConst::NetConst(const string&n, verinum::V v)
       value_[0] = v;
 }
 
-NetConst::NetConst(const string&n, const verinum&val)
-: NetNode(n, val.len())
+NetConst::NetConst(NetScope*s, const string&n, const verinum&val)
+: NetNode(s, n, val.len())
 {
       value_ = new verinum::V[pin_count()];
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
@@ -2429,6 +2411,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.174  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.173  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

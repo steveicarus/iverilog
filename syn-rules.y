@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.14 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.15 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -178,14 +178,17 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       NetNet*adr = adr_e->synthesize(des);
       assert(adr);
 
+      NetScope*scope = adr->scope();
+      assert(scope);
+
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
       NetNet*ce = cexp? cexp->synthesize(des) : 0;
 
       assert(d);
 
-      NetRamDq*ram = new NetRamDq(des->local_symbol(mem->name()), mem,
-				  adr->pin_count());
+      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(mem->name()),
+				  mem, adr->pin_count());
 
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(adr->pin(idx), ram->pin_Address(idx));

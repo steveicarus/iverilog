@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.3 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_force.cc,v 1.4 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,8 +44,8 @@
  * output pins to connect to the netlist? But that would cause the
  * link ring to grow, and that is not quite correct either. Hmm...
  */
-NetCAssign::NetCAssign(const string&n, NetNet*l)
-: NetNode(n, l->pin_count()), lval_(l)
+NetCAssign::NetCAssign(NetScope*s, const string&n, NetNet*l)
+: NetNode(s, n, l->pin_count()), lval_(l)
 {
       lval_->incr_eref();
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
@@ -81,8 +81,8 @@ const NetNet*NetDeassign::lval() const
       return lval_;
 }
 
-NetForce::NetForce(const string&n, NetNet*l)
-: NetNode(n, l->pin_count()), lval_(l)
+NetForce::NetForce(NetScope*s, const string&n, NetNet*l)
+: NetNode(s, n, l->pin_count()), lval_(l)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
@@ -117,6 +117,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.4  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.3  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

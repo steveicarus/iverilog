@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.218 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: netlist.h,v 1.219 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 /*
@@ -80,7 +80,6 @@ class NetObj {
 
     public:
     public:
-      explicit NetObj(const string&n, unsigned npins);
       explicit NetObj(NetScope*s, const string&n, unsigned npins);
       explicit NetObj(NetScope*s, const char*n, unsigned npins);
       virtual ~NetObj();
@@ -284,7 +283,6 @@ class NetNode  : public NetObj {
     public:
       explicit NetNode(NetScope*s, const string&n, unsigned npins);
       explicit NetNode(NetScope*s, const char*n, unsigned npins);
-      explicit NetNode(const string&n, unsigned npins);
 
       virtual ~NetNode();
 
@@ -563,7 +561,8 @@ class NetDivide  : public NetNode {
 class NetModulo  : public NetNode {
 
     public:
-      NetModulo(const string&n, unsigned width, unsigned wa, unsigned wb);
+      NetModulo(NetScope*s, const string&n,
+		unsigned width, unsigned wa, unsigned wb);
       ~NetModulo();
 
       unsigned width_r() const;
@@ -776,7 +775,7 @@ class NetMux  : public NetNode {
 class NetRamDq  : public NetNode {
 
     public:
-      NetRamDq(const string&name, NetMemory*mem, unsigned awid);
+      NetRamDq(NetScope*s, const string&name, NetMemory*mem, unsigned awid);
       ~NetRamDq();
 
       unsigned width() const;
@@ -959,7 +958,7 @@ class NetBUFZ  : public NetNode {
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(const string&n);
+      explicit NetCaseCmp(NetScope*s, const string&n);
       ~NetCaseCmp();
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -977,8 +976,8 @@ class NetCaseCmp  : public NetNode {
 class NetConst  : public NetNode {
 
     public:
-      explicit NetConst(const string&n, verinum::V v);
-      explicit NetConst(const string&n, const verinum&val);
+      explicit NetConst(NetScope*s, const string&n, verinum::V v);
+      explicit NetConst(NetScope*s, const string&n, const verinum&val);
       ~NetConst();
 
       verinum::V value(unsigned idx) const;
@@ -1416,7 +1415,7 @@ class NetCase  : public NetProc {
 class NetCAssign  : public NetProc, public NetNode {
 
     public:
-      explicit NetCAssign(const string&n, NetNet*l);
+      explicit NetCAssign(NetScope*s, const string&n, NetNet*l);
       ~NetCAssign();
 
       const Link& lval_pin(unsigned) const;
@@ -1661,8 +1660,8 @@ class NetEvProbe  : public NetNode {
     public:
       enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
 
-      explicit NetEvProbe(const string&n, NetEvent*tgt,
-			  edge_t t, unsigned p);
+      explicit NetEvProbe(NetScope*s, const string&n,
+			  NetEvent*tgt, edge_t t, unsigned p);
       ~NetEvProbe();
 
       edge_t edge() const;
@@ -1692,7 +1691,7 @@ class NetEvProbe  : public NetNode {
 class NetForce  : public NetProc, public NetNode {
 
     public:
-      explicit NetForce(const string&n, NetNet*l);
+      explicit NetForce(NetScope*s, const string&n, NetNet*l);
       ~NetForce();
 
       const Link& lval_pin(unsigned) const;
@@ -2850,6 +2849,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.219  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.218  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

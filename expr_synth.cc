@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.27 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.28 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -396,7 +396,7 @@ NetNet* NetEConst::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
-      NetConst*con = new NetConst(des->local_symbol(path), value());
+      NetConst*con = new NetConst(scope, des->local_symbol(path), value());
       for (unsigned idx = 0 ;  idx < width;  idx += 1)
 	    connect(osig->pin(idx), con->pin(idx));
 
@@ -562,6 +562,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.28  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.27  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

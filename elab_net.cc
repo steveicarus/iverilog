@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.76 2001/10/16 02:19:26 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.77 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -385,7 +385,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 
       NetNet*zero = 0;
       if (lsig->pin_count() != rsig->pin_count()) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					verinum::V0);
 	    des->add_node(tmp);
 	    zero = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    connect(tmp->pin(0), zero->pin(0));
@@ -441,7 +442,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 				(op_ == 'E')? NetLogic::AND : NetLogic::NAND);
 	    connect(gate->pin(0), osig->pin(0));
 	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-		  NetCaseCmp*cmp = new NetCaseCmp(des->local_symbol(path));
+		  NetCaseCmp*cmp = new NetCaseCmp(scope,
+						  des->local_symbol(path));
 
 		  if (idx < lsig->pin_count())
 			connect(cmp->pin(1), lsig->pin(idx));
@@ -621,7 +623,8 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
 	//    wire [7:0] r = a / b;
 
       if (rwidth < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = rwidth ;  idx < osig->pin_count() ;  idx += 1)
 		  connect(osig->pin(idx), tmp->pin(0));
@@ -649,7 +652,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, const string&path,
       unsigned rwidth = lsig->pin_count();
       if (rsig->pin_count() > rwidth)
 	    rwidth = rsig->pin_count();
-      NetModulo*mod = new NetModulo(des->local_symbol(path), rwidth,
+      NetModulo*mod = new NetModulo(scope, des->local_symbol(path), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
       des->add_node(mod);
@@ -673,7 +676,8 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, const string&path,
 	/* If the lvalue is larger then the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
 		  connect(osig->pin(idx), tmp->pin(0));
@@ -810,7 +814,8 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
 	/* If the lvalue is larger then the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
 		  connect(osig->pin(idx), tmp->pin(0));
@@ -851,7 +856,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 				     NetNet::WIRE, lwidth);
 	    osig->local_flag(true);
 
-	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*zero = new NetConst(scope, des->local_symbol(path),
+					 verinum::V0);
 	    des->add_node(zero);
 
 	    if (op_ == 'l') {
@@ -904,7 +910,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	    connect(lsig->pin(idx), gate->pin_Data(idx));
 
       if (lsig->pin_count() < lwidth) {
-	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetConst*zero = new NetConst(scope, des->local_symbol(path),
+					 verinum::V0);
 	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path));
 	    des->add_node(zero);
 	    connect(zero->pin(0), tmp->pin(0));
@@ -919,7 +926,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 
       if (op_ == 'r') {
 	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path));
-	    NetConst*dir = new NetConst(des->local_symbol(path), verinum::V1);
+	    NetConst*dir = new NetConst(scope, des->local_symbol(path),
+					verinum::V1);
 	    connect(dir->pin(0), gate->pin_Direction());
 	    connect(tmp->pin(0), gate->pin_Direction());
 	    des->add_node(dir);
@@ -1063,7 +1071,8 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  verinum pvalue = pc->value();
 		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT,
 				   pc->expr_width());
-		  NetConst*cp = new NetConst(des->local_symbol(path), pvalue);
+		  NetConst*cp = new NetConst(scope, des->local_symbol(path),
+					     pvalue);
 		  des->add_node(cp);
 		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
 			connect(sig->pin(idx), cp->pin(idx));
@@ -1207,7 +1216,7 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
 	    return 0;
 
 
-      NetRamDq*ram = new NetRamDq(des->local_symbol(mem->name()),
+      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(mem->name()),
 				  mem, adr->pin_count());
       des->add_node(ram);
 
@@ -1480,7 +1489,8 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	    for (idx = 0 ;  idx < num.len() && idx < value_->len(); idx += 1)
 		  num.set(idx, value_->get(idx));
 
-	    NetConst*tmp = new NetConst(des->local_symbol(path), num);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					num);
 	    for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 		  tmp->pin(idx).drive0(drive0);
 		  tmp->pin(idx).drive1(drive1);
@@ -1498,22 +1508,14 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	    NetNet*net = new NetNet(scope, des->local_symbol(path),
 				    NetNet::IMPLICIT, value_->len());
 	    net->local_flag(true);
-	    NetConst*tmp = new NetConst(des->local_symbol(path), *value_);
+	    NetConst*tmp = new NetConst(scope, des->local_symbol(path),
+					*value_);
 	    for (unsigned idx = 0 ;  idx < value_->len() ;  idx += 1)
 		  connect(net->pin(idx), tmp->pin(idx));
 
 	    des->add_node(tmp);
 	    return net;
       }
-
-#if 0
-	/* This warning is trying to catch the cases where an unsized
-	   integer in a netlist causes the netlist to explode in width
-	   even when it need not. This proved to be spurious and
-	   caused lots of false alarms, so it is commented out. */
-      cerr << get_line() << ": warning: Number with indefinite size "
-	   << "in self-determined context." << endl;
-#endif
 
 	/* None of the above tight constraints are present, so make a
 	   plausible choice for the width. Try to reduce the width as
@@ -1543,7 +1545,7 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       NetNet*net = new NetNet(scope, des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
-      NetConst*tmp = new NetConst(des->local_symbol(path), num);
+      NetConst*tmp = new NetConst(scope, des->local_symbol(path), num);
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    connect(net->pin(idx), tmp->pin(idx));
 
@@ -1663,7 +1665,7 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
       if (dwidth < width) {
 	    verinum vpad (verinum::V0, width-dwidth);
-	    NetConst*pad = new NetConst(des->local_symbol(path), vpad);
+	    NetConst*pad = new NetConst(scope, des->local_symbol(path), vpad);
 	    des->add_node(pad);
 	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), pad->pin(idx-dwidth));
@@ -1711,7 +1713,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    sig->local_flag(true);
 
 	    verinum tmp(v_not(*val) + verinum(1UL, width), width);
-	    NetConst*con = new NetConst(des->local_symbol(path), tmp);
+	    NetConst*con = new NetConst(scope, des->local_symbol(path), tmp);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), con->pin(idx));
 
@@ -1897,6 +1899,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.77  2001/10/28 01:14:53  steve
+ *  NetObj constructor finally requires a scope.
+ *
  * Revision 1.76  2001/10/16 02:19:26  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *
@@ -2024,143 +2029,5 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used
  *  many places in the port list.
- *
- * Revision 1.36  2000/05/07 20:48:14  steve
- *  Properly elaborate repeat concatenations.
- *
- * Revision 1.35  2000/05/07 19:40:26  steve
- *  Fix connection of Direction of LMP_CLSHIFT
- *  to constant values. Remember to add a signal
- *  to the nexus and connect the receiver in vvm.
- *
- * Revision 1.34  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.33  2000/05/03 21:21:36  steve
- *  Allow ternary result to be padded to result width.
- *
- * Revision 1.32  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.31  2000/05/02 00:58:11  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.30  2000/04/28 21:00:29  steve
- *  Over agressive signal elimination in constant probadation.
- *
- * Revision 1.29  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.28  2000/03/27 04:38:15  steve
- *  Speling error.
- *
- * Revision 1.27  2000/03/20 17:54:10  steve
- *  Remove dangerous tmp signal delete.
- *
- * Revision 1.26  2000/03/17 21:50:25  steve
- *  Switch to control warnings.
- *
- * Revision 1.25  2000/03/16 19:03:03  steve
- *  Revise the VVM backend to use nexus objects so that
- *  drivers and resolution functions can be used, and
- *  the t-vvm module doesn't need to write a zillion
- *  output functions.
- *
- * Revision 1.24  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.23  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.22  2000/02/16 03:58:27  steve
- *  Fix up width matching in structural bitwise operators.
- *
- * Revision 1.21  2000/02/14 06:04:52  steve
- *  Unary reduction operators do not set their operand width
- *
- * Revision 1.20  2000/01/18 04:53:40  steve
- *  Support structural XNOR.
- *
- * Revision 1.19  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.18  2000/01/11 04:20:57  steve
- *  Elaborate net widths of constants to as small
- *  as is possible, obeying context constraints.
- *
- *  Comparison operators can handle operands with
- *  different widths.
- *
- * Revision 1.17  2000/01/02 22:07:09  steve
- *  Add a signal to nexus of padding constant.
- *
- * Revision 1.16  2000/01/02 21:45:31  steve
- *  Add structural reduction NAND,
- *  Fix size coercion of structural shifts.
- *
- * Revision 1.15  2000/01/02 19:39:03  steve
- *  Structural reduction XNOR.
- *
- * Revision 1.14  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.13  1999/12/16 03:46:39  steve
- *  Structural logical or.
- *
- * Revision 1.12  1999/12/16 02:42:14  steve
- *  Simulate carry output on adders.
- *
- * Revision 1.11  1999/12/02 04:08:10  steve
- *  Elaborate net repeat concatenations.
- *
- * Revision 1.10  1999/11/30 04:33:41  steve
- *  Put implicitly defined signals in the scope.
- *
- * Revision 1.9  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.8  1999/11/21 17:35:37  steve
- *  Memory name lookup handles scopes.
- *
- * Revision 1.7  1999/11/21 00:13:08  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.6  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.5  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.4  1999/11/05 23:36:31  steve
- *  Forgot to return the mux for use after elaboration.
- *
- * Revision 1.3  1999/11/05 21:45:19  steve
- *  Fix NetConst being set to zero width, and clean
- *  up elaborate_set_cmp_ for NetEBinary.
- *
- * Revision 1.2  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.1  1999/10/31 20:08:24  steve
- *  Include subtraction in LPM_ADD_SUB device.
- *
  */
 

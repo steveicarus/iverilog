@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_modulo.cc,v 1.2 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.3 2001/10/28 01:14:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,9 +30,9 @@
 # include  "netlist.h"
 
 
-NetModulo::NetModulo(const string&n, unsigned wr,
+NetModulo::NetModulo(NetScope*s, const string&n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
+: NetNode(s, n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
