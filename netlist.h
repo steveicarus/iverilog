@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.319 2004/09/05 17:44:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.320 2004/10/04 00:25:18 steve Exp $"
 #endif
 
 /*
@@ -2229,10 +2229,6 @@ class NetVariable : public LineInfo {
  * This node represents a function call in an expression. The object
  * contains a pointer to the function definition, which is used to
  * locate the value register and input expressions.
- *
- * The NetNet parameter to the constructor is the *register* NetNet
- * that receives the result of the function, and the NetExpr list is
- * the parameters passed to the function.
  */
 class NetEUFunc  : public NetExpr {
 
@@ -3361,6 +3357,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.320  2004/10/04 00:25:18  steve
+ *  Remove inaccurate comment.
+ *
  * Revision 1.319  2004/09/05 17:44:42  steve
  *  Add support for module instance arrays.
  *
