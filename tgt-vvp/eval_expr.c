@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.53 2001/11/19 04:25:46 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.54 2002/01/11 05:23:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1109,6 +1109,8 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 		case IVL_EX_SFUNC:
 		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
 			fprintf(vvp_out, ", $time");
+		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
+			fprintf(vvp_out, ", $stime");
 		  else
 			fprintf(vvp_out, ", ?");
 		  continue;
@@ -1448,6 +1450,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.54  2002/01/11 05:23:05  steve
+ *  Handle certain special cases of stime.
+ *
  * Revision 1.53  2001/11/19 04:25:46  steve
  *  Handle padding out of logical values.
  *

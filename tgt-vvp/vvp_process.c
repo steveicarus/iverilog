@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.51 2001/12/05 05:41:20 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.52 2002/01/11 05:23:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -877,6 +877,8 @@ static int show_system_task_call(ivl_statement_t net)
 		case IVL_EX_SFUNC:
 		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
 			fprintf(vvp_out, ", $time");
+		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
+			fprintf(vvp_out, ", $time");
 		  else
 			fprintf(vvp_out, ", ?");
 		  continue;
@@ -1100,6 +1102,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.52  2002/01/11 05:23:05  steve
+ *  Handle certain special cases of stime.
+ *
  * Revision 1.51  2001/12/05 05:41:20  steve
  *  Make sure fork labels are globally unique.
  *
