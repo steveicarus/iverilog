@@ -19,7 +19,33 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h,v 1.2 2003/05/26 04:39:16 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.1 2003/09/30 01:33:13 steve Exp $"
+#endif
+
+# define SIZEOF_UNSIGNED_LONG_LONG 8
+# define SIZEOF_UNSIGNED_LONG 8
+# define SIZEOF_UNSIGNED 4
+
+#if SIZEOF_UNSIGNED >= 8
+typedef unsigned PLI_UINT64;
+typedef int      PLI_INT64;
+# define TIME_FMT ""
+#else
+# if SIZEOF_UNSIGNED_LONG >= 8
+typedef unsigned long PLI_UINT64;
+typedef          long PLI_INT64;
+#  define TIME_FMT "l"
+# else
+#  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
+typedef unsigned long long PLI_UINT64;
+typedef          long long PLI_INT64;
+#   define TIME_FMT "ll"
+#  else
+typedef unsigned long PLI_UINT64;
+typedef          long PLI_INT64;
+#   define TIME_FMT "l"
+#  endif
+# endif
 #endif
 
 typedef signed int     PLI_INT32;
@@ -30,7 +56,10 @@ typedef signed char    PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
 
 /*
- * $Log: _pli_types.h,v $
+ * $Log: _pli_types.h.in,v $
+ * Revision 1.1  2003/09/30 01:33:13  steve
+ *  Add PLI_UINT64 to _pli_types.h.
+ *
  * Revision 1.2  2003/05/26 04:39:16  steve
  *  Typo type name.
  *
