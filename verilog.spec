@@ -31,7 +31,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt netlist.txt t-dll.txt vpi.txt vvm.txt xnf.txt xilinx-hint.txt
+%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt netlist.txt t-dll.txt vpi.txt vvm.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
 %attr(-,root,root) /usr/man/man1/iverilog.1.gz

@@ -13,13 +13,13 @@ home page at <http://www.icarus.com/eda/verilog>.
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
 tools. These back-end tools currently include a simulator written in
-C++ called VVM, another faster simulator called VVP and an XNF (Xilinx
-Netlist Format) generator. See "vvm.txt" and "xnf.txt" for further
-details on these back-end processors. In the future, backends are
-expected for EDIF/LPM, structural Verilog, VHDL, etc.
+C++ called VVM, another faster simulator called VVP, an XNF (Xilinx
+Netlist Format) generator and an EDIF fpga netlist generator. In the
+future, backends are expected for EDIF/LPM, structural Verilog, VHDL,
+etc.
 
-    For instructions on how to run Icarus Verilog, see the ``iverilog''
-    man page.
+    For instructions on how to run Icarus Verilog,
+    see the ``iverilog'' man page.
 
 
 2.0 Building/Installing Icarus Verilog From Source
@@ -29,6 +29,8 @@ as simple as practical. Someone basically familiar with the target
 system and C/C++ compilation should be able to build the source
 distribution with little effort. Some actual programming skills are
 not required, but helpful in case of problems.
+
+If you are building for Windows, see the mingw.txt file.
 
 2.1 Compile Time Prerequisites
 
