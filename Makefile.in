@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.110 2001/12/30 17:20:33 steve Exp $"
+#ident "$Id: Makefile.in,v 1.111 2002/01/05 04:36:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -85,9 +85,8 @@ endif
 # sure the basics were compiled properly.
 check: all
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) check); done
-	driver/iverilog -Ccheck.conf -ocheck -tvvm-check -B./ivlpp examples/hello.vl
-	$(CXX) -o check $(rdynamic) -fno-exceptions -I$(srcdir) -I$(srcdir)/vvm -I$(srcdir)/vpip -Lvvm -Lvpip check.cc -lvvm -lvpip $(dllib)
-	./check | grep 'Hello, World'
+	driver/iverilog -Ccheck.conf -ocheck.vvp -tvvp-check -B./ivlpp $(srcdir)/examples/hello.vl
+	vvp/vvp ./check.vvp | grep 'Hello, World'
 
 clean:
 	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a libvpi.a
