@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.37 2000/05/16 04:05:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.38 2000/05/26 05:26:11 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1365,6 +1365,25 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	    width = tru_sig->pin_count();
 
       assert(width >= tru_sig->pin_count());
+
+	/* If the expression has width, then generate a boolean result
+	   by connecting an OR gate to calculate the truth value of
+	   the result. */
+      if (expr_sig->pin_count() > 1) {
+	    NetLogic*log = new NetLogic(des->local_symbol(path),
+					expr_sig->pin_count()+1,
+					NetLogic::OR);
+	    for (unsigned idx = 0;  idx < expr_sig->pin_count(); idx += 1)
+		  connect(log->pin(idx+1), expr_sig->pin(idx));
+
+	    NetNet*tmp = new NetTmp(scope, des->local_symbol(path));
+	    tmp->local_flag(true);
+	    connect(tmp->pin(0), log->pin(0));
+	    des->add_node(log);
+
+	    expr_sig = tmp;
+      }
+
       assert(expr_sig->pin_count() == 1);
 
 	/* This is the width of the LPM_MUX device that I'm about to
@@ -1559,6 +1578,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.38  2000/05/26 05:26:11  steve
+ *  Handle wide conditions in ternary operator.
+ *
  * Revision 1.37  2000/05/16 04:05:15  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used
