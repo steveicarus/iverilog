@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.12 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.13 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -201,6 +201,14 @@ NetNet* NetEBComp::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEBDiv::synthesize(Design*des)
+{
+      cerr << get_line() << ": internal error: cannot synthesize division: "
+	   << *this << endl;
+      des->errors += 1;
+      return 0;
+}
+
 NetNet* NetEConcat::synthesize(Design*des)
 {
       assert(repeat_ == 1);
@@ -309,6 +317,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.13  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.12  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.118 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: netlist.cc,v 1.119 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1964,6 +1964,27 @@ NetEBComp* NetEBComp::dup_expr() const
       return result;
 }
 
+NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      unsigned w = l->expr_width();
+      if (r->expr_width() > w)
+	    w = r->expr_width();
+
+      expr_width(w);
+}
+
+NetEBDiv::~NetEBDiv()
+{
+}
+
+NetEBDiv* NetEBDiv::dup_expr() const
+{
+      NetEBDiv*result = new NetEBDiv(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
+}
+
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
@@ -2516,6 +2537,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.119  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.118  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

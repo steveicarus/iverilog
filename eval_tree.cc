@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.9 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.10 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -130,6 +130,12 @@ NetEConst* NetEBComp::eval_tree()
 	  default:
 	    return 0;
       }
+}
+
+NetEConst* NetEBDiv::eval_tree()
+{
+      eval_sub_tree_();
+      return 0;
 }
 
 NetEConst* NetEBLogic::eval_tree()
@@ -269,6 +275,9 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.10  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.9  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

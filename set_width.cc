@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.11 2000/04/26 03:33:32 steve Exp $"
+#ident "$Id: set_width.cc,v 1.12 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 /*
@@ -127,6 +127,15 @@ bool NetEBBits::set_width(unsigned w)
 bool NetEBComp::set_width(unsigned w)
 {
       return (w == 1);
+}
+
+/*
+ * There is nothing we can do to the operands of a division to make it
+ * confirm to the requested width. Force the context to pad or truncate.
+ */
+bool NetEBDiv::set_width(unsigned w)
+{
+      return w == expr_width();
 }
 
 bool NetEBLogic::set_width(unsigned w)
@@ -286,6 +295,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.12  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.11  2000/04/26 03:33:32  steve
  *  Do not set width too small to hold significant bits.
  *

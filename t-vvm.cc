@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.140 2000/04/26 18:35:11 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.141 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -475,6 +475,8 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 
       expr->right()->expr_scan(this);
       string rres = result;
+
+      assert(expr->expr_width() != 0);
 
       result = make_temp();
       os_ << "      // " << expr->get_line() << ": expression node." << endl;
@@ -2687,6 +2689,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.141  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.140  2000/04/26 18:35:11  steve
  *  Handle assigning small values to big registers.
  *

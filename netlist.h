@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.131 2000/04/28 16:50:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.132 2000/04/28 18:43:23 steve Exp $"
 #endif
 
 /*
@@ -1791,6 +1791,23 @@ class NetEBAdd : public NetEBinary {
 };
 
 /*
+ * This class represents the integer division operators.
+ *   /  -- Divide
+ *   %  -- Modulus
+ */
+class NetEBDiv : public NetEBinary {
+
+    public:
+      NetEBDiv(char op, NetExpr*l, NetExpr*r);
+      ~NetEBDiv();
+
+      virtual bool set_width(unsigned w);
+      virtual NetEBDiv* dup_expr() const;
+      virtual NetEConst* eval_tree();
+      virtual NetNet* synthesize(Design*);
+};
+
+/*
  * The bitwise binary operators are represented by this class. This is
  * a specialization of the binary operator, so is derived from
  * NetEBinary. The particular constraints on these operators are that
@@ -2451,6 +2468,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.132  2000/04/28 18:43:23  steve
+ *  integer division in expressions properly get width.
+ *
  * Revision 1.131  2000/04/28 16:50:53  steve
  *  Catch memory word parameters to tasks.
  *
