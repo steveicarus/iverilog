@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.14 2001/04/26 15:52:22 steve Exp $"
+#ident "$Id: functor.cc,v 1.15 2001/05/03 04:54:33 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -171,29 +171,43 @@ const unsigned char vvp_edge_anyedge[16] = {
       1, 1, 1, 0  // z -> ...
 };
 
+/*
+ * A mode1 functor is a probe of some sort that is looking for an edge
+ * of some specified type on any of its inputs. If it finds the right
+ * kind of edge, then it awakens all the threads that are waiting on
+ * this functor *and* it schedules an assign for any output it might
+ * have. The latter is to support wider event/or then a single functor
+ * can support.
+ */
 static void functor_set_mode1(functor_t fp)
 {
       vvp_event_t ep = fp->event;
 
-      for (unsigned idx = 0 ;  ep->threads && (idx < 4) ;  idx += 1) {
-	    unsigned oval = (ep->ival >> 2*idx) & 3;
-	    unsigned nval = (fp->ival >> 2*idx) & 3;
+	/* Only go through the effort if there is someone interested
+	   in the results... */
 
-	    unsigned val = (oval << 2) | nval;
-	    unsigned char edge_p = ep->vvp_edge_tab[val];
+      if (ep->threads || fp->out) {
 
-	    if (edge_p) {
-		  vthread_t tmp = ep->threads;
-		  ep->threads = 0;
-		  vthread_schedule_list(tmp);
+	    for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
+		  unsigned oval = (ep->ival >> 2*idx) & 3;
+		  unsigned nval = (fp->ival >> 2*idx) & 3;
+
+		  unsigned val = (oval << 2) | nval;
+		  unsigned char edge_p = ep->vvp_edge_tab[val];
+
+		  if (edge_p) {
+			vthread_t tmp = ep->threads;
+			ep->threads = 0;
+			vthread_schedule_list(tmp);
+
+			if (fp->out)
+			      schedule_assign(fp->out, 0, 0);
+		  }
 	    }
       }
 
 	/* the new value is the new old value. */
       ep->ival = fp->ival;
-
-      if (fp->out)
-	    schedule_assign(fp->out, 0, 0);
 }
 
 /*
@@ -316,6 +330,12 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.15  2001/05/03 04:54:33  steve
+ *  Fix handling of a mode 1 functor that feeds into a
+ *  mode 2 functor. Feed the result only if the event
+ *  is triggered, and do pass to the output even if no
+ *  threads are waiting.
+ *
  * Revision 1.14  2001/04/26 15:52:22  steve
  *  Add the mode-42 functor concept to UDPs.
  *
