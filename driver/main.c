@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.39 2002/05/28 00:50:40 steve Exp $"
+#ident "$Id: main.c,v 1.40 2002/05/28 02:25:03 steve Exp $"
 
 # include "config.h"
 
@@ -92,8 +92,6 @@ const char*depfile = 0;
 const char*generation = "-g3.0";
 
 char warning_flags[16] = "";
-char *library_flags = 0;
-char *library_flags2 = 0;
 
 char*inc_list = 0;
 char*def_list = 0;
@@ -304,28 +302,12 @@ static void process_warning_switch(const char*name)
 
 void process_library_switch(const char *name)
 {
-      if (library_flags) {
-	    library_flags = realloc(library_flags, 
-				    strlen(library_flags) + strlen(name) + 5);
-	    strcat(library_flags, " -y ");
-      } else {
-	    library_flags = malloc(strlen(name) + 4);
-	    strcpy(library_flags, "-y ");
-      }
-      strcat(library_flags, name);
+      fprintf(iconfig_file, "-y:%s\n", name);
 }
 
 void process_library2_switch(const char *name)
 {
-      if (library_flags2) {
-	    library_flags2 = realloc(library_flags2, 
-				    strlen(library_flags2) + strlen(name) + 5);
-	    strcat(library_flags2, " -Y ");
-      } else {
-	    library_flags2 = malloc(strlen(name) + 4);
-	    strcpy(library_flags2, "-Y ");
-      }
-      strcat(library_flags2, name);
+      fprintf(iconfig_file, "-Y:%s\n", name);
 }
 
 void process_include_dir(const char *name)
@@ -444,6 +426,20 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "%s: Error opening temporary file %s\n",
 		    argv[0], source_path);
 	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
+	    return 1;
+      }
+
+	/* Create another temporary file for passing configuration
+	   information to ivl. */
+      iconfig_path = strdup(tempnam(NULL, "ivrlh"));
+      assert(iconfig_path);
+      iconfig_file = fopen(iconfig_path, "w");
+      if (NULL == iconfig_file) {
+	    fprintf(stderr, "%s: Error opening temporary file %s\n",
+		    argv[0], iconfig_path);
+	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
+	    fclose(source_file);
+	    remove(source_path);
 	    return 1;
       }
 
@@ -682,6 +678,9 @@ int main(int argc, char **argv)
 
 	    rc = system(cmd);
 	    remove(source_path);
+	    fclose(iconfig_file);
+	    remove(iconfig_path);
+
 	    if (rc != 0) {
 		  if (WIFEXITED(rc)) {
 			fprintf(stderr, "errors preprocessing Verilog program.\n");
@@ -693,20 +692,6 @@ int main(int argc, char **argv)
 	    }
 
 	    return 0;
-      }
-
-	/* Create another temporary file for passing configuration
-	   information to ivl. */
-      iconfig_path = strdup(tempnam(NULL, "ivrlh"));
-      assert(iconfig_path);
-      iconfig_file = fopen(iconfig_path, "w");
-      if (NULL == iconfig_file) {
-	    fprintf(stderr, "%s: Error opening temporary file %s\n",
-		    argv[0], iconfig_path);
-	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
-	    fclose(source_file);
-	    remove(source_path);
-	    return 1;
       }
 
 	/* Write the preprocessor command needed to preprocess a
@@ -731,6 +716,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.40  2002/05/28 02:25:03  steve
+ *  Pass library paths through -Cfile instead of command line.
+ *
  * Revision 1.39  2002/05/28 00:50:40  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.9 2002/05/28 00:50:39 steve Exp $"
+#ident "$Id: build_string.c,v 1.10 2002/05/28 02:25:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -150,22 +150,6 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(warning_flags);
 			break;
 
-		      case 'y':
-			if (library_flags) {
-			      strcpy(output, library_flags);
-			      output += strlen(library_flags);
-			      olen -= strlen(library_flags);
-			}
-			break;
-
-		      case 'Y':
-			if (library_flags2) {
-			      strcpy(output, library_flags2);
-			      output += strlen(library_flags2);
-			      olen -= strlen(library_flags2);
-			}
-			break;
-
 		  }
 		  pattern += 1;
 
@@ -181,6 +165,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.10  2002/05/28 02:25:03  steve
+ *  Pass library paths through -Cfile instead of command line.
+ *
  * Revision 1.9  2002/05/28 00:50:39  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library

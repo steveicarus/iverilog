@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.56 2002/05/28 00:50:39 steve Exp $"
+#ident "$Id: main.cc,v 1.57 2002/05/28 02:25:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,6 +99,12 @@ bool error_implicit = false;
  */
 bool verbose_flag = false;
 
+/*
+ * Read the contents of a config file. This file is a temporary
+ * configuration file made by the compiler driver to carry the bulky
+ * flags generated from the user. This reduces the size of the command
+ * line needed to invoke ivl
+ */
 static void read_iconfig_file(const char*ipath)
 {
       char buf[8*1024];
@@ -130,6 +136,13 @@ static void read_iconfig_file(const char*ipath)
 
 	    if (strcmp(buf, "ivlpp") == 0) {
 		  ivlpp_string = strdup(cp);
+
+	    } else if (strcmp(buf, "-y") == 0) {
+		  library_dirs.push_back(strdup(cp));
+
+	    } else if (strcmp(buf, "-Y") == 0) {
+		  library_suff.push_back(strdup(cp));
+
 	    }
       }
 }
@@ -570,6 +583,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.57  2002/05/28 02:25:03  steve
+ *  Pass library paths through -Cfile instead of command line.
+ *
  * Revision 1.56  2002/05/28 00:50:39  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library
