@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.40 2000/11/29 23:59:29 steve Exp $"
+#ident "$Id: Makefile.in,v 1.41 2000/12/15 20:05:16 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -49,8 +49,8 @@ STRIP = @STRIP@
 
 O = vvm_add_sub.o vvm_bit.o vvm_calltf.o vvm_clshift.o vvm_compare.o \
 vvm_event.o vvm_ff.o vvm_force.o \
-vvm_func.o vvm_gates.o vvm_idiv.o vvm_imod.o vvm_mult.o vvm_mux.o \
-vvm_nexus.o vvm_pevent.o vvm_signal.o vvm_thread.o vvm_udp.o
+vvm_func.o vvm_gates.o vvm_idiv.o vvm_imod.o vvm_memory.o vvm_mult.o \
+vvm_mux.o vvm_nexus.o vvm_pevent.o vvm_signal.o vvm_thread.o vvm_udp.o
 
 P = vpi_bit.o vpi_callback.o \
 vpi_const.o vpi_iter.o vpi_memory.o vpi_null.o \

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.191 2000/12/15 03:06:04 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.192 2000/12/15 20:05:16 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1251,8 +1251,7 @@ void target_vvm::signal(const NetNet*sig)
 void target_vvm::memory(const NetMemory*mem)
 {
       const string mname = mangle(mem->name());
-      out << "static vvm_memory_t<" << mem->width() << ", " <<
-	    mem->count() << "> " << mname << ";"
+      out << "static vvm_memory_t " << mname << ";"
 	    " /* " << mem->name() << " */" << endl;
       init_code << "      vpip_make_memory(&" << mname << ", \"" <<
 	    mem->name() << "\", " << mem->width() << ", " <<
@@ -2657,8 +2656,7 @@ void target_vvm::proc_assign_mem_nb(const NetAssignMemNB*amem)
 
       assert(mem->width() <= amem->rval()->expr_width());
 
-      defn << "      (new vvm_memory_t<" << mem->width() << ","
-	   << mem->count() << ">::assign_nb(" << mangle(mem->name())
+      defn << "      (new vvm_memory_t::assign_nb(" << mangle(mem->name())
 	   << ", " << index << ".as_unsigned(), " << rval <<
 	    ")) -> schedule();" << endl;
 }
@@ -3406,6 +3404,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.192  2000/12/15 20:05:16  steve
+ *  Fix memory access in vvm. (PR#70)
+ *
  * Revision 1.191  2000/12/15 03:06:04  steve
  *  functions with system tasks (PR#46)
  *

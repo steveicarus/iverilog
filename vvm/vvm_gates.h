@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.68 2000/12/10 06:42:00 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.69 2000/12/15 20:05:16 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -530,7 +530,7 @@ template <unsigned WIDTH, unsigned AWIDTH, unsigned SIZE>
 class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
 
     public:
-      vvm_ram_dq(vvm_memory_t<WIDTH,SIZE>*mem)
+      vvm_ram_dq(vvm_memory_t*mem)
       : mem_(mem)
 	    { mem->set_callback(this);
 	      for (unsigned idx = 0 ;  idx < AWIDTH+WIDTH+2 ;  idx += 1)
@@ -577,7 +577,7 @@ class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
       void handle_write(unsigned idx) { if (idx == addr_val_) send_out_(); }
 
     private:
-      vvm_memory_t<WIDTH,SIZE>*mem_;
+      vvm_memory_t*mem_;
 
       vpip_bit_t ibits_[AWIDTH+WIDTH+2];
       vvm_nexus::drive_t out_[WIDTH];
@@ -1006,6 +1006,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.69  2000/12/15 20:05:16  steve
+ *  Fix memory access in vvm. (PR#70)
+ *
  * Revision 1.68  2000/12/10 06:42:00  steve
  *  Support delays on continuous assignment from idents. (PR#40)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.10 2000/12/12 03:30:25 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.11 2000/12/15 20:05:16 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -86,72 +86,44 @@ struct vvm_ram_callback {
       vvm_ram_callback*next_;
 };
 
-template <unsigned WIDTH, unsigned SIZE>
 class vvm_memory_t : public __vpiMemory {
 
     public:
-      vvm_memory_t()
-	    { cb_list_ = 0;
-	    }
+      vvm_memory_t();
 
-      void set_word(unsigned addr, const vvm_bitset_t&val)
-	    { unsigned base = WIDTH * addr;
-	      assert(addr < size);
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    bits[base+idx] = val[idx];
-	      call_list_(addr);
-	    }
+      void set_word(unsigned addr, const vvm_bitset_t&val);
 
-      void set_word(unsigned addr,
-		    const vpip_bit_t val[WIDTH])
-	    { unsigned base = WIDTH * addr;
-	      assert(addr < size);
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    bits[base+idx] = val[idx];
-	      call_list_(addr);
-	    }
+      void set_word(unsigned addr, const vpip_bit_t*val);
 
-      void get_word(unsigned addr, vvm_bitset_t&val) const
-	    { unsigned base = WIDTH * addr;
-	      assert(addr < size);
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    val[idx] = bits[base+idx];
-	    }
+      void get_word(unsigned addr, vvm_bitset_t&val) const;
 
-      void set_callback(vvm_ram_callback*ram)
-	    { ram->next_ = cb_list_;
-	      cb_list_ = ram;
-	    }
+      void set_callback(vvm_ram_callback*ram);
 
       class assign_nb  : public vvm_event {
 	  public:
-	    assign_nb(vvm_memory_t<WIDTH,SIZE>&m, unsigned i,
-		      const vvm_bitset_t&v)
-	    : mem_(m), index_(i), val_(bits_, WIDTH)
-	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  val_[idx] = v[idx];
-	    }
+	    assign_nb(vvm_memory_t&m, unsigned i, const vvm_bitset_t&v);
+	    ~assign_nb();
 
-	    void event_function() { mem_.set_word(index_, val_); }
+	    void event_function();
 
 	  private:
-	    vvm_memory_t<WIDTH,SIZE>&mem_;
+	    vvm_memory_t&mem_;
 	    unsigned index_;
-	    vpip_bit_t bits_[WIDTH];
+	    vpip_bit_t*bits_;
 	    vvm_bitset_t val_;
       };
 
     private:
       vvm_ram_callback*cb_list_;
-      void call_list_(unsigned idx)
-	    { for (vvm_ram_callback*cur = cb_list_; cur; cur = cur->next_)
-		    cur->handle_write(idx);
-	    }
+      void call_list_(unsigned idx);
 };
 
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.11  2000/12/15 20:05:16  steve
+ *  Fix memory access in vvm. (PR#70)
+ *
  * Revision 1.10  2000/12/12 03:30:25  steve
  *  out-line vvm_bitset_t methods.
  *
