@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.85 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: netlist.h,v 1.86 1999/11/05 04:40:40 steve Exp $"
 #endif
 
 /*
@@ -317,6 +317,8 @@ class NetAddSub  : public NetNode {
       NetObj::Link& pin_DataB(unsigned idx);
       NetObj::Link& pin_Result(unsigned idx);
 
+      const NetObj::Link& pin_DataA(unsigned idx) const;
+      const NetObj::Link& pin_DataB(unsigned idx) const;
       const NetObj::Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -493,7 +495,7 @@ class NetExpr  : public LineInfo {
 
 /*
  * The expression constant is slightly special, and is sometimes
- * retured from other classes that can be evaluated at compile
+ * returned from other classes that can be evaluated at compile
  * time. This class represents constant values in expressions.
  */
 class NetEConst  : public NetExpr {
@@ -509,6 +511,7 @@ class NetEConst  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetEConst* dup_expr() const;
+      virtual NetNet*synthesize(Design*);
 
     private:
       verinum value_;
@@ -1339,6 +1342,7 @@ class NetEBAdd : public NetEBinary {
       virtual bool set_width(unsigned w);
       virtual NetEBAdd* dup_expr() const;
       virtual NetEConst* eval_tree();
+      virtual NetNet* synthesize(Design*);
 };
 
 /*
@@ -1854,6 +1858,15 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.86  1999/11/05 04:40:40  steve
+ *  Patch to synthesize LPM_ADD_SUB from expressions,
+ *  Thanks to Larry Doolittle. Also handle constants
+ *  in expressions.
+ *
+ *  Synthesize adders in XNF, based on a patch from
+ *  Larry. Accept synthesis of constants from Larry
+ *  as is.
+ *
  * Revision 1.85  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.

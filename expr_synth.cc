@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.2 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.3 1999/11/05 04:40:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -29,6 +29,44 @@ NetNet* NetExpr::synthesize(Design*des)
 	   << *this << endl;
       des->errors += 1;
       return 0;
+}
+
+/*
+ * Make an LPM_ADD_SUB device from addition operators.
+ */
+NetNet* NetEBAdd::synthesize(Design*des)
+{
+      assert((op()=='+') || (op()=='-'));
+
+      string path = des->local_symbol("SYNTH");
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig = right_->synthesize(des);
+      
+      assert(lsig->pin_count() == rsig->pin_count());
+      unsigned width=lsig->pin_count();
+
+      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, width);
+
+      string oname = des->local_symbol(path);
+      NetAddSub *adder = new NetAddSub(oname, width);
+      for (unsigned idx = 0 ;  idx < width;  idx += 1) {
+	    connect(lsig->pin(idx), adder->pin_DataA(idx));
+	    connect(rsig->pin(idx), adder->pin_DataB(idx));
+	    connect(osig->pin(idx), adder->pin_Result(idx));
+      }
+      des->add_node(adder);
+      des->add_signal(osig);
+
+      switch (op()) {
+	  case '+':
+	    adder->attribute("LPM_Direction", "ADD");
+	    break;
+	  case '-':
+	    adder->attribute("LPM_Direction", "SUB");
+	    break;
+      }
+
+      return osig;
 }
 
 /*
@@ -77,6 +115,22 @@ NetNet* NetEBBits::synthesize(Design*des)
 	    des->add_node(gate);
       }
 
+      des->add_signal(osig);
+      return osig;
+}
+
+NetNet* NetEConst::synthesize(Design*des)
+{
+      string path = des->local_symbol("SYNTH");
+      unsigned width=expr_width();
+
+      NetNet*osig = new NetNet(path, NetNet::IMPLICIT, width);
+      for (unsigned idx = 0 ;  idx < width;  idx += 1) {
+	    string oname = des->local_symbol(path);
+	    NetConst *c = new NetConst(oname, value().get(idx));
+	    connect(osig->pin(idx), c->pin(0));
+	    des->add_node(c);
+      }
       des->add_signal(osig);
       return osig;
 }
@@ -150,6 +204,15 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.3  1999/11/05 04:40:40  steve
+ *  Patch to synthesize LPM_ADD_SUB from expressions,
+ *  Thanks to Larry Doolittle. Also handle constants
+ *  in expressions.
+ *
+ *  Synthesize adders in XNF, based on a patch from
+ *  Larry. Accept synthesis of constants from Larry
+ *  as is.
+ *
  * Revision 1.2  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.

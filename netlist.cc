@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.82 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: netlist.cc,v 1.83 1999/11/05 04:40:40 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -555,7 +555,21 @@ NetObj::Link& NetAddSub::pin_DataA(unsigned idx)
       return pin(idx);
 }
 
+const NetObj::Link& NetAddSub::pin_DataA(unsigned idx) const
+{
+      idx = 6 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
+}
+
 NetObj::Link& NetAddSub::pin_DataB(unsigned idx)
+{
+      idx = 7 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
+}
+
+const NetObj::Link& NetAddSub::pin_DataB(unsigned idx) const
 {
       idx = 7 + idx*3;
       assert(idx < pin_count());
@@ -602,7 +616,7 @@ NetMux::NetMux(const string&n, unsigned wi, unsigned si, unsigned sw)
       }
 
       for (unsigned idx = 0 ;  idx < swidth_ ;  idx += 1) {
-	    pin_Sel(idx).set_dir(Link::OUTPUT);
+	    pin_Sel(idx).set_dir(Link::INPUT);
 	    pin_Sel(idx).set_name("Sel", idx);
       }
 }
@@ -2090,6 +2104,15 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.83  1999/11/05 04:40:40  steve
+ *  Patch to synthesize LPM_ADD_SUB from expressions,
+ *  Thanks to Larry Doolittle. Also handle constants
+ *  in expressions.
+ *
+ *  Synthesize adders in XNF, based on a patch from
+ *  Larry. Accept synthesis of constants from Larry
+ *  as is.
+ *
  * Revision 1.82  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
