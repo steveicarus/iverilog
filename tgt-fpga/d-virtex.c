@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.18 2002/11/01 02:36:34 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.19 2002/11/22 01:45:40 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -37,6 +37,8 @@
  *     non-inverting buffer. This device is typically removed by the
  *     place-and-route step, as it is not normally needed within an
  *     FPGA net.
+ *
+ *   BUFT       O, I, T
  *
  *   INV        O, I
  *     Inverting buffer.
@@ -74,6 +76,13 @@ static const char*virtex_library_text =
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
+"      (cell BUFT (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port I (direction OUTPUT))\n"
+"                 (port T (direction INPUT)))))\n"
 "      (cell FDCE (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -479,6 +488,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    sprintf(jbuf, "(portRef I (instanceRef U%u))", edif_uref);
 	    edif_set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
+	    break;
+
+	  case IVL_LO_BUFIF1:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "(instance (rename U%u \"%s\")",
+		    edif_uref, ivl_logic_name(net));
+	    fprintf(xnf, " (viewRef net"
+		    " (cellRef TBUF (libraryRef VIRTEX))))\n");
+
+	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+
+	    sprintf(jbuf, "(portRef I (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
+
+	    sprintf(jbuf, "(portRef T (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 2), jbuf);
 	    break;
 
 	  case IVL_LO_NOR:
@@ -1657,6 +1683,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.19  2002/11/22 01:45:40  steve
+ *  Implement bufif1 as BUFT
+ *
  * Revision 1.18  2002/11/01 02:36:34  steve
  *  Fix bottom bit of ADD/SUB device.
  *
