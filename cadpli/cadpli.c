@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: cadpli.c,v 1.3 2003/02/22 04:04:38 steve Exp $"
+#ident "$Id: cadpli.c,v 1.4 2003/04/30 01:28:06 steve Exp $"
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
@@ -86,12 +86,12 @@ void (*vlog_startup_routines[])() = {
       0
 };
 
-/* STUB */
-s_tfcell veriusertfs[0];
-
 
 /*
  * $Log: cadpli.c,v $
+ * Revision 1.4  2003/04/30 01:28:06  steve
+ *  Remove veriusertfs stuf.
+ *
  * Revision 1.3  2003/02/22 04:04:38  steve
  *  Only include malloc.h if it is present.
  *
