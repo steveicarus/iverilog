@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.40 2001/05/20 00:56:48 steve Exp $"
+#ident "$Id: vthread.cc,v 1.41 2001/05/24 04:20:10 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -760,6 +760,46 @@ bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_MOD(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      assert(cp->number <= 8*sizeof(unsigned long));
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+      unsigned long lv = 0, rv = 0;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb | rb) & 2)
+		  goto x_out;
+
+	    lv |= lb << idx;
+	    rv |= rb << idx;
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      lv %= rv;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+	    lv >>= 1;
+      }
+
+      return true;
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+
+      return true;
+}
+
 bool of_MOV(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -1005,6 +1045,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.41  2001/05/24 04:20:10  steve
+ *  Add behavioral modulus.
+ *
  * Revision 1.40  2001/05/20 00:56:48  steve
  *  Make vthread_put_but expand the space if needed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.67 2001/05/22 04:08:16 steve Exp $"
+#ident "$Id: compile.cc,v 1.68 2001/05/24 04:20:10 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -98,6 +98,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
+      { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1206,6 +1207,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.68  2001/05/24 04:20:10  steve
+ *  Add behavioral modulus.
+ *
  * Revision 1.67  2001/05/22 04:08:16  steve
  *  Get the initial inputs to functors set at xxxx.
  *

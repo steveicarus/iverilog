@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.26 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: codes.h,v 1.27 2001/05/24 04:20:10 steve Exp $"
 #endif
 
 
@@ -61,6 +61,7 @@ extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
@@ -127,6 +128,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.27  2001/05/24 04:20:10  steve
+ *  Add behavioral modulus.
+ *
  * Revision 1.26  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

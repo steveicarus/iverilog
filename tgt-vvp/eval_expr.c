@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.28 2001/05/20 01:18:38 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.29 2001/05/24 04:20:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -510,7 +510,7 @@ static struct vector_info draw_binary_expr_rs(ivl_expr_t exp, unsigned wid)
       }
 }
 
-static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -524,10 +524,22 @@ static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
 
-      if (ivl_expr_opcode(exp) == '-')
-	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n", lv.base, rv.base, wid);
-      else
+      switch (ivl_expr_opcode(exp)) {
+	  case '+':
 	    fprintf(vvp_out, "    %%add %u, %u, %u;\n", lv.base, rv.base, wid);
+	    break;
+
+	  case '-':
+	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n", lv.base, rv.base, wid);
+	    break;
+
+	  case '%':
+	    fprintf(vvp_out, "    %%mod %u, %u, %u;\n", lv.base, rv.base, wid);
+	    break;
+
+	  default:
+	    assert(0);
+      }
 
       clr_vector(rv);
 
@@ -560,7 +572,8 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '+':
 	  case '-':
-	    rv = draw_binary_expr_plus(exp, wid);
+	  case '%':
+	    rv = draw_binary_expr_arith(exp, wid);
 	    break;
 
 	  case 'l': /* << */
@@ -1030,6 +1043,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.29  2001/05/24 04:20:10  steve
+ *  Add behavioral modulus.
+ *
  * Revision 1.28  2001/05/20 01:18:38  steve
  *  Implement reduction nor.
  *
