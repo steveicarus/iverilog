@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.28 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.29 2001/12/30 21:32:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,18 +44,6 @@ bool PExpr::is_the_same(const PExpr*that) const
 bool PExpr::is_constant(Module*) const
 {
       return false;
-}
-
-NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
-			     unsigned long,
-			     unsigned long,
-			     unsigned long,
-			     Link::strength_t,
-			     Link::strength_t) const
-{
-      cerr << get_line() << ": error: Unable to elaborate `"
-	   << *this << "' as gates." << endl;
-      return 0;
 }
 
 NetNet* PExpr::elaborate_lnet(Design*des, NetScope*) const
@@ -216,13 +204,14 @@ bool PENumber::is_constant(Module*) const
       return true;
 }
 
-PEString::PEString(const string&s)
+PEString::PEString(char*s)
 : text_(s)
 {
 }
 
 PEString::~PEString()
 {
+      delete[]text_;
 }
 
 string PEString::value() const
@@ -267,6 +256,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.29  2001/12/30 21:32:03  steve
+ *  Support elaborate_net for PEString objects.
+ *
  * Revision 1.28  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.141 2001/12/14 02:05:13 steve Exp $"
+#ident "$Id: parse.y,v 1.142 2001/12/30 21:32:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -819,7 +819,6 @@ expr_primary
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
-		  delete $1;
 		}
 	| identifier
 		{ PEIdent*tmp = new PEIdent(*$1);

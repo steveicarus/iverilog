@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.82 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.83 2001/12/30 21:32:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,18 @@
 # include  "compiler.h"
 
 # include  <iostream>
+
+NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
+			     unsigned long,
+			     unsigned long,
+			     unsigned long,
+			     Link::strength_t,
+			     Link::strength_t) const
+{
+      cerr << get_line() << ": error: Unable to elaborate `"
+	   << *this << "' as gates." << endl;
+      return 0;
+}
 
 /*
  * Elaborating binary operations generally involves elaborating the
@@ -1539,6 +1551,55 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
       return net;
 }
 
+/*
+ * A string is a NetEConst node that is made of the ASCII bits of the
+ * string instead of the bits of a number. In fact, a string is just
+ * another numeric notation.
+ */
+NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
+				unsigned lwidth,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay,
+				Link::strength_t drive0,
+				Link::strength_t drive1) const
+{
+      unsigned strbits = strlen(text_) * 8;
+      NetNet*net;
+
+	/* If we are constrained by a l-value size, then just make a
+	   number constant with the correct size and set as many bits
+	   in that constant as make sense. Pad excess with zeros. */
+      if (lwidth > 0) {
+	    net = new NetNet(scope, scope->local_hsymbol(),
+			     NetNet::IMPLICIT, lwidth);
+
+      } else {
+	    net = new NetNet(scope, scope->local_hsymbol(),
+			     NetNet::IMPLICIT, strbits);
+      }
+      net->local_flag(true);
+
+	/* Make a verinum that is filled with the 0 pad. */
+      verinum num(verinum::V0, net->pin_count());
+
+      unsigned idx;
+      for (idx = 0 ;  idx < num.len() && idx < strbits; idx += 1) {
+	    char byte = text_[strbits/8 - 1 - idx/8];
+	    char mask = 1<<(idx%8);
+	    num.set(idx, (byte & mask)? verinum::V1 : verinum::V0);
+      }
+
+      NetConst*tmp = new NetConst(scope, scope->local_hsymbol(), num);
+      for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    tmp->pin(idx).drive0(drive0);
+	    tmp->pin(idx).drive1(drive1);
+	    connect(net->pin(idx), tmp->pin(idx));
+      }
+
+      des->add_node(tmp);
+      return net;
+}
 
 /*
  * Elaborate the ternary operator in a netlist by creating a LPM_MUX
@@ -1880,6 +1941,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.83  2001/12/30 21:32:03  steve
+ *  Support elaborate_net for PEString objects.
+ *
  * Revision 1.82  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
