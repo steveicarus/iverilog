@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.72 2002/08/28 17:15:35 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.73 2002/08/28 18:38:07 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -715,6 +715,27 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
       return lv;
 }
 
+/*
+ * The subi is restricted to imm operands that are <= 16 bits wide.
+ */
+static struct vector_info draw_sub_immediate(ivl_expr_t le,
+					     ivl_expr_t re,
+					     unsigned wid)
+{
+      struct vector_info lv;
+      unsigned long imm;
+
+      lv = draw_eval_expr_wid(le, wid);
+      assert(lv.wid == wid);
+
+      imm = get_number_immediate(re);
+      assert( (imm & ~0xffff) == 0 );
+
+      fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+
+      return lv;
+}
+
 static struct vector_info draw_mul_immediate(ivl_expr_t le,
 					     ivl_expr_t re,
 					     unsigned wid)
@@ -751,6 +772,16 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, 8*sizeof(unsigned long)))
 	    return draw_add_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '-')
+	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	    return draw_sub_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '-')
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
+	  && (! number_is_unknown(re))
+	  && number_is_immediate(re, 16))
+	    return draw_sub_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '*')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
@@ -1760,6 +1791,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.73  2002/08/28 18:38:07  steve
+ *  Add the %subi instruction, and use it where possible.
+ *
  * Revision 1.72  2002/08/28 17:15:35  steve
  *  Generate %load/nx for indexed load of nets.
  *

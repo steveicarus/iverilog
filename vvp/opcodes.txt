@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.39 2002/08/28 17:15:06 steve Exp $
+ *  $Id: opcodes.txt,v 1.40 2002/08/28 18:38:07 steve Exp $
  */
 
 
@@ -461,6 +461,13 @@ operand are x, then the entire result is x.
 
 See also the %add instruction.
 
+* %subi <bit-l>, <imm>, <wid>
+
+This instruction arithmetically subtracts the immediate value from the
+left vector. The <imm> value is a 16bit unsigned value zer-extended to
+the <wid> of the left vector. The result replaces the left vector.
+
+See also the %addi instruction.
 
 * %vpi_call <name> [, ...]
 

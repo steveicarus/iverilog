@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.48 2002/08/28 17:15:06 steve Exp $"
+#ident "$Id: codes.h,v 1.49 2002/08/28 18:38:07 steve Exp $"
 #endif
 
 
@@ -91,6 +91,7 @@ extern bool of_SET_X(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
+extern bool of_SUBI(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
@@ -154,6 +155,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.49  2002/08/28 18:38:07  steve
+ *  Add the %subi instruction, and use it where possible.
+ *
  * Revision 1.48  2002/08/28 17:15:06  steve
  *  Add the %load/nx opcode to index vpi nets.
  *

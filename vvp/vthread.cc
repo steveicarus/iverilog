@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.83 2002/08/28 17:15:06 steve Exp $"
+#ident "$Id: vthread.cc,v 1.84 2002/08/28 18:38:07 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2128,6 +2128,58 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SUBI(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
+
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
+      unsigned long*lvb;
+      if (lva == 0)
+	    goto x_out;
+
+      lvb = new unsigned long[word_count];
+
+      lvb[0] = ~ cp->bit_idx[1];
+      for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
+	    lvb[idx] = ~0;
+
+      unsigned long carry;
+      carry = 1;
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
+
+	    unsigned long tmp = lvb[idx] + carry;
+	    unsigned long sum = lva[idx] + tmp;
+	    carry = 0;
+	    if (tmp < lvb[idx])
+		  carry = 1;
+	    if (sum < tmp)
+		  carry = 1;
+	    if (sum < lva[idx])
+		  carry = 1;
+	    lva[idx] = sum;
+      }
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
+      }
+
+      delete[]lva;
+      delete[]lvb;
+
+      return true;
+
+ x_out:
+      delete[]lva;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return true;
+}
+
 bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
 	// printf("thread %p: %%vpi_call\n", thr);
@@ -2267,6 +2319,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.84  2002/08/28 18:38:07  steve
+ *  Add the %subi instruction, and use it where possible.
+ *
  * Revision 1.83  2002/08/28 17:15:06  steve
  *  Add the %load/nx opcode to index vpi nets.
  *
