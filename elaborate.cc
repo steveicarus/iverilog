@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.125 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.126 1999/11/21 01:16:51 steve Exp $"
 #endif
 
 /*
@@ -290,7 +290,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	    else
 		  index = low - idx;
 
-	    tmp << name << "<" << index << ">";
+	    tmp << name << "<" << index << ">" << ends;
 	    const string inm = tmp.str();
 
 	    switch (type()) {
@@ -2133,6 +2133,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.126  1999/11/21 01:16:51  steve
+ *  Fix coding errors handling names of logic devices,
+ *  and add support for buf device in vvm.
+ *
  * Revision 1.125  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *

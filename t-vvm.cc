@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.77 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.78 1999/11/21 01:16:51 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -963,6 +963,9 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    os << "static vvm_and" << "<" << gate->pin_count()-1 <<
 		  "," << gate->rise_time() << "> ";
 	    break;
+	  case NetLogic::BUF:
+	    os << "static vvm_buf<" << gate->rise_time() << "> ";
+	    break;
 	  case NetLogic::BUFIF0:
 	    os << "static vvm_bufif0<" << gate->rise_time() << "> ";
 	    break;
@@ -992,6 +995,9 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    os << "static vvm_xor" << "<" << gate->pin_count()-1 <<
 		  "," << gate->rise_time() << "> ";
 	    break;
+	  default:
+	    os << "#error \"internal ivl error:bad gate type for " <<
+		  gate->name() << "\"" << endl;
       }
 
       os << mangle(gate->name()) << "(&" << outfun << ");" << endl;
@@ -1920,6 +1926,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.78  1999/11/21 01:16:51  steve
+ *  Fix coding errors handling names of logic devices,
+ *  and add support for buf device in vvm.
+ *
  * Revision 1.77  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *

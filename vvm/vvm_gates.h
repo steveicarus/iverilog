@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.24 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.25 1999/11/21 01:16:51 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -609,6 +609,30 @@ class vvm_ram_dq  : protected vvm_ram_callback {
 	    }
 };
 
+template <unsigned long DELAY> class vvm_buf {
+
+    public:
+      explicit vvm_buf(vvm_out_event::action_t o)
+      : output_(o)
+      { }
+
+      void init_I(unsigned, vpip_bit_t) { }
+      void start(vvm_simulation*) { }
+
+      void set_I(vvm_simulation*sim, unsigned, vpip_bit_t val)
+	    { vpip_bit_t outval = val;
+	      if (val == Vz) val = Vx;
+	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
+	      if (DELAY > 0)
+		    sim->insert_event(DELAY, ev);
+	      else
+		    sim->active_event(ev);
+	    }
+
+    private:
+      vvm_out_event::action_t output_;
+};
+
 template <unsigned long DELAY> class vvm_bufif1 {
 
     public:
@@ -987,6 +1011,10 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.25  1999/11/21 01:16:51  steve
+ *  Fix coding errors handling names of logic devices,
+ *  and add support for buf device in vvm.
+ *
  * Revision 1.24  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *
