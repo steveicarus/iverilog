@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem.c,v 1.6 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.7 2001/11/09 03:39:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -122,6 +122,84 @@ static int sys_readmem_calltf(char*name)
       return 0;
 }
 
+static int sys_writemem_calltf(char*name)
+{
+      int wwid;
+      char*path;
+      FILE*file;
+      unsigned cnt = 0;
+      s_vpi_value value;
+      vpiHandle words;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: file name parameter missing.\n", name);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, item) != vpiConstant) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      if (vpi_get(vpiConstType, item) != vpiStringConst) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiStringVal;
+      vpi_get_value(item, &value);
+      path = strdup(value.value.str);
+
+	/* Get and check the second paramter. It must be a memory. */
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("%s: Missing memory parameter\n", name);
+	    free(path);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, item) != vpiMemory) {
+	    vpi_printf("%s: Second parameter must be a memory.\n", name);
+	    free(path);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+	/* XXXX remaining parameters not supported. */
+      vpi_free_object(argv);
+
+	/* Open the data file. */
+      file = fopen(path, "w");
+      if (file == 0) {
+	    vpi_printf("%s: Unable to open %s for writeing.\n", name, path);
+	    free(path);
+	    return 0;
+      }
+
+      words = vpi_iterate(vpiMemoryWord, item);
+      assert(words);
+
+      wwid = vpi_get(vpiSize, item);
+
+      value.format = vpiIntVal;
+
+      while ((item = vpi_scan(words))) {
+	    if (cnt%16 == 0)
+		  fprintf(file, "// 0x%08x\n", cnt);
+	    cnt += 1;
+	    vpi_get_value(item, &value);
+	    fprintf(file, "%lx\n", (unsigned long)value.value.integer);
+      }
+
+      fclose(file);
+      return 0;
+}
+
 void sys_readmem_register()
 {
       s_vpi_systf_data tf_data;
@@ -141,10 +219,21 @@ void sys_readmem_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemb";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$writememh";
+      tf_data.calltf    = sys_writemem_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$writememh";
+      vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.7  2001/11/09 03:39:21  steve
+ *  Support $writememh
+ *
  * Revision 1.6  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
