@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.34 1999/08/02 00:19:16 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.35 1999/08/15 01:23:56 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -306,6 +306,14 @@ static string emit_proc_rval(ostream&os, unsigned indent, const NetExpr*expr)
       return scan.result;
 }
 
+/*
+ * The vvm_parm_rval class scans expressions for the purpose of making
+ * parameters for system tasks/functions. Thus, the generated code is
+ * geared towards making the handles needed to make the call.
+ *
+ * The result of any parm rval scan is a vpiHandle, or a string that
+ * automatically converts to a vpiHandle on assignment.
+ */
 class vvm_parm_rval  : public expr_scan_t {
 
     public:
@@ -326,8 +334,11 @@ class vvm_parm_rval  : public expr_scan_t {
 void vvm_parm_rval::expr_const(const NetEConst*expr)
 {
       if (expr->value().is_string()) {
-	    result = "\"";
-	    result = result + expr->value().as_string() + "\"";
+	    result = make_temp();
+	    os_ << "        struct __vpiHandle " << result << ";" << endl;
+	    os_ << "        vvm_make_vpi_parm(&" << result << ", \""
+		<< expr->value().as_string() << "\");" << endl;
+	    result = "&" + result;
 	    return;
       }
 
@@ -353,16 +364,19 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 	    os_ << ";" << endl;
       }
 
-      result = tname;
+      result = make_temp();
+      os_ << "        struct __vpiHandle " << result << ";" << endl;
+      os_ << "        vvm_make_vpi_parm(&" << result << ", &" << tname
+	  << ");" << endl;
+      result = "&" + result;
 }
 
 void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 {
       if (expr->name() == "$time") {
-	    string res = make_temp();
-	    os_ << "        vvm_calltf_parm " << res <<
-		  "(vvm_calltf_parm::TIME);" << endl;
-	    result = res;
+	    os_ << "        system_time.val.time.low "
+		  "= sim_->get_sim_time();" << endl;
+	    result = string("&system_time");
       } else {
 	    cerr << "Unhandled identifier: " << expr->name() << endl;
       }
@@ -370,12 +384,7 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
 {
-      string res = make_temp();
-      os_ << "        vvm_calltf_parm::SIG " << res << ";" << endl;
-      os_ << "        " << res << ".bits = &" <<
-	    mangle(expr->name()) << "_bits;" << endl;
-      os_ << "        " << res << ".mon = &" <<
-	    mangle(expr->name()) << ";" << endl;
+      string res = string("&") + mangle(expr->name()) + "_vpi";
       result = res;
 }
 
@@ -393,11 +402,16 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "# include \"vvm_func.h\"" << endl;
       os << "# include \"vvm_calltf.h\"" << endl;
       os << "# include \"vvm_thread.h\"" << endl;
+      os << "# include \"vpi_user.h\"" << endl;
+      os << "# include \"vpi_priv.h\"" << endl;
+
+      os << "static struct __vpiHandle system_time;" << endl;
       process_counter = 0;
 
       init_code << "static void design_init(vvm_simulation&sim)" << endl;
       init_code << "{" << endl;
-
+      init_code << "      vvm_init_vpi_timevar(&system_time, \"$time\");"
+		<< endl;
       start_code << "static void design_start(vvm_simulation&sim)" << endl;
       start_code << "{" << endl;
 }
@@ -414,6 +428,7 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       os << start_code.str();
 
       os << "main()" << endl << "{" << endl;
+      os << "      vvm_load_vpi_module(\"system.vpi\");" << endl;
       os << "      vvm_simulation sim;" << endl;
       os << "      design_init(sim);" << endl;
       os << "      design_start(sim);" << endl;
@@ -818,6 +833,14 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
       os << "static vvm_signal_t<" << net->pin_count() << "> " <<
 	    mangle(net->name()) << "(\"" << net->name() << "\", &" <<
 	    mangle(net->name()) << "_bits);" << endl;
+
+      os << "static struct __vpiHandle " << mangle(net->name()) <<
+	    "_vpi;" << endl;
+
+      init_code << "      vvm_init_vpi_handle(&" <<
+	    mangle(net->name()) << "_vpi, &" << mangle(net->name()) <<
+	    "_bits, &" << mangle(net->name()) << ");" << endl;
+      
 }
 
 /*
@@ -1139,16 +1162,42 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 {
       string ptmp = make_temp();
-      os << "        struct vvm_calltf_parm " << ptmp << "[" <<
+
+#if 0
+      os << "        struct __vpiHandle " << ptmp << "[" <<
 	    net->nparms() << "];" << endl;
       for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1)
 	    if (net->parm(idx)) {
 		  string val = emit_parm_rval(os, net->parm(idx));
-		  os << "        " << ptmp << "[" << idx << "] = " <<
-			val << ";" << endl;
+		  os << "        vvm_make_vpi_parm(&" << ptmp << "["
+		     << idx << "], " << val << ");" << endl;
+	    } else {
+		  os << "        vvm_make_vpi_parm(&" << ptmp << "["
+		     << idx << "]);" << endl;
 	    }
+#else
+      os << "        vpiHandle " << ptmp << "[" << net->nparms() <<
+	    "];" << endl;
+      for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
+	    string val;
+	    if (net->parm(idx)) {
+		  val = emit_parm_rval(os, net->parm(idx));
+
+	    } else {
+		  val = make_temp();
+		  os << "        struct __vpiHandle " << val << ";" << endl;
+		  os << "        vvm_make_vpi_parm(&" << val << ");" << endl;
+		  val = string("&") + val;
+	    }
+
+	    os << "        " << ptmp << "[" << idx << "] = " << val << ";"
+	       << endl;
+      }
+#endif
+
       os << "        vvm_calltask(sim_, \"" << net->name() << "\", " <<
 	    net->nparms() << ", " << ptmp << ");" << endl;
+
 }
 
 void target_vvm::proc_utask(ostream&os, const NetUTask*net)
@@ -1308,6 +1357,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.35  1999/08/15 01:23:56  steve
+ *  Convert vvm to implement system tasks with vpi.
+ *
  * Revision 1.34  1999/08/02 00:19:16  steve
  *  Get rid of excess set/init of NetESignal objects.
  *

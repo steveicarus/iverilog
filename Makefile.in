@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.11 1999/08/07 20:05:51 steve Exp $"
+#ident "$Id: Makefile.in,v 1.12 1999/08/15 01:23:56 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -46,11 +46,13 @@ CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: ivl
+	cd vpi ; make all
 	cd vvm ; make all
 	cd ivlpp ; make all
 
 clean:
 	rm *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc
+	cd vpi ; make clean
 	cd vvm ; make clean
 	cd ivlpp ; make clean
 
@@ -87,6 +89,7 @@ lexor.cc: lexor.lex
 	flex -PVL -s -olexor.cc lexor.lex
 
 install: all installdirs $(bindir)/ivl
+	cd vpi ; make install
 	cd vvm ; make install
 	cd ivlpp ; make install
 

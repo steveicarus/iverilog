@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,25 +17,34 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_monitor.cc,v 1.2 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.1 1999/08/15 01:23:56 steve Exp $"
 #endif
 
-# include  "vvm.h"
+# include  "vpi_user.h"
+# include  "veriuser.h"
 
-
-vvm_monitor_t::vvm_monitor_t(const char*n)
-: name_(n)
+static int sys_finish_calltf(char *xx)
 {
+      tf_dofinish();
+      return 0;
 }
 
+void sys_finish_register()
+{
+      s_vpi_systf_data tf_data;
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$finish";
+      tf_data.calltf    = sys_finish_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      vpi_register_systf(&tf_data);
+}
 
 /*
- * $Log: vvm_monitor.cc,v $
- * Revision 1.2  1999/08/15 01:23:56  steve
+ * $Log: sys_finish.c,v $
+ * Revision 1.1  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.1  1998/11/09 23:44:11  steve
- *  Add vvm library.
  *
  */
 

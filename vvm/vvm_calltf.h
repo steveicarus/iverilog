@@ -19,69 +19,51 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.h,v 1.1 1998/11/09 23:44:11 steve Exp $"
+#ident "$Id: vvm_calltf.h,v 1.2 1999/08/15 01:23:56 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  <string>
 
+typedef struct __vpiHandle*vpiHandle;
+
+/*
+ * This function loads a vpi module by name.
+ */
+extern void vvm_load_vpi_module(const char*path);
+
+
+/*
+ * The vvm_init_vpi_handle functions initialize statis VPI handles
+ * that may be used many places within the program.
+ */
+extern void vvm_init_vpi_handle(vpiHandle, vvm_bits_t*, vvm_monitor_t*);
+extern void vvm_init_vpi_timevar(vpiHandle, const char*name);
+
+/*
+ * The vvm_make_vpi_parm functions initialize the vpiHandles to
+ * represent objects suitable for use as vvm_calltask parameters.
+ */
+extern void vvm_make_vpi_parm(vpiHandle ref, const char*val);
+extern void vvm_make_vpi_parm(vpiHandle ref, vvm_bits_t*val);
+extern void vvm_make_vpi_parm(vpiHandle ref);
+
 /*
  * The vvm environment supports external calls to C++ by
  * vvm_calltask. The code generator generates calls to vvm_calltask
  * that corresponds to the system call in the Verilog source. The
- * vvm_calltask in turn locates the function (by name) and calls the
- * C++ code that implements the task.
- *
- * The parameters of the task are implemented as an array of
- * vvm_calltf_parm objects. Each object represents a paramter from the
- * source.
+ * vvm_calltask in turn locates the vpi implementation (by name) and
+ * calls the VPI that implements the task.
  */
-class vvm_calltf_parm {
-
-    public:
-      enum TYPE { NONE, ULONG, STRING, BITS, TIME };
-
-      vvm_calltf_parm();
-      explicit vvm_calltf_parm(TYPE);
-      vvm_calltf_parm(const vvm_calltf_parm&);
-      ~vvm_calltf_parm();
-
-      TYPE type() const { return type_; }
-
-      struct SIG {
-	    vvm_bits_t*bits;
-	    vvm_monitor_t*mon;
-      };
-
-      unsigned long as_ulong() const { return ulong_; }
-      string as_string() const { return *(string*)string_; }
-      vvm_bits_t* as_bits() const { return bits_.bits; }
-      vvm_monitor_t* as_mon() const { return bits_.mon; }
-
-      const string& sig_name() const { return bits_.mon->name(); }
-
-      vvm_calltf_parm& operator= (unsigned long);
-      vvm_calltf_parm& operator= (const string&);
-      vvm_calltf_parm& operator= (const SIG&);
-      vvm_calltf_parm& operator= (const vvm_calltf_parm&);
-
-    private:
-      TYPE type_;
-
-      union {
-	    unsigned long ulong_;
-	    char string_[sizeof(string)];
-	    SIG bits_;
-      };
-
-      void release_();
-};
 
 extern void vvm_calltask(vvm_simulation*sim, const string&name,
-			 unsigned nparms, class vvm_calltf_parm*parms);
+			 unsigned nparms, vpiHandle*parms);
 
 /*
  * $Log: vvm_calltf.h,v $
+ * Revision 1.2  1999/08/15 01:23:56  steve
+ *  Convert vvm to implement system tasks with vpi.
+ *
  * Revision 1.1  1998/11/09 23:44:11  steve
  *  Add vvm library.
  *

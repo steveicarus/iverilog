@@ -1,5 +1,7 @@
+#ifndef __veriuser_H
+#define __veriuser_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,25 +19,29 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_monitor.cc,v 1.2 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: veriuser.h,v 1.1 1999/08/15 01:23:56 steve Exp $"
 #endif
 
-# include  "vvm.h"
-
-
-vvm_monitor_t::vvm_monitor_t(const char*n)
-: name_(n)
-{
-}
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
- * $Log: vvm_monitor.cc,v $
- * Revision 1.2  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.1  1998/11/09 23:44:11  steve
- *  Add vvm library.
- *
+ * This header file only exists as a stub, and to carry the function
+ * declaration for the tf_dofinish() function. I plan on removing both
+ * as soon as a VPI way of doing this appears.
  */
 
+extern void tf_dofinish();
+
+#ifdef __cplusplus
+}
+#endif
+
+/*
+ * $Log: veriuser.h,v $
+ * Revision 1.1  1999/08/15 01:23:56  steve
+ *  Convert vvm to implement system tasks with vpi.
+ *
+ */
+#endif

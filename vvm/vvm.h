@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.9 1999/06/21 01:02:34 steve Exp $"
+#ident "$Id: vvm.h,v 1.10 1999/08/15 01:23:56 steve Exp $"
 #endif
 
 # include  <vector>
@@ -235,17 +235,17 @@ class vvm_simulation {
  */
 class vvm_monitor_t {
     public:
-      vvm_monitor_t(const string&);
+      vvm_monitor_t(const char*);
 
       void trigger(vvm_simulation*sim)
 	    { if (event_) sim->monitor_event(event_); }
 
-      const string& name() const { return name_; }
+      const char* name() const { return name_; }
 
       void enable(vvm_event*e) { event_ = e; }
 
     private:
-      string name_;
+      const char* name_;
       vvm_event*event_;
 
     private: // not implemented
@@ -257,7 +257,7 @@ class vvm_monitor_t {
 template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
     public:
-      vvm_signal_t(const string&n, vvm_bitset_t<WIDTH>*b)
+      vvm_signal_t(const char*n, vvm_bitset_t<WIDTH>*b)
       : vvm_monitor_t(n), bits_(b)
 	    { }
 
@@ -280,6 +280,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.10  1999/08/15 01:23:56  steve
+ *  Convert vvm to implement system tasks with vpi.
+ *
  * Revision 1.9  1999/06/21 01:02:34  steve
  *  Add init to vvm_signal_t.
  *

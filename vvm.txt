@@ -16,6 +16,17 @@ So a sample command line to compile a Verilog file to C++ would be:
 
 	ivl -F nobufz -F sigfold -F propinit -t vvm -o foo.cc foo.vl
 
+Once the program is compiled down to C++ code, it needs to be further
+compiled and linked into an executable image. The command for doing
+this is highly dependent on the system where you use Icarus
+Verilog. For Linux, the compile command is typically:
+
+	c++ -o foo foo.cc -lvvm -ldl
+
+On any system, the compiled program requires that the VPI_MODULE_PATH
+be set to a ':' separated list of directories to search for vpi files,
+the system.vpi file in particular. This is a run time requirement.
+
 ATTRIBUTES
 
 (none)
@@ -99,8 +110,11 @@ bits are at:
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
- $Id: vvm.txt,v 1.1 1999/04/29 16:29:04 steve Exp $
+ $Id: vvm.txt,v 1.2 1999/08/15 01:23:56 steve Exp $
  $Log: vvm.txt,v $
+ Revision 1.2  1999/08/15 01:23:56  steve
+  Convert vvm to implement system tasks with vpi.
+
  Revision 1.1  1999/04/29 16:29:04  steve
   Add vvm target documentation
 

@@ -1,0 +1,56 @@
+
+HOW IT WORKS
+
+The VPI interface for Icarus Verilog works by creating from a
+collection of PLI applications a single vpi module. The vpi module
+includes compiled code for the applications linked together (with any
+other libraries that the applications need) into a module with a
+single exported symbol, the vlog_startup_routines array.
+
+The product that wishes to invoke the module (normally at run time)
+loads the module, locates the vlog_startup_routines table, and calls
+all the startup routines contained in that table. It is possible for a
+product to link with many modules. In that case, all the modules are
+linked in and startup routines are called in order.
+
+The product that uses vpi modules uses the environment variable
+VPI_MODULE_PATH as a ':' separated list of directories. This is the
+module search path. When a module is specified by name (using whatever
+means the product supports) the module search path is scanned until
+the module is located.
+
+The special module name "system.vpi" is part of the core Icarus
+Verilog distribution and includes implementations of the standard
+system tasks/functions.
+
+COMPILING A VPI MODULE (LINUX)
+
+To compile a module, first compile down to object files all the PLI
+applications that you wish to include in the module. Then, create a
+small "C" source file that defines only the startup table like so:
+
+    extern void hello_register();
+    void (*vlog_startup_routines[])() = {
+        hello_register,
+	0
+    };
+
+Compile this table source down to its object file, as well. Finally,
+link the application with the command:
+
+    cc -o foo.vpi -shared <all the .o files>
+
+No VPI libraries need to be included because the product that loads
+the module will supply all the standard vpi functions. If you use any
+non-vpi library functions, you may need to include libraries to
+support them.
+
+The resulting foo.vpi file is the vpi module. Place it in a location
+where the product to use it can locate it.
+
+
+CAVEAT EMPTOR
+
+Only the calltf function is supported. The compiletf and sizetf
+functions are invoked at compile time, and the ivl compiler does not
+yet support VPI.
