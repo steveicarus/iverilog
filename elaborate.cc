@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.218 2001/07/28 22:13:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.219 2001/08/01 05:17:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -481,11 +481,28 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	    pins = exp;
 
+      } else if (pin_count() == 0) {
+
+	      /* Handle the special case that no ports are
+		 connected. It is possible that this is an empty
+		 connect-by-name list, su we'll allow it and assume
+		 that is the case. */
+
+	    svector<PExpr*>*tmp = new svector<PExpr*>(rmod->port_count());
+	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
+		  (*tmp)[idx] = 0;
+
+	    pins = tmp;
+
       } else {
+
+	      /* Otherwise, this is a positional list of fort
+		 connections. In this case, the port count must be
+		 right. Check that is is, the get the pin list. */
 
 	    if (pin_count() != rmod->port_count()) {
 		  cerr << get_line() << ": error: Wrong number "
-			"of parameters. Expecting " << rmod->port_count() <<
+			"of ports. Expecting " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
@@ -2345,6 +2362,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.219  2001/08/01 05:17:31  steve
+ *  Accept empty port lists to module instantiation.
+ *
  * Revision 1.218  2001/07/28 22:13:11  steve
  *  Detect a missing task definition before it crashes me.
  *

@@ -268,8 +268,61 @@ comparison operators or the reduction operators. Icarus Verilog will
 generate appropriate error messages.
 
 
-$Id: ieee1364-notes.txt,v 1.7 2001/02/17 05:27:31 steve Exp $
+* MODULE INSTANCE WITH WRONG SIZE PORT LIST
+
+A module declaration like this declares a module that takes three ports:
+
+	module three (a, b, c);
+	  input a, b, c;
+	  reg x;
+	endmodule
+
+This is fine and obvious. It is also clear from the standard that
+these are legal instantiations of this module:
+
+	three u1 (x,y,z);
+	three u2 ( ,y, );
+	three u3 ( , , );
+	three u4 (.b(y));
+
+In some of the above examples, there are unconnected ports. In the
+case of u4, the pass by name connects only port b, and leaves a and c
+unconnected. u2 and u4 are the same thing, in fact, but using
+positional or by-name syntax. The next example is a little less
+obvious:
+
+	three u4 ();
+
+The trick here is that strictly speaking, the parser cannot tell
+whether this is a list of no pass by name ports (that is, all
+unconnected) or an empty positional list. If this were an empty
+positional list, then the wrong number of ports is given, but if it is
+an empty by-name list, it is an obviously valid instantiation. So it
+is fine to accept this case as valid.
+
+These are more doubtful:
+
+	three u5(x,y);
+	three u6(,);
+
+These are definitely positional port lists, and they are definitely
+the wrong length. In this case, the standard is not explicit about
+what to do about positional port lists in module instantiations,
+except that the first is connected to the first, second to second,
+etc. It does not say that the list must be the right length, but every
+example of unconnected ports used by-name syntax, and every example of
+ordered list has the right size list.
+
+Icarus Verilog takes the (very weak) hint that ordered lists should be
+the right length, and will therefore flag instances u5 and u6 as
+errors. The IEEE1364 standard should be more specific one way or the
+other.
+
+$Id: ieee1364-notes.txt,v 1.8 2001/08/01 05:17:31 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.8  2001/08/01 05:17:31  steve
+ Accept empty port lists to module instantiation.
+
 Revision 1.7  2001/02/17 05:27:31  steve
  I allow function ports to have types.
 
