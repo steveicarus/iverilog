@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.4 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: debug.cc,v 1.5 2001/07/19 02:20:55 steve Exp $"
 #endif
 
 /*
@@ -136,6 +136,9 @@ void breakpoint(void)
       interact_flag = true;
       while (interact_flag) {
 	    char*input = readline("> ");
+	    if (input == 0)
+		  break;
+
 	    unsigned argc = 0;
 	    char**argv = new char*[strlen(input)/2];
 
@@ -167,6 +170,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.5  2001/07/19 02:20:55  steve
+ *  EOF is the same as resume.
+ *
  * Revision 1.4  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.
