@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.26 1999/06/22 03:46:08 steve Exp $"
+#ident "$Id: lexor.lex,v 1.27 1999/06/22 03:59:37 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -51,9 +51,11 @@ static verinum*make_unsized_dec(const char*txt);
 static verinum*make_unsized_octal(const char*txt);
 static verinum*make_unsized_hex(const char*txt);
 
+static int comment_enter;
 %}
 
 %x CCOMMENT
+%x LCOMMENT
 %x CSTRING
 %s UDPTABLE
 %x PPINCLUDE
@@ -64,12 +66,14 @@ static verinum*make_unsized_hex(const char*txt);
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
 
-"//".* { ; }
+"//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
+<LCOMMENT>.    { yymore(); }
+<LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
 
-"/*" { BEGIN(CCOMMENT); }
+"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { yymore(); }
 <CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
-<CCOMMENT>"*/" { BEGIN(0); }
+<CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 "<<" { return K_LS; }
 ">>" { return K_RS; }
