@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.20 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: verinum.h,v 1.21 2003/01/30 04:23:25 steve Exp $"
 #endif
 
 # include  <string>
 
+# include  "config.h"
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
@@ -130,6 +131,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.21  2003/01/30 04:23:25  steve
+ *  include config.h to get iosfwd flags.
+ *
  * Revision 1.20  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *
