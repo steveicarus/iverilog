@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.16 2001/01/06 22:22:17 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.17 2001/01/07 18:22:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -32,7 +32,7 @@ static unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
       unsigned count_x = 0, count_z = 0;
       unsigned long val = 0;
 
-      assert( len <= 8*sizeof(val) );
+      assert( nbits <= 8*sizeof(val) );
 
       for (idx = 0 ;  idx < nbits ;  idx += 1) {
 	    val *= 2;
@@ -456,6 +456,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.17  2001/01/07 18:22:15  steve
+ *  Assert on length of bit vector.
+ *
  * Revision 1.16  2001/01/06 22:22:17  steve
  *  Support signed decimal display of variables.
  *
