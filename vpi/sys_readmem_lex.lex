@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem_lex.lex,v 1.2 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: sys_readmem_lex.lex,v 1.3 2000/03/05 20:01:19 steve Exp $"
 #endif
 # include "sys_readmem_lex.h"
 # include  <string.h>
@@ -169,8 +169,7 @@ static void make_bin_value()
 void sys_readmem_start_file(FILE*in, int bin_flag,
 			    unsigned width, struct t_vpi_vecval *vv)
 {
-      yyin = in;
-      YY_FLUSH_BUFFER;
+      yyrestart(in);
       BEGIN(bin_flag? BIN : HEX);
       word_width = width;
       vecval = vv;
