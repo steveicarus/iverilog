@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.42 2002/09/18 04:29:55 steve Exp $
+ *  $Id: opcodes.txt,v 1.43 2002/11/07 02:32:39 steve Exp $
  */
 
 
@@ -297,6 +297,7 @@ ended, then the %join does not block or yield the thread.
 
 
 * %load <bit>, <functor-label>
+* %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a value from the given functor output into the
 specified thread register bit. The functor-label can refer to a .net,
@@ -304,6 +305,8 @@ a .var or a .functor, and may be indexed with array syntax to get at a
 functor within a vector of functors. This instruction loads only a
 single bit.
 
+THe %load/v instruction is a vector version, that loads an entire
+vector, starting at the given <bit> and functor.
 
 * %load/m <bit>, <memory-label>
 
@@ -431,6 +434,7 @@ semantics.  Like:
 
 
 * %set <var-label>, <bit>
+* %set/v <var-label>, <bit>, <wid>
 
 This sets a bit of a variable, and is used to implement blocking
 assignments. The <label> identifies the variable to receive the new
@@ -438,6 +442,11 @@ value. Once the set completes, the value is immediately available to
 be read out of the variable. The <bit> is the address of the thread
 register that contains the bit value to assign.
 
+The %set/v instrunction is the same as the %set, but it adds a width
+for a vector. The bits are written out in order, starting at the
+addressed variable bit and working up. If the <bit> is one of the
+constant bits, then the value is repeated for the width. Otherwise,
+the vector is taken from increasing thread bit addresses.
 
 * %set/m <memory-label>, <bit>
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.90 2002/11/05 03:46:44 steve Exp $"
+#ident "$Id: vthread.cc,v 1.91 2002/11/07 02:32:39 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1414,6 +1414,21 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+      assert(cp->bit_idx[1] > 0);
+
+      unsigned bit = cp->bit_idx[0];
+      for (unsigned idx = 0;  idx < cp->bit_idx[1];  idx += 1, bit += 1) {
+
+	    vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
+	    thr_put_bit(thr, bit, functor_get(iptr));
+      }
+
+      return true;
+}
+
 bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2119,6 +2134,29 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[1] > 0);
+
+      unsigned bit = cp->bit_idx[0];
+      if (bit >= 4) {
+	    for (unsigned idx = 0;  idx < cp->bit_idx[1]; idx += 1, bit += 1) {
+		  unsigned char bit_val = thr_get_bit(thr, bit);
+		  vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
+		  functor_set(iptr, bit_val, strong_values[bit_val], true);
+	    }
+
+      } else {
+	    unsigned char bit_val = strong_values[thr_get_bit(thr, bit)];
+
+	    for (unsigned idx = 0;  idx < cp->bit_idx[1]; idx += 1) {
+		  vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
+		  functor_set(iptr, bit_val, bit_val, true);
+	    }
+      }
+      return true;
+}
+
 /*
  * Implement the %set/x instruction:
  *
@@ -2428,6 +2466,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.91  2002/11/07 02:32:39  steve
+ *  Add vector set and load instructions.
+ *
  * Revision 1.90  2002/11/05 03:46:44  steve
  *  Fix mask calculate when MOV_b is right on the word boundary.
  *
