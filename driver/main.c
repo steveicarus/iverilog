@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.47 2002/08/12 01:27:48 steve Exp $"
+#ident "$Id: main.c,v 1.48 2002/12/04 02:29:36 steve Exp $"
 
 # include "config.h"
 
@@ -119,6 +119,34 @@ char tmp[MAXSIZE];
 
 static char ivl_root[MAXSIZE];
 
+#ifdef __MINGW32__
+# include  <fcntl.h>
+static FILE*fopen_safe(const char*path)
+{
+      FILE*file = 0;
+      int fd;
+
+      fd = open(path, O_WRONLY|O_CREAT|O_EXCL, 0700);
+      if (fd != -1)
+	    file = fdopen(fd, "w");
+
+       return file;
+}
+#else
+# include  <fcntl.h>
+static FILE*fopen_safe(const char*path)
+{
+      FILE*file = 0;
+      int fd;
+
+      fd = open(path, O_WRONLY|O_CREAT|O_EXCL, 0700);
+      if (fd != -1)
+	    file = fdopen(fd, "w");
+
+       return file;
+}
+#endif
+
 static const char*my_tempfile(const char*str, FILE**fout)
 {
       FILE*file;
@@ -148,7 +176,7 @@ static const char*my_tempfile(const char*str, FILE**fout)
       while ((retry > 0) && (file == NULL)) {
 	    unsigned code = rand();
 	    sprintf(pathbuf, "%s%c%s%04x", tmpdir, sep, str, code);
-	    file = fopen(pathbuf, "w");
+	    file = fopen_safe(pathbuf);
 	    retry -= 1;
       }
 
@@ -657,6 +685,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.48  2002/12/04 02:29:36  steve
+ *  Use O_EXCL when opening temp files.
+ *
  * Revision 1.47  2002/08/12 01:27:48  steve
  *  Escape the backslash in the windows file name.
  *
