@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.136 2002/11/11 01:12:41 steve Exp $"
+#ident "$Id: Makefile.in,v 1.137 2002/11/13 01:50:11 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -83,6 +83,7 @@ all: dosify.exe
 dosify.exe: dosify.c
 	$(CC) -o dosify.exe dosify.c
 
+SUBDIRS += driver-vpi
 else
 all: iverilog-vpi
 endif

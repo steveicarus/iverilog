@@ -255,4 +255,4 @@ AC_MSG_RESULT($ident_support)
 
 AC_CONFIG_SUBDIRS(vvp tgt-vvp tgt-fpga libveriuser)
 
-AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
+AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
