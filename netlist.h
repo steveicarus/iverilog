@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.173 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.174 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 /*
@@ -1242,6 +1242,7 @@ class NetAssignBase : public NetProc {
 
       NetAssign_* l_val(unsigned);
       const NetAssign_* l_val(unsigned) const;
+      unsigned l_val_count() const;
 
 	// This returns the total width of the accumulated l-value. It
 	// accounts for any grouping of NetAssign_ objects that might happen.
@@ -2806,6 +2807,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.174  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.173  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

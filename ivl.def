@@ -26,6 +26,10 @@ ivl_logic_type
 ivl_logic_pin
 ivl_logic_pins
 
+ivl_lval_mux
+ivl_lval_pin
+ivl_lval_pins
+
 ivl_nexus_name
 ivl_nexus_ptrs
 ivl_nexus_ptr
@@ -54,6 +58,8 @@ ivl_stmt_cond_expr
 ivl_stmt_cond_false
 ivl_stmt_cond_true
 ivl_stmt_delay_val
+ivl_stmt_lval
+ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
 ivl_stmt_parm

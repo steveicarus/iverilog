@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.5 2000/09/20 02:53:15 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.6 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -132,6 +132,18 @@ const NetAssign_* NetAssignBase::l_val(unsigned idx) const
       return cur;
 }
 
+unsigned NetAssignBase::l_val_count() const
+{
+      const NetAssign_*cur = lval_;
+      unsigned cnt = 0;
+      while (cur) {
+	    cnt += 1;
+	    cur = cur->more;
+      }
+
+      return cnt;
+}
+
 unsigned NetAssignBase::lwidth() const
 {
       unsigned sum = 0;
@@ -161,6 +173,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.6  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.5  2000/09/20 02:53:15  steve
  *  Correctly measure comples l-values of assignments.
  *

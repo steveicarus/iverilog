@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.13 2000/10/16 22:44:54 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.14 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -201,6 +201,28 @@ extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
       return net->pins_[pin];
 }
 
+extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
+{
+      assert(net);
+      return net->mux;
+}
+
+extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
+{
+      assert(net);
+      return net->width_;
+}
+
+extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->width_);
+      if (net->width_ == 1)
+	    return net->n.pin_;
+      else
+	    return net->n.pins_[idx];
+}
+
 extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
 {
       assert(net);
@@ -350,10 +372,42 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.delay_;
 }
 
+extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_ASSIGN:
+	    assert(idx < net->u_.assign_.lvals_);
+	    return net->u_.assign_.lval_ + idx;
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
+extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_ASSIGN:
+	    return net->u_.assign_.lvals_;
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
 extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_ASSIGN);
-      return net->u_.assign_.lwidth_;
+      unsigned sum = 0;
+      for (unsigned idx = 0 ;  idx < net->u_.assign_.lvals_ ;  idx += 1) {
+	    ivl_lval_t cur = net->u_.assign_.lval_ + idx;
+	    if (cur->mux)
+		  sum += 1;
+	    else
+		  sum += cur->width_;
+      }
+
+      return sum;
 }
 
 extern "C" const char* ivl_stmt_name(ivl_statement_t net)
@@ -422,6 +476,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.14  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.13  2000/10/16 22:44:54  steve
  *  Stubs so that cygwin port will link ivl.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.18 2000/10/15 21:02:08 steve Exp $"
+#ident "$Id: stub.c,v 1.19 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 /*
@@ -75,18 +75,32 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 
 static void show_statement(ivl_statement_t net, unsigned ind)
 {
+      unsigned idx;
       const ivl_statement_type_t code = ivl_statement_type(net);
 
       switch (code) {
+
 	  case IVL_ST_ASSIGN:
 	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
+		  unsigned pp;
+		  ivl_lval_t lval = ivl_stmt_lval(net, idx);
+		  ivl_nexus_t nex = ivl_lval_pin(lval, 0);
+
+		  fprintf(out, "%*s{%s", ind+4, "", ivl_nexus_name(nex));
+		  for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
+			nex = ivl_lval_pin(lval, pp);
+			fprintf(out, ", %s", ivl_nexus_name(nex));
+		  }
+		  fprintf(out, "}\n");
+	    }
+
 	    show_expression(ivl_stmt_rval(net), ind+4);
 	    break;
 
 	  case IVL_ST_BLOCK: {
 		unsigned cnt = ivl_stmt_block_count(net);
-		unsigned idx;
 		fprintf(out, "%*sbegin\n", ind, "");
 		for (idx = 0 ;  idx < cnt ;  idx += 1) {
 		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
@@ -124,7 +138,6 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_STASK: {
-		unsigned idx;
 		fprintf(out, "%*sCall %s(%u parameters);\n", ind, "",
 			ivl_stmt_name(net), ivl_stmt_parm_count(net));
 		for (idx = 0 ;  idx < ivl_stmt_parm_count(net) ;  idx += 1)
@@ -323,6 +336,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.19  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.18  2000/10/15 21:02:08  steve
  *  Makefile patches to support target loading under cygwin.
  *

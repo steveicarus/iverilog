@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.9 2000/10/08 04:01:54 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.10 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -74,12 +74,44 @@ bool dll_target::process(const NetProcTop*net)
  */
 void dll_target::proc_assign(const NetAssign*net)
 {
+      unsigned cnt;
+
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_ASSIGN;
 
-      stmt_cur_->u_.assign_.lwidth_ = net->lwidth();
+      stmt_cur_->u_.assign_.lvals_ = cnt = net->l_val_count();
+      stmt_cur_->u_.assign_.lval_ = new struct ivl_lval_s[cnt];
+
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
+	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
+	    const NetAssign_*asn = net->l_val(idx);
+
+	    cur->width_ = asn->pin_count();
+
+	    if (cur->width_ > 1) {
+		  cur->n.pins_ = new ivl_nexus_t[cur->width_];
+		  for (unsigned pp = 0 ;  pp < cur->width_ ;  pp += 1) {
+			const Nexus*nex = asn->pin(pp).nexus();
+			assert(nex->t_cookie());
+			cur->n.pins_[pp] = (ivl_nexus_t)nex->t_cookie();
+		  }
+
+	    } else {
+		  const Nexus*nex = asn->pin(0).nexus();
+		  assert(nex->t_cookie());
+		  cur->n.pin_ = (ivl_nexus_t)nex->t_cookie();
+	    }
+
+	    cur->mux = 0;
+	    if (asn->bmux()) {
+		  assert(expr_ == 0);
+		  asn->bmux()->expr_scan(this);
+		  cur->mux = expr_;
+		  expr_ = 0;
+	    }
+      }
 
       assert(expr_ == 0);
       net->rval()->expr_scan(this);
@@ -269,6 +301,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.10  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.9  2000/10/08 04:01:54  steve
  *  Back pointers in the nexus objects into the devices
  *  that point to it.

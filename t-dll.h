@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.13 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: t-dll.h,v 1.14 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -128,6 +128,20 @@ struct ivl_expr_s {
 		  ivl_expr_t lsb_;
 	    } subsig_;
       } u_;
+};
+
+/*
+ * This object contains references to ivl_nexus_t objects that in turn
+ * are reg nets. This is used by the assignment to represent the
+ * l-value expressions.
+ */
+struct ivl_lval_s {
+      unsigned width_  :24;
+      ivl_expr_t mux;
+      union {
+	    ivl_nexus_t*pins_;
+	    ivl_nexus_t pin_;
+      } n;
 };
 
 /*
@@ -248,7 +262,8 @@ struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       union {
 	    struct { /* IVL_ST_ASSIGN */
-		  unsigned lwidth_  :24;
+		  unsigned lvals_;
+		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
 	    } assign_;
 
@@ -298,6 +313,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.14  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.13  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible

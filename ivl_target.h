@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.20 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.21 2000/10/18 20:04:39 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -113,6 +113,7 @@ _BEGIN_DECL
  */
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
+typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
@@ -312,6 +313,32 @@ extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 
+
+/* LVAL
+ * The l-values of assignments are concatenation of ivl_lval_t
+ * objects. Each l-value has a bunch of connections (in the form of
+ * ivl_nexus_t objects) and possibly a mux expression. The compiler
+ * takes care of part selects and nested concatenations. The
+ * ivl_stmt_lval function pulls ivl_lval_t objects out of the
+ * statement.
+ *
+ * ivl_lval_mux
+ *    If the l-value includes a bit select expression, this method
+ *    returns an ivl_expr_t that represents that
+ *    expression. Otherwise, it returns 0.
+ *
+ * ivl_lval_pin
+ *    Return an ivl_nexus_t for the connection of the ivl_lval_t.
+ *
+ * ivl_lval_pins
+ *    Return the number of pins for this object.
+ */
+
+extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
+extern unsigned    ivl_lval_pins(ivl_lval_t net);
+extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
+
+
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
  * nexus. These functions manage the ivl_nexus_t object. They also
@@ -445,6 +472,10 @@ extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_ASSIGN */
+extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
+  /* IVL_ST_ASSIGN */
+extern unsigned ivl_stmt_lvals(ivl_statement_t net);
+  /* IVL_ST_ASSIGN */
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
@@ -518,6 +549,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.21  2000/10/18 20:04:39  steve
+ *  Add ivl_lval_t and support for assignment l-values.
+ *
  * Revision 1.20  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible
