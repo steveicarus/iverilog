@@ -219,16 +219,14 @@ To run the program
 
 5.0 Unsupported Constructs
 
-IVL is in development - as such it still only supports a subset
+IVL is in development - as such it still only supports a (growing) subset
 of verilog.  Below is a description of some of the currently unsupported
 verilog features.
 
-Event Control - ??
+  - Lvalue bit ranges - Example: regvalue [7:3] = 5'b0;
 
-Lvalue bit ranges - Example: regvalue [7:3] = 5'b0;
+  - Complex delay expressions, specifically min,typ,max expressions.
 
-Non-blocking Assignment - Example: regvalue <= 5'b0;
+  - Tasks/functions
 
-Complex delay expressions - ??
-
-Tasks/functions
+  - Other things I forgot to mention.
