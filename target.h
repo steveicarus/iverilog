@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.34 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: target.h,v 1.35 2000/04/22 04:20:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -91,6 +91,7 @@ struct target_t {
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
+      virtual bool net_force(ostream&os, const NetForce*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
 
 	/* Output a process (called for each process). It is up to the
@@ -105,6 +106,7 @@ struct target_t {
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
+      virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual bool proc_trigger(ostream&os, const NetEvTrig*);
@@ -152,6 +154,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.35  2000/04/22 04:20:20  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.34  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

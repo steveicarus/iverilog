@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.19 2000/04/12 04:23:57 steve Exp $"
+#ident "$Id: Statement.cc,v 1.20 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -167,6 +167,17 @@ void PEventStatement::set_statement(Statement*st)
       statement_ = st;
 }
 
+PForce::PForce(PExpr*l, PExpr*r)
+: lval_(l), expr_(r)
+{
+}
+
+PForce::~PForce()
+{
+      delete lval_;
+      delete expr_;
+}
+
 PForever::PForever(Statement*s)
 : statement_(s)
 {
@@ -180,6 +191,16 @@ PForever::~PForever()
 PProcess::~PProcess()
 {
       delete statement_;
+}
+
+PRelease::PRelease(PExpr*l)
+: lval_(l)
+{
+}
+
+PRelease::~PRelease()
+{
+      delete lval_;
 }
 
 PRepeat::PRepeat(PExpr*e, Statement*s)
@@ -210,6 +231,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.20  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.19  2000/04/12 04:23:57  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

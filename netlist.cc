@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.116 2000/04/18 01:02:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.117 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1735,6 +1735,25 @@ verinum::V NetConst::value(unsigned idx) const
       return value_[idx];
 }
 
+NetForce::NetForce(const string&n, NetNet*l)
+: NetNode(n, l->pin_count()), lval_(l)
+{
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name("I", idx);
+      }
+}
+
+NetForce::~NetForce()
+{
+}
+
+const NetObj::Link& NetForce::lval_pin(unsigned idx) const
+{
+      assert(idx < lval_->pin_count());
+      return lval_->pin(idx);
+}
+
 NetFuncDef::NetFuncDef(NetScope*s, const svector<NetNet*>&po)
 : scope_(s), statement_(0), ports_(po)
 {
@@ -2483,6 +2502,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.117  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.116  2000/04/18 01:02:54  steve
  *  Minor cleanup of NetTaskDef.
  *

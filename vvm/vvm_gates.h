@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.57 2000/04/15 02:25:32 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.58 2000/04/22 04:20:20 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -277,6 +277,35 @@ class vvm_ff  : public vvm_nexus::recvr_t {
     private: // not implemeneted
       vvm_ff(const vvm_ff&);
       vvm_ff& operator= (const vvm_ff&);
+};
+
+/*
+ * This class supports the handling of the procedural force
+ * assignment. It is a device on the netlist that receives a bit value
+ * and forces it onto the target vvm_nexus. That target is enabled by
+ * the execution of the force statement in behavioral code.
+ */
+class vvm_force  : public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_force(unsigned w);
+      ~vvm_force();
+
+      void init_I(unsigned key, vpip_bit_t val);
+
+      void force(unsigned key, vvm_nexus*tgt);
+      void release();
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+
+      unsigned width_;
+      vpip_bit_t*bits_;
+      vvm_nexus**target_;
+
+    private: // not implemented
+      vvm_force(const vvm_force&);
+      vvm_force& operator= (const vvm_force&);
 };
 
 /*
@@ -887,6 +916,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.58  2000/04/22 04:20:20  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.57  2000/04/15 02:25:32  steve
  *  Support chained events.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.1 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_nexus.h,v 1.2 2000/04/22 04:20:20 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -85,7 +85,7 @@ class vvm_nexus {
 
     public:
       vvm_nexus();
-      virtual ~vvm_nexus() =0;
+      ~vvm_nexus();
 
 	// These methods support connecting the receiver and driver to
 	// the nexus.
@@ -100,12 +100,17 @@ class vvm_nexus {
 	// to procedural assignments to the node, as if it where a reg.
       void reg_assign(vpip_bit_t val);
 
+	// This method causes the specified value to be forced onto
+	// the nexus. This overrides all drivers that are attached.
+      void force_assign(vpip_bit_t val);
+      void release();
+
 	// The run_values() method collects all the current driver
 	// values and, with the aid of the resolution_function,
 	// generates the current value for the nexus. It also passes
 	// that value on to the receuvers.
       void run_values();
-      virtual vpip_bit_t resolution_function(const vpip_bit_t*, unsigned) const =0;
+      vpip_bit_t resolution_function(const vpip_bit_t*, unsigned) const;
 
     private:
       vpip_bit_t value_;
@@ -119,18 +124,11 @@ class vvm_nexus {
       vpip_bit_t*ival_;
       unsigned  nival_;
 
+      vpip_bit_t force_;
+
     private: // not implemented
       vvm_nexus(const vvm_nexus&);
       vvm_nexus& operator= (const vvm_nexus&);
-};
-
-
-class vvm_nexus_wire  : public vvm_nexus {
-
-    public:
-      vvm_nexus_wire();
-      ~vvm_nexus_wire();
-      vpip_bit_t resolution_function(const vpip_bit_t*, unsigned) const;
 };
 
 
@@ -139,11 +137,14 @@ class vvm_nexus_wire  : public vvm_nexus {
  * creates all the events needed to make it happen after the specified
  * delay.
  */
-void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
-			unsigned long delay);
+extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
+			       unsigned long delay);
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.2  2000/04/22 04:20:20  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.1  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

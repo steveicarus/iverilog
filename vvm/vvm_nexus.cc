@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.5 2000/03/22 05:16:38 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.6 2000/04/22 04:20:20 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -128,8 +128,18 @@ void vvm_nexus::reg_assign(vpip_bit_t val)
 {
       assert(drivers_ == 0);
       value_ = val;
+      if (force_ != 0)
+	    return;
+
       for (recvr_cell*cur = recvrs_;  cur ;  cur = cur->next)
 	    cur->dev->take_value(cur->key, value_);
+}
+
+void vvm_nexus::force_assign(vpip_bit_t val)
+{
+      force_ = val;
+      for (recvr_cell*cur = recvrs_;  cur ;  cur = cur->next)
+	    cur->dev->take_value(cur->key, force_);
 }
 
 /*
@@ -158,6 +168,9 @@ void vvm_nexus::run_values()
       vpip_bit_t val = resolution_function(ival_, nival_);
       if (value_ == val) return;
       value_ = val;
+
+      if (force_ != 0)
+	    return;
 
 	/* Now deliver that output value to all the receivers
 	   connected to this nexus. */
@@ -197,16 +210,8 @@ vvm_nexus::recvr_t::~recvr_t()
 {
 }
 
-vvm_nexus_wire::vvm_nexus_wire()
-{
-}
-
-vvm_nexus_wire::~vvm_nexus_wire()
-{
-}
-
-vpip_bit_t vvm_nexus_wire::resolution_function(const vpip_bit_t*bits,
-					       unsigned nbits) const
+vpip_bit_t vvm_nexus::resolution_function(const vpip_bit_t*bits,
+					  unsigned nbits) const
 {
       if (nbits == 0) return HiZ;
       return vpip_bits_resolve(bits, nbits);
@@ -233,6 +238,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.6  2000/04/22 04:20:20  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.5  2000/03/22 05:16:38  steve
  *  Integrate drive resolution function.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.54 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.55 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 /*
@@ -483,6 +483,12 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
       }
 }
 
+void PForce::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "force " << *lval_ << " = " << *expr_
+	  << "; /* " << get_line() << " */" << endl;
+}
+
 void PForever::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "forever /* " << get_line() << " */" << endl;
@@ -510,6 +516,12 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    statement_->dump(out, ind);
       else
 	    out << setw(ind) << "" << "/* NOOP */" << endl;
+}
+
+void PRelease::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "release " << *lval_ << "; /* "
+	  << get_line() << " */" << endl;
 }
 
 void PRepeat::dump(ostream&out, unsigned ind) const
@@ -733,6 +745,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.55  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.54  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

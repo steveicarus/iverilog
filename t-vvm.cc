@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.137 2000/04/15 19:51:30 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.138 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -80,6 +80,7 @@ class target_vvm : public target_t {
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
+      virtual bool net_force(ostream&os, const NetForce*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
       virtual bool process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
@@ -91,6 +92,7 @@ class target_vvm : public target_t {
               void proc_case_fun(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
               void proc_condit_fun(ostream&os, const NetCondit*);
+      virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
@@ -802,7 +804,7 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 	    os << "static struct __vpiNumberConst number_table[" <<
 		  number_counter+1 << "];" << endl;
       if (nexus_wire_counter > 0)
-	    os << "static vvm_nexus_wire nexus_wire_table[" <<
+	    os << "static vvm_nexus nexus_wire_table[" <<
 		  nexus_wire_counter << "];" << endl;
       if (signal_bit_counter > 0)
 	    os << "static vpip_bit_t signal_bit_table[" <<
@@ -1734,6 +1736,24 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 }
 
 
+bool target_vvm::net_force(ostream&os, const NetForce*dev)
+{
+      string mname = mangle(dev->name());
+
+      os << "static vvm_force " << mname << "(" << dev->pin_count()
+	 << ");" << endl;
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&dev->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << idx << ");" << endl;
+      }
+
+      return true;
+}
+
 void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
 {
       string mname = mangle(net->name());
@@ -2310,6 +2330,21 @@ void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
       defn << "      }" << endl;
 }
 
+bool target_vvm::proc_force(ostream&os, const NetForce*dev)
+{
+      const string mname = mangle(dev->name());
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&dev->lval_pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    defn << "      " << mname << ".force("<<idx<<", "
+		 << "nexus_wire_table+"<<ncode << ");" << endl;
+      }
+
+      return true;
+}
+
 /*
  * The forever loop is implemented by starting a basic block, handing
  * the statement, and putting in a goto to the beginning of the block.
@@ -2626,6 +2661,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.138  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.137  2000/04/15 19:51:30  steve
  *  fork-join support in vvm.
  *

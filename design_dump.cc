@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.76 2000/04/12 20:02:52 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.77 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 /*
@@ -152,6 +152,12 @@ void NetDivide::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "NET_DIVIDE (NetDivide): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetForce::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "force " << lval_->name() << endl;
+      dump_node_pins(o, ind+4);
 }
 
 void NetMult::dump_node(ostream&o, unsigned ind) const
@@ -546,6 +552,12 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
 	    o << setw(ind+2) << "" << "/* noop */ ;" << endl;
 }
 
+void NetForce::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "force " << lval_->name() << " = "
+	<< name() << ";" << endl;
+}
+
 void NetForever::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "forever" << endl;
@@ -890,6 +902,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.77  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.76  2000/04/12 20:02:52  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.39 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: emit.cc,v 1.40 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 /*
@@ -95,6 +95,11 @@ void NetFF::emit_node(ostream&o, struct target_t*tgt) const
       tgt->lpm_ff(o, this);
 }
 
+void NetForce::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_force(o, this);
+}
+
 void NetMult::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->lpm_mult(o, this);
@@ -165,6 +170,11 @@ bool NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_condit(o, this);
       return true;
+}
+
+bool NetForce::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_force(o, this);
 }
 
 bool NetForever::emit_proc(ostream&o, struct target_t*tgt) const
@@ -416,6 +426,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.40  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.39  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.91 2000/04/21 03:22:18 steve Exp $"
+#ident "$Id: parse.y,v 1.92 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1671,8 +1671,10 @@ statement
 		  $$ = 0;
 		}
 	| K_force lavalue '=' expression ';'
-		{ yyerror(@1, "sorry: procedural force assign not supported.");
-		  $$ = 0;
+		{ PForce*tmp = new PForce($2, $4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_TRIGGER IDENTIFIER ';'
 		{ PTrigger*tmp = new PTrigger($2);
@@ -1718,8 +1720,10 @@ statement
 		  $$ = tmp;
 		}
 	| K_release lavalue ';'
-		{ yyerror(@1, "sorry: release not supported.");
-		  $$ = 0;
+		{ PRelease*tmp = new PRelease($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_repeat '(' expression ')' statement
 		{ PRepeat*tmp = new PRepeat($3, $5);

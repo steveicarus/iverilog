@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.126 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.127 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 /*
@@ -1402,6 +1402,33 @@ class NetEvProbe  : public NetNode {
 };
 
 /*
+ * The force statement causes the r-val net to be forced onto the
+ * l-val net when it is executed. The code generator is expected to
+ * know what that means. All the expressions are structural and behave
+ * like nets.
+ *
+ * This class is a NetProc because it it turned on by procedural
+ * behavior. However, it is also a NetNode because it connects to
+ * nets, and when activated follows the net values.
+ */
+class NetForce  : public NetProc, public NetNode {
+
+    public:
+      explicit NetForce(const string&n, NetNet*l);
+      ~NetForce();
+
+      const NetObj::Link& lval_pin(unsigned) const;
+
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      NetNet*lval_;
+};
+
+/*
  * A forever statement is executed over and over again forever. Or
  * until its block is disabled.
  */
@@ -2391,6 +2418,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.127  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.126  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

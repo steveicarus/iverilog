@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.24 2000/04/12 04:23:57 steve Exp $"
+#ident "$Id: Statement.h,v 1.25 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  <string>
@@ -288,6 +288,20 @@ class PEventStatement  : public Statement {
       Statement*statement_;
 };
 
+class PForce  : public Statement {
+
+    public:
+      explicit PForce(PExpr*l, PExpr*r);
+      ~PForce();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*lval_;
+      PExpr*expr_;
+};
+
 class PForever : public Statement {
     public:
       explicit PForever(Statement*s);
@@ -346,6 +360,19 @@ class PRepeat : public Statement {
       Statement*statement_;
 };
 
+class PRelease  : public Statement {
+
+    public:
+      explicit PRelease(PExpr*l);
+      ~PRelease();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*lval_;
+};
+
 /*
  * The PTrigger statement sends a trigger to a named event. Take the
  * name here.
@@ -381,6 +408,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.25  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.24  2000/04/12 04:23:57  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.160 2000/04/21 04:38:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.161 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 /*
@@ -1802,6 +1802,32 @@ NetProc* PForever::elaborate(Design*des, const string&path) const
       return proc;
 }
 
+NetProc* PForce::elaborate(Design*des, const string&path) const
+{
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lval == 0)
+	    return 0;
+
+      NetNet*rval = expr_->elaborate_net(des, path, lval->pin_count(),
+					 0, 0, 0);
+      if (rval == 0)
+	    return 0;
+
+      if (rval->pin_count() < lval->pin_count())
+	    rval = pad_to_width(des, path, rval, lval->pin_count());
+
+      NetForce* dev = new NetForce(des->local_symbol(path), lval);
+      des->add_node(dev);
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
+	    connect(dev->pin(idx), rval->pin(idx));
+
+      return dev;
+}
+
 /*
  * elaborate the for loop as the equivalent while loop. This eases the
  * task for the target code generator. The structure is:
@@ -1939,6 +1965,13 @@ void PFunction::elaborate_2(Design*des, NetScope*scope) const
       }
 
       def->set_proc(st);
+}
+
+NetProc* PRelease::elaborate(Design*des, const string&path) const
+{
+      cerr << get_line() << ": sorry: I do not elaborate release yet."
+	   << endl;
+      return 0;
 }
 
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
@@ -2228,6 +2261,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.161  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.160  2000/04/21 04:38:15  steve
  *  Bit padding in assignment to memory.
  *

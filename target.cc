@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.35 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: target.cc,v 1.36 2000/04/22 04:20:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -155,6 +155,13 @@ void target_t::net_const(ostream&os, const NetConst*)
 	    "Unhandled CONSTANT node." << endl;
 }
 
+bool target_t::net_force(ostream&os, const NetForce*dev)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetForce node." << endl;
+      return false;
+}
+
 void target_t::net_probe(ostream&os, const NetEvProbe*net)
 {
       cerr << "target (" << typeid(*this).name() << "): "
@@ -216,6 +223,13 @@ void target_t::proc_delay(ostream&os, const NetPDelay*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_delay." << endl;
+}
+
+bool target_t::proc_force(ostream&os, const NetForce*dev)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_force." << endl;
+      return false;
 }
 
 void target_t::proc_forever(ostream&os, const NetForever*)
@@ -339,6 +353,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.36  2000/04/22 04:20:19  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.35  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

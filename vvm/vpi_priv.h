@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.14 2000/03/31 07:08:39 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.15 2000/04/22 04:20:20 steve Exp $"
 #endif
 
 /*
@@ -50,6 +50,8 @@ struct __vpirt;
  *     1SSS1sss  - Logic 1
  *     1xxx0xxx  - Logic X
  *     00001000  - Logic Z
+ *
+ *     00000000  - Invalid/No signal
  *
  * So as you can see, logic values can be quickly compared by masking
  * the strength bits.
@@ -342,6 +344,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.15  2000/04/22 04:20:20  steve
+ *  Add support for force assignment.
+ *
  * Revision 1.14  2000/03/31 07:08:39  steve
  *  allow cancelling of cbValueChange events.
  *
