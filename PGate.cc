@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.7 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PGate.cc,v 1.8 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "PGate.h"
@@ -47,6 +47,10 @@ PGate::PGate(const string&name, svector<PExpr*>*pins)
 }
 
 PGate::~PGate()
+{
+}
+
+void PGate::elaborate_scope(Design*, NetScope*) const
 {
 }
 
@@ -148,6 +152,13 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.8  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.7  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.29 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PExpr.h,v 1.30 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  <string>
@@ -32,6 +32,7 @@ class Design;
 class Module;
 class NetNet;
 class NetExpr;
+class NetScope;
 
 /*
  * The PExpr class hierarchy supports the description of
@@ -49,7 +50,13 @@ class PExpr : public LineInfo {
       virtual void dump(ostream&) const;
 
 	// Procedural elaboration of the expression.
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
+
+	// Elaborate expressions that are the r-value of parameter
+	// assignments. This elaboration follows the restrictions of
+	// constant expressions and supports later overriding and
+	// evaluation of parameters.
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
 	// This method elaborate the expression as gates, for use in a
 	// continuous assign or other wholly structural context.
@@ -97,7 +104,7 @@ class PEConcat : public PExpr {
 				    unsigned long rise,
 				    unsigned long fall,
 				    unsigned long decay) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
       virtual bool is_constant(Module*) const;
 
     private:
@@ -140,7 +147,7 @@ class PEIdent : public PExpr {
 				    unsigned long fall,
 				    unsigned long decay) const;
 
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
 
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
@@ -182,7 +189,8 @@ class PENumber : public PExpr {
 				    unsigned long rise,
 				    unsigned long fall,
 				    unsigned long decay) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
       virtual bool is_the_same(const PExpr*that) const;
@@ -200,7 +208,7 @@ class PEString : public PExpr {
 
       string value() const { return text_; }
       virtual void dump(ostream&) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -220,7 +228,7 @@ class PEUnary : public PExpr {
 				    unsigned long rise,
 				    unsigned long fall,
 				    unsigned long decay) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
 
     private:
       char op_;
@@ -241,7 +249,7 @@ class PEBinary : public PExpr {
 				    unsigned long rise,
 				    unsigned long fall,
 				    unsigned long decay) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetEBinary*elaborate_expr(Design*des, NetScope*) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
@@ -299,7 +307,7 @@ class PETernary : public PExpr {
 				    unsigned long rise =0,
 				    unsigned long fall =0,
 				    unsigned long decay =0) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetETernary*elaborate_expr(Design*des, NetScope*) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
@@ -317,17 +325,24 @@ class PECallFunction : public PExpr {
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
 
     private:
       string name_;
       svector<PExpr *> parms_;
 
-      NetESFunc* elaborate_sfunc_(Design*des, const string&path) const;
+      NetESFunc* elaborate_sfunc_(Design*des, NetScope*scope) const;
 };
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.30  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.29  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

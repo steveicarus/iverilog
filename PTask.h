@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.h,v 1.7 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PTask.h,v 1.8 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
 # include  "svector.h"
 # include  <string>
 class Design;
+class NetScope;
 class PWire;
 class Statement;
 
@@ -37,6 +38,12 @@ class PTask  : public LineInfo {
     public:
       explicit PTask(svector<PWire*>*p, Statement*s);
       ~PTask();
+
+	// Tasks introduce scope, to need to be handled during the
+	// scope elaboration pass. The scope passed is my scope,
+	// created by the containing scope. I fill it in with stuff if
+	// I need to.
+      void elaborate_scope(Design*des, NetScope*scope) const;
 
       void elaborate_1(Design*des, const string&path) const;
       void elaborate_2(Design*des, const string&path) const;
@@ -65,9 +72,11 @@ class PFunction : public LineInfo {
 
       void set_output(PWire*);
 
+      void elaborate_scope(Design*des, NetScope*scope) const;
+
 	/* Functions are elaborated in 2 passes. */
-      void elaborate_1(Design *des, const string &path) const;
-      void elaborate_2(Design *des, const string &path) const;
+      void elaborate_1(Design *des, NetScope*) const;
+      void elaborate_2(Design *des, NetScope*) const;
 
       void dump(ostream&, unsigned) const;
 
@@ -79,6 +88,13 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.8  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.7  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

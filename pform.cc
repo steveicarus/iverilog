@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.54 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: pform.cc,v 1.55 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -727,8 +727,15 @@ void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
 
 void pform_set_parameter(const string&name, PExpr*expr)
 {
+      assert(expr);
       pform_cur_module->parameters[name] = expr;
       pform_cur_module->param_names.push_back(name);
+}
+
+void pform_set_defparam(const string&name, PExpr*expr)
+{
+      assert(expr);
+      pform_cur_module->defparms[name] = expr;
 }
 
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
@@ -820,6 +827,13 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.55  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.54  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

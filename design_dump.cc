@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.67 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.68 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 /*
@@ -523,7 +523,7 @@ void NetForever::dump(ostream&o, unsigned ind) const
 
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "function " << name_ << endl;
+      o << setw(ind) << "" << "function " << scope_->name() << endl;
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
@@ -596,11 +596,41 @@ void NetScope::dump(ostream&o) const
 	  case FORK_JOIN:
 	    o << " parallel block";
 	    break;
+	  case FUNC:
+	    o << " function";
+	    break;
 	  case MODULE:
 	    o << " module";
 	    break;
+	  case TASK:
+	    o << " task";
+	    break;
       }
       o << endl;
+
+	/* Dump the parameters for this scope. */
+      {
+	    map<string,NetExpr*>::const_iterator pp;
+	    for (pp = parameters_.begin()
+		       ; pp != parameters_.end() ;  pp ++) {
+		  o << "    parameter " << (*pp).first << " = "  <<
+			*(*pp).second << ";" << endl;
+	    }
+      }
+
+	/* Dump the saved defparam assignments here. */
+      {
+	    map<string,NetExpr*>::const_iterator pp;
+	    for (pp = defparams.begin()
+		       ; pp != defparams.end() ;  pp ++ ) {
+		  o << "    defparam " << (*pp).first << " = " <<
+			*(*pp).second << ";" << endl;
+	    }
+      }
+
+	/* Dump any sub-scopes. */
+      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
+	    cur->dump(o);
 }
 
 void NetSTask::dump(ostream&o, unsigned ind) const
@@ -756,7 +786,7 @@ void NetEMemory::dump(ostream&o) const
 
 void NetEParam::dump(ostream&o) const
 {
-      o << "<" << path_ << "." << name_ << ">";
+      o << "<" << scope_->name() << "." << name_ << ">";
 }
 
 void NetETernary::dump(ostream&o) const
@@ -795,22 +825,7 @@ void NetEUnary::dump(ostream&o) const
 void Design::dump(ostream&o) const
 {
       o << "SCOPES:" << endl;
-      {
-	    map<string,NetScope*>::const_iterator pp;
-	    for (pp = scopes_.begin()
-		       ; pp != scopes_.end() ;  pp ++)
-		  (*pp).second -> dump(o);
-      }
-
-      o << "ELABORATED PARAMETERS:" << endl;
-      {
-	    map<string,NetExpr*>::const_iterator pp;
-	    for (pp = parameters_.begin()
-		       ; pp != parameters_.end() ;  pp ++) {
-		  o << "    " << (*pp).first << " = "  <<
-			*(*pp).second << ";" << endl;
-	    }
-      }
+      root_scope_->dump(o);
 
       o << "ELABORATED SIGNALS:" << endl;
 
@@ -871,6 +886,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.68  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.67  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

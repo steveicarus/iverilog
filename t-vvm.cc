@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.106 2000/02/29 05:20:21 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.107 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -690,6 +690,12 @@ void target_vvm::scope(ostream&os, const NetScope*scope)
       switch (scope->type()) {
 	  case NetScope::MODULE:
 	    type_code = "vpiModule";
+	    break;
+	  case NetScope::TASK:
+	    type_code = "vpiTask";
+	    break;
+	  case NetScope::FUNC:
+	    type_code = "vpiFunction";
 	    break;
 	  case NetScope::BEGIN_END:
 	    type_code = "vpiNamedBegin";
@@ -2168,6 +2174,13 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.107  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.106  2000/02/29 05:20:21  steve
  *  Remove excess variable.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.13 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.14 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -99,6 +99,7 @@ typedef struct t_vpi_value {
 
 /* OBJECT CODES */
 #define vpiConstant     7
+#define vpiFunction    20
 #define vpiIterator    27
 #define vpiMemory      29
 #define vpiMemoryWord  30
@@ -108,6 +109,7 @@ typedef struct t_vpi_value {
 #define vpiNet         36
 #define vpiReg         48
 #define vpiSysTaskCall 57
+#define vpiTask        59
 #define vpiTimeVar     63
 #define vpiSysTfCall   85
 #define vpiArgument    89
@@ -228,6 +230,13 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.14  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.13  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

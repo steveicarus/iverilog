@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.8 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.9 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -241,7 +241,8 @@ NetExpr* NetEParam::eval_tree()
       if (des_ == 0)
 	    return 0;
 
-      const NetExpr*expr = des_->find_parameter(path_, name_);
+      assert(scope_);
+      const NetExpr*expr = scope_->get_parameter(name_);
       assert(expr);
 
       NetExpr*nexpr = expr->dup_expr();
@@ -262,12 +263,19 @@ NetExpr* NetEParam::eval_tree()
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      des_->set_parameter(path_+"."+name_, res);
+      scope_->set_parameter(name_, res);
       return res->dup_expr();
 }
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.9  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.8  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

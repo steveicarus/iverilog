@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.49 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.50 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 /*
@@ -609,6 +609,15 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
+      for (parm_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  cur ++) {
+	    out << "    defparam " << (*cur).first << " = ";
+	    if ((*cur).second)
+		  out << *(*cur).second << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+
 	// Iterate through and display all the wires.
       for (map<string,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
@@ -702,6 +711,13 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.50  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.49  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

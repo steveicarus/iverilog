@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.84 2000/03/05 18:26:51 steve Exp $"
+#ident "$Id: parse.y,v 1.85 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -261,9 +261,8 @@ defparam_assign
 			delete tmp;
 			tmp = 0;
 		  }
-		  yyerror(@1, "sorry: defparam assignments not supported.");
+		  pform_set_defparam($1, $3);
 		  delete $1;
-		  delete $3;
 		}
 	;
 

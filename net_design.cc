@@ -1,0 +1,533 @@
+/*
+ * Copyright (c) 2000Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: net_design.cc,v 1.1 2000/03/08 04:36:53 steve Exp $"
+#endif
+
+/*
+ * This source file contains all the implementations of the Design
+ * class declared in netlist.h.
+ */
+
+# include  "netlist.h"
+
+static string parse_first_name(string&path)
+{
+      unsigned pos = path.find('.');
+      if (pos > path.length()) {
+	    string res = path;
+	    path = "";
+	    return res;
+      }
+
+      string res = path.substr(0, pos);
+      path = path.substr(pos+1, path.length());
+      return res;
+}
+
+static string parse_last_name(string&path)
+{
+      unsigned pos = path.rfind('.');
+      if (pos > path.length()) {
+	    string res = path;
+	    path = "";
+	    return res;
+      }
+
+      string res = path.substr(pos+1, path.length());
+      path = path.substr(0, pos);
+      return res;
+}
+
+Design:: Design()
+: errors(0), root_scope_(0), signals_(0), nodes_(0), procs_(0), lcounter_(0)
+{
+}
+
+Design::~Design()
+{
+}
+
+NetScope* Design::make_root_scope(const string&root)
+{
+      assert(root_scope_ == 0);
+      root_scope_ = new NetScope(root);
+      return root_scope_;
+}
+
+NetScope* Design::make_scope(const string&path,
+			     NetScope::TYPE t,
+			     const string&name)
+{
+      NetScope*up = find_scope(path);
+      assert(up);
+
+      NetScope*scope = new NetScope(up, name, t);
+
+      return scope;
+}
+
+
+/*
+ * This method locates a scope in the design, given its rooted
+ * heirarchical name. Each component of the key is used to scan one
+ * more step down the tree until the name runs out or the search
+ * fails.
+ */
+NetScope* Design::find_scope(const string&key)
+{
+      if (key == root_scope_->name())
+	    return root_scope_;
+
+      string path = key;
+      string root = parse_first_name(path);
+
+      NetScope*cur = root_scope_;
+      if (root != cur->name())
+	    return 0;
+
+      while (cur) {
+	    string next = parse_first_name(path);
+	    cur = cur->child(next);
+	    if (path == "") return cur;
+      }
+
+      return cur;
+}
+
+/*
+ * Find a parameter from within a specified context. If the name is
+ * not here, keep looking up until I run out of up to look at. The
+ * method works by scanning scopes, starting with the passed scope and
+ * working up towards the root, looking for the named parameter. The
+ * name in this case can be hierarchical, so there is an inner loop to
+ * follow the scopes of the name down to to key.
+ */
+const NetExpr* Design::find_parameter(const NetScope*scope,
+				      const string&name) const
+{
+      for ( ; scope ;  scope = scope->parent()) {
+	    string path = name;
+	    string key = parse_first_name(path);
+
+	    const NetScope*cur = scope;
+	    while (path != "") {
+		  cur = cur->child(key);
+		  if (cur == 0) break;
+		  key = parse_first_name(path);
+	    }
+
+	    if (cur == 0) continue;
+
+	    if (const NetExpr*res = cur->get_parameter(key))
+		  return res;
+      }
+
+      return 0;
+}
+
+
+/*
+ * This method runs through the scope, noticing the defparam
+ * statements that were collected during the elaborate_scope pass and
+ * applying them to the target parameters. The implementation actually
+ * works by using a specialized method from the NetScope class that
+ * does all the work for me.
+ */
+void Design::run_defparams()
+{
+      root_scope_->run_defparams(this);
+}
+
+void NetScope::run_defparams(Design*des)
+{
+      NetScope*cur = sub_;
+      while (cur) {
+	    cur->run_defparams(des);
+	    cur = cur->sib_;
+      }
+
+      map<string,NetExpr*>::const_iterator pp;
+      for (pp = defparams.begin() ;  pp != defparams.end() ;  pp ++ ) {
+	    NetExpr*val = (*pp).second;
+	    string path = (*pp).first;
+	    string name = parse_last_name(path);
+
+	    NetScope*targ_scope = des->find_scope(path);
+	    if (targ_scope == 0) {
+		  cerr << val->get_line() << ": warning: scope of " <<
+			path << "." << name << " not found." << endl;
+		  continue;
+	    }
+
+	    val = targ_scope->set_parameter(name, val);
+	    if (val == 0) {
+		  cerr << val->get_line() << ": warning: parameter "
+		       << name << " not found in " << targ_scope->name()
+		       << "." << endl;
+	    } else {
+		  delete val;
+	    }
+      }
+}
+
+void Design::evaluate_parameters()
+{
+      root_scope_->evaluate_parameters(this);
+}
+
+void NetScope::evaluate_parameters(Design*des)
+{
+      NetScope*cur = sub_;
+      while (cur) {
+	    cur->evaluate_parameters(des);
+	    cur = cur->sib_;
+      }
+
+
+	// Evaluate the parameter values. The parameter expressions
+	// have already been elaborated and replaced by the scope
+	// scanning code. Now the parameter expression can be fully
+	// evaluated, or it cannot be evaluated at all.
+
+      typedef map<string,NetExpr*>::iterator mparm_it_t;
+
+      for (mparm_it_t cur = parameters_.begin()
+		 ; cur != parameters_.end() ;  cur ++) {
+
+	      // Get the NetExpr for the parameter.
+	    NetExpr*expr = (*cur).second;
+	    assert(expr);
+
+	      // If it's already a NetEConst, then this parameter is done.
+	    if (dynamic_cast<const NetEConst*>(expr))
+		  continue;
+
+	      // Try to evaluate the expression.
+	    NetExpr*nexpr = expr->eval_tree();
+	    if (nexpr == 0) {
+		  cerr << (*cur).second->get_line() << ": internal error: "
+			"unable to evaluate parm expression: " <<
+			*expr << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	      // The evaluate worked, replace the old expression with
+	      // this constant value.
+	    assert(nexpr);
+	    delete expr;
+	    (*cur).second = nexpr;
+      }
+
+}
+
+string Design::get_flag(const string&key) const
+{
+      map<string,string>::const_iterator tmp = flags_.find(key);
+      if (tmp == flags_.end())
+	    return "";
+      else
+	    return (*tmp).second;
+}
+
+void Design::add_signal(NetNet*net)
+{
+      assert(net->design_ == 0);
+      if (signals_ == 0) {
+	    net->sig_next_ = net;
+	    net->sig_prev_ = net;
+      } else {
+	    net->sig_next_ = signals_->sig_next_;
+	    net->sig_prev_ = signals_;
+	    net->sig_next_->sig_prev_ = net;
+	    net->sig_prev_->sig_next_ = net;
+      }
+      signals_ = net;
+      net->design_ = this;
+}
+
+void Design::del_signal(NetNet*net)
+{
+      assert(net->design_ == this);
+      if (signals_ == net)
+	    signals_ = net->sig_prev_;
+
+      if (signals_ == net) {
+	    signals_ = 0;
+      } else {
+	    net->sig_prev_->sig_next_ = net->sig_next_;
+	    net->sig_next_->sig_prev_ = net->sig_prev_;
+      }
+      net->design_ = 0;
+}
+
+/*
+ * This method looks for a string given a current context as a
+ * starting point.
+ */
+NetNet* Design::find_signal(const string&path, const string&name)
+{
+      if (signals_ == 0)
+	    return 0;
+
+      const NetScope*scope = find_scope(path);
+      if (scope == 0) {
+	    cerr << "internal error: invalid scope: " << path << endl;
+	    return 0;
+      }
+      assert(scope);
+
+      for (;;) {
+	    string fulname = scope? (scope->name() + "." + name) : name;
+
+	    NetNet*cur = signals_;
+	    do {
+		  if (cur->name() == fulname)
+			return cur;
+
+		  cur = cur->sig_prev_;
+	    } while (cur != signals_);
+
+	    if (scope == 0)
+		  return 0;
+
+	    scope = scope->parent();
+      }
+}
+
+void Design::add_memory(NetMemory*mem)
+{
+      memories_[mem->name()] = mem;
+}
+
+NetMemory* Design::find_memory(const string&path, const string&name)
+{
+      string root = path;
+
+      for (;;) {
+	    string fulname = root + "." + name;
+	    map<string,NetMemory*>::const_iterator cur
+		  = memories_.find(fulname);
+
+	    if (cur != memories_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
+}
+
+void Design::add_function(const string&key, NetFuncDef*def)
+{
+      funcs_[key] = def;
+}
+
+NetFuncDef* Design::find_function(const string&path, const string&name)
+{
+      string root = path;
+      for (;;) {
+	    string key = root + "." + name;
+	    map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
+	    if (cur != funcs_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
+}
+
+NetFuncDef* Design::find_function(const string&key)
+{
+      map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
+      if (cur != funcs_.end())
+	    return (*cur).second;
+      return 0;
+}
+
+void Design::add_task(const string&key, NetTaskDef*def)
+{
+      tasks_[key] = def;
+}
+
+NetTaskDef* Design::find_task(const string&path, const string&name)
+{
+      string root = path;
+      for (;;) {
+	    string key = root + "." + name;
+	    map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
+	    if (cur != tasks_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
+}
+
+NetTaskDef* Design::find_task(const string&key)
+{
+      map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
+      if (cur == tasks_.end())
+	    return 0;
+
+      return (*cur).second;
+}
+
+void Design::add_node(NetNode*net)
+{
+      assert(net->design_ == 0);
+      if (nodes_ == 0) {
+	    net->node_next_ = net;
+	    net->node_prev_ = net;
+      } else {
+	    net->node_next_ = nodes_->node_next_;
+	    net->node_prev_ = nodes_;
+	    net->node_next_->node_prev_ = net;
+	    net->node_prev_->node_next_ = net;
+      }
+      nodes_ = net;
+      net->design_ = this;
+}
+
+void Design::del_node(NetNode*net)
+{
+      assert(net->design_ == this);
+      if (nodes_ == net)
+	    nodes_ = net->node_prev_;
+
+      if (nodes_ == net) {
+	    nodes_ = 0;
+      } else {
+	    net->node_next_->node_prev_ = net->node_prev_;
+	    net->node_prev_->node_next_ = net->node_next_;
+      }
+
+      net->design_ = 0;
+}
+
+void Design::add_process(NetProcTop*pro)
+{
+      pro->next_ = procs_;
+      procs_ = pro;
+}
+
+void Design::delete_process(NetProcTop*top)
+{
+      assert(top);
+      if (procs_ == top) {
+	    procs_ = top->next_;
+
+      } else {
+	    NetProcTop*cur = procs_;
+	    while (cur->next_ != top) {
+		  assert(cur->next_);
+		  cur = cur->next_;
+	    }
+
+	    cur->next_ = top->next_;
+      }
+
+      if (procs_idx_ == top)
+	    procs_idx_ = top->next_;
+
+      delete top;
+}
+
+void Design::clear_node_marks()
+{
+      if (nodes_ == 0)
+	    return;
+
+      NetNode*cur = nodes_;
+      do {
+	    cur->set_mark(false);
+	    cur = cur->node_next_;
+      } while (cur != nodes_);
+}
+
+void Design::clear_signal_marks()
+{
+      if (signals_ == 0)
+	    return;
+
+      NetNet*cur = signals_;
+      do {
+	    cur->set_mark(false);
+	    cur = cur->sig_next_;
+      } while (cur != signals_);
+}
+
+NetNode* Design::find_node(bool (*func)(const NetNode*))
+{
+      if (nodes_ == 0)
+	    return 0;
+
+      NetNode*cur = nodes_->node_next_;
+      do {
+	    if ((cur->test_mark() == false) && func(cur))
+		  return cur;
+
+	    cur = cur->node_next_;
+      } while (cur != nodes_->node_next_);
+
+      return 0;
+}
+
+NetNet* Design::find_signal(bool (*func)(const NetNet*))
+{
+      if (signals_ == 0)
+	    return 0;
+
+      NetNet*cur = signals_->sig_next_;
+      do {
+	    if ((cur->test_mark() == false) && func(cur))
+		  return cur;
+
+	    cur = cur->sig_next_;
+      } while (cur != signals_->sig_next_);
+
+      return 0;
+}
+
+/*
+ * $Log: net_design.cc,v $
+ * Revision 1.1  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
+ */
+

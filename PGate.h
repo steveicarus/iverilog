@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.14 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PGate.h,v 1.15 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -31,6 +31,7 @@
 class PExpr;
 class PUdp;
 class Design;
+class NetScope;
 class Module;
 
 /*
@@ -69,6 +70,7 @@ class PGate : public LineInfo {
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*sc) const;
 
     protected:
       const svector<PExpr*>* get_pins() const { return pins_; }
@@ -175,6 +177,7 @@ class PGModule  : public PGate {
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*sc) const;
 
     private:
       string type_;
@@ -192,10 +195,18 @@ class PGModule  : public PGate {
 
       void elaborate_mod_(Design*, Module*mod, const string&path) const;
       void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
+      void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.15  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.14  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

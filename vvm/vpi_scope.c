@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.6 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -47,6 +47,26 @@ static const struct __vpirt vpip_module_rt = {
       module_iter
 };
 
+static const struct __vpirt vpip_task_rt = {
+      vpiTask,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+};
+
+static const struct __vpirt vpip_function_rt = {
+      vpiFunction,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+};
+
 static const struct __vpirt vpip_named_begin_rt = {
       vpiNamedBegin,
       0,
@@ -69,6 +89,12 @@ vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
 	  case vpiNamedBegin:
 	    ref->base.vpi_type = &vpip_named_begin_rt;
 	    break;
+	  case vpiTask:
+	    ref->base.vpi_type = &vpip_task_rt;
+	    break;
+	  case vpiFunction:
+	    ref->base.vpi_type = &vpip_function_rt;
+	    break;
 	  default:
 	    assert(0);
       }
@@ -90,6 +116,13 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.6  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.23 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.24 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -823,7 +823,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 					    rise, fall, decay);
 
 
-	    if (const NetExpr*pe = des->find_parameter(path, text_)) {
+	    if (const NetExpr*pe = des->find_parameter(scope, text_)) {
 
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
@@ -1336,6 +1336,13 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.24  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.23  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

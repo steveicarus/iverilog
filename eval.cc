@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.13 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: eval.cc,v 1.14 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -96,7 +96,9 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
  */
 verinum* PEIdent::eval_const(const Design*des, const string&path) const
 {
-      const NetExpr*expr = des->find_parameter(path, text_);
+      const NetScope*scope = des->find_scope(path);
+      assert(scope);
+      const NetExpr*expr = des->find_parameter(scope, text_);
 
       if (expr == 0)
 	    return 0;
@@ -142,6 +144,13 @@ verinum* PETernary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.14  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.13  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.145 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.146 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 /*
@@ -385,14 +385,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
 	// Missing module instance names have already been rejected.
       assert(get_name() != "");
-	// Check for duplicate scopes.
-      if (NetScope*tmp = des->find_scope(path + "." + get_name())) {
-	    cerr << get_line() << ": error: Instance/Scope name " <<
-		  get_name() << " already used in this context." <<
-		  endl;
-	    des->errors += 1;
-	    return;
-      }
 
       if (msb_) {
 	    cerr << get_line() << ": sorry: Module instantiation arrays "
@@ -401,7 +393,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    return;
       }
 
-      NetScope*my_scope = des->make_scope(path, NetScope::MODULE, get_name());
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+	// I know a priori that the elaborate_scope created the scope
+	// already, so just look it up as a child of the current scope.
+      NetScope*my_scope = scope->child(get_name());
+      assert(my_scope);
       const string my_name = my_scope -> name();
 
       const svector<PExpr*>*pins;
@@ -471,7 +469,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, my_scope, parms_, nparms_, overrides_);
+      rmod->elaborate(des, my_scope);
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters. Scan
@@ -614,7 +612,27 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    return;
       }
 
-      cerr << get_line() << ": error: Unknown module: " << type_ << endl;
+      cerr << get_line() << ": internal error: Unknown module type: " <<
+	    type_ << endl;
+}
+
+void PGModule::elaborate_scope(Design*des, NetScope*sc) const
+{
+	// Look for the module type
+      map<string,Module*>::const_iterator mod = modlist->find(type_);
+      if (mod != modlist->end()) {
+	    elaborate_scope_mod_(des, (*mod).second, sc);
+	    return;
+      }
+
+	// Try a primitive type
+      map<string,PUdp*>::const_iterator udp = udplist->find(type_);
+      if (udp != udplist->end())
+	    return;
+
+
+      cerr << get_line() << ": error: Unknown module type: " << type_ << endl;
+      des->errors += 1;
 }
 
 /*
@@ -672,51 +690,6 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
       return osig;
 }
 
-NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
-{
-      assert(value_);
-      NetEConst*tmp = new NetEConst(*value_);
-      tmp->set_line(*this);
-      return tmp;
-}
-
-NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
-{
-      NetEConst*tmp = new NetEConst(value());
-      tmp->set_line(*this);
-      return tmp;
-}
-
-NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
-{
-      cerr << get_line() << ": I do not know how to elaborate expression: "
-	   << *this << endl;
-      return 0;
-}
-
-NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
-{
-      NetExpr*ip = expr_->elaborate_expr(des, path);
-      if (ip == 0) return 0;
-
-      /* Should we evaluate expressions ahead of time,
-       * just like in PEBinary::elaborate_expr() ?
-       */
-
-      NetEUnary*tmp;
-      switch (op_) {
-	  default:
-	    tmp = new NetEUnary(op_, ip);
-	    tmp->set_line(*this);
-	    break;
-	  case '~':
-	    tmp = new NetEUBits(op_, ip);
-	    tmp->set_line(*this);
-	    break;
-      }
-      return tmp;
-}
-
 NetProc* Statement::elaborate(Design*des, const string&path) const
 {
       cerr << "internal error: elaborate: What kind of statement? " <<
@@ -728,7 +701,9 @@ NetProc* Statement::elaborate(Design*des, const string&path) const
 NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
 				    Design*des, const string&path) const
 {
-      NetExpr*rv = rval()->elaborate_expr(des, path);
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+      NetExpr*rv = rval()->elaborate_expr(des, scope);
       if (rv == 0)
 	    return 0;
 
@@ -751,6 +726,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 				 unsigned&msb, unsigned&lsb,
 				 NetExpr*&mux) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* Get the l-value, and assume that it is an identifier. */
       const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 
@@ -828,7 +806,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    assert(id->lsb_ == 0);
 	    verinum*v = id->msb_->eval_const(des, path);
 	    if (v == 0) {
-		  NetExpr*m = id->msb_->elaborate_expr(des, path);
+		  NetExpr*m = id->msb_->elaborate_expr(des, scope);
 		  assert(m);
 		  msb = 0;
 		  lsb = 0;
@@ -858,6 +836,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 
 NetProc* PAssign::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* Catch the case where the lvalue is a reference to a memory
 	   item. These are handled differently. */
       do {
@@ -891,7 +872,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    rv = new NetEConst(*val);
 	    delete val;
 
-      } else if (rv = rval()->elaborate_expr(des, path)) {
+      } else if (rv = rval()->elaborate_expr(des, scope)) {
 
 	      /* OK, go on. */
 
@@ -1036,8 +1017,11 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
 				      Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* Elaborate the r-value expression, ... */
-      NetExpr*rv = rval()->elaborate_expr(des, path);
+      NetExpr*rv = rval()->elaborate_expr(des, scope);
       if (rv == 0)
 	    return 0;
 
@@ -1065,6 +1049,9 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
  */
 NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* Catch the case where the lvalue is a reference to a memory
 	   item. These are handled differently. */
       do {
@@ -1086,7 +1073,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
 	/* Elaborate the r-value expression. This generates a
 	   procedural expression that I attach to the assignment. */
-      NetExpr*rv = rval()->elaborate_expr(des, path);
+      NetExpr*rv = rval()->elaborate_expr(des, scope);
       if (rv == 0)
 	    return 0;
 
@@ -1132,6 +1119,9 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
  */
 NetProc* PBlock::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
 	    ? NetBlock::PARA
 	    : NetBlock::SEQU;
@@ -1139,19 +1129,14 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       bool fail_flag = false;
 
       string npath;
+      NetScope*nscope;
       if (name_.length()) {
-	      // Check for duplicate scopes.
-	    if (NetScope*tmp = des->find_scope(path + "." + name_)) {
-		  cerr << get_line() << ": error: Instance/Scope name " <<
-			name_ << " already used in this context." <<
-			endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	      // Make this new scope.
-	    npath = des->make_scope(path, NetScope::BEGIN_END, name_)->name();
+	    nscope = scope->child(name_);
+	    assert(nscope);
+	    npath = nscope->name();
 
       } else {
+	    nscope = scope;
 	    npath = path;
       }
 
@@ -1184,7 +1169,10 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
  */
 NetProc* PCase::elaborate(Design*des, const string&path) const
 {
-      NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetExpr*expr = expr_->elaborate_expr(des, scope);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
@@ -1229,7 +1217,7 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
-		  gu = cur->expr[e]->elaborate_expr(des, path);
+		  gu = cur->expr[e]->elaborate_expr(des, scope);
 
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, path);
@@ -1244,8 +1232,11 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 
 NetProc* PCondit::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	// Elaborate and try to evaluate the conditional expression.
-      NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetExpr*expr = expr_->elaborate_expr(des, scope);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate"
 		  " condition expression." << endl;
@@ -1321,12 +1312,15 @@ NetProc* PCallTask::elaborate(Design*des, const string&path) const
  */
 NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       svector<NetExpr*>eparms (nparms());
 
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    PExpr*ex = parm(idx);
 
-	    eparms[idx] = ex? ex->elaborate_expr(des, path) : 0;
+	    eparms[idx] = ex? ex->elaborate_expr(des, scope) : 0;
       }
 
       NetSTask*cur = new NetSTask(name(), eparms);
@@ -1363,6 +1357,9 @@ NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
  */
 NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetTaskDef*def = des->find_task(path, name_);
       if (def == 0) {
 	    cerr << get_line() << ": error: Enable of unknown task ``" <<
@@ -1400,7 +1397,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
 
-	    NetExpr*rv = parms_[idx]->elaborate_expr(des, path);
+	    NetExpr*rv = parms_[idx]->elaborate_expr(des, scope);
 	    NetAssign*pr = new NetAssign("@", des, port->pin_count(), rv);
 	    for (unsigned pi = 0 ;  pi < port->pin_count() ;  pi += 1)
 		  connect(port->pin(pi), pr->pin(pi));
@@ -1566,6 +1563,9 @@ NetProc* PForever::elaborate(Design*des, const string&path) const
  */
 NetProc* PForStatement::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
       assert(id1);
       const PEIdent*id2 = dynamic_cast<const PEIdent*>(name2_);
@@ -1585,7 +1585,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       }
       assert(sig);
       NetAssign*init = new NetAssign("@for-assign", des, sig->pin_count(),
-				     expr1_->elaborate_expr(des, path));
+				     expr1_->elaborate_expr(des, scope));
       for (unsigned idx = 0 ;  idx < init->pin_count() ;  idx += 1)
 	    connect(init->pin(idx), sig->pin(idx));
 
@@ -1608,7 +1608,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       sig = des->find_signal(path, id2->name());
       assert(sig);
       NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
-				     expr2_->elaborate_expr(des, path));
+				     expr2_->elaborate_expr(des, scope));
       for (unsigned idx = 0 ;  idx < step->pin_count() ;  idx += 1)
 	    connect(step->pin(idx), sig->pin(idx));
 
@@ -1618,7 +1618,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
-      NetExpr*ce = cond_->elaborate_expr(des, path);
+      NetExpr*ce = cond_->elaborate_expr(des, scope);
       if (ce == 0) {
 	    delete top;
 	    return 0;
@@ -1647,8 +1647,12 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
  * within. These passes are needed because the statement may invoke
  * the function itself (or other functions) so can't be elaborated
  * until all the functions are partially elaborated.
+ *
+ * In both cases, the scope parameter is the scope of the function. In
+ * other words, it is the scope that has the name of the function with
+ * the path of the containing module.
  */
-void PFunction::elaborate_1(Design*des, const string&path) const
+void PFunction::elaborate_1(Design*des, NetScope*scope) const
 {
 	/* Translate the wires that are ports to NetNet pointers by
 	   presuming that the name is already elaborated, and look it
@@ -1656,26 +1660,27 @@ void PFunction::elaborate_1(Design*des, const string&path) const
 	   calls to the task. (Remember, the task itself does not need
 	   these ports.) */
       svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
-      ports[0] = des->find_signal(path, path);
+      ports[0] = des->find_signal(scope->name(), scope->name());
       for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
-	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
+	    NetNet*tmp = des->find_signal(scope->name(),
+					  (*ports_)[idx]->name());
 
 	    ports[idx+1] = tmp;
       }
 
-      NetFuncDef*def = new NetFuncDef(path, ports);
-      des->add_function(path, def);
+      NetFuncDef*def = new NetFuncDef(scope, ports);
+      des->add_function(scope->name(), def);
 }
 
-void PFunction::elaborate_2(Design*des, const string&path) const
+void PFunction::elaborate_2(Design*des, NetScope*scope) const
 {
-      NetFuncDef*def = des->find_function(path);
+      NetFuncDef*def = des->find_function(scope->name());
       assert(def);
 
-      NetProc*st = statement_->elaborate(des, path);
+      NetProc*st = statement_->elaborate(des, scope->name());
       if (st == 0) {
 	    cerr << statement_->get_line() << ": error: Unable to elaborate "
-		  "statement in function " << path << "." << endl;
+		  "statement in function " << def->name() << "." << endl;
 	    des->errors += 1;
 	    return;
       }
@@ -1685,7 +1690,10 @@ void PFunction::elaborate_2(Design*des, const string&path) const
 
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
 {
-      NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetExpr*expr = expr_->elaborate_expr(des, scope);
       if (expr == 0) {
 	    cerr << get_line() << ": Unable to elaborate"
 		  " repeat expression." << endl;
@@ -1775,120 +1783,19 @@ void PTask::elaborate_2(Design*des, const string&path) const
  */
 NetProc* PWhile::elaborate(Design*des, const string&path) const
 {
-      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path),
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, scope),
 				   statement_->elaborate(des, path));
       return loop;
 }
 
-bool Module::elaborate(Design*des, NetScope*scope,
-		       named<PExpr*>*parms, unsigned nparms,
-		       svector<PExpr*>*overrides_) const
+bool Module::elaborate(Design*des, NetScope*scope) const
 {
       const string path = scope->name();
       bool result_flag = true;
 
-	// Generate all the parameters that this instance of this
-	// module introduce to the design. This needs to be done in
-	// two passes. The first pass marks the parameter names as
-	// available so that they can be discovered when the second
-	// pass references them during elaboration.
-      typedef map<string,PExpr*>::const_iterator mparm_it_t;
-
-	// So this loop elaborates the parameters, but doesn't
-	// evaluate references to parameters. This scan practically
-	// locates all the parameters and puts them in the parameter
-	// table in the design. No expressions are evaluated.
-      for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    des->set_parameter(pname, new NetEParam);
-      }
-
-	// The replace map contains replacement expressions for the
-	// parameters. If there is a replacement expression, use that
-	// instead of the default expression. Otherwise, use the
-	// default expression.
-
-	// Replacement expressions can come from the ordered list of
-	// overrides, or from the parameter replace by name list.
-
-      map<string,PExpr*> replace;
-
-      if (overrides_) {
-	    assert(parms == 0);
-	    list<string>::const_iterator cur = param_names.begin();
-	    for (unsigned idx = 0
-		       ;  idx < overrides_->count()
-		       ; idx += 1, cur++) {
-		  replace[*cur] = (*overrides_)[idx];
-	    }
-
-      } else if (parms) {
-
-	    for (unsigned idx = 0 ;  idx < nparms ;  idx += 1)
-		  replace[parms[idx].name] = parms[idx].parm;
-
-      }
-
-
-	// ... and this loop elaborates the expressions. The parameter
-	// expressions are reduced to ordinary expressions that do not
-	// include references to other parameters. Take careful note
-	// of the fact that override expressions are elaborated in the
-	// *parent* scope.
-
-      for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    NetExpr*expr;
-
-	    if (PExpr*tmp = replace[(*cur).first])
-		  expr = tmp->elaborate_expr(des, scope->parent()->name());
-	    else
-		  expr = (*cur).second->elaborate_expr(des, path);
-
-	    des->set_parameter(pname, expr);
-      }
-
-
-	// Finally, evaluate the parameter value. This step collapses
-	// the parameters to NetEConst values.
-      for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
-
-	      // Get the NetExpr for the parameter.
-	    string pname = path + "." + (*cur).first;
-	    const NetExpr*expr = des->find_parameter(path, (*cur).first);
-	    assert(expr);
-
-	      // If it's already a NetEConst, then this parameter is done.
-	    if (dynamic_cast<const NetEConst*>(expr))
-		  continue;
-
-	      // Get a non-constant copy of the expression to evaluate...
-	    NetExpr*nexpr = expr->dup_expr();
-	    if (nexpr == 0) {
-		  cerr << (*cur).second->get_line() << ": internal error: "
-			"unable to dup expression: " << *expr << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	      // Try to evaluate the expression.
-	    nexpr = nexpr->eval_tree();
-	    if (nexpr == 0) {
-		  cerr << (*cur).second->get_line() << ": internal error: "
-			"unable to evaluate parm expression: " <<
-			*expr << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	      // The evaluate worked, replace the old expression with
-	      // this constant value.
-	    assert(nexpr);
-	    des->set_parameter(pname, nexpr);
-      }
 
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
@@ -1906,14 +1813,24 @@ bool Module::elaborate(Design*des, NetScope*scope,
 
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate_1(des, pname);
+	    NetScope*fscope = scope->child((*cur).first);
+	    if (scope == 0) {
+		  cerr << (*cur).second->get_line() << ": internal error: "
+		       << "Child scope for function " << (*cur).first
+		       << " missing in " << scope->name() << "." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    (*cur).second->elaborate_1(des, fscope);
       }
 
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate_2(des, pname);
+
+	    NetScope*fscope = scope->child((*cur).first);
+	    assert(fscope);
+	    (*cur).second->elaborate_2(des, fscope);
       }
 
 	// Elaborate the task definitions. This is done before the
@@ -1992,11 +1909,26 @@ Design* elaborate(const map<string,Module*>&modules,
 	// module and elaborate what I find.
       Design*des = new Design;
 
-      NetScope*scope = des->make_root_scope(root);
-
       modlist = &modules;
       udplist = &primitives;
-      bool rc = rmod->elaborate(des, scope, 0, 0, (svector<PExpr*>*)0);
+
+	// Make the root scope, then scan the pform looking for scopes
+	// and parameters. 
+      NetScope*scope = des->make_root_scope(root);
+      if (! rmod->elaborate_scope(des, scope)) {
+	    delete des;
+	    return 0;
+      }
+
+      des->run_defparams();
+      des->evaluate_parameters();
+
+	// Now that the structure and parameters are taken care of,
+	// run through the pform again and generate the full netlist.
+
+      bool rc = rmod->elaborate(des, scope);
+
+
       modlist = 0;
       udplist = 0;
 
@@ -2004,12 +1936,20 @@ Design* elaborate(const map<string,Module*>&modules,
 	    delete des;
 	    des = 0;
       }
+
       return des;
 }
 
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.146  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.145  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
@@ -2024,145 +1964,5 @@ Design* elaborate(const map<string,Module*>&modules,
  *
  * Revision 1.141  2000/01/10 01:35:23  steve
  *  Elaborate parameters afer binding of overrides.
- *
- * Revision 1.140  2000/01/09 20:37:57  steve
- *  Careful with wires connected to multiple ports.
- *
- * Revision 1.139  2000/01/09 05:50:48  steve
- *  Support named parameter override lists.
- *
- * Revision 1.138  2000/01/02 19:39:03  steve
- *  Structural reduction XNOR.
- *
- * Revision 1.137  2000/01/02 18:25:37  steve
- *  Do not overrun the pin index when the LSB != 0.
- *
- * Revision 1.136  2000/01/01 06:18:00  steve
- *  Handle synthesis of concatenation.
- *
- * Revision 1.135  1999/12/14 23:42:16  steve
- *  Detect duplicate scopes.
- *
- * Revision 1.134  1999/12/11 05:45:41  steve
- *  Fix support for attaching attributes to primitive gates.
- *
- * Revision 1.133  1999/12/05 02:24:08  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.132  1999/12/02 04:08:10  steve
- *  Elaborate net repeat concatenations.
- *
- * Revision 1.131  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.130  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.129  1999/11/24 04:01:58  steve
- *  Detect and list scope names.
- *
- * Revision 1.128  1999/11/21 20:03:24  steve
- *  Handle multiply in constant expressions.
- *
- * Revision 1.127  1999/11/21 17:35:37  steve
- *  Memory name lookup handles scopes.
- *
- * Revision 1.126  1999/11/21 01:16:51  steve
- *  Fix coding errors handling names of logic devices,
- *  and add support for buf device in vvm.
- *
- * Revision 1.125  1999/11/21 00:13:08  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.124  1999/11/18 03:52:19  steve
- *  Turn NetTmp objects into normal local NetNet objects,
- *  and add the nodangle functor to clean up the local
- *  symbols generated by elaboration and other steps.
- *
- * Revision 1.123  1999/11/10 02:52:24  steve
- *  Create the vpiMemory handle type.
- *
- * Revision 1.122  1999/11/05 21:45:19  steve
- *  Fix NetConst being set to zero width, and clean
- *  up elaborate_set_cmp_ for NetEBinary.
- *
- * Revision 1.121  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.120  1999/10/31 20:08:24  steve
- *  Include subtraction in LPM_ADD_SUB device.
- *
- * Revision 1.119  1999/10/31 04:11:27  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.118  1999/10/18 00:02:21  steve
- *  Catch unindexed memory reference.
- *
- * Revision 1.117  1999/10/13 03:16:36  steve
- *  Remove commented out do_assign.
- *
- * Revision 1.116  1999/10/10 01:59:54  steve
- *  Structural case equals device.
- *
- * Revision 1.115  1999/10/09 21:30:16  steve
- *  Support parameters in continuous assignments.
- *
- * Revision 1.114  1999/10/09 19:24:04  steve
- *  Better message for combinational operators.
- *
- * Revision 1.113  1999/10/08 17:48:08  steve
- *  Support + in constant expressions.
- *
- * Revision 1.112  1999/10/08 17:27:23  steve
- *  Accept adder parameters with different widths,
- *  and simplify continuous assign construction.
- *
- * Revision 1.111  1999/10/07 05:25:33  steve
- *  Add non-const bit select in l-value of assignment.
- *
- * Revision 1.110  1999/10/06 00:39:00  steve
- *  == and != connected to the wrong pins of the compare.
- *
- * Revision 1.109  1999/10/05 06:19:46  steve
- *  Add support for reduction NOR.
- *
- * Revision 1.108  1999/10/05 02:00:06  steve
- *  sorry message for non-constant l-value bit select.
- *
- * Revision 1.107  1999/09/30 21:28:34  steve
- *  Handle mutual reference of tasks by elaborating
- *  task definitions in two passes, like functions.
- *
- * Revision 1.106  1999/09/30 17:22:33  steve
- *  catch non-constant delays as unsupported.
- *
- * Revision 1.105  1999/09/30 02:43:02  steve
- *  Elaborate ~^ and ~| operators.
- *
- * Revision 1.104  1999/09/30 00:48:50  steve
- *  Cope with errors during ternary operator elaboration.
- *
- * Revision 1.103  1999/09/29 22:57:10  steve
- *  Move code to elab_expr.cc
- *
- * Revision 1.102  1999/09/29 18:36:03  steve
- *  Full case support
- *
- * Revision 1.101  1999/09/29 00:42:50  steve
- *  Allow expanding of additive operators.
- *
- * Revision 1.100  1999/09/25 02:57:30  steve
  */
 

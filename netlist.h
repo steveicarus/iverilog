@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.110 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.111 2000/03/08 04:36:54 steve Exp $"
 #endif
 
 /*
@@ -1201,13 +1201,14 @@ class NetForever : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(const string&, const svector<NetNet*>&po);
+      NetFuncDef(NetScope*, const svector<NetNet*>&po);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
 
-      const string& name() const;
+      const string name() const;
       const NetProc*proc() const;
+      NetScope*scope();
 
       unsigned port_count() const;
       const NetNet*port(unsigned idx) const;
@@ -1215,7 +1216,7 @@ class NetFuncDef {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      string name_;
+      NetScope*scope_;
       NetProc*statement_;
       svector<NetNet*>ports_;
 };
@@ -1389,7 +1390,7 @@ class NetEUFunc  : public NetExpr {
       NetEUFunc(NetFuncDef*, NetESignal*, svector<NetExpr*>&);
       ~NetEUFunc();
 
-      const string& name() const;
+      const string name() const;
 
       const NetESignal*result() const;
       unsigned parm_count() const;
@@ -1718,7 +1719,7 @@ class NetEConcat  : public NetExpr {
 class NetEParam  : public NetExpr {
     public:
       NetEParam();
-      NetEParam(class Design*des, const string&path, const string&name);
+      NetEParam(class Design*des, NetScope*scope, const string&name);
       ~NetEParam();
 
       virtual bool set_width(unsigned w);
@@ -1730,7 +1731,7 @@ class NetEParam  : public NetExpr {
 
     private:
       Design*des_;
-      string path_;
+      NetScope*scope_;
       string name_;
 };
 
@@ -1980,21 +1981,52 @@ class NetESubSignal  : public NetExpr {
 class NetScope {
 
     public:
-      enum TYPE { MODULE, BEGIN_END, FORK_JOIN };
+      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
       NetScope(const string&root);
       NetScope(NetScope*up, const string&name, TYPE t);
       ~NetScope();
 
+	/* Parameters exist within a scope, and these methods allow
+	   one to manipulate the set. In these cases, the name is the
+	   *simple* name of the paramter, the heirarchy is implicit in
+	   the scope. The return value from set_parameter is the
+	   previous expression, if there was one. */
+
+      NetExpr* set_parameter(const string&name, NetExpr*val);
+      const NetExpr*get_parameter(const string&name) const;
+
+
+	/* The parent and child() methods allow users of NetScope
+	   objects to locate nearby scopes. */
+      NetScope* child(const string&name);
+      const NetScope* parent() const;
+      const NetScope* child(const string&name) const;
+
       TYPE type() const;
       string name() const;
-      const NetScope* parent() const;
+
+      void run_defparams(class Design*);
+      void evaluate_parameters(class Design*);
 
       void dump(ostream&) const;
+      void emit_scope(ostream&o, struct target_t*tgt) const;
+
+
+	/* This member is used during elaboration to pass defparam
+	   assignments from the scope pass to the parameter evaluation
+	   step. After that, it is not used. */
+
+      map<string,NetExpr*>defparams;
 
     private:
       TYPE type_;
       string name_;
+
+      map<string,NetExpr*>parameters_;
+
       NetScope*up_;
+      NetScope*sib_;
+      NetScope*sub_;
 };
 
 /*
@@ -2025,8 +2057,14 @@ class Design {
       NetScope* find_scope(const string&path);
 
 	// PARAMETERS
-      void set_parameter(const string&, NetExpr*);
-      const NetExpr*find_parameter(const string&path, const string&name) const;
+
+	/* This method searches for a parameter, starting in the given
+	   scope. This method handles the upward searches that the
+	   NetScope class itself does not support. */
+      const NetExpr*find_parameter(const NetScope*, const string&name) const;
+
+      void run_defparams();
+      void evaluate_parameters();
 
 	// SIGNALS
       void add_signal(NetNet*);
@@ -2074,11 +2112,9 @@ class Design {
       string local_symbol(const string&path);
 
     private:
-      map<string,NetScope*> scopes_;
-
-	// List all the parameters in the design. This table includes
-	// the parameters of instantiated modules in canonical names.
-      map<string,NetExpr*> parameters_;
+	// Keep a tree of scopes. The NetScope class handles the wide
+	// tree and per-hop searches for me.
+      NetScope*root_scope_;
 
 	// List all the signals in the design.
       NetNet*signals_;
@@ -2152,6 +2188,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.111  2000/03/08 04:36:54  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.110  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *
@@ -2175,282 +2218,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *
  * Revision 1.103  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
- *
- * Revision 1.102  1999/12/16 02:42:15  steve
- *  Simulate carry output on adders.
- *
- * Revision 1.101  1999/12/12 06:03:14  steve
- *  Allow memories without indices in expressions.
- *
- * Revision 1.100  1999/12/09 06:00:00  steve
- *  Fix const/non-const errors.
- *
- * Revision 1.99  1999/12/05 19:30:43  steve
- *  Generate XNF RAMS from synthesized memories.
- *
- * Revision 1.98  1999/12/05 02:24:09  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.97  1999/12/01 06:06:16  steve
- *  Redo synth to use match_proc_t scanner.
- *
- * Revision 1.96  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.95  1999/11/27 19:07:58  steve
- *  Support the creation of scopes.
- *
- * Revision 1.94  1999/11/24 04:01:59  steve
- *  Detect and list scope names.
- *
- * Revision 1.93  1999/11/21 17:35:37  steve
- *  Memory name lookup handles scopes.
- *
- * Revision 1.92  1999/11/21 00:13:09  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.91  1999/11/19 05:02:37  steve
- *  handle duplicate connect to a nexus.
- *
- * Revision 1.90  1999/11/19 03:02:25  steve
- *  Detect flip-flops connected to opads and turn
- *  them into OUTFF devices. Inprove support for
- *  the XNF-LCA attribute in the process.
- *
- * Revision 1.89  1999/11/18 03:52:19  steve
- *  Turn NetTmp objects into normal local NetNet objects,
- *  and add the nodangle functor to clean up the local
- *  symbols generated by elaboration and other steps.
- *
- * Revision 1.88  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.87  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.86  1999/11/05 04:40:40  steve
- *  Patch to synthesize LPM_ADD_SUB from expressions,
- *  Thanks to Larry Doolittle. Also handle constants
- *  in expressions.
- *
- *  Synthesize adders in XNF, based on a patch from
- *  Larry. Accept synthesis of constants from Larry
- *  as is.
- *
- * Revision 1.85  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.84  1999/11/04 01:12:42  steve
- *  Elaborate combinational UDP devices.
- *
- * Revision 1.83  1999/11/02 04:55:34  steve
- *  Add the synthesize method to NetExpr to handle
- *  synthesis of expressions, and use that method
- *  to improve r-value handling of LPM_FF synthesis.
- *
- *  Modify the XNF target to handle LPM_FF objects.
- *
- * Revision 1.82  1999/11/01 02:07:40  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.81  1999/10/31 04:11:27  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.80  1999/10/10 23:29:37  steve
- *  Support evaluating + operator at compile time.
- *
- * Revision 1.79  1999/10/10 01:59:55  steve
- *  Structural case equals device.
- *
- * Revision 1.78  1999/10/07 05:25:34  steve
- *  Add non-const bit select in l-value of assignment.
- *
- * Revision 1.77  1999/10/06 05:06:16  steve
- *  Move the rvalue into NetAssign_ common code.
- *
- * Revision 1.76  1999/09/30 21:28:34  steve
- *  Handle mutual reference of tasks by elaborating
- *  task definitions in two passes, like functions.
- *
- * Revision 1.75  1999/09/30 02:43:02  steve
- *  Elaborate ~^ and ~| operators.
- *
- * Revision 1.74  1999/09/29 18:36:03  steve
- *  Full case support
- *
- * Revision 1.73  1999/09/28 03:11:30  steve
- *  Get the bit widths of unary operators that return one bit.
- *
- * Revision 1.72  1999/09/25 02:57:30  steve
- *  Parse system function calls.
- *
- * Revision 1.71  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.70  1999/09/23 00:21:55  steve
- *  Move set_width methods into a single file,
- *  Add the NetEBLogic class for logic expressions,
- *  Fix error setting with of && in if statements.
- *
- * Revision 1.69  1999/09/22 16:57:23  steve
- *  Catch parallel blocks in vvm emit.
- *
- * Revision 1.68  1999/09/21 00:13:40  steve
- *  Support parameters that reference other paramters.
- *
- * Revision 1.67  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
- * Revision 1.66  1999/09/18 01:53:08  steve
- *  Detect constant lessthen-equal expressions.
- *
- * Revision 1.65  1999/09/16 04:18:15  steve
- *  elaborate concatenation repeats.
- *
- * Revision 1.64  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.63  1999/09/13 03:10:59  steve
- *  Clarify msb/lsb in context of netlist. Properly
- *  handle part selects in lval and rval of expressions,
- *  and document where the least significant bit goes
- *  in NetNet objects.
- *
- * Revision 1.62  1999/09/11 04:43:17  steve
- *  Support ternary and <= operators in vvm.
- *
- * Revision 1.61  1999/09/08 04:05:30  steve
- *  Allow assign to not match rvalue width.
- *
- * Revision 1.60  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.59  1999/09/01 20:46:19  steve
- *  Handle recursive functions and arbitrary function
- *  references to other functions, properly pass
- *  function parameters and save function results.
- *
- * Revision 1.58  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.57  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.56  1999/08/18 04:00:02  steve
- *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
- *
- * Revision 1.55  1999/08/06 04:05:28  steve
- *  Handle scope of parameters.
- *
- * Revision 1.54  1999/08/01 21:48:11  steve
- *  set width of procedural r-values when then
- *  l-value is a memory word.
- *
- * Revision 1.53  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.52  1999/07/31 03:16:54  steve
- *  move binary operators to derived classes.
- *
- * Revision 1.51  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.50  1999/07/18 21:17:50  steve
- *  Add support for CE input to XNF DFF, and do
- *  complete cleanup of replaced design nodes.
- *
- * Revision 1.49  1999/07/18 05:52:47  steve
- *  xnfsyn generates DFF objects for XNF output, and
- *  properly rewrites the Design netlist in the process.
- *
- * Revision 1.48  1999/07/17 22:01:13  steve
- *  Add the functor interface for functor transforms.
- *
- * Revision 1.47  1999/07/17 19:51:00  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.46  1999/07/17 03:08:32  steve
- *  part select in expressions.
- *
- * Revision 1.45  1999/07/16 04:33:41  steve
- *  set_width for NetESubSignal.
- *
- * Revision 1.44  1999/07/07 04:20:57  steve
- *  Emit vvm for user defined tasks.
- *
- * Revision 1.43  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.42  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.41  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.40  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.39  1999/06/13 17:30:23  steve
- *  More unary operators.
- *
- * Revision 1.38  1999/06/13 16:30:06  steve
- *  Unify the NetAssign constructors a bit.
- *
- * Revision 1.37  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.36  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.35  1999/06/03 05:16:25  steve
- *  Compile time evalutation of constant expressions.
- *
- * Revision 1.34  1999/06/02 15:38:46  steve
- *  Line information with nets.
- *
- * Revision 1.33  1999/05/30 01:11:46  steve
- *  Exressions are trees that can duplicate, and not DAGS.
- *
- * Revision 1.32  1999/05/27 04:13:08  steve
- *  Handle expression bit widths with non-fatal errors.
- *
- * Revision 1.31  1999/05/16 05:08:42  steve
- *  Redo constant expression detection to happen
- *  after parsing.
- *
- *  Parse more operators and expressions.
- *
- * Revision 1.30  1999/05/12 04:03:19  steve
- *  emit NetAssignMem objects in vvm target.
- *
- * Revision 1.29  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.105 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.106 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1639,8 +1639,8 @@ verinum::V NetConst::value(unsigned idx) const
       return value_[idx];
 }
 
-NetFuncDef::NetFuncDef(const string&n, const svector<NetNet*>&po)
-: name_(n), statement_(0), ports_(po)
+NetFuncDef::NetFuncDef(NetScope*s, const svector<NetNet*>&po)
+: scope_(s), statement_(0), ports_(po)
 {
 }
 
@@ -1648,9 +1648,9 @@ NetFuncDef::~NetFuncDef()
 {
 }
 
-const string& NetFuncDef::name() const
+const string NetFuncDef::name() const
 {
-      return name_;
+      return scope_->name();
 }
 
 void NetFuncDef::set_proc(NetProc*st)
@@ -1663,6 +1663,11 @@ void NetFuncDef::set_proc(NetProc*st)
 const NetProc* NetFuncDef::proc() const
 {
       return statement_;
+}
+
+NetScope*NetFuncDef::scope()
+{
+      return scope_;
 }
 
 unsigned NetFuncDef::port_count() const
@@ -1747,7 +1752,7 @@ NetEUFunc::~NetEUFunc()
 	    delete parms_[idx];
 }
 
-const string& NetEUFunc::name() const
+const string NetEUFunc::name() const
 {
       return func_->name();
 }
@@ -2054,8 +2059,8 @@ NetEParam::NetEParam()
 {
 }
 
-NetEParam::NetEParam(Design*d, const string&p, const string&n)
-: des_(d), path_(p), name_(n)
+NetEParam::NetEParam(Design*d, NetScope*s, const string&n)
+: des_(d), scope_(s), name_(n)
 {
 }
 
@@ -2237,18 +2242,47 @@ const NetExpr* NetRepeat::expr() const
       return expr_;
 }
 
+/*
+ * The NetScope class keeps a scope tree organized. Each node of the
+ * scope tree points to its parent, its right sibling and its leftmost
+ * child. The root node has no parent or siblings. The node stores the
+ * name of the scope. The complete hierarchical name of the scope is
+ * formed by appending the path of scopes from the root to the scope
+ * in question.
+ */
 NetScope::NetScope(const string&n)
-: type_(NetScope::MODULE), name_(n), up_(0)
+: type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
 {
 }
 
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
-: type_(t), name_(n), up_(up)
+: type_(t), name_(n), up_(up), sib_(0), sub_(0)
 {
+      sib_ = up_->sub_;
+      up_->sub_ = this;
 }
 
 NetScope::~NetScope()
 {
+      assert(sib_ == 0);
+      assert(sub_ == 0);
+}
+
+NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
+{
+      NetExpr*&ref = parameters_[key];
+      NetExpr* res = ref;
+      ref = expr;
+      return res;
+}
+
+const NetExpr* NetScope::get_parameter(const string&key) const
+{
+      map<string,NetExpr*>::const_iterator idx = parameters_.find(key);
+      if (idx == parameters_.end())
+	    return 0;
+      else
+	    return (*idx).second;
 }
 
 NetScope::TYPE NetScope::type() const
@@ -2262,6 +2296,36 @@ string NetScope::name() const
 	    return up_->name() + "." + name_;
       else
 	    return name_;
+}
+
+/*
+ * This method locates a child scope by name. The name is the simple
+ * name of the child, no heirarchy is searched.
+ */
+NetScope* NetScope::child(const string&name)
+{
+      if (sub_ == 0) return 0;
+
+      NetScope*cur = sub_;
+      while (cur->name_ != name) {
+	    if (cur->sib_ == 0) return 0;
+	    cur = cur->sib_;
+      }
+
+      return cur;
+}
+
+const NetScope* NetScope::child(const string&name) const
+{
+      if (sub_ == 0) return 0;
+
+      NetScope*cur = sub_;
+      while (cur->name_ != name) {
+	    if (cur->sib_ == 0) return 0;
+	    cur = cur->sib_;
+      }
+
+      return cur;
 }
 
 const NetScope* NetScope::parent() const
@@ -2561,357 +2625,15 @@ void NetUDP::set_initial(char val)
       init_ = val;
 }
 
-Design:: Design()
-: errors(0), signals_(0), nodes_(0), procs_(0), lcounter_(0)
-{
-}
-
-Design::~Design()
-{
-}
-
-NetScope* Design::make_root_scope(const string&root)
-{
-      NetScope*scope = new NetScope(root);
-      scopes_[root] = scope;
-      return scope;
-}
-
-NetScope* Design::make_scope(const string&path,
-			     NetScope::TYPE t,
-			     const string&name)
-{
-      NetScope*up = find_scope(path);
-      assert(up);
-
-      NetScope*scope = new NetScope(up, name, t);
-      scopes_[scope->name()] = scope;
-
-      return scope;
-}
-
-NetScope* Design::find_scope(const string&key)
-{
-      map<string,NetScope*>::const_iterator tmp = scopes_.find(key);
-      if (tmp == scopes_.end())
-	    return 0;
-      else
-	    return (*tmp).second;
-}
-
-void Design::set_parameter(const string&key, NetExpr*expr)
-{
-      parameters_[key] = expr;
-}
-
-/*
- * Find a parameter from within a specified context. If the name is
- * not here, keep looking up until I run out of up to look at.
- */
-const NetExpr* Design::find_parameter(const string&path,
-				      const string&name) const
-{
-      string root = path;
-
-      for (;;) {
-	    string fulname = root + "." + name;
-	    map<string,NetExpr*>::const_iterator cur
-		  = parameters_.find(fulname);
-
-	    if (cur != parameters_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
-
-      return 0;
-}
-
-string Design::get_flag(const string&key) const
-{
-      map<string,string>::const_iterator tmp = flags_.find(key);
-      if (tmp == flags_.end())
-	    return "";
-      else
-	    return (*tmp).second;
-}
-
-void Design::add_signal(NetNet*net)
-{
-      assert(net->design_ == 0);
-      if (signals_ == 0) {
-	    net->sig_next_ = net;
-	    net->sig_prev_ = net;
-      } else {
-	    net->sig_next_ = signals_->sig_next_;
-	    net->sig_prev_ = signals_;
-	    net->sig_next_->sig_prev_ = net;
-	    net->sig_prev_->sig_next_ = net;
-      }
-      signals_ = net;
-      net->design_ = this;
-}
-
-void Design::del_signal(NetNet*net)
-{
-      assert(net->design_ == this);
-      if (signals_ == net)
-	    signals_ = net->sig_prev_;
-
-      if (signals_ == net) {
-	    signals_ = 0;
-      } else {
-	    net->sig_prev_->sig_next_ = net->sig_next_;
-	    net->sig_next_->sig_prev_ = net->sig_prev_;
-      }
-      net->design_ = 0;
-}
-
-/*
- * This method looks for a string given a current context as a
- * starting point.
- */
-NetNet* Design::find_signal(const string&path, const string&name)
-{
-      if (signals_ == 0)
-	    return 0;
-
-      string root = path;
-      for (;;) {
-
-	    string fulname = root + "." + name;
-	    NetNet*cur = signals_;
-	    do {
-		  if (cur->name() == fulname)
-			return cur;
-
-		  cur = cur->sig_prev_;
-	    } while (cur != signals_);
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
-
-      return 0;
-}
-
-void Design::add_memory(NetMemory*mem)
-{
-      memories_[mem->name()] = mem;
-}
-
-NetMemory* Design::find_memory(const string&path, const string&name)
-{
-      string root = path;
-
-      for (;;) {
-	    string fulname = root + "." + name;
-	    map<string,NetMemory*>::const_iterator cur
-		  = memories_.find(fulname);
-
-	    if (cur != memories_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
-
-      return 0;
-}
-
-void Design::add_function(const string&key, NetFuncDef*def)
-{
-      funcs_[key] = def;
-}
-
-NetFuncDef* Design::find_function(const string&path, const string&name)
-{
-      string root = path;
-      for (;;) {
-	    string key = root + "." + name;
-	    map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
-	    if (cur != funcs_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
-
-      return 0;
-}
-
-NetFuncDef* Design::find_function(const string&key)
-{
-      map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
-      if (cur != funcs_.end())
-	    return (*cur).second;
-      return 0;
-}
-
-void Design::add_task(const string&key, NetTaskDef*def)
-{
-      tasks_[key] = def;
-}
-
-NetTaskDef* Design::find_task(const string&path, const string&name)
-{
-      string root = path;
-      for (;;) {
-	    string key = root + "." + name;
-	    map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
-	    if (cur != tasks_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
-
-      return 0;
-}
-
-NetTaskDef* Design::find_task(const string&key)
-{
-      map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
-      if (cur == tasks_.end())
-	    return 0;
-
-      return (*cur).second;
-}
-
-void Design::add_node(NetNode*net)
-{
-      assert(net->design_ == 0);
-      if (nodes_ == 0) {
-	    net->node_next_ = net;
-	    net->node_prev_ = net;
-      } else {
-	    net->node_next_ = nodes_->node_next_;
-	    net->node_prev_ = nodes_;
-	    net->node_next_->node_prev_ = net;
-	    net->node_prev_->node_next_ = net;
-      }
-      nodes_ = net;
-      net->design_ = this;
-}
-
-void Design::del_node(NetNode*net)
-{
-      assert(net->design_ == this);
-      if (nodes_ == net)
-	    nodes_ = net->node_prev_;
-
-      if (nodes_ == net) {
-	    nodes_ = 0;
-      } else {
-	    net->node_next_->node_prev_ = net->node_prev_;
-	    net->node_prev_->node_next_ = net->node_next_;
-      }
-
-      net->design_ = 0;
-}
-
-void Design::add_process(NetProcTop*pro)
-{
-      pro->next_ = procs_;
-      procs_ = pro;
-}
-
-void Design::delete_process(NetProcTop*top)
-{
-      assert(top);
-      if (procs_ == top) {
-	    procs_ = top->next_;
-
-      } else {
-	    NetProcTop*cur = procs_;
-	    while (cur->next_ != top) {
-		  assert(cur->next_);
-		  cur = cur->next_;
-	    }
-
-	    cur->next_ = top->next_;
-      }
-
-      if (procs_idx_ == top)
-	    procs_idx_ = top->next_;
-
-      delete top;
-}
-
-void Design::clear_node_marks()
-{
-      if (nodes_ == 0)
-	    return;
-
-      NetNode*cur = nodes_;
-      do {
-	    cur->set_mark(false);
-	    cur = cur->node_next_;
-      } while (cur != nodes_);
-}
-
-void Design::clear_signal_marks()
-{
-      if (signals_ == 0)
-	    return;
-
-      NetNet*cur = signals_;
-      do {
-	    cur->set_mark(false);
-	    cur = cur->sig_next_;
-      } while (cur != signals_);
-}
-
-NetNode* Design::find_node(bool (*func)(const NetNode*))
-{
-      if (nodes_ == 0)
-	    return 0;
-
-      NetNode*cur = nodes_->node_next_;
-      do {
-	    if ((cur->test_mark() == false) && func(cur))
-		  return cur;
-
-	    cur = cur->node_next_;
-      } while (cur != nodes_->node_next_);
-
-      return 0;
-}
-
-NetNet* Design::find_signal(bool (*func)(const NetNet*))
-{
-      if (signals_ == 0)
-	    return 0;
-
-      NetNet*cur = signals_->sig_next_;
-      do {
-	    if ((cur->test_mark() == false) && func(cur))
-		  return cur;
-
-	    cur = cur->sig_next_;
-      } while (cur != signals_->sig_next_);
-
-      return 0;
-}
-
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.106  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.105  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
@@ -2951,295 +2673,5 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
  *
  * Revision 1.93  1999/11/24 04:01:59  steve
  *  Detect and list scope names.
- *
- * Revision 1.92  1999/11/21 18:03:35  steve
- *  Fix expression width of memory references.
- *
- * Revision 1.91  1999/11/21 17:35:37  steve
- *  Memory name lookup handles scopes.
- *
- * Revision 1.90  1999/11/21 00:13:08  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.89  1999/11/19 05:02:37  steve
- *  handle duplicate connect to a nexus.
- *
- * Revision 1.88  1999/11/19 03:02:25  steve
- *  Detect flip-flops connected to opads and turn
- *  them into OUTFF devices. Inprove support for
- *  the XNF-LCA attribute in the process.
- *
- * Revision 1.87  1999/11/18 03:52:19  steve
- *  Turn NetTmp objects into normal local NetNet objects,
- *  and add the nodangle functor to clean up the local
- *  symbols generated by elaboration and other steps.
- *
- * Revision 1.86  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.85  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.84  1999/11/13 03:46:52  steve
- *  Support the LPM_MUX in vvm.
- *
- * Revision 1.83  1999/11/05 04:40:40  steve
- *  Patch to synthesize LPM_ADD_SUB from expressions,
- *  Thanks to Larry Doolittle. Also handle constants
- *  in expressions.
- *
- *  Synthesize adders in XNF, based on a patch from
- *  Larry. Accept synthesis of constants from Larry
- *  as is.
- *
- * Revision 1.82  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.81  1999/11/04 01:12:42  steve
- *  Elaborate combinational UDP devices.
- *
- * Revision 1.80  1999/11/02 04:55:34  steve
- *  Add the synthesize method to NetExpr to handle
- *  synthesis of expressions, and use that method
- *  to improve r-value handling of LPM_FF synthesis.
- *
- *  Modify the XNF target to handle LPM_FF objects.
- *
- * Revision 1.79  1999/11/01 02:07:40  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.78  1999/10/31 04:11:27  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.77  1999/10/10 23:29:37  steve
- *  Support evaluating + operator at compile time.
- *
- * Revision 1.76  1999/10/10 01:59:55  steve
- *  Structural case equals device.
- *
- * Revision 1.75  1999/10/07 05:25:34  steve
- *  Add non-const bit select in l-value of assignment.
- *
- * Revision 1.74  1999/10/06 05:06:16  steve
- *  Move the rvalue into NetAssign_ common code.
- *
- * Revision 1.73  1999/10/05 04:02:10  steve
- *  Relaxed width handling for <= assignment.
- *
- * Revision 1.72  1999/09/30 21:28:34  steve
- *  Handle mutual reference of tasks by elaborating
- *  task definitions in two passes, like functions.
- *
- * Revision 1.71  1999/09/29 18:36:03  steve
- *  Full case support
- *
- * Revision 1.70  1999/09/28 03:11:29  steve
- *  Get the bit widths of unary operators that return one bit.
- *
- * Revision 1.69  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.68  1999/09/23 00:21:54  steve
- *  Move set_width methods into a single file,
- *  Add the NetEBLogic class for logic expressions,
- *  Fix error setting with of && in if statements.
- *
- * Revision 1.67  1999/09/21 00:13:40  steve
- *  Support parameters that reference other paramters.
- *
- * Revision 1.66  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
- * Revision 1.65  1999/09/18 01:53:08  steve
- *  Detect constant lessthen-equal expressions.
- *
- * Revision 1.64  1999/09/16 04:18:15  steve
- *  elaborate concatenation repeats.
- *
- * Revision 1.63  1999/09/16 00:33:45  steve
- *  Handle implicit !=0 in if statements.
- *
- * Revision 1.62  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.61  1999/09/13 03:10:59  steve
- *  Clarify msb/lsb in context of netlist. Properly
- *  handle part selects in lval and rval of expressions,
- *  and document where the least significant bit goes
- *  in NetNet objects.
- *
- * Revision 1.60  1999/09/12 01:16:51  steve
- *  Pad r-values in certain assignments.
- *
- * Revision 1.59  1999/09/11 04:43:17  steve
- *  Support ternary and <= operators in vvm.
- *
- * Revision 1.58  1999/09/08 04:05:30  steve
- *  Allow assign to not match rvalue width.
- *
- * Revision 1.57  1999/09/04 01:57:15  steve
- *  Generate fake adder code in vvm.
- *
- * Revision 1.56  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.55  1999/09/01 20:46:19  steve
- *  Handle recursive functions and arbitrary function
- *  references to other functions, properly pass
- *  function parameters and save function results.
- *
- * Revision 1.54  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.53  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.52  1999/08/06 04:05:28  steve
- *  Handle scope of parameters.
- *
- * Revision 1.51  1999/08/01 21:48:11  steve
- *  set width of procedural r-values when then
- *  l-value is a memory word.
- *
- * Revision 1.50  1999/07/31 19:14:47  steve
- *  Add functions up to elaboration (Ed Carter)
- *
- * Revision 1.49  1999/07/31 03:16:54  steve
- *  move binary operators to derived classes.
- *
- * Revision 1.48  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.47  1999/07/18 21:17:50  steve
- *  Add support for CE input to XNF DFF, and do
- *  complete cleanup of replaced design nodes.
- *
- * Revision 1.46  1999/07/18 05:52:46  steve
- *  xnfsyn generates DFF objects for XNF output, and
- *  properly rewrites the Design netlist in the process.
- *
- * Revision 1.45  1999/07/17 19:51:00  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.44  1999/07/17 18:06:02  steve
- *  Better handling of bit width of + operators.
- *
- * Revision 1.43  1999/07/17 03:08:31  steve
- *  part select in expressions.
- *
- * Revision 1.42  1999/07/16 04:33:41  steve
- *  set_width for NetESubSignal.
- *
- * Revision 1.41  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.40  1999/06/24 05:02:36  steve
- *  Properly terminate signal matching scan.
- *
- * Revision 1.39  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.38  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.37  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.36  1999/06/13 16:30:06  steve
- *  Unify the NetAssign constructors a bit.
- *
- * Revision 1.35  1999/06/10 05:33:28  steve
- *  Handle a few more operator bit widths.
- *
- * Revision 1.34  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.33  1999/06/07 02:23:31  steve
- *  Support non-blocking assignment down to vvm.
- *
- * Revision 1.32  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.31  1999/06/03 05:16:25  steve
- *  Compile time evalutation of constant expressions.
- *
- * Revision 1.30  1999/06/02 15:38:46  steve
- *  Line information with nets.
- *
- * Revision 1.29  1999/05/30 01:11:46  steve
- *  Exressions are trees that can duplicate, and not DAGS.
- *
- * Revision 1.28  1999/05/27 04:13:08  steve
- *  Handle expression bit widths with non-fatal errors.
- *
- * Revision 1.27  1999/05/20 05:07:37  steve
- *  Line number info with match error message.
- *
- * Revision 1.26  1999/05/16 05:08:42  steve
- *  Redo constant expression detection to happen
- *  after parsing.
- *
- *  Parse more operators and expressions.
- *
- * Revision 1.25  1999/05/13 04:02:09  steve
- *  More precise handling of verinum bit lengths.
- *
- * Revision 1.24  1999/05/12 04:03:19  steve
- *  emit NetAssignMem objects in vvm target.
- *
- * Revision 1.23  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.22  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.21  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
- *
- * Revision 1.20  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.19  1999/03/15 02:43:32  steve
- *  Support more operators, especially logical.
- *
- * Revision 1.18  1999/03/01 03:27:53  steve
- *  Prevent the duplicate allocation of ESignal objects.
- *
- * Revision 1.17  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.16  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.15  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.14 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: Module.h,v 1.15 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -66,6 +66,12 @@ class Module {
 	   into this map. */
       map<string,PExpr*>parameters;
 
+	/* The module also has defparam assignments which don't create
+	   new parameters within the module, but may be used to set
+	   values within this module (when instantiated) or in other
+	   instantiated modules. */
+      map<string,PExpr*>defparms;
+
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,
            but rather refer to parameters in the order they
@@ -101,9 +107,9 @@ class Module {
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
       void dump(ostream&out) const;
-      bool elaborate(Design*, NetScope*scope,
-		     named<PExpr*>*parms, unsigned nparms,
-		     svector<PExpr*>*overrides_) const;
+      bool elaborate(Design*, NetScope*scope) const;
+
+      bool elaborate_scope(Design*, NetScope*scope) const;
 
     private:
       const string name_;
@@ -123,6 +129,13 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.15  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.14  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

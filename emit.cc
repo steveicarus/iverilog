@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.33 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: emit.cc,v 1.34 2000/03/08 04:36:53 steve Exp $"
 #endif
 
 /*
@@ -250,6 +250,13 @@ void NetRepeat::emit_recurse(ostream&o, struct target_t*tgt) const
 	    statement_->emit_proc(o, tgt);
 }
 
+void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
+{
+      tgt->scope(o, this);
+      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
+	    cur->emit_scope(o, tgt);
+}
+
 void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
       proc_->emit_proc(o, tgt);
@@ -261,11 +268,7 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
       tgt->start_design(o, this);
 
 	// enumerate the scopes
-      { map<string,NetScope*>::const_iterator sc;
-        for (sc = scopes_.begin() ;  sc != scopes_.end() ;  sc++) {
-	      tgt->scope(o, (*sc).second);
-	}
-      }
+      root_scope_->emit_scope(o, tgt);
 
 	// emit signals
       if (signals_) {
@@ -394,6 +397,13 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.34  2000/03/08 04:36:53  steve
+ *  Redesign the implementation of scopes and parameters.
+ *  I now generate the scopes and notice the parameters
+ *  in a separate pass over the pform. Once the scopes
+ *  are generated, I can process overrides and evalutate
+ *  paremeters before elaboration begins.
+ *
  * Revision 1.33  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
