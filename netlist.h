@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.56 1999/08/18 04:00:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.57 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 /*
@@ -758,6 +758,19 @@ class NetForever : public NetProc {
       NetProc*statement_;
 };
 
+class NetFuncDef {
+
+    public:
+      explicit NetFuncDef(const string&, NetProc*st);
+      ~NetFuncDef();
+
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      string name_;
+      NetProc*statement_;
+};
+
 class NetPDelay  : public NetProc {
 
     public:
@@ -1339,6 +1352,9 @@ class Design {
       void add_memory(NetMemory*);
       NetMemory* find_memory(const string&name);
 
+	// Functions
+      void add_function(const string&n, NetFuncDef*);
+
 	// Tasks
       void add_task(const string&n, NetTaskDef*);
       NetTaskDef* find_task(const string&key);
@@ -1378,6 +1394,9 @@ class Design {
       NetNet*signals_;
 
       map<string,NetMemory*> memories_;
+
+	// List the function definitions in the design.
+      map<string,NetFuncDef*> funcs_;
 
 	// List the task definitions in the design.
       map<string,NetTaskDef*> tasks_;
@@ -1440,6 +1459,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.57  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.56  1999/08/18 04:00:02  steve
  *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
  *

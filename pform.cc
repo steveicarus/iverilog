@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.38 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: pform.cc,v 1.39 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -504,8 +504,16 @@ void pform_set_task(const string&name, PTask*task)
       pform_cur_module->add_task(name, task);
 }
 
-void pform_set_function(const string&name, PFunction *func)
+void pform_set_function(const string&name, svector<PExpr*>*ra, PFunction *func)
 {
+      PWire*out = new PWire(name+"."+name, NetNet::REG, NetNet::POUTPUT);
+      if (ra) {
+	    assert(ra->count() == 2);
+	    out->set_range((*ra)[0], (*ra)[1]);
+	    delete ra;
+      }
+      pform_cur_module->add_wire(out);
+      func->set_output(out);
       pform_cur_module->add_function(name, func);
 }
 
@@ -660,6 +668,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.39  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.38  1999/08/23 16:48:39  steve
  *  Parameter overrides support from Peter Monta
  *  AND and XOR support wide expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.34 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.35 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 /*
@@ -423,6 +423,12 @@ void NetForever::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetFuncDef::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "function " << name_ << endl;
+      statement_->dump(o, ind+2);
+}
+
 void NetPDelay::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "#" << delay_;
@@ -690,6 +696,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.35  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.34  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

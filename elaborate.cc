@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.72 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.73 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 /*
@@ -1866,6 +1866,17 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       return top;
 }
 
+void PFunction::elaborate(Design*des, const string&path) const
+{
+      NetProc*st = statement_->elaborate(des, path);
+      NetFuncDef*def = new NetFuncDef(path, st);
+      des->add_function(path, def);
+
+      cerr << get_line() << ": Sorry, unable to elaborate "
+	    "function definitions." << endl;
+      des->errors += 1;
+}
+
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
@@ -1985,6 +1996,14 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 	    (*wt)->elaborate(des, path);
       }
 
+	// Elaborate functions.
+      typedef map<string,PFunction*>::const_iterator mfunc_it_t;
+      for (mfunc_it_t cur = funcs_.begin()
+		 ; cur != funcs_.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    (*cur).second->elaborate(des, pname);
+      }
+
 	// Elaborate the task definitions. This is done before the
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
@@ -2070,6 +2089,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.73  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.72  1999/08/23 16:48:39  steve
  *  Parameter overrides support from Peter Monta
  *  AND and XOR support wide expressions.

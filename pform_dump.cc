@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.35 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.36 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 /*
@@ -65,7 +65,7 @@ void PECallFunction::dump(ostream &out) const
 {
       out << name_ << "(";
       parms_[0]->dump(out);
-      for (unsigned idx = 0; idx < parms_.count(); ++idx) {
+      for (unsigned idx = 1; idx < parms_.count(); ++idx) {
 	    out << ", ";
 	    parms_[idx]->dump(out);
       }
@@ -439,6 +439,7 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 
 void PFunction::dump(ostream&out, unsigned ind) const
 {
+      out << setw(ind) << "" << "output " << out_->name() << ";" << endl;
       for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 	    out << setw(ind) << "";
 	    out << "input ";
@@ -628,6 +629,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.36  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.35  1999/08/23 16:48:39  steve
  *  Parameter overrides support from Peter Monta
  *  AND and XOR support wide expressions.

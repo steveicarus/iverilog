@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PTask.h,v 1.3 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: PTask.h,v 1.4 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -50,21 +50,33 @@ class PTask  : public LineInfo {
       PTask& operator=(const PTask&);
 };
 
+/*
+ * The function is similar to a task (in this context) but there is a
+ * single output port and a set of input ports. The output port is the
+ * function return value.
+ */
 class PFunction : public LineInfo {
- public:
-      explicit PFunction(svector<PWire *> *p, Statement *s);
+
+    public:
+      explicit PFunction(svector<PWire *>*p, Statement *s);
       ~PFunction();
 
-      //virtual void elaborate(Design *des, const string &path) const {}
+      void set_output(PWire*);
+
+      virtual void elaborate(Design *des, const string &path) const;
       void dump(ostream&, unsigned) const;
 
- private:
+    private:
+      PWire*out_;
       svector<PWire *> *ports_;
       Statement *statement_;
 };
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.4  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.3  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *

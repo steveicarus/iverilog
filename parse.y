@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.59 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: parse.y,v 1.60 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -137,6 +137,7 @@ extern void lex_end_table();
 
 %type <task> task_body
 %type <function> func_body
+%type <exprs> range_or_type_opt
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_opt
@@ -1028,7 +1029,7 @@ module_item
                 { PFunction *tmp = $6;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  pform_set_function($3, $6);
+		  pform_set_function($3, $2, $6);
 		  delete $3;
 		}
 	| K_specify specify_item_list K_endspecify
@@ -1284,12 +1285,12 @@ range_opt
 	;
 
 range_or_type_opt
-	: range { }
-	| K_integer
-	| K_real
-	| K_realtime
-	| K_time
-	|
+	: range { $$ = $1; }
+	| K_integer { $$ = 0; }
+	| K_real { $$ = 0; }
+	| K_realtime { $$ = 0; }
+	| K_time { $$ = 0; }
+	| { $$ = 0; }
 	;
   /* The register_variable rule is matched only when I am parsing
      variables in a "reg" definition. I therefore know that I am

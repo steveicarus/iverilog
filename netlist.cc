@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.52 1999/08/06 04:05:28 steve Exp $"
+#ident "$Id: netlist.cc,v 1.53 1999/08/25 22:22:41 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -480,6 +480,15 @@ NetProc* NetCondit::if_clause()
 NetProc* NetCondit::else_clause()
 {
       return else_;
+}
+
+NetFuncDef::NetFuncDef(const string&n, NetProc*st)
+: name_(n), statement_(st)
+{
+}
+
+NetFuncDef::~NetFuncDef()
+{
 }
 
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
@@ -1439,6 +1448,11 @@ NetMemory* Design::find_memory(const string&key)
       return (*cur).second;
 }
 
+void Design::add_function(const string&key, NetFuncDef*def)
+{
+      funcs_[key] = def;
+}
+
 void Design::add_task(const string&key, NetTaskDef*def)
 {
       tasks_[key] = def;
@@ -1571,6 +1585,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.53  1999/08/25 22:22:41  steve
+ *  elaborate some aspects of functions.
+ *
  * Revision 1.52  1999/08/06 04:05:28  steve
  *  Handle scope of parameters.
  *
