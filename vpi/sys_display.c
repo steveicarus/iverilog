@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.48 2003/01/09 04:10:58 steve Exp $"
+#ident "$Id: sys_display.c,v 1.49 2003/01/26 18:18:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -425,6 +425,14 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cp += 1;
 			break;
 
+		      case 'f':
+		      case 'F':
+			format_char = 'f';
+			do_arg = 1;
+			value.format = vpiRealVal;
+			cp += 1;
+			break;
+
 		      case 'h':
 		      case 'H':
 		      case 'x':
@@ -522,7 +530,6 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			break;
 
 		      case 'e':
-		      case 'f':
 		      case 'g':
 			  // new Verilog 2001 format specifiers...
 		      case 'l':
@@ -559,8 +566,13 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 			      switch(format_char){
 			      case 'c':
-				  vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
-				  break;
+				vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
+				break;
+
+			      case 'f':
+				vpi_mcd_printf(mcd, "%f",
+					       value.value.real);
+				break;
 
 			      case 't':
 				format_time(mcd, fsize,
@@ -760,6 +772,12 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  value.format = vpiTimeVal;
 		  vpi_get_value(item, &value);
 		  vpi_mcd_printf(mcd, "%20u", value.value.time->low);
+		  break;
+
+		case vpiRealVar:
+		  value.format = vpiRealVal;
+		  vpi_get_value(item, &value);
+		  vpi_mcd_printf(mcd, "%f", value.value.real);
 		  break;
 
 		default:
@@ -1556,6 +1574,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.49  2003/01/26 18:18:36  steve
+ *  Support display of real values and constants.
+ *
  * Revision 1.48  2003/01/09 04:10:58  steve
  *  use userdata to save $display argument handles.
  *
