@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.7 2001/03/23 02:40:22 steve Exp $
+ *  $Id: README.txt,v 1.8 2001/03/24 22:59:28 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -140,6 +140,50 @@ Note that nets in a design do not necessarily have a specific functor
 or object allocated to them. Nets are just something that behavioral
 code can read, so it is enough to give to the behavioral code the
 vvp_ipoint_t object of the .functor that drives the net.
+
+
+NET STATEMENTS:
+
+A net is similar to a variable, except that a thread cannot write to
+it (unless it uses a force) and it is given a different VPI type
+code. The syntax of a .net statement is also similar to but not
+exactly the same as the .var statement:
+
+	<label> .net "name", <msb>, <lsb>, <symbols_list>;
+
+A .net statement creates a functor for each bit of the vector in
+exactly the same way that a .var creates functors. The truth table for
+a .net functor is the same, as well. The net has an output that may be
+connected to something, but need not. The 0 (zero) input of each bit
+functor is the normal input, and is connected to the output of a
+functor or another net.
+
+The second functor input is a force net. This connects to an
+expression that is announced by a force statement of some sort. The
+third input is the only input settable by behavioral code, it selects
+between the normal input and the force input. These inputs work
+exactly the same as those for the .var functors.
+
+Since .var items are written by behavioral code, there is no worry
+about how to connect their inputs. You don't. But .net items do have
+inputs that need to be connected to the outputs of other
+functors. Nets are also complicated by the fact that they come in
+vectors, so the inputs of all the functors in the array need to be
+connected. Fortunately, there is only one input per .net functor that
+can be connected, and that is input 0.
+
+The force input and selector input are manipulated exactly the same
+way as with .var force and selector inputs, so there is no need for a
+syntax to handle them.
+
+Since there is exactly one input per bit in the vector, it is easy
+enough to just list the vvp_ipoint_t symbols in order. Each symbol
+references a functor, and connects the corresponding .net input to the
+output of that functor, as if the .net is an <N> bit wide functor. The
+bits of the vector are connected least-significant-bit first. It is
+legal to leave a bit unconnected. To do that, simply leave the
+position for that bit blank. Bits of .nets are initialized to
+z. Unconnected bits keep the value z throughout the simulation.
 
 
 THREAD STATEMENTS:
