@@ -99,13 +99,22 @@ configure script that modify its behavior:
 	    compilation of 32bit compatible vvp (vvp32) and the vpi
 	    modules that match.
 
-NOTE FOR AMD64: If you are building on an AMD64 system, you probably
-want to put libraries in a lib64 directory instead of the usual lib
-directory. This is how Linux/AMD64 keeps 64bit libraries segregated
-from 32bit libraries. This is done by configuring like this:
+2.2.1 Special AMD64 Instructions
+
+(The Icarus Verilog RPM for x86_64 is build using these instructions.)
+
+If you are building for Linux/AMD64 (a.k.a x86_64) then to get the
+most out of your install, first make sure you have both 64bit and
+32bit development libraries installed. Then configure with this
+somewhat more compilcated command:
 
   ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
 
+This reflects the convention on AMD64 systems that 64bit libraries go
+into lib64 directories. The "--enable-vvp32" also turns on 32bit
+compatibility files. A 32bit version of vvp (vvp32) will be created,
+as well as 32bit versions of the development libraries and bundled VPI
+libraries.
 
 2.3 (Optional) Testing
 
