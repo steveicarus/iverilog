@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.186 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.187 2000/12/16 01:45:48 steve Exp $"
 #endif
 
 /*
@@ -2545,7 +2545,6 @@ class NetScope {
 
     public:
       enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
-      NetScope(const string&root);
       NetScope(NetScope*up, const string&name, TYPE t);
       ~NetScope();
 
@@ -2598,12 +2597,14 @@ class NetScope {
 
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);
+      void set_module_name(const char*);
 
       NetTaskDef* task_def();
       NetFuncDef* func_def();
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
+      const char*module_name() const;
 
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e. -3 is
@@ -2663,6 +2664,7 @@ class NetScope {
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
+	    char*module_name_;
       };
 
       NetScope*up_;
@@ -2835,6 +2837,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.187  2000/12/16 01:45:48  steve
+ *  Detect recursive instantiations (PR#2)
+ *
  * Revision 1.186  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

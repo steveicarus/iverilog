@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.107 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.108 2000/12/16 01:45:47 steve Exp $"
 #endif
 
 /*
@@ -702,7 +702,7 @@ void NetScope::dump(ostream&o) const
 	    o << " function";
 	    break;
 	  case MODULE:
-	    o << " module";
+	    o << " module <" << (module_name_? module_name_ : "") << ">";
 	    break;
 	  case TASK:
 	    o << " task";
@@ -998,6 +998,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.108  2000/12/16 01:45:47  steve
+ *  Detect recursive instantiations (PR#2)
+ *
  * Revision 1.107  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.16 2000/09/24 17:41:13 steve Exp $"
+#ident "$Id: net_design.cc,v 1.17 2000/12/16 01:45:48 steve Exp $"
 #endif
 
 /*
@@ -90,7 +90,8 @@ unsigned long Design::scale_to_precision(unsigned long val,
 NetScope* Design::make_root_scope(const string&root)
 {
       assert(root_scope_ == 0);
-      root_scope_ = new NetScope(root);
+      root_scope_ = new NetScope(0, root, NetScope::MODULE);
+      root_scope_->set_module_name(root.c_str());
       return root_scope_;
 }
 
@@ -486,6 +487,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.17  2000/12/16 01:45:48  steve
+ *  Detect recursive instantiations (PR#2)
+ *
  * Revision 1.16  2000/09/24 17:41:13  steve
  *  fix null pointer when elaborating undefined task.
  *

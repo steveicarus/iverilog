@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.10 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.11 2000/12/16 01:45:48 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,16 +31,6 @@
  * formed by appending the path of scopes from the root to the scope
  * in question.
  */
-NetScope::NetScope(const string&n)
-: type_(NetScope::MODULE), up_(0), sib_(0), sub_(0)
-{
-      memories_ = 0;
-      signals_ = 0;
-      events_ = 0;
-      lcounter_ = 0;
-      name_ = new char[n.length()+1];
-      strcpy(name_, n.c_str());
-}
 
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
@@ -48,10 +38,17 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
       memories_ = 0;
       signals_ = 0;
       events_ = 0;
-      time_unit_ = up->time_unit();
-      time_prec_ = up->time_precision();
-      sib_ = up_->sub_;
-      up_->sub_ = this;
+
+      if (up) {
+	    time_unit_ = up->time_unit();
+	    time_prec_ = up->time_precision();
+	    sib_ = up_->sub_;
+	    up_->sub_ = this;
+      } else {
+	    time_unit_ = 0;
+	    time_prec_ = 0;
+	    assert(t == MODULE);
+      }
 
       switch (t) {
 	  case NetScope::TASK:
@@ -59,6 +56,9 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 	    break;
 	  case NetScope::FUNC:
 	    func_ = 0;
+	    break;
+	  case NetScope::MODULE:
+	    module_name_ = 0;
 	    break;
       }
       name_ = new char[n.length()+1];
@@ -71,6 +71,8 @@ NetScope::~NetScope()
       assert(sub_ == 0);
       lcounter_ = 0;
       delete[]name_;
+      if ((type_ == MODULE) && module_name_)
+	    free(module_name_);
 }
 
 NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
@@ -145,6 +147,18 @@ const NetFuncDef* NetScope::func_def() const
 {
       assert( type_ == FUNC );
       return func_;
+}
+
+void NetScope::set_module_name(const char*n)
+{
+      assert(type_ == MODULE);
+      module_name_ = strdup(n);
+}
+
+const char* NetScope::module_name() const
+{
+      assert(type_ == MODULE);
+      return module_name_;
 }
 
 void NetScope::time_unit(int val)
@@ -355,6 +369,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.11  2000/12/16 01:45:48  steve
+ *  Detect recursive instantiations (PR#2)
+ *
  * Revision 1.10  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

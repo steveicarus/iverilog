@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.6 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.7 2000/12/16 01:45:48 steve Exp $"
 #endif
 
 /*
@@ -208,8 +208,32 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
+	// check for recursive instantiation by scanning the current
+	// scope and its parents. Look for a module instantiation of
+	// the same module, but farther up in the scope.
+
+      for (NetScope*scn = sc ;  scn ;  scn = scn->parent()) {
+	    if (scn->type() != NetScope::MODULE)
+		  continue;
+
+	    if (mod->get_name() != scn->module_name())
+		  continue;
+
+	    cerr << get_line() << ": error: You cannot instantiate "
+		 << "module " << mod->get_name() << " within itself." << endl;
+
+	    cerr << get_line() << ":      : The offending instance is "
+		 << sc->name() << "." << get_name() << " within "
+		 << scn->name() << "." << endl;
+
+	    des->errors += 1;
+	    return;
+      }
+
 	// Create the new scope as a MODULE with my name.
       NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
+      my_scope->set_module_name(mod->get_name().c_str());
+
 	// Set time units and precision.
       my_scope->time_unit(mod->time_unit);
       my_scope->time_precision(mod->time_precision);
@@ -420,6 +444,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.7  2000/12/16 01:45:48  steve
+ *  Detect recursive instantiations (PR#2)
+ *
  * Revision 1.6  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during
