@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.35 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: compile.cc,v 1.36 2001/04/18 05:03:49 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -601,7 +601,14 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 	/* Figure out the target PC. */
       tmp = sym_get_value(sym_codespace, dest.text);
       code->fork->cptr = tmp.num;
-      assert(code->fork->cptr);
+      if (code->fork->cptr == 0) {
+	    struct cresolv_list_s*res = new cresolv_list_s;
+	    res->cp = code;
+	    res->lab = dest.text;
+	    res->next = cresolv_list;
+	    cresolv_list = res;
+	    dest.text = 0;
+      }
 
 	/* Figure out the target SCOPE. */
       vpiHandle sh = compile_vpi_lookup(scope.text);
@@ -798,7 +805,12 @@ void compile_cleanup(void)
 	    vvp_cpoint_t tmp = val.num;
 
 	    if (tmp != 0) {
-		  res->cp->cptr = tmp;
+		    /* Resolved the reference. If this is a %fork,
+		       then handle it slightly differently. */
+		  if (res->cp->opcode == of_FORK)
+			res->cp->fork->cptr = tmp;
+		  else
+			res->cp->cptr = tmp;
 		  free(res->lab);
 		  
 	    } else {
@@ -828,6 +840,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.36  2001/04/18 05:03:49  steve
+ *  Resolve forward references for %fork.
+ *
  * Revision 1.35  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
@@ -896,43 +911,5 @@ void compile_dump(FILE*fd)
  *
  * Revision 1.13  2001/03/25 00:35:35  steve
  *  Add the .net statement.
- *
- * Revision 1.12  2001/03/23 02:40:22  steve
- *  Add the :module header statement.
- *
- * Revision 1.11  2001/03/22 22:38:13  steve
- *  Detect undefined system tasks at compile time.
- *
- * Revision 1.10  2001/03/22 05:28:41  steve
- *  Add code label forward references.
- *
- * Revision 1.9  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.8  2001/03/21 05:13:03  steve
- *  Allow var objects as vpiHandle arguments to %vpi_call.
- *
- * Revision 1.7  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.6  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
- * Revision 1.5  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.4  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.3  2001/03/11 23:06:49  steve
- *  Compact the vvp_code_s structure.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 
