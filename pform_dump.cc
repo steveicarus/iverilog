@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.29 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.30 1999/07/30 00:43:17 steve Exp $"
 #endif
 
 /*
@@ -409,21 +409,22 @@ void PRepeat::dump(ostream&out, unsigned ind) const
 
 void PTask::dump(ostream&out, unsigned ind) const
 {
-      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
-	    out << setw(ind) << "";
-	    switch ((*ports_)[idx]->get_port_type()) {
-		case NetNet::PINPUT:
-		  out << "input ";
-		  break;
-		case NetNet::POUTPUT:
-		  out << "output ";
-		  break;
-		case NetNet::PINOUT:
-		  out << "inout ";
-		  break;
+      if (ports_)
+	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+		  out << setw(ind) << "";
+		  switch ((*ports_)[idx]->get_port_type()) {
+		      case NetNet::PINPUT:
+			out << "input ";
+			break;
+		      case NetNet::POUTPUT:
+			out << "output ";
+			break;
+		      case NetNet::PINOUT:
+			out << "inout ";
+			break;
+		  }
+		  out << (*ports_)[idx]->name() << ";" << endl;
 	    }
-	    out << (*ports_)[idx]->name() << ";" << endl;
-      }
 
       statement_->dump(out, ind);
 }
@@ -546,6 +547,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.30  1999/07/30 00:43:17  steve
+ *  Handle dumping tasks with no ports.
+ *
  * Revision 1.29  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *
