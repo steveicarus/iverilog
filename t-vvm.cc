@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.12 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.13 1999/02/22 03:01:12 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -180,6 +180,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case '-':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_minus("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '&':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_and("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  default:
@@ -636,40 +640,69 @@ void target_vvm::proc_block(ostream&os, const NetBlock*net)
  */
 void target_vvm::proc_case(ostream&os, const NetCase*net)
 {
+      os << "        /* case (" << *net->expr() << ") */" << endl;
       string expr = emit_proc_rval(os, 8, net->expr());
 
       ostrstream sc;
-      unsigned default_step_ = thread_step_ + 1;
+      unsigned exit_step = thread_step_ + 1;
       thread_step_ += 1;
+
+      unsigned default_idx = net->nitems();
 
 	/* Handle the case statement like a computed goto, where the
 	   result of the case statements is the next state to go
 	   to. Once that is done, return true so that statement is
 	   executed. */
       for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
+	    if (net->expr(idx) == 0) {
+		  assert(default_idx == net->nitems());
+		  default_idx = idx;
+		  continue;
+	    }
+	    assert(net->expr(idx));
+	    os << "        /* " << *net->expr(idx) << " : */" << endl;
 	    string guard = emit_proc_rval(os, 8, net->expr(idx));
 
 	    thread_step_ += 1;
 
 	    os << "        if (" << expr << ".eequal(" << guard <<
-		  "))" << endl;
+		  ")) {" << endl;
 	    os << "            step_ = &step_" <<
 		  thread_step_ << "_;" << endl;
+	    os << "            return true;" << endl;
+	    os << "        }" << endl;
 
 	    sc << "      bool step_" << thread_step_ << "_()" << endl;
 	    sc << "      {" << endl;
 	    net->stat(idx)->emit_proc(sc, this);
-	    sc << "        step_ = &step_" << default_step_ << "_;" << endl;
+	    sc << "        step_ = &step_" << exit_step << "_;" << endl;
 	    sc << "        return true;" << endl;
 	    sc << "      }" << endl;
       }
 
-      os << "        else" << endl;
-      os << "            step_ = &step_" << default_step_ << "_;" << endl;
+      if (default_idx < net->nitems()) {
+	    thread_step_ += 1;
+
+	    os << "        /* default : */" << endl;
+	    os << "        step_ = &step_" << thread_step_ << "_;" << endl;
+
+	    sc << "      bool step_" << thread_step_ << "_()" << endl;
+	    sc << "      {" << endl;
+	    net->stat(default_idx)->emit_proc(sc, this);
+	    sc << "        step_ = &step_" << exit_step << "_;" << endl;
+	    sc << "        return true;" << endl;
+	    sc << "      }" << endl;
+
+      } else {
+	    os << "        /* no default ... fall out of case. */" << endl;
+	    os << "        step_ = &step_" << exit_step << "_;" << endl;
+      }
+
+      os << "        /* endcase */" << endl;
       os << "        return true;" << endl;
       os << "      }" << endl;
       os << sc.str();
-      os << "      bool step_" << default_step_ << "_()" << endl;
+      os << "      bool step_" << exit_step << "_()" << endl;
       os << "      {" << endl;
 }
 
@@ -837,6 +870,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.13  1999/02/22 03:01:12  steve
+ *  Handle default case.
+ *
  * Revision 1.12  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *
