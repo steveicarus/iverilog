@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.31 2000/02/23 04:43:43 steve Exp $"
+#ident "$Id: vvm.h,v 1.32 2000/03/13 00:02:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -276,6 +276,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.32  2000/03/13 00:02:34  steve
+ *  Remove unneeded templates.
+ *
  * Revision 1.31  2000/02/23 04:43:43  steve
  *  Some compilers do not accept the not symbol.
  *
@@ -284,101 +287,5 @@ class vvm_memory_t : public __vpiMemory {
  *
  * Revision 1.29  2000/01/08 03:09:14  steve
  *  Non-blocking memory writes.
- *
- * Revision 1.28  2000/01/06 05:56:02  steve
- *  Add memory address range check.
- *
- * Revision 1.27  1999/12/12 19:47:54  steve
- *  Remove the useless vvm_simulation class.
- *
- * Revision 1.26  1999/12/09 06:00:19  steve
- *  Fix const/non-const errors.
- *
- * Revision 1.25  1999/12/05 02:24:09  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.24  1999/12/02 03:36:01  steve
- *  shiftl and shiftr take unsized second parameter.
- *
- * Revision 1.23  1999/11/22 00:30:52  steve
- *  Detemplate some and, or and nor methods.
- *
- * Revision 1.22  1999/11/21 00:13:09  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.21  1999/11/10 02:52:24  steve
- *  Create the vpiMemory handle type.
- *
- * Revision 1.20  1999/11/01 02:07:41  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.19  1999/10/31 04:11:28  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.18  1999/10/29 03:37:22  steve
- *  Support vpiValueChance callbacks.
- *
- * Revision 1.17  1999/10/28 21:36:00  steve
- *  Get rid of monitor_t and fold __vpiSignal into signal.
- *
- * Revision 1.16  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
- * Revision 1.15  1999/10/13 03:15:51  steve
- *  Remove useless operator=.
- *
- * Revision 1.14  1999/10/06 01:28:18  steve
- *  The $finish task should work immediately.
- *
- * Revision 1.13  1999/10/05 04:02:10  steve
- *  Relaxed width handling for <= assignment.
- *
- * Revision 1.12  1999/09/29 18:36:04  steve
- *  Full case support
- *
- * Revision 1.11  1999/09/28 01:13:15  steve
- *  Support in vvm > and >= behavioral operators.
- *
- * Revision 1.10  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.9  1999/06/21 01:02:34  steve
- *  Add init to vvm_signal_t.
- *
- * Revision 1.8  1999/06/07 03:40:22  steve
- *  Implement the < binary operator.
- *
- * Revision 1.7  1999/05/03 01:51:29  steve
- *  Restore support for wait event control.
- *
- * Revision 1.6  1999/04/22 04:56:58  steve
- *  Add to vvm proceedural memory references.
- *
- * Revision 1.5  1999/03/16 04:43:46  steve
- *  Add some logical operators.
- *
- * Revision 1.4  1999/02/08 03:55:55  steve
- *  Do not generate code for signals,
- *  instead use the NetESignal node to
- *  generate gate-like signal devices.
- *
- * Revision 1.3  1998/12/17 23:54:58  steve
- *  VVM support for small sequential UDP objects.
- *
- * Revision 1.2  1998/11/10 00:48:31  steve
- *  Add support it vvm target for level-sensitive
- *  triggers (i.e. the Verilog wait).
- *  Fix display of $time is format strings.
- *
- * Revision 1.1  1998/11/09 23:44:10  steve
- *  Add vvm library.
- *
  */
 #endif

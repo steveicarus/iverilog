@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.20 2000/02/23 04:43:43 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.21 2000/03/13 00:02:34 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -48,72 +48,21 @@ vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
 /*
  * The unary AND is the reduction AND. It returns a single bit.
  */
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_and(const vvm_bitset_t<WIDTH>&r)
-{
-      vvm_bitset_t<1> res;
-      res[0] = r[0];
-
-      for (unsigned idx = 1 ;  idx < WIDTH ;  idx += 1) {
-	    res[0] = res[0] & r[idx];
-      }
-      return res;
-}
+extern vvm_bitset_t<1> vvm_unop_and(const vvm_bits_t&r);
+extern vvm_bitset_t<1> vvm_unop_nand(const vvm_bits_t&r);
 
 /*
  * The unary OR is the reduction OR. It returns a single bit.
  */
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_or(const vvm_bitset_t<WIDTH>&r)
-{
-      vvm_bitset_t<1> res;
-      res[0] = V1;
+extern vvm_bitset_t<1> vvm_unop_or(const vvm_bits_t&r);
+extern vvm_bitset_t<1> vvm_unop_nor(const vvm_bits_t&r);
 
-      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-	    if (r[idx] == V1)
-		  return res;
-      }
-
-      res[0] = V0;
-      return res;
-}
-
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_nor(const vvm_bitset_t<WIDTH>&r)
-{
-      vvm_bitset_t<1>res = vvm_unop_or(r);
-      return vvm_unop_not(res);
-}
-
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_lnot(const vvm_bitset_t<WIDTH>&r)
-{
-      vvm_bitset_t<1> res = vvm_unop_or(r);
-      return vvm_unop_not(res);
-}
 
 /*
  * The unary XOR is the reduction XOR. It returns a single bit.
  */
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_xor(const vvm_bitset_t<WIDTH>&r)
-{
-      vvm_bitset_t<1> res;
-      res[0] = V0;
-
-      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-	    if (r[idx] == V1)
-		  res[0] = v_not(res[0]);
-      }
-
-      return res;
-}
-
-template <unsigned WIDTH>
-vvm_bitset_t<1> vvm_unop_xnor(const vvm_bitset_t<WIDTH>&r)
-{
-     return v_not(vvm_unop_xor(r));
-}
+extern vvm_bitset_t<1> vvm_unop_xor(const vvm_bits_t&r);
+extern vvm_bitset_t<1> vvm_unop_xnor(const vvm_bits_t&r);
 
 //
 // simple-minded unary minus operator (two's complement)
@@ -290,347 +239,47 @@ vvm_bitset_t<WIDTH> vvm_binop_shiftr(const vvm_bitset_t<WIDTH>&l,
  * extended with zeros. Also, if there is Vx or Vz anywhere in either
  * vectors, the result is Vx.
  */
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_eq(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
-
-      if (LW <= RW) {
-	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
-		  if ((l[idx] == Vx) || (l[idx] == Vz)) {
-			result[0] = Vx;
-			return result;
-		  }
-		  if ((r[idx] == Vx) || (r[idx] == Vz)) {
-			result[0] = Vx;
-			return result;
-		  }
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  switch (r[idx]) {
-		      case V0:
-			break;
-		      case V1:
-			result[0] = V0;
-			return result;
-		      case Vx:
-		      case Vz:
-			result[0] = Vx;
-			return result;
-		  }
-		  
-	    return result;
-      } else {
-	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
-		  if ((l[idx] == Vx) || (l[idx] == Vz)) {
-			result[0] = Vx;
-			return result;
-		  }
-		  if ((r[idx] == Vx) || (r[idx] == Vz)) {
-			result[0] = Vx;
-			return result;
-		  }
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  switch (l[idx]) {
-		      case V0:
-			break;
-		      case V1:
-			result[0] = V0;
-			return result;
-		      case Vx:
-		      case Vz:
-			result[0] = Vx;
-			return result;
-		  }
-		  
-	    return result;
-      }
-}
+extern vvm_bitset_t<1> vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vvm_bitset_t<1> vvm_binop_ne(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * This function return true if all the bits are the same. Even x and
  * z bites are compared for equality.
  */
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_eeq(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
+extern vvm_bitset_t<1> vvm_binop_eeq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vvm_bitset_t<1> vvm_binop_nee(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      if (LW <= RW) {
-	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  if (r[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-		  
-      } else {
-	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  if (l[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-		  
-      }
-
-      return result;
-}
 
 /*
  * This function return true if all the bits are the same. The x and z
  * bits are don't care, s don't make the result false.
  */
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_xeq(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
-
-      if (LW <= RW) {
-	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
-		  if ((l[idx] == Vz) || (r[idx] == Vz))
-			continue;
-		  if ((l[idx] == Vx) || (r[idx] == Vx))
-			continue;
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1) {
-		  if ((r[idx] == Vx) || (r[idx] == Vz))
-			continue;
-		  if (r[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-		  
-      } else {
-	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
-		  if ((l[idx] == Vz) || (r[idx] == Vz))
-			continue;
-		  if ((l[idx] == Vx) || (r[idx] == Vx))
-			continue;
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1) {
-		  if ((l[idx] == Vx) || (l[idx] == Vz))
-			continue;
-		  if (l[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-      }
-
-      return result;
-}
+extern vvm_bitset_t<1> vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * This function return true if all the bits are the same. The z
  * bits are don't care, so don't make the result false.
  */
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_zeq(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
+extern vvm_bitset_t<1> vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      if (LW <= RW) {
-	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
-		  if ((l[idx] == Vz) || (r[idx] == Vz))
-			continue;
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1) {
-		  if (r[idx] == Vz)
-			continue;
-		  if (r[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-		  
-      } else {
-	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
-		  if ((l[idx] == Vz) || (r[idx] == Vz))
-			continue;
-		  if (l[idx] != r[idx]) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1) {
-		  if (l[idx] == Vz)
-			continue;
-		  if (l[idx] != V0) {
-			result[0] = V0;
-			return result;
-		  }
-	    }
-      }
 
-      return result;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result = vvm_binop_eq(l,r);
-      result[0] = v_not(result[0]);
-      return result;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_nee(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result = vvm_binop_eeq(l,r);
-      result[0] = v_not(result[0]);
-      return result;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_lt(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V0;
-      const unsigned common = (LW < RW)? LW : RW;
-      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
-	    result[0] = less_with_cascade(l[idx], r[idx], result[0]);
-
-      if (LW > RW) {
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  result[0] = less_with_cascade(l[idx], V0, result[0]);
-      } else {
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  result[0] = less_with_cascade(V0, r[idx], result[0]);
-      }
-
-      return result;
-}
+extern vvm_bitset_t<1> vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * The <= operator takes operands of natural width and returns a
  * single bit. The result is V1 if l <= r, otherwise V0;
  */
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_le(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
-      const unsigned common = (LW < RW)? LW : RW;
-      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
-	    result[0] = less_with_cascade(l[idx], r[idx], result[0]);
+extern vvm_bitset_t<1> vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      if (LW > RW) {
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  result[0] = less_with_cascade(l[idx], V0, result[0]);
-      } else {
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  result[0] = less_with_cascade(V0, r[idx], result[0]);
-      }
+extern vvm_bitset_t<1> vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      return result;
-}
+extern vvm_bitset_t<1> vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r);
 
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_gt(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V0;
-      const unsigned common = (LW < RW)? LW : RW;
-      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
-	    result[0] = greater_with_cascade(l[idx], r[idx], result[0]);
+extern vvm_bitset_t<1> vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      if (LW > RW) {
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  result[0] = greater_with_cascade(l[idx], V0, result[0]);
-      } else {
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  result[0] = greater_with_cascade(V0, r[idx], result[0]);
-      }
+extern vvm_bitset_t<1> vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r);
 
-      return result;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_ge(const vvm_bitset_t<LW>&l,
-			     const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> result;
-      result[0] = V1;
-      const unsigned common = (LW < RW)? LW : RW;
-      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
-	    result[0] = greater_with_cascade(l[idx], r[idx], result[0]);
-
-      if (LW > RW) {
-	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
-		  result[0] = greater_with_cascade(l[idx], V0, result[0]);
-      } else {
-	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  result[0] = greater_with_cascade(V0, r[idx], result[0]);
-      }
-
-      return result;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_land(const vvm_bitset_t<LW>&l,
-			       const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> res1 = vvm_unop_or(l);
-      vvm_bitset_t<1> res2 = vvm_unop_or(r);
-      res1[0] = res1[0] & res2[0];
-      return res1;
-}
-
-template <unsigned LW, unsigned RW>
-vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
-			       const vvm_bitset_t<RW>&r)
-{
-      vvm_bitset_t<1> res1 = vvm_unop_or(l);
-      vvm_bitset_t<1> res2 = vvm_unop_or(r);
-      res1[0] = res1[0] | res2[0];
-      return res1;
-}
+extern vvm_bitset_t<1> vvm_unop_lnot(const vvm_bits_t&r);
 
 template <unsigned W>
 vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
@@ -648,6 +297,9 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.21  2000/03/13 00:02:34  steve
+ *  Remove unneeded templates.
+ *
  * Revision 1.20  2000/02/23 04:43:43  steve
  *  Some compilers do not accept the not symbol.
  *
@@ -662,59 +314,5 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
  *
  * Revision 1.16  1999/12/02 03:36:01  steve
  *  shiftl and shiftr take unsized second parameter.
- *
- * Revision 1.15  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
- * Revision 1.14  1999/10/05 06:19:47  steve
- *  Add support for reduction NOR.
- *
- * Revision 1.13  1999/10/01 15:26:29  steve
- *  Add some vvm operators from Eric Aardoom.
- *
- * Revision 1.12  1999/09/29 22:57:26  steve
- *  LT supports different width objects.
- *
- * Revision 1.11  1999/09/29 18:36:04  steve
- *  Full case support
- *
- * Revision 1.10  1999/09/28 01:13:16  steve
- *  Support in vvm > and >= behavioral operators.
- *
- * Revision 1.9  1999/09/23 04:39:52  steve
- *  The <= operator takes different width operands.
- *
- * Revision 1.8  1999/09/11 04:43:17  steve
- *  Support ternary and <= operators in vvm.
- *
- * Revision 1.7  1999/06/24 04:20:47  steve
- *  Add !== and === operators.
- *
- * Revision 1.6  1999/06/07 03:40:22  steve
- *  Implement the < binary operator.
- *
- * Revision 1.5  1999/06/07 02:23:31  steve
- *  Support non-blocking assignment down to vvm.
- *
- * Revision 1.4  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
- *
- * Revision 1.3  1999/03/16 04:43:46  steve
- *  Add some logical operators.
- *
- * Revision 1.2  1999/03/15 02:42:44  steve
- *  Add the AND and OR bitwise operators.
- *
- * Revision 1.1  1998/11/09 23:44:11  steve
- *  Add vvm library.
- *
  */
 #endif
