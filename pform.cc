@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.45 1999/09/21 00:58:33 steve Exp $"
+#ident "$Id: pform.cc,v 1.46 1999/09/30 01:22:37 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -42,7 +42,9 @@ static Module*pform_cur_module = 0;
 /*
  * The scope stack and the following functions handle the processing
  * of scope. As I enter a scope, the push function is called, and as I
- * leave a scope the opo function is called.
+ * leave a scope the pop function is called.
+ *
+ * The top module is not included in the scope list.
  */
 struct scope_name_t {
       string name;
@@ -640,7 +642,7 @@ static void pform_set_reg_integer(const string&nm)
       string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(nm, NetNet::INTEGER, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::INTEGER, NetNet::NOT_A_PORT);
 	    pform_cur_module->add_wire(cur);
       } else {
 	    bool rc = cur->set_wire_type(NetNet::INTEGER);
@@ -712,6 +714,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.46  1999/09/30 01:22:37  steve
+ *  Handle declaration of integers (including scope) in functions.
+ *
  * Revision 1.45  1999/09/21 00:58:33  steve
  *  Get scope right when setting the net range.
  *

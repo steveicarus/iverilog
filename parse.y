@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.71 1999/09/30 00:48:04 steve Exp $"
+#ident "$Id: parse.y,v 1.72 1999/09/30 01:22:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -169,6 +169,11 @@ source_file
 	| source_file description
 	;
 
+  /* The block_item_decl is used in function definitions, task
+     definitions, module definitions and named blocks. Wherever a new
+     scope is entered, the source may declare new registers and
+     integers. This rule matches those declarations. The containing
+     rule has presumably set up the scope. */
 block_item_decl
 	: K_reg range register_variable_list ';'
 		{ pform_set_net_range($3, $2);
@@ -697,6 +702,9 @@ func_body
 		}
 	;
 
+  /* A function_item is either a block item (i.e. a reg or integer
+     declaration) or an input declaration. There are no output or
+     inout ports. */
 function_item
 	: K_input range_opt list_of_variables ';'
                 { svector<PWire*>*tmp
@@ -706,9 +714,7 @@ function_item
 		  delete $3;
 		  $$ = tmp;
 		}
-	| K_reg range_opt list_of_variables ';'
-                { $$ = 0; }
-	| K_integer list_of_variables ';'
+	| block_item_decl
                 { $$ = 0; }
 	;
 
