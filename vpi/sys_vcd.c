@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.27 2002/04/06 20:25:45 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.28 2002/05/10 16:00:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -533,6 +533,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       switch (vpi_get(vpiType, item)) {
 
+	  case vpiMemory:
+	      /* don't know how to watch memories. */
+	    break;
+
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiReg:  type = "reg";    }
 
@@ -776,6 +780,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.28  2002/05/10 16:00:16  steve
+ *  ignore vpiMemory objects in vcd dumper.
+ *
  * Revision 1.27  2002/04/06 20:25:45  steve
  *  cbValueChange automatically replays.
  *
