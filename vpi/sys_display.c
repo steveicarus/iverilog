@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.58 2003/05/02 04:44:41 steve Exp $"
+#ident "$Id: sys_display.c,v 1.59 2003/05/02 15:45:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1188,6 +1188,23 @@ static int sys_fdisplay_calltf(char *name)
 	    case vpiRealVar:
 	    case vpiIntegerVar:
 	      break;
+
+	  case vpiConstant:
+	    switch (vpi_get(vpiConstType, item)) {
+		case vpiDecConst:
+		case vpiBinaryConst:
+		case vpiOctConst:
+		case vpiHexConst:
+		  break;
+		default:
+		  vpi_printf("ERROR: %s mcd parameter must be integral", name);
+		  vpi_printf(", got vpiType=vpiConstant, vpiConstType=%d\n",
+			     vpi_get(vpiConstType, item));
+		  vpi_free_object(argv);
+		  return 0;
+	    }
+	    break;
+
 	    default:
 	      vpi_printf("ERROR: %s mcd parameter must be integral", name);
 	      vpi_printf(", got vpiType=%d\n", type);
@@ -1649,6 +1666,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.59  2003/05/02 15:45:43  steve
+ *  Certain constants are allowed as mcd parameters.
+ *
  * Revision 1.58  2003/05/02 04:44:41  steve
  *  $fdisplay can have a RealVar, not RealVal argument.
  *
