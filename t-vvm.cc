@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.84 1999/11/28 23:42:03 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.85 1999/11/28 23:59:22 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -876,10 +876,7 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
       gate->pin(gpin).next_link(cur, pin);
       while (cur != gate) {
 
-	    if (dynamic_cast<const NetESignal*>(cur)) {
-		    // Skip signals
-
-	    } else if (cur->pin(pin).get_name() != "") {
+	    if (cur->pin(pin).get_name() != "") {
 
 		  delayed << "      " << mangle(cur->name()) << ".set_"
 			  << cur->pin(pin).get_name() << "(sim, " <<
@@ -1217,11 +1214,6 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
 			      continue;
 
-			  // Skip signals, I'll hit them when I handle the
-			  // NetESignal nodes.
-			if (dynamic_cast<const NetESignal*>(cur))
-			      continue;
-
 			delayed << "        " << mangle(cur->name())
 				<< ".set_" << lnk.get_name() << "sim_, "
 				<< lnk.get_inst() << ", value_[0]);" << endl;
@@ -1247,11 +1239,6 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 
 			  // Skip output only pins.
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			  // Skip signals, I'll hit them when I handle the
-			  // NetNet nodes.
-			if (dynamic_cast<const NetESignal*>(cur))
 			      continue;
 
 			delayed << "      " << mangle(cur->name()) <<
@@ -1412,11 +1399,6 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
 			      continue;
 
-			  // Skip signals, I'll hit them when I handle the
-			  // NetNet nodes.
-			if (dynamic_cast<const NetESignal*>(cur))
-			      continue;
-
 			  // It is possible for a named device to show up
 			  // several times in a link. This is the classic
 			  // case with NetESignal objects, which are
@@ -1451,11 +1433,6 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 			  // Skip output only pins.
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			  // Skip signals, I'll hit them when I handle the
-			  // NetNet nodes.
-			if (dynamic_cast<const NetESignal*>(cur))
 			      continue;
 
 			  // It is possible for a named device to show up
@@ -1974,6 +1951,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.85  1999/11/28 23:59:22  steve
+ *  Remove useless tests for NetESignal.
+ *
  * Revision 1.84  1999/11/28 23:42:03  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.
