@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.29 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.30 2001/04/01 06:52:27 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -655,6 +655,9 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	  case IVL_ST_CASEZ:
 	    return net->u_.case_.cond;
 
+	  case IVL_ST_WHILE:
+	    return net->u_.while_.cond_;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -802,6 +805,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.30  2001/04/01 06:52:27  steve
+ *  support the NetWhile statement.
+ *
  * Revision 1.29  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *

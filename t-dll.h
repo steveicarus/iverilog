@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.29 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: t-dll.h,v 1.30 2001/04/01 06:52:28 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -386,7 +386,7 @@ struct ivl_statement_s {
 	    } wait_;
 
 	    struct { /* IVL_ST_WHILE */
-		  int cond_; /* XXXX */
+		  ivl_expr_t cond_;
 		  ivl_statement_t stmt_;
 	    } while_;
       } u_;
@@ -394,6 +394,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.30  2001/04/01 06:52:28  steve
+ *  support the NetWhile statement.
+ *
  * Revision 1.29  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.42 2001/04/01 04:38:17 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.43 2001/04/01 06:52:27 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -677,7 +677,7 @@ extern unsigned ivl_stmt_case_count(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
   /* IVL_ST_CASE */
 extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
-  /* IVL_ST_CONDIT, IVL_ST_CASE */
+  /* IVL_ST_CONDIT, IVL_ST_CASE IVL_ST_WHILE */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
@@ -722,6 +722,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.43  2001/04/01 06:52:27  steve
+ *  support the NetWhile statement.
+ *
  * Revision 1.42  2001/04/01 04:38:17  steve
  *  dead cruft.
  *

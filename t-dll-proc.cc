@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.18 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.19 2001/04/01 06:52:28 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -421,7 +421,10 @@ void dll_target::proc_while(const NetWhile*net)
       stmt_cur_->u_.while_.stmt_ = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
-	/* XXXX Nothing about the expression? */
+      assert(expr_ == 0);
+      net->expr()->expr_scan(this);
+      stmt_cur_->u_.while_.cond_ = expr_;
+      expr_ = 0;
 
 	/* Now generate the statement of the while loop. We know it is
 	   a single statement, and we know that the
@@ -435,6 +438,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.19  2001/04/01 06:52:28  steve
+ *  support the NetWhile statement.
+ *
  * Revision 1.18  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *
