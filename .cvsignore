@@ -22,4 +22,5 @@ config.log
 config.cache
 autom4te.cache
 config.h
+_pli_types.h
 dosify
