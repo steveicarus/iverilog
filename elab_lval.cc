@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.11 2001/01/10 03:13:23 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.12 2001/02/09 03:16:48 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -284,8 +284,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    if (wid > reg->pin_count()) {
-		  cerr << get_line() << ": error: part select "
+	      /* If the part select extends beyond the extreme of the
+		 variable, then report an error. Note that loff is
+		 converted to normalized form so is relative the
+		 variable pins. */
+
+	    if ((wid + loff) > reg->pin_count()) {
+		  cerr << get_line() << ": error: bit/part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
 		  des->errors += 1;
@@ -306,6 +311,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.12  2001/02/09 03:16:48  steve
+ *  Report bit/part select out of range errors. (PR#133)
+ *
  * Revision 1.11  2001/01/10 03:13:23  steve
  *  Build task outputs as lval instead of nets. (PR#98)
  *
