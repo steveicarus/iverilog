@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.6 2001/07/11 04:43:57 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "symbols.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <assert.h>
 
 static char* scope_get_str(int code, vpiHandle obj)
@@ -134,6 +137,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.7  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.6  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *

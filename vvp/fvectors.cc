@@ -17,12 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fvectors.cc,v 1.2 2001/08/09 19:38:23 steve Exp $"
+#ident "$Id: fvectors.cc,v 1.3 2001/09/15 18:27:05 steve Exp $"
 #endif
+
+# include  "config.h"
 
 # include  "functor.h"
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 
 struct vvp_fvector_s {

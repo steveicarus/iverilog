@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.2 2001/05/20 00:40:12 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.3 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 /*
@@ -29,7 +29,10 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  <stdio.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <assert.h>
 
 struct __vpiVThrVec {
@@ -345,6 +348,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.3  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.2  2001/05/20 00:40:12  steve
  *  Get bit ordering right when making decimal strings.
  *

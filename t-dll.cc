@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.62 2001/09/09 16:49:04 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.63 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,10 @@
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  "netmisc.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 #if defined(__WIN32__)
 
@@ -1532,6 +1535,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.63  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.62  2001/09/09 16:49:04  steve
  *  Connect right ANEB pin when doing NE comparator.
  *

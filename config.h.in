@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.1 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: config.h.in,v 1.2 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -37,6 +37,7 @@
 # undef HAVE_TIMES
 # undef HAVE_IOSFWD
 # undef HAVE_GETOPT_H
+# undef HAVE_MALLOC_H
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
 # undef HAVE_FCHMOD
@@ -44,6 +45,9 @@
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.2  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.1  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.6 2001/08/09 22:25:30 steve Exp $"
+#ident "$Id: debug.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 /*
@@ -38,7 +38,9 @@
 # include  <readline/history.h>
 # include  <string.h>
 # include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 
 
 static bool interact_flag = false;
@@ -171,6 +173,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.7  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.6  2001/08/09 22:25:30  steve
  *  Include functor address in debug functor print.
  *

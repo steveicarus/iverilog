@@ -17,12 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.46 2001/09/14 04:15:46 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.47 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 
 /*
@@ -1199,6 +1202,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.47  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.46  2001/09/14 04:15:46  steve
  *  Generate code for identity comparators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.5 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.6 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 /*
@@ -33,7 +33,10 @@
 # include  "functor.h"
 # include  <stdio.h>
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 const struct __vpirt callback_rt = {
       vpiCallback,
@@ -257,6 +260,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.6  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.5  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

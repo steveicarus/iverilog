@@ -18,14 +18,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.9 2001/08/09 19:38:23 steve Exp $"
+#ident "$Id: udp.cc,v 1.10 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 #include "udp.h"
 #include "schedule.h"
 #include "symbols.h"
 #include <assert.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#include <stdlib.h>
 #include <stdio.h>
 
 void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
@@ -361,6 +364,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.10  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.9  2001/08/09 19:38:23  steve
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.

@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.44 2001/09/01 00:58:16 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.45 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
@@ -981,6 +984,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.45  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.44  2001/09/01 00:58:16  steve
  *  dead comments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.54 2001/09/07 23:29:28 steve Exp $"
+#ident "$Id: vthread.cc,v 1.55 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -26,7 +26,10 @@
 # include  "schedule.h"
 # include  "functor.h"
 # include  "vpi_priv.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
 
@@ -1353,6 +1356,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.55  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.54  2001/09/07 23:29:28  steve
  *  Redo of_SUBU in a more obvious algorithm, that
  *  is not significantly slower. Also, clean up the

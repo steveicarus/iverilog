@@ -18,14 +18,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.7 2001/09/11 01:54:58 steve Exp $"
+#ident "$Id: memory.cc,v 1.8 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 #include "memory.h"
 #include "symbols.h"
 #include "schedule.h"
 #include <assert.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#include <stdlib.h>
 #include <string.h>
 
 

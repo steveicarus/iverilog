@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.17 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.18 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,10 @@
 # include  "t-dll.h"
 # include  "netlist.h"
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 /*
  * These methods implement the expression scan that generates the
@@ -298,6 +301,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.18  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.17  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.9 2001/08/03 06:50:44 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.10 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 /*
@@ -28,7 +28,10 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  <stdio.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
 
@@ -329,6 +332,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.10  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.9  2001/08/03 06:50:44  steve
  *  Detect system function used as a task.
  *

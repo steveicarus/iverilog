@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.23 2001/08/09 19:38:23 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.24 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 /*
@@ -28,7 +28,10 @@
 # include  "vpi_priv.h"
 # include  "functor.h"
 # include  <stdio.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
 
@@ -496,6 +499,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.24  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.23  2001/08/09 19:38:23  steve
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.

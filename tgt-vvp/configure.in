@@ -11,6 +11,7 @@ AC_CANONICAL_HOST
 
 AC_CYGWIN
 AC_SUBST(CYGWIN)
+AC_CHECK_HEADERS(malloc.h)
 
 # The -fPIC flag is used to tell the compiler to make position
 # independent code. It is needed when making shared objects.

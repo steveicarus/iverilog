@@ -16,13 +16,15 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic-edif.c,v 1.5 2001/09/15 05:06:04 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.6 2001/09/15 18:27:04 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
 # include  <stdlib.h>
 # include  <string.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <assert.h>
 
 struct nexus_recall {
@@ -392,6 +394,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.6  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.5  2001/09/15 05:06:04  steve
  *  Support != in virtex code generator.
  *

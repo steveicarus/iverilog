@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.6 2001/07/11 04:43:57 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  <stdio.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 const char*yypath;
 unsigned yyline;
@@ -95,6 +98,9 @@ void argv_sym_lookup(struct argv_s*obj)
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.7  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.6  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *

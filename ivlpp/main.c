@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.11 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: main.c,v 1.12 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,7 +42,9 @@ const char VERSION[] = "$Name:  $ $State: Exp $";
 
 # include  <stdio.h>
 # include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <unistd.h>
 # include  <string.h>
 #if defined(HAVE_GETOPT_H)
@@ -186,6 +188,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.12  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.11  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,14 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.11 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: schedule.cc,v 1.12 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "schedule.h"
 # include  "functor.h"
 # include  "memory.h"
 # include  "vthread.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <assert.h>
 
 # include  <stdio.h>
@@ -357,6 +360,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.12  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.11  2001/07/11 02:27:21  steve
  *  Add support for REadOnlySync and monitors.
  *

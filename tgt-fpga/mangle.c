@@ -16,12 +16,15 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: mangle.c,v 1.3 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: mangle.c,v 1.4 2001/09/15 18:27:04 steve Exp $"
 
 
 # include  "fpga_priv.h"
 # include  <string.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 static size_t xnf_mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
 {
@@ -94,6 +97,9 @@ const char* xnf_mangle_nexus_name(ivl_nexus_t net)
 
 /*
  * $Log: mangle.c,v $
+ * Revision 1.4  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.3  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.

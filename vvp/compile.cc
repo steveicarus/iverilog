@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.99 2001/09/11 01:54:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.100 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -33,7 +33,9 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "parse_misc.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -1635,6 +1637,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.100  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.99  2001/09/11 01:54:58  steve
  *  initial structural memory propagation (Stephan Boettcher)
  *

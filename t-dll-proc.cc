@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.34 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.35 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,10 @@
 # include  "ivl_target.h"
 # include  "compiler.h"
 # include  "t-dll.h"
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 
 bool dll_target::process(const NetProcTop*net)
@@ -666,6 +669,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.35  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.34  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.8 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: imain.c,v 1.9 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,7 +28,9 @@
 
 # include  "priv.h"
 
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -152,6 +154,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.9  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.8  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

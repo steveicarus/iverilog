@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.8 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.9 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -25,7 +25,10 @@
 # include  <stdio.h>
 # include  <stdarg.h>
 # include  <assert.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 
 /*
  * When a task is called, this value is set so that vpi_handle can
@@ -151,6 +154,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.9  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.8  2001/07/11 02:27:21  steve
  *  Add support for REadOnlySync and monitors.
  *

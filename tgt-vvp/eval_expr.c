@@ -17,12 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.43 2001/08/31 01:37:56 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.44 2001/09/15 18:27:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <assert.h>
 
 struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid);
@@ -1197,6 +1200,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.44  2001/09/15 18:27:04  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.43  2001/08/31 01:37:56  steve
  *  Handle update in place of repeat constants.
  *

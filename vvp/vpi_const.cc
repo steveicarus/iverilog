@@ -17,12 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.6 2001/08/08 00:57:20 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdio.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
+# include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
 
@@ -194,6 +197,9 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.7  2001/09/15 18:27:05  steve
+ *  Make configure detect malloc.h
+ *
  * Revision 1.6  2001/08/08 00:57:20  steve
  *  Unused variable warnings.
  *
