@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.63 2000/07/29 17:58:21 steve Exp $"
+#ident "$Id: pform.cc,v 1.64 2000/09/13 16:32:26 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -921,6 +921,7 @@ int pform_parse(const char*path, map<string,Module*>&modules,
       int rc = VLparse();
       if (rc) {
 	    cerr << "I give up." << endl;
+	    error_count += 1;
       }
 
       modules = vl_modules;
@@ -931,6 +932,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.64  2000/09/13 16:32:26  steve
+ *  Error message for invalid variable list.
+ *
  * Revision 1.63  2000/07/29 17:58:21  steve
  *  Introduce min:typ:max support.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.104 2000/07/29 17:58:21 steve Exp $"
+#ident "$Id: parse.y,v 1.105 2000/09/13 16:32:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1182,6 +1182,12 @@ module_item
 			delete $2;
 		  }
 		  delete $3;
+		}
+	| port_type range_opt error ';'
+		{ yyerror(@3, "error: Invalid variable list"
+			  " in port declaration.");
+		  if ($2) delete $2;
+		  yyerrok;
 		}
 	| block_item_decl
 	| K_defparam defparam_assign_list ';'
