@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.63 2002/06/05 03:43:14 steve Exp $"
+#ident "$Id: stub.c,v 1.64 2002/07/28 23:57:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -588,6 +588,12 @@ static void show_logic(ivl_net_logic_t net)
 		    name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
+	  case IVL_LO_NOT:
+	    fprintf(out, "  not #(%u) %s (%s",
+		    ivl_logic_delay(net, 0),
+		    name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
 	  case IVL_LO_OR:
 	    fprintf(out, "  or %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
@@ -599,7 +605,7 @@ static void show_logic(ivl_net_logic_t net)
 	  default:
 	    fprintf(out, "  unsupported gate %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    return;
+	    break;
       }
 
       npins = ivl_logic_pins(net);
@@ -697,6 +703,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.64  2002/07/28 23:57:22  steve
+ *  dump NOT gates.
+ *
  * Revision 1.63  2002/06/05 03:43:14  steve
  *  Dump l-value memory indices.
  *
