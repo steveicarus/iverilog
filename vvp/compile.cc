@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.93 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: compile.cc,v 1.94 2001/08/09 19:38:23 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -124,10 +124,8 @@ const static struct opcode_table_s opcode_table[] = {
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
-static unsigned opcode_count = 0;
-//static const unsigned opcode_count 
-//                  = sizeof(opcode_table)/sizeof(*opcode_table) - 1; 
-// No?
+static const unsigned opcode_count =
+                    sizeof(opcode_table)/sizeof(*opcode_table) - 1;
 
 static int opcode_compare(const void*k, const void*r)
 {
@@ -167,43 +165,304 @@ static symbol_table_t sym_vpi = 0;
  * defined after its use in a functor. The ptr parameter is the
  * complete vvp_input_t for the input port.
  */
-struct resolv_list_s {
-      struct resolv_list_s*next;
-      vvp_ipoint_t port;
 
-      char*source;
-      unsigned idx;
-};
 
+/*
+ * Postponed lookups got out of hand, so here is a generic framework.
+ */
 static struct resolv_list_s*resolv_list = 0;
 
-static void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
+struct resolv_list_s {
+      struct resolv_list_s*next;
+      struct resolv_list_s* submit();
+      virtual bool resolve(bool mes = false) = 0;
+};
+
+inline struct resolv_list_s *resolv_list_s::submit()
 {
-      struct resolv_list_s*res = (struct resolv_list_s*)
-	    calloc(1, sizeof(struct resolv_list_s));
+      if (resolve())
+	    return this;
+
+      next = resolv_list;
+      resolv_list = this;
+      
+      return 0x0;
+}
+
+/*
+ *  And the application to functor input lookup
+ */
+
+struct functor_resolv_list_s: public resolv_list_s {
+      char*source;
+      unsigned idx;
+      vvp_ipoint_t port;
+      virtual bool resolve(bool mes);
+};
+
+bool functor_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t val = sym_get_value(sym_functors, source);
+      vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
+
+      if (vec) {
+	    vvp_ipoint_t tmp = vvp_fvector_get(vec, idx);
+	    if (tmp) {
+		  functor_t fport = functor_index(tmp);
+		  functor_t iobj = functor_index(port);
+		  iobj->port[ipoint_port(port)] = fport->out;
+		  fport->out = port;
+		  free(source);
+		  return true;
+	    }
+      }
+
+      if (mes)
+	    fprintf(stderr, "unresolved functor reference: %s\n", source);
+      
+      return false;
+}
+
+inline static 
+void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
+{
+      static struct functor_resolv_list_s*res =0x0;
+      if (!res)
+	    res = new struct functor_resolv_list_s;
 
       res->port   = ptr;
       res->source = lab;
       res->idx    = idx;
-      res->next   = resolv_list;
-      resolv_list = res;
+
+      res = dynamic_cast<functor_resolv_list_s*>(res->submit());
 }
 
-
 /*
- * Instructions may make forward references to labels or functors. In
- * this case, the reference is short is a llist or flist (depending on
- * the type) and resolved during cleanup.
+ *  fvector_set lookup
  */
-struct cresolv_list_s {
-      struct cresolv_list_s*next;
-      struct vvp_code_s*cp;
-      char*lab;
+
+struct fvector_resolv_list_s: public resolv_list_s {
+      char*source;
       unsigned idx;
+      vvp_fvector_t vec;
+      unsigned vidx;
+      virtual bool resolve(bool mes);
 };
 
-static struct cresolv_list_s*cresolv_llist = 0;
-static struct cresolv_list_s*cresolv_flist = 0;
+bool fvector_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t val = sym_get_value(sym_functors, source);
+      vvp_fvector_t svec = (vvp_fvector_t) val.ptr;
+
+      if (svec) {
+	    vvp_ipoint_t tmp = vvp_fvector_get(svec, idx);
+	    if (tmp) {
+		  vvp_fvector_set(vec, vidx, tmp);
+		  free(source);
+		  return true;
+	    }
+      }
+
+      if (mes)
+	    fprintf(stderr, 
+		    "unresolved functor reference (net input): %s\n", 
+		    source);
+      
+      return false;
+}
+
+inline static 
+void postpone_fvector_input(vvp_fvector_t vec, unsigned vidx,
+			    char*lab, unsigned idx)
+{
+      static struct fvector_resolv_list_s*res =0x0;
+      if (!res)
+	    res = new struct fvector_resolv_list_s;
+
+      res->vec = vec;
+      res->vidx = vidx;
+      res->source = lab;
+      res->idx = idx;
+
+      res = dynamic_cast<fvector_resolv_list_s*>(res->submit());
+}
+
+/*
+ *  vpiHandle lookup
+ */
+
+struct vpi_handle_resolv_list_s: public resolv_list_s {
+      vpiHandle *handle;
+      char *label;
+      virtual bool resolve(bool mes);
+};
+
+bool vpi_handle_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t val = sym_get_value(sym_vpi, label);
+      if (!val.ptr) {
+	    // check for thread vector  T<base,wid>
+	    unsigned base, wid;
+	    unsigned n;
+	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
+		&& n == strlen(label)) {
+		  val.ptr = vpip_make_vthr_vector(base, wid);
+		  sym_set_value(sym_vpi, label, val);
+	    }
+      }
+
+      if (!val.ptr) {
+	    // check for memory word  M<mem,base,wid>
+      }
+
+      if (val.ptr) {
+	    *handle = (vpiHandle) val.ptr;
+	    free(label);
+	    return true;
+      }
+      
+      if (mes)
+	    fprintf(stderr, "unresolved vpi name lookup: %s\n", label);
+      
+      return false;
+}
+
+void compile_vpi_lookup(vpiHandle *handle, char*label)
+{
+      static struct vpi_handle_resolv_list_s*res =0x0;
+      if (!res)
+	    res = new struct vpi_handle_resolv_list_s;
+
+      res->handle = handle;
+      res->label  = label;
+
+      res = dynamic_cast<vpi_handle_resolv_list_s*>(res->submit());
+}
+
+/*
+ * Code Label lookup
+ */
+
+struct code_label_resolv_list_s: public resolv_list_s {
+      struct vvp_code_s *code;
+      char *label;
+      virtual bool resolve(bool mes);
+};
+
+bool code_label_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t val = sym_get_value(sym_codespace, label);
+      if (val.num) {
+	    if (code->opcode == of_FORK)
+		  code->fork->cptr = val.num;
+	    else
+		  code->cptr = val.num;
+	    free(label);
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr,
+		    "unresolved code label: %s\n",
+		    label);
+
+      return false;
+}
+
+inline static
+void code_label_lookup(struct vvp_code_s *code, char *label)
+{
+      static struct code_label_resolv_list_s *res =0x0;
+      if (!res)
+	    res = new struct code_label_resolv_list_s;
+
+      res->code  = code;
+      res->label = label;
+
+      res = dynamic_cast<code_label_resolv_list_s *>(res->submit());
+}
+
+/*
+ * functor label lookup
+ */
+
+struct code_functor_resolv_list_s: public resolv_list_s {
+      struct vvp_code_s *code;
+      char *label;
+      unsigned idx;
+      virtual bool resolve(bool mes);
+};
+
+bool code_functor_resolv_list_s::resolve(bool mes)
+{
+      symbol_value_t val = sym_get_value(sym_functors, label);
+      if (val.ptr) {
+	    vvp_fvector_t v = (vvp_fvector_t) val.ptr;
+	    code->iptr = vvp_fvector_get(v, idx);
+	    if (code->iptr) {
+		  free(label);
+		  return true;
+	    }
+      }
+
+      if (mes)
+	    fprintf(stderr, 
+		    "unresolved code reference to functor: %s\n", 
+		    label);
+
+      return false;
+}
+
+inline static
+void code_functor_lookup(struct vvp_code_s *code, char *label, unsigned idx)
+{
+      static struct code_functor_resolv_list_s *res =0x0;
+      if (!res)
+	    res = new struct code_functor_resolv_list_s;
+
+      res->code  = code;
+      res->label = label;
+      res->idx   = idx; 
+
+      res = dynamic_cast<code_functor_resolv_list_s *>(res->submit());
+}
+
+/*
+ * When parsing is otherwise complete, this function is called to do
+ * the final stuff. Clean up deferred linking here.
+ */
+
+void compile_cleanup(void)
+{
+      int lnerrs = -1;
+      int nerrs = 0;
+      int last;
+      
+      do {
+	    struct resolv_list_s *res = resolv_list;
+	    resolv_list = 0x0;
+	    last = nerrs == lnerrs;
+	    lnerrs = nerrs;
+	    nerrs = 0;
+	    while (res) {
+		  struct resolv_list_s *cur = res;
+		  res = res->next;
+		  if (cur->resolve(last))
+			delete cur;
+		  else {
+			nerrs++;
+			cur->next = resolv_list;
+			resolv_list = cur;
+		  }
+	    }
+	    if (last && nerrs)
+		  fprintf(stderr, 
+			  "compile_cleanup: %d unresolved items\n", 
+			  nerrs);
+      } while (nerrs && nerrs != lnerrs && !last);
+
+      compile_errors += nerrs;
+}
 
 void compile_vpi_symbol(const char*label, vpiHandle obj)
 {
@@ -226,10 +485,6 @@ void compile_init(void)
 
       sym_codespace = new_symbol_table();
       codespace_init();
-
-      opcode_count = 0;
-      while (opcode_table[opcode_count].mnemonic)
-	    opcode_count += 1;
 }
 
 void compile_load_vpi_module(char*name)
@@ -333,18 +588,7 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 		  continue;
 	    }
 
-	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
-
-	    if (vec) {
-		  vvp_ipoint_t tmp = vvp_fvector_get(vec, argv[idx].idx);
-		  functor_t fport = functor_index(tmp);
-		  iobj->port[ipoint_port(ifdx)] = fport->out;
-		  fport->out = ifdx;
-		  free(argv[idx].text);
-	    } else {
-		  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
-	    }
+	    postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
       }
 }
 
@@ -965,17 +1209,13 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
  */
 void compile_code(char*label, char*mnem, comp_operands_t opa)
 {
-      vvp_cpoint_t ptr = codespace_allocate();
-
 	/* First, I can give the label a value that is the current
 	   codespace pointer. Don't need the text of the label after
 	   this is done. */
-      if (label) {
-	    symbol_value_t val;
-	    val.num = ptr;
-	    sym_set_value(sym_codespace, label, val);
-	    free(label);
-      }
+      if (label) 
+	    compile_codelabel(label);
+
+      vvp_cpoint_t ptr = codespace_allocate();
 
 	/* Lookup the opcode in the opcode table. */
       struct opcode_table_s*op = (struct opcode_table_s*)
@@ -1002,7 +1242,6 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	   list that the parser supplied. */
 
       for (unsigned idx = 0 ;  idx < op->argc ;  idx += 1) {
-	    symbol_value_t tmp;
 
 	    switch (op->argt[idx]) {
 		case OA_NONE:
@@ -1033,21 +1272,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  assert(opa->argv[idx].symb.idx == 0);
-		  tmp = sym_get_value(sym_codespace, opa->argv[idx].symb.text);
-		  code->cptr = tmp.num;
-		  if (code->cptr == 0) {
-			struct cresolv_list_s*res = (struct cresolv_list_s*)
-			      calloc(1, sizeof(struct cresolv_list_s));
-			res->cp = code;
-			res->lab = opa->argv[idx].symb.text;
-			res->next = cresolv_llist;
-			cresolv_llist = res;
-
-		  } else {
-
-			free(opa->argv[idx].symb.text);
-		  }
-
+		  code_label_lookup(code, opa->argv[idx].symb.text);
 		  break;
 
 		case OA_FUNC_PTR:
@@ -1059,20 +1284,9 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  tmp = sym_get_value(sym_functors, opa->argv[idx].symb.text);
-		  if (tmp.ptr == 0) {
-			struct cresolv_list_s*res = new struct cresolv_list_s;
-			res->cp  = code;
-			res->lab = opa->argv[idx].symb.text;
-			res->idx = opa->argv[idx].symb.idx;
-			res->next = cresolv_flist;
-			cresolv_flist = res;
-		  } else {
-			vvp_fvector_t v = (vvp_fvector_t) tmp.ptr;
-			code->iptr = 
-			      vvp_fvector_get(v, opa->argv[idx].symb.idx);
-			free(opa->argv[idx].symb.text);
-		  }
+		  code_functor_lookup(code, 
+				      opa->argv[idx].symb.text,
+				      opa->argv[idx].symb.idx);
 		  break;
 
 		case OA_NUMBER:
@@ -1120,25 +1334,16 @@ void compile_codelabel(char*label)
 
 void compile_disable(char*label, struct symb_s symb)
 {
+      if (label) 
+	    compile_codelabel(label);
+
       vvp_cpoint_t ptr = codespace_allocate();
-
-	/* First, I can give the label a value that is the current
-	   codespace pointer. Don't need the text of the label after
-	   this is done. */
-      if (label) {
-	    symbol_value_t val;
-	    val.num = ptr;
-	    sym_set_value(sym_codespace, label, val);
-      }
-
 
 	/* Fill in the basics of the %disable in the instruction. */
       vvp_code_t code = codespace_index(ptr);
       code->opcode = of_DISABLE;
 
       compile_vpi_lookup(&code->handle, symb.text);
-
-      free(label);
 }
 
 /*
@@ -1149,17 +1354,10 @@ void compile_disable(char*label, struct symb_s symb)
  */
 void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 {
-      symbol_value_t tmp;
-      vvp_cpoint_t ptr = codespace_allocate();
+      if (label) 
+	    compile_codelabel(label);
 
-	/* First, I can give the label a value that is the current
-	   codespace pointer. Don't need the text of the label after
-	   this is done. */
-      if (label) {
-	    symbol_value_t val;
-	    val.num = ptr;
-	    sym_set_value(sym_codespace, label, val);
-      }
+      vvp_cpoint_t ptr = codespace_allocate();
 
 	/* Fill in the basics of the %fork in the instruction. */
       vvp_code_t code = codespace_index(ptr);
@@ -1167,37 +1365,18 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       code->fork = new struct fork_extend;
 
 	/* Figure out the target PC. */
-      tmp = sym_get_value(sym_codespace, dest.text);
-      code->fork->cptr = tmp.num;
-      if (code->fork->cptr == 0) {
-	    struct cresolv_list_s*res = new cresolv_list_s;
-	    res->cp = code;
-	    res->lab = dest.text;
-	    res->next = cresolv_llist;
-	    cresolv_llist = res;
-	    dest.text = 0;
-      }
+      code_label_lookup(code, dest.text);
 
 	/* Figure out the target SCOPE. */
       compile_vpi_lookup((vpiHandle*)&code->fork->scope, scope.text);
-      
-      free(label);
-      free(dest.text);
 }
 
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 {
-      vvp_cpoint_t ptr = codespace_allocate();
+      if (label)
+	    compile_codelabel(label);
 
-	/* First, I can give the label a value that is the current
-	   codespace pointer. Don't need the text of the label after
-	   this is done. */
-      if (label) {
-	    symbol_value_t val;
-	    val.num = ptr;
-	    sym_set_value(sym_codespace, label, val);
-	    free(label);
-      }
+      vvp_cpoint_t ptr = codespace_allocate();
 
 	/* Create an instruction in the code space. */
       vvp_code_t code = codespace_index(ptr);
@@ -1217,17 +1396,10 @@ void compile_vpi_func_call(char*label, char*name,
 			   unsigned vbit, unsigned vwid,
 			   unsigned argc, vpiHandle*argv)
 {
+      if (label) 
+	    compile_codelabel(label);
+      
       vvp_cpoint_t ptr = codespace_allocate();
-
-	/* First, I can give the label a value that is the current
-	   codespace pointer. Don't need the text of the label after
-	   this is done. */
-      if (label) {
-	    symbol_value_t val;
-	    val.num = ptr;
-	    sym_set_value(sym_codespace, label, val);
-	    free(label);
-      }
 
 	/* Create an instruction in the code space. */
       vvp_code_t code = codespace_index(ptr);
@@ -1260,51 +1432,6 @@ void compile_thread(char*start_sym)
       vthread_t thr = vthread_new(pc, vpip_peek_current_scope());
       schedule_vthread(thr, 0);
       free(start_sym);
-}
-
-
-struct postponed_handles_list_s {
-      struct postponed_handles_list_s*next;
-      vpiHandle *handle;
-      char*name;
-};
-
-static struct postponed_handles_list_s *late_handles;
-
-void compile_vpi_lookup(vpiHandle *handle, char*label)
-{
-      symbol_value_t val;
-
-      val = sym_get_value(sym_vpi, label);
-      if (!val.ptr) {
-	    // check for thread vector  T<base,wid>
-	    unsigned base, wid;
-	    unsigned n;
-	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
-		&& n == strlen(label)) {
-		  val.ptr = vpip_make_vthr_vector(base, wid);
-		  sym_set_value(sym_vpi, label, val);
-	    }
-      }
-
-      if (!val.ptr) {
-	    // check for memory word  M<mem,base,wid>
-      }
-
-      if (!val.ptr) {
-	    struct postponed_handles_list_s*res = 
-		  (struct postponed_handles_list_s*)
-		  malloc(sizeof(struct postponed_handles_list_s));
-	    
-	    res->handle  = handle;
-	    res->name    = label;
-	    res->next    = late_handles;
-	    late_handles = res;
-      } else {
-	    free(label);
-      }
-
-      *handle = (vpiHandle) val.ptr;
 }
 
 /*
@@ -1341,95 +1468,95 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       free(label);
 }
 
+static vvp_ipoint_t make_const_functor(unsigned val, 
+				       unsigned str0, 
+				       unsigned str1)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+
+      obj->table   = ft_var;
+      obj->ival    = val;
+      obj->oval    = val;
+      obj->odrive0 = str0;
+      obj->odrive1 = str1;
+      obj->mode    = 0;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
+      schedule_functor(fdx, 0);
+      return fdx;
+}
+
 void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
-      vvp_ipoint_t fdx = functor_allocate(wid);
 
-      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
+      vvp_fvector_t vec = vvp_fvector_new(wid);
       define_fvector_symbol(label, vec);
-
-	/* Allocate all the functors for the net itself. */
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    functor_t obj = functor_index(ipoint_index(fdx,idx));
-	    obj->table = ft_var;
-	    obj->ival  = 0x02;
-	    obj->oval  = 0x02;
-	    obj->odrive0 = 6;
-	    obj->odrive1 = 6;
-	    obj->mode  = 0;
-#if defined(WITH_DEBUG)
-	    obj->breakpoint = 0;
-#endif
-      }
 
       assert(argc == wid);
 
-	/* Connect port[0] of each of the net functors to the output
-	   of the addressed object. */
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
-	    functor_t obj = functor_index(ptr);
 
-	      /* Skip unconnected nets. */
+	    vvp_ipoint_t ipt = 0;
+
 	    if (argv[idx].text == 0) {
-		  obj->oval = 3;
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(3,6,6);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<0>") == 0) {
-		  obj->oval = 0;
-		  schedule_functor(ptr, 0);
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(0,6,6);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<su0>") == 0) {
-		  obj->oval = 0;
-		  obj->odrive0 = 7;
-		  obj->odrive1 = 7;
-		  schedule_functor(ptr, 0);
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(0,7,7);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
-		  obj->oval = 1;
-		  schedule_functor(ptr, 0);
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(1,6,6);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<su1>") == 0) {
-		  obj->oval = 1;
-		  obj->odrive0 = 7;
-		  obj->odrive1 = 7;
-		  schedule_functor(ptr, 0);
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(1,7,7);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<x>") == 0) {
-		  obj->oval = 2;
-		  continue;
-	    }
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(2,6,6);
+		  ipt = cf;
+	    } else
 
 	    if (strcmp(argv[idx].text, "C<z>") == 0) {
-		  obj->oval = 3;
-		  schedule_functor(ptr, 0);
+		  static vvp_ipoint_t cf=0;
+		  if (!cf) 
+			cf = make_const_functor(3,6,6);
+		  ipt = cf;
+	    } else {
+			
+		  postpone_fvector_input(vec, idx, 
+					 argv[idx].text, argv[idx].idx);
 		  continue;
 	    }
 
-	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    if (val.ptr) {
-		  vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
-		  functor_t src =
-			functor_index(vvp_fvector_get(vec, argv[idx].idx));
-		  obj->port[0] = src->out;
-		  src->out = ptr;
-
-	    } else {
-		  postpone_functor_input(ipoint_make(ptr, 0),
-					 argv[idx].text,
-					 argv[idx].idx);
-	    }
+	    vvp_fvector_set(vec, idx, ipt);
       }
 
 	/* Make the vpiHandle for the reg. */
@@ -1439,119 +1566,6 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
       free(label);
       free(argv);
-}
-
-/*
- * When parsing is otherwise complete, this function is called to do
- * the final stuff. Clean up deferred linking here.
- */
-void compile_cleanup(void)
-{
-      struct resolv_list_s*tmp_list = resolv_list;
-      resolv_list = 0;
-
-      while (tmp_list) {
-	    struct resolv_list_s*res = tmp_list;
-	    tmp_list = res->next;
-
-	      /* Get the addressed functor object and select the input
-		 port that needs resolution. */
-	    functor_t obj = functor_index(res->port);
-	    unsigned idx = ipoint_port(res->port);
-
-	      /* Try again to look up the symbol that was not defined
-		 the first time around. */
-	    symbol_value_t val = sym_get_value(sym_functors, res->source);
-	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
-
-	    if (vec != 0) {
-		    /* The symbol is defined, link the functor input
-		       to the resolved output. */
-
-		  vvp_ipoint_t tmp = vvp_fvector_get(vec, res->idx);
-		  functor_t fport = functor_index(tmp);
-		  obj->port[idx] = fport->out;
-		  fport->out = res->port;
-
-		  free(res->source);
-		  free(res);
-
-	    } else {
-		    /* Still not resolved. put back into the list. */
-		  fprintf(stderr, "unresolved functor reference: %s\n",
-			  res->source);
-		  res->next = resolv_list;
-		  resolv_list = res;
-		  compile_errors += 1;
-	    }
-      }
-
-      struct cresolv_list_s*tmp_clist = cresolv_llist;
-      cresolv_llist = 0;
-
-      while (tmp_clist) {
-	    struct cresolv_list_s*res = tmp_clist;
-	    tmp_clist = res->next;
-
-	    symbol_value_t val = sym_get_value(sym_codespace, res->lab);
-	    vvp_cpoint_t tmp = val.num;
-
-	    if (tmp != 0) {
-		    /* Resolved the reference. If this is a %fork,
-		       then handle it slightly differently. */
-		  if (res->cp->opcode == of_FORK)
-			res->cp->fork->cptr = tmp;
-		  else
-			res->cp->cptr = tmp;
-		  free(res->lab);
-		  
-	    } else {
-		  compile_errors += 1;
-		  fprintf(stderr, "unresolved code label: %s\n", res->lab);
-		  res->next = cresolv_llist;
-		  cresolv_llist = res;
-	    }
-      }
-
-      tmp_clist = cresolv_flist;
-      cresolv_flist = 0;
-
-      while (tmp_clist) {
-	    struct cresolv_list_s*res = tmp_clist;
-	    tmp_clist = res->next;
-
-	    symbol_value_t val = sym_get_value(sym_functors, res->lab);
-	    vvp_fvector_t vec = (vvp_fvector_t) val.ptr;
-
-	    if (vec != 0) {
-		  res->cp->iptr = vvp_fvector_get(vec, res->idx);
-		  free(res->lab);
-		  
-	    } else {
-		  compile_errors += 1;
-		  fprintf(stderr, "unresolved code reference "
-			  "to functor: %s\n", res->lab);
-		  res->next = cresolv_llist;
-		  cresolv_flist = res;
-	    }
-      }
-
-      struct postponed_handles_list_s *lhandle = late_handles;
-      late_handles = 0x0;
-      while (lhandle) {
-	    struct postponed_handles_list_s *tmp = lhandle;
-	    lhandle = lhandle->next;
-	    compile_vpi_lookup(tmp->handle, tmp->name);
-	    free(tmp);
-      }
-      lhandle = late_handles;
-      while (lhandle) {
-	    compile_errors += 1;
-	    fprintf(stderr, 
-		    "unresolved vpi name lookup: %s\n",
-		    lhandle->name);
-	    lhandle = lhandle->next;
-      }
 }
 
 /*
@@ -1573,6 +1587,11 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.94  2001/08/09 19:38:23  steve
+ *  Nets (wires) do not use their own functors.
+ *  Modifications to propagation of values.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.93  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

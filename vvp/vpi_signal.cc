@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.22 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.23 2001/08/09 19:38:23 steve Exp $"
 #endif
 
 /*
@@ -340,6 +340,17 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
  * %assign instructions and causes all the side-effects that the
  * equivilent instruction would cause.
  */
+
+static void functor_poke(struct __vpiSignal*rfp, unsigned idx, 
+			 unsigned val, unsigned str)
+{
+      vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
+      functor_t fu = functor_index(ptr);
+      fu->oval = val;
+      fu->ostr = str;
+      functor_propagate(ptr);
+}
+
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 				  p_vpi_time when, int flags)
 {
@@ -366,11 +377,10 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 			      "too large.\n", wid);
 		      assert(0);
 		}
-
+		
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      functor_set(vvp_fvector_get(rfp->bits,idx), val&1,
-				  (val&1)? St1 : St0, true);
+		      functor_poke(rfp, idx, val&1, (val&1)? St1 : St0);
 		      val >>= 1;
 		}
 		break;
@@ -379,16 +389,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  functor_set(vvp_fvector_get(rfp->bits,0), 0, St0, true);
+		  functor_poke(rfp, 0, 0, St0);
 		  break;
 		case vpi1:
-		  functor_set(vvp_fvector_get(rfp->bits,0), 1, St1, true);
+		  functor_poke(rfp, 0, 1, St1);
 		  break;
 		case vpiX:
-		  functor_set(vvp_fvector_get(rfp->bits,0), 2, StX, true);
+		  functor_poke(rfp, 0, 2, StX);
 		  break;
 		case vpiZ:
-		  functor_set(vvp_fvector_get(rfp->bits,0), 3, HiZ, true);
+		  functor_poke(rfp, 0, 3, HiZ);
 		  break;
 		default:
 		  assert(0);
@@ -404,20 +414,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		      int bit = (aval&1) | ((bval<<1)&2);
 		      switch (bit) {
 			  case 0: /* zero */
-			    functor_set(vvp_fvector_get(rfp->bits,idx),
-					0, St0, true);
+			    functor_poke(rfp,idx, 0, St0);
 			    break;
 			  case 1: /* one */
-			    functor_set(vvp_fvector_get(rfp->bits,idx),
-					1, St1, true);
+			    functor_poke(rfp,idx, 1, St1);
 			    break;
 			  case 2: /* z */
-			    functor_set(vvp_fvector_get(rfp->bits,idx),
-					3, HiZ, true);
+			    functor_poke(rfp,idx, 3, HiZ);
 			    break;
 			  case 3: /* x */
-			    functor_set(vvp_fvector_get(rfp->bits,idx),
-					2, StX, true);
+			    functor_poke(rfp,idx, 2, StX);
 			    break;
 		      }
 		      aval >>= 1;
@@ -490,6 +496,11 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.23  2001/08/09 19:38:23  steve
+ *  Nets (wires) do not use their own functors.
+ *  Modifications to propagation of values.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.22  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

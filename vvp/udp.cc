@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.8 2001/07/24 01:44:50 steve Exp $"
+#ident "$Id: udp.cc,v 1.9 2001/08/09 19:38:23 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -52,11 +52,6 @@ void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
       fp->oval = out;
       schedule_functor(ptr, 0);
     }
-}
-
-unsigned vvp_udp_s::get(vvp_ipoint_t i, functor_t f)
-{
-      assert(0);
 }
 
 
@@ -366,6 +361,11 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.9  2001/08/09 19:38:23  steve
+ *  Nets (wires) do not use their own functors.
+ *  Modifications to propagation of values.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.8  2001/07/24 01:44:50  steve
  *  Fast UDP tables (Stephan Boettcher)
  *

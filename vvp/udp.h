@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.8 2001/07/24 01:44:50 steve Exp $"
+#ident "$Id: udp.h,v 1.9 2001/08/09 19:38:23 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -31,7 +31,6 @@ typedef struct udp_table_entry_s *udp_table_entry_t;
 class vvp_udp_s : public vvp_fobj_s
 {
     public:
-      unsigned get(vvp_ipoint_t i, functor_t f);
       void set(vvp_ipoint_t i, functor_t f, bool push);
 
     public:
@@ -55,6 +54,11 @@ struct vvp_udp_s *udp_find(char *label);
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.9  2001/08/09 19:38:23  steve
+ *  Nets (wires) do not use their own functors.
+ *  Modifications to propagation of values.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.8  2001/07/24 01:44:50  steve
  *  Fast UDP tables (Stephan Boettcher)
  *
