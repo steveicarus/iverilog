@@ -17,11 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.34 2003/02/07 02:45:05 steve Exp $"
+#ident "$Id: main.cc,v 1.35 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "config.h"
-# include  "debug.h"
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "schedule.h"
@@ -123,7 +122,6 @@ int main(int argc, char*argv[])
       int opt;
       unsigned flag_errors = 0;
       const char*design_path = 0;
-      bool debug_flag = false;
       struct rusage cycles[3];
       const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
@@ -144,16 +142,10 @@ int main(int argc, char*argv[])
 #endif
 
       while ((opt = getopt(argc, argv, "+dhl:M:m:v")) != EOF) switch (opt) {
-	  case 'd':
-	    debug_flag = true;
-	    break;
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
                    "Options:\n"
-#if defined(WITH_DEBUG)
-                   " -d             Enter the debugger.\n"
-#endif
                    " -h             Print this help message.\n"
                    " -l file        Logfile, '-' for <stderr>\n"
                    " -M path        VPI module directory\n"
@@ -267,10 +259,6 @@ int main(int argc, char*argv[])
 	    }
       }
        
-#if defined(WITH_DEBUG)
-      if (debug_flag)
-	    breakpoint();
-#endif
 
       schedule_simulate();
 
@@ -297,6 +285,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.35  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.34  2003/02/07 02:45:05  steve
  *  Mke getopt ignore options after the file name.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.7 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: resolv.h,v 1.8 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -39,9 +39,6 @@ class resolv_functor_s: public functor_s {
 
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
-#ifdef WITH_DEBUG
-      void debug_print(vvp_ipoint_t fnc);
-#endif
 
     private:
       unsigned char istr[4];
@@ -50,6 +47,9 @@ class resolv_functor_s: public functor_s {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.8  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.7  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,12 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.41 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: functor.cc,v 1.42 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "statistics.h"
-# include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
 # include  <stdlib.h>
@@ -131,9 +130,6 @@ functor_s::functor_s()
       ostr = StX;
       cstr = StX;
       inhibit = 0;
-#if defined(WITH_DEBUG)
-      break_flag = 0;
-#endif
 }
 
 functor_s::~functor_s()
@@ -155,10 +151,6 @@ void functor_s::propagate(unsigned val, unsigned str, bool push)
 	    idx = idxp->port[ipoint_port(idx)];
       }
 
-#if defined(WITH_DEBUG)
-      if (break_flag)
-	    breakpoint();
-#endif
 }
 
 void functor_s::put_ostr(unsigned val, unsigned str, bool push)
@@ -227,32 +219,11 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 edge_inputs_functor_s::~edge_inputs_functor_s()
 {}
 
-#ifdef WITH_DEBUG
-# include  <stdio.h>
-static const char bitval_tab[4] = { '0', '1', 'x', 'z' };
-
-void functor_s::debug_print(vvp_ipoint_t fnc)
-{
-      printf("0x%x: out pointer  =", fnc);
-      vvp_ipoint_t cur = out;
-      while (cur) {
-	    printf(" 0x%x", cur);
-	    functor_t tmp = functor_index(cur);
-	    cur = tmp->port[cur&3];
-      }
-      printf("\n");
-      printf("0x%x: input values = %c %c %c %c\n", fnc,
-	     bitval_tab[ival&3],
-	     bitval_tab[(ival>>2)&3],
-	     bitval_tab[(ival>>4)&3],
-	     bitval_tab[(ival>>6)&3]);
-      printf("0x%x: out value    = %c (%02x)\n", fnc,
-	     bitval_tab[get_oval()], get_ostr());
-}
-#endif
-
 /*
  * $Log: functor.cc,v $
+ * Revision 1.42  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.41  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
@@ -267,35 +238,5 @@ void functor_s::debug_print(vvp_ipoint_t fnc)
  *
  * Revision 1.37  2001/12/18 05:32:11  steve
  *  Improved functor debug dumps.
- *
- * Revision 1.36  2001/12/14 01:59:28  steve
- *  Better variable names for functor chunks.
- *
- * Revision 1.35  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.34  2001/11/16 04:22:27  steve
- *  include stdlib.h for portability.
- *
- * Revision 1.33  2001/11/10 18:07:11  steve
- *  Runtime support for functor delays. (Stephan Boettcher)
- *
- * Revision 1.32  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.31  2001/11/04 05:03:21  steve
- *  MacOSX 10.1 updates.
- *
- * Revision 1.30  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.29  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.28  2001/10/27 03:43:56  steve
- *  Propagate functor push, to make assign better.
  */
 

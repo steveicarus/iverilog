@@ -17,12 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.104 2003/02/27 20:36:29 steve Exp $"
+#ident "$Id: vthread.cc,v 1.105 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "codes.h"
-# include  "debug.h"
 # include  "schedule.h"
 # include  "functor.h"
 # include  "ufunc.h"
@@ -586,9 +585,6 @@ bool of_BLEND(vthread_t thr, vvp_code_t cp)
 
 bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
 {
-#if defined(WITH_DEBUG)
-      breakpoint();
-#endif
       return true;
 }
 
@@ -2679,6 +2675,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.105  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.104  2003/02/27 20:36:29  steve
  *  Add the cvt/vr instruction.
  *

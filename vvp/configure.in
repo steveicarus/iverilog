@@ -29,9 +29,6 @@ fi
 
 AC_PROG_INSTALL
 
-AC_ARG_ENABLE(vvp-debug, vvp-debug -- interactive debugger for VVP runtime.,
-	AC_DEFINE(ENABLE_VVP_DEBUG))
-
 AC_CHECK_HEADERS(getopt.h malloc.h)
 
 AC_CHECK_SIZEOF(unsigned long long)

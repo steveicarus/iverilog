@@ -19,14 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.49 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: functor.h,v 1.50 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "pointers.h"
 # include  "delay.h"
-#ifdef ENABLE_VVP_DEBUG
-# include  "debug.h"
-#endif
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -182,13 +179,6 @@ struct functor_s {
       unsigned inhibit    : 1;
 
     public:
-#if defined(WITH_DEBUG)
-        /* True if this functor triggers a breakpoint. */
-      unsigned break_flag : 1;
-      virtual void debug_print(vvp_ipoint_t fnc);
-#endif
-
-    public:
       virtual void set(vvp_ipoint_t ipt, bool push, 
 		       unsigned val, unsigned str = 0) = 0;
 
@@ -266,11 +256,6 @@ void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
 {
       functor_t fp = functor_index(ptr);
       fp->set(ptr, push, val, str);
-
-#if defined(WITH_DEBUG)
-      if (fp->break_flag)
-	    breakpoint();
-#endif
 }
 
 /*
@@ -352,6 +337,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.50  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.49  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.156 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: compile.cc,v 1.157 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -710,14 +710,8 @@ void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
       fprintf(stderr, "internal error: Set value to const_functor 0x%x\n", p);
       fprintf(stderr, "              : Value is %u, trying to set %u\n",
 	      oval, val);
-
-#if defined(WITH_DEBUG)
-      debug_print(p);
-      breakpoint();
-#else
       fprintf(stderr, "              : I'm driving functor 0x%x\n", out);
       assert(0);
-#endif
 }
 
 
@@ -1533,6 +1527,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.157  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.156  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

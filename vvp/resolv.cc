@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.16 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: resolv.cc,v 1.17 2003/03/13 04:36:57 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -188,22 +188,12 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
       put_ostr(val, sval, false);
 }
 
-#ifdef WITH_DEBUG
-# include  <stdio.h>
-
-static const char bitval_tab[4] = { '0', '1', 'x', 'z' };
-void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
-{
-      printf("0x%x: Resolver tied to %02x\n", fnc, hiz_);
-      printf("0x%x: input strengths = %02x %02x %02x %02x\n", fnc,
-	     istr[0], istr[1], istr[2], istr[3]);
-      functor_s::debug_print(fnc);
-}
-#endif
-
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.17  2003/03/13 04:36:57  steve
+ *  Remove the obsolete functor delete functions.
+ *
  * Revision 1.16  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
@@ -223,40 +213,5 @@ void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
  *
  * Revision 1.11  2001/12/15 02:11:51  steve
  *  Give tri0 and tri1 their proper strengths.
- *
- * Revision 1.10  2001/12/15 01:54:39  steve
- *  Support tri0 and tri1 resolvers.
- *
- * Revision 1.9  2001/12/06 03:31:25  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.8  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.7  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.6  2001/10/14 01:45:11  steve
- *  Propogate strength-only changes from resolver.
- *
- * Revision 1.5  2001/07/21 02:34:39  steve
- *  Fix blending of ambiguous pairs.
- *
- * Revision 1.4  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- * Revision 1.3  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.2  2001/05/12 20:38:06  steve
- *  A resolver that understands some simple strengths.
- *
- * Revision 1.1  2001/05/09 02:53:53  steve
- *  Implement the .resolv syntax.
- *
  */
 
