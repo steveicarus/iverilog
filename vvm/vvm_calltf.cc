@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_calltf.cc,v 1.11 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.12 2001/01/14 17:12:59 steve Exp $"
 #endif
 
 # include  "machine.h"
@@ -31,7 +31,7 @@
 # include  <stdarg.h>
 # include  <malloc.h>
 # include  <stdio.h>
-# include  <dlfcn.h>
+# include  "ivl_dlfcn.h"
 
 # define MAX_PATHLEN 1024
 
@@ -63,12 +63,12 @@ typedef void (*vlog_startup_routines_t)(void);
 
 void vvm_load_vpi_module(const char*name)
 {
-      void*mod = 0;
+      ivl_dll_t mod = 0;
       const char*path = getenv("VPI_MODULE_PATH");
       if (path == 0) path = module_path;
 
       if ((path == 0) || (strchr(name, '/'))) {
-	  mod = dlopen(name, RTLD_NOW);
+	  mod = ivl_dlopen(name);
 	  if (mod == 0) {
 		cerr << name << ": " << dlerror() << endl;
 		return;
@@ -90,7 +90,7 @@ void vvm_load_vpi_module(const char*name)
 		  dest[n+1] = 0;
 		  strcat(dest, name);
 
-		  mod = dlopen(dest, RTLD_NOW);
+		  mod = ivl_dlopen(dest);
 		  if (mod) break;
 	    }
       }
@@ -100,12 +100,12 @@ void vvm_load_vpi_module(const char*name)
 	    return;
       }
 
-      void*table = dlsym(mod, LU "vlog_startup_routines" TU);
+      void*table = ivl_dlsym(mod, LU "vlog_startup_routines" TU);
       vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
       if (routines == 0) {
 	    cerr << name << ": Unable to locate the vlog_startup_routines"
 		 " table." << endl;
-	    dlclose(mod);
+	    ivl_dlclose(mod);
 	    return;
       }
 
@@ -117,6 +117,9 @@ void vvm_load_vpi_module(const char*name)
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.12  2001/01/14 17:12:59  steve
+ *  possible HP/UX portability support.
+ *
  * Revision 1.11  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *
@@ -131,28 +134,5 @@ void vvm_load_vpi_module(const char*name)
  *  persistent, rewrite the simulation scheduler
  *  in C (to interface with VPI) and add VPI support
  *  for callbacks.
- *
- * Revision 1.7  1999/10/10 14:57:38  steve
- *  Handle display of odd octal/hex widths (Eric Ardoom)
- *
- * Revision 1.6  1999/09/29 01:41:18  steve
- *  Support the $write system task, and have the
- *  vpi_scan function free iterators as needed.
- *
- * Revision 1.5  1999/09/13 03:08:10  steve
- *  fix vpiHexStrVal dumping of digits to strings.
- *
- * Revision 1.4  1999/08/19 02:51:11  steve
- *  Add vpi_sim_control
- *
- * Revision 1.3  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.2  1999/05/31 15:46:36  steve
- *  Handle time in more places.
- *
- * Revision 1.1  1998/11/09 23:44:10  steve
- *  Add vvm library.
- *
  */
 
