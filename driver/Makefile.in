@@ -3,9 +3,7 @@
 #    and/or modify it in source code form under the terms of the GNU
 #    Library General Public License as published by the Free Software
 #    Foundation; either version 2 of the License, or (at your option)
-#    any later version. In order to redistribute the software in
-#    binary form, you will need a Picture Elements Binary Software
-#    License.
+#    any later version.
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,12 +16,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.15 2002/08/10 22:36:59 steve Exp $"
+#ident "$Id: Makefile.in,v 1.16 2002/12/08 03:06:30 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.6
+VERSION = 0.7
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
