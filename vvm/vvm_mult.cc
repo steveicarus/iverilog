@@ -17,16 +17,72 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_mult.cc,v 1.5 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_mult.cc,v 1.6 2000/04/21 02:30:40 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
 # include  <assert.h>
 
+
+static void add_into_result(vpip_bit_t *r, unsigned nr,
+			    const vpip_bit_t *a, unsigned na) {
+      unsigned idx;
+
+      vpip_bit_t carry_bit = St0;
+
+      for (idx = 0; idx < nr && idx < na; idx++) {
+	    vpip_bit_t val;
+
+	    val = B_XOR(B_XOR(a[idx], r[idx]), carry_bit);
+            carry_bit = B_OR(B_OR(B_AND(a[idx], r[idx]),
+                                  B_AND(a[idx], carry_bit)),
+                             B_AND(r[idx], carry_bit));
+            r[idx] = val;
+      }
+}
+
+static void vvm_binop_mult_generic(vpip_bit_t*r, unsigned nr,
+				   const vpip_bit_t*a, unsigned na,
+				   const vpip_bit_t*b, unsigned nb) {
+      unsigned idx;
+
+      for (idx = 0 ;  idx < na ;  idx += 1) 
+           if (B_ISXZ(a[idx]))
+                 goto unknown_result;
+
+      for (idx = 0 ;  idx < nb ;  idx += 1)
+	    if (B_ISXZ(b[idx]))
+		  goto unknown_result;
+
+	// Start off initialized to 0...
+      for (idx = 0 ;  idx < nr ;  idx += 1)
+            r[idx] = St0;
+
+      for (idx = 0; idx < nb && idx < nr; idx++)
+            if (B_IS1(b[idx]))
+		  add_into_result(r+idx, nr-idx, a, na);
+
+      return;
+
+ unknown_result:
+      for (unsigned idx= 0 ;  idx < nr ;  idx += 1)
+	    r[idx] = StX;
+}
+
+
 void vvm_binop_mult(vpip_bit_t*r, unsigned nr,
 		    const vpip_bit_t*a, unsigned na,
 		    const vpip_bit_t*b, unsigned nb)
 {
+      if (nr > 8*sizeof(unsigned long) ||
+          na > 8*sizeof(unsigned long) ||
+	  nb > 8*sizeof(unsigned long)) {
+	      // If we can't use the fast routine, default to 
+	      // the slow one...
+	    vvm_binop_mult_generic(r, nr, a, na, b, nb);
+	    return;
+      }
+
       assert(nr <= 8*sizeof(unsigned long));
       assert(na <= 8*sizeof(unsigned long));
       assert(nb <= 8*sizeof(unsigned long));
@@ -130,6 +186,9 @@ void vvm_mult::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_mult.cc,v $
+ * Revision 1.6  2000/04/21 02:30:40  steve
+ *  Generic multiplier (Chris Lattner)
+ *
  * Revision 1.5  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
