@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.30 2002/02/27 05:46:33 steve Exp $"
+#ident "$Id: lexor.lex,v 1.31 2002/03/01 05:42:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "parse.h"
 # include  <string.h>
+# include  <assert.h>
 %}
 
 %%
@@ -38,6 +39,7 @@
   /* A label is any non-blank text that appears left justified. */
 ^[.$_a-zA-Z\\][.$_a-zA-Z\\0-9<>/]* {
       yylval.text = strdup(yytext);
+      assert(yylval.text);
       return T_LABEL; }
 
   /* String tokens are parsed here. Return as the token value the
@@ -45,11 +47,13 @@
 \"([^\"\\]|\\.)*\" {
       yytext[strlen(yytext)-1] = 0;
       yylval.text = strdup(yytext+1);
+      assert(yylval.text);
       return T_STRING; }
 
 [1-9][0-9]*"'b"[01xz]+ {
       yylval.vect.idx = strtoul(yytext, 0, 10);
       yylval.vect.text = (char*)malloc(yylval.vect.idx + 1);
+      assert(yylval.vect.text);
 
       const char*bits = strchr(yytext, 'b');
       bits += 1;
@@ -104,6 +108,7 @@
 
 "%"[.$_/a-zA-Z0-9]+ {
       yylval.text = strdup(yytext);
+      assert(yylval.text);
       return T_INSTR; }
 
 [0-9][0-9]* {
@@ -120,12 +125,14 @@
      labels so the rule must match a string that a label would match. */
 [.$_a-zA-Z\\][.$_a-zA-Z\\0-9<>/]* {
       yylval.text = strdup(yytext);
+      assert(yylval.text);
       return T_SYMBOL; }
 
   /* Symbols may include komma `,' in certain constructs */
 
 [A-Z]"<"[.$_a-zA-Z0-9/,]*">" {
       yylval.text = strdup(yytext);
+      assert(yylval.text);
       return T_SYMBOL; }
 
 
@@ -151,6 +158,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.31  2002/03/01 05:42:50  steve
+ *  out-of-memory asserts.
+ *
  * Revision 1.30  2002/02/27 05:46:33  steve
  *  carriage return is white space.
  *
