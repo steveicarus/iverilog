@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.21 2002/11/02 01:10:49 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.22 2002/11/21 18:15:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -170,16 +170,20 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	    verinum*vl = lsb_->eval_const(des, scope);
 	    if (vl == 0) {
 		  cerr << lsb_->get_line() << ": error: "
-			"Part select expressions must be constant: "
-		       << *lsb_;
+			"Part select expressions must be constant."
+		       << endl;
+		  cerr << lsb_->get_line() << ":      : This lsb expression "
+			"violates the rule: " << *lsb_ << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 	    verinum*vm = msb_->eval_const(des, scope);
-	    if (vl == 0) {
+	    if (vm == 0) {
 		  cerr << msb_->get_line() << ": error: "
-			"Part select expressions must be constant: "
-		       << *msb_;
+			"Part select expressions must be constant."
+		       << endl;
+		  cerr << msb_->get_line() << ":      : This msb expression "
+			"violates the rule: " << *msb_ << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -314,6 +318,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.22  2002/11/21 18:15:40  steve
+ *  Fix const test of msb in assignment l-values.
+ *
  * Revision 1.21  2002/11/02 01:10:49  steve
  *  Detect memories without work index in l-value.
  *
