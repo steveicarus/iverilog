@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.229 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.230 2002/01/22 01:40:04 steve Exp $"
 #endif
 
 /*
@@ -2467,11 +2467,12 @@ class NetEMemory  : public NetExpr {
       NetEMemory(NetMemory*mem, NetExpr*idx =0);
       virtual ~NetEMemory();
 
-      const string& name () const { return mem_->name(); }
-      const NetExpr* index() const { return idx_; }
+      const string& name () const;
+      const NetExpr* index() const;
 
       virtual bool set_width(unsigned);
 
+      NetExpr* eval_tree();
       virtual NetEMemory*dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2864,6 +2865,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.230  2002/01/22 01:40:04  steve
+ *  Precalculate constant results of memory index expressions.
+ *
  * Revision 1.229  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

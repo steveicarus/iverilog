@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.179 2001/12/31 00:08:14 steve Exp $"
+#ident "$Id: netlist.cc,v 1.180 2002/01/22 01:40:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2084,6 +2084,16 @@ NetEMemory::~NetEMemory()
 {
 }
 
+const string& NetEMemory::name() const
+{
+      return mem_->name();
+}
+
+const NetExpr* NetEMemory::index() const
+{
+      return idx_;
+}
+
 NetMemory::NetMemory(NetScope*sc, const string&n, long w, long s, long e)
 : name_(n), width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
 {
@@ -2405,6 +2415,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.180  2002/01/22 01:40:04  steve
+ *  Precalculate constant results of memory index expressions.
+ *
  * Revision 1.179  2001/12/31 00:08:14  steve
  *  Support $signed cast of expressions.
  *
