@@ -97,7 +97,14 @@ take a tea break.
 * Install Icarus Verilog
 
 If the compile ran OK, then next you install Icarus Verilog in the
-directory you have chosen. This is how:
+directory you have chosen. This is a little tricky, however, because
+the tools like "strip", "ranlib" and etc. that come with Mingw do not
+understand the Cygwin style paths that are in the makefile. To get
+around that problem, first remove the Mingw from your path before
+doing the next step. An easy way to do that is to open a fresh Cygwin
+window.
+
+When you are ready, install like this:
 
 	$ make install
 
