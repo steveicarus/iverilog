@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2003/02/21 03:40:35 $" Version "$Date: 2003/02/21 03:40:35 $"
+.TH vvp 1 "$Date: 2003/03/06 20:04:42 $" Version "$Date: 2003/03/06 20:04:42 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -54,29 +54,35 @@ are instead passed on to the executed design, and are available via
 the \fI$test$plusargs\fP and \fI$value$plusargs\fP system functions.
 .PP
 Arguments that do not start with the plus(+) character are not
-available to the standard system tasks, but can still be accessed via
-PLI code via the \fIvpi_get_vlog_info\fP function. This means that
-vpi modules may use arguments that do not start with + and be assured
-that they do not interfere with user defined plus-args.
+available to the \fI$plusargs\fP system tasks, but can still be
+accessed via PLI code via the \fIvpi_get_vlog_info\fP function. This
+means that vpi modules may use arguments that do not start with + and
+be assured that they do not interfere with user defined plus-args.
 .PP
 There are a few extended arguments that are interpreted by the
-standard system module, which implements the standard system tasks and
-so is always included. These flags arguments are described here.
+standard system.vpi module, which implements the standard system tasks
+and so is always included. These arguments are described here.
 .TP 8
-.B -vcd
+.B -vcd\fR|\fP-vcd-none
 This extended argument sets the wave dump format to VCD. This is the
 default in the absence of any \fBIVERILOG_DUMPER\fP environment
 variable. The VCD dump files are large and ponderous, but are also
 maximally compatible with third party tools that read waveform dumps.
+.PP
+The \fB-vcd-none\fP variant actually suppresses all waveform
+output. This can make long simulations run faster.
 
 .TP 8
-.B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space
+.B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space\fR|\fP-lxt-none
 These extended arguments set the wave dump format to lxt, possibly with
 format optimizations. The \fB-lxt-space\fP flag sets the output
 format to lxt with full compression enabled. The resulting files are
 quite small. The \fB-lxt-speed\fP chooses the lxt compression mode
 that leads to the best execution time and the fastest read time, at
 the expense of some file size.
+.PP
+The \fB-lxt-none\fP variant actually suppresses all waveform
+output. This can make long simulations run faster.
 
 .SH ENVIRONMENT
 .PP
@@ -84,11 +90,12 @@ The vvp command also accepts some environment variables that control
 its behavior. These can be used to make semi-permanent changes.
 
 .TP 8
-.B IVERILOG_DUMPER=\fIlxt|vcd\fP
+.B IVERILOG_DUMPER=\fIlxt|vcd|none\fP
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
-gtkwave or compatible viewers.
+gtkwave or compatible viewers. It can also be used to suppress VCD
+output, a time-saver for regression tests.
 
 .SH INTERACTIVE MODE
 .PP

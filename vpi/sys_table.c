@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.18 2003/02/20 00:50:06 steve Exp $"
+#ident "$Id: sys_table.c,v 1.19 2003/03/06 20:04:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,6 +35,7 @@ extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_lxt_register();
+extern void sys_vcdoff_register();
 
 static void sys_lxt_or_vcd_register()
 {
@@ -71,8 +72,17 @@ static void sys_lxt_or_vcd_register()
 	    } else if (strcmp(vlog_info.argv[idx],"-lxt-speed") == 0) {
 		  dumper = "lxt";
 
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt-none") == 0) {
+		  dumper = "none";
+
 	    } else if (strcmp(vlog_info.argv[idx],"-vcd") == 0) {
 		  dumper = "vcd";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-vcd-off") == 0) {
+		  dumper = "none";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-vcd-none") == 0) {
+		  dumper = "none";
 
 	    }
       }
@@ -88,6 +98,12 @@ static void sys_lxt_or_vcd_register()
 
       else if (strcmp(dumper, "LXT") == 0)
 	    sys_lxt_register();
+
+      else if (strcmp(dumper, "none") == 0)
+	    sys_vcdoff_register();
+
+      else if (strcmp(dumper, "NONE") == 0)
+	    sys_vcdoff_register();
 
       else {
 	    fprintf(stderr, "system.vpi: Unknown dumper format: %s\n",
@@ -111,6 +127,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.19  2003/03/06 20:04:42  steve
+ *  Add means to suppress wveform output
+ *
  * Revision 1.18  2003/02/20 00:50:06  steve
  *  Update lxt_write implementation, and add compression control flags.
  *
