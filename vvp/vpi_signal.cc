@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.15 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.16 2001/06/21 22:54:12 steve Exp $"
 #endif
 
 /*
@@ -366,6 +366,58 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 }
 
 
+static struct __vpiSignal*by_bits_root = 0;
+static void by_bits_insert(struct __vpiSignal*sig)
+{
+      if (by_bits_root == 0) {
+	    by_bits_root = sig;
+	    return;
+      }
+
+      struct __vpiSignal*cur = by_bits_root;
+      for (;;) {
+	    if (cur->bits > sig->bits) {
+		  if (cur->by_bits[0] == 0) {
+			cur->by_bits[0] = sig;
+			break;
+		  }
+		  cur = cur->by_bits[0];
+
+	    } else {
+		  if (cur->by_bits[1] == 0) {
+			cur->by_bits[1] = sig;
+			break;
+		  }
+		  cur = cur->by_bits[1];
+	    }
+      }
+}
+
+struct __vpiSignal* vpip_sig_from_ptr(vvp_ipoint_t ptr)
+{
+      struct __vpiSignal*cur = by_bits_root;
+
+      while (cur) {
+	    if (ptr < cur->bits) {
+		  cur = cur->by_bits[0];
+		  continue;
+	    }
+
+	    unsigned wid = (cur->msb > cur->lsb)
+		  ? cur->msb - cur->lsb
+		  : cur->lsb - cur->msb;
+
+	    if (ptr > ipoint_index(cur->bits, wid)) {
+		  cur = cur->by_bits[1];
+		  continue;
+	    }
+
+	    return cur;
+      }
+
+      return cur;
+}
+
 static const struct __vpirt vpip_reg_rt = {
       vpiReg,
       signal_get,
@@ -401,8 +453,13 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
       obj->bits = base;
+      obj->callbacks = 0;
+      obj->by_bits[0] = 0;
+      obj->by_bits[1] = 0;
 
       obj->scope = vpip_peek_current_scope();
+
+      by_bits_insert(obj);
 
       return &obj->base;
 }
@@ -423,8 +480,13 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
       obj->bits = base;
+      obj->callbacks = 0;
+      obj->by_bits[0] = 0;
+      obj->by_bits[1] = 0;
 
       obj->scope = vpip_peek_current_scope();
+
+      by_bits_insert(obj);
 
       return &obj->base;
 }
@@ -432,6 +494,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.16  2001/06/21 22:54:12  steve
+ *  Support cbValueChange callbacks.
+ *
  * Revision 1.15  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

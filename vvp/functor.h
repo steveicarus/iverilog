@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.25 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: functor.h,v 1.26 2001/06/21 22:54:12 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -140,7 +140,8 @@ struct functor_s {
       unsigned odrive1    : 3;
 	/* Strength form of the output value. */
       unsigned ostr       : 8;
-
+	/* set this flag if there might be a waiting callback. */
+      unsigned callback   : 1;
 #if defined(WITH_DEBUG)
 	/* True if this functor triggers a breakpoint. */
       unsigned breakpoint : 1;
@@ -294,6 +295,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.26  2001/06/21 22:54:12  steve
+ *  Support cbValueChange callbacks.
+ *
  * Revision 1.25  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *

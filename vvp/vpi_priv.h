@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.16 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.17 2001/06/21 22:54:12 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -109,11 +109,31 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
 	/* The represented value is here. */
       vvp_ipoint_t bits;
+	/* Call these items on a callback event. */
+      struct __vpiCallback*callbacks;
+	/* Keep in a binary tree, ordered by bits member. */
+      struct __vpiSignal* by_bits[2];
 };
 extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_ipoint_t base);
 extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_ipoint_t base);
+extern struct __vpiSignal*vpip_sig_from_ptr(vvp_ipoint_t ptr);
+
+/*
+ * Callback handles are created when the VPI function registers a
+ * callback. The handle is stored by the run time, and it triggered
+ * when the run-time thing that it is waiting for happens.
+ */
+struct __vpiCallback {
+      struct __vpiHandle base;
+
+      struct t_cb_data cb_data;
+
+      struct __vpiCallback*next;
+};
+
+extern void vpip_trip_functor_callbacks(vvp_ipoint_t ptr);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -231,6 +251,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.17  2001/06/21 22:54:12  steve
+ *  Support cbValueChange callbacks.
+ *
  * Revision 1.16  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *
@@ -243,46 +266,5 @@ vpiHandle vpip_sim_time(void);
  * Revision 1.14  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.13  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.12  2001/04/05 01:34:26  steve
- *  Add the .var/s and .net/s statements for VPI support.
- *
- * Revision 1.11  2001/04/04 17:43:19  steve
- *  support decimal strings from signals.
- *
- * Revision 1.10  2001/04/04 04:33:09  steve
- *  Take vector form as parameters to vpi_call.
- *
- * Revision 1.9  2001/04/02 00:24:31  steve
- *  Take numbers as system task parameters.
- *
- * Revision 1.8  2001/03/31 19:00:44  steve
- *  Add VPI support for the simulation time.
- *
- * Revision 1.7  2001/03/25 00:35:35  steve
- *  Add the .net statement.
- *
- * Revision 1.6  2001/03/23 02:40:23  steve
- *  Add the :module header statement.
- *
- * Revision 1.5  2001/03/21 05:13:03  steve
- *  Allow var objects as vpiHandle arguments to %vpi_call.
- *
- * Revision 1.4  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.3  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
- * Revision 1.2  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
  */
 #endif

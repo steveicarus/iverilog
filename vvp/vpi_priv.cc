@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.5 2001/06/12 03:53:11 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.6 2001/06/21 22:54:12 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -137,20 +137,6 @@ extern "C" void vpi_vprintf(const char*fmt, va_list ap)
       vprintf(fmt, ap);
 }
 
-/* STUBS */
-
-vpiHandle vpi_register_cb(p_cb_data data)
-{
-      fprintf(stderr, "vpi Sorry: vpi_register_cb not supported\n");
-      return 0;
-}
-
-
-int vpi_remove_cb(vpiHandle ref)
-{
-      assert(0);
-      return 0;
-}
 
 extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 {
@@ -166,6 +152,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.6  2001/06/21 22:54:12  steve
+ *  Support cbValueChange callbacks.
+ *
  * Revision 1.5  2001/06/12 03:53:11  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.22 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: functor.cc,v 1.23 2001/06/21 22:54:12 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "udp.h"
 # include  "schedule.h"
 # include  "vthread.h"
+# include  "vpi_priv.h"
 # include  "debug.h"
 # include  <assert.h>
 
@@ -290,6 +291,11 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, unsigned str, bool push)
 	    break;
       }
 
+      if (fp->callback) {
+	    fp->callback = 0;
+	    vpip_trip_functor_callbacks(ptr);
+      }
+
 #if defined(WITH_DEBUG)
       if (fp->breakpoint)
 	    breakpoint();
@@ -359,6 +365,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.23  2001/06/21 22:54:12  steve
+ *  Support cbValueChange callbacks.
+ *
  * Revision 1.22  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.
