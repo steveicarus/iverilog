@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.191 2000/09/24 17:41:13 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.192 2000/09/29 22:58:57 steve Exp $"
 #endif
 
 /*
@@ -1055,6 +1055,14 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 		  fail_flag = true;
 		  continue;
 	    }
+
+	      // If the result turns out to be a noop, then skip it.
+	    if (NetBlock*tbl = dynamic_cast<NetBlock*>(tmp))
+		  if (tbl->proc_first() == 0) {
+			delete tbl;
+			continue;
+		  }
+
 	    cur->append(tmp);
       }
 
@@ -2257,6 +2265,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.192  2000/09/29 22:58:57  steve
+ *  Do not put noop statements into blocks.
+ *
  * Revision 1.191  2000/09/24 17:41:13  steve
  *  fix null pointer when elaborating undefined task.
  *
