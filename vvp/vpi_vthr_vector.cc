@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.1 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.2 2001/05/20 00:40:12 steve Exp $"
 #endif
 
 /*
@@ -117,7 +117,7 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1) {
 	    val *= 2;
-	    switch (get_bit(rfp, idx)) {
+	    switch (get_bit(rfp, rfp->wid-idx-1)) {
 		case 0:
 		  break;
 		case 1:
@@ -345,6 +345,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.2  2001/05/20 00:40:12  steve
+ *  Get bit ordering right when making decimal strings.
+ *
  * Revision 1.1  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit
