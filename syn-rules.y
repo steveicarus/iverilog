@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.15 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.16 2001/11/29 01:58:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -150,12 +150,29 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       assert(d);
 
+	// FIXME!
+	// asn->l_val(0) is good as far as it goes, that's a
+	// *NetAssign_. Really need to chase the link list to the end,
+	// otherwise we don't assign properly to constructs like {a,b}. 
+	// Should turn asn->l_val(0)->lwidth() below into
+	// asn->lwidth() and follow the linked list of l-values.
       NetFF*ff = new NetFF(top->scope(), asn->l_val(0)->name(),
 			   asn->l_val(0)->lwidth());
 
+	// asn->l_val(0)->sig() is a *NetNet, which doesn't have the
+	// loff_ and lwid_ context.  Add the correction for loff_
+	// ourselves.
+
+	// This extra calculations allows for statments like, for
+	// example:
+	//    lval[7:1] <= foo;
+	// where lval is really a "reg [7:0]". In other words, part
+	// selects in the l-value are handled by loff and the lwidth().
+
+      int loff = asn->l_val(0)->get_loff();
       for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
 	    connect(ff->pin_Data(idx), d->bit(idx));
-	    connect(ff->pin_Q(idx), asn->l_val(0)->sig()->pin(idx));
+	    connect(ff->pin_Q(idx), asn->l_val(0)->sig()->pin(idx+loff));
       }
 
       connect(ff->pin_Clock(), pclk->pin(0));

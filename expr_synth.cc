@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.28 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.29 2001/11/29 01:58:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -510,7 +510,7 @@ NetNet* NetETernary::synthesize(Design *des)
 }
 
 /*
- * When synthesizing a signal expressoin, it is usually fine to simply
+ * When synthesizing a signal expression, it is usually fine to simply
  * return the NetNet that it refers to. If this is a part select,
  * though, a bit more work needs to be done. Return a temporary that
  * represents the connections to the selected bits.
@@ -562,6 +562,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.29  2001/11/29 01:58:18  steve
+ *  Handle part selects in l-values of DFF devices.
+ *
  * Revision 1.28  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.225 2001/11/19 04:26:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.226 2001/11/29 01:58:18 steve Exp $"
 #endif
 
 /*
@@ -1181,7 +1181,7 @@ class NetAssign_ {
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it not
-	// nexessarily the same as the pin_count().
+	// necessarily the same as the pin_count().
       unsigned lwidth() const;
 
 	// Get the name of the underlying object.
@@ -2862,6 +2862,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.226  2001/11/29 01:58:18  steve
+ *  Handle part selects in l-values of DFF devices.
+ *
  * Revision 1.225  2001/11/19 04:26:46  steve
  *  Unary reduction operators are all 1-bit results.
  *
