@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.16 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.17 2001/04/21 02:04:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -130,6 +130,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ltype = "BUF";
 	    break;
 
+	  case IVL_LO_NAND:
+	    ltype = "NAND";
+	    break;
+
 	  case IVL_LO_NOR:
 	    ltype = "NOR";
 	    break;
@@ -140,6 +144,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_OR:
 	    ltype = "OR";
+	    break;
+
+	  case IVL_LO_XNOR:
+	    ltype = "XNOR";
 	    break;
 
 	  case IVL_LO_XOR:
@@ -306,6 +314,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.17  2001/04/21 02:04:01  steve
+ *  Add NAND and XNOR functors.
+ *
  * Revision 1.16  2001/04/15 16:37:48  steve
  *  add XOR support.
  *

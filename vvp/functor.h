@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.12 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: functor.h,v 1.13 2001/04/21 02:04:01 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -169,14 +169,19 @@ extern void functor_dump(FILE*fd);
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
+extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
 extern const unsigned char ft_OR[];
+extern const unsigned char ft_XNOR[];
 extern const unsigned char ft_XOR[];
 extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.13  2001/04/21 02:04:01  steve
+ *  Add NAND and XNOR functors.
+ *
  * Revision 1.12  2001/04/15 16:37:48  steve
  *  add XOR support.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.36 2001/04/18 05:03:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.37 2001/04/21 02:04:01 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -261,11 +261,17 @@ void compile_functor(char*label, char*type, unsigned init,
       } else if (strcmp(type, "BUF") == 0) {
 	    obj->table = ft_BUF;
 
+      } else if (strcmp(type, "NAND") == 0) {
+	    obj->table = ft_NAND;
+
       } else if (strcmp(type, "NOR") == 0) {
 	    obj->table = ft_NOR;
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj->table = ft_NOT;
+
+      } else if (strcmp(type, "XNOR") == 0) {
+	    obj->table = ft_XNOR;
 
       } else if (strcmp(type, "XOR") == 0) {
 	    obj->table = ft_XOR;
@@ -840,6 +846,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.37  2001/04/21 02:04:01  steve
+ *  Add NAND and XNOR functors.
+ *
  * Revision 1.36  2001/04/18 05:03:49  steve
  *  Resolve forward references for %fork.
  *
