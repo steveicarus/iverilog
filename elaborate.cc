@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.228 2001/10/31 03:22:31 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.229 2001/11/04 23:12:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -183,15 +183,13 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       assert(lval && rval);
 
-      if (lval->pin_count() > rval->pin_count()) {
-	    cerr << get_line() << ": sorry: lval width (" <<
-		  lval->pin_count() << ") > rval width (" <<
-		  rval->pin_count() << ")." << endl;
-	    delete lval;
-	    delete rval;
-	    des->errors += 1;
-	    return;
-      }
+
+	/* If the r-value insists on being smaller then the l-value
+	   (perhaps it is explicitly sized) the pad it out to be the
+	   right width so that something is connected to all the bits
+	   of the l-value. */
+      if (lval->pin_count() > rval->pin_count())
+	    rval = pad_to_width(des, rval, lval->pin_count());
 
       for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1)
 	    connect(lval->pin(idx), rval->pin(idx));
@@ -2411,6 +2409,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.229  2001/11/04 23:12:29  steve
+ *  Pad limited r-values in continuous assignments.
+ *
  * Revision 1.228  2001/10/31 03:22:31  steve
  *  Give up if roots are missing.
  *
