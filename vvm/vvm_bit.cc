@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.5 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.6 1999/11/22 00:30:52 steve Exp $"
 #endif
 
 # include  "vvm.h"
+# include  <iostream>
 
 ostream& operator << (ostream&os, vpip_bit_t bit)
 {
@@ -66,6 +67,25 @@ ostream& operator << (ostream&os, const vvm_bits_t&str)
 
 vvm_bits_t::~vvm_bits_t()
 {
+}
+
+unsigned vvm_bits_t::as_unsigned()
+{
+      unsigned result = 0;
+      unsigned width = get_width();
+      for (unsigned idx = width ;  idx > 0 ;  idx -= 1) {
+	    result <<= 1;
+	    switch (get_bit(idx-1)) {
+		case V0:
+		case Vx:
+		case Vz:
+		  break;
+		case V1:
+		  result |= 1;
+		  break;
+	    }
+      }
+      return result;
 }
 
 vvm_ram_callback::vvm_ram_callback()
@@ -122,6 +142,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.6  1999/11/22 00:30:52  steve
+ *  Detemplate some and, or and nor methods.
+ *
  * Revision 1.5  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *

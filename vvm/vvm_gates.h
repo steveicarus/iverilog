@@ -19,11 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.25 1999/11/21 01:16:51 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.26 1999/11/22 00:30:52 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  <assert.h>
+
+extern vpip_bit_t compute_and(const vpip_bit_t*inp, unsigned count);
+extern vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count);
+extern vpip_bit_t compute_or(const vpip_bit_t*inp, unsigned count);
 
 /*
  * A vvm gate is constructed with an input width and an output
@@ -37,16 +41,28 @@ class vvm_out_event  : public vvm_event {
 
     public:
       typedef void (*action_t)(vvm_simulation*, vpip_bit_t);
-      vvm_out_event(vvm_simulation*s, vpip_bit_t v, action_t o)
-      : output_(o), sim_(s), val_(v) { }
 
-      void event_function()
-      { output_(sim_, val_); }
+      vvm_out_event(vvm_simulation*s, vpip_bit_t v, action_t o);
+      ~vvm_out_event();
+
+      void event_function();
 
     private:
       const action_t output_;
       vvm_simulation*const sim_;
       const vpip_bit_t val_;
+};
+
+class vvm_1bit_out {
+
+    public:
+      vvm_1bit_out(vvm_out_event::action_t, unsigned delay);
+      ~vvm_1bit_out();
+      void output(vvm_simulation*sim, vpip_bit_t);
+
+    private:
+      vvm_out_event::action_t output_;
+      unsigned delay_;
 };
 
 /*
@@ -111,45 +127,27 @@ template <unsigned WIDTH> class vvm_add_sub {
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
+template <unsigned WIDTH, unsigned long DELAY>
+class vvm_and  : private vvm_1bit_out {
 
     public:
       explicit vvm_and(vvm_out_event::action_t o)
-      : output_(o) { }
+      : vvm_1bit_out(o, DELAY) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim, compute_and(input_,WIDTH)); }
 
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		  return;
+	    { if (input_[idx] == val) return;
 	      input_[idx] = val;
-
-	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
+	      output(sim, compute_and(input_,WIDTH));
 	    }
 
     private:
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval & input_[i];
-	      return outval;
-	    }
-
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
 template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
@@ -481,7 +479,9 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
 	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
+	    { vvm_event*ev = new vvm_out_event(sim,
+					       compute_or(input_,WIDTH),
+					       output_);
 	      if (DELAY > 0)
 		    sim->insert_event(DELAY, ev);
 	      else
@@ -501,56 +501,32 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
 	    }
 
     private:
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval | input_[i];
-	      return outval;
-	    }
-
       vpip_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_nor {
+template <unsigned WIDTH, unsigned long DELAY>
+class vvm_nor  : private vvm_1bit_out {
 
     public:
       explicit vvm_nor(vvm_out_event::action_t o)
-      : output_(o) { }
+      : vvm_1bit_out(o, DELAY) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim, compute_nor(input_,WIDTH)); }
 
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
 		  return;
 	      input_[idx] = val;
-
-	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
+	      output(sim, compute_nor(input_,WIDTH));
 	    }
 
     private:
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval | input_[i];
-	      return not(outval);
-	    }
-
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
 template <unsigned WIDTH, unsigned AWIDTH, unsigned SIZE>
@@ -718,27 +694,19 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
 /*
  * Simple inverter buffer.
  */
-template <unsigned long DELAY> class vvm_not {
+template <unsigned long DELAY> class vvm_not  : private vvm_1bit_out {
 
     public:
       explicit vvm_not(vvm_out_event::action_t o)
-      : output_(o)
-      { }
+      : vvm_1bit_out(o, DELAY) { }
 
       void init_I(unsigned, vpip_bit_t) { }
       void start(vvm_simulation*) { }
 
       void set_I(vvm_simulation*sim, unsigned, vpip_bit_t val)
-	    { vpip_bit_t outval = not(val);
-	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim, not(val)); }
 
     private:
-      vvm_out_event::action_t output_;
 };
 
 template <unsigned WIDTH, unsigned long DELAY> class vvm_xnor {
@@ -1011,6 +979,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.26  1999/11/22 00:30:52  steve
+ *  Detemplate some and, or and nor methods.
+ *
  * Revision 1.25  1999/11/21 01:16:51  steve
  *  Fix coding errors handling names of logic devices,
  *  and add support for buf device in vvm.

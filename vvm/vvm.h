@@ -1,7 +1,7 @@
 #ifndef __vvm_H
 #define __vvm_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.22 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: vvm.h,v 1.23 1999/11/22 00:30:52 steve Exp $"
 #endif
 
-# include  <vector>
-# include  <string>
 # include  <cassert>
 # include  "vpi_priv.h"
 
@@ -38,6 +36,7 @@ class vvm_event;
 class vvm_simulation;
 class vvm_simulation_cycle;
 class vvm_thread;
+class ostream;
 
 
 inline vpip_bit_t operator & (vpip_bit_t l, vpip_bit_t r)
@@ -106,6 +105,8 @@ class vvm_bits_t {
       virtual ~vvm_bits_t() =0;
       virtual unsigned get_width() const =0;
       virtual vpip_bit_t get_bit(unsigned idx) const =0;
+
+      unsigned as_unsigned();
 };
 
 extern ostream& operator << (ostream&os, vpip_bit_t);
@@ -136,21 +137,14 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	    }
 	    
 
+      vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
+	    { bits = that.bits; }
+
       vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
       vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
 
       unsigned get_width() const { return WIDTH; }
       vpip_bit_t get_bit(unsigned idx) const { return bits[idx]; }
-
-      unsigned as_unsigned() const
-	    { unsigned result = 0;
-	      for (unsigned idx = WIDTH ;  idx > 0 ;  idx -= 1) {
-		    result <<= 1;
-		    if (bits[idx-1]) result |= 1;
-	      }
-	      return result;
-	    }
-
 
     public:
       vpip_bit_t bits[WIDTH];
@@ -300,6 +294,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.23  1999/11/22 00:30:52  steve
+ *  Detemplate some and, or and nor methods.
+ *
  * Revision 1.22  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *
