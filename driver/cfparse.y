@@ -18,19 +18,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.1 2001/11/12 01:26:36 steve Exp $"
+#ident "$Id: cfparse.y,v 1.2 2001/11/12 18:47:32 steve Exp $"
 #endif
 
 
 # include  "globals.h"
+
 %}
 
 %union {
       char*text;
 };
 
-%token TOK_Dy
-%token <text> TOK_STRING
+%token TOK_Da TOK_Dv TOK_Dy
+%token <text> TOK_INCDIR TOK_PLUSARG TOK_STRING
 
 %%
 
@@ -48,9 +49,26 @@ item    : TOK_STRING
 		{ process_file_name($1);
 		  free($1);
 		}
+        | TOK_Da
+		{ }
+        | TOK_Dv TOK_STRING
+		{ process_file_name($2);
+		  fprintf(stderr, "%s:%u: Ignoring -v in front of %s\n",
+			  @1.text, @1.first_line, $2);
+		  free($2);
+		}
         | TOK_Dy TOK_STRING
 		{ process_library_switch($2);
 		  free($2);
+		}
+	| TOK_INCDIR
+		{ process_include_dir($1);
+		  free($1);
+		}
+	| TOK_PLUSARG
+		{ fprintf(stderr, "%s:%u: Ignoring %s\n",
+			  @1.text, @1.first_line, $1);
+		  free($1);
 		}
 	;
 

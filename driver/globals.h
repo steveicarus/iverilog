@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.7 2001/11/12 01:26:36 steve Exp $"
+#ident "$Id: globals.h,v 1.8 2001/11/12 18:47:32 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -57,6 +57,9 @@ extern void process_file_name(const char*name);
   /* Add the name to the list of library directories. */
 extern void process_library_switch(const char*name);
 
+  /* Add a new include file search directory */
+extern void process_include_dir(const char*name);
+
   /* -v */
 extern int verbose_flag;
 
@@ -71,6 +74,10 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.8  2001/11/12 18:47:32  steve
+ *  Support +incdir in command files, and ignore other
+ *  +args flags. Also ignore -a and -v flags.
+ *
  * Revision 1.7  2001/11/12 01:26:36  steve
  *  More sophisticated command file parser.
  *

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.27 2001/11/12 01:26:36 steve Exp $"
+#ident "$Id: main.c,v 1.28 2001/11/12 18:47:32 steve Exp $"
 
 # include "config.h"
 
@@ -78,6 +78,8 @@ const char sep = '\\';
 #else
 const char sep = '/';
 #endif
+
+extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
 const char*mtm  = 0;
@@ -282,6 +284,21 @@ void process_library_switch(const char *name)
       strcat(library_flags, name);
 }
 
+void process_include_dir(const char *name)
+{
+      if (inc_list == 0) {
+	    inc_list = malloc(strlen(" -I")+strlen(name)+1);
+	    strcpy(inc_list, " -I");
+	    strcat(inc_list, name);
+      } else {
+	    inc_list = realloc(inc_list, strlen(inc_list)
+			       + strlen(" -I")
+			       + strlen(name) + 1);
+	    strcat(inc_list, " -I");
+	    strcat(inc_list, name);
+      }
+}
+
 void process_file_name(const char*name)
 {
       if (src_list) {
@@ -391,18 +408,9 @@ int main(int argc, char **argv)
  		  return 1;
 
 		case 'I':
-		  if (inc_list == 0) {
-			inc_list = malloc(strlen(" -I")+strlen(optarg)+1);
-			strcpy(inc_list, " -I");
-			strcat(inc_list, optarg);
-		  } else {
-			inc_list = realloc(inc_list, strlen(inc_list)
-					   + strlen(" -I")
-					   + strlen(optarg) + 1);
-			strcat(inc_list, " -I");
-			strcat(inc_list, optarg);
-		  }
+		  process_include_dir(optarg);
 		  break;
+
 		case 'm':
 		  if (mod_list == 0) {
 			mod_list = malloc(strlen(" -m")+strlen(optarg)+1);
@@ -482,8 +490,13 @@ int main(int argc, char **argv)
 		  return 1;
 	    }
 
-	    cfreset(fp);
+	    cfreset(fp, command_filename);
 	    rc = cfparse();
+	    if (rc != 0) {
+		  fprintf(stderr, "%s: error reading command file\n",
+			  command_filename);
+		  return 1;
+	    }
       }
 
 	/* Finally, process all the remaining words on the command
@@ -587,6 +600,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.28  2001/11/12 18:47:32  steve
+ *  Support +incdir in command files, and ignore other
+ *  +args flags. Also ignore -a and -v flags.
+ *
  * Revision 1.27  2001/11/12 01:26:36  steve
  *  More sophisticated command file parser.
  *

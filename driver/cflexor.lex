@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cflexor.lex,v 1.1 2001/11/12 01:26:36 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.2 2001/11/12 18:47:32 steve Exp $"
 #endif
 
 # include  "cfparse.h"
 # include  "cfparse_misc.h"
+# include  "globals.h"
 # include  <string.h>
 
 /*
@@ -36,6 +37,8 @@
 YYLTYPE yylloc;
 
 static int comment_enter;
+
+static int plus_incdir(void);
 
 %}
 
@@ -63,28 +66,47 @@ static int comment_enter;
   /* Skip line ends, but also count the line. */
 \n { yylloc.first_line += 1; }
 
+"+incdir+".* { return plus_incdir(); }
+
+  /* If it is not any known plus-flag, return the generic form. */
+"+"[^\n \t\b\r]* { cflval.text = strdup(yytext);
+                   return TOK_PLUSARG; } 
+
+  /* Notice the -a flag. */
+"-a" { return TOK_Da; }
+
+  /* Notice the -v flag. */
+"-v" { return TOK_Dv; }
+
+  /* Notice the -y flag. */
 "-y" { return TOK_Dy; }
 
 "/"[^\*\/].* { cflval.text = strdup(yytext);
-             return TOK_STRING; } 
+               return TOK_STRING; } 
 
-[^/\n \t\b\r-].* { cflval.text = strdup(yytext);
-          return TOK_STRING; } 
+[^/\n \t\b\r+-].* { cflval.text = strdup(yytext);
+                   return TOK_STRING; } 
 
   /* Fallback match. */
 . { return yytext[0]; }
 
 %%
 
+static int plus_incdir(void)
+{
+      cflval.text = strdup(yytext + strlen("+incdir+"));
+      return TOK_INCDIR;
+}
+
 int yywrap()
 {
       return 1;
 }
 
-void cfreset(FILE*fd)
+void cfreset(FILE*fd, const char*path)
 {
       yyin = fd;
       yyrestart(fd);
       yylloc.first_line = 1;
-      yylloc.text = "";
+      yylloc.text = (char*)path;
 }
