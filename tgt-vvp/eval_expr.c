@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.47 2001/09/29 04:37:44 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.48 2001/10/10 04:47:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -184,12 +184,29 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-	/* XXXX For now, assume the operands are a single bit. */
-      assert(ivl_expr_width(le) == 1);
-      assert(ivl_expr_width(re) == 1);
 
-      lv = draw_eval_expr_wid(le, wid);
-      rv = draw_eval_expr_wid(re, wid);
+      lv = draw_eval_expr(le);
+
+      if ((lv.base >= 4) && (lv.wid > 1)) {
+	    struct vector_info tmp;
+	    clr_vector(lv);
+	    tmp.base = allocate_vector(1);
+	    tmp.wid = 1;
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
+		    lv.base, lv.wid);
+	    lv = tmp;
+      }
+
+      rv = draw_eval_expr(re);
+      if ((rv.base >= 4) && (rv.wid > 1)) {
+	    struct vector_info tmp;
+	    clr_vector(rv);
+	    tmp.base = allocate_vector(1);
+	    tmp.wid = 1;
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
+		    rv.base, rv.wid);
+	    rv = tmp;
+      }
 
       if (lv.base < 4) {
 	    if (rv.base < 4) {
@@ -204,6 +221,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 		  } else {
 			lv.base = 2;
 		  }
+		  lv.wid = 1;
 
 	    } else {
 		  fprintf(vvp_out, "    %%and %u, %u, 1;\n", rv.base, lv.base);
@@ -1086,7 +1104,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(exp);
-      const char *rop;
+      const char *rop = 0;
       int inv = 0;
 
       switch (ivl_expr_opcode(exp)) {
@@ -1252,6 +1270,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.48  2001/10/10 04:47:43  steve
+ *  Support vectors as operands to logical and.
+ *
  * Revision 1.47  2001/09/29 04:37:44  steve
  *  Generate code for unary minus (PR#272)
  *
