@@ -31,7 +31,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
+%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
 %attr(-,root,root) /usr/man/man1/iverilog.1.gz
@@ -44,6 +44,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/ivl
 %attr(-,root,root) /usr/lib/ivl/ivlpp
 %attr(-,root,root) /usr/lib/ivl/system.vpi
+%attr(-,root,root) /usr/lib/ivl/cadpli.vpl
 %attr(-,root,root) /usr/lib/ivl/null.tgt
 %attr(-,root,root) /usr/lib/ivl/vvp.tgt
 %attr(-,root,root) /usr/lib/ivl/fpga.tgt
@@ -54,3 +55,4 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
 %attr(-,root,root) /usr/include/veriuser.h
+%attr(-,root,root) /usr/include/_pli_types.h
