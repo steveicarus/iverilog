@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.8 2000/03/25 05:02:25 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.9 2000/03/31 07:08:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -82,7 +82,8 @@ vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
       ref->name = name;
       ref->bits = b;
       ref->nbits = nb;
-      ref->monitor = 0;
+      ref->mfirst = 0;
+      ref->mlast  = 0;
       return &(ref->base);
 }
 
@@ -103,12 +104,16 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
       ref->name = name;
       ref->bits = b;
       ref->nbits = nb;
-      ref->monitor = 0;
+      ref->mfirst = 0;
+      ref->mlast  = 0;
       return &(ref->base);
 }
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.9  2000/03/31 07:08:39  steve
+ *  allow cancelling of cbValueChange events.
+ *
  * Revision 1.8  2000/03/25 05:02:25  steve
  *  signal bits are referenced at run time by the vpiSignal struct.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.11 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: sys_display.c,v 1.12 2000/03/31 07:08:39 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -300,11 +300,14 @@ static int monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
+	/* The user_data of the callback is a pointer to the callback
+	   handle. I use this to reschedule the callback if needed. */
+      vpiHandle*cbh = (vpiHandle*) (cause->user_data);
 
 	/* Reschedule this event so that it happens for the next
 	   trigger on this variable. */
       cb = *cause;
-      vpi_register_cb(&cb);
+      *cbh = vpi_register_cb(&cb);
       
       if (monitor_scheduled) return 0;
 
@@ -363,6 +366,11 @@ static int sys_monitor_calltf(char*name)
 	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
 		case vpiNet:
 		case vpiReg:
+		    /* Monitoring reg and net values involves setting
+		       a collback for value changes. pass the storage
+		       pointer for the callback itself as user_data so
+		       that the callback can refresh itself. */
+		  cb.user_data = (char*)(monitor_callbacks+idx);
 		  cb.obj = monitor_info.items[idx];
 		  monitor_callbacks[idx] = vpi_register_cb(&cb);
 		  break;
@@ -413,6 +421,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.12  2000/03/31 07:08:39  steve
+ *  allow cancelling of cbValueChange events.
+ *
  * Revision 1.11  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

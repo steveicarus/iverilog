@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_callback.c,v 1.6 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_callback.c,v 1.7 2000/03/31 07:08:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -69,20 +69,15 @@ static void vpip_call_callback(void*cp)
 void vpip_run_value_changes(struct __vpiSignal*sig)
 {
       struct __vpiCallback*cur;
-      if (sig->monitor == 0) return;
 
-      while (sig->monitor->next != sig->monitor) {
-	    cur = sig->monitor->next;
-	    sig->monitor->next = cur->next;
-
+      while (sig->mfirst) {
+	    cur = sig->mfirst;
+	    sig->mfirst = cur->next;
+	    if (sig->mfirst == 0)
+		  sig->mlast = 0;
 	    cur->next = 0;
 	    cur->ev = vpip_sim_insert_event(0, cur, vpip_call_callback, 0);
       }
-
-      cur = sig->monitor;
-      sig->monitor = 0;
-      cur->next = 0;
-      cur->ev = vpip_sim_insert_event(0, cur, vpip_call_callback, 0);
 }
 
 /*
@@ -110,18 +105,21 @@ static void go_value_change(struct __vpiCallback*rfp)
       assert((sig->base.vpi_type->type_code == vpiReg)
 	     || (sig->base.vpi_type->type_code == vpiNet));
 
+
 	/* If there are no monitor events, start the list. */
-      if (sig->monitor == 0) {
-	    rfp->next = rfp;
-	    sig->monitor = rfp;
+      if (sig->mfirst == 0) {
+	    rfp->sig = sig;
+	    rfp->next = 0;
+	    sig->mfirst = rfp;
+	    sig->mlast = rfp;
 	    return;
       }
 
 	/* Put me at the end of the list. Remember that the monitor
 	   points to the *last* item in the list. */
-      rfp->next = sig->monitor->next;
-      sig->monitor->next = rfp;
-      sig->monitor = rfp;
+      rfp->sig = sig;
+      rfp->next = 0;
+      sig->mlast->next = rfp;
 }
 
 /*
@@ -157,9 +155,32 @@ int vpi_remove_cb(vpiHandle ref)
       assert(ref->vpi_type->type_code == vpiCallback);
 
       if (rfp->ev) {
+
 	      /* callbacks attached to events are easy. */
 	    vpip_sim_cancel_event(rfp->ev);
 
+      } else if (rfp->sig) {
+
+	      /* callbacks to signals need to be removed from the
+		 signal's list of monitor callbacks. */
+	    struct __vpiSignal*sig = rfp->sig;
+
+	    if (sig->mfirst == rfp) {
+		  sig->mfirst = rfp->next;
+		  if (sig->mfirst == 0)
+			sig->mlast = 0;
+		  rfp->next = 0;
+		  rfp->sig = 0;
+	    } else {
+		  struct __vpiCallback*cur = sig->mfirst;
+		  while (cur->next != rfp) {
+			assert(cur->next);
+			cur = cur->next;
+		  }
+		  cur->next = rfp->next;
+		  if (cur->next == 0)
+			sig->mlast = cur;
+	    }
       } else {
 	    assert(0);
       }
@@ -170,6 +191,9 @@ int vpi_remove_cb(vpiHandle ref)
 
 /*
  * $Log: vpi_callback.c,v $
+ * Revision 1.7  2000/03/31 07:08:39  steve
+ *  allow cancelling of cbValueChange events.
+ *
  * Revision 1.6  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.13 2000/03/25 05:02:24 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.14 2000/03/31 07:08:39 steve Exp $"
 #endif
 
 /*
@@ -127,7 +127,11 @@ struct __vpiCallback {
       struct __vpiHandle base;
       struct t_cb_data cb_data;
 
+	/* Set this value if I'm pending in the event queue. */
       struct vpip_event*ev;
+	/* Set this value if I'm waiting for a value change on a signal*/
+      struct __vpiSignal*sig;
+
       struct __vpiCallback*next;
 };
 
@@ -205,7 +209,8 @@ struct __vpiSignal {
       vpip_bit_t*bits;
       unsigned nbits;
 	/* monitors are added here. */
-      struct __vpiCallback*monitor;
+      struct __vpiCallback*mfirst;
+      struct __vpiCallback*mlast;
 };
 
 
@@ -337,6 +342,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.14  2000/03/31 07:08:39  steve
+ *  allow cancelling of cbValueChange events.
+ *
  * Revision 1.13  2000/03/25 05:02:24  steve
  *  signal bits are referenced at run time by the vpiSignal struct.
  *
