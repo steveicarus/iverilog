@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.33 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.34 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -27,8 +27,8 @@
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
-static unsigned local_count = 0;
-static unsigned thread_count = 0;
+unsigned local_count = 0;
+unsigned thread_count = 0;
 
 /*
  * This file includes the code needed to generate VVP code for
@@ -854,6 +854,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.34  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.33  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit

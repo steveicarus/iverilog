@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.43 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: t-dll.h,v 1.44 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -107,6 +107,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
+      void expr_ternary(const NetETernary*);
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
@@ -172,6 +173,12 @@ struct ivl_expr_s {
 		  ivl_expr_t msb_;
 		  ivl_expr_t lsb_;
 	    } subsig_;
+
+	    struct {
+		  ivl_expr_t cond;
+		  ivl_expr_t true_e;
+		  ivl_expr_t false_e;
+	    } ternary_;
 
 	    struct {
 		  ivl_memory_t mem_;
@@ -513,6 +520,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.44  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.43  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

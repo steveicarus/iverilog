@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.25 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.26 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -810,6 +810,44 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res, tmp;
+
+      unsigned lab_false, lab_out;
+      ivl_expr_t cond = ivl_expr_oper1(exp);
+      ivl_expr_t true_ex = ivl_expr_oper2(exp);
+      ivl_expr_t false_ex = ivl_expr_oper3(exp);
+
+      lab_false = local_count++;
+      lab_out = local_count++;
+
+      tmp = draw_eval_expr(cond);
+      clr_vector(tmp);
+
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+
+      fprintf(vvp_out, "    %%jmp/0xz  T_%d.%d, %u;\n",
+	      thread_count, lab_false, tmp.base);
+
+      tmp = draw_eval_expr_wid(true_ex, wid);
+      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
+      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
+      clr_vector(tmp);
+
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+
+      tmp = draw_eval_expr_wid(false_ex, wid);
+      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
+      clr_vector(tmp);
+
+
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+
+      return res;
+}
+
 /*
  * A call to a user defined function generates a result that is the
  * result of this expression.
@@ -944,6 +982,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_signal_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_TERNARY:
+	    res = draw_ternary_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_MEMORY:
 	    res = draw_memory_expr(exp, wid);
 	    break;
@@ -967,6 +1009,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.26  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.25  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit
@@ -989,63 +1034,5 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
  *
  * Revision 1.20  2001/04/29 20:47:39  steve
  *  Evalulate logical or (||)
- *
- * Revision 1.19  2001/04/21 03:26:23  steve
- *  Right shift by constant.
- *
- * Revision 1.18  2001/04/21 01:49:17  steve
- *  Left shift by a constant amount.
- *
- * Revision 1.17  2001/04/18 05:12:03  steve
- *  Use the new %fork syntax.
- *
- * Revision 1.16  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.15  2001/04/15 04:07:56  steve
- *  Add support for behavioral xnor.
- *
- * Revision 1.14  2001/04/06 02:28:03  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.13  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.12  2001/04/02 03:47:49  steve
- *  Evaluate binary & and | operators.
- *
- * Revision 1.11  2001/04/01 22:26:21  steve
- *  Unary ! is a reduction operator.
- *
- * Revision 1.10  2001/04/01 21:47:29  steve
- *  Implement the unary ! operator.
- *
- * Revision 1.9  2001/04/01 07:22:42  steve
- *  Generate code for < and <=.
- *
- * Revision 1.8  2001/04/01 06:49:32  steve
- *  Evaluate the logical AND operator.
- *
- * Revision 1.7  2001/03/31 17:36:39  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.6  2001/03/31 02:00:44  steve
- *  Generate code for + and concat expressions.
- *
- * Revision 1.5  2001/03/29 05:16:25  steve
- *  Handle truncation/padding of numbers.
- *
- * Revision 1.4  2001/03/29 02:52:39  steve
- *  Add unary ~ operator to tgt-vvp.
- *
- * Revision 1.3  2001/03/27 06:43:27  steve
- *  Evaluate === and !==
- *
- * Revision 1.2  2001/03/23 01:10:24  steve
- *  Assure that operands are the correct width.
- *
- * Revision 1.1  2001/03/22 05:06:21  steve
- *  Geneate code for conditional statements.
- *
  */
 

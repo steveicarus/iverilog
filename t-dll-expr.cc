@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.12 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.13 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -166,6 +166,34 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       expr_->u_.sfunc_.name_ = strdup(net->name());
 }
 
+void dll_target::expr_ternary(const NetETernary*net)
+{
+      assert(expr_ == 0);
+
+      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr);
+
+      expr->type_  = IVL_EX_TERNARY;
+      expr->width_ = net->expr_width();
+      expr->signed_ = net->has_sign()? 1 : 0;
+
+      net->cond_expr()->expr_scan(this);
+      assert(expr_);
+      expr->u_.ternary_.cond = expr_;
+      expr_ = 0;
+
+      net->true_expr()->expr_scan(this);
+      assert(expr_);
+      expr->u_.ternary_.true_e = expr_;
+      expr_ = 0;
+
+      net->false_expr()->expr_scan(this);
+      assert(expr_);
+      expr->u_.ternary_.false_e = expr_;
+
+      expr_ = expr;
+}
+
 void dll_target::expr_signal(const NetESignal*net)
 {
       assert(expr_ == 0);
@@ -226,6 +254,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.13  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.12  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

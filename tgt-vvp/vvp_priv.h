@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.9 2001/05/06 17:54:33 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.10 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -74,7 +74,16 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 extern void clr_vector(struct vector_info vec);
 
 /*
+ * These are used to count labels as I generate code.
+ */
+extern unsigned local_count;
+extern unsigned thread_count;
+
+/*
  * $Log: vvp_priv.h,v $
+ * Revision 1.10  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.9  2001/05/06 17:54:33  steve
  *  Behavioral code to read memories. (Stephan Boettcher)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.61 2001/05/12 03:18:44 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.62 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -167,6 +167,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
+      IVL_EX_TERNARY,
       IVL_EX_UFUNC,
       IVL_EX_ULONG,
       IVL_EX_UNARY
@@ -382,11 +383,11 @@ extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY IVL_EX_UNARY, IVL_EX_MEMORY */
+  /* IVL_EX_BINARY IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
-  /* IVL_EX_BINARY */
+  /* IVL_EX_BINARY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
-  /* */
+  /* IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
   /* IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
@@ -851,6 +852,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.62  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.61  2001/05/12 03:18:44  steve
  *  Make sure LPM devices have drives on outputs.
  *

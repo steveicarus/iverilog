@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.44 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.45 2001/05/17 04:37:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -239,6 +239,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.idx_;
 
+	  case IVL_EX_TERNARY:
+	    return net->u_.ternary_.cond;
+
 	  default:
 	    assert(0);
       }
@@ -253,6 +256,9 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.rig_;
 
+	  case IVL_EX_TERNARY:
+	    return net->u_.ternary_.true_e;
+
 	  default:
 	    assert(0);
       }
@@ -263,6 +269,14 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
 extern "C" ivl_expr_t ivl_expr_oper3(ivl_expr_t net)
 {
       assert(net);
+      switch (net->type_) {
+
+	  case IVL_EX_TERNARY:
+	    return net->u_.ternary_.false_e;
+
+	  default:
+	    assert(0);
+      }
       return 0;
 }
 
@@ -1129,6 +1143,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.45  2001/05/17 04:37:02  steve
+ *  Behavioral ternary operators for vvp.
+ *
  * Revision 1.44  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
