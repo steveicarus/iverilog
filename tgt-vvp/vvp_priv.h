@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.25 2003/03/15 04:45:18 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.26 2003/06/05 04:18:50 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -157,7 +157,7 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
  *    lookaside. If it finds it, return a reallocated base for the
  *    expression. Otherwise, return 0.
  */
-extern unsigned short allocate_vector(unsigned short wid);
+extern unsigned short allocate_vector(unsigned wid);
 extern void clr_vector(struct vector_info vec);
 
 extern void clear_expression_lookaside(void);
@@ -165,8 +165,7 @@ extern void save_expression_lookaside(unsigned short addr,
 				      ivl_expr_t exp,
 				      unsigned short wid);
 
-extern unsigned short allocate_vector_exp(ivl_expr_t exp,
-					  unsigned short wid);
+extern unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned wid);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
@@ -193,6 +192,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.26  2003/06/05 04:18:50  steve
+ *  Better width testing for thread vector allocation.
+ *
  * Revision 1.25  2003/03/15 04:45:18  steve
  *  Allow real-valued vpi functions to have arguments.
  *

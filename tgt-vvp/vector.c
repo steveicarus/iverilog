@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.1 2002/09/27 16:33:34 steve Exp $"
+#ident "$Id: vector.c,v 1.2 2003/06/05 04:18:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -70,11 +70,11 @@ void clr_vector(struct vector_info vec)
  * set. It never returns a bit addressed <8 (0-3 are constant, 4-7 are
  * condition codes).
  */
-unsigned short allocate_vector(unsigned short wid)
+unsigned short allocate_vector(unsigned wid)
 {
-      unsigned short base = 8;
+      unsigned base = 8;
+      unsigned idx = 0;
 
-      unsigned short idx = 0;
       while (idx < wid) {
 	    assert((base + idx) < 0x10000);
 	    if (peek_bit(base+idx)) {
@@ -156,7 +156,7 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
 }
 
 static unsigned short find_expression_lookaside(ivl_expr_t exp,
-						unsigned short wid)
+						unsigned wid)
 {
       unsigned top;
       unsigned idx, match;
@@ -187,7 +187,7 @@ static unsigned short find_expression_lookaside(ivl_expr_t exp,
       return 0;
 }
 
-unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned short wid)
+unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
       unsigned short la = find_expression_lookaside(exp, wid);
@@ -204,6 +204,9 @@ unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned short wid)
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.2  2003/06/05 04:18:50  steve
+ *  Better width testing for thread vector allocation.
+ *
  * Revision 1.1  2002/09/27 16:33:34  steve
  *  Add thread expression lookaside map.
  *
