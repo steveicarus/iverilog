@@ -684,21 +684,24 @@ return(lt);
 
 
 /*
- * enable/disable indexing (for faster reads)
+ * enable/disable partial dump mode (for faster reads)
  */
-void lxt2_wr_set_indexing_off(struct lxt2_wr_trace *lt)
+void lxt2_wr_set_partial_off(struct lxt2_wr_trace *lt)
 {
 if(lt)
 	{
-	lt->indexing = 0;
+	lt->partial = 0;
+	lt->partial_zip = 0;
 	}
 }
 
-void lxt2_wr_set_indexing_on(struct lxt2_wr_trace *lt)
+void lxt2_wr_set_partial_on(struct lxt2_wr_trace *lt, int zipmode)
 {
 if(lt)
 	{
-	lt->indexing = 1;
+	lt->partial = 1;
+	lt->partial_zip = (zipmode != 0);
+	lt->partial_iter = LXT2_WR_PARTIAL_SIZE; 
 	}
 }
 
@@ -868,7 +871,10 @@ void lxt2_wr_flush_granule(struct lxt2_wr_trace *lt, int do_finalize)
 {
 unsigned int idx_nbytes, map_nbytes, i, j;
 struct lxt2_wr_symbol *s;
-unsigned int skip = 0;
+unsigned int partial_iter;
+unsigned int iter, iter_hi;
+unsigned char using_partial, using_partial_zip=0;
+unsigned int current_iter_pos=0;
 
 if(lt->flush_valid)
 	{
@@ -879,6 +885,19 @@ if(lt->flush_valid)
 
 	lt->flush_valid = 0;
 	}
+
+lt->granule_dirty = 0;
+
+if((using_partial=(lt->partial)&&(lt->numfacs>lt->partial_iter)))
+	{
+	partial_iter = lt->partial_iter;
+	using_partial_zip = lt->partial_zip;
+	}
+	else
+	{
+	partial_iter = lt->numfacs;
+	}
+
 
 if(!lt->timegranule)
 	{
@@ -893,22 +912,31 @@ if(!lt->timegranule)
 	lt->current_chunkz = lt->position;
 	/* fprintf(stderr, "First chunkz position is %d (0x%08x)\n", lt->current_chunkz, lt->current_chunkz); */
 
-	lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
+	if(!using_partial_zip)
+		{
+		lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
+		}
+		else
+		{
+		lt->zpackcount_cumulative = 0;
+		}
 	lt->zpackcount = 0;
 	}
 
-lt->granule_dirty = 0;
-lxt2_wr_emit_u8z(lt, LXT2_WR_GRAN_SECT_TIME);
-
-lxt2_wr_emit_u8z(lt, lt->timepos);
-for(i=0;i<lt->timepos;i++)
-	{
-	lxt2_wr_emit_u64z(lt, (lt->timetable[i]>>32)&0xffffffff, lt->timetable[i]&0xffffffff);
-	}
-gzflush_buffered(lt, 0);
 
 
-for(j=0;j<lt->numfacs;j++)
+for(iter=0; iter<lt->numfacs; iter=iter_hi)
+{
+unsigned int total_chgs;
+unsigned int partial_length;
+
+total_chgs = 0;
+partial_length = 0;
+
+iter_hi = iter + partial_iter;
+if(iter_hi > lt->numfacs) iter_hi = lt->numfacs;
+
+for(j=iter;j<iter_hi;j++)
 	{
 	granmsk_t msk = lt->sorted_facs[j]->msk;
 
@@ -940,51 +968,57 @@ else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256) { idx_nbytes = 2; 
 else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256*256) { idx_nbytes = 3; }
 else { idx_nbytes = 4; }
 
-if(lt->indexing)
+if(using_partial)
 	{
-	unsigned int total_chgs = 0;
-	unsigned int total_nbytes;
+	/* skip */
+	partial_length = 1 +			/* lt->timepos */
+	lt->timepos * sizeof(lxttime_t)+	/* timevals */
 
-	for(j=0;j<lt->numfacs;j++)
+	1 +					/* map_nbytes */
+	(iter_hi-iter) * map_nbytes +		/* actual map */
+	1;					/* idx_nbytes */
+
+	for(j=iter;j<iter_hi;j++)
 		{
-		s=lt->sorted_facs[j];
+	        s=lt->sorted_facs[j];
 		total_chgs += s->chgpos;
 		}
-	total_chgs *= idx_nbytes;
+	total_chgs *= idx_nbytes;		/* vch skip */
 
-	if(total_chgs < 256) { total_nbytes = 1; }
-	else if(total_chgs < 256*256) { total_nbytes = 2; }
-	else if(total_chgs < 256*256*256) { total_nbytes = 3; }
-	else { total_nbytes = 4; }
+	partial_length += total_chgs; 		/* actual changes */
 
-	lxt2_wr_emit_u8z(lt, 4+total_nbytes);	/* 5..8 value is an encoding which says we'll be sending out indexing skips */
-	for(j=0;j<lt->numfacs;j++)
+	if(using_partial_zip)
 		{
-		switch(total_nbytes)
-			{
-			case 1:	lxt2_wr_emit_u8z(lt, skip); break;
-			case 2: lxt2_wr_emit_u16z(lt, skip); break;
-			case 3: lxt2_wr_emit_u24z(lt, skip); break;
-			case 4: lxt2_wr_emit_u32z(lt, skip); break;
-			}
-
-		s=lt->sorted_facs[j];
-		skip += (s->chgpos * idx_nbytes);
+		fseek(lt->handle, 0L, SEEK_END);
+		current_iter_pos = ftell(lt->handle);
+		lxt2_wr_emit_u32(lt, 0);		/* size of this section (compressed)   */
+		lxt2_wr_emit_u32(lt, partial_length+9);	/* size of this section (uncompressed) */
+		lxt2_wr_emit_u32(lt, iter);		/* begin iter of section               */
+		fflush(lt->handle);
+	
+		lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
+		lt->zpackcount = 0;
 		}
 
-	switch(total_nbytes)			/* to get past the skip data... */
-		{
-		case 1:	lxt2_wr_emit_u8z(lt, skip); break;
-		case 2: lxt2_wr_emit_u16z(lt, skip); break;
-		case 3: lxt2_wr_emit_u24z(lt, skip); break;
-		case 4: lxt2_wr_emit_u32z(lt, skip); break;
-		}
-
-	gzflush_buffered(lt, 0);
+	lxt2_wr_emit_u8z(lt, LXT2_WR_GRAN_SECT_TIME_PARTIAL);
+	lxt2_wr_emit_u32z(lt, iter);
+	lxt2_wr_emit_u32z(lt, partial_length);
+	}
+	else
+	{
+	lxt2_wr_emit_u8z(lt, LXT2_WR_GRAN_SECT_TIME);
 	}
 
+lxt2_wr_emit_u8z(lt, lt->timepos);
+for(i=0;i<lt->timepos;i++)
+	{
+	lxt2_wr_emit_u64z(lt, (lt->timetable[i]>>32)&0xffffffff, lt->timetable[i]&0xffffffff);
+	}
+gzflush_buffered(lt, 0);
+
+
 lxt2_wr_emit_u8z(lt, map_nbytes);
-for(j=0;j<lt->numfacs;j++)
+for(j=iter;j<iter_hi;j++)
 	{
 	unsigned int val;
         s=lt->sorted_facs[j];
@@ -1005,7 +1039,7 @@ for(j=0;j<lt->numfacs;j++)
 
 lxt2_wr_emit_u8z(lt, idx_nbytes);
 gzflush_buffered(lt, 0);
-for(j=0;j<lt->numfacs;j++)
+for(j=iter;j<iter_hi;j++)
 	{
         s=lt->sorted_facs[j];
 
@@ -1023,7 +1057,27 @@ for(j=0;j<lt->numfacs;j++)
 	s->chgpos = 0;
 	}
 
-gzflush_buffered(lt, 0);
+if(using_partial_zip)
+	{
+	unsigned int clen;
+
+	gzflush_buffered(lt, 1);
+	fseek(lt->handle, 0L, SEEK_END);
+	lt->position=ftell(lt->handle);
+
+	clen = lt->position - current_iter_pos - 12;
+	fseek(lt->handle, current_iter_pos, SEEK_SET);
+
+	lt->zpackcount_cumulative+=lt->zpackcount;
+
+	lxt2_wr_emit_u32(lt, clen);
+	}
+	else
+	{
+	gzflush_buffered(lt, 0);
+	}
+} /* ...for(iter) */
+
 
 lt->timepos = 0;
 lt->timegranule++;
@@ -1032,6 +1086,19 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 	unsigned int unclen, clen;
 	ds_Tree *dt, *dt2;
 	dslxt_Tree *ds, *ds2;
+
+	if(using_partial_zip)
+		{
+		fseek(lt->handle, 0L, SEEK_END);
+		current_iter_pos = ftell(lt->handle);
+		lxt2_wr_emit_u32(lt, 0);		/* size of this section (compressed)   */
+		lxt2_wr_emit_u32(lt, 0);		/* size of this section (uncompressed) */
+		lxt2_wr_emit_u32(lt, ~0);		/* control section		       */
+		fflush(lt->handle);
+	
+		lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
+		lt->zpackcount = 0;
+		}
 
 	/* fprintf(stderr, "reached granule %d, finalizing block for section %d\n", lt->timegranule, lt->numsections); */
 	lt->numsections++;
@@ -1084,15 +1151,35 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 		}
 	lt->mapdict_head = lt->mapdict_curr = lt->mapdict = NULL;
 
-	lxt2_wr_emit_u32z(lt, lt->num_dict_entries);	/* -12 */
-	lxt2_wr_emit_u32z(lt, lt->dict_string_mem_required);/* -8 */
+	lxt2_wr_emit_u32z(lt, lt->num_dict_entries);		/* -12 */
+	lxt2_wr_emit_u32z(lt, lt->dict_string_mem_required);	/* -8 */
 	lxt2_wr_emit_u32z(lt, lt->num_map_entries);		/* -4 */
 
 	lt->num_map_entries = 0;
 	lt->num_dict_entries = lt->dict_string_mem_required = 0;
 
 	/* fprintf(stderr, "returned from finalize..\n"); */
-	gzflush_buffered(lt, 1);
+
+	if(using_partial_zip)
+		{
+		unsigned int clen;
+	
+		gzflush_buffered(lt, 1);
+		fseek(lt->handle, 0L, SEEK_END);
+		lt->position=ftell(lt->handle);
+	
+		clen = lt->position - current_iter_pos - 12;
+		fseek(lt->handle, current_iter_pos, SEEK_SET);
+
+		lt->zpackcount_cumulative+=lt->zpackcount;
+		lxt2_wr_emit_u32(lt, clen);
+		lxt2_wr_emit_u32(lt, lt->zpackcount);
+		}
+		else
+		{
+		gzflush_buffered(lt, 1);
+		}
+
         fseek(lt->handle, 0L, SEEK_END);
         lt->position=ftell(lt->handle);
 	/* fprintf(stderr, "file position after dumping dict: %d 0x%08x\n", lt->position, lt->position); */
@@ -1103,8 +1190,16 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 	/* fprintf(stderr, "%d/%d un/compressed bytes in section\n", unclen, clen); */
 
 	fseek(lt->handle, lt->current_chunk, SEEK_SET);
-	lxt2_wr_emit_u32(lt, unclen);
-	lxt2_wr_emit_u32(lt, clen);
+	if(using_partial_zip)
+		{
+		lxt2_wr_emit_u32(lt, lt->zpackcount_cumulative);
+		lxt2_wr_emit_u32(lt, clen);
+		}
+		else
+		{
+		lxt2_wr_emit_u32(lt, unclen);
+		lxt2_wr_emit_u32(lt, clen);
+		}
 	lxt2_wr_emit_u64(lt, (lt->firsttime>>32)&0xffffffff, lt->firsttime&0xffffffff);
 	lxt2_wr_emit_u64(lt, (lt->lasttime>>32)&0xffffffff, lt->lasttime&0xffffffff);
 

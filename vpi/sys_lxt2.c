@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.1 2003/09/01 04:04:03 steve Exp $"
+#ident "$Id: sys_lxt2.c,v 1.2 2003/09/10 17:53:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -414,6 +414,7 @@ static void open_dumpfile(const char*path)
 
 	    lxt2_wr_set_initial_value(dump_file, 'x');
 	    lxt2_wr_set_compression_depth(dump_file, 4);
+	    lxt2_wr_set_partial_on(dump_file, 1);
 
             atexit((void(*)(void))close_dumpfile);
       }
@@ -803,6 +804,9 @@ void sys_lxt2_register()
 
 /*
  * $Log: sys_lxt2.c,v $
+ * Revision 1.2  2003/09/10 17:53:42  steve
+ *  Add lxt2 support for partial mode.
+ *
  * Revision 1.1  2003/09/01 04:04:03  steve
  *  Add lxt2 support.
  *
