@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.78 2003/04/14 03:37:47 steve Exp $"
+#ident "$Id: lexor.lex,v 1.79 2003/05/28 04:21:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -317,16 +317,24 @@ W [ \t\b\f\r]+
   }
 
 
+`{W} { cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+	    << "Stray tic (`) here. Perhaps you put white space" << endl;
+       cerr << yylloc.text << ":" << yylloc.first_line << ":      : "
+	    << "between the tic and preprocessor directive?"
+	    << endl;
+       error_count += 1; }
 
   /* Final catchall. something got lost or mishandled. */
 
-. {   cerr << yylloc.first_line << ": unmatched character (";
+. {   cerr << yylloc.text << ":" << yylloc.first_line
+	   << ": error: unmatched character (";
       if (isgraph(yytext[0]))
 	    cerr << yytext[0];
       else
 	    cerr << "hex " << hex << (0xffU & ((unsigned) (yytext[0])));
 
-      cerr << ")" << endl; }
+      cerr << ")" << endl;
+      error_count += 1; }
 
 %%
 
