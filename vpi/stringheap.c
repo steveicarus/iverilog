@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stringheap.c,v 1.1 2003/02/13 18:13:28 steve Exp $"
+#ident "$Id: stringheap.c,v 1.2 2003/04/28 01:03:11 steve Exp $"
 #endif
 
 # include  "stringheap.h"
@@ -47,9 +47,10 @@ const char*strdup_sh(struct stringheap_s*hp, const char*txt)
 	    hp->cell_off = 0;
       }
 
-      if ((STRINGHEAP_SIZE - hp->cell_off) <= len) {
+      if ((STRINGHEAP_SIZE - hp->cell_off - 1) <= len) {
 	    struct stringheap_cell*tmp = malloc(PAGE_SIZE);
 	    tmp->next = hp->cell_lst;
+	    hp->cell_lst = tmp;
 	    hp->cell_off = 0;
       }
 
@@ -63,6 +64,9 @@ const char*strdup_sh(struct stringheap_s*hp, const char*txt)
 
 /*
  * $Log: stringheap.c,v $
+ * Revision 1.2  2003/04/28 01:03:11  steve
+ *  Fix stringheap list management failure.
+ *
  * Revision 1.1  2003/02/13 18:13:28  steve
  *  Make lxt use stringheap to perm-allocate strings.
  *

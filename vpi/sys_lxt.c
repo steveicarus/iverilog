@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.19 2003/04/27 02:22:27 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.20 2003/04/28 01:03:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -517,7 +517,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  
 		  if (nexus_id)
 			set_nexus_ident(nexus_id, ident);
-		  
+
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
@@ -793,6 +793,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.20  2003/04/28 01:03:11  steve
+ *  Fix stringheap list management failure.
+ *
  * Revision 1.19  2003/04/27 02:22:27  steve
  *  Capture VCD dump value in the rosync time period.
  *

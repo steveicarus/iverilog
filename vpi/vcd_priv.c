@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.2 2003/02/13 18:13:28 steve Exp $"
+#ident "$Id: vcd_priv.c,v 1.3 2003/04/28 01:03:11 steve Exp $"
 #endif
 
 # include  "vcd_priv.h"
@@ -131,7 +131,7 @@ static inline unsigned ihash(int nex)
       return a & 0xff;
 }
 
-static struct vcd_id_s **vcd_ids;
+static struct vcd_id_s **vcd_ids = 0;
 
 const char *find_nexus_ident(int nex)
 {
@@ -169,6 +169,9 @@ void set_nexus_ident(int nex, const char *id)
 
 /*
  * $Log: vcd_priv.c,v $
+ * Revision 1.3  2003/04/28 01:03:11  steve
+ *  Fix stringheap list management failure.
+ *
  * Revision 1.2  2003/02/13 18:13:28  steve
  *  Make lxt use stringheap to perm-allocate strings.
  *
