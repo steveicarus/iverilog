@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.12 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.13 2000/03/25 05:02:24 steve Exp $"
 #endif
 
 /*
@@ -258,7 +258,8 @@ struct __vpiNumberConst {
  * of the constructed object.
  */
 extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
-extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name);
+extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
+			       vpip_bit_t*bits, unsigned nbits);
 extern vpiHandle vpip_make_scope(struct __vpiScope*ref,
 				 int type_code,
 				 const char*name);
@@ -269,7 +270,8 @@ extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 					unsigned nbits);
 extern vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 				  unsigned width, unsigned size);
-extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name);
+extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
+			       vpip_bit_t*bits, unsigned nbits);
 extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 				    const char*val);
 
@@ -335,6 +337,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.13  2000/03/25 05:02:24  steve
+ *  signal bits are referenced at run time by the vpiSignal struct.
+ *
  * Revision 1.12  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.5 2000/03/25 02:43:57 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.6 2000/03/25 05:02:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -56,19 +56,21 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 /*
  * The vvm_signal_t template is the real object that handles the
  * receiving of assignments and doing whatever is done. It also
- * connects VPI to the C++/vvm design. The vvm_bitset_t stores the
- * actual bits, this just attaches the name and vpiSignal stuff to the
- * set. 
+ * connects VPI to the C++/vvm design. The actual bits are referenced
+ * by the base vpiSignal structure.
  */
 class vvm_signal_t  : public __vpiSignal, public vvm_nexus::recvr_t  {
 
     public:
-      vvm_signal_t(vpip_bit_t*b, unsigned nb);
+      vvm_signal_t();
       ~vvm_signal_t();
 
       void init_P(unsigned idx, vpip_bit_t val);
-
       void take_value(unsigned key, vpip_bit_t val);
+
+    private: // not implemented
+      vvm_signal_t(const vvm_signal_t&);
+      vvm_signal_t& operator= (const vvm_signal_t&);
 };
 
 struct vvm_ram_callback {
@@ -144,6 +146,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.6  2000/03/25 05:02:25  steve
+ *  signal bits are referenced at run time by the vpiSignal struct.
+ *
  * Revision 1.5  2000/03/25 02:43:57  steve
  *  Remove all remain vvm_bitset_t return values,
  *  and disallow vvm_bitset_t copying.

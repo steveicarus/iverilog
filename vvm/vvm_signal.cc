@@ -17,15 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.2 2000/03/17 20:21:14 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.3 2000/03/25 05:02:25 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
 
-vvm_signal_t::vvm_signal_t(vpip_bit_t*b, unsigned nb)
+vvm_signal_t::vvm_signal_t()
 {
-      bits = b;
-      nbits = nb;
+      bits = 0;
+      nbits = 0;
 }
 
 vvm_signal_t::~vvm_signal_t()
@@ -40,6 +40,7 @@ void vvm_signal_t::init_P(unsigned idx, vpip_bit_t val)
 
 void vvm_signal_t::take_value(unsigned key, vpip_bit_t val)
 {
+      assert(key < nbits);
       bits[key] = val;
       vpip_run_value_changes(this);
 }
@@ -54,6 +55,9 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.3  2000/03/25 05:02:25  steve
+ *  signal bits are referenced at run time by the vpiSignal struct.
+ *
  * Revision 1.2  2000/03/17 20:21:14  steve
  *  Detemplatize the vvm_signal_t class.
  *

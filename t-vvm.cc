@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.124 2000/03/25 02:43:56 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.125 2000/03/25 05:02:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -833,11 +833,11 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
       os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
 	    net_name<< "_bits; /* " << sig->name() <<
 	    " */" << endl;
-      os << "static vvm_signal_t " << net_name << "(" << net_name <<
-	    "_bits.bits, " << sig->pin_count() << ");" << endl;
+      os << "static vvm_signal_t " << net_name << ";" << endl;
 
-      init_code << "      vpip_make_reg(&" << net_name <<
-	    ", \"" << sig->name() << "\");" << endl;
+      init_code << "      vpip_make_reg(&" << net_name
+		<< ", \"" << sig->name() << "\"," << net_name<<"_bits.bits, "
+		<< sig->pin_count() << ");" << endl;
 
       if (const NetScope*scope = sig->scope()) {
 	    string sname = mangle(scope->name()) + "_scope";
@@ -971,6 +971,9 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
 		  continue;
 
 	    if (! dynamic_cast<const NetObj*>(cur->get_obj()))
+		  continue;
+
+	    if (dynamic_cast<const NetNet*>(cur->get_obj()))
 		  continue;
 
 	      // Build an init statement for the link, that writes the
@@ -2387,6 +2390,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.125  2000/03/25 05:02:24  steve
+ *  signal bits are referenced at run time by the vpiSignal struct.
+ *
  * Revision 1.124  2000/03/25 02:43:56  steve
  *  Remove all remain vvm_bitset_t return values,
  *  and disallow vvm_bitset_t copying.
