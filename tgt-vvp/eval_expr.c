@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.2 2001/03/23 01:10:24 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.3 2001/03/27 06:43:27 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -94,6 +94,16 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
       rv = draw_eval_expr_wid(re, wid);
 
       switch (ivl_expr_opcode(exp)) {
+	  case 'E': /* === */
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
+		    rv.base, lv.wid);
+	    clr_vector(lv);
+	    clr_vector(rv);
+	    lv.base = 6;
+	    lv.wid = 1;
+	    break;
+
 	  case 'e': /* == */
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
@@ -101,6 +111,18 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 	    clr_vector(lv);
 	    clr_vector(rv);
 	    lv.base = 4;
+	    lv.wid = 1;
+	    break;
+
+	  case 'N': /* !== */
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
+		    rv.base, lv.wid);
+	    fprintf(vvp_out, "    %%inv 6, 1;\n");
+
+	    clr_vector(lv);
+	    clr_vector(rv);
+	    lv.base = 6;
 	    lv.wid = 1;
 	    break;
 
@@ -128,7 +150,9 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info rv;
 
       switch (ivl_expr_opcode(exp)) {
+	  case 'E': /* === */
 	  case 'e': /* == */
+	  case 'N': /* !== */
 	  case 'n': /* != */
 	    assert(wid == 1);
 	    rv = draw_binary_expr_eq(exp);
@@ -278,6 +302,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.3  2001/03/27 06:43:27  steve
+ *  Evaluate === and !==
+ *
  * Revision 1.2  2001/03/23 01:10:24  steve
  *  Assure that operands are the correct width.
  *
