@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.44 1999/09/22 16:57:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.45 1999/09/23 03:56:57 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -286,6 +286,8 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	  default:
 	    cerr << "vvm: Unhandled unary op `" << expr->op() << "'"
 		 << endl;
+	    os_ << "#error \"" << expr->get_line() << ": vvm error: "
+		  "Unhandled unary op: " << *expr << "\"" << endl;
 	    os_ << result << ";" << endl;
 	    break;
       }
@@ -317,6 +319,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
+	  case 'l': // left shift(<<)
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftl("
+		<< lres << "," << rres << ");" << endl;
+	    break;
 	  case 'L': // <=
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_le("
 		<< lres << "," << rres << ");" << endl;
@@ -335,6 +341,9 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case 'o': // logical or (||)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_lor("
+		<< lres << "," << rres << ");" << endl;
+	  case 'r': // right shift(>>)
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftr("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
@@ -360,7 +369,8 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	  default:
 	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
 		 << *expr << endl;
-	    os_ << lres << ";" << endl;
+	    os_ << "#error \"" << expr->get_line() << ": vvm error: "
+		  "Unhandled binary op: " << *expr << "\"" << endl;
 	    result = lres;
 	    break;
       }
@@ -1448,6 +1458,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.45  1999/09/23 03:56:57  steve
+ *  Support shift operators.
+ *
  * Revision 1.44  1999/09/22 16:57:24  steve
  *  Catch parallel blocks in vvm emit.
  *

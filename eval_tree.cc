@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.3 1999/09/23 00:21:54 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.4 1999/09/23 03:56:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -108,7 +108,52 @@ NetExpr* NetEBComp::eval_tree()
 
 NetExpr* NetEBLogic::eval_tree()
 {
+      eval_sub_tree_();
       return 0;
+}
+
+/*
+ * Evaluate the shift operator if possible. For this to work, both
+ * operands must be constant.
+ */
+NetExpr* NetEBShift::eval_tree()
+{
+      eval_sub_tree_();
+      NetEConst*re = dynamic_cast<NetEConst*>(right_);
+      if (re == 0)
+	    return 0;
+
+      NetEConst*le = dynamic_cast<NetEConst*>(left_);
+      if (le == 0)
+	    return 0;
+
+      NetEConst*res;
+
+      verinum rv = re->value();
+      verinum lv = le->value();
+      if (rv.is_defined()) {
+
+	    unsigned wid = expr_width();
+	    unsigned shift = rv.as_ulong();
+
+	    verinum nv (verinum::V0, wid);
+
+	    if (op() == 'r')
+		  for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1)
+			nv.set(idx, lv[idx+shift]);
+
+	    else
+		  for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1)
+			nv.set(idx+shift, lv[idx]);
+
+	    res = new NetEConst(nv);
+
+      } else {
+	    verinum nv (verinum::Vx, expr_width());
+	    res = new NetEConst(nv);
+      }
+
+      return res;
 }
 
 NetExpr* NetEConcat::eval_tree()
@@ -191,6 +236,9 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.4  1999/09/23 03:56:57  steve
+ *  Support shift operators.
+ *
  * Revision 1.3  1999/09/23 00:21:54  steve
  *  Move set_width methods into a single file,
  *  Add the NetEBLogic class for logic expressions,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.2 1999/09/23 02:27:50 steve Exp $"
+#ident "$Id: set_width.cc,v 1.3 1999/09/23 03:56:57 steve Exp $"
 #endif
 
 /*
@@ -126,6 +126,18 @@ bool NetEBLogic::set_width(unsigned w)
       if (!flag)
 	    flag = right_->set_width(left_->expr_width());
       return (w == 1);
+}
+
+/*
+ * The shift operator allows the shift amount to have its own
+ * natural width. The width of the operator result is the width of the
+ * left operand, the value that is to be shifted.
+ */
+bool NetEBShift::set_width(unsigned w)
+{
+      bool flag;
+      flag = left_->set_width(w);
+      return flag;
 }
 
 /*
@@ -239,6 +251,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.3  1999/09/23 03:56:57  steve
+ *  Support shift operators.
+ *
  * Revision 1.2  1999/09/23 02:27:50  steve
  *  comparison parameter width is self determined.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.98 1999/09/23 02:28:27 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.99 1999/09/23 03:56:57 steve Exp $"
 #endif
 
 /*
@@ -1339,6 +1339,12 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	    tmp->set_line(*this);
 	    break;
 
+	  case 'l':
+	  case 'r':
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
 	  case '^':
 	  case '&':
 	  case '|':
@@ -2631,6 +2637,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.99  1999/09/23 03:56:57  steve
+ *  Support shift operators.
+ *
  * Revision 1.98  1999/09/23 02:28:27  steve
  *  internal error message for funky comparison width.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.68 1999/09/23 00:21:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.69 1999/09/23 03:56:57 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -816,6 +816,16 @@ NetEBLogic::NetEBLogic(char op, NetExpr*l, NetExpr*r)
 }
 
 NetEBLogic::~NetEBLogic()
+{
+}
+
+NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width(l->expr_width());
+}
+
+NetEBShift::~NetEBShift()
 {
 }
 
@@ -1621,6 +1631,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.69  1999/09/23 03:56:57  steve
+ *  Support shift operators.
+ *
  * Revision 1.68  1999/09/23 00:21:54  steve
  *  Move set_width methods into a single file,
  *  Add the NetEBLogic class for logic expressions,
