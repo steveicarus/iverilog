@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.37 2001/07/06 04:48:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.38 2001/07/07 03:01:06 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -933,8 +933,13 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 
       width = ivl_lpm_width(net);
       selects = ivl_lpm_selects(net);
-      fprintf(vvp_out, "L_%s .shift/l %u", 
-	      vvp_mangle_id(ivl_lpm_name(net)), width);
+
+      if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
+	    fprintf(vvp_out, "L_%s .shift/r %u", 
+		    vvp_mangle_id(ivl_lpm_name(net)), width);
+      else
+	    fprintf(vvp_out, "L_%s .shift/l %u", 
+		    vvp_mangle_id(ivl_lpm_name(net)), width);
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    fprintf(vvp_out, ", ");
@@ -973,6 +978,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    return;
 
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    draw_lpm_shiftl(net);
 	    return;
 
@@ -1065,6 +1071,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.38  2001/07/07 03:01:06  steve
+ *  Generate code for right shift.
+ *
  * Revision 1.37  2001/07/06 04:48:04  steve
  *  Generate code for structural left shift.
  *
