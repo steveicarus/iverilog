@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.252 2002/07/07 22:32:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.253 2002/07/24 16:24:45 steve Exp $"
 #endif
 
 /*
@@ -313,10 +313,6 @@ class NetNode  : public NetObj {
       explicit NetNode(NetScope*s, const char*n, unsigned npins);
 
       virtual ~NetNode();
-
-	// This method locates the next node that has all its pins
-	// connected to the same of my own pins.
-      NetNode*next_node();
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
@@ -1639,7 +1635,7 @@ class NetEvent : public LineInfo {
 
 	// Locate the first event that matches my behavior and
 	// monitors the same signals.
-      NetEvent* find_similar_event();
+      void find_similar_event(list<NetEvent*>&);
 
 	// This method replaces pointers to me with pointers to
 	// that. It is typically used to replace similar events
@@ -1747,6 +1743,8 @@ class NetEvProbe  : public NetNode {
       edge_t edge() const;
       NetEvent* event();
       const NetEvent* event() const;
+
+      void find_similar_probes(list<NetEvProbe*>&);
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -3002,6 +3000,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.253  2002/07/24 16:24:45  steve
+ *  Rewrite find_similar_event to support doing
+ *  all event matching and replacement in one
+ *  shot, saving time in the scans.
+ *
  * Revision 1.252  2002/07/07 22:32:15  steve
  *  Asynchronous synthesis of case statements.
  *

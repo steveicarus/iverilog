@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.193 2002/07/02 03:02:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.194 2002/07/24 16:24:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -231,36 +231,6 @@ NetNode::~NetNode()
 {
       if (design_)
 	    design_->del_node(this);
-}
-
-NetNode* NetNode::next_node()
-{
-      Link*pin0 = pin(0).next_nlink();
-      if (pin0 == 0)
-	    pin0 = pin(0).nexus()->first_nlink();
-
-      while (pin0 != &pin(0)) {
-	    NetNode*cur = dynamic_cast<NetNode*>(pin0->get_obj());
-	    if (cur == 0)
-		  goto continue_label;
-	    if (cur->pin_count() != pin_count())
-		  goto continue_label;
-
-	    { bool flag = true;
-	      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
-		    flag = flag && pin(idx).is_linked(cur->pin(idx));
-
-	      if (flag == true)
-		    return cur;
-	    }
-
-      continue_label:
-	    pin0 = pin0->next_nlink();
-	    if (pin0 == 0)
-		  pin0 = pin(0).nexus()->first_nlink();
-      }
-
-      return 0;
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
@@ -2371,6 +2341,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.194  2002/07/24 16:24:45  steve
+ *  Rewrite find_similar_event to support doing
+ *  all event matching and replacement in one
+ *  shot, saving time in the scans.
+ *
  * Revision 1.193  2002/07/02 03:02:57  steve
  *  Change the signal to a net when assignments go away.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.15 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.16 2002/07/24 16:24:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,6 +30,7 @@
  */
 # include  "functor.h"
 # include  "netlist.h"
+# include  "compiler.h"
 
 class nodangle_f  : public functor_t {
     public:
@@ -37,22 +38,32 @@ class nodangle_f  : public functor_t {
       void signal(Design*des, NetNet*sig);
 
       unsigned count_;
+      unsigned stotal, etotal;
 };
 
 void nodangle_f::event(Design*des, NetEvent*ev)
 {
-      if (NetEvent*match = ev->find_similar_event()) {
-	    assert(match != ev);
-	    ev->replace_event(match);
+	/* If there are no references to this event, then go right
+	   ahead and delete in. There is no use looking further at
+	   it. */
+      if ((ev->nwait() + ev->ntrig()) == 0) {
+	    delete ev;
+	    etotal += 1;
+	    return;
       }
 
-      if (ev->nwait() != 0)
-	    return;
+	/* Try to find all the events that are similar to me, and
+	   replace their references with references to me. */
+      list<NetEvent*> match;
+      ev->find_similar_event(match);
+      for (list<NetEvent*>::iterator idx = match.begin()
+		 ; idx != match.end() ;  idx ++) {
 
-      if (ev->ntrig() != 0)
-	    return;
+	    NetEvent*tmp = *idx;
+	    assert(tmp != ev);
+	    tmp ->replace_event(ev);
+      }
 
-      delete ev;
 }
 
 void nodangle_f::signal(Design*des, NetNet*sig)
@@ -74,12 +85,16 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 
 	/* Check to see if the signal is completely unconnected. If
 	   all the bits are unlinked, then delete it. */
-      unsigned unlinked = 0;
+      bool linked_flag = false;
       for (unsigned idx =  0 ;  idx < sig->pin_count() ;  idx += 1)
-	    if (! sig->pin(idx).is_linked()) unlinked += 1;
+	    if (sig->pin(idx).is_linked()) {
+		  linked_flag = true;
+		  break;
+	    }
 
-      if (unlinked == sig->pin_count()) {
+      if (! linked_flag) {
 	    delete sig;
+	    stotal += 1;
 	    return;
       }
 
@@ -110,6 +125,9 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 		  significant_flags += 1;
 		  break;
 	    }
+
+	    if (significant_flags <= idx)
+		  break;
       }
 
 	/* If every pin is connected to another significant signal,
@@ -117,21 +135,40 @@ void nodangle_f::signal(Design*des, NetNet*sig)
       if (significant_flags == sig->pin_count()) {
 	    count_ += 1;
 	    delete sig;
+	    stotal += 1;
       }
 }
 
 void nodangle(Design*des)
 {
       nodangle_f fun;
+      unsigned count_iterations = 0;
+      fun.stotal = 0;
+      fun.etotal = 0;
 
       do {
 	    fun.count_ = 0;
 	    des->functor(&fun);
+	    count_iterations += 1;
+
+	    if (verbose_flag) {
+		  cout << " ... " << count_iterations << " iterations"
+		       << " deleted " << fun.stotal << " dangling signals"
+		       << " and " << fun.etotal << " events."
+		       << " (count=" << fun.count_ << ")" << endl;
+	    }
+
       } while (fun.count_ > 0);
+
 }
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.16  2002/07/24 16:24:45  steve
+ *  Rewrite find_similar_event to support doing
+ *  all event matching and replacement in one
+ *  shot, saving time in the scans.
+ *
  * Revision 1.15  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

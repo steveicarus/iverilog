@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.18 2002/06/30 02:21:31 steve Exp $"
+#ident "$Id: net_event.cc,v 1.19 2002/07/24 16:24:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -119,139 +119,66 @@ unsigned NetEvent::nwait() const
  * A "similar" event is one that has an identical non-nil set of
  * probes.
  */
-NetEvent* NetEvent::find_similar_event()
+void NetEvent::find_similar_event(list<NetEvent*>&event_list)
 {
       if (probes_ == 0)
-	    return 0;
+	    return;
 
-      struct table_s {
-	    NetEvent*ev;
-	    bool mark;
-      } *table;
+      map<NetEvent*,unsigned> event_matches;
 
-	//NetEvent**cand;
-	//bool*cflg;
-      unsigned max_cand = 0, ncand = 0;
+	/* First, get a list of all the NetEvProbes that are connected
+	   to my first probe. Then use that to create a set of
+	   candidate events. These candidate events are a superset of
+	   the similar events, so I will be culling this list later. */
+      list<NetEvProbe*>first_probes;
+      probes_->find_similar_probes(first_probes);
 
-      NetEvProbe*cur = probes_;
-
-	/* Get an estimate of the number of candidate events there
-	   are. To get it, count the number of probes that are
-	   connected to my first probe. Since there is no more then
-	   one NetEvent per NetEvProbe, this is the maximum number of
-	   similar events possible.
-
-	   Once we get that count, allocate the arrays needed to
-	   account for these events. */
-
-      for (NetNode*idx = cur->next_node()
-		 ; idx && (idx != cur) ;  idx = idx->next_node()) {
-	    NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(idx);
-	    if (tmp == 0)
-		  continue;
-	    if (tmp->edge() != cur->edge())
-		  continue;
-
-	    max_cand += 1;
+      for (list<NetEvProbe*>::iterator idx = first_probes.begin()
+		 ; idx != first_probes.end() ;  idx ++) {
+	    event_matches[ (*idx)->event() ] = 1;
       }
 
-      table = new struct table_s[max_cand];
+	/* Now scan the remaining probes, in each case ticking the
+	   candidate event. The events that really are similar to this
+	   one will turn up in every probe list. */
+      unsigned probe_count = 1;
+      for (NetEvProbe*cur = probes_->enext_ ; cur ;  cur = cur->enext_) {
+	    list<NetEvProbe*>similar_probes;
+	    cur->find_similar_probes(similar_probes);
 
-
-	/* First, locate all the candidate events from my first
-	   probe. Look for all the NetEvProbe objects connected to my
-	   probe (that are the same edge) and save the NetEvent that
-	   that probe drives. */
-
-      for (NetNode*idx = cur->next_node()
-		 ; idx && (idx != cur) ;  idx = idx->next_node()) {
-	    NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(idx);
-	    if (tmp == 0)
-		  continue;
-	    if (tmp->edge() != cur->edge())
-		  continue;
-
-	      /* Don't include myself in the list of candidates. */
-	    NetEvent*etmp = tmp->event();
-	    if (etmp == this)
-		  continue;
-
-	    table[ncand++].ev = etmp;
-	    assert(ncand <= max_cand);
-      }
-
-
-	/* All the events in the cand array are now known to connect
-	   through at least one NetEvProbe. Now go through all my
-	   remaining probes and check that each candidate event is
-	   also connected (through a NetEvProbe) to me.
-
-	   By the time I finish this scan, only NetEvents that have
-	   equivilent NetEvProbes remain. These are candidates. The
-	   events may have *more* NetEvProbes then me, I'll catch
-	   those later. */
-
-      for (cur = cur->enext_ ;  cur && ncand ;  cur = cur->enext_) {
-	    for (unsigned idx = 0 ;  idx < ncand ;  idx += 1)
-		  table[idx].mark = false;
-
-	      /* For this probe, look for other probes connected to it
-		 and find the event connected to it. Mark that event
-		 as connected to this probe. */
-
-	    for (NetNode*idx = cur->next_node()
-		       ; idx && (idx != cur) ;  idx = idx->next_node()) {
-		  NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(idx);
-		  if (tmp == 0)
-			continue;
-		  if (tmp->edge() != cur->edge())
-			continue;
-
-		  for (unsigned srch = 0 ;  srch < ncand ;  srch += 1)
-			if (table[srch].ev == tmp->event()) {
-			      table[srch].mark = true;
-			      break;
-			}
+	    for (list<NetEvProbe*>::iterator idx = similar_probes.begin()
+		       ; idx != similar_probes.end() ;  idx ++) {
+		  event_matches[ (*idx)->event() ] += 1;
 	    }
 
-	      /* Look for all the candidates that did not connect to
-		 this probe (cflg is false) and eliminate them. */
-
-	    for (unsigned idx = 0 ;  idx < ncand ;  ) {
-		  if (table[idx].mark) {
-			idx += 1;
-			continue;
-		  }
-
-		  for (unsigned tmp = idx ;  (tmp+1) < ncand ;  tmp += 1)
-			table[tmp] = table[tmp+1];
-
-		  ncand -= 1;
-	    }
+	    probe_count += 1;
       }
 
+	/* Now scan the candidate events. Those events that are
+	   connected to all my probes (match_count[x] == probe_count)
+	   are possible. If those events have the same number of
+	   events, then jackpot. */
+      for (map<NetEvent*,unsigned>::iterator idx = event_matches.begin()
+		 ; idx != event_matches.end() ;  idx ++) {
 
-	/* Scan the remaining candidates for a similar
-	   NetEvent. Eliminate NetEvent objects that have more
-	   NetEvProbe objects then I, because those have a proper
-	   superset of my probes and were not eliminated by the
-	   previous scan.
+	    NetEvent*tmp = (*idx).first;
 
-	   As soon as we find a similar event, we're done. */
+	    if (tmp == this)
+		  continue;
 
-      for (unsigned idx = 0 ;  idx < ncand ;  idx += 1) {
-	    if (table[idx].ev->nprobe() == nprobe()) {
-		  NetEvent*res = table[idx].ev;
-		  delete[]table;
-		  return res;
-	    }
+	    if ((*idx).second != probe_count)
+		  continue;
+
+	    unsigned tcnt = 0;
+	    for (NetEvProbe*cur = tmp->probes_ ; cur ; cur = cur->enext_)
+		  tcnt += 1;
+
+	    if (tcnt == probe_count)
+		  event_list .push_back(tmp);
       }
 
-
-	/* Oops, fell off the list without finding a result. return nil. */
-      delete[]table;
-      return 0;
 }
+
 
 void NetEvent::replace_event(NetEvent*that)
 {
@@ -353,6 +280,42 @@ NetEvent* NetEvProbe::event()
 const NetEvent* NetEvProbe::event() const
 {
       return event_;
+}
+
+/*
+ * A similar NetEvProbe is one that is connected to all the same nexa
+ * that this probe is connected to, and also is the same edge
+ * type. Don't count myself as a similar probe.
+ */
+void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
+{
+      Nexus*nex = pin(0).nexus();
+
+      for (Link*lcur = nex->first_nlink(); lcur; lcur = lcur->next_nlink()) {
+	    NetObj*obj = lcur->get_obj();
+	    if (obj->pin_count() != pin_count())
+		  continue;
+
+	    NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(obj);
+	    if (tmp == 0)
+		  continue;
+
+	    if (tmp == this)
+		  continue;
+
+	    if (edge() != tmp->edge())
+		  continue;
+
+	    bool ok_flag = true;
+	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1)
+		  if (pin(idx).nexus() != tmp->pin(idx).nexus()) {
+			ok_flag = false;
+			break;
+		  }
+
+	    if (ok_flag == true)
+		  plist .push_back(tmp);
+      }
 }
 
 NetEvWait::NetEvWait(NetProc*pr)
@@ -479,6 +442,11 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.19  2002/07/24 16:24:45  steve
+ *  Rewrite find_similar_event to support doing
+ *  all event matching and replacement in one
+ *  shot, saving time in the scans.
+ *
  * Revision 1.18  2002/06/30 02:21:31  steve
  *  Add structure for asynchronous logic synthesis.
  *
