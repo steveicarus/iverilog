@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.78 2003/11/13 05:55:33 steve Exp $"
+#ident "$Id: main.cc,v 1.79 2003/11/26 01:37:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -421,7 +421,8 @@ int main(int argc, char*argv[])
 
       library_suff.push_back(".v");
 
-      flags["VPI_MODULE_LIST"] = "system";
+      vpi_module_list = strdup("system");
+      flags["VPI_MODULE_LIST"] = vpi_module_list;
       flags["-o"] = "a.out";
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
@@ -715,6 +716,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.79  2003/11/26 01:37:14  steve
+ *  Properly initialize vpi_module_list with system.
+ *
  * Revision 1.78  2003/11/13 05:55:33  steve
  *  Move the DLL= flag to target config files.
  *
