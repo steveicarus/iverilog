@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.120 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.121 2004/02/19 06:57:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -632,7 +632,7 @@ void pform_set_net_range(list<char*>*names,
  */
 static void pform_make_event(const char*name, const char*fn, unsigned ln)
 {
-      PEvent*event = new PEvent(lex_strings.add(name));
+      PEvent*event = new PEvent(lex_strings.make(name));
       event->set_file(fn);
       event->set_lineno(ln);
       pform_cur_module->events[name] = event;
@@ -1519,6 +1519,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.121  2004/02/19 06:57:10  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.120  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

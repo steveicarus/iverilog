@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PEvent.cc,v 1.4 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: PEvent.cc,v 1.5 2004/02/19 06:57:10 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "PEvent.h"
 
-PEvent::PEvent(const char*n)
+PEvent::PEvent(perm_string n)
 : name_(n)
 {
 }
@@ -33,13 +33,16 @@ PEvent::~PEvent()
 {
 }
 
-const char* PEvent::name() const
+perm_string  PEvent::name() const
 {
       return name_;
 }
 
 /*
  * $Log: PEvent.cc,v $
+ * Revision 1.5  2004/02/19 06:57:10  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.4  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

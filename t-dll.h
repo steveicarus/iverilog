@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.109 2004/02/18 17:11:58 steve Exp $"
+#ident "$Id: t-dll.h,v 1.110 2004/02/19 06:57:11 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -175,7 +175,7 @@ struct dll_target  : public target_t, public expr_scan_t {
  */
 
 struct ivl_event_s {
-      const char*name;
+      perm_string name;
       ivl_scope_t scope;
       unsigned nany, nneg, npos;
       ivl_nexus_t*pins;
@@ -574,7 +574,7 @@ struct ivl_signal_s {
       signed lsb_index;
       signed lsb_dist;
 
-      const char*name_;
+      perm_string name_;
       ivl_scope_t scope_;
 
       union {
@@ -683,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.110  2004/02/19 06:57:11  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.109  2004/02/18 17:11:58  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_event.cc,v 1.24 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_event.cc,v 1.25 2004/02/19 06:57:10 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -27,7 +27,7 @@
 /*
  * NOTE: The name_ is perm-allocated by the caller.
  */
-NetEvent::NetEvent(const char*n)
+NetEvent::NetEvent(perm_string n)
 : name_(n)
 {
       scope_ = 0;
@@ -51,7 +51,7 @@ NetEvent::~NetEvent()
 	/* name_ is lex_strings. */
 }
 
-const char* NetEvent::name() const
+perm_string NetEvent::name() const
 {
       return name_;
 }
@@ -59,7 +59,7 @@ const char* NetEvent::name() const
 string NetEvent::full_name() const
 {
       assert(scope_);
-      return scope_->name() + "." + name_;
+      return scope_->name() + "." + string(name_);
 }
 
 const NetScope* NetEvent::scope() const
@@ -449,6 +449,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.25  2004/02/19 06:57:10  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.24  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

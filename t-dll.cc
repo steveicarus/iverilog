@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.126 2004/02/18 17:11:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.127 2004/02/19 06:57:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1088,7 +1088,7 @@ void dll_target::memory(const NetMemory*net)
       ivl_memory_t obj = new struct ivl_memory_s;
 
       obj->scope_    = find_scope(des_, net->scope());
-      obj->basename_ = strings_.make(net->name());
+      obj->basename_ = net->name();
       obj->width_    = net->width();
       obj->signed_   = 0;
       obj->size_     = net->count();
@@ -2176,6 +2176,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.127  2004/02/19 06:57:10  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.126  2004/02/18 17:11:58  steve
  *  Use perm_strings for named langiage items.
  *
@@ -2199,125 +2202,5 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
  *
  * Revision 1.119  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
- *
- * Revision 1.118  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.117  2003/07/26 04:06:58  steve
- *  Watch out for moving nexus_ptr while adding pins to nexus.
- *
- * Revision 1.116  2003/07/05 20:42:08  steve
- *  Fix some enumeration warnings.
- *
- * Revision 1.115  2003/06/24 01:38:03  steve
- *  Various warnings fixed.
- *
- * Revision 1.114  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.113  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.112  2003/05/13 16:30:39  steve
- *  Clear pin pointers if pin is not connected.
- *
- * Revision 1.111  2003/05/13 01:56:15  steve
- *  Allow primitives to hvae unconnected input ports.
- *
- * Revision 1.110  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.109  2003/03/29 05:51:25  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.108  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.107  2003/03/06 01:24:37  steve
- *  Obsolete the ivl_event_name function.
- *
- * Revision 1.106  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.105  2003/03/03 02:22:41  steve
- *  Scope names stored only as basename.
- *
- * Revision 1.104  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.103  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.102  2003/01/16 21:43:52  steve
- *  Assert some task definition sanity.
- *
- * Revision 1.101  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.100  2002/11/05 02:12:35  steve
- *  Fix the call to FormatMessage under Windows.
- *
- * Revision 1.99  2002/11/03 22:44:19  steve
- *  Cast for gcc convenience.
- *
- * Revision 1.98  2002/11/03 20:47:23  steve
- *  Slightly more verbose load fail message.
- *
- * Revision 1.97  2002/10/23 01:47:18  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.96  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.95  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.94  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.93  2002/08/04 19:13:16  steve
- *  dll uses StringHeap for named items.
- *
- * Revision 1.92  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.91  2002/07/24 16:21:52  steve
- *  Verbose messages.
- *
- * Revision 1.90  2002/07/22 21:07:40  steve
- *  Set ivl_target delays for case compare logic.
- *
- * Revision 1.89  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.88  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.87  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.86  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.85  2002/06/16 19:19:16  steve
- *  Generate runtime code to normalize indices.
- *
- * Revision 1.84  2002/05/26 01:39:03  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
  */
 

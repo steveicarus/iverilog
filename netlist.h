@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.308 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.309 2004/02/19 06:57:10 steve Exp $"
 #endif
 
 /*
@@ -1776,10 +1776,10 @@ class NetEvent : public LineInfo {
 	// The name of the event is the basename, and should not
 	// include the scope. Also, the name passed here should be
 	// perm-allocated.
-      explicit NetEvent (const char*n);
+      explicit NetEvent (perm_string n);
       ~NetEvent();
 
-      const char* name() const;
+      perm_string name() const;
       string full_name() const;
 
 	// Get information about probes connected to me.
@@ -1812,7 +1812,7 @@ class NetEvent : public LineInfo {
       NexusSet*nex_async_();
 
     private:
-      const char* name_;
+      perm_string name_;
 
 	// The NetScope class uses these to list the events.
       NetScope*scope_;
@@ -3315,6 +3315,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.309  2004/02/19 06:57:10  steve
+ *  Memory and Event names use perm_string.
+ *
  * Revision 1.308  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *
