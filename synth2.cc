@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth2.cc,v 1.5 2002/07/29 00:00:28 steve Exp $"
+#ident "$Id: synth2.cc,v 1.6 2002/08/10 22:07:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -278,11 +278,26 @@ class synth2_f  : public functor_t {
  */
 void synth2_f::process(class Design*des, class NetProcTop*top)
 {
+      if (top->attribute("ivl_synthesis_off").as_ulong() != 0)
+	    return;
+
       if (! top->is_asynchronous()) {
-	    if (top->attribute("asynchronous").as_ulong() != 0)
-		  cerr << top->get_line() << ": warning: "
-		       << "Process is marked asynchronous,"
+	    if (top->attribute("ivl_combinational").as_ulong() != 0) {
+		  cerr << top->get_line() << ": error: "
+		       << "Process is marked combinational,"
 		       << " but isn't really." << endl;
+		  des->errors += 1;
+	    }
+
+	    if (top->attribute("ivl_synthesis_on").as_ulong() != 0) {
+		  cerr << top->get_line() << ": error: "
+		       << "Process is marked for synthesis,"
+		       << " but I can't do it." << endl;
+		  des->errors += 1;
+	    }
+
+	    cerr << top->get_line() << ": warning: "
+		 << "Process not synthesized." << endl;
 	    return;
       }
 
@@ -304,6 +319,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.6  2002/08/10 22:07:08  steve
+ *  Observe attributes to control synthesis.
+ *
  * Revision 1.5  2002/07/29 00:00:28  steve
  *  Asynchronous synthesis of sequential blocks.
  *
