@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/05/24 01:13:00 $" Version "$Date: 2002/05/24 01:13:00 $"
+.TH iverilog 1 "$Date: 2002/05/28 20:46:51 $" Version "$Date: 2002/05/28 20:46:51 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -239,6 +239,18 @@ The \fB+libext\fP token in command files fives file extensions to try
 when looking for a library file. This is useful in conjunction with
 \fB-y\fP flags to list suffixes to try in each directory before moving
 on to the next library directory.
+
+.TP 8
+.B +libdir+\fIdir\fP
+This is another way to specify library directories. See the -y flag.
+
+.TP 8
+.B +libdir-nocase+\fIdir\fP
+This is like the \fB+libdir\fP statement, but file names inside the
+directories declared here are case insensitive. The missing module
+name in a lookup need not match the file name case, as long as the
+letters are correct. For example, "foo" matches "Foo.v" but not
+"bar.v".
 
 .TP 8
 .B +define+\fINAME\fP=\fIvalue\fP
