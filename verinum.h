@@ -19,10 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.14 2001/01/02 03:23:40 steve Exp $"
+#ident "$Id: verinum.h,v 1.15 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  <string>
+
+#ifdef HAVE_IOSFWD
+# include  <iosfwd>
+#else
+class ostream;
+#endif
 
 /*
  * Numbers in verlog are multibit strings, where each bit has 4
@@ -96,7 +102,6 @@ class verinum {
 };
 
 
-class ostream;
 extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
 
@@ -114,6 +119,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.15  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.14  2001/01/02 03:23:40  steve
  *  Evaluate constant &, | and unary ~.
  *

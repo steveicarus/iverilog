@@ -19,12 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PEvent.h,v 1.3 2000/04/09 17:44:30 steve Exp $"
+#ident "$Id: PEvent.h,v 1.4 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
 # include  <string>
-class ostream;
+
 class Design;
 class NetScope;
 
@@ -52,6 +52,9 @@ class PEvent : public LineInfo {
 
 /*
  * $Log: PEvent.h,v $
+ * Revision 1.4  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.3  2000/04/09 17:44:30  steve
  *  Catch event declarations during scope elaborate.
  *

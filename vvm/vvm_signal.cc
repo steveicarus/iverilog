@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.6 2000/12/12 03:30:25 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.7 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
@@ -63,14 +63,6 @@ unsigned vvm_bitset_t::as_unsigned() const
       return result;
 }
 
-ostream& operator << (ostream&os, const vvm_bitset_t&str)
-{
-      os << str.get_width() << "b'";
-      for (unsigned idx = str.get_width() ;  idx > 0 ;  idx -= 1)
-	    b_output(os, str.get_bit(idx));
-
-      return os;
-}
 
 vvm_signal_t::vvm_signal_t()
 {
@@ -105,6 +97,9 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.7  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.6  2000/12/12 03:30:25  steve
  *  out-line vvm_bitset_t methods.
  *

@@ -19,12 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.11 2000/12/15 20:05:16 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.12 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_nexus.h"
-class ostream;
 
 /*
  * The vvm_bitset_t is a reference to an array of vpip_bit_t
@@ -57,7 +56,6 @@ class vvm_bitset_t  {
       vvm_bitset_t& operator= (const vvm_bitset_t&);
 };
 
-extern ostream& operator << (ostream&os, const vvm_bitset_t&str);
 
 /*
  * The vvm_signal_t template is the real object that handles the
@@ -121,6 +119,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.12  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.11  2000/12/15 20:05:16  steve
  *  Fix memory access in vvm. (PR#70)
  *

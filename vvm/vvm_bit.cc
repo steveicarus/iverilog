@@ -17,36 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_bit.cc,v 1.12 2000/04/10 05:26:07 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.13 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  "vvm.h"
-# include  <iostream>
 
-ostream& b_output (ostream&os, vpip_bit_t bit)
-{
-      if (B_IS0(bit)) {
-	    os << "0";
-	    return os;
-      }
-
-      if (B_IS1(bit)) {
-	    os << "1";
-	    return os;
-      }
-
-      if (B_ISX(bit)) {
-	    os << "x";
-	    return os;
-      }
-
-      if (B_ISZ(bit)) {
-	    os << "z";
-	    return os;
-      }
-
-      return os;
-}
 
 bool negedge(vpip_bit_t from, vpip_bit_t to)
 {
@@ -114,6 +89,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.13  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.12  2000/04/10 05:26:07  steve
  *  All events now use the NetEvent class.
  *

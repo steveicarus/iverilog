@@ -19,14 +19,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.9 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: PWire.h,v 1.10 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "LineInfo.h"
-# include <map>
+# include  <map>
 # include  "svector.h"
+
+#ifdef HAVE_IOSFWD
+# include  <iosfwd>
+#else
 class ostream;
+#endif
+
 class PExpr;
 class Design;
 
@@ -86,6 +92,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.10  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.9  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

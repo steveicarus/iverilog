@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.36 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: vvm.h,v 1.37 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -34,7 +34,6 @@ typedef unsigned vvm_u32;
 
 class vvm_event;
 class vvm_thread;
-class ostream;
 
 
 inline vpip_bit_t B_AND(vpip_bit_t l, vpip_bit_t r)
@@ -97,8 +96,6 @@ inline vpip_bit_t B_NOT(vpip_bit_t l)
 extern bool negedge(vpip_bit_t from, vpip_bit_t to);
 extern bool posedge(vpip_bit_t from, vpip_bit_t to);
 
-extern ostream& b_output (ostream&os, vpip_bit_t);
-
 /*
  * Verilog events (update events and nonblocking assign) are derived
  * from this abstract class so that the simulation engine can treat
@@ -126,6 +123,9 @@ class vvm_event {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.37  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.36  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

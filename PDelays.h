@@ -19,14 +19,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.h,v 1.2 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PDelays.h,v 1.3 2001/01/16 02:44:17 steve Exp $"
 #endif
 
 # include  "svector.h"
 # include  <string>
+
+#ifdef HAVE_IOSFWD
+# include  <iosfwd>
+#else
+class ostream;
+#endif
+
 class Design;
 class PExpr;
-class ostream;
 
 /*
  * Various PForm objects can carry delays. These delays include rise,
@@ -60,6 +66,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.3  2001/01/16 02:44:17  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.2  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

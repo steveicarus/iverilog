@@ -5,10 +5,13 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
-AC_CHECK_HEADERS(getopt.h)
+
+AC_LANG_CPLUSPLUS
+
+AC_CHECK_HEADERS(getopt.h iosfwd)
+
 AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
 AC_SUBST(HAVE_IPAL)
-AC_PROG_INSTALL
 
 # --
 # Look for a dl library to use. First look for the standard dlopen
@@ -22,6 +25,8 @@ if test -z "$DLLIB" ; then
 AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
 fi
 AC_SUBST(DLLIB)
+
+AC_PROG_INSTALL
 
 AC_CANONICAL_HOST
 # $host

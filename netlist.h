@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.193 2001/01/06 06:31:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.194 2001/01/16 02:44:18 steve Exp $"
 #endif
 
 /*
@@ -35,6 +35,12 @@
 # include  "svector.h"
 # include  "Attrib.h"
 
+#ifdef HAVE_IOSFWD
+# include  <iosfwd>
+#else
+class ostream;
+#endif
+
 class Design;
 class Link;
 class Nexus;
@@ -44,7 +50,6 @@ class NetProcTop;
 class NetScope;
 class NetExpr;
 class NetESignal;
-class ostream;
 
 
 struct target;
@@ -2846,6 +2851,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.194  2001/01/16 02:44:18  steve
+ *  Use the iosfwd header if available.
+ *
  * Revision 1.193  2001/01/06 06:31:58  steve
  *  declaration initialization for time variables.
  *
