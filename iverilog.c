@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.2 2000/04/21 22:51:38 steve Exp $"
+#ident "$Id: iverilog.c,v 1.3 2000/04/21 22:54:47 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -34,7 +34,7 @@ const char*opath = "a.out";
 const char*targ  = "vvm";
 int verbose_flag = 0;
 
-static char cmdline[4096];
+static char cmdline[8192];
 
 static int t_null()
 {
@@ -67,7 +67,8 @@ static int t_vvm()
       strcat(cmdline, base);
       strcat(cmdline, "/ivl -o ");
       strcat(cmdline, opath);
-      strcat(cmdline, ".cc -tvvm -Fcprop -Fnodangle ");
+      strcat(cmdline, ".cc -tvvm -Fcprop -Fnodangle -fVPI_MODULE_PATH=");
+      strcat(cmdline, base);
       strcat(cmdline, " -- -");
       if (verbose_flag)
 	    printf("translate: %s\n", cmdline);
@@ -189,6 +190,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.3  2000/04/21 22:54:47  steve
+ *  module path in vvm target.
+ *
  * Revision 1.2  2000/04/21 22:51:38  steve
  *  Support the -tnull target type.
  *
