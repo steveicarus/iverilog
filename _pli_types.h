@@ -19,18 +19,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h,v 1.1 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: _pli_types.h,v 1.2 2003/05/26 04:39:16 steve Exp $"
 #endif
 
 typedef signed int     PLI_INT32;
 typedef unsigned int   PLI_UINT32;
 typedef signed short   PLI_INT16;
-typedef unsigned short PLI_UINT12;
+typedef unsigned short PLI_UINT16;
 typedef signed char    PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
 
 /*
  * $Log: _pli_types.h,v $
+ * Revision 1.2  2003/05/26 04:39:16  steve
+ *  Typo type name.
+ *
  * Revision 1.1  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC
