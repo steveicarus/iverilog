@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.27 2003/02/06 17:50:23 steve Exp $"
+#ident "$Id: set_width.cc,v 1.28 2003/04/02 04:25:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -249,8 +249,23 @@ bool NetEConst::set_width(unsigned w)
 
       if (w > value_.len()) {
 	    verinum::V pad = verinum::V0;
-	    if (value_.has_sign())
+	    if (value_.has_sign()) {
 		  pad = value_.get(value_.len()-1);
+
+	    } else if (value_.len() == 0) {
+		  pad = verinum::V0;
+
+	    } else switch (value_.get(value_.len()-1)) {
+		case verinum::V1:
+		case verinum::V0:
+		  break;
+		case verinum::Vx:
+		  pad = verinum::Vx;
+		  break;
+		case verinum::Vz:
+		  pad = verinum::Vz;
+		  break;
+	    }
 
 	    verinum tmp (verinum::V0, w, has_width());
 	    for (unsigned idx = 0 ;  idx < value_.len() ;  idx += 1)
@@ -383,6 +398,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.28  2003/04/02 04:25:26  steve
+ *  Fix xz extension of constants.
+ *
  * Revision 1.27  2003/02/06 17:50:23  steve
  *  Real constants have no defined vector width
  *

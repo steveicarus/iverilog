@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.73 2003/03/25 03:00:04 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.74 2003/04/02 04:25:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -161,6 +161,15 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'E': /* === */
 	  case 'n': /* != */
 	  case 'N': /* !== */
+	    if (dynamic_cast<NetEConst*>(rp)
+		&& (lp->expr_width() > rp->expr_width()))
+		  rp->set_width(lp->expr_width());
+
+	    if (dynamic_cast<NetEConst*>(lp)
+		&& (lp->expr_width() < rp->expr_width()))
+		  lp->set_width(rp->expr_width());
+
+	      /* from here, handle this like other compares. */
 	  case 'L': /* <= */
 	  case 'G': /* >= */
 	  case '<':
@@ -943,6 +952,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.74  2003/04/02 04:25:26  steve
+ *  Fix xz extension of constants.
+ *
  * Revision 1.73  2003/03/25 03:00:04  steve
  *  Scope names can be relative.
  *
