@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.22 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: main.cc,v 1.23 1999/09/22 16:57:23 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -75,7 +75,6 @@ static void parm_to_flagmap(const string&flag)
 extern Design* elaborate(const map<string,Module*>&modules,
 			 const map<string,PUdp*>&primitives,
 			 const string&root);
-extern void emit(ostream&o, const Design*, const char*);
 
 extern void cprop(Design*des);
 extern void propinit(Design*des);
@@ -252,6 +251,7 @@ int main(int argc, char*argv[])
       }
 
 
+      bool emit_rc;
       if (out_path) {
 	    ofstream out;
 	    out.open(out_path);
@@ -261,10 +261,15 @@ int main(int argc, char*argv[])
 		  return 1;
 	    }
 
-	    emit(out, des, target);
+	    emit_rc = emit(out, des, target);
 
       } else {
-	    emit(cout, des, target);
+	    emit_rc = emit(cout, des, target);
+      }
+
+      if (!emit_rc) {
+	    cerr << "internal error: Code generation had errors." << endl;
+	    return 1;
       }
 
       return 0;
@@ -272,6 +277,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.23  1999/09/22 16:57:23  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.22  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.68 1999/09/21 00:13:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.69 1999/09/22 16:57:23 steve Exp $"
 #endif
 
 /*
@@ -589,7 +589,10 @@ class NetProc {
       explicit NetProc() : next_(0) { }
       virtual ~NetProc();
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+	// This method is called to emit the statement to the
+	// target. The target returns true if OK, false for errors.
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -628,7 +631,7 @@ class NetAssign  : public NetAssign_ {
       void find_lval_range(const NetNet*&net, unsigned&msb,
 			   unsigned&lsb) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -656,7 +659,7 @@ class NetAssignNB  : public NetAssign_ {
 	// the pin that gets the value.
       const NetExpr*bmux() const { return bmux_; }
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -694,7 +697,7 @@ class NetAssignMem : public NetAssignMem_ {
       explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMem();
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -706,7 +709,7 @@ class NetAssignMemNB : public NetAssignMem_ {
       explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMemNB();
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -731,7 +734,7 @@ class NetBlock  : public NetProc {
       void append(NetProc*);
 
       void emit_recurse(ostream&, struct target_t*) const;
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -758,7 +761,7 @@ class NetCase  : public NetProc {
       const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -791,7 +794,7 @@ class NetCondit  : public NetProc {
       void emit_recurse_if(ostream&, struct target_t*) const;
       void emit_recurse_else(ostream&, struct target_t*) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -812,7 +815,7 @@ class NetForever : public NetProc {
 
       void emit_recurse(ostream&, struct target_t*) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -855,7 +858,7 @@ class NetPDelay  : public NetProc {
 
       unsigned long delay() const { return delay_; }
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
@@ -885,7 +888,7 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
       NetProc* statement();
       const NetProc* statement() const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
@@ -935,7 +938,7 @@ class NetRepeat : public NetProc {
       const NetExpr*expr() const;
       void emit_recurse(ostream&, struct target_t*) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -961,7 +964,7 @@ class NetSTask  : public NetProc {
 
       const NetExpr* parm(unsigned idx) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1050,7 +1053,7 @@ class NetUTask  : public NetProc {
 
       const string& name() const { return task_->name(); }
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1072,7 +1075,7 @@ class NetWhile  : public NetProc {
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1081,9 +1084,11 @@ class NetWhile  : public NetProc {
 };
 
 
-/* The is the top of any process. It carries the type (initial or
-   always) and a pointer to the statement, probably a block, that
-   makes up the process. */
+/*
+ * The is the top of any process. It carries the type (initial or
+ * always) and a pointer to the statement, probably a block, that
+ * makes up the process.
+ */
 class NetProcTop  : public LineInfo {
 
     public:
@@ -1097,7 +1102,7 @@ class NetProcTop  : public LineInfo {
       const NetProc*statement() const;
 
       void dump(ostream&, unsigned ind) const;
-      void emit(ostream&, struct target_t*tgt) const;
+      bool emit(ostream&, struct target_t*tgt) const;
 
     private:
       const Type type_;
@@ -1524,7 +1529,7 @@ class Design {
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
-      void emit(ostream&, struct target_t*) const;
+      bool emit(ostream&, struct target_t*) const;
 
       void clear_node_marks();
       NetNode*find_node(bool (*test)(const NetNode*));
@@ -1613,6 +1618,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.69  1999/09/22 16:57:23  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.68  1999/09/21 00:13:40  steve
  *  Support parameters that reference other paramters.
  *

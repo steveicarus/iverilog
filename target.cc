@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.19 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: target.cc,v 1.20 1999/09/22 16:57:24 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -105,9 +105,9 @@ void target_t::net_event(ostream&os, const NetNEvent*net)
       net->dump_node(cerr, 4);
 }
 
-void target_t::process(ostream&os, const NetProcTop*top)
+bool target_t::process(ostream&os, const NetProcTop*top)
 {
-      top->statement()->emit_proc(os, this);
+      return top->statement()->emit_proc(os, this);
 }
 
 void target_t::proc_assign(ostream&os, const NetAssign*)
@@ -134,10 +134,11 @@ void target_t::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*)
 	    "Unhandled non-blocking memory assignment." << endl;
 }
 
-void target_t::proc_block(ostream&os, const NetBlock*)
+bool target_t::proc_block(ostream&os, const NetBlock*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_block." << endl;
+      return false;
 }
 
 void target_t::proc_case(ostream&os, const NetCase*cur)
@@ -268,6 +269,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.20  1999/09/22 16:57:24  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.19  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

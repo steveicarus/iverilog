@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.43 1999/09/22 04:30:04 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.44 1999/09/22 16:57:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -54,11 +54,11 @@ class target_vvm : public target_t {
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
-      virtual void process(ostream&os, const NetProcTop*);
+      virtual bool process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
-      virtual void proc_block(ostream&os, const NetBlock*);
+      virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
@@ -508,11 +508,12 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       os << "}" << endl;
 }
 
-void target_vvm::process(ostream&os, const NetProcTop*top)
+bool target_vvm::process(ostream&os, const NetProcTop*top)
 {
       start_process(os, top);
-      top->statement()->emit_proc(os, this);
+      bool rc = top->statement()->emit_proc(os, this);
       end_process(os, top);
+      return rc;
 }
 
 void target_vvm::signal(ostream&os, const NetNet*sig)
@@ -1075,14 +1076,14 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
       }
 }
 
-void target_vvm::proc_block(ostream&os, const NetBlock*net)
+bool target_vvm::proc_block(ostream&os, const NetBlock*net)
 {
       if (net->type() == NetBlock::PARA) {
-	    cerr << "internal error: vvm cannot emit parallel blocks."
-		 << endl;
-	    return;
+	    cerr << "sorry: vvm cannot emit parallel blocks." << endl;
+	    return false;
       }
       net->emit_recurse(os, this);
+      return true;
 }
 
 /*
@@ -1447,6 +1448,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.44  1999/09/22 16:57:24  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.43  1999/09/22 04:30:04  steve
  *  Parse and elaborate named for/join blocks.
  *

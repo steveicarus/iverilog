@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.18 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: target.h,v 1.19 1999/09/22 16:57:24 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -80,14 +80,14 @@ struct target_t {
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
-      virtual void process(ostream&os, const NetProcTop*);
+      virtual bool process(ostream&os, const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
       virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
-      virtual void proc_block(ostream&os, const NetBlock*);
+      virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
@@ -123,7 +123,7 @@ struct expr_scan_t {
 /* The emit functions take a design and emit it to the output stream
    using the specified target. If the target is given by name, it is
    located in the target_table and used. */
-extern void emit(ostream&o, const Design*des, const char*type);
+extern bool emit(ostream&o, const Design*des, const char*type);
 
 /* This function takes a fully qualified verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
@@ -136,6 +136,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.19  1999/09/22 16:57:24  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.18  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

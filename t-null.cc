@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.5 1999/09/17 02:06:26 steve Exp $"
+#ident "$Id: t-null.cc,v 1.6 1999/09/22 16:57:24 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,7 +35,7 @@ static class target_null_t  : public target_t {
       void task_def(ostream&, const NetTaskDef*) { }
       void net_esignal(ostream&, const NetESignal*) { }
       void net_event(ostream&, const NetNEvent*) { }
-      void proc_block(ostream&, const NetBlock*) { }
+      bool proc_block(ostream&, const NetBlock*) { return true; }
       void proc_condit(ostream&, const NetCondit*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
       void proc_event(ostream&, const NetPEvent*) { }
@@ -48,6 +48,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.6  1999/09/22 16:57:24  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.5  1999/09/17 02:06:26  steve
  *  Handle unconnected module ports.
  *

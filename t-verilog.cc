@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.7 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.8 1999/09/22 16:57:24 steve Exp $"
 #endif
 
 /*
@@ -43,7 +43,7 @@ class target_verilog : public target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void start_process(ostream&os, const NetProcTop*);
-      virtual void proc_block(ostream&os, const NetBlock*);
+      virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_stask(ostream&os, const NetSTask*);
@@ -173,13 +173,14 @@ void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
       }
 }
 
-void target_verilog::proc_block(ostream&os, const NetBlock*net)
+bool target_verilog::proc_block(ostream&os, const NetBlock*net)
 {
       os << setw(indent_) << "" << "begin" << endl;
       indent_ += 4;
       net->emit_recurse(os, this);
       indent_ -= 4;
       os << setw(indent_) << "" << "end" << endl;
+      return true;
 }
 
 void target_verilog::proc_delay(ostream&os, const NetPDelay*net)
@@ -271,6 +272,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.8  1999/09/22 16:57:24  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.7  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

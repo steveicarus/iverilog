@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.22 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: emit.cc,v 1.23 1999/09/22 16:57:23 steve Exp $"
 #endif
 
 /*
@@ -75,59 +75,68 @@ void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
       tgt->bufz(o, this);
 }
 
-void NetProcTop::emit(ostream&o, struct target_t*tgt) const
+bool NetProcTop::emit(ostream&o, struct target_t*tgt) const
 {
-      tgt->process(o, this);
+      return tgt->process(o, this);
 }
 
-void NetProc::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetProc::emit_proc(ostream&o, struct target_t*tgt) const
 {
       cerr << "EMIT: Proc type? " << typeid(*this).name() << endl;
+      return false;
 }
 
-void NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign(o, this);
+      return true;
 }
 
-void NetAssignNB::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignNB::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign_nb(o, this);
+      return true;
 }
 
-void NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign_mem(o, this);
+      return true;
 }
 
-void NetAssignMemNB::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignMemNB::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign_mem_nb(o, this);
+      return true;
 }
 
-void NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
 {
-      tgt->proc_block(o, this);
+      return tgt->proc_block(o, this);
 }
 
-void NetCase::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetCase::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_case(o, this);
+      return true;
 }
 
-void NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_condit(o, this);
+      return true;
 }
 
-void NetForever::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetForever::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_forever(o, this);
+      return true;
 }
 
-void NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_delay(o, this);
+      return true;
 }
 
 void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
@@ -135,9 +144,10 @@ void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
       if (statement_) statement_->emit_proc(o, tgt);
 }
 
-void NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_event(o, this);
+      return true;
 }
 
 void NetPEvent::emit_proc_recurse(ostream&o, struct target_t*tgt) const
@@ -145,24 +155,28 @@ void NetPEvent::emit_proc_recurse(ostream&o, struct target_t*tgt) const
       if (statement_) statement_->emit_proc(o, tgt);
 }
 
-void NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_repeat(o, this);
+      return true;
 }
 
-void NetSTask::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetSTask::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_stask(o, this);
+      return true;
 }
 
-void NetUTask::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetUTask::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_utask(o, this);
+      return true;
 }
 
-void NetWhile::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetWhile::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_while(o, this);
+      return true;
 }
 
 void NetBlock::emit_recurse(ostream&o, struct target_t*tgt) const
@@ -206,8 +220,9 @@ void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
       proc_->emit_proc(o, tgt);
 }
 
-void Design::emit(ostream&o, struct target_t*tgt) const
+bool Design::emit(ostream&o, struct target_t*tgt) const
 {
+      bool rc = true;
       tgt->start_design(o, this);
 
 	// emit signals
@@ -257,9 +272,10 @@ void Design::emit(ostream&o, struct target_t*tgt) const
 
 	// emit the processes
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
-	    idx->emit(o, tgt);
+	    rc = rc && idx->emit(o, tgt);
 
       tgt->end_design(o, this);
+      return rc;
 }
 
 void NetEBinary::expr_scan(struct expr_scan_t*tgt) const
@@ -323,20 +339,22 @@ void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_unary(this);
 }
 
-void emit(ostream&o, const Design*des, const char*type)
+bool emit(ostream&o, const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
 	    const struct target*tgt = target_table[idx];
-	    if (tgt->name == type) {
-		  des->emit(o, tgt->meth);
-		  return;
-	    }
+	    if (tgt->name == type)
+		  return des->emit(o, tgt->meth);
+
       }
 }
 
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.23  1999/09/22 16:57:23  steve
+ *  Catch parallel blocks in vvm emit.
+ *
  * Revision 1.22  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *
