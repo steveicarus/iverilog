@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.33 2001/01/15 00:47:01 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.34 2001/01/15 22:05:14 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -534,6 +534,8 @@ extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
+extern ivl_scope_type_t ivl_scope_type(ivl_scope_t net);
+extern const char*  ivl_scope_tname(ivl_scope_t net);
 
 
 /* SIGNALS
@@ -665,6 +667,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.34  2001/01/15 22:05:14  steve
+ *  Declare ivl_scope_type functions.
+ *
  * Revision 1.33  2001/01/15 00:47:01  steve
  *  Pass scope type information to the target module.
  *
