@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.16 2002/04/20 04:33:23 steve Exp $"
+#ident "$Id: schedule.cc,v 1.17 2002/05/04 03:03:17 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -280,9 +280,15 @@ static vvp_time64_t schedule_time;
 vvp_time64_t schedule_simtime(void)
 { return schedule_time; }
 
+extern void vpiPresim();
+extern void vpiPostsim();
+
 void schedule_simulate(void)
 {
       schedule_time = 0;
+
+      // Execute pre-simulation callbacks
+      vpiPresim();
 
       while (schedule_runnable && sched_list) {
 
@@ -358,12 +364,17 @@ void schedule_simulate(void)
 		  break;
 
 	    }
-
       }
+
+      // Execute post-simulation callbacks
+      vpiPostsim();
 }
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.17  2002/05/04 03:03:17  steve
+ *  Add simulator event callbacks.
+ *
  * Revision 1.16  2002/04/20 04:33:23  steve
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.

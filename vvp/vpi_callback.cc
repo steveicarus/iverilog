@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.12 2002/04/20 04:33:23 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.13 2002/05/04 03:03:17 steve Exp $"
 #endif
 
 /*
@@ -270,6 +270,64 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
       return obj;
 }
 
+/*
+ * The following functions are the used for pre and post simulation
+ * callbacks.
+ */
+
+static struct __vpiCallback*EndOfCompile = NULL;
+static struct __vpiCallback*StartOfSimulation = NULL;
+static struct __vpiCallback*EndOfSimulation = NULL;
+
+void vpiPresim() {
+      struct __vpiCallback* cur;
+
+      /*
+       * Walk the list of register callbacks
+       */
+      for (cur = EndOfCompile; cur != NULL; cur = cur->next) {
+	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+      }
+      for (cur = StartOfSimulation; cur != NULL; cur = cur->next) {
+	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+      }
+}
+
+void vpiPostsim() {
+      struct __vpiCallback* cur;
+
+      /*
+       * Walk the list of register callbacks
+       */
+      for (cur = EndOfSimulation; cur != NULL; cur = cur->next) {
+	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+      }
+}
+
+static struct __vpiCallback* make_prepost(p_cb_data data)
+{
+      struct __vpiCallback*obj = new_vpi_callback();
+      obj->cb_data = *data;
+
+      /* Insert at head of list */
+      switch (data->reason) {
+	  case cbEndOfCompile:
+	      obj->next = EndOfCompile;
+	      EndOfCompile = obj;
+	  break;
+	  case cbStartOfSimulation:
+	      obj->next = StartOfSimulation;
+	      StartOfSimulation = obj;
+	  break;
+	  case cbEndOfSimulation:
+	      obj->next = EndOfSimulation;
+	      EndOfSimulation = obj;
+	  break;
+      }
+
+      return obj;
+}
+
 vpiHandle vpi_register_cb(p_cb_data data)
 {
       struct __vpiCallback*obj = 0;
@@ -286,6 +344,12 @@ vpiHandle vpi_register_cb(p_cb_data data)
 
 	  case cbReadWriteSynch:
 	    obj = make_sync(data, false);
+	    break;
+
+	  case cbEndOfCompile:
+	  case cbStartOfSimulation:
+	  case cbEndOfSimulation:
+	    obj = make_prepost(data);
 	    break;
 
 	  default:
@@ -345,6 +409,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.13  2002/05/04 03:03:17  steve
+ *  Add simulator event callbacks.
+ *
  * Revision 1.12  2002/04/20 04:33:23  steve
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.
