@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.141 2003/01/10 03:06:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.142 2003/01/18 23:56:06 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -96,7 +96,7 @@ endif
 check: all
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) check); done
 	driver/iverilog -Ccheck.conf -ocheck.vvp -tvvp-check -B./ivlpp $(srcdir)/examples/hello.vl
-	vvp/vvp -M./vpi ./check.vvp | grep 'Hello, World'
+	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 clean:
 	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a libvpi.a iverilog-vpi
