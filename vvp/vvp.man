@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2002/07/12 02:35:35 $" Version "$Date: 2002/07/12 02:35:35 $"
+.TH vvp 1 "$Date: 2002/07/12 16:30:44 $" Version "$Date: 2002/07/12 16:30:44 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -69,7 +69,7 @@ its behavior. These can be used to make semi-permanent changes.
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
-gtkwave for compatible viewers.
+gtkwave or compatible viewers.
 
 .SH "AUTHOR"
 .nf
