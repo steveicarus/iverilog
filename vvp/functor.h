@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.24 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: functor.h,v 1.25 2001/06/19 03:01:10 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -283,6 +283,7 @@ extern const unsigned char ft_BUF[];
 extern const unsigned char ft_BUFIF0[];
 extern const unsigned char ft_BUFIF1[];
 extern const unsigned char ft_MUXZ[];
+extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
@@ -293,6 +294,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.25  2001/06/19 03:01:10  steve
+ *  Add structural EEQ gates (Stephan Boettcher)
+ *
  * Revision 1.24  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.

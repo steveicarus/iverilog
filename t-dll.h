@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.49 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: t-dll.h,v 1.50 2001/06/19 03:01:10 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -60,6 +60,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
+      void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
       void lpm_add_sub(const NetAddSub*);
       void lpm_compare(const NetCompare*);
@@ -538,6 +539,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.50  2001/06/19 03:01:10  steve
+ *  Add structural EEQ gates (Stephan Boettcher)
+ *
  * Revision 1.49  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

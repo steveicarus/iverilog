@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.78 2001/06/18 01:09:32 steve Exp $"
+#ident "$Id: compile.cc,v 1.79 2001/06/19 03:01:10 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -372,6 +372,9 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj->table = ft_MUXZ;
+
+      } else if (strcmp(type, "EEQ") == 0) {
+	    obj->table = ft_EEQ;
 
       } else if (strcmp(type, "NAND") == 0) {
 	    obj->table = ft_NAND;
@@ -1406,6 +1409,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.79  2001/06/19 03:01:10  steve
+ *  Add structural EEQ gates (Stephan Boettcher)
+ *
  * Revision 1.78  2001/06/18 01:09:32  steve
  *  More behavioral unary reduction operators.
  *  (Stephan Boettcher)

@@ -54,6 +54,10 @@ normally initialized to 1 and left unconnected. The device is called
 MUXZ because the x and z values of the A and B inputs are passed
 through.
 	
+* EEQ
+
+Compare two pairs of inputs.  output = (i1 === i2) && (i3 === i4);
+
 * NAND
 
 * NOR

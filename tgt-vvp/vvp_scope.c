@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.35 2001/06/18 03:10:34 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.36 2001/06/19 03:01:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -579,6 +579,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ltype = "XOR";
 	    break;
 
+	  case IVL_LO_EEQ:
+	    ltype = "EEQ";
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %u\n",
 		    ivl_logic_type(lptr));
@@ -1033,6 +1037,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.36  2001/06/19 03:01:10  steve
+ *  Add structural EEQ gates (Stephan Boettcher)
+ *
  * Revision 1.35  2001/06/18 03:10:34  steve
  *   1. Logic with more than 4 inputs
  *   2. Id and name mangling

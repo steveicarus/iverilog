@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.68 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.69 2001/06/19 03:01:10 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -195,6 +195,8 @@ typedef enum ivl_logic_e {
       IVL_LO_PMOS,
       IVL_LO_XNOR,
       IVL_LO_XOR,
+
+      IVL_LO_EEQ, 
 
       IVL_LO_UDP
 } ivl_logic_t;
@@ -882,6 +884,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.69  2001/06/19 03:01:10  steve
+ *  Add structural EEQ gates (Stephan Boettcher)
+ *
  * Revision 1.68  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
