@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.58 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: parse.y,v 1.59 2004/08/28 16:26:41 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -386,10 +386,12 @@ statement
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
-	| T_LABEL K_NET T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols_net ';'
+	| T_LABEL K_NET T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, false, $9.cnt, $9.vect); }
 
-	| T_LABEL K_NET_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols_net ';'
+        | T_LABEL K_NET_S T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
@@ -633,6 +635,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.59  2004/08/28 16:26:41  steve
+ *  .net range values can be signed.
+ *
  * Revision 1.58  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *
