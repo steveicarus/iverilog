@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.9 2003/10/15 02:17:39 steve Exp $"
+#ident "$Id: stop.cc,v 1.10 2003/11/07 05:58:02 steve Exp $"
 #endif
 
 /*
@@ -424,7 +424,7 @@ void stop_handler(int rc)
 		  first += 1;
 
 	    if (first[0] != 0) {
-#ifdef HAVE_READLINE_HISTORY
+#ifdef HAVE_READLINE_HISTORY_H
 		  add_history(first);
 #endif
 		  invoke_command(first);
@@ -452,6 +452,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.10  2003/11/07 05:58:02  steve
+ *  Fix conditional compilation of readline history.
+ *
  * Revision 1.9  2003/10/15 02:17:39  steve
  *  Include net objects in list display.
  *
