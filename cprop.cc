@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.18 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: cprop.cc,v 1.19 2000/11/18 04:10:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -228,6 +228,9 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		unsigned top = obj->pin_count();
 		unsigned idx = 1;
 
+		  /* Eliminate all the 0 inputs. They have no effect
+		     on the output of an XOR gate. Don't remove the
+		     last input, though. */
 		while (idx < top) {
 		      if (! link_drivers_constant(obj->pin(idx))) {
 			    idx += 1;
@@ -247,9 +250,100 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      }
 		}
 
+		  /* Look for pairs of constant 1 inputs. If I find a
+		     pair, then eliminate both. Each iteration through
+		     the loop, the `one' variable holds the index to
+		     the previous V1, or 0 if there is none.
+
+		     The `ones' variable counts the number of V1
+		     inputs. After this loop completes, `ones' will be
+		     0 or 1. */
+
+		unsigned one = 0, ones = 0;
+		idx = 1;
+		while (idx < top) {
+		      if (! link_drivers_constant(obj->pin(idx))) {
+			    idx += 1;
+			    continue;
+		      }
+
+		      if (driven_value(obj->pin(idx)) == verinum::V1) {
+			    if (one == 0) {
+				  one = idx;
+				  ones += 1;
+				  idx += 1;
+				  continue;
+			    }
+
+			    obj->pin(idx).unlink();
+			    top -= 1;
+			    if (idx < top) {
+				  connect(obj->pin(idx), obj->pin(top));
+				  obj->pin(top).unlink();
+			    }
+
+			    obj->pin(one).unlink();
+			    top -= 1;
+			    if (one < top) {
+				  connect(obj->pin(one), obj->pin(top));
+				  obj->pin(top).unlink();
+			    }
+
+			    assert(ones == 1);
+			    ones = 0;
+			    continue;
+		      }
+
+		      idx += 1;
+		}
+
+		  /* If all the inputs were eliminated, then replace
+		     the gate with a constant 0 and I am done. */
+		if (top == 1) {
+		      NetConst*tmp = new NetConst(obj->name(), verinum::V0);
+
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If there is a stray V1 input and only one other
+		     input, then replace the gate with an inverter and
+		     we are done. */
+
+		if ((top == 3) && (ones == 1)) {
+		      unsigned save;
+		      if (! link_drivers_constant(obj->pin(1)))
+			    save = 1;
+		      else if (driven_value(obj->pin(1)) != verinum::V1)
+			    save = 1;
+		      else
+			    save = 2;
+
+		      NetLogic*tmp = new NetLogic(obj->scope(),
+						  obj->name(), 2,
+						  NetLogic::NOT);
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+		      connect(obj->pin(save), tmp->pin(1));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If we are down to only one input, then replace
+		     the XOR with a BUF and exit now. */
 		if (top == 2) {
 		      NetLogic*tmp = new NetLogic(obj->scope(),
-						  obj->name(), top,
+						  obj->name(), 2,
 						  NetLogic::BUF);
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -261,6 +355,9 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      return;
 		}
 
+		  /* Finally, this cleans up the gate by creating a
+		     new XOR gate that has the right number of
+		     inputs, connected in the right place. */
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(obj->scope(),
 						  obj->name(), top,
@@ -434,6 +531,11 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.19  2000/11/18 04:10:37  steve
+ *  Handle constant propagation through XOR gates,
+ *  including reducing the gate to a constant,
+ *  a buffer or an inverter if possible.
+ *
  * Revision 1.18  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *
