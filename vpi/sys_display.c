@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.68 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_display.c,v 1.69 2004/01/23 23:40:44 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -829,12 +829,32 @@ static int format_str(vpiHandle scope, unsigned int mcd,
       return idx;
 }
 
+static void do_display_numeric(unsigned int mcd,
+			       struct strobe_cb_info*info,
+			       vpiHandle item)
+{
+      int size;
+      s_vpi_value value;
+
+      value.format = info->default_format;
+      vpi_get_value(item, &value);
+
+      switch(info->default_format){
+	  case vpiDecStrVal:
+	    size = vpi_get_dec_size(item);
+	    my_mcd_printf(mcd, "%*s", size, value.value.str);
+	    break;
+
+	  default:
+	    my_mcd_printf(mcd, "%s", value.value.str);
+      }
+}
+
 static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
       char*fmt;
       s_vpi_value value;
       unsigned int idx;
-      int size;
 
       for (idx = 0 ;  idx < info->nitems ;  idx += 1) {
 	    vpiHandle item = info->items[idx];
@@ -856,9 +876,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 					  info->items+idx+1);
 			free(fmt);
 		  } else {
-			value.format = vpiBinStrVal;
-			vpi_get_value(item, &value);
-			my_mcd_printf(mcd, "%s", value.value.str);
+			do_display_numeric(mcd, info, item);
 		  }
 		  break;
 
@@ -866,20 +884,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiMemoryWord:
-		  value.format = info->default_format;
-		  vpi_get_value(item, &value);
-
-		  switch(info->default_format){
-		  case vpiDecStrVal:
-		      size = vpi_get_dec_size(item);
-		      my_mcd_printf(mcd, "%*s", size, value.value.str);
-		      break;
-
-		  default:
-		      my_mcd_printf(mcd, "%s", value.value.str);
-		  }
-		  
-
+		  do_display_numeric(mcd, info, item);
 		  break;
 
 		case vpiTimeVar:
@@ -1580,6 +1585,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.69  2004/01/23 23:40:44  steve
+ *  Honor default format of numbers.
+ *
  * Revision 1.68  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *
