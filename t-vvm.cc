@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.27 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.28 1999/07/07 04:20:57 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -42,6 +42,7 @@ class target_vvm : public target_t {
       virtual void start_design(ostream&os, const Design*);
       virtual void signal(ostream&os, const NetNet*);
       virtual void memory(ostream&os, const NetMemory*);
+      virtual void task_def(ostream&os, const NetTaskDef*);
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
@@ -59,6 +60,7 @@ class target_vvm : public target_t {
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
+      virtual void proc_utask(ostream&os, const NetUTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
@@ -420,6 +422,28 @@ void target_vvm::memory(ostream&os, const NetMemory*mem)
       os << "static vvm_bitset_t<" << mem->width() << "> " <<
 	    mangle(mem->name()) << "[" << mem->count() << "]; " <<
 	    "/* " << mem->name() << " */" << endl;
+}
+
+void target_vvm::task_def(ostream&os, const NetTaskDef*def)
+{
+      thread_step_ = 0;
+      const string name = mangle(def->name());
+      os << "class " << name << "  : public vvm_thread {" << endl;
+      os << "    public:" << endl;
+      os << "      " << name << "(vvm_simulation*sim, vvm_thread*th)" << endl;
+      os << "      : vvm_thread(sim), back_(th), step_(&step_0_)" << endl;
+      os << "      { }" << endl;
+      os << "      ~" << name << "() { }" << endl;
+      os << "      bool go() { return (this->*step_)(); }" << endl;
+      os << "    private:" << endl;
+      os << "      vvm_thread*back_;" << endl;
+      os << "      bool (" << name << "::*step_)();" << endl;
+      os << "      bool step_0_() {" << endl;
+      def->proc()->emit_proc(os, this);
+      os << "        sim_->thread_active(back_);" << endl;
+      os << "        return false;" << endl;
+      os << "      }" << endl;
+      os << "};" << endl;
 }
 
 /*
@@ -793,7 +817,7 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
       os << "    private:" << endl;
       os << "      bool (thread" << process_counter <<
 	    "_t::*step_)();" << endl;
-
+      os << "      vvm_thread*callee_;" << endl;
       os << "      bool step_0_() {" << endl;
 }
 
@@ -1058,6 +1082,19 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 	    net->nparms() << ", " << ptmp << ");" << endl;
 }
 
+void target_vvm::proc_utask(ostream&os, const NetUTask*net)
+{
+      unsigned out_step = ++thread_step_;
+      const string name = mangle(net->name());
+      os << "        callee_ = new " << name << "(sim_, this);" << endl;
+      os << "        step_ = &step_" << out_step << "_;" << endl;
+      os << "        return false;" << endl;
+      os << "      }" << endl;
+      os << "      bool step_" << out_step << "_()" << endl;
+      os << "      {" << endl;
+      os << "        delete callee_;" << endl;
+}
+
 /*
  * The while loop is implemented by making each iteration one [or
  * more] basic block and letting the loop condition skip to the block
@@ -1202,6 +1239,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.28  1999/07/07 04:20:57  steve
+ *  Emit vvm for user defined tasks.
+ *
  * Revision 1.27  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

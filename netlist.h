@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.43 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: netlist.h,v 1.44 1999/07/07 04:20:57 steve Exp $"
 #endif
 
 /*
@@ -877,6 +877,7 @@ class NetTaskDef {
       ~NetTaskDef();
 
       const string& name() const { return name_; }
+      const NetProc*proc() const { return proc_; }
 
       void dump(ostream&, unsigned) const;
 
@@ -899,6 +900,7 @@ class NetUTask  : public NetProc {
       NetUTask(NetTaskDef*, const svector<NetExpr*>&);
       ~NetUTask();
 
+      const string& name() const { return task_->name(); }
       unsigned nparms() const { return parms_.count(); }
 
       const NetExpr* parm(unsigned idx) const;
@@ -1336,6 +1338,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.44  1999/07/07 04:20:57  steve
+ *  Emit vvm for user defined tasks.
+ *
  * Revision 1.43  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

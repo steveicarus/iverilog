@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.15 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: emit.cc,v 1.16 1999/07/07 04:20:57 steve Exp $"
 #endif
 
 /*
@@ -224,14 +224,6 @@ void Design::emit(ostream&o, struct target_t*tgt) const
       }
 
 
-	// emit task definitions
-      {
-	    map<string,NetTaskDef*>::const_iterator ta;
-	    for (ta = tasks_.begin() ; ta != tasks_.end() ;  ta ++) {
-		  tgt->task_def(o, (*ta).second);
-	    }
-      }
-
 	// emit nodes
       if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
@@ -241,6 +233,14 @@ void Design::emit(ostream&o, struct target_t*tgt) const
 	    } while (cur != nodes_->node_next_);
       }
 
+
+	// emit task definitions
+      {
+	    map<string,NetTaskDef*>::const_iterator ta;
+	    for (ta = tasks_.begin() ; ta != tasks_.end() ;  ta ++) {
+		  tgt->task_def(o, (*ta).second);
+	    }
+      }
 
 	// emit the processes
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
@@ -308,6 +308,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.16  1999/07/07 04:20:57  steve
+ *  Emit vvm for user defined tasks.
+ *
  * Revision 1.15  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *
