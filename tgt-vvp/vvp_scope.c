@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.42 2001/07/22 21:31:14 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.43 2001/07/28 03:18:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -195,15 +195,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       }
 
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_SUPPLY1)) {
-	    sprintf(result, "V_%s[%u]", vvp_mangle_id(ivl_signal_name(sptr)),
-		    nptr_pin);
-	    return result;
+	    return "C<su1>";
       }
 
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_SUPPLY0)) {
-	    sprintf(result, "V_%s[%u]", vvp_mangle_id(ivl_signal_name(sptr)),
-		    nptr_pin);
-	    return result;
+	    return "C<su0>";
       }
 
       cptr = ivl_nexus_ptr_con(nptr);
@@ -1110,6 +1106,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.43  2001/07/28 03:18:50  steve
+ *  Generate constant symbols for supply nets.
+ *
  * Revision 1.42  2001/07/22 21:31:14  steve
  *  supply signals give input values.
  *
