@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.67 1999/08/04 02:13:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.68 1999/08/05 04:58:57 steve Exp $"
 #endif
 
 /*
@@ -1203,12 +1203,11 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       }
       assert(reg);
 
-      if (reg->type() != NetNet::REG) {
+      if ((reg->type() != NetNet::REG) && (reg->type() != NetNet::INTEGER)) {
 	    cerr << get_line() << ": " << *lval() << " is not a register."
 		 << endl;
 	    return 0;
       }
-      assert(reg->type() == NetNet::REG);
 
       if (id->msb_ && id->lsb_) {
 	    verinum*vl = id->lsb_->eval_const(des, path);
@@ -1312,7 +1311,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    unsigned wid = msb - lsb + 1;
 
 	    if (! rv->set_width(wid)) {
-		  cerr << rv->get_line() << ": Unable to match expression "
+		  cerr << get_line() << ": Unable to match expression "
 			"width of " << rv->expr_width() << " to l-value"
 			" width of " << wid << "." << endl;
 		    //XXXX delete rv;
@@ -1355,7 +1354,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    unsigned wid = msb - lsb + 1;
 
 	    if (! rv->set_width(wid)) {
-		  cerr << rv->get_line() << ": Unable to match expression "
+		  cerr << get_line() << ": Unable to match expression "
 			"width of " << rv->expr_width() << " to l-value"
 			" width of " << wid << "." << endl;
 		    //XXXX delete rv;
@@ -2042,6 +2041,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.68  1999/08/05 04:58:57  steve
+ *  Allow integers as register lvalues.
+ *
  * Revision 1.67  1999/08/04 02:13:02  steve
  *  Elaborate module ports that are concatenations of
  *  module signals.
