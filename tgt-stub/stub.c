@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.102 2005/01/28 05:36:18 steve Exp $"
+#ident "$Id: stub.c,v 1.103 2005/01/29 16:47:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -633,6 +633,41 @@ static void show_event(ivl_event_t net)
       }
 }
 
+static const char* str_tab[8] = {
+      "HiZ", "small", "medium", "weak",
+      "large", "pull", "strong", "supply"};
+
+/*
+ * This function is used by the show_signal to dump a constant value
+ * that is connected to the signal. While we are here, check that the
+ * value is consistent with the signal itself.
+ */
+static void signal_nexus_const(ivl_signal_t sig,
+			       ivl_nexus_ptr_t ptr,
+			       ivl_net_const_t con)
+{
+      const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
+      const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
+
+      const char*bits = ivl_const_bits(con);
+      unsigned idx, width = ivl_const_width(con);
+
+      fprintf(out, "      const-");
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    fprintf(out, "%c", bits[width-idx-1]);
+      }
+
+      fprintf(out, " (%s0, %s1, width=%u)\n", dr0, dr1, width);
+
+      if (ivl_signal_width(sig) != width) {
+	    fprintf(stderr, "ERROR: Width of signal does not match "
+		    "width of connected constant vector.\n");
+	    stub_errors += 1;
+      }
+}
+
+
 static void show_signal(ivl_signal_t net)
 {
       unsigned idx;
@@ -699,10 +734,6 @@ static void show_signal(ivl_signal_t net)
 	    ivl_signal_t sig;
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
-	    static const char* str_tab[8] = {
-		  "HiZ", "small", "medium", "weak",
-		  "large", "pull", "strong", "supply"};
-
 	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
 	    const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
 
@@ -737,12 +768,7 @@ static void show_signal(ivl_signal_t net)
 			  ivl_lpm_basename(lpm), dr0, dr1);
 
 	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
-		  const char*bits = ivl_const_bits(con);
-		  unsigned pin = ivl_nexus_ptr_pin(ptr);
-
-		  fprintf(out, "      const-%c (%s0, %s1)\n",
-			  bits[pin], dr0, dr1);
-
+		  signal_nexus_const(net, ptr, con);
 
 	    } else {
 		  fprintf(out, "      ?[%u] (%s0, %s1)\n",
@@ -948,6 +974,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.103  2005/01/29 16:47:52  steve
+ *  Check width of constant attached to nexus.
+ *
  * Revision 1.102  2005/01/28 05:36:18  steve
  *  Show the lpm_mult device.
  *
