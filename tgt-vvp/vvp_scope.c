@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.63 2002/01/12 04:03:40 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.64 2002/01/12 17:49:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -280,11 +280,17 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    switch (bits[nptr_pin]) {
 		case '0':
 		  drive = ivl_nexus_ptr_drive0(nptr);
-		  sprintf(result, "C<%s0>", drive_string(drive));
+		  if (drive == IVL_DR_HiZ)
+			sprintf(result, "C<z>");
+		  else
+			sprintf(result, "C<%s0>", drive_string(drive));
 		  break;
 		case '1':
 		  drive = ivl_nexus_ptr_drive1(nptr);
-		  sprintf(result, "C<%s1>", drive_string(drive));
+		  if (drive == IVL_DR_HiZ)
+			sprintf(result, "C<z>");
+		  else
+			sprintf(result, "C<%s1>", drive_string(drive));
 		  break;
 		default:
 		  sprintf(result, "C<%c>", bits[nptr_pin]);
@@ -1404,6 +1410,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.64  2002/01/12 17:49:41  steve
+ *  Handle constants with drive strength z
+ *
  * Revision 1.63  2002/01/12 04:03:40  steve
  *  Drive strengths for continuous assignments.
  *
