@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.84 2002/08/05 04:18:45 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.85 2002/08/07 02:17:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -241,10 +241,7 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
-#if 0
-	  case IVL_EX_MEMORY:
-	    return net->u_.memory_.mem_->name_;
-#endif
+
 	  default:
 	    assert(0);
       }
@@ -1553,6 +1550,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.85  2002/08/07 02:17:14  steve
+ *  Dead code.
+ *
  * Revision 1.84  2002/08/05 04:18:45  steve
  *  Store only the base name of memories.
  *
