@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.30 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: functor.h,v 1.31 2001/10/09 02:28:17 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -304,6 +304,8 @@ extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
 extern const unsigned char ft_BUFIF0[];
 extern const unsigned char ft_BUFIF1[];
+extern const unsigned char ft_PMOS[];
+extern const unsigned char ft_NMOS[];
 extern const unsigned char ft_MUXZ[];
 extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
@@ -316,6 +318,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.31  2001/10/09 02:28:17  steve
+ *  Add the PMOS and NMOS functor types.
+ *
  * Revision 1.30  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

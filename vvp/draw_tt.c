@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.9 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.10 2001/10/09 02:28:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -172,6 +172,74 @@ static void draw_BUFIF1(void)
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
 			      if (i2 == 1)
+				    val = 3;
+			      else if (i0 == 1)
+				    val = 1;
+			      else if (i0 == 0)
+				    val = 0;
+			      else
+				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_PMOS(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_PMOS[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i2 == 0 || i0 == 3)
+				    val = 3;
+			      else if (i0 == 1)
+				    val = 1;
+			      else if (i0 == 0)
+				    val = 0;
+			      else
+				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_NMOS(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_NMOS[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i2 == 1 || i0 == 3)
 				    val = 3;
 			      else if (i0 == 1)
 				    val = 1;
@@ -531,6 +599,8 @@ main()
       draw_BUF();
       draw_BUFIF0();
       draw_BUFIF1();
+      draw_PMOS();
+      draw_NMOS();
       draw_MUXZ();
       draw_EEQ();
       draw_NAND();
@@ -546,6 +616,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.10  2001/10/09 02:28:17  steve
+ *  Add the PMOS and NMOS functor types.
+ *
  * Revision 1.9  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *

@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.100 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: compile.cc,v 1.101 2001/10/09 02:28:16 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "bufif.h"
+# include  "npmos.h"
 # include  "compile.h"
 # include  "functor.h"
 # include  "resolv.h"
@@ -676,6 +677,14 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       } else if (strcmp(type, "BUFIF1") == 0) {
 	    obj->obj = new vvp_bufif1_s;
+	    obj->mode = M42;
+
+      } else if (strcmp(type, "PMOS") == 0) {
+	    obj->obj = new vvp_pmos_s;
+	    obj->mode = M42;
+
+      } else if (strcmp(type, "NMOS") == 0) {
+	    obj->obj = new vvp_nmos_s;
 	    obj->mode = M42;
 
       } else if (strcmp(type, "MUXZ") == 0) {
@@ -1637,6 +1646,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.101  2001/10/09 02:28:16  steve
+ *  Add the PMOS and NMOS functor types.
+ *
  * Revision 1.100  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *
