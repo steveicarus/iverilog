@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.7 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: Module.h,v 1.8 1999/08/04 02:13:02 steve Exp $"
 #endif
 
 # include  <list>
@@ -73,7 +73,7 @@ class Module {
       void add_function(const string&name, PFunction*def);
 
       unsigned port_count() const;
-      const PWire* get_port(unsigned idx) const;
+      const svector<PWire*>& get_port(unsigned idx) const;
       unsigned find_port(const string&) const;
 
 	// Find a wire by name. This is used for connecting gates to
@@ -105,6 +105,10 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.8  1999/08/04 02:13:02  steve
+ *  Elaborate module ports that are concatenations of
+ *  module signals.
+ *
  * Revision 1.7  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.

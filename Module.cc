@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.5 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: Module.cc,v 1.6 1999/08/04 02:13:02 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -66,11 +66,10 @@ unsigned Module::port_count() const
       return ports_.count();
 }
 
-const PWire* Module::get_port(unsigned idx) const
+const svector<PWire*>& Module::get_port(unsigned idx) const
 {
       assert(idx < ports_.count());
-      assert(ports_[idx]->wires.count() == 1);
-      return ports_[idx]->wires[0];
+      return ports_[idx]->wires;
 }
 
 unsigned Module::find_port(const string&name) const
@@ -100,6 +99,10 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.6  1999/08/04 02:13:02  steve
+ *  Elaborate module ports that are concatenations of
+ *  module signals.
+ *
  * Revision 1.5  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.

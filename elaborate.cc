@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.66 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.67 1999/08/04 02:13:02 steve Exp $"
 #endif
 
 /*
@@ -481,41 +481,42 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    }
 
 	    assert(sig);
-	    const PWire*pport = rmod->get_port(idx);
-	    NetNet*prt = des->find_signal(my_name, pport->name());
-	    assert(prt);
+
+	      // Inside the module, the port is one or more signals,
+	      // that were already elaborated. List all those signals,
+	      // and I will connect them up later.
+	    svector<PWire*> mport = rmod->get_port(idx);
+	    svector<NetNet*>prts (mport.count());
+
+	    unsigned prts_pin_count = 0;
+	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
+		  PWire*pport = mport[0];
+		  prts[ldx] = des->find_signal(my_name, pport->name());
+		  assert(prts[ldx]);
+		  prts_pin_count += prts[ldx]->pin_count();
+	    }
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths.
-	    if (prt->pin_count() != sig->pin_count()) {
-		  cerr << get_line() << ": Port " <<
-			pport->name() << " of " << type_ <<
-			" expects " << prt->pin_count() << " pins, got " <<
+	    if (prts_pin_count != sig->pin_count()) {
+		  cerr << get_line() << ": Port " << idx << " of " << type_ <<
+			" expects " << prts_pin_count << " pins, got " <<
 			sig->pin_count() << " from " << sig->name() << endl;
 		  des->errors += 1;
 		  continue;
 	    }
 
-	    assert(prt->pin_count() == sig->pin_count());
-	    switch (prt->port_type()) {
-		    // INPUT and OUTPUT ports are directional. Handle
-		    // them like assignments.
-		case NetNet::PINPUT:
-		  do_assign(des, path, prt, sig);
-		  break;
-		case NetNet::POUTPUT:
-		  do_assign(des, path, sig, prt);
-		  break;
+	      // Connect the sig expression that is the context of the
+	      // module instance to the ports of the elaborated
+	      // module.
 
-		    // INOUT ports are like terminal posts. Just
-		    // connect the inside and the outside nets
-		    // together.
-		case NetNet::PINOUT:
-		  for (unsigned p = 0 ;  p < sig->pin_count() ;  p += 1)
-			connect(prt->pin(p), sig->pin(p));
-		  break;
-		default:
-		  assert(0);
+	    assert(prts_pin_count == sig->pin_count());
+	    for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
+		  for (unsigned p = 0 ;  p < prts[ldx]->pin_count() ; p += 1) {
+			prts_pin_count -= 1;
+			connect(sig->pin(prts_pin_count),
+				prts[ldx]->pin(prts[ldx]->pin_count()-p-1));
+		  }
 	    }
 
 	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
@@ -2041,6 +2042,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.67  1999/08/04 02:13:02  steve
+ *  Elaborate module ports that are concatenations of
+ *  module signals.
+ *
  * Revision 1.66  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.
