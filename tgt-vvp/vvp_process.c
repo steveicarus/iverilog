@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.94 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.95 2004/12/11 05:43:30 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -821,51 +821,62 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_stmt_cassign(ivl_statement_t net)
 {
-      ivl_lval_t lval;
-      ivl_signal_t lsig;
       ivl_expr_t rval;
+      struct vector_info rvec;
+      unsigned roff = 0;
+      unsigned lidx = 0;
 
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
+      rval = ivl_stmt_rval(net);
+      assert(rval);
 
-      lsig = ivl_lval_sig(lval);
-      assert(lsig != 0);
-      assert(ivl_lval_mux(lval) == 0);
-      assert(ivl_lval_part_off(lval) == 0);
+      rvec = draw_eval_expr(rval, STUFF_OK_47);
 
-      if ( (rval = ivl_stmt_rval(net)) ) {
+      for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ; lidx += 1) {
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
+	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    unsigned use_wid;
 
-	    struct vector_info rvec = draw_eval_expr(rval, STUFF_OK_47);
+	    assert(lsig != 0);
+	    assert(ivl_lval_mux(lval) == 0);
+	    assert(ivl_lval_part_off(lval) == 0);
+
+	    use_wid = ivl_signal_width(lsig);
+	    assert(roff + use_wid <= rvec.wid);
+
 	    fprintf(vvp_out, "  %%cassign/v V_%s, %u, %u;\n",
-		    vvp_signal_label(lsig), rvec.base, rvec.wid);
+		    vvp_signal_label(lsig), rvec.base+roff, use_wid);
 
-      } else {
-	      /* The statement nexus count is an obsolete concept.
-		 Should be 1. */
-	    assert(ivl_stmt_nexus_count(net) == 1);
-
-	    fprintf(stderr, "XXXX tgt-vvp: forgot how to implement cassign\n");
-	    return -1;
+	    if (rvec.base >= 4)
+		  roff += use_wid;
       }
+
+	/* FIXME: The above assumes that the expression is a constant
+	   value to be assigned to the target. If it is not, then we
+	   will need to generate a thread or netlist to deal with the
+	   expression and repetitively assign to the target. */
 
       return 0;
 }
 
+/*
+ * Handle the deassign similar to cassign. The lvals must all be
+ * vectors without bit or part selects. Simply call %deassign for all
+ * the values.
+ */
 static int show_stmt_deassign(ivl_statement_t net)
 {
-      ivl_lval_t lval;
-      ivl_signal_t lsig;
-      unsigned idx;
+      unsigned lidx;
 
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
+      for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
+	    ivl_signal_t lsig = ivl_lval_sig(lval);
 
-      lsig = ivl_lval_sig(lval);
-      assert(lsig != 0);
-      assert(ivl_lval_mux(lval) == 0);
-      assert(ivl_lval_part_off(lval) == 0);
+	    assert(lsig != 0);
+	    assert(ivl_lval_mux(lval) == 0);
+	    assert(ivl_lval_part_off(lval) == 0);
 
-      fprintf(vvp_out, "   %%deassign V_%s;\n", vvp_signal_label(lsig));
+	    fprintf(vvp_out, "   %%deassign V_%s;\n", vvp_signal_label(lsig));
+      }
 
       return 0;
 }
@@ -1518,6 +1529,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.95  2004/12/11 05:43:30  steve
+ *  cassign and deassign handle concatenated l-values.
+ *
  * Revision 1.94  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
