@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.47.2.1 2005/02/19 16:39:32 steve Exp $
+ *  $Id: README.txt,v 1.47.2.2 2005/02/23 18:37:52 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -283,7 +283,7 @@ statement, it creates no functors. The symbol list is a list of
 functors that feed into each bit of the vector, and the vpiHandle
 holds references to those functors that are fed it.
 
-The <label> is required and is used to locate the net object that is
+The <label> is required and is used to locate the net object that it
 represents. This label does not map to a functor, so only references
 that know they want to access .nets are able to locate the symbol. In
 particular, this includes behavioral %load and %wait instructions. The
@@ -312,7 +312,7 @@ second word.
 
 Structural read access is implemented in terms of address and data
 ports.  The addresses applied to the address port are expected to be
-withing the ranges specified, not based at zero.
+within the ranges specified, not based at zero.
 
 A read port is a vector of functors that is wide enough to accept all
 provided address bits and at least as wide as the requested subset of
@@ -381,11 +381,10 @@ EVENT STATEMENTS
 Threads need to interact with the functors of a netlist synchronously,
 as well as asynchronously. There are cases where the web of functors
 needs to wake up a waiting thread. The web of functors signals threads
-through .event objects, that are declare like so:
+through .event objects, that are declared like so:
 
 	<label> .event <type>, <symbols_list>;
 	<label> .event "name";
-
 
 This event statement declares an object that a %wait instruction
 can take as an operand. When a thread executes a %wait, it puts
@@ -509,7 +508,7 @@ similar:
 
 Whereas the arithmetic statements create an array of functor outputs,
 there is only one useful functor output for the comparators. That
-functor output is 1 1f the comparison is true, 0 if false, and x
+functor output is 1 if the comparison is true, 0 if false, and x
 otherwise. The plain versions do unsigned comparison, but the ".s"
 versions do signed comparison. (Equality doesn't need to care about
 sign.)
@@ -742,7 +741,7 @@ compile.cc. This function in turn calls all the *_init() functions in
 other parts of the source that need initialization for compile. All
 the various sub-init functions are called <foo>_init().
 
-Compilation is controlled by the parser, it parse.y. As the parser
+Compilation is controlled by the parser, in parse.y. As the parser
 reads and parses input, the compilation proceeds in the rules by
 calling various compile_* functions. All these functions live in the
 compile.cc file. Compilation calls other sections of the code as
