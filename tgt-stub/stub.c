@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.44 2001/06/07 03:09:37 steve Exp $"
+#ident "$Id: stub.c,v 1.45 2001/06/07 04:20:10 steve Exp $"
 #endif
 
 /*
@@ -106,12 +106,16 @@ static void show_lpm(ivl_lpm_t net)
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
 		      fprintf(out, "    Data A %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_data(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
+			      nex? ivl_nexus_name(nex) : "");
+		}
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
 		      fprintf(out, "    Data B %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_datab(net, idx)));
+			      nex? ivl_nexus_name(nex) : "");
+		}
 		break;
 	  }
 
@@ -581,6 +585,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.45  2001/06/07 04:20:10  steve
+ *  Account for carry out on add devices.
+ *
  * Revision 1.44  2001/06/07 03:09:37  steve
  *  support subtraction in tgt-vvp.
  *

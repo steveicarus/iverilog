@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.44 2001/06/07 03:09:37 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.45 2001/06/07 04:20:10 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -618,13 +618,19 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       obj->scope = find_scope(des_.root_, net->scope());
       assert(obj->scope);
 
+	/* Choose the width of the adder. If the carry bit is
+	   connected, then widen the adder by one and plan on leaving
+	   the fake inputs unconnected. */
       obj->u_.arith.width = net->width();
+      if (net->pin_Cout().is_linked()) {
+	    obj->u_.arith.width += 1;
+      }
 
       obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
       obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
 
-      for (unsigned idx = 0 ;  idx < obj->u_.arith.width ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
 	    const Nexus*nex;
 
 	    nex = net->pin_Result(idx).nexus();
@@ -647,6 +653,21 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+	/* If the carry output is connected, then connect the extra Q
+	   pin to the carry nexus and zero the a and b inputs. */
+      if (net->pin_Cout().is_linked()) {
+	    unsigned carry = obj->u_.arith.width - 1;
+	    const Nexus*nex = net->pin_Cout().nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.q[carry] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[carry], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    obj->u_.arith.a[carry] = 0;
+	    obj->u_.arith.b[carry] = 0;
       }
 
       scope_add_lpm(obj->scope, obj);
@@ -1066,6 +1087,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.45  2001/06/07 04:20:10  steve
+ *  Account for carry out on add devices.
+ *
  * Revision 1.44  2001/06/07 03:09:37  steve
  *  support subtraction in tgt-vvp.
  *

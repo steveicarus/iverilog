@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.30 2001/06/07 03:09:37 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.31 2001/06/07 04:20:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -629,14 +629,22 @@ static void draw_lpm_add(ivl_lpm_t net)
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t a = ivl_lpm_data(net, idx);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(a);
+	    if (a) {
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(a);
+	    } else {
+		  fprintf(vvp_out, ", C<0>");
+	    }
       }
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t b = ivl_lpm_datab(net, idx);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(b);
+	    if (b) {
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(b);
+	    } else {
+		  fprintf(vvp_out, ", C<0>");
+	    }
       }
 
       fprintf(vvp_out, ";\n");
@@ -766,6 +774,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.31  2001/06/07 04:20:10  steve
+ *  Account for carry out on add devices.
+ *
  * Revision 1.30  2001/06/07 03:09:37  steve
  *  support subtraction in tgt-vvp.
  *
