@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.4 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: udp.cc,v 1.5 2001/05/31 04:12:43 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -32,6 +32,21 @@ static symbol_table_t udp_table;
 void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
 {
   unsigned char out = propagate_(ptr);
+
+  switch (out) {
+      case 0:
+	fp->ostr = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
+	break;
+      case 1:
+	fp->ostr = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
+	break;
+      case 2:
+	fp->ostr = 0x80 | (fp->odrive0<<0) | (fp->odrive1<<4);
+	break;
+      case 3:
+	fp->ostr = 0x00;
+	break;
+  }
 
   if (out != fp->oval) 
     {
@@ -208,6 +223,10 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.5  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.4  2001/05/06 03:51:37  steve
  *  Regularize the mode-42 functor handling.
  *

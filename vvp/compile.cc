@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.69 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: compile.cc,v 1.70 2001/05/31 04:12:43 steve Exp $"
 #endif
 
+# include  "bufif.h"
 # include  "compile.h"
 # include  "functor.h"
 # include  "resolv.h"
@@ -355,10 +356,12 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    obj->table = ft_BUF;
 
       } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj->table = ft_BUFIF0;
+	    obj->obj = new vvp_bufif0_s;
+	    obj->mode = M42;
 
       } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj->table = ft_BUFIF1;
+	    obj->obj = new vvp_bufif1_s;
+	    obj->mode = M42;
 
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj->table = ft_MUXZ;
@@ -1207,6 +1210,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.70  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.69  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.3 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: resolv.cc,v 1.4 2001/05/31 04:12:43 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -118,9 +118,9 @@ static unsigned blend(unsigned a, unsigned b)
 }
 
 /*
- * For now, cheat and resolve the values without using the actual
- * strengths. The strengths are not yet available to the inputs, so
- * this is all we can do for now.
+ * Resolve the strength values of the inputs, two at a time. Pairs of
+ * inputs are resolved with the blend function, and the final value is
+ * reduced to a 4-value result for propagation.
  */
 void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
@@ -146,6 +146,8 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 	    break;
       }
 
+      fp->ostr = val;
+
 	/* If the output changes, then create a propagation event. */
       if (oval != fp->oval) {
 	    fp->oval = oval;
@@ -158,6 +160,10 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.4  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.3  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

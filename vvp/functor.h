@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.23 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: functor.h,v 1.24 2001/05/31 04:12:43 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -100,6 +100,9 @@
  *    STRONG = 6,
  *    SUPPLY = 7
  *
+ * The output value (oval) is combined with the drive specifications
+ * to make a fully strength aware output, as described below.
+ *
  * OUTPUT STRENGTHS:
  *
  * The strength-aware outputs are specified as an 8 bit value, that is
@@ -108,6 +111,11 @@
  * strength and one bit of value, like so: VSSS. The high nible has
  * the strength-value closest to supply1, and the low nibble has the
  * strength-value closest to supply0.
+ *
+ * The functor calculates, when it operates, a 4-value output into
+ * oval and a fully strength aware value into ostr. The mode-0
+ * functors use the odrive0 and odrive1 fields to form the strength
+ * value.
  */
 
 struct functor_s {
@@ -130,13 +138,16 @@ struct functor_s {
       unsigned oval       : 2;
       unsigned odrive0    : 3;
       unsigned odrive1    : 3;
+	/* Strength form of the output value. */
+      unsigned ostr       : 8;
+
 #if defined(WITH_DEBUG)
 	/* True if this functor triggers a breakpoint. */
       unsigned breakpoint : 1;
 #endif
 
 	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
-      unsigned char mode;
+      unsigned mode       : 2;
       union {
  	    unsigned char old_ival; // mode 3
       };
@@ -173,7 +184,7 @@ enum strength_e {
  * it happens when it happens.
  */
 
-#define M42 42
+#define M42 3
 
 struct vvp_fobj_s {
       virtual unsigned get(vvp_ipoint_t i, functor_t f);
@@ -282,6 +293,10 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.24  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.23  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

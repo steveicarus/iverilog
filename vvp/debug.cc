@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.3 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: debug.cc,v 1.4 2001/05/31 04:12:43 steve Exp $"
 #endif
 
 /*
@@ -97,7 +97,7 @@ static void cmd_functor(unsigned argc, char*argv[])
 		   bitval_tab[(fp->ival>>4)&3], fp->istr[2],
 		   bitval_tab[(fp->ival>>6)&3], fp->istr[3]);
 	    printf("out value    = %c (%02x)\n",
-		   bitval_tab[fp->oval], 0 /*xxxx*/);
+		   bitval_tab[fp->oval], fp->ostr);
       }
 }
 
@@ -167,6 +167,10 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.4  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.3  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.21 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: functor.cc,v 1.22 2001/05/31 04:12:43 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -155,6 +155,22 @@ static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp, bool push)
 	/* If the output changes, then create a propagation event. */
       if (out != fp->oval) {
 	    fp->oval = out;
+
+	    switch (out) {
+		case 0:
+		  fp->ostr = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
+		  break;
+		case 1:
+		  fp->ostr = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
+		  break;
+		case 2:
+		  fp->ostr = 0x80 | (fp->odrive0<<0) | (fp->odrive1<<4);
+		  break;
+		case 3:
+		  fp->ostr = 0x00;
+		  break;
+	    }
+
 	    if (push)
 		  functor_propagate(ptr);
 	    else
@@ -305,31 +321,14 @@ void functor_propagate(vvp_ipoint_t ptr)
 {
       functor_t fp = functor_index(ptr);
       unsigned char oval = fp->oval;
-      unsigned drive0 = fp->odrive0;
-      unsigned drive1 = fp->odrive1;
-
-      unsigned str;
-      switch (oval) {
-	  case 0:
-	    str = 0x00 | (drive0<<0) | (drive0<<4);
-	    break;
-	  case 1:
-	    str = 0x88 | (drive1<<0) | (drive1<<4);
-	    break;
-	  case 2:
-	    str = 0x80 | (drive0<<0) | (drive1<<4);
-	    break;
-	  case 3:
-	    str = 0x00;
-	    break;
-      }
+      unsigned char ostr = fp->ostr;
 
       vvp_ipoint_t idx = fp->out;
       while (idx) {
 	    functor_t idxp = functor_index(idx);
 	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
 
-	    functor_set(idx, oval, str, false);
+	    functor_set(idx, oval, ostr, false);
 	    idx = next;
       }
 }
@@ -360,6 +359,10 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.22  2001/05/31 04:12:43  steve
+ *  Make the bufif0 and bufif1 gates strength aware,
+ *  and accurately propagate strengths of outputs.
+ *
  * Revision 1.21  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *
