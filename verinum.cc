@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.28 2001/11/06 06:11:55 steve Exp $"
+#ident "$Id: verinum.cc,v 1.29 2001/11/19 02:54:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -655,6 +655,14 @@ verinum operator / (const verinum&left, const verinum&right)
 	    return result;
       }
 
+	/* If the right expression is a zero value, then the result is
+	   filled with 'bx bits. */
+      if (right.as_ulong() == 0) {
+	    verinum result (verinum::Vx, use_len, has_len_flag);
+	    result.has_sign(left.has_sign() || right.has_sign());
+	    return result;
+      }
+
       verinum result(verinum::Vz, use_len, has_len_flag);
       result.has_sign(left.has_sign() || right.has_sign());
 
@@ -702,6 +710,14 @@ verinum operator % (const verinum&left, const verinum&right)
 	   result is undefined. Create a result that is the right size
 	   and is filled with 'bx bits. */
       if (! (left.is_defined() && right.is_defined())) {
+	    verinum result (verinum::Vx, use_len, has_len_flag);
+	    result.has_sign(left.has_sign() || right.has_sign());
+	    return result;
+      }
+
+	/* If the right expression is a zero value, then the result is
+	   filled with 'bx bits. */
+      if (right.as_ulong() == 0) {
 	    verinum result (verinum::Vx, use_len, has_len_flag);
 	    result.has_sign(left.has_sign() || right.has_sign());
 	    return result;
@@ -770,6 +786,10 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.29  2001/11/19 02:54:12  steve
+ *  Handle division and modulus by zero while
+ *  evaluating run-time constants.
+ *
  * Revision 1.28  2001/11/06 06:11:55  steve
  *  Support more real arithmetic in delay constants.
  *
