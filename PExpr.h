@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.12 1999/06/15 02:50:02 steve Exp $"
+#ident "$Id: PExpr.h,v 1.13 1999/06/16 03:13:29 steve Exp $"
 #endif
 
 # include  <string>
@@ -188,6 +188,8 @@ class PEBinary : public PExpr {
       explicit PEBinary(char op, PExpr*l, PExpr*r)
       : op_(op), left_(l), right_(r) { }
 
+      virtual bool is_constant(Module*) const;
+
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
@@ -218,6 +220,9 @@ class PETernary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.13  1999/06/16 03:13:29  steve
+ *  More syntax parse with sorry stubs.
+ *
  * Revision 1.12  1999/06/15 02:50:02  steve
  *  Add lexical support for real numbers.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.42 1999/06/15 05:38:39 steve Exp $"
+#ident "$Id: parse.y,v 1.43 1999/06/16 03:13:29 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -64,7 +64,7 @@ extern void lex_end_table();
       verireal* realtime;
 };
 
-%token <text>   IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
+%token <text>   HIDENTIFIER IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EQ K_NE K_CEQ K_CNE K_LS K_RS
@@ -197,6 +197,30 @@ charge_strength
 charge_strength_opt
 	: charge_strength
 	|
+	;
+
+defparam_assign
+	: identifier '=' expression
+		{ PExpr*tmp = $3;
+		  if (!pform_expression_is_constant(tmp)) {
+			yyerror(@3, "parameter value must be constant.");
+			delete tmp;
+			tmp = 0;
+		  }
+		  yyerror(@1, "Sorry, defparam assignments not supported.");
+		  delete $1;
+		  delete $3;
+		}
+	;
+
+defparam_assign_list
+	: defparam_assign
+	| range defparam_assign
+		{ yyerror(@1, "Ranges in parameter definition "
+		          "are not supported.");
+		  delete $1;
+		}
+	| defparam_assign_list ',' defparam_assign
 	;
 
 delay
@@ -489,10 +513,6 @@ expression
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
-	| IDENTIFIER '(' expression_list ')'
-		{ yyerror(@2, "Sorry, function calls not supported.");
-		  $$ = 0;
-		}
 	;
 
 
@@ -566,6 +586,14 @@ expr_primary
 		  tmp->lsb_ = $5;
 		  delete $1;
 		  $$ = tmp;
+		}
+	| identifier '(' expression_list ')'
+		{ yyerror(@2, "Sorry, function calls not supported.");
+		  $$ = 0;
+		}
+	| SYSTEM_IDENTIFIER '(' expression_list ')'
+		{ yyerror(@2, "Sorry, function calls not supported.");
+		  $$ = 0;
 		}
 	| '(' expression ')'
 		{ $$ = $2; }
@@ -713,13 +741,12 @@ gatetype
 	;
 
 identifier
-	: identifier '.' IDENTIFIER
-		{ yyerror(@1, "Sorry, qualified identifiers not supported.");
-		  $$ = $3;
-		  delete $1;
-		}
-	| IDENTIFIER
+	: IDENTIFIER
 		{ $$ = $1; }
+	| HIDENTIFIER
+		{ yyerror(@1, "Sorry, qualified identifiers not supported.");
+		  $$ = $1;
+		}
 	;
 
 list_of_ports
@@ -760,14 +787,14 @@ list_of_variables
      continuous assign statement. This checks (where it can) that the
      expression meets the constraints of continuous assignments. */
 lavalue
-	: IDENTIFIER
+	: identifier
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
-	| IDENTIFIER '[' expression ']'
+	| identifier '[' expression ']'
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  PExpr*sel = $3;
 		  if (! pform_expression_is_constant(sel)) {
@@ -782,7 +809,7 @@ lavalue
 		  delete $1;
 		  $$ = tmp;
 		}
-	| IDENTIFIER range
+	| identifier range
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  assert($2->count() == 2);
 		  tmp->msb_ = (*$2)[0];
@@ -846,6 +873,13 @@ module
 		{ pform_endmodule(*$2);
 		  delete $2;
 		}
+	| K_module IDENTIFIER list_of_ports_opt ';'
+		{ pform_startmodule(*$2, $3);
+		}
+	  K_endmodule
+		{ pform_endmodule(*$2);
+		  delete $2;
+		}
 	;
 
 module_item
@@ -888,6 +922,11 @@ module_item
 		{ pform_set_reg_integer($2);
 		  delete $2;
 		}
+	| K_defparam defparam_assign_list ';'
+	| K_event list_of_variables ';'
+		{ yyerror(@1, "Sorry, named events not supported.");
+		  delete $2;
+		}
 	| K_parameter parameter_assign_list ';'
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
@@ -896,8 +935,8 @@ module_item
 		{ pform_make_modgates(*$1, $3);
 		  delete $1;
 		  if ($2) {
-			yyerror(@2, "Sorry, parameter override not supported.");
-			delete $2;
+		      yyerror(@2, "Sorry, parameter override not supported.");
+		      delete $2;
 		  }
 		}
 	| K_assign delay_opt lavalue '=' expression ';'
@@ -1104,18 +1143,16 @@ port_type
 range
 	: '[' expression ':' expression ']'
 		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
-		  if (!pform_expression_is_constant($2)) {
+		  if (!pform_expression_is_constant($2))
 			yyerror(@2, "msb of range must be constant.");
-			delete $2;
-		  } else {
-			(*tmp)[0] = $2;
-		  }
-		  if (!pform_expression_is_constant($4)) {
+
+		  (*tmp)[0] = $2;
+
+		  if (!pform_expression_is_constant($4))
 			yyerror(@4, "msb of range must be constant.");
-			delete $4;
-		  } else {
-			(*tmp)[1] = $4;
-		  }
+
+		  (*tmp)[1] = $4;
+
 		  $$ = tmp;
 		}
 	;
@@ -1210,9 +1247,17 @@ statement
 		}
 	| K_begin error K_end
 		{ yyerrok; }
+	| K_deassign lavalue';'
+		{ yyerror(@1, "Sorry, deassign not supported.");
+		  $$ = 0;
+		}
 	| K_disable IDENTIFIER ';'
 		{ yyerror(@1, "Sorry, disable statements not supported.");
 		  delete $2;
+		  $$ = 0;
+		}
+	| K_force lavalue '=' expression ';'
+		{ yyerror(@1, "Sorry, procedural force assign not supported.");
 		  $$ = 0;
 		}
 	| K_forever statement
@@ -1222,6 +1267,10 @@ statement
 		}
 	| K_fork statement_list K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
+	| K_release lavalue ';'
+		{ yyerror(@1, "Sorry, release not supported.");
+		  $$ = 0;
+		}
 	| K_repeat '(' expression ')' statement
 		{ yyerror(@1, "Sorry, repeat statements not supported.");
 		  delete $3;
@@ -1354,14 +1403,21 @@ statement
 	| SYSTEM_IDENTIFIER '(' expression_list ')' ';'
 		{ $$ = pform_make_calltask($1, $3);
 		}
+	| SYSTEM_IDENTIFIER '(' ')' ';'
+		{ $$ = pform_make_calltask($1);
+		}
 	| SYSTEM_IDENTIFIER ';'
 		{ $$ = pform_make_calltask($1);
 		}
-	| IDENTIFIER '(' expression_list ')' ';'
+	| identifier '(' expression_list ')' ';'
 		{ yyerror(@1, "Sorry, task enabling not implemented.");
 		  $$ = new PNoop;
 		}
-	| IDENTIFIER ';'
+	| identifier '(' ')' ';'
+		{ yyerror(@1, "Sorry, task enabling not implemented.");
+		  $$ = new PNoop;
+		}
+	| identifier ';'
 		{ yyerror(@1, "Sorry, task enabling not implemented.");
 		  $$ = new PNoop;
 		}

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.4 1999/06/10 04:03:52 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.5 1999/06/16 03:13:29 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -36,6 +36,11 @@ bool PExpr::is_the_same(const PExpr*that) const
 bool PExpr::is_constant(Module*) const
 {
       return false;
+}
+
+bool PEBinary::is_constant(Module*mod) const
+{
+      return left_->is_constant(mod) && right_->is_constant(mod);
 }
 
 PEConcat::~PEConcat()
@@ -78,6 +83,9 @@ PETernary::~PETernary()
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.5  1999/06/16 03:13:29  steve
+ *  More syntax parse with sorry stubs.
+ *
  * Revision 1.4  1999/06/10 04:03:52  steve
  *  Add support for the Ternary operator,
  *  Add support for repeat concatenation,
