@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.19 2000/11/04 01:52:57 steve Exp $"
+#ident "$Id: sys_display.c,v 1.20 2000/11/04 05:49:22 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -80,6 +80,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 	    } else if (*cp == '%') {
 		  int fsize = -1;
+		  int do_num = 0;
 
 		  cp += 1;
 		  if (isdigit(*cp))
@@ -90,29 +91,22 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			break;
 		      case 'b':
 		      case 'B':
+			do_num = 1;
 			value.format = vpiBinStrVal;
-			vpi_get_value(argv[idx++], &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'd':
 		      case 'D':
+			do_num = 1;
 			value.format = vpiDecStrVal;
-			vpi_get_value(argv[idx++], &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'h':
 		      case 'H':
 		      case 'x':
 		      case 'X':
-			if (idx >= argc) {
-			      vpi_printf("%s", "\nRAN OUT OF VALUES\n");
-			      exit(1);
-			}
+			do_num = 1;
 			value.format = vpiHexStrVal;
-			vpi_get_value(argv[idx++], &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'm':
@@ -122,16 +116,14 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			break;
 		      case 'o':
 		      case 'O':
+			do_num = 1;
 			value.format = vpiOctStrVal;
-			vpi_get_value(argv[idx++], &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 't':
 		      case 'T':
+			do_num = 1;
 			value.format = vpiDecStrVal;
-			vpi_get_value(argv[idx++], &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case '%':
@@ -142,6 +134,23 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
 			break;
+		  }
+
+		    /* If we encountered a numeric format string, then
+		       grab the number value from the next parameter
+		       and display it in the requested format. */
+		  if (do_num) {
+			if (idx >= argc) {
+			      vpi_printf("\ntoo few arguments for format %s\n",
+					 fmt);
+			} else {
+			      vpi_get_value(argv[idx++], &value);
+			      if (fsize>0)
+				    vpi_mcd_printf(mcd, "%*s", 
+						   fsize, value.value.str);
+			      else
+				    vpi_mcd_printf(mcd, "%s", value.value.str);
+			}
 		  }
 
 	    } else {
@@ -585,6 +594,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.20  2000/11/04 05:49:22  steve
+ *  Integrate parameter count changes (PR#34)
+ *
  * Revision 1.19  2000/11/04 01:52:57  steve
  *  Scope information is needed by all types of display tasks.
  *
