@@ -1,5 +1,5 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM 
-			   September 17, 2000	
+		Copyright 2000-2003 Stephen Williams
 
 
 1.0 What is ICARUS Verilog?
@@ -66,6 +66,14 @@ on a UNIX-like system:
 
 	- termcap
 	  The readline library in turn uses termcap.
+
+If you are building from CVS, you will also need software to generate
+the configure scripts.
+
+	- autoconf 2.53
+	  This generates configure scripts from configure.in. The 2.53
+	  or later versions are known to work, autoconf 2.13 is
+	  reported to *not* work.
 
 2.2 Compilation
 
