@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.88 2002/01/12 04:03:39 steve Exp $"
+#ident "$Id: pform.cc,v 1.89 2002/01/26 05:28:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -401,8 +401,6 @@ static void pform_set_net_range(const char*name,
 				const svector<PExpr*>*range,
 				bool signed_flag)
 {
-      assert(range);
-      assert(range->count() == 2);
 
       PWire*cur = pform_cur_module->get_wire(hier_name(name));
       if (cur == 0) {
@@ -410,9 +408,17 @@ static void pform_set_net_range(const char*name,
 	    return;
       }
 
-      assert((*range)[0]);
-      assert((*range)[1]);
-      cur->set_range((*range)[0], (*range)[1]);
+      if (range == 0) {
+	      /* This is the special case that we really mean a
+		 scalar. Set a fake range. */
+	    cur->set_range(0, 0);
+
+      } else {
+	    assert(range->count() == 2);
+	    assert((*range)[0]);
+	    assert((*range)[1]);
+	    cur->set_range((*range)[0], (*range)[1]);
+      }
       cur->set_signed(signed_flag);
 }
 
@@ -756,8 +762,7 @@ void pform_makewire(const vlltype&li,
 		 ; cur ++ ) {
 	    char*txt = *cur;
 	    pform_makewire(li, txt, type);
-	    if (range)
-		  pform_set_net_range(txt, range, false);
+	    pform_set_net_range(txt, range, false);
 	    free(txt);
       }
 
@@ -1155,6 +1160,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.89  2002/01/26 05:28:28  steve
+ *  Detect scalar/vector declarion mismatch.
+ *
  * Revision 1.88  2002/01/12 04:03:39  steve
  *  Drive strengths for continuous assignments.
  *

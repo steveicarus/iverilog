@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.68 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.69 2002/01/26 05:28:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,11 +227,17 @@ void PWire::dump(ostream&out) const
 
       assert(msb_.count() == lsb_.count());
       for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-	    assert(msb_[idx]);
-	    if (lsb_[idx])
-		  out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
-	    else
-		  out << " [" << *msb_[idx] << "]";
+
+	    if (msb_[idx] == 0) {
+		  assert(lsb_[idx] == 0);
+		  out << " <scalar>";
+
+	    } else {
+		  if (lsb_[idx])
+			out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
+		  else
+			out << " [" << *msb_[idx] << "]";
+	    }
       }
 
       out << " " << hname_;
@@ -814,6 +820,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.69  2002/01/26 05:28:28  steve
+ *  Detect scalar/vector declarion mismatch.
+ *
  * Revision 1.68  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

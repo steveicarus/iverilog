@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.cc,v 1.7 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: PWire.cc,v 1.8 2002/01/26 05:28:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,14 +39,7 @@ NetNet::Type PWire::get_wire_type() const
 {
       return type_;
 }
-#if 0
-string PWire::name() const
-{
-      string name = hname_[0];
-      for (unsigned idx = 1 ;  hname_[idx] ;  idx += 1)
-	    name = name + "." + hname_[idx];
-}
-#endif
+
 const hname_t& PWire::path() const
 {
       return hname_;
@@ -127,6 +120,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.8  2002/01/26 05:28:28  steve
+ *  Detect scalar/vector declarion mismatch.
+ *
  * Revision 1.7  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

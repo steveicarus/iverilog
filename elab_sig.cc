@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.19 2002/01/23 03:35:17 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.20 2002/01/26 05:28:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -390,6 +390,10 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (msb_.count()) {
 	    svector<long>mnum (msb_.count());
 	    svector<long>lnum (msb_.count());
+	      /* There may be places where the signal is declared as a
+		 scaler. Count those here, for consistency check
+		 later. */
+	    unsigned count_scalars = 0;
 
 	      /* There may be multiple declarations of ranges, because
 		 the symbol may have its range declared in i.e. input
@@ -397,6 +401,14 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		 here. I will resolve the values later. */
 
 	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
+
+		  if (msb_[idx] == 0) {
+			count_scalars += 1;
+			assert(lsb_[idx] == 0);
+			mnum[idx] = 0;
+			lnum[idx] = 0;
+			continue;
+		  }
 
 		  NetEConst*tmp;
 		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx]);
@@ -427,6 +439,18 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  delete texpr;
 
 	    }
+
+	      /* Check that the declarations were all scalar or all
+		 vector. It is an error to mix them. Use the
+		 count_scalars to know. */
+	    if ((count_scalars > 0) && (count_scalars != msb_.count())) {
+		  cerr << get_line() << ": error: Signal ``" << hname_
+		       << "'' declared both as a vector and a scalar."
+		       << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
 
 	      /* Make sure all the values for msb and lsb match by
 		 value. If not, report an error. */
@@ -495,6 +519,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.20  2002/01/26 05:28:28  steve
+ *  Detect scalar/vector declarion mismatch.
+ *
  * Revision 1.19  2002/01/23 03:35:17  steve
  *  Detect incorrect function ports.
  *
