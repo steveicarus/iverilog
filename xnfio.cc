@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.5 1999/11/02 04:55:01 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.6 1999/11/18 02:58:37 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -56,6 +56,12 @@ static void make_obuf(Design*des, NetNet*net)
 	/* FIXME: If there is nothing internally driving this PAD, I
 	   can connect the PAD to a pullup and disconnect it from the
 	   rest of the circuit. This would save routing resources. */
+      if (count_outputs(net->pin(0)) <= 0) {
+	    cerr << net->get_line() << ":warning: No outputs to OPAD: "
+		 << net->name() << endl;
+	    return;
+      }
+
       assert(count_outputs(net->pin(0)) > 0);
 
 	/* Look for an existing OBUF connected to this signal. If it
@@ -217,6 +223,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.6  1999/11/18 02:58:37  steve
+ *  Handle (with a warning) unconnected opads.
+ *
  * Revision 1.5  1999/11/02 04:55:01  steve
  *  repair the sense of T from bufif01
  *
