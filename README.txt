@@ -1,12 +1,14 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM 
-			     July 7, 1999		
+			   September 18, 1999		
 
 
 1.0 What is ICARUS Verilog(IVL)?
 
 Icarus Verilog is intended to compile ALL of the Verilog HDL as described
 in the IEEE-1364 standard. Of course, it's not quite there yet. It does
-currently handle a mix of structural and behavioral constructs.
+currently handle a mix of structural and behavioral constructs. For a
+view of the current state of Icarus Verilog, see its home page at
+<http://www.icarus.com/pub/verilog>.
  
 IVL is not aimed at being a simulator in the traditional sense, but a
 compiler that generates code employed by back-end tools. These back-
@@ -19,7 +21,7 @@ and an XNF (Xilinx Netlist Format) generator. See "vvm.txt" and
 This tool includes a parser which reads in Verilog (plus extensions)
 and generates an internal netlist. The netlist is passed to various
 processing steps that transform the design to more optimal/practical
-forms, then passed to a code generator for final output. The
+forms, then is passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
 switches.
 
@@ -27,15 +29,16 @@ switches.
 
 There is a separate program, ivlpp, that does the preprocessing. This
 program implements the `include and `define directives producing
-output that is equivalent but without the directives. See
-ivlpp/ivlpp.txt for details.
+output that is equivalent but without the directives. The output is a
+single file with line number directives, so that the actual compiler
+only sees a single input file. See ivlpp/ivlpp.txt for details.
 
 2.2 Parse
 
 The verilog compiler starts by parsing the verilog source file. The
 output of the parse in a list of Module objects in PFORM. The pform
 (see pform.h) is mostly a direct reflection of the compilation
-unit. There may be dangling references, and it is not yet clear which
+step. There may be dangling references, and it is not yet clear which
 module is the root.
 
 One can see a human readable version of the final PFORM by using the
@@ -47,7 +50,8 @@ PFORM into the file named <path>.
 This phase takes the pform and generates a netlist. The driver selects
 (by user request or lucky guess) the root module to elaborate,
 resolves references and expands the instantiations to form the design
-netlist. (See netlist.txt.)
+netlist. (See netlist.txt.) Final semantic checks are performed during
+elaboration, and some simple optimizations are performed.
 
 The elaborate() function performs the elaboration.
 
@@ -84,23 +88,27 @@ command line.
 
 3.0 Building/Installing IVL
 
-Unpack the tar-ball and cd into the verilog-######### directory.
+Unpack the tar-ball and cd into the verilog-######### directory, and
+compile the source with the commands:
 
-./configure
-make
-cd vvm
-make
+  ./configure
+  make
 
 Now install the files in an appropriate place. (The makefiles by
 default install in /usr/local unless you specify a different prefix
 with the --prefix=<path> flag to the configure command.) Do this as
 root.
 
-make install
-cd vvm
-make install
+  make install
 
-4.0 Running IVL
+4.0 Running Verilog
+
+The preferred way to invoke the compiler with the verilog(1)
+command. This program invokes the preprocessor (ivlpp) and the
+compiler (ivl) with the proper command line options to get the job
+done in a friendly way. See the verilog(1) man page for usage details.
+
+4.1 Running IVL Directly
 
 The ivl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator.
@@ -208,78 +216,46 @@ endmodule
 
 --------------------------------------------------------------
 
-Insure that "ivl" is on your search path, and the library 
-libvvm.a is available.
+Insure that "ivl" is on your search path, and the vpi library 
+is available.
 
 For csh - 
 
-setenv PATH /usr/local/bin:$PATH
-setenv LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
+  setenv PATH /usr/local/bin:$PATH
+  setenv VPI_MODULE_PATH /usr/local/lib/ivl
 
-ivl -t vvm -o hello.cc hello.vl
-g++ hello.cc -o hello -lvvm
+  verilog hello.vl
 
 (The above presumes that /usr/local/include and /usr/local/lib are
-part of the compiler search path, which is usually the case for egcs.)
+part of the compiler search path, which is usually the case for gcc.)
 
 To run the program
 
-./hello
+  ./hello
 
 
 5.0 Unsupported Constructs
 
 IVL is in development - as such it still only supports a (growing) subset
 of verilog.  Below is a description of some of the currently unsupported
-verilog features.
-
-  - The "?" operator. Example: count = val ? 1 : 0;
+verilog features. This list is not exhaustive, and does not account
+for errors in the compiler. See the Icarus Verilog web page for the
+current state of support for Verilog.
 
   - Ranges within parameter definitions:
     Example: parameter [15:0] seed = 16'ha3; 
 
     [Note: IEEE Std: 1364-1995 does not allow the syntax.]
 
-  - The "&&" operator:
-    Example: if (a && 0) do = 1;
-
-  - The "===" operator:  Example: if( a === b) do = 1;
-
-  - The ">=" operator: Example: if ( a >= 0) do = 1;
-
-  - The ">" operator: Example: if ( a > 0) do = 1;
-  
-  - The "<=" operator: Example: if ( a <= 0) do = 1;
-
-  - The "<<" shift operator: Example: a = 8'b0000_0010 << 1;  
-
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
-
-  - Expansion of a string into a larger variable:
-    Example: reg [0:15] b;  b = "b"; 
-
-  - Function declarations/calls.
 
   - Non-scalar memories, i.e. other than registers. 
     Example: reg [1:0] b [2:0]; 
 
-  - Delay list. Example:  sample #(9,99) sample1(a,b);
-
-  - Bit ranges within IF. Example: if (a[2:3])  do = 1;
- 
-  - Assignment timing delay: Example: a = #1 0;   #1 a = #2 ~a;
-
-  - Bit Ranges within $write, $display.
-
   - `timescale directive
 
-  - Specify blocks
+Specify blocks are parsed bug ignored in general.
 
-  - Named port parameters.
-    Example: module foo(.x(r[0])) ;  reg r[7:0]; endmodule
-
-    Note that binding to a port by name does work from the outside.
-    i.e. ``foo foogate(.x(n[0]))'' is OK.
 
 6.0 CREDITS
 
