@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.30 2001/12/31 00:02:33 steve Exp $"
+#ident "$Id: verinum.cc,v 1.31 2002/02/01 05:09:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -359,7 +359,7 @@ ostream& operator<< (ostream&o, const verinum&v)
 	    if (v.has_sign())
 		  o << "'sb";
 	    else
-		  o << "'sb";
+		  o << "'b";
 
 	    if (v.len() == 0) {
 		  o << "0";
@@ -595,7 +595,7 @@ verinum operator - (const verinum&left, const verinum&r)
       for (unsigned idx = min ;  idx < max ;  idx += 1)
 	    val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
 
-
+      val.has_sign(left.has_sign() && r.has_sign());
       return val;
 }
 
@@ -793,6 +793,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.31  2002/02/01 05:09:14  steve
+ *  Propagate sign in unary minus.
+ *
  * Revision 1.30  2001/12/31 00:02:33  steve
  *  Include s indicator in dump of signed numbers.
  *

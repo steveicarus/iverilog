@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.180 2002/01/22 01:40:04 steve Exp $"
+#ident "$Id: netlist.cc,v 1.181 2002/02/01 05:09:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2339,6 +2339,14 @@ NetEUnary::NetEUnary(char op, NetExpr*ex)
 	    expr_width(1);
 	    break;
       }
+      switch (op_) {
+	  case '-':
+	  case '+':
+	    cast_signed(ex->has_sign());
+	    break;
+	  default:
+	    ;
+      }
 }
 
 NetEUnary::~NetEUnary()
@@ -2415,6 +2423,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.181  2002/02/01 05:09:14  steve
+ *  Propagate sign in unary minus.
+ *
  * Revision 1.180  2002/01/22 01:40:04  steve
  *  Precalculate constant results of memory index expressions.
  *
