@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.24 2001/05/08 23:58:43 steve Exp $
+ *  $Id: README.txt,v 1.25 2001/05/09 02:53:25 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -387,13 +387,14 @@ to make this one go.
 
 RESOLVER STATEMENTS:
 
-Resolver statements are functors with 4 inputs, but their job is to
-calculate a resolved output using strength resolution. The type of the
-functor is used to select a specific resolution function.
+Resolver statements are strength-aware functors with 4 inputs, but
+their job typically is to calculate a resolved output using strength
+resolution. The type of the functor is used to select a specific
+resolution function.
 
-	<label> .resolv/tri  <symbols_list>;
-	<label> .resolv/tri0 <symbols_list>;
-	<label> .resolv/tri1 <symbols_list>;
+	<label> .resolv tri,  <symbols_list>;
+	<label> .resolv tri0, <symbols_list>;
+	<label> .resolv tri1, <symbols_list>;
 
 
 THREAD STATEMENTS:

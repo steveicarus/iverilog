@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.25 2001/05/02 23:16:50 steve Exp $"
+#ident "$Id: parse.y,v 1.26 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -54,7 +54,7 @@ extern FILE*yyin;
 };
 
 
-%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
+%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_RESOLV K_SCOPE K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_vpi_call K_disable K_fork
@@ -142,6 +142,15 @@ statement
 		{ compile_memory_port($1, $3, $5, $7, $9.cnt, $9.vect); }
 
 	| mem_init_stmt
+
+
+  /* Resolver statements are very much like functors. They are
+     compiled to functors of a different mode. */
+
+	| T_LABEL K_RESOLV T_SYMBOL ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_resolver($1, $3, obj.cnt, obj.vect);
+		}
 
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
@@ -429,6 +438,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.26  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.25  2001/05/02 23:16:50  steve
  *  Document memory related opcodes,
  *  parser uses numbv_s structures instead of the

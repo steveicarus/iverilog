@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.17 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: functor.cc,v 1.18 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -285,6 +285,12 @@ unsigned functor_get(vvp_ipoint_t ptr)
       return fp->oval;
 }
 
+unsigned vvp_fobj_s::get(vvp_ipoint_t, functor_t fp)
+{
+      return fp->oval;
+}
+
+
 /*
  * This function is used by the scheduler to implement the propagation
  * event. The input is the pointer to the functor who's output is to
@@ -343,6 +349,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.18  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.17  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

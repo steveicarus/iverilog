@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.20 2001/05/02 04:05:17 steve Exp $"
+#ident "$Id: compile.h,v 1.21 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -60,6 +60,14 @@ extern void compile_load_vpi_module(char*name);
  */
 extern void compile_functor(char*label, char*type,
 			    unsigned argc, struct symb_s*argv);
+
+
+/*
+ * This is called by the parser to make a resolver. This is a special
+ * kind of functor; a strength aware functor.
+ */
+extern void compile_resolver(char*label, char*type,
+			     unsigned argc, struct symb_s*argv);
 
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
@@ -174,6 +182,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.21  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.20  2001/05/02 04:05:17  steve
  *  Remove the init parameter of functors, and instead use
  *  the special C<?> symbols to initialize inputs. This is

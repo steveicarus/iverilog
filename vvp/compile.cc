@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.59 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: compile.cc,v 1.60 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "functor.h"
+# include  "resolv.h"
 # include  "udp.h" 
 # include  "memory.h" 
 # include  "symbols.h"
@@ -267,6 +268,20 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 		  continue;
 	    }
 
+	    if (strcmp(argv[idx].text, "C<x>") == 0) {
+		  free(argv[idx].text);
+		  iobj->ival &= ~(3 << idx*2);
+		  iobj->ival |= 2 << idx*2;
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<z>") == 0) {
+		  free(argv[idx].text);
+		  iobj->ival &= ~(3 << idx*2);
+		  iobj->ival |= 3 << idx*2;
+		  continue;
+	    }
+
 	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
 	    vvp_ipoint_t tmp = val.num;
 
@@ -303,7 +318,7 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
       obj->odrive0 = 6;
       obj->odrive1 = 6;
       obj->mode = 0;
-#if defined(WIDH_DEBUG)
+#if defined(WITH_DEBUG)
       obj->breakpoint = 0;
 #endif
 
@@ -355,6 +370,34 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
       obj->oval = 3 & (out >> 2 * (obj->ival&3));
       if (obj->oval != 2)
 	    schedule_functor(fdx, 0);
+
+      free(label);
+      free(type);
+}
+
+void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+
+      define_functor_symbol(label, fdx);
+
+      assert(argc <= 4);
+
+      obj->ival = 0xaa;
+      obj->oval = 2;
+      obj->odrive0 = 6;
+      obj->odrive1 = 6;
+      obj->mode = M42;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
+
+      obj->obj = new vvp_resolv_s;
+
+	/* Connect the inputs of this functor to the given symbols. If
+	   there are C<X> inputs, set the ival appropriately. */
+      inputs_connect(fdx, argc, argv);
 
       free(label);
       free(type);
@@ -1100,6 +1143,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.60  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.59  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

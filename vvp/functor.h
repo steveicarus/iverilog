@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.19 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: functor.h,v 1.20 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -159,7 +159,7 @@ typedef struct functor_s *functor_t;
 #define M42 42
 
 struct vvp_fobj_s {
-      virtual unsigned get(vvp_ipoint_t i, functor_t f) =0;
+      virtual unsigned get(vvp_ipoint_t i, functor_t f);
       virtual void set(vvp_ipoint_t i, functor_t f, bool push) =0;
 };
 
@@ -260,6 +260,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.20  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.19  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

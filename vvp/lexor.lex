@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.15 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: lexor.lex,v 1.16 2001/05/09 02:53:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -70,6 +70,7 @@
 ".functor"  { return K_FUNCTOR; }
 ".net"      { return K_NET; }
 ".net/s"    { return K_NET_S; }
+".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".thread"   { return K_THREAD; }
 ".var"      { return K_VAR; }
@@ -132,6 +133,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.16  2001/05/09 02:53:25  steve
+ *  Implement the .resolv syntax.
+ *
  * Revision 1.15  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
