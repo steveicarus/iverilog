@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.22 2003/06/13 19:10:46 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.23 2003/06/16 00:34:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -395,6 +395,10 @@ void PEvent::elaborate_scope(Design*des, NetScope*scope) const
 
 void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 {
+      assert(scope->type() == NetScope::FUNC);
+
+      if (statement_)
+	    statement_->elaborate_scope(des, scope);
 }
 
 void PTask::elaborate_scope(Design*des, NetScope*scope) const
@@ -534,6 +538,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.23  2003/06/16 00:34:08  steve
+ *  Functions can have sub-scope.
+ *
  * Revision 1.22  2003/06/13 19:10:46  steve
  *  Properly manage real variables in subscopes.
  *
@@ -571,48 +578,5 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
  * Revision 1.12  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
- *
- * Revision 1.11  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.10  2001/10/09 02:01:04  steve
- *  Tasks can have sub-scopes.
- *
- * Revision 1.9  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.8  2001/04/28 23:18:08  steve
- *  UDP instances need not have user supplied names.
- *
- * Revision 1.7  2000/12/16 01:45:48  steve
- *  Detect recursive instantiations (PR#2)
- *
- * Revision 1.6  2000/07/30 18:25:43  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- *
- * Revision 1.5  2000/07/22 22:09:03  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.4  2000/04/09 17:44:30  steve
- *  Catch event declarations during scope elaborate.
- *
- * Revision 1.3  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- * Revision 1.2  2000/03/11 03:25:52  steve
- *  Locate scopes in statements.
- *
- * Revision 1.1  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
  */
 
