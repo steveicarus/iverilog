@@ -1,9 +1,10 @@
-.TH iverilog-vpi 1 "$Date: 2002/05/28 05:21:30 $" Version "$Date: 2002/05/28 05:21:30 $"
+.TH iverilog-vpi 1 "$Date: 2002/07/05 17:17:20 $" Version "$Date: 2002/07/05 17:17:20 $"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
 .SH SYNOPSIS
 .B iverilog-vpi
+[--name=\fIname\fP]
 \fIsourcefile\fP...
 
 .SH DESCRIPTION
@@ -26,6 +27,11 @@ first source file is named \fIfoo.c\fP, the output becomes
 Include the named library in the link of the VPI module. This allows
 VPI modules to further reference external libraries.
 
+.TP 8
+.B --name=\fIname\fP
+Normally, the output VPI module will be named after the first source
+file passed to the command. This flag sets the name (without the .vpi
+suffix) of the output vpi module.
 .SH "AUTHOR"
 .nf
 Steve Williams (steve@icarus.com)

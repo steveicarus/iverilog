@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.5 2002/07/03 23:20:12 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.6 2002/07/05 17:17:20 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -60,6 +60,10 @@ do
          if [ x$OUT = x ]; then
 	    OUT=`basename $parm .o`
 	 fi
+	 ;;
+
+    --name=*)
+	 OUT=`echo $parm | cut -b8-`
 	 ;;
 
     -l*) LIB="$LIB $parm"
