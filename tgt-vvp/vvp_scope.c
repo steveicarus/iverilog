@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.84 2003/02/25 03:40:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.85 2003/03/03 01:48:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1577,7 +1577,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       fprintf(vvp_out, "S_%s .scope %s, \"%s\"",
 	      vvp_mangle_id(ivl_scope_name(net)), 
 	      type,
-	      vvp_mangle_name(ivl_scope_name(net)));
+	      vvp_mangle_name(ivl_scope_basename(net)));
 
       if (parent) {
 	    fprintf(vvp_out, ", S_%s;\n",
@@ -1652,6 +1652,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.85  2003/03/03 01:48:41  steve
+ *  Only give scope basename to .scope directives.
+ *
  * Revision 1.84  2003/02/25 03:40:45  steve
  *  Eliminate use of ivl_lpm_name function.
  *
@@ -1674,105 +1677,5 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
  *
  * Revision 1.79  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.78  2002/09/17 05:37:45  steve
- *  Generate vvp code for structural flip-flops.
- *
- * Revision 1.77  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.76  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.75  2002/08/03 22:30:48  steve
- *  Eliminate use of ivl_signal_name for signal labels.
- *
- * Revision 1.74  2002/07/18 02:06:37  steve
- *  Need driver for sure in assign feedback and other cases.
- *
- * Revision 1.73  2002/07/08 04:04:07  steve
- *  Generate code for wide muxes.
- *
- * Revision 1.72  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.71  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.70  2002/04/23 05:18:05  steve
- *  Tail size was wrong.
- *
- * Revision 1.69  2002/04/23 05:06:31  steve
- *  Handle bitsel muxes of odd shaped outputs.
- *
- * Revision 1.68  2002/04/23 03:53:59  steve
- *  Add support for non-constant bit select.
- *
- * Revision 1.67  2002/04/22 03:15:25  steve
- *  Keep delays applied to BUFZ devices.
- *
- * Revision 1.66  2002/03/18 00:18:50  steve
- *  Generate port information in the .ufunc statement.
- *
- * Revision 1.65  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.64  2002/01/12 17:49:41  steve
- *  Handle constants with drive strength z
- *
- * Revision 1.63  2002/01/12 04:03:40  steve
- *  Drive strengths for continuous assignments.
- *
- * Revision 1.62  2002/01/06 03:15:43  steve
- *  Constant values have drive strengths.
- *
- * Revision 1.61  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.60  2001/12/15 02:13:33  steve
- *  Support all 3 TRI net types.
- *
- * Revision 1.59  2001/12/14 06:03:34  steve
- *  Generate notif functors.
- *
- * Revision 1.58  2001/12/14 02:05:13  steve
- *  Parse and handle drive strengths of gates to vvp.
- *
- * Revision 1.57  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.56  2001/11/01 04:26:57  steve
- *  Generate code for deassign and cassign.
- *
- * Revision 1.55  2001/10/24 03:43:45  steve
- *  Write resolvers before the .functor (PR#300)
- *
- * Revision 1.54  2001/10/22 02:04:37  steve
- *  unused idx warning.
- *
- * Revision 1.53  2001/10/22 00:04:51  steve
- *  Remove useless code for drawing .var inputs.
- *
- * Revision 1.52  2001/10/21 23:38:16  steve
- *  wrong variable for clk input to memory.
- *
- * Revision 1.51  2001/10/18 17:30:25  steve
- *  Support rnpmos devices. (Philip Blundell)
- *
- * Revision 1.50  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.49  2001/10/15 02:58:27  steve
- *  Carry the type of the scope (Stephan Boettcher)
- *
- * Revision 1.48  2001/10/09 02:28:44  steve
- *  handle nmos and pmos devices.
- *
- * Revision 1.47  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
  */
 
