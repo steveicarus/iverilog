@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.11 2002/06/03 00:08:42 steve Exp $"
+#ident "$Id: veriuser.h,v 1.12 2002/06/03 21:52:59 steve Exp $"
 #endif
 
 /*
@@ -99,7 +99,7 @@ extern int tf_dostop(void);
 extern void tf_error(const char*, ...)
       __attribute__((format (printf,1,2)));
 
-extern void tf_getinstance(void);
+extern char* tf_getinstance(void);
 
 extern int tf_getlongtime(int*high_bits);
 
@@ -112,6 +112,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.12  2002/06/03 21:52:59  steve
+ *  Fix return type of tf_getinstance.
+ *
  * Revision 1.11  2002/06/03 00:08:42  steve
  *  Better typing for veriusertfs table.
  *

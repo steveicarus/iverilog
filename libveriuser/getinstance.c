@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: getinstance.c,v 1.1 2002/06/02 18:54:59 steve Exp $"
+#ident "$Id: getinstance.c,v 1.2 2002/06/03 21:52:59 steve Exp $"
 #endif
 
+#include  <veriuser.h>
 #include  <vpi_user.h>
 
 /*
@@ -32,6 +33,9 @@ char *tf_getinstance(void)
 
 /*
  * $Log: getinstance.c,v $
+ * Revision 1.2  2002/06/03 21:52:59  steve
+ *  Fix return type of tf_getinstance.
+ *
  * Revision 1.1  2002/06/02 18:54:59  steve
  *  Add tf_getinstance function.
  *
