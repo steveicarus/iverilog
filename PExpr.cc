@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.26 2001/11/07 04:26:46 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.27 2001/11/08 05:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,7 +46,7 @@ bool PExpr::is_constant(Module*) const
       return false;
 }
 
-NetNet* PExpr::elaborate_net(Design*des, const string&path, unsigned,
+NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
 			     unsigned long,
 			     unsigned long,
 			     unsigned long,
@@ -264,6 +264,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.27  2001/11/08 05:15:50  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.26  2001/11/07 04:26:46  steve
  *  elaborate_lnet uses scope instead of string path.
  *

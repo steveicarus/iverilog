@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.51 2001/11/07 04:26:46 steve Exp $"
+#ident "$Id: PExpr.h,v 1.52 2001/11/08 05:15:50 steve Exp $"
 #endif
 
 # include  <string>
@@ -62,7 +62,7 @@ class PExpr : public LineInfo {
 
 	// This method elaborate the expression as gates, for use in a
 	// continuous assign or other wholly structural context.
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -124,7 +124,7 @@ class PEConcat : public PExpr {
       virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -217,7 +217,7 @@ class PEIdent : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
 
 	// Structural r-values are OK.
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -250,7 +250,7 @@ class PEIdent : public PExpr {
 	// expression.
       PExpr*idx_;
 
-      NetNet* elaborate_net_ram_(Design*des, const string&path,
+      NetNet* elaborate_net_ram_(Design*des, NetScope*scope,
 				 NetMemory*mem, unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
@@ -266,7 +266,7 @@ class PENumber : public PExpr {
       const verinum& value() const;
 
       virtual void dump(ostream&) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -309,7 +309,7 @@ class PEUnary : public PExpr {
       ~PEUnary();
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -336,7 +336,7 @@ class PEBinary : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -355,42 +355,42 @@ class PEBinary : public PExpr {
 
       NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
 
-      NetNet* elaborate_net_add_(Design*des, const string&path,
+      NetNet* elaborate_net_add_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_bit_(Design*des, const string&path,
+      NetNet* elaborate_net_bit_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_cmp_(Design*des, const string&path,
+      NetNet* elaborate_net_cmp_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_div_(Design*des, const string&path,
+      NetNet* elaborate_net_div_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_mod_(Design*des, const string&path,
+      NetNet* elaborate_net_mod_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_log_(Design*des, const string&path,
+      NetNet* elaborate_net_log_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_mul_(Design*des, const string&path,
+      NetNet* elaborate_net_mul_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
-      NetNet* elaborate_net_shift_(Design*des, const string&path,
+      NetNet* elaborate_net_shift_(Design*des, NetScope*scope,
 				   unsigned lwidth,
 				   unsigned long rise,
 				   unsigned long fall,
@@ -410,7 +410,7 @@ class PETernary : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path,
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
@@ -449,6 +449,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.52  2001/11/08 05:15:50  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.51  2001/11/07 04:26:46  steve
  *  elaborate_lnet uses scope instead of string path.
  *

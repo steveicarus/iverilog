@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.14 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.15 2001/11/08 05:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -368,9 +368,17 @@ string NetScope::local_symbol()
       return res.str();
 }
 
+string NetScope::local_hsymbol()
+{
+      return name() + "." + local_symbol();
+}
+
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.15  2001/11/08 05:15:50  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.14  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

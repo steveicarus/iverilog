@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.221 2001/11/06 04:32:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.222 2001/11/08 05:15:51 steve Exp $"
 #endif
 
 /*
@@ -2651,6 +2651,9 @@ class NetScope {
 	/* This method generates a non-hierarchical name that is
 	   guaranteed to be unique within this scope. */
       string local_symbol();
+	/* This method generates a hierarchical name that is
+	   guaranteed to be unique globally. */
+      string local_hsymbol();
 
       void dump(ostream&) const;
       void emit_scope(struct target_t*tgt) const;
@@ -2856,6 +2859,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.222  2001/11/08 05:15:51  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.221  2001/11/06 04:32:37  steve
  *  shift expressions can have definite widths.
  *

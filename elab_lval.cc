@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.15 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.16 2001/11/08 05:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,7 @@
  */
 NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 {
-      NetNet*ll = elaborate_net(des, scope->name(), 0, 0, 0, 0);
+      NetNet*ll = elaborate_net(des, scope, 0, 0, 0, 0);
       if (ll == 0) {
 	    cerr << get_line() << ": Assignment l-value too complex."
 		 << endl;
@@ -277,6 +277,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.16  2001/11/08 05:15:50  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.15  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

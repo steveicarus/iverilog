@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.231 2001/11/07 04:26:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.232 2001/11/08 05:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -97,7 +97,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	   direct drivers. This is how I attach strengths to the
 	   assignment operation. */
       if (const PEIdent*id = dynamic_cast<const PEIdent*>(pin(1))) {
-	    NetNet*rid = id->elaborate_net(des, path, lval->pin_count(),
+	    NetNet*rid = id->elaborate_net(des, scope, lval->pin_count(),
 					   0, 0, 0, Link::STRONG,
 					   Link::STRONG);
 	    if (rid == 0) {
@@ -170,7 +170,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	/* Elaborate the r-value. Account for the initial decays,
 	   which are going to be attached to the last gate before the
 	   generated NetNet. */
-      NetNet*rval = pin(1)->elaborate_net(des, path,
+      NetNet*rval = pin(1)->elaborate_net(des, scope,
 					  lval->pin_count(),
 					  rise_time, fall_time, decay_time,
 					  drive0, drive1);
@@ -377,7 +377,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
-	    NetNet*sig = ex->elaborate_net(des, path, 0, 0, 0, 0);
+	    NetNet*sig = ex->elaborate_net(des, scope, 0, 0, 0, 0);
 	    if (sig == 0)
 		  continue;
 
@@ -564,7 +564,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	      // port. sig is the thing outside the module that
 	      // connects to the port.
 
-	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path,
+	    NetNet*sig = (*pins)[idx]->elaborate_net(des, scope,
 						     prts_pin_count,
 						     0, 0, 0);
 	    if (sig == 0) {
@@ -678,7 +678,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 	    if (pin(idx) == 0)
 		  continue;
 
-	    NetNet*sig = pin(idx)->elaborate_net(des, path, 1, 0, 0, 0);
+	    NetNet*sig = pin(idx)->elaborate_net(des, scope, 1, 0, 0, 0);
 	    if (sig == 0) {
 		  cerr << "internal error: Expression too complicated "
 			"for elaboration:" << *pin(idx) << endl;
@@ -1502,7 +1502,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
       if (lval == 0)
 	    return 0;
 
-      NetNet*rval = expr_->elaborate_net(des, path, lval->pin_count(),
+      NetNet*rval = expr_->elaborate_net(des, scope, lval->pin_count(),
 					 0, 0, 0);
       if (rval == 0)
 	    return 0;
@@ -1525,7 +1525,7 @@ NetDeassign* PDeassign::elaborate(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lval == 0)
 	    return 0;
 
@@ -1746,7 +1746,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
       if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE)) {
 
-	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, path,
+	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, scope,
 							1, 0, 0, 0);
 	    if (ex == 0) {
 		  expr_[0]->dump(cerr);
@@ -1840,7 +1840,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 		 the sub-expression as a net and decide how to handle
 		 the edge. */
 
-	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
+	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, scope,
 							    0, 0, 0, 0);
 	    if (expr == 0) {
 		  expr_[idx]->dump(cerr);
@@ -1933,11 +1933,11 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lval == 0)
 	    return 0;
 
-      NetNet*rval = expr_->elaborate_net(des, path, lval->pin_count(),
+      NetNet*rval = expr_->elaborate_net(des, scope, lval->pin_count(),
 					 0, 0, 0);
       if (rval == 0)
 	    return 0;
@@ -2095,7 +2095,7 @@ NetProc* PRelease::elaborate(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lval == 0)
 	    return 0;
 
@@ -2408,6 +2408,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.232  2001/11/08 05:15:50  steve
+ *  Remove string paths from PExpr elaboration.
+ *
  * Revision 1.231  2001/11/07 04:26:46  steve
  *  elaborate_lnet uses scope instead of string path.
  *
