@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.43 2000/08/01 22:44:26 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.44 2000/08/18 04:38:57 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1216,6 +1216,36 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      switch (sig->port_type()) {
+	  case NetNet::PINPUT:
+	  case NetNet::POUTPUT:
+	  case NetNet::PINOUT:
+	    break;
+
+	      /* If the name matches, but the signal is not a port,
+		 then the user declared the object but there is no
+		 matching input/output/inout declaration. */
+
+	  case NetNet::NOT_A_PORT:
+	    cerr << get_line() << ": error: signal " << text_ << " in"
+		 << " module " << scope->name() << " is not a port." << endl;
+	    cerr << get_line() << ":      : Are you missing an input/"
+		 << "output/inout declaration?" << endl;
+	    des->errors += 1;
+	    return 0;
+
+	      /* This should not happen. A PWire can only become
+		 PIMPLICIT if this is a udp reg port, and the make_udp
+		 function should turn it into an output.... I think. */
+
+	  case NetNet::PIMPLICIT:
+	    cerr << get_line() << ": internal error: signal " << text_
+		 << " in module " << scope->name() << " is left as "
+		 << "port type PIMPLICIT." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 
       if (msb_ && lsb_) {
 	      /* Detect a part select. Evaluate the bits and elaborate
@@ -1632,6 +1662,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.44  2000/08/18 04:38:57  steve
+ *  Proper error messages when port direction is missing.
+ *
  * Revision 1.43  2000/08/01 22:44:26  steve
  *  Extend x or z that is top bit of a constant.
  *

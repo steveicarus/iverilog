@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.182 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.183 2000/08/18 04:38:57 steve Exp $"
 #endif
 
 /*
@@ -435,13 +435,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
 		  PEIdent*pport = mport[ldx];
 		  prts[ldx] = pport->elaborate_port(des, my_scope);
-		  if (prts[ldx] == 0) {
-			cerr << pport->get_line() << ": internal error: "
-			     << "Failed to elaborate port expr: "
-			     << *pport << endl;
-			des->errors += 1;
+		  if (prts[ldx] == 0)
 			continue;
-		  }
+
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
 	    }
@@ -2296,8 +2292,6 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 	    NetProc*cur = (*st)->statement()->elaborate(des, path);
 	    if (cur == 0) {
-		  cerr << (*st)->get_line() << ": error: Elaboration "
-			"failed for this process." << endl;
 		  result_flag = false;
 		  continue;
 	    }
@@ -2390,6 +2384,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.183  2000/08/18 04:38:57  steve
+ *  Proper error messages when port direction is missing.
+ *
  * Revision 1.182  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during
