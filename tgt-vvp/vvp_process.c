@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.50 2001/11/18 01:28:18 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.51 2001/12/05 05:41:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -663,6 +663,8 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	   the implementations of all the child threads. */
       fprintf(vvp_out, "t_%u ;\n", out);
 
+      transient_id += cnt-1;
+
       return rc;
 }
 
@@ -1098,6 +1100,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.51  2001/12/05 05:41:20  steve
+ *  Make sure fork labels are globally unique.
+ *
  * Revision 1.50  2001/11/18 01:28:18  steve
  *  Generate force code for variable l-values.
  *
