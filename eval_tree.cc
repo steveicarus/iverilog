@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.21 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.22 2001/02/07 02:46:31 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -363,9 +363,30 @@ NetEConst* NetEBComp::eval_tree()
       }
 }
 
+/*
+ * The NetEBDiv operator includes the / and % opeators. First evaluate
+ * the sub-expressions, then perform the required operation.
+ */
 NetEConst* NetEBDiv::eval_tree()
 {
       eval_sub_tree_();
+
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
+
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      switch (op_) {
+	  case '/':
+	    return new NetEConst(lval / rval);
+
+	  case '%':
+	    return new NetEConst(lval % rval);
+      }
+
       return 0;
 }
 
@@ -822,6 +843,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.22  2001/02/07 02:46:31  steve
+ *  Support constant evaluation of / and % (PR#124)
+ *
  * Revision 1.21  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

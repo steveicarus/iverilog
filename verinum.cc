@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.22 2001/01/02 03:23:40 steve Exp $"
+#ident "$Id: verinum.cc,v 1.23 2001/02/07 02:46:31 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -60,8 +60,8 @@ verinum::verinum(const string&str)
       }
 }
 
-verinum::verinum(verinum::V val, unsigned n)
-: has_len_(true), has_sign_(false), string_flag_(false)
+verinum::verinum(verinum::V val, unsigned n, bool h)
+: has_len_(h), has_sign_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -523,13 +523,18 @@ verinum operator - (const verinum&left, const verinum&r)
  */
 verinum operator * (const verinum&left, const verinum&right)
 {
+      const bool has_len_flag = left.has_len() && right.has_len();
+
+	/* If either operand is not fully defined, then the entire
+	   result is undefined. Create a result that is the right size
+	   and is filled with 'bx bits. */
       if (! (left.is_defined() && right.is_defined())) {
-	    verinum result (verinum::Vx, left.len() + right.len());
+	    verinum result (verinum::Vx, left.len()+right.len(), has_len_flag);
 	    result.has_sign(left.has_sign() || right.has_sign());
 	    return result;
       }
 
-      verinum result(verinum::V0, left.len() + right.len());
+      verinum result(verinum::V0, left.len() + right.len(), has_len_flag);
 
       for (unsigned rdx = 0 ;  rdx < right.len() ;  rdx += 1) {
 
@@ -545,6 +550,113 @@ verinum operator * (const verinum&left, const verinum&right)
       }
 
       result.has_sign(left.has_sign() || right.has_sign());
+      return result;
+}
+
+/*
+ * This operator divides the left number by the right number. If
+ * either value is signed, the result is signed. If both values have a
+ * defined length, then the result has a defined length.
+ */
+verinum operator / (const verinum&left, const verinum&right)
+{
+      const bool has_len_flag = left.has_len() && right.has_len();
+
+      unsigned use_len = left.len();
+
+	/* If either operand is not fully defined, then the entire
+	   result is undefined. Create a result that is the right size
+	   and is filled with 'bx bits. */
+      if (! (left.is_defined() && right.is_defined())) {
+	    verinum result (verinum::Vx, use_len, has_len_flag);
+	    result.has_sign(left.has_sign() || right.has_sign());
+	    return result;
+      }
+
+      verinum result(verinum::Vz, use_len, has_len_flag);
+      result.has_sign(left.has_sign() || right.has_sign());
+
+	/* do the operation differently, depending on whether the
+	   result is signed or not. */
+      if (result.has_sign()) {
+
+	      /* XXXX FIXME XXXX Use native unsigned division to do
+		 the work. This does not work if the result is too
+		 large for the native integer. */
+	    assert(use_len <= 8*sizeof(long));
+	    long l = left.as_long();
+	    long r = right.as_long();
+	    long v = l / r;
+	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+		  v >>= 1;
+	    }
+
+      } else {
+
+	      /* XXXX FIXME XXXX Use native unsigned division to do
+		 the work. This does not work if the result is too
+		 large for the native integer. */
+	    assert(use_len <= 8*sizeof(unsigned long));
+	    unsigned long l = left.as_ulong();
+	    unsigned long r = right.as_ulong();
+	    unsigned long v = l / r;
+	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+		  v >>= 1;
+	    }
+      }
+
+      return result;
+}
+
+verinum operator % (const verinum&left, const verinum&right)
+{
+      const bool has_len_flag = left.has_len() && right.has_len();
+
+      unsigned use_len = left.len();
+
+	/* If either operand is not fully defined, then the entire
+	   result is undefined. Create a result that is the right size
+	   and is filled with 'bx bits. */
+      if (! (left.is_defined() && right.is_defined())) {
+	    verinum result (verinum::Vx, use_len, has_len_flag);
+	    result.has_sign(left.has_sign() || right.has_sign());
+	    return result;
+      }
+
+      verinum result(verinum::Vz, use_len, has_len_flag);
+      result.has_sign(left.has_sign() || right.has_sign());
+
+      if (result.has_sign()) {
+
+	      /* XXXX FIXME XXXX Use native unsigned division to do
+		 the work. This does not work if the result is too
+		 large for the native integer. */
+	    assert(use_len <= 8*sizeof(long));
+	    long l = left.as_long();
+	    long r = right.as_long();
+	    long v = l % r;
+	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+		  v >>= 1;
+	    }
+
+      } else {
+
+	      /* XXXX FIXME XXXX Use native unsigned division to do
+		 the work. This does not work if the result is too
+		 large for the native integer. */
+	    assert(use_len <= 8*sizeof(unsigned long));
+	    unsigned long l = left.as_ulong();
+	    unsigned long r = right.as_ulong();
+	    unsigned long v = l % r;
+	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+		  v >>= 1;
+	    }
+      }
+
       return result;
 }
 
@@ -576,6 +688,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.23  2001/02/07 02:46:31  steve
+ *  Support constant evaluation of / and % (PR#124)
+ *
  * Revision 1.22  2001/01/02 03:23:40  steve
  *  Evaluate constant &, | and unary ~.
  *
