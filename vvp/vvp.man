@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2003/03/06 20:04:42 $" Version "$Date: 2003/03/06 20:04:42 $"
+.TH vvp 1 "$Date: 2003/12/07 20:05:56 $" Version "$Date: 2003/12/07 20:05:56 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -84,13 +84,20 @@ the expense of some file size.
 The \fB-lxt-none\fP variant actually suppresses all waveform
 output. This can make long simulations run faster.
 
+.TP 8
+.B -lxt2
+The LXT2 format is slower then LXT (faster then VCD) but takes less
+space, and is written out incrementally. Thus, you can view lxt2 files
+while a simulation is still running (or paused) or if your simulation
+crashes or is killed, you still have a useful dump.
+
 .SH ENVIRONMENT
 .PP
 The vvp command also accepts some environment variables that control
 its behavior. These can be used to make semi-permanent changes.
 
 .TP 8
-.B IVERILOG_DUMPER=\fIlxt|vcd|none\fP
+.B IVERILOG_DUMPER=\fIlxt|lxt2|vcd|none\fP
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to

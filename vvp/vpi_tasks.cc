@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.24 2003/06/18 00:54:28 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.25 2003/12/07 20:05:56 steve Exp $"
 #endif
 
 /*
@@ -95,7 +95,7 @@ static char *systask_get_str(int type, vpiHandle ref)
       assert((ref->vpi_type->type_code == vpiSysTaskCall)
 	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
-      char *bn = rfp->defn->info.tfname;
+      const char *bn = rfp->defn->info.tfname;
       char *rbuf = need_result_buf(strlen(bn) + 1, RBUF_STR);
 
       switch (type) {
@@ -487,6 +487,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.25  2003/12/07 20:05:56  steve
+ *  Ducument lxt2 access.
+ *
  * Revision 1.24  2003/06/18 00:54:28  steve
  *  Account for all 64 bits in results of $time.
  *
