@@ -425,6 +425,8 @@ Verilog guidance, and especially testing from many people, including
 	Peter Monta <pmonta@halibut.imedia.com>
 	Daniel H. Nelsen <dhn@qedinc.com>
 	Stefan Petersen <spe@geda.seul.org>
+	Michael Ruff <mruff@chiaro.com>
+	Mike Runyan <mrunyan@chiaro.com>
 	Jason Schonberg <schonm@yahoo.com>
 	Stuart Sutherland <stuart@sutherland.com>
 	Stephen Tell <tell@cs.unc.edu>
