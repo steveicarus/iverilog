@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.10 2003/02/07 02:48:43 steve Exp $"
+#ident "$Id: verireal.cc,v 1.11 2003/02/07 06:13:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,16 +31,14 @@
 
 verireal::verireal()
 {
-      sign_ = false;
-      mant_ = 0;
-      exp10_  = 0;
+      value_ = 0.0;
 }
 
 verireal::verireal(const char*txt)
 {
-      mant_ = 0;
-      sign_ = false;
-      exp10_ = 0;
+      unsigned long mant = 0;
+      bool sign = false;
+      signed int exp10 = 0;
 
       const char*ptr = txt;
       for (  ; *ptr ;  ptr += 1) {
@@ -51,8 +49,8 @@ verireal::verireal(const char*txt)
 
 	    assert(isdigit(*ptr));
 
-	    mant_ *= 10;
-	    mant_ += *ptr - '0';
+	    mant *= 10;
+	    mant += *ptr - '0';
       }
 
       if (*ptr == '.') {
@@ -64,9 +62,9 @@ verireal::verireal(const char*txt)
 
 		  assert(isdigit(*ptr));
 
-		  mant_ *= 10;
-		  mant_ += *ptr - '0';
-		  exp10_ -= 1;
+		  mant *= 10;
+		  mant += *ptr - '0';
+		  exp10 -= 1;
 	    }
       }
 
@@ -84,17 +82,17 @@ verireal::verireal(const char*txt)
 		  tmp += *ptr - '0';
 	    }
 
-	    exp10_ += sflag? -tmp : +tmp;
+	    exp10 += sflag? -tmp : +tmp;
       }
 
       assert(*ptr == 0);
+
+      value_ = pow(10.0,exp10) * mant * (sign? -1.0 : 1.0);
 }
 
 verireal::verireal(long val)
 {
-      sign_  = val < 0;
-      mant_  = sign_? -val : +val;
-      exp10_ = 0;
+      value_ = (double)val;
 }
 
 verireal::~verireal()
@@ -103,64 +101,44 @@ verireal::~verireal()
 
 long verireal::as_long(int shift) const
 {
-      long val = mant_;
-      int ex = exp10_ + shift;
+      double out = value_ * pow(10.0,shift);
+      double outf;
 
-      while (ex < 0) {
-	    long mod = val % 10;
-	    val /= 10;
-	    if (ex == -1 && mod >= 5)
-		  val += 1;
-	    ex += 1;
+      if (out >= 0.0) {
+	    outf = floor(out);
+	    if (out >= (outf + 0.5))
+		  outf += 1.0;
+      } else {
+	    outf = ceil(out);
+	    if (out <= (outf - 0.5))
+		  outf -= 1.0;
       }
-
-      while (ex > 0) {
-	    val *= 10;
-	    ex -= 1;
-      }
-
-      if (sign_)
-	    return -val;
-      else
-	    return val;
+      return (long) outf;
 }
 
 double verireal::as_double() const
 {
-      return mant_ * pow(10.0, exp10_) * (sign_? -1 : 1);
+      return value_;
 }
 
 verireal operator* (const verireal&l, const verireal&r)
 {
       verireal res;
-      res.sign_ = l.sign_ != r.sign_;
-      res.mant_ = l.mant_ * r.mant_;
-      res.exp10_= l.exp10_ + r.exp10_;
+      res.value_ = l.value_ * r.value_;
       return res;
 }
 
 verireal operator/ (const verireal&l, const verireal&r)
 {
       verireal res;
-      res.sign_ = l.sign_ != r.sign_;
-      res.mant_ = l.mant_ / r.mant_;
-      res.exp10_= l.exp10_ - r.exp10_;
+      res.value_ = l.value_ / r.value_;
       return res;
 }
 
 verireal operator/ (const verireal&l, const verinum&r)
 {
       verireal res;
-      res.sign_ = l.sign_;
-
-      long rmant = r.as_long();
-      if (rmant < 0) {
-	    rmant = -rmant;
-	    res.sign_ = !res.sign_;
-      }
-
-      res.mant_ = l.mant_ / rmant;
-      res.exp10_= l.exp10_;
+      res.value_ = l.value_ / (double)r.as_long();
       return res;
 }
 
@@ -180,12 +158,15 @@ verireal operator% (const verireal&l, const verinum&r)
 
 ostream& operator<< (ostream&out, const verireal&v)
 {
-      out << (v.sign_? "-" : "+") << v.mant_ << "e" << v.exp10_;
+      out << v.value_;
       return out;
 }
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.11  2003/02/07 06:13:44  steve
+ *  Store real values as native double.
+ *
  * Revision 1.10  2003/02/07 02:48:43  steve
  *  NetEBDiv handles real value constant expressions.
  *

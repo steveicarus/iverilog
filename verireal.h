@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.8 2003/02/07 02:48:43 steve Exp $"
+#ident "$Id: verireal.h,v 1.9 2003/02/07 06:13:44 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -62,9 +62,7 @@ class verireal {
       double as_double() const;
 
     private:
-      bool sign_;
-      unsigned long mant_;
-      signed int exp10_;
+      double value_;
 };
 
 extern ostream& operator<< (ostream&, const verireal&);
@@ -76,6 +74,9 @@ extern verireal operator% (const verireal&, const verinum&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.9  2003/02/07 06:13:44  steve
+ *  Store real values as native double.
+ *
  * Revision 1.8  2003/02/07 02:48:43  steve
  *  NetEBDiv handles real value constant expressions.
  *
