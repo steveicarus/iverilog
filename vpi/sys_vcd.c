@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.50 2003/10/29 03:23:12 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.51 2003/10/29 03:28:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,7 +180,7 @@ static int variable_cb_2(p_cb_data cause)
       PLI_UINT64 now = timerec_to_time64(cause->time);
 
       if (now != vcd_cur_time) {
-	    fprintf(dump_file, "#%" TIME_FMT "\n", now);
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", now);
 	    vcd_cur_time = now;
       }
 
@@ -230,7 +230,7 @@ static int dumpvars_cb(p_cb_data cause)
       fprintf(dump_file, "$enddefinitions $end\n");
 
       if (!dump_is_off) {
-	    fprintf(dump_file, "#%" TIME_FMT "\n", dumpvars_time);
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
 	    fprintf(dump_file, "$dumpvars\n");
 	    vcd_checkpoint();
 	    fprintf(dump_file, "$end\n");
@@ -250,7 +250,7 @@ inline static int install_dumpvars_callback(void)
       if (dumpvars_status == 2) {
 	    vpi_mcd_printf(1, "VCD Error:"
 			   " $dumpvars ignored,"
-			   " previously called at simtime %" TIME_FMT "\n",
+			   " previously called at simtime %" PLI_UINT64_FMT "\n",
 			   dumpvars_time);
 	    return 1;
       }
@@ -289,7 +289,7 @@ static int sys_dumpoff_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "\n", now64);
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", now64);
       vcd_cur_time = now64;
 
       fprintf(dump_file, "$dumpoff\n");
@@ -320,7 +320,7 @@ static int sys_dumpon_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "\n", now64);
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", now64);
       vcd_cur_time = now64;
 
       fprintf(dump_file, "$dumpon\n");
@@ -346,7 +346,7 @@ static int sys_dumpall_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "\n", now64);
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", now64);
       vcd_cur_time = now.low;
 
       fprintf(dump_file, "$dumpall\n");
@@ -811,6 +811,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.51  2003/10/29 03:28:27  steve
+ *  Add the PLU_UINT64_FMT string for formatting output.
+ *
  * Revision 1.50  2003/10/29 03:23:12  steve
  *  Portably handle time format of VCD prints.
  *

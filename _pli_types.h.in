@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h.in,v 1.4 2003/10/29 03:23:12 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.5 2003/10/29 03:28:27 steve Exp $"
 #endif
 
 # undef HAVE_INTTYPES_H
@@ -45,7 +45,7 @@ typedef unsigned short PLI_UINT16;
 typedef signed char    PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
 
-# define TIME_FMT PRIu64
+# define PLI_UINT64_FMT PRIu64
 
 #else
 
@@ -61,21 +61,21 @@ typedef unsigned char  PLI_UBYTE8;
 #if SIZEOF_UNSIGNED >= 8
 typedef unsigned PLI_UINT64;
 typedef int      PLI_INT64;
-# define TIME_FMT "%u"
+# define PLI_UINT64_FMT "%u"
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long PLI_UINT64;
 typedef          long PLI_INT64;
-#  define TIME_FMT "%lu"
+#  define PLI_UINT64_FMT "%lu"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
 typedef unsigned long long PLI_UINT64;
 typedef          long long PLI_INT64;
-#   define TIME_FMT "%llu"
+#   define PLI_UINT64_FMT "%llu"
 #  else
 typedef unsigned long PLI_UINT64;
 typedef          long PLI_INT64;
-#   define TIME_FMT "%lu"
+#   define PLI_UINT64_FMT "%lu"
 #  endif
 # endif
 #endif
@@ -90,6 +90,9 @@ typedef unsigned char  PLI_UBYTE8;
 
 /*
  * $Log: _pli_types.h.in,v $
+ * Revision 1.5  2003/10/29 03:28:27  steve
+ *  Add the PLU_UINT64_FMT string for formatting output.
+ *
  * Revision 1.4  2003/10/29 03:23:12  steve
  *  Portably handle time format of VCD prints.
  *
