@@ -399,6 +399,9 @@ removed from the list) send e-mail to me.
       Solaris/SPARC packages (.pkg)
 	Dan McMahill <mcmahill@mtl.mit.edu>
 
+      Cygwin32/*
+        Venkat Iyer <venkat@comit.com>
+
 (*) These are not the only systems where Icarus Verilog has been run,
 just the systems where precompiled binaries are publicly available.
 

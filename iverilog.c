@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.21 2000/09/12 01:17:19 steve Exp $"
+#ident "$Id: iverilog.c,v 1.22 2000/09/30 03:20:47 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -28,12 +28,22 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#if HAVE_GETOPT_H
+#include <getopt.h>
+#endif
+
 #ifndef IVL_ROOT
 # define IVL_ROOT "."
 #endif
 
 #ifndef RDYNAMIC
 # define RDYNAMIC "-rdynamic"
+#endif
+
+#ifdef USE_LIBVPIP
+# define LIBVPIP "-lvpip"
+#else
+# define LIBVPIP ""
 #endif
 
 const char*base = IVL_ROOT;
@@ -195,7 +205,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
       }
 
       sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
-	      "-L%s %s.cc -lvvm %s", CXX, opath, IVL_INC, IVL_LIB,
+	      "-L%s %s.cc -lvvm " LIBVPIP "%s", CXX, opath, IVL_INC, IVL_LIB,
 	      opath, DLLIB);
 
       if (verbose_flag)
@@ -491,6 +501,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.22  2000/09/30 03:20:47  steve
+ *  Cygwin port changes from Venkat
+ *
  * Revision 1.21  2000/09/12 01:17:19  steve
  *  Oops, the -m flag takes a parameter and needs the :
  *

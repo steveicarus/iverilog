@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.69 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: Makefile.in,v 1.70 2000/09/30 03:20:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -51,20 +51,20 @@ CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
 LDFLAGS = @LDFLAGS@
 
-all: ivl verilog iverilog
-	cd vpi ; $(MAKE) all
+all: ivl@EXEEXT@ verilog iverilog@EXEEXT@
 	cd vvm ; $(MAKE) all
+	cd vpi ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog
-	cd vpi ; $(MAKE) clean
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog@EXEEXT@
 	cd vvm ; $(MAKE) clean
+	cd vpi ; $(MAKE) clean
 	cd ivlpp ; $(MAKE) clean
 
 distclean: clean
-	rm -f vpi/Makefile
 	rm -f vvm/Makefile
+	rm -f vpi/Makefile
 	rm -f ivlpp/Makefile
 	rm -f config.status config.cache config.log
 	rm -f Makefile
@@ -104,11 +104,11 @@ verilog: $(srcdir)/verilog.sh
 	    -e 's;@dllib@;@DLLIB@;' \
 	    -e 's;@$(tmp4)@;@CXX@;' < $< > $@
 
-ivl: $O
-	$(CXX) $(CXXFLAGS) $(rdynamic) -o ivl $O $(dllib)
+ivl@EXEEXT@: $O
+	$(CXX) $(CXXFLAGS) $(rdynamic) -o ivl@EXEEXT@ $O $(dllib)
 
-iverilog: iverilog.c
-	$(CC) $(CPPFLAGS) -o iverilog -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' iverilog.c
+iverilog@EXEEXT@: iverilog.c
+	$(CC) $(CPPFLAGS) -o iverilog@EXEEXT@ -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' iverilog.c
 
 %.o dep/%.d: %.cc
 	@[ -d dep ] || mkdir dep
@@ -136,18 +136,18 @@ lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 
-install: all installdirs $(bindir)/iverilog $(libdir)/ivl/ivl $(includedir)/ivl_target.h $(mandir)/man1/iverilog.1
-	cd vpi ; $(MAKE) install
+install: all installdirs $(bindir)/iverilog@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@ $(includedir)/ivl_target.h $(mandir)/man1/iverilog.1
 	cd vvm ; $(MAKE) install
+	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 
-$(bindir)/iverilog: ./iverilog
-	$(INSTALL_PROGRAM) ./iverilog $(bindir)/iverilog
-	$(STRIP) $(bindir)/iverilog
+$(bindir)/iverilog@EXEEXT@: ./iverilog@EXEEXT@
+	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(bindir)/iverilog@EXEEXT@
+	$(STRIP) $(bindir)/iverilog@EXEEXT@
 
-$(libdir)/ivl/ivl: ./ivl
-	$(INSTALL_PROGRAM) ./ivl $(libdir)/ivl/ivl
-	$(STRIP) $(libdir)/ivl/ivl
+$(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
+	$(STRIP) $(libdir)/ivl/ivl@EXEEXT@
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h
@@ -159,10 +159,10 @@ installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl $(mandir)/man1
 
 uninstall:
-	rm -f $(libdir)/ivl/ivl
-	rm -f $(bindir)/verilog
-	rm -f $(bindir)/gverilog
-	rm -f $(bindir)/iverilog
+	rm -f $(libdir)/ivl/ivl@EXEEXT@
+	rm -f $(bindir)/verilog@EXEEXT@
+	rm -f $(bindir)/gverilog@EXEEXT@
+	rm -f $(bindir)/iverilog@EXEEXT@
 	rm -r $(includedir)/ivl_target.h
 	rm -f $(mandir)/man1/verilog.1
 	rm -f $(mandir)/man1/iverilog.1

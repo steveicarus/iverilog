@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_vlog_info.c,v 1.2 2000/09/12 01:17:40 steve Exp $"
+#ident "$Id: vpi_vlog_info.c,v 1.3 2000/09/30 03:20:48 steve Exp $"
 #endif
 
-#include <vpi_user.h>
+#include <vpi_priv.h>
 
 // STORAGE FOR COMMAND LINE ARGUMENTS
 

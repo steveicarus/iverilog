@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.5 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: sys_table.c,v 1.6 2000/09/30 03:20:47 steve Exp $"
 #endif
 
 extern void sys_finish_register();
@@ -35,9 +35,16 @@ void (*vlog_startup_routines[])() = {
       0
 };
 
+#ifdef __CYGWIN32__
+#include <cygwin/cygwin_dll.h>
+DECLARE_CYGWIN_DLL(DllMain);
+#endif
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.6  2000/09/30 03:20:47  steve
+ *  Cygwin port changes from Venkat
+ *
  * Revision 1.5  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

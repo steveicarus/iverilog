@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.5 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.6 2000/09/30 03:20:48 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -91,8 +91,16 @@ const struct __vpirt vpip_sysfunc_rt = {
       systask_iter
 };
 
+#ifdef __CYGWIN32__
+#include <cygwin/cygwin_dll.h>
+DECLARE_CYGWIN_DLL(DllMain);
+#endif
+
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.6  2000/09/30 03:20:48  steve
+ *  Cygwin port changes from Venkat
+ *
  * Revision 1.5  2000/05/07 18:20:08  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.
