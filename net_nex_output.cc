@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.6 2002/09/17 04:39:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,8 +42,10 @@ void NetAssignBase::nex_output(NexusSet&out)
       assert(lsig);
       assert(lval_->more == 0);
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-	    out.add(lsig->pin(idx).nexus());
+      for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
+	    unsigned off = lval_->get_loff() + idx;
+	    out.add(lsig->pin(off).nexus());
+      }
 
 }
 
@@ -85,6 +87,9 @@ void NetEvWait::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.6  2002/09/17 04:39:20  steve
+ *  Account for part select in l-value.
+ *
  * Revision 1.5  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
