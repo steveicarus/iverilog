@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.28 1999/07/07 04:20:57 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.29 1999/07/10 01:02:08 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -308,22 +308,46 @@ class vvm_parm_rval  : public expr_scan_t {
       string result;
 
     private:
-      virtual void expr_const(const NetEConst*expr)
-	    {
-		  if (expr->value().is_string()) {
-			result = "\"";
-			result = result + expr->value().as_string() + "\"";
-			return;
-		  }
-	    }
-
+      virtual void expr_const(const NetEConst*expr);
       virtual void expr_ident(const NetEIdent*);
-
       virtual void expr_signal(const NetESignal*);
 
     private:
       ostream&os_;
 };
+
+void vvm_parm_rval::expr_const(const NetEConst*expr)
+{
+      if (expr->value().is_string()) {
+	    result = "\"";
+	    result = result + expr->value().as_string() + "\"";
+	    return;
+      }
+
+      string tname = make_temp();
+      os_ << "        vvm_bitset_t<" <<
+	    expr->expr_width() << "> " << tname << ";" << endl;
+      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
+	    os_ << "        " << tname << "[" << idx << "] = ";
+	    switch (expr->value().get(idx)) {
+		case verinum::V0:
+		  os_ << "V0";
+		  break;
+		case verinum::V1:
+		  os_ << "V1";
+		  break;
+		case verinum::Vx:
+		  os_ << "Vx";
+		  break;
+		case verinum::Vz:
+		  os_ << "Vz";
+		  break;
+	    }
+	    os_ << ";" << endl;
+      }
+
+      result = tname;
+}
 
 void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 {
@@ -1239,6 +1263,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.29  1999/07/10 01:02:08  steve
+ *  Handle number constants as parameters.
+ *
  * Revision 1.28  1999/07/07 04:20:57  steve
  *  Emit vvm for user defined tasks.
  *
