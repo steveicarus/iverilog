@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.6 2000/04/26 21:11:41 steve Exp $"
+#ident "$Id: iverilog.c,v 1.7 2000/04/29 01:20:14 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -33,6 +33,8 @@ const char*base = IVL_ROOT;
 const char*opath = "a.out";
 const char*targ  = "vvm";
 const char*start = 0;
+
+char*f_list = 0;
 
 int verbose_flag = 0;
 
@@ -93,6 +95,13 @@ static int t_vvm(char*cmd, unsigned ncmd)
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
 
+      if (f_list) {
+	    rc = strlen(f_list);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
       if (start) {
 	    sprintf(tmp, " -s%s", start);
 	    rc = strlen(tmp);
@@ -144,6 +153,13 @@ static int t_xnf(char*cmd, unsigned ncmd)
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
 
+      if (f_list) {
+	    rc = strlen(f_list);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
       if (start) {
 	    sprintf(tmp, " -s%s", start);
 	    rc = strlen(tmp);
@@ -173,7 +189,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:Eo:s:t:v")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:Ef:o:s:t:v")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -181,6 +197,19 @@ int main(int argc, char **argv)
 		  break;
 		case 'E':
 		  e_flag = 1;
+		  break;
+		case 'f':
+		  if (f_list == 0) {
+			f_list = malloc(strlen("-f")+strlen(optarg)+1);
+			strcpy(f_list, "-f");
+			strcat(f_list, optarg);
+		  } else {
+			f_list = realloc(f_list, strlen(f_list) +
+					 strlen(" -f") +
+					 strlen(optarg) + 1);
+			strcat(f_list, " -f");
+			strcat(f_list, optarg);
+		  }
 		  break;
 		case 'o':
 		  opath = optarg;
@@ -258,6 +287,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.7  2000/04/29 01:20:14  steve
+ *  The -f flag is now in place.
+ *
  * Revision 1.6  2000/04/26 21:11:41  steve
  *  Mussed up command string mashing.
  *
