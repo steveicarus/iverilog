@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.8 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: eval.cc,v 1.9 1999/10/08 17:48:09 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -41,6 +41,12 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
       verinum*res;
 
       switch (op_) {
+	  case '+': {
+		long lv = l->as_long();
+		long rv = r->as_long();
+		res = new verinum(lv+rv, l->len());
+		break;
+	  }
 	  case '-': {
 		long lv = l->as_long();
 		long rv = r->as_long();
@@ -92,6 +98,9 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.9  1999/10/08 17:48:09  steve
+ *  Support + in constant expressions.
+ *
  * Revision 1.8  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *

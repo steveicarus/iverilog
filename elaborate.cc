@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.112 1999/10/08 17:27:23 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.113 1999/10/08 17:48:08 steve Exp $"
 #endif
 
 /*
@@ -945,8 +945,25 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
       if (msb_ && lsb_) {
 	    verinum*mval = msb_->eval_const(des, path);
-	    assert(mval);
+	    if (mval == 0) {
+		  cerr << msb_->get_line() << ": error: unable to "
+			"evaluate constant expression: " << *msb_ <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    verinum*lval = lsb_->eval_const(des, path);
+	    if (lval == 0) {
+		  cerr << lsb_->get_line() << ": error: unable to "
+			"evaluate constant expression: " << *lsb_ <<
+			endl;
+		  delete mval;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    assert(mval);
 	    assert(lval);
 	    unsigned midx = sig->sb_to_idx(mval->as_long());
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
@@ -2570,6 +2587,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.113  1999/10/08 17:48:08  steve
+ *  Support + in constant expressions.
+ *
  * Revision 1.112  1999/10/08 17:27:23  steve
  *  Accept adder parameters with different widths,
  *  and simplify continuous assign construction.
