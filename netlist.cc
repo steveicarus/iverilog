@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.74 1999/10/06 05:06:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.75 1999/10/07 05:25:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -382,7 +382,7 @@ NetObj::Link& NetAddSub::pin_Result(unsigned idx)
 }
 
 NetAssign_::NetAssign_(const string&n, unsigned w)
-: NetNode(n, w), rval_(0)
+: NetNode(n, w), rval_(0), bmux_(0)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
 	    pin(idx).set_dir(NetObj::Link::OUTPUT);
@@ -392,11 +392,19 @@ NetAssign_::NetAssign_(const string&n, unsigned w)
 NetAssign_::~NetAssign_()
 {
       if (rval_) delete rval_;
+      if (bmux_) delete bmux_;
 }
 
 void NetAssign_::set_rval(NetExpr*r)
 {
+      assert(rval_ == 0);
       rval_ = r;
+}
+
+void NetAssign_::set_bmux(NetExpr*r)
+{
+      assert(bmux_ == 0);
+      bmux_ = r;
 }
 
 NetExpr* NetAssign_::rval()
@@ -409,10 +417,30 @@ const NetExpr* NetAssign_::rval() const
       return rval_;
 }
 
+const NetExpr* NetAssign_::bmux() const
+{
+      return bmux_;
+}
+
 NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
 : NetAssign_(n, w)
 {
       set_rval(rv);
+}
+
+NetAssign::NetAssign(const string&n, Design*des, unsigned w,
+		     NetExpr*mu, NetExpr*rv)
+: NetAssign_(n, w)
+{
+      bool flag = rv->set_width(1);
+      if (flag == false) {
+	    cerr << rv->get_line() << ": Expression bit width" <<
+		  " conflicts with l-value bit width." << endl;
+	    des->errors += 1;
+      }
+
+      set_rval(rv);
+      set_bmux(mu);
 }
 
 NetAssign::~NetAssign()
@@ -420,7 +448,7 @@ NetAssign::~NetAssign()
 }
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssign_(n, w), bmux_(0)
+: NetAssign_(n, w)
 {
       if (rv->expr_width() < w) {
 	    cerr << rv->get_line() << ": Expression bit width (" <<
@@ -434,7 +462,7 @@ NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
 			 NetExpr*mu, NetExpr*rv)
-: NetAssign_(n, w), bmux_(mu)
+: NetAssign_(n, w)
 {
       bool flag = rv->set_width(1);
       if (flag == false) {
@@ -444,11 +472,11 @@ NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
       }
 
       set_rval(rv);
+      set_bmux(mu);
 }
 
 NetAssignNB::~NetAssignNB()
 {
-      delete bmux_;
 }
 
 
@@ -479,7 +507,7 @@ NetAssignMemNB::~NetAssignMemNB()
 {
 }
 
-
+#if 0
 /*
  * This method looks at the objects connected to me, and searches for
  * a signal that I am fully connected to. Return that signal, and the
@@ -519,6 +547,7 @@ void NetAssign::find_lval_range(const NetNet*&net, unsigned&msb,
 
       assert(0); // No suitable signals??
 }
+#endif
 
 NetBlock::~NetBlock()
 {
@@ -1703,6 +1732,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.75  1999/10/07 05:25:34  steve
+ *  Add non-const bit select in l-value of assignment.
+ *
  * Revision 1.74  1999/10/06 05:06:16  steve
  *  Move the rvalue into NetAssign_ common code.
  *

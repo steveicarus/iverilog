@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.59 1999/10/06 01:28:18 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.60 1999/10/07 05:25:34 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1139,38 +1139,84 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       defn << "      // " << net->get_line() << ": " << endl;
 
-	/* Not only is the lvalue signal assigned to, send the bits to
-	   all the other pins that are connected to this signal. */
+      if (net->bmux()) {
 
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-	    const NetObj*cur;
-	    unsigned pin;
-	    map<string,bool> written;
+	    string bval = emit_proc_rval(defn, 8, net->bmux());
 
-	    for (net->pin(idx).next_link(cur, pin)
-		       ; net->pin(idx) != cur->pin(pin)
-		       ; cur->pin(pin).next_link(cur, pin)) {
+	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
-		    // Skip output only pins.
-		  if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			continue;
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  const NetObj*cur;
+		  unsigned pin;
+		  map<string,bool> written;
 
-		    // Skip signals, I'll hit them when I handle the
-		    // NetESignal nodes.
-		  if (dynamic_cast<const NetNet*>(cur))
-			continue;
+		  defn << "      case " << idx << ":" << endl;
 
-		    // It is possible for a named device to show up
-		    // several times in a link. This is the classic
-		    // case with NetESignal objects, which are
-		    // repeated for each expression that uses it.
-		  if (written[cur->name()])
-			continue;
+		  for (net->pin(idx).next_link(cur, pin)
+			     ; net->pin(idx) != cur->pin(pin)
+			     ; cur->pin(pin).next_link(cur, pin)) {
 
-		  written[cur->name()] = true;
-		  defn << "      " << mangle(cur->name()) <<
-			".set(sim_, " << pin << ", " <<
-			rval << "[" << idx << "]);" << endl;
+			  // Skip output only pins.
+			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
+			      continue;
+
+			  // Skip signals, I'll hit them when I handle the
+			  // NetESignal nodes.
+			if (dynamic_cast<const NetNet*>(cur))
+			      continue;
+
+			  // It is possible for a named device to show up
+			  // several times in a link. This is the classic
+			  // case with NetESignal objects, which are
+			  // repeated for each expression that uses it.
+			if (written[cur->name()])
+			      continue;
+
+			written[cur->name()] = true;
+			defn << "        " << mangle(cur->name()) <<
+			      ".set(sim_, " << pin << ", " <<
+			      rval << "[" << idx << "]);" << endl;
+		  }
+
+		  defn << "        break;" << endl;
+	    }
+	    defn << "      }" << endl;
+
+      } else {
+	      /* Not only is the lvalue signal assigned to, send the
+		 bits to all the other pins that are connected to this
+		 signal. */
+
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  const NetObj*cur;
+		  unsigned pin;
+		  map<string,bool> written;
+
+		  for (net->pin(idx).next_link(cur, pin)
+			     ; net->pin(idx) != cur->pin(pin)
+			     ; cur->pin(pin).next_link(cur, pin)) {
+
+			  // Skip output only pins.
+			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
+			      continue;
+
+			  // Skip signals, I'll hit them when I handle the
+			  // NetESignal nodes.
+			if (dynamic_cast<const NetNet*>(cur))
+			      continue;
+
+			  // It is possible for a named device to show up
+			  // several times in a link. This is the classic
+			  // case with NetESignal objects, which are
+			  // repeated for each expression that uses it.
+			if (written[cur->name()])
+			      continue;
+
+			written[cur->name()] = true;
+			defn << "      " << mangle(cur->name()) <<
+			      ".set(sim_, " << pin << ", " <<
+			      rval << "[" << idx << "]);" << endl;
+		  }
 	    }
       }
 }
@@ -1678,6 +1724,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.60  1999/10/07 05:25:34  steve
+ *  Add non-const bit select in l-value of assignment.
+ *
  * Revision 1.59  1999/10/06 01:28:18  steve
  *  The $finish task should work immediately.
  *

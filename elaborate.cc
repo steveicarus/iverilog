@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.110 1999/10/06 00:39:00 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.111 1999/10/07 05:25:33 steve Exp $"
 #endif
 
 /*
@@ -120,16 +120,16 @@ void PWire::elaborate(Design*des, const string&path) const
 	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
 		  verinum*mval = msb_[idx]->eval_const(des,path);
 		  if (mval == 0) {
-			cerr << msb_[idx]->get_line() << ": Unable to "
-			      "evaluate constant expression ``" <<
+			cerr << msb_[idx]->get_line() << ": error: "
+			      "Unable to evaluate constant expression ``" <<
 			      *msb_[idx] << "''." << endl;
 			des->errors += 1;
 			return;
 		  }
 		  verinum*lval = lsb_[idx]->eval_const(des, path);
 		  if (mval == 0) {
-			cerr << lsb_[idx]->get_line() << ": Unable to "
-			      "evaluate constant expression ``" <<
+			cerr << lsb_[idx]->get_line() << ": error: "
+			      "Unable to evaluate constant expression ``" <<
 			      *lsb_[idx] << "''." << endl;
 			des->errors += 1;
 			return;
@@ -145,7 +145,7 @@ void PWire::elaborate(Design*des, const string&path) const
 		 value. If not, report an error. */
 	    for (unsigned idx = 1 ;  idx < msb_.count() ;  idx += 1) {
 		  if ((mnum[idx] != mnum[0]) || (lnum[idx] != lnum[0])) {
-			cerr << get_line() << ": Inconsistent width, "
+			cerr << get_line() << ": error: Inconsistent width, "
 			      "[" << mnum[idx] << ":" << lnum[idx] << "]"
 			      " vs. [" << mnum[0] << ":" << lnum[0] << "]"
 			      " for signal ``" << name_ << "''" << endl;
@@ -202,7 +202,8 @@ void PWire::elaborate(Design*des, const string&path) const
 
 void PGate::elaborate(Design*des, const string&path) const
 {
-      cerr << "what kind of gate? " << typeid(*this).name() << endl;
+      cerr << "internal error: what kind of gate? " <<
+	    typeid(*this).name() << endl;
 }
 
 /*
@@ -231,8 +232,8 @@ void PGAssign::elaborate(Design*des, const string&path) const
       NetNet*rval = pin(1)->elaborate_net(des, path, rise_time,
 					  fall_time, decay_time);
       if (rval == 0) {
-	    cerr << get_line() << ": Unable to elaborate r-value: " <<
-		  *pin(1) << endl;
+	    cerr << get_line() << ": error: Unable to elaborate r-value: "
+		 << *pin(1) << endl;
 	    des->errors += 1;
 	    return;
       }
@@ -240,7 +241,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
       assert(lval && rval);
 
       if (lval->pin_count() != rval->pin_count()) {
-	    cerr << get_line() << ": lval width (" <<
+	    cerr << get_line() << ": error: lval width (" <<
 		  lval->pin_count() << ") != rval width (" <<
 		  rval->pin_count() << ")." << endl;
 	    delete lval;
@@ -273,15 +274,15 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	    verinum*lsb = lsb_->eval_const(des, path);
 
 	    if (msb == 0) {
-		  cerr << get_line() << ": Unable to evaluate expression "
-		       << *msb_ << endl;
+		  cerr << get_line() << ": error: Unable to evaluate "
+			"expression " << *msb_ << endl;
 		  des->errors += 1;
 		  return;
 	    }
 
 	    if (lsb == 0) {
-		  cerr << get_line() << ": Unable to evaluate expression "
-		       << *lsb_ << endl;
+		  cerr << get_line() << ": error: Unable to evaluate "
+			"expression " << *lsb_ << endl;
 		  des->errors += 1;
 		  return;
 	    }
@@ -391,8 +392,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 			connect(cur[gdx]->pin(idx), sig->pin(gdx));
 
 	    else {
-		  cerr << get_line() << ": Gate count of " << count <<
-			" does not match net width of " <<
+		  cerr << get_line() << ": error: Gate count of " <<
+			count << " does not match net width of " <<
 			sig->pin_count() << " at pin " << idx << "."
 		       << endl;
 		  des->errors += 1;
@@ -436,7 +437,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		    // method will return the port count. Detect that
 		    // as an error.
 		  if (pidx == nexp) {
-			cerr << get_line() << ": port ``" <<
+			cerr << get_line() << ": error: port ``" <<
 			      pins_[idx].name << "'' is not a port of "
 			     << get_name() << "." << endl;
 			des->errors += 1;
@@ -447,7 +448,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		    // the (*exp) array will already have a pointer
 		    // value where I want to place this expression.
 		  if ((*exp)[pidx]) {
-			cerr << get_line() << ": port ``" <<
+			cerr << get_line() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
 			des->errors += 1;
@@ -464,7 +465,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
       } else {
 
 	    if (pin_count() != rmod->port_count()) {
-		  cerr << get_line() << ": Wrong number "
+		  cerr << get_line() << ": error: Wrong number "
 			"of parameters. Expecting " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
@@ -495,7 +496,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		  continue;
 	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path);
 	    if (sig == 0) {
-		  cerr << "Expression too complicated for elaboration." << endl;
+		  cerr << "internal error: Expression too complicated "
+			"for elaboration." << endl;
 		  continue;
 	    }
 
@@ -518,9 +520,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths.
 	    if (prts_pin_count != sig->pin_count()) {
-		  cerr << get_line() << ": Port " << idx << " of " << type_ <<
-			" expects " << prts_pin_count << " pins, got " <<
-			sig->pin_count() << " from " << sig->name() << endl;
+		  cerr << get_line() << ": error: Port " << idx << " of "
+		       << type_ << " expects " << prts_pin_count <<
+			" pins, got " << sig->pin_count() << " from "
+		       << sig->name() << endl;
 		  des->errors += 1;
 		  continue;
 	    }
@@ -563,8 +566,8 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 
 	    NetNet*sig = pin(idx)->elaborate_net(des, path);
 	    if (sig == 0) {
-		  cerr << "Expression too complicated for elaboration:"
-		       << *pin(idx) << endl;
+		  cerr << "internal error: Expression too complicated "
+			"for elaboration:" << *pin(idx) << endl;
 		  continue;
 	    }
 
@@ -620,7 +623,7 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    return;
       }
 
-      cerr << get_line() << ": Unknown module: " << type_ << endl;
+      cerr << get_line() << ": error: Unknown module: " << type_ << endl;
 }
 
 /*
@@ -636,13 +639,13 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
       NetNet*lsig = left_->elaborate_net(des, path),
 	    *rsig = right_->elaborate_net(des, path);
       if (lsig == 0) {
-	    cerr << get_line() << ": Cannot elaborate ";
+	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << get_line() << ": Cannot elaborate ";
+	    cerr << get_line() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -781,7 +784,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  }
 
 	  default:
-	    cerr << "Unhandled BINARY '" << op_ << "'" << endl;
+	    cerr << "internal eror: Unhandled BINARY '" << op_ << "'" << endl;
 	    osig = 0;
       }
 
@@ -807,7 +810,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
       unsigned errors = 0;
 
       if (repeat_) {
-	    cerr << get_line() << ": Sorry, I do not know how to"
+	    cerr << get_line() << ": sorry: I do not know how to"
 		  " elaborate repeat concatenation nets." << endl;
 	    return 0;
       }
@@ -862,7 +865,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
       unsigned errors = 0;
 
       if (repeat_) {
-	    cerr << get_line() << ": Sorry, I do not know how to"
+	    cerr << get_line() << ": sorry: I do not know how to"
 		  " elaborate repeat concatenation nets." << endl;
 	    return 0;
       }
@@ -914,7 +917,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
 	    if (des->find_memory(path+"."+text_)) {
-		  cerr << get_line() << ": Sorry, memories not supported"
+		  cerr << get_line() << ": sorry: memories not supported"
 			" in this context." << endl;
 		  return 0;
 	    }
@@ -991,7 +994,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
 	    if (des->find_memory(path+"."+text_)) {
-		  cerr << get_line() << ": memories (" << text_
+		  cerr << get_line() << ": error: memories (" << text_
 		       << ") cannot be l-values in continuous "
 		       << "assignments." << endl;
 		  return 0;
@@ -1008,7 +1011,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
-	    cerr << get_line() << ": registers (" << sig->name()
+	    cerr << get_line() << ": error: registers (" << sig->name()
 		 << ") cannot be l-values in continuous"
 		 << " assignments." << endl;
 	    return 0;
@@ -1259,7 +1262,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  default:
-	    cerr << "Unhandled UNARY '" << op_ << "'" << endl;
+	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
 
@@ -1335,7 +1338,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
 
 NetProc* Statement::elaborate(Design*des, const string&path) const
 {
-      cerr << "elaborate: What kind of statement? " <<
+      cerr << "internal error: elaborate: What kind of statement? " <<
 	    typeid(*this).name() << endl;
       NetProc*cur = new NetProc;
       return cur;
@@ -1402,8 +1405,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       assert(reg);
 
       if ((reg->type() != NetNet::REG) && (reg->type() != NetNet::INTEGER)) {
-	    cerr << get_line() << ": " << *lval() << " is not a register."
-		 << endl;
+	    cerr << get_line() << ": error: " << *lval() <<
+		  " is not a register." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -1422,8 +1426,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    }
 	    verinum*vm = id->msb_->eval_const(des, path);
 	    if (vl == 0) {
-		  cerr << id->msb_->get_line() << ": Expression must be"
-			" constant in this context: " << *id->msb_;
+		  cerr << id->msb_->get_line() << ": error: "
+			"Expression must be constant in this context: "
+		       << *id->msb_;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -1617,12 +1622,10 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       } else {
 
 	    assert(msb == lsb);
-	    unsigned wid = 1;
-	    cerr << get_line() << ": sorry: l-value bit select expression"
-		  " must be constant." << endl;
-	    delete reg;
-	    delete rv;
-	    return 0;
+	    cur = new NetAssign(des->local_symbol(path), des,
+				reg->pin_count(), mux, rv);
+	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx));
       }
 
 
@@ -1776,7 +1779,7 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
       if (expr == 0) {
-	    cerr << get_line() << ": Unable to elaborate the case"
+	    cerr << get_line() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
 	    return 0;
       }
@@ -2499,7 +2502,7 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 
 	    NetProc*cur = (*st)->statement()->elaborate(des, path);
 	    if (cur == 0) {
-		  cerr << (*st)->get_line() << ": Elaboration "
+		  cerr << (*st)->get_line() << ": error: Elaboration "
 			"failed for this process." << endl;
 		  result_flag = false;
 		  continue;
@@ -2553,6 +2556,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.111  1999/10/07 05:25:33  steve
+ *  Add non-const bit select in l-value of assignment.
+ *
  * Revision 1.110  1999/10/06 00:39:00  steve
  *  == and != connected to the wrong pins of the compare.
  *

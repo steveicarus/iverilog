@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.77 1999/10/06 05:06:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.78 1999/10/07 05:25:34 steve Exp $"
 #endif
 
 /*
@@ -622,23 +622,29 @@ class NetAssign_ : public NetProc, public NetNode {
       NetExpr*rval();
       const NetExpr*rval() const;
 
+	// If this expression exists, then only a single bit is to be
+	// set from the rval, and the value of this expression selects
+	// the pin that gets the value.
+      const NetExpr*bmux() const;
+
     protected:
       NetAssign_(const string&n, unsigned w);
       virtual ~NetAssign_() =0;
 
       void set_rval(NetExpr*);
+      void set_bmux(NetExpr*);
 
     private:
       NetExpr*rval_;
+      NetExpr*bmux_;
 };
 
 class NetAssign  : public NetAssign_ {
     public:
       explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
+      explicit NetAssign(const string&, Design*des, unsigned w,
+			 NetExpr*mux, NetExpr*rv);
       ~NetAssign();
-
-      void find_lval_range(const NetNet*&net, unsigned&msb,
-			   unsigned&lsb) const;
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -659,18 +665,12 @@ class NetAssignNB  : public NetAssign_ {
       ~NetAssignNB();
 
 
-	// If this expression exists, then only a single bit is to be
-	// set from the rval, and the value of this expression selects
-	// the pin that gets the value.
-      const NetExpr*bmux() const { return bmux_; }
-
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetExpr* bmux_;
 };
 
 /*
@@ -1711,6 +1711,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.78  1999/10/07 05:25:34  steve
+ *  Add non-const bit select in l-value of assignment.
+ *
  * Revision 1.77  1999/10/06 05:06:16  steve
  *  Move the rvalue into NetAssign_ common code.
  *

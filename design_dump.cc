@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.47 1999/10/06 05:06:16 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.48 1999/10/07 05:25:33 steve Exp $"
 #endif
 
 /*
@@ -129,16 +129,18 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Procedural assign (NetAssign): " <<
-	    *rval() << endl;
+      o << setw(ind) << "" << "Procedural assign (NetAssign): " << name();
+      if (bmux())
+	    o << "[" << *bmux() << "]";
+      o << " = " << *rval() << endl;
       dump_node_pins(o, ind+4);
 }
 
 void NetAssignNB::dump_node(ostream&o, unsigned ind) const
 {
-      if (bmux_)
+      if (bmux())
 	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
-	      << name() << "[" << *bmux_ << "] <= " << *rval() << endl;
+	      << name() << "[" << *bmux() << "] <= " << *rval() << endl;
       else
 	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
 	      << name() << " <= " << *rval() << endl;
@@ -334,21 +336,26 @@ void NetAssign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
 
-      const NetNet*sig;
-      unsigned msb, lsb;
-      find_lval_range(sig, msb, lsb);
-      o << sig->name() << "[" << msb;
-      if (pin_count() > 1)
-	    o << ":" << lsb;
-      o << "] = " << *rval() << ";" << endl;
+      if (bmux()) {
+	    o << name() << "[" << *bmux() << "] = ";
+	    if (rise_time())
+		  o << "#" << rise_time() << " ";
+	    o << *rval() << ";" << endl;
+
+      } else {
+	    o << name() << " = ";
+	    if (rise_time())
+		  o << "#" << rise_time() << " ";
+	    o << *rval() << ";" << endl;
+      }
 }
 
 void NetAssignNB::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
 
-      if (bmux_) {
-	    o << name() << "[" << *bmux_ << "] <= ";
+      if (bmux()) {
+	    o << name() << "[" << *bmux() << "] <= ";
 	    if (rise_time())
 		  o << "#" << rise_time() << " ";
 	    o << *rval() << ";" << endl;
@@ -779,6 +786,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.48  1999/10/07 05:25:33  steve
+ *  Add non-const bit select in l-value of assignment.
+ *
  * Revision 1.47  1999/10/06 05:06:16  steve
  *  Move the rvalue into NetAssign_ common code.
  *
