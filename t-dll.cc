@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.58 2001/08/28 04:07:41 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.59 2001/08/31 22:58:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -922,6 +922,18 @@ void dll_target::lpm_ff(const NetFF*net)
       assert(obj->u_.ff.clk);
       nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
+	/* If there is a clock enable, then connect it up to the FF
+	   device. */
+      if (net->pin_Enable().is_linked()) {
+	    nex = net->pin_Enable().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.we = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.we);
+	    nexus_lpm_add(obj->u_.ff.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.ff.we = 0;
+      }
+
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
@@ -1486,6 +1498,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.59  2001/08/31 22:58:39  steve
+ *  Support DFF CE inputs.
+ *
  * Revision 1.58  2001/08/28 04:07:41  steve
  *  Add some ivl_target convenience functions.
  *

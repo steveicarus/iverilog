@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.64 2001/08/28 04:07:18 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.65 2001/08/31 22:58:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -506,6 +506,7 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_RAM:
+	  case IVL_LPM_FF:
 	    return net->u_.ff.we;
 	  default:
 	    assert(0);
@@ -1351,6 +1352,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.65  2001/08/31 22:58:40  steve
+ *  Support DFF CE inputs.
+ *
  * Revision 1.64  2001/08/28 04:07:18  steve
  *  Add some ivl_target convenience functions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.61 2001/08/28 04:07:41 steve Exp $"
+#ident "$Id: t-dll.h,v 1.62 2001/08/31 22:58:40 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -242,7 +242,7 @@ struct ivl_lpm_s {
 		  unsigned short width;
 		  unsigned short swid; // ram only
 		  ivl_nexus_t clk;
-		  ivl_nexus_t we; // ram only ??
+		  ivl_nexus_t we;
 		  union {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
@@ -562,6 +562,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.62  2001/08/31 22:58:40  steve
+ *  Support DFF CE inputs.
+ *
  * Revision 1.61  2001/08/28 04:07:41  steve
  *  Add some ivl_target convenience functions.
  *

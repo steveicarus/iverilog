@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.78 2001/08/28 04:07:17 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.79 2001/08/31 22:58:39 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -541,7 +541,7 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
-  /* IVL_LPM_RAM */
+  /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
@@ -944,6 +944,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.79  2001/08/31 22:58:39  steve
+ *  Support DFF CE inputs.
+ *
  * Revision 1.78  2001/08/28 04:07:17  steve
  *  Add some ivl_target convenience functions.
  *
