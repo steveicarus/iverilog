@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.11 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: link_const.cc,v 1.12 2002/06/19 04:18:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,15 +33,17 @@
 bool link_drivers_constant(const Link&lnk)
 {
       const Nexus*nex = lnk.nexus();
-      bool flag = true;
 
       for (const Link*cur = nex->first_nlink()
 		 ; cur  ;  cur = cur->next_nlink()) {
 	    const NetNet*sig;
+	    Link::DIR cur_dir;
 
 	    if (cur == &lnk)
 		  continue;
-	    if (cur->get_dir() == Link::INPUT)
+
+	    cur_dir = cur->get_dir();
+	    if (cur_dir == Link::INPUT)
 		  continue;
 
 	      /* If this is an input or inout port of a root module,
@@ -57,28 +59,27 @@ bool link_drivers_constant(const Link&lnk)
 		 is not constant because it connects to an unspecified
 		 outside world. */
 
-	    if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) do {
+	    if (cur_dir == Link::PASSIVE) {
+		  
+		  const NetObj*obj = cur->get_obj();
+		  if (obj->scope()->parent() != 0)
+			continue;
+
+		  sig = dynamic_cast<const NetNet*>(cur->get_obj());
+		  assert(sig);
+
 		  if (sig->port_type() == NetNet::NOT_A_PORT)
-			break;
+			continue;
 
 		  if (sig->port_type() == NetNet::POUTPUT)
-			break;
+			continue;
 
-		  if (sig->scope()->parent())
-			break;
+		  return false;
 
-		  flag = false;
-	    } while(0);
-
-
-	      /* If the link is PASSIVE then it doesn't count as a
-		 driver if its initial value is Vz. PASSIVE nodes
-		 include wires and tri nets. */
-	    if (cur->get_dir() == Link::PASSIVE)
-		  continue;
+	    }
 
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
-		  flag = false;
+		  return false;
 
 	      /* If there is a supply net, then this nexus will have a
 		 constant value independent of any drivers. */
@@ -92,7 +93,7 @@ bool link_drivers_constant(const Link&lnk)
 		  }
       }
 
-      return flag;
+      return true;
 }
 
 verinum::V driven_value(const Link&lnk)
@@ -123,6 +124,9 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.12  2002/06/19 04:18:46  steve
+ *  Shuffle link_drivers_constant for speed.
+ *
  * Revision 1.11  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster
