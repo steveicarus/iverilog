@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: npmos.cc,v 1.3 2001/10/18 17:30:26 steve Exp $"
+#ident "$Id: npmos.cc,v 1.4 2001/10/24 03:18:52 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -44,9 +44,9 @@ static void mos_set(vvp_ipoint_t ptr, functor_t fp, bool push, unsigned in1_on, 
       unsigned in1 = (fp->ival >> 2) & 0x03;
       unsigned is0 = reduce_strength(fp->istr[0], table);
   
-      unsigned char outH = 0x88 | ((is0 & 3)<<4) | (0);
-      unsigned char outL = 0x00 | ((is0 & 3)<<0) | (0);
-      unsigned char outX = 0x80 | (is0 & 3) | (is0 & 0x30);
+      unsigned char outH = 0x88 | ((is0 & 7)<<4) | (0);
+      unsigned char outL = 0x00 | ((is0 & 7)<<0) | (0);
+      unsigned char outX = 0x80 | (is0 & 7) | (is0 & 0x70);
 
       if (in1 == in1_on) {
 	    // gate on; output follows input
@@ -100,6 +100,9 @@ void vvp_rnmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.4  2001/10/24 03:18:52  steve
+ *  npmos outputs have 3bit strengths, not 2.
+ *
  * Revision 1.3  2001/10/18 17:30:26  steve
  *  Support rnpmos devices. (Philip Blundell)
  *
