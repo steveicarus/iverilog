@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: veriusertfs.c,v 1.3 2002/06/03 00:08:42 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.4 2002/06/04 01:42:58 steve Exp $"
 #endif
 
 /*
@@ -28,6 +28,7 @@
 
 # include <string.h>
 # include <stdlib.h>
+# include <assert.h>
 # include "vpi_user.h"
 # include "veriuser.h"
 
@@ -37,6 +38,7 @@
  */
 typedef struct t_pli_data {
       p_tfcell	tf;		/* pointer to veriusertfs cell */
+      int	paramvc;	/* parameter number for misctf */
 } s_pli_data, *p_pli_data;
 
 static int compiletf(char *);
@@ -56,17 +58,18 @@ void veriusertfs_register()
 	    /* last element */
 	    if (tf->type == 0) break;
 
-	    /* only forwref true */
+	    /* force forwref true */
 	    if (!tf->forwref) {
-		  vpi_printf("  skipping %s, forwref != true\n",
+		  vpi_printf("veriusertfs: %s, forcing forwref = true\n",
 			tf->tfname);
-		  continue;
 	    }
 
 	    /* squirrel away veriusertfs in persistent user_data */
 	    data = (p_pli_data) calloc(1, sizeof(s_pli_data));
+	    assert(data != NULL);
 	    data->tf = tf;
 
+	    /* build callback structure */
 	    (void) memset(&tf_data, 0, sizeof(s_vpi_systf_data));
 	    switch (tf->type) {
 		  case usertask:
@@ -76,7 +79,7 @@ void veriusertfs_register()
 			tf_data.type = vpiSysFunc;
 		  break;
 		  default:
-			vpi_printf("  skipping %s, unsupported type %d\n",
+			vpi_printf("veriusertfs: %s, unsupported type %d\n",
 			      tf->tfname, tf->type);
 			continue;
 		  break;
@@ -102,8 +105,11 @@ static int compiletf(char *data)
 {
       p_pli_data pli;
       p_tfcell tf;
-      vpiHandle call_h, arg_i, arg_h;
       s_cb_data cb_data;
+      vpiHandle call_h, arg_i, arg_h;
+      p_pli_data dp;
+      int paramvc = 1;
+      int rtn;
 
       /* cast back from opaque */
       pli = (p_pli_data)data;
@@ -117,31 +123,35 @@ static int compiletf(char *data)
       cb_data.cb_rtn = callback;
       cb_data.user_data = data;
 
-      /* register EndOfSim misctf callback */
+      /* register EOS misctf callback */
       cb_data.reason = cbEndOfSimulation;
       cb_data.obj = call_h;
       vpi_register_cb(&cb_data);
 
-#ifdef FIXME
-      /* register callbacks on each argument */
+      /* register paramvc misctf callback(s) */
       cb_data.reason = cbValueChange;
       arg_i = vpi_iterate(vpiArgument, call_h);
       if (arg_i != NULL) {
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
+		  /* replicate user_data for each instance */
+		  dp = (p_pli_data)calloc(1, sizeof(s_pli_data));
+		  assert(dp != NULL);
+		  memcpy(dp, cb_data.user_data, sizeof(s_pli_data));
+		  dp->paramvc = paramvc++;
+		  cb_data.user_data = (char *)dp;
 		  cb_data.obj = arg_h;
 		  vpi_register_cb(&cb_data);
 	    }
       }
-#endif
 
-      /* since we are in compiletf, misctf needs to fire */
+      /*
+       * Since we are in compiletf, checktf and misctf need to
+       * be executed. Check runs first to match other simulators.
+       */
+      rtn = (tf->checktf) ? tf->checktf(tf->data, reason_checktf) : 0;
       if (tf->misctf) tf->misctf(tf->data, reason_endofcompile, 0);
 
-      /* similarly run checktf now */
-      if (tf->checktf)
-	    return tf->checktf(tf->data, 0);
-      else
-	    return 0;
+      return rtn;
 }
 
 /*
@@ -157,20 +167,23 @@ static int calltf(char *data)
       tf = pli->tf;
 
       /* execute calltf */
-      if (tf->calltf)
-	    return tf->calltf(tf->data, 0);
-      else
-	    return 0;
+      return (tf->calltf) ? tf->calltf(tf->data, reason_calltf) : 0;
 }
 
 /*
  * This function is the wrapper for all the misctf callbacks
  */
-static int callback (p_cb_data data)
+extern int async_misctf_enable;
+
+static int callback(p_cb_data data)
 {
       p_pli_data pli;
       p_tfcell tf;
       int reason;
+      int paramvc = 0;
+
+      /* not enabled */
+      if (data->reason == cbValueChange && !async_misctf_enable) return 0;
 
       /* cast back from opaque */
       pli = (p_pli_data)data->user_data;
@@ -179,6 +192,7 @@ static int callback (p_cb_data data)
       switch (data->reason) {
 	    case cbValueChange:
 		  reason = reason_paramvc;
+		  paramvc = pli->paramvc;
 		  break;
 	    case cbEndOfSimulation:
 		  reason = reason_finish;
@@ -188,14 +202,14 @@ static int callback (p_cb_data data)
       }
 
       /* execute misctf */
-      if (tf->misctf)
-	    return tf->misctf(tf->data, reason, 0);
-      else
-	    return 0;
+      return (tf->misctf) ? tf->misctf(tf->data, reason, paramvc) : 0;
 }
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.4  2002/06/04 01:42:58  steve
+ *  Add misctf support to libveriuser
+ *
  * Revision 1.3  2002/06/03 00:08:42  steve
  *  Better typing for veriusertfs table.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.12 2002/06/03 21:52:59 steve Exp $"
+#ident "$Id: veriuser.h,v 1.13 2002/06/04 01:42:58 steve Exp $"
 #endif
 
 /*
@@ -81,7 +81,9 @@ extern void veriusertfs_register();
 #define userfunction 2
 #define userrealfunction 3
 
-/* misctf callback reasons */
+/* callback reasons */
+#define reason_checktf 1
+#define reason_calltf 3
 #define reason_paramvc 7
 #define reason_finish 9
 #define reason_endofcompile 16
@@ -91,6 +93,9 @@ extern void veriusertfs_register();
 extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
 extern char* mc_scan_plusargs(char*plusarg);
+
+extern int tf_asyncoff(void);
+extern int tf_asyncon(void);
 
 extern int tf_dofinish(void);
 
@@ -112,6 +117,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.13  2002/06/04 01:42:58  steve
+ *  Add misctf support to libveriuser
+ *
  * Revision 1.12  2002/06/03 21:52:59  steve
  *  Fix return type of tf_getinstance.
  *
