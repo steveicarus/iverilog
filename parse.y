@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.50 1999/07/10 02:19:26 steve Exp $"
+#ident "$Id: parse.y,v 1.51 1999/07/12 00:59:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -263,6 +263,8 @@ delay_value
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
+			$$->set_file(@1.text);
+			$$->set_lineno(@1.first_line);
 		  }
 		}
 	| IDENTIFIER
@@ -1453,8 +1455,7 @@ statement
 		  $$ = tmp;
 		}
 	| lpvalue '=' delay expression ';'
-		{ yyerror(@1, "Sorry, assignment timing control not implemented.");
-		  PAssign*tmp = new PAssign($1,$3);
+		{ PAssign*tmp = new PAssign($1,$3,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;

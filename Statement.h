@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.14 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: Statement.h,v 1.15 1999/07/12 00:59:36 steve Exp $"
 #endif
 
 # include  <string>
@@ -77,11 +77,12 @@ class Statement : public LineInfo {
  */
 class PAssign_  : public Statement {
     public:
-      explicit PAssign_(PExpr*lval, PExpr*ex);
+      explicit PAssign_(PExpr*lval, PExpr*de, PExpr*ex);
       virtual ~PAssign_() =0;
 
-      const PExpr* lval() const { return lval_; }
-      const PExpr* rval() const { return rval_; }
+      const PExpr* lval() const  { return lval_; }
+      const PExpr* delay() const { return delay_; }
+      const PExpr* rval() const  { return rval_; }
 
     protected:
       NetNet*elaborate_lval(Design*, const string&path,
@@ -90,6 +91,7 @@ class PAssign_  : public Statement {
 
     private:
       PExpr* lval_;
+      PExpr* delay_;
       PExpr* rval_;
 };
 
@@ -97,6 +99,7 @@ class PAssign  : public PAssign_ {
 
     public:
       explicit PAssign(PExpr*lval, PExpr*ex);
+      explicit PAssign(PExpr*lval, PExpr*de, PExpr*ex);
       ~PAssign();
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -330,6 +333,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.15  1999/07/12 00:59:36  steve
+ *  procedural blocking assignment delays.
+ *
  * Revision 1.14  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.52 1999/07/10 03:00:05 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.53 1999/07/12 00:59:36 steve Exp $"
 #endif
 
 /*
@@ -1136,13 +1136,20 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       } while(0);
 
+
+	/* elaborate the lval. This detects any part selects and mux
+	   expressions that might exist. */
       unsigned lsb, msb;
       NetExpr*mux;
       NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
       if (reg == 0) return 0;
 
-      assert(rval());
+	/* If there is a delay expression, elaborate it. */
+      verinum*dex = delay() ? delay()->eval_const(des, path) : 0;
 
+
+	/* Elaborate the r-value expression. */
+      assert(rval());
       NetExpr*rv = rval()->elaborate_expr(des, path);
       if (rv == 0) {
 	    cerr << get_line() << ": failed to elaborate expression."
@@ -1152,6 +1159,33 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       assert(rv);
 
       NetAssign*cur;
+
+	/* Rewrite delayed assignments as assignments that are
+	   delayed. This only works if the l-value has no mux
+	   expression. */
+      if (dex && (mux == 0)) {
+	    string tp = des->local_symbol(path);
+	    unsigned wid = msb - lsb + 1;
+	    cur = new NetAssign(tp, des, wid, rv);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx+lsb));
+
+	    cur->set_line(*this);
+	    des->add_node(cur);
+	    NetPDelay*dep = new NetPDelay(dex->as_ulong(), cur);
+
+	    delete dex;
+	    return dep;
+      }
+
+      if (dex) {
+	    delete dex;
+	    cerr << delay()->get_line() << ": Sorry, delay expression "
+		  "(or l-value) too complicated." << endl;
+	    des->errors += 1;
+      }
+
+
       if (mux == 0) {
 	    unsigned wid = msb - lsb + 1;
 	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
@@ -1200,6 +1234,12 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(rv);
+
+      if (delay()) {
+	    cerr << delay()->get_line() << ": Sorry, I cannot elaborate "
+		  "assignment delay expressions." << endl;
+	    des->errors += 1;
+      }
 
       NetAssignNB*cur;
       if (mux == 0) {
@@ -1723,6 +1763,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.53  1999/07/12 00:59:36  steve
+ *  procedural blocking assignment delays.
+ *
  * Revision 1.52  1999/07/10 03:00:05  steve
  *  Proper initialization of registers.
  *

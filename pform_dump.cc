@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.26 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.27 1999/07/12 00:59:36 steve Exp $"
 #endif
 
 /*
@@ -262,14 +262,18 @@ void Statement::dump(ostream&out, unsigned ind) const
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval() << " = " << *rval() << ";";
+      out << *lval() << " = ";
+      if (delay()) out << "#" << *delay() << " ";
+      out << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval() << " <= " << *rval() << ";";
+      out << *lval() << " <= ";
+      if (delay()) out << "#" << *delay() << " ";
+      out << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
@@ -521,6 +525,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.27  1999/07/12 00:59:36  steve
+ *  procedural blocking assignment delays.
+ *
  * Revision 1.26  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

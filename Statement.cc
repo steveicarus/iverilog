@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.11 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: Statement.cc,v 1.12 1999/07/12 00:59:36 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -27,19 +27,25 @@ Statement::~Statement()
 {
 }
 
-PAssign_::PAssign_(PExpr*lval, PExpr*ex)
-: lval_(lval), rval_(ex)
+PAssign_::PAssign_(PExpr*lval, PExpr*de, PExpr*ex)
+: lval_(lval), delay_(de), rval_(ex)
 {
 }
 
 PAssign_::~PAssign_()
 {
       delete lval_;
+      delete delay_;
       delete rval_;
 }
 
 PAssign::PAssign(PExpr*lval, PExpr*ex)
-: PAssign_(lval, ex)
+: PAssign_(lval, 0, ex)
+{
+}
+
+PAssign::PAssign(PExpr*lval, PExpr*d, PExpr*ex)
+: PAssign_(lval, d, ex)
 {
 }
 
@@ -48,7 +54,7 @@ PAssign::~PAssign()
 }
 
 PAssignNB::PAssignNB(PExpr*lval, PExpr*ex)
-: PAssign_(lval, ex)
+: PAssign_(lval, 0, ex)
 {
 }
 
@@ -137,6 +143,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.12  1999/07/12 00:59:36  steve
+ *  procedural blocking assignment delays.
+ *
  * Revision 1.11  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,
