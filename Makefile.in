@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.76 2000/10/28 17:51:45 steve Exp $"
+#ident "$Id: Makefile.in,v 1.77 2000/10/28 19:12:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -62,7 +62,7 @@ all: ivl@EXEEXT@
 # sure the basics were compiled properly.
 check: all
 	driver/iverilog -Ccheck.conf -ocheck -tvvm-check -B./ivlpp examples/hello.vl
-	$(CXX) -o check $(rdynamic) -fno-exceptions -Ivvm -Lvvm check.cc -lvvm -lvpip $(dllib)
+	$(CXX) -o check $(rdynamic) -fno-exceptions -Ivvm -Ivpi -Lvvm check.cc -lvvm -lvpip $(dllib)
 	./check | grep 'Hello, World'
 
 clean:

@@ -44,6 +44,7 @@ ivl_scope_name
 ivl_scope_sigs
 ivl_scope_sig
 
+ivl_signal_pin
 ivl_signal_pins
 ivl_signal_port
 ivl_signal_type
