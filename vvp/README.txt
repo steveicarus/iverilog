@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.35 2001/08/10 04:31:27 steve Exp $
+ *  $Id: README.txt,v 1.36 2001/08/25 17:22:32 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -254,56 +254,12 @@ holds references to those functors that are fed it.
 
 The <label> is required and is used to locate the net object that is
 represents. This label does not map to a functor, so only references
-that know they want access .nets are able to locate the symbol. In
+that know they want to access .nets are able to locate the symbol. In
 particular, this includes behavioral %load and %wait instructions. The
 references to net and reg objects are done through the .net label
 instead of a general functor symbol. The instruction stores the
 functor pointer, though.
 
-X A .net statement creates a functor for each bit of the vector in
-X exactly the same way that a .var creates functors. The truth table for
-X a .net functor is the same, as well. The net has an output that may be
-X connected to something, but need not. The 0 (zero) input of each bit
-X functor is the normal input, and is connected to the output of a
-X functor or another net.
-
-X The second functor input is a force net. This connects to an
-X expression that is announced by a force statement of some sort. The
-X third input is the only input settable by behavioral code, it selects
-X between the normal input and the force input. These inputs work
-X exactly the same as those for the .var functors.
-
-X Since .var items are written by behavioral code, there is no worry
-X about how to connect their inputs. You don't. But .net items do have
-X inputs that need to be connected to the outputs of other
-X functors. Nets are also complicated by the fact that they come in
-X vectors, so the inputs of all the functors in the array need to be
-X connected. Fortunately, there is only one input per .net functor that
-X can be connected, and that is input 0.
-
-X The force input and selector input are manipulated exactly the same
-X way as with .var force and selector inputs, so there is no need for a
-X syntax to handle them.
-
-X Since there is exactly one input per bit in the vector, it is easy
-X enough to just list the vvp_ipoint_t symbols in order. Each symbol
-X references a functor, and connects the corresponding .net input to the
-X output of that functor, as if the .net is an <N> bit wide functor. The
-X bits of the vector are connected least-significant-bit first. It is
-X legal to leave a bit unconnected. To do that, simply leave the
-X position for that bit blank. Bits of .nets are initialized to
-X z. Unconnected bits keep the value z throughout the simulation.
-
-X The special input symbols "C<0>", "C<1>", "C<x>" and "C<z>" and magic
-X symbols that set the net to a constant value instead of accepting an
-X input from a functor. This can happen, for example, when a wire is
-X declared like so:
-
-X 	wire foo = 1'b1;
-
-X This prevents any real functor being created and connected, and
-X instead leaves the input unconnected and initializes the wire with the
-X specified value, instead of the default z.
 
 MEMORY STATEMENTS:
 
