@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.1 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: udp.h,v 1.2 2001/04/24 03:48:53 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -109,6 +109,9 @@ inline vvp_ipoint_t udp_idx_t::next_node()
 
 inline vvp_ipoint_t udp_idx_t::parent()
 {
+  if (nin<=4)
+    return 0x0;
+
   int idx = (cur_i==nin-1 ? cur_i-1 : cur_i) / 3;
   if (!idx)
     return 0x0;
@@ -117,6 +120,9 @@ inline vvp_ipoint_t udp_idx_t::parent()
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.2  2001/04/24 03:48:53  steve
+ *  Fix underflow when UDP has 1 input.
+ *
  * Revision 1.1  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.39 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: compile.cc,v 1.40 2001/04/24 03:48:53 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -319,7 +319,7 @@ void compile_udp_functor(char*label, char*type,
   struct vvp_udp_s *u = udp_find(type);
   assert (argc == u->nin);
 
-  int nfun = (argc-2) / 3 + 1;
+  int nfun = argc<=4 ? 1 : (argc-2) / 3 + 1;
 
   vvp_ipoint_t fdx = functor_allocate(nfun);
   functor_t obj = functor_index(fdx);
@@ -944,6 +944,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.40  2001/04/24 03:48:53  steve
+ *  Fix underflow when UDP has 1 input.
+ *
  * Revision 1.39  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *
