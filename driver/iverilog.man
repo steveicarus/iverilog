@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2000/10/18 21:53:05 $" Version "$Date: 2000/10/18 21:53:05 $"
+.TH iverilog 1 "$Date: 2001/01/05 05:16:03 $" Version "$Date: 2001/01/05 05:16:03 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Cpath] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
+[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -24,6 +24,14 @@ compile the verilog source. Normally, the path used to locate these
 tools is built into the \fIiverilog\fP program. However, the \fB-B\fP
 switch allows the user to select a different set of programs. The path
 given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
+.TP 8
+.B -c\fIfile\fP
+This flag specifies an input file that contains a list of Verilog
+source files. This is similar to the \fIcommand file\fP of other
+Verilog simulators, in that it is a file that contains the file names
+instead of taking them on the command line. The command file may
+contain C-style comments (/*-*/) or shell-style comments (# to the end
+of the line.)
 .TP 8
 .B -C\fIpath\fP
 This flag selects the driver configuration file to use. Normally, the
