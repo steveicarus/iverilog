@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.2 1999/11/06 16:00:18 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -42,11 +42,33 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
       }
 }
 
+static void number_value(vpiHandle ref, p_vpi_value vp)
+{
+      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (vp->format) {
+
+	  default:
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
 static const struct __vpirt vpip_string_rt = {
       vpiConstant,
       0,
       0,
       string_value,
+      0,
+      0
+};
+
+static const struct __vpirt vpip_number_rt = {
+      vpiConstant,
+      0,
+      0,
+      number_value,
       0,
       0
 };
@@ -58,8 +80,21 @@ vpiHandle vpip_make_string_const(struct __vpiStringConst*ref, const char*val)
       return &(ref->base);
 }
 
+vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
+				 const enum vpip_bit_t*bits,
+				 unsigned nbits)
+{
+      ref->base.vpi_type = &vpip_number_rt;
+      ref->bits = bits;
+      ref->nbits = nbits;
+      return &(ref->base);
+}
+
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.2  1999/11/06 16:00:18  steve
+ *  Put number constants into a static table.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

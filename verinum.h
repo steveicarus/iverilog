@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.7 1999/10/22 23:57:53 steve Exp $"
+#ident "$Id: verinum.h,v 1.8 1999/11/06 16:00:17 steve Exp $"
 #endif
 
 # include  <string>
@@ -63,6 +63,9 @@ class verinum {
 	// an ascii description instead of a number value.
       bool is_string() const { return string_flag_; }
 
+	// Comparison for use in sorting algorithms.
+      bool is_before(const verinum&that) const;
+
 	// Individual bits can be accessed with the get and set
 	// methods.
       V get(unsigned idx) const;
@@ -97,6 +100,9 @@ extern verinum operator - (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.8  1999/11/06 16:00:17  steve
+ *  Put number constants into a static table.
+ *
  * Revision 1.7  1999/10/22 23:57:53  steve
  *  do the <= in bits, not numbers.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.11 1999/10/22 23:57:53 steve Exp $"
+#ident "$Id: verinum.cc,v 1.12 1999/11/06 16:00:17 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -211,6 +211,18 @@ string verinum::as_string() const
       string result = string(tmp);
       delete[]tmp;
       return result;
+}
+
+bool verinum::is_before(const verinum&that) const
+{
+      if (that.nbits_ > nbits_) return true;
+      if (that.nbits_ < nbits_) return false;
+
+      for (unsigned idx = nbits_  ;  idx > 0 ;  idx -= 1) {
+	    if (bits_[idx-1] < that.bits_[idx-1]) return true;
+	    if (bits_[idx-1] > that.bits_[idx-1]) return false;
+      }
+      return false;
 }
 
 bool verinum::is_defined() const
@@ -455,6 +467,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.12  1999/11/06 16:00:17  steve
+ *  Put number constants into a static table.
+ *
  * Revision 1.11  1999/10/22 23:57:53  steve
  *  do the <= in bits, not numbers.
  *

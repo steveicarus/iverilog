@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.71 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.72 1999/11/06 16:00:17 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -29,6 +29,13 @@
 # include  <unistd.h>
 # include  "netlist.h"
 # include  "target.h"
+
+  // Comparison for use in sorting algorithms.
+
+struct less_verinum {
+      bool operator() (const verinum&left, const verinum&right)
+	    { return left.is_before(right); }
+};
 
 static string make_temp()
 {
@@ -115,6 +122,9 @@ class target_vvm : public target_t {
 	// handle name mapped by this.
       map<string,unsigned>string_constants;
       unsigned string_counter;
+
+      map<verinum,unsigned,less_verinum>number_constants;
+      unsigned number_counter;
 };
 
 
@@ -498,33 +508,40 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 	    return;
       }
 
-      string tname = make_temp();
-      tgt_->defn << "        vvm_bitset_t<" <<
-	    expr->expr_width() << "> " << tname << ";" << endl;
-      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    tgt_->defn << "        " << tname << "[" << idx << "] = ";
-	    switch (expr->value().get(idx)) {
-		case verinum::V0:
-		  tgt_->defn << "V0";
-		  break;
-		case verinum::V1:
-		  tgt_->defn << "V1";
-		  break;
-		case verinum::Vx:
-		  tgt_->defn << "Vx";
-		  break;
-		case verinum::Vz:
-		  tgt_->defn << "Vz";
-		  break;
+      unsigned&res = tgt_->number_constants[expr->value()];
+      if (res == 0) {
+	    res = tgt_->number_counter ++;
+	    unsigned width = expr->expr_width();
+	    tgt_->init_code << "      { vpip_bit_t*bits = new vpip_bit_t["
+			    << width << "];" << endl;
+
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		  tgt_->init_code << "        bits[" << idx << "] = ";
+		  switch(expr->value().get(idx)) {
+		      case verinum::V0:
+			tgt_->init_code << "V0;" << endl;
+			break;
+		      case verinum::V1:
+			tgt_->init_code << "V1;" << endl;
+			break;
+		      case verinum::Vx:
+			tgt_->init_code << "Vx;" << endl;
+			break;
+		      case verinum::Vz:
+			tgt_->init_code << "Vz;" << endl;
+			break;
+		  }
 	    }
-	    tgt_->defn << ";" << endl;
+	    tgt_->init_code << "        vpip_make_number_const("
+		  "&number_table[" << res << "], bits, " << width <<
+		  ");" << endl;
+	    tgt_->init_code << "      }" << endl;
       }
 
-      result = make_temp();
-      tgt_->defn << "        struct __vpiHandle " << result << ";" << endl;
-      tgt_->defn << "        vvm_make_vpi_parm(&" << result << ", &"
-		 << tname << ");" << endl;
-      result = "&" + result;
+      ostrstream tmp;
+      tmp << "&number_table[" << res << "].base" << ends;
+      result = tmp.str();
+      return;
 }
 
 void vvm_parm_rval::expr_ident(const NetEIdent*expr)
@@ -573,8 +590,10 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 
       process_counter = 0;
       string_counter = 1;
+      number_counter = 1;
 
       os << "static struct __vpiStringConst string_table[];" << endl;
+      os << "static struct __vpiNumberConst number_table[];" << endl;
 
       init_code << "static void design_init(vvm_simulation&sim)" << endl;
       init_code << "{" << endl;
@@ -588,6 +607,8 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 {
       os << "static struct __vpiStringConst string_table[" <<
 	    string_counter+1 << "];" << endl;
+      os << "static struct __vpiNumberConst number_table[" <<
+	    number_counter+1 << "];" << endl;
 
       defn.close();
       os << "// **** Definition code" << endl;
@@ -1818,6 +1839,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.72  1999/11/06 16:00:17  steve
+ *  Put number constants into a static table.
+ *
  * Revision 1.71  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

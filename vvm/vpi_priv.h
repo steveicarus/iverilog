@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.3 1999/10/29 03:37:22 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.4 1999/11/06 16:00:18 steve Exp $"
 #endif
 
 /*
@@ -150,6 +150,13 @@ struct __vpiStringConst {
       const char*value;
 };
 
+struct __vpiNumberConst {
+      struct __vpiHandle base;
+
+      enum vpip_bit_t*bits;
+      unsigned nbits;
+};
+
 /*
  * These are methods to initialize specific handle types. Except for
  * vpip_make_iterator, all the vpi_make_* functions expect the caller
@@ -160,6 +167,9 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
 extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name);
 extern vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
 					const char*val);
+extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
+					const enum vpip_bit_t*bits,
+					unsigned nbits);
 extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name);
 extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 				    const char*val);
@@ -226,6 +236,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.4  1999/11/06 16:00:18  steve
+ *  Put number constants into a static table.
+ *
  * Revision 1.3  1999/10/29 03:37:22  steve
  *  Support vpiValueChance callbacks.
  *
