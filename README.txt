@@ -12,11 +12,15 @@ home page at <http://www.icarus.com/eda/verilog>.
  
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
-tools. These back- end tools currently include a simulator written in
+tools. These back-end tools currently include a simulator written in
 C++ called VVM and an XNF (Xilinx Netlist Format) generator. See
 "vvm.txt" and "xnf.txt" for further details on these back-end
 processors. In the future, backends are expected for EDIF/LPM,
 structural Verilog, VHDL, etc.
+
+    For instructions on how to run Icarus Verilog, see the ``iverilog''
+    man page.
+
 
 2.0 Building/Installing Icarus Verilog From Source
 
@@ -63,6 +67,23 @@ with the commands:
   ./configure
   make
 
+Normally, this command automatically figures out every thing it needs
+to know. It generally works pretty well. There are a few flags to the
+configure script that modify its behavior:
+
+	--without-ipal
+	    This turns off support for Icarus PAL, whether ipal
+	    libaries are installed or not.
+
+	--prefix=<root>
+	    The default is /usr/local, which causes the tool suite to
+	    be compiled for install in /usr/local/bin,
+	    /usr/local/share/ivl, etc.
+
+	    I recommend that if you are configuring for precompiled
+	    binaries, use --prefix=/usr. On Solaris systems, it is
+	    common to use --prefix=/opt.
+
 2.3 (Optional) Testing
 
 To run a simple test before installation, execute
@@ -77,10 +98,15 @@ by root.
 
 Now install the files in an appropriate place. (The makefiles by
 default install in /usr/local unless you specify a different prefix
-with the --prefix=<path> flag to the configure command.) Do this as
-root.
+with the --prefix=<path> flag to the configure command.) You may need
+to do this as root to gain access to installation directories.
 
   make install
+
+2.5 Uninstallation
+
+The generated Makefiles also include the uninstall target. This should
+remove all the files that ``make install'' creates.
 
 3.0 How Icarus Verilog Works
 
@@ -216,6 +242,10 @@ compiler (ivl) with the proper command line options to get the job
 done in a friendly way. See the iverilog(1) man page for usage details.
 
 4.1 Running IVL Directly (not recommended)
+
+    NOTE: The preferred method of running Icarus Verilog is the
+    iverilog command described above. The instructions below may
+    change at any time without notice.
 
 The ivl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator, but not the preprocessor.
@@ -418,8 +448,12 @@ removed from the list) send e-mail to me.
       Cygwin32/*
         Venkat Iyer <venkat@comit.com>
 
+      Mingw32
+        Venkat Iyer <venkat@comit.com>
+
 (+) These are not the only systems where Icarus Verilog has been run,
 just the systems where precompiled binaries are publicly available.
+
 
 6.2 TEST SUITE MANAGER
 
