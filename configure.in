@@ -5,6 +5,13 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
+AC_CHECK_PROGS(XGPERF,gperf,none)
+if test "$XGPERF" = "none"
+then
+        echo "*** Error: No suitable gperf found. ***"
+        echo "    Please install the 'gperf' package."
+        exit 1
+fi
 
 AC_LANG_CPLUSPLUS
 
