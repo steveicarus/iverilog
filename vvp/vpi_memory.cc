@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.10 2002/06/30 04:35:47 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.11 2002/07/01 15:36:12 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -465,7 +465,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			      op->bval |= (1 << idx % 32);
 			      break;
 			}
-			if (idx && !(idx % 32)) {
+			if (!((idx+1) % 32) && (idx+1 < width)) {
 			      op++;
 			      op->aval = op->bval = 0;
 			}
@@ -536,6 +536,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.11  2002/07/01 15:36:12  steve
+ *  Limit word writing to vector limits.
+ *
  * Revision 1.10  2002/06/30 04:35:47  steve
  *  Get vpiVectorVal for memories.
  *
