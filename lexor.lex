@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.55 2001/02/07 01:08:21 steve Exp $"
+#ident "$Id: lexor.lex,v 1.56 2001/04/26 16:12:48 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -81,7 +81,6 @@ static void line_directive2();
 
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_dec(const char*txt);
-static verinum*make_unsized_dec(const char*txt);
 static verinum*make_sized_octal(const char*txt);
 static verinum*make_sized_hex(const char*txt);
 static verinum*make_unsized_binary(const char*txt);
