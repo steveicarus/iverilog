@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.31 2002/02/01 05:09:14 steve Exp $"
+#ident "$Id: verinum.cc,v 1.32 2002/04/27 04:48:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -351,6 +351,11 @@ ostream& operator<< (ostream&o, verinum::V v)
  */
 ostream& operator<< (ostream&o, const verinum&v)
 {
+      if (v.is_string()) {
+	    o << "\"" << v.as_string() << "\"";
+	    return o;
+      }
+
 	/* If the verinum number has a fixed length, dump all the bits
 	   literally. This is how we express the fixed length in the
 	   output. */
@@ -793,6 +798,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.32  2002/04/27 04:48:43  steve
+ *  Display string verinums as strings.
+ *
  * Revision 1.31  2002/02/01 05:09:14  steve
  *  Propagate sign in unary minus.
  *
