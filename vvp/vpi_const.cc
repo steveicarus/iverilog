@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.16 2002/05/17 04:12:19 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.17 2002/06/14 22:05:28 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -309,11 +309,12 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 
 	  case vpiIntVal: {
 		unsigned val = 0;
+		unsigned bit_val = 0;
 
 		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
 		      unsigned nibble = idx/4;
 		      unsigned shift  = 2 * (idx%4);
-		      unsigned bit_val = (rfp->bits[nibble] >> shift) & 3;
+		      bit_val = (rfp->bits[nibble] >> shift) & 3;
 		      if (bit_val > 1) {
 			    vp->value.integer = 0;
 			    return;
@@ -321,6 +322,14 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 			    val |= bit_val << idx;
 		      }
 		}
+
+		/* sign extend */
+		if (rfp->signed_flag) {
+		    for (unsigned idx = rfp->nbits; idx <sizeof(int)*8; idx++) {
+			val |= bit_val << idx;
+		    }
+		}
+
 		vp->value.integer = val;
 		break;
 	  }
@@ -504,6 +513,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.17  2002/06/14 22:05:28  steve
+ *  sign extend signed vectors vpiIntVal.
+ *
  * Revision 1.16  2002/05/17 04:12:19  steve
  *  Rewire vpiMemory and vpiMemoryWord handles to
  *  support proper iteration of words, and the
