@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: sys_funcs.cc,v 1.2 2004/03/10 04:51:24 steve Exp $"
+#ident "$Id: sys_funcs.cc,v 1.3 2004/03/11 06:02:58 steve Exp $"
 
 # include  "config.h"
 # include  "compiler.h"
@@ -81,8 +81,16 @@ int load_sys_func_table(const char*path)
       struct sfunc_return_type_cell*cell;
       FILE*fd = fopen(path, "r");
 
-      if (fd == 0)
+      if (fd == 0) {
+	    if (verbose_flag) {
+		  fprintf(stderr, "%s: Unable to open System Function Table file.\n", path);
+	    }
 	    return -1;
+      }
+
+      if (verbose_flag) {
+	    fprintf(stderr, "%s: Processing System Function Table file.\n", path);
+      }
 
       char buf[256];
       while (fgets(buf, sizeof buf, fd)) {
@@ -182,6 +190,9 @@ int load_sys_func_table(const char*path)
 
 /*
  * $Log: sys_funcs.cc,v $
+ * Revision 1.3  2004/03/11 06:02:58  steve
+ *  Verbose details for sft parsing.
+ *
  * Revision 1.2  2004/03/10 04:51:24  steve
  *  Add support for system function table files.
  *
