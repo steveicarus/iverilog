@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.62 1999/09/02 01:59:27 steve Exp $"
+#ident "$Id: parse.y,v 1.63 1999/09/10 05:02:09 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -165,8 +165,17 @@ source_file
 	;
 
 block_item_decl
-	: K_reg range_opt register_variable_list ';'
+	: K_reg range register_variable_list ';'
+		{ pform_set_net_range($3, $2);
+		  delete $2;
+		  delete $3;
+		}
+	| K_reg register_variable_list ';'
+		{ delete $2; }
 	| K_integer list_of_variables ';'
+		{ pform_set_reg_integer($2);
+		  delete $2;
+		}
 	;
 
 block_item_decls
@@ -675,7 +684,8 @@ func_body
 function_item
 	: K_input range_opt list_of_variables ';'
                 { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, $2, $3);
+			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
+						@1.text, @1.first_line);
 		  delete $2;
 		  delete $3;
 		  $$ = tmp;
@@ -991,17 +1001,7 @@ module_item
 		  }
 		  delete $3;
 		}
-	| K_reg range register_variable_list ';'
-		{ pform_set_net_range($3, $2);
-		  delete $2;
-		  delete $3;
-		}
-	| K_reg register_variable_list ';'
-		{ delete $2; }
-	| K_integer register_variable_list ';'
-		{ pform_set_reg_integer($2);
-		  delete $2;
-		}
+	| block_item_decl
 	| K_defparam defparam_assign_list ';'
 	| K_event list_of_variables ';'
 		{ yyerror(@1, "Sorry, named events not supported.");
@@ -1678,24 +1678,27 @@ task_body
 
 task_item
 	: block_item_decl
-	    { $$ = 0; }
+	    { $$ = new svector<PWire*>(0); }
 	| K_input range_opt list_of_variables ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, $2, $3);
+			= pform_make_task_ports(NetNet::PINPUT, $2,
+						$3, @1.text, @1.first_line);
 		  delete $2;
 		  delete $3;
 		  $$ = tmp;
 		}
 	| K_output range_opt list_of_variables ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT, $2, $3);
+			= pform_make_task_ports(NetNet::POUTPUT, $2, $3,
+						@1.text, @1.first_line);
 		  delete $2;
 		  delete $3;
 		  $$ = tmp;
 		}
 	| K_inout range_opt list_of_variables ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT, $2, $3);
+			= pform_make_task_ports(NetNet::PINOUT, $2, $3,
+						@1.text, @1.first_line);
 		  delete $2;
 		  delete $3;
 		  $$ = tmp;

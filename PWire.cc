@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.cc,v 1.1 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: PWire.cc,v 1.2 1999/09/10 05:02:09 steve Exp $"
 #endif
 
 # include  "PWire.h"
@@ -41,6 +41,10 @@ bool PWire::set_wire_type(NetNet::Type t)
 	  case NetNet::IMPLICIT:
 	    type_ = t;
 	    return true;
+	  case NetNet::IMPLICIT_REG:
+	    if (t == NetNet::REG) { type_ = t; return true; }
+	    if (t == NetNet::INTEGER) {type_ = t; return true; }
+	    return false;
 	  case NetNet::REG:
 	    if (t == NetNet::REG) return true;
 	    if (t == NetNet::INTEGER) {type_ = t; return true; }
@@ -96,6 +100,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.2  1999/09/10 05:02:09  steve
+ *  Handle integers at task parameters.
+ *
  * Revision 1.1  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.

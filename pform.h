@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.30 1999/08/27 15:08:37 steve Exp $"
+#ident "$Id: pform.h,v 1.31 1999/09/10 05:02:09 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -157,7 +157,9 @@ extern void pform_make_pgassign_list(svector<PExpr*>*alist,
    can be used as task port information. */
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     const svector<PExpr*>*range,
-					     const list<string>*names);
+					     const list<string>*names,
+					     const string& file,
+					     unsigned lineno);
 
 
 /*
@@ -172,6 +174,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.31  1999/09/10 05:02:09  steve
+ *  Handle integers at task parameters.
+ *
  * Revision 1.30  1999/08/27 15:08:37  steve
  *  continuous assignment lists.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.41 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: pform.cc,v 1.42 1999/09/10 05:02:09 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -483,8 +483,11 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
  */
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      const svector<PExpr*>*range,
-				      const list<string>*names)
+				      const list<string>*names,
+				      const string& file,
+				      unsigned lineno)
 {
+      assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
@@ -498,6 +501,8 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt);
+		  curw->set_file(file);
+		  curw->set_lineno(lineno);
 		  pform_cur_module->add_wire(curw);
 	    }
 
@@ -616,8 +621,9 @@ void pform_set_port_type(list<string>*names, NetNet::PortType pt)
       }
 }
 
-static void pform_set_reg_integer(const string&name)
+static void pform_set_reg_integer(const string&nm)
 {
+      string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       assert(cur);
       bool rc = cur->set_wire_type(NetNet::INTEGER);
@@ -687,6 +693,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.42  1999/09/10 05:02:09  steve
+ *  Handle integers at task parameters.
+ *
  * Revision 1.41  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *
