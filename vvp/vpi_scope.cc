@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.9 2001/10/15 02:58:27 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.10 2001/11/02 05:43:11 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -175,13 +175,27 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
       struct __vpiScope*scope = new struct __vpiScope;
 
       switch(type[2]) {
-      case 'd': scope->base.vpi_type = &vpip_scope_module_rt;   break;
-      case 'n': scope->base.vpi_type = &vpip_scope_function_rt; break;
-      case 's': scope->base.vpi_type = &vpip_scope_task_rt;     break;
-      case 'r': scope->base.vpi_type = &vpip_scope_fork_rt;     break;
-      case 'g': scope->base.vpi_type = &vpip_scope_begin_rt;    break;
-      default:  scope->base.vpi_type = &vpip_scope_module_rt;  assert(0);
+	  case 'd': /* type == module */
+	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    break;
+	  case 'n': /* type == function */
+	    scope->base.vpi_type = &vpip_scope_function_rt;
+	    break;
+	  case 's': /* type == task */
+	    scope->base.vpi_type = &vpip_scope_task_rt;
+	    break;
+	  case 'r': /* type == fork */
+	    scope->base.vpi_type = &vpip_scope_fork_rt;
+	    break;
+	  case 'g': /* type == begin */
+	    scope->base.vpi_type = &vpip_scope_begin_rt;
+	    break;
+	  default:
+	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    assert(0);
       }
+
+      assert(scope->base.vpi_type);
 
       scope->name = name;
       scope->intern = 0;
@@ -224,6 +238,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.10  2001/11/02 05:43:11  steve
+ *  Comment the scope type parser.
+ *
  * Revision 1.9  2001/10/15 02:58:27  steve
  *  Carry the type of the scope (Stephan Boettcher)
  *
