@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.27 1999/06/22 03:59:37 steve Exp $"
+#ident "$Id: lexor.lex,v 1.28 1999/07/03 21:27:22 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -38,9 +38,9 @@ extern string vl_file;
 extern YYLTYPE yylloc;
 
 static void reset_lexor();
+static void line_directive();
+
 static int check_identifier(const char*name);
-static void ppinclude_filename();
-static void ppdo_include();
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_dec(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
@@ -58,10 +58,11 @@ static int comment_enter;
 %x LCOMMENT
 %x CSTRING
 %s UDPTABLE
-%x PPINCLUDE
 %x PPTIMESCALE
 
 %%
+
+^"#line"[ ]+\"[^\"]*\"[ ]+[0-9]+.* { line_directive(); }
 
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
@@ -209,19 +210,6 @@ static int comment_enter;
 	   << ": Sorry, `timescale not supported." << endl;
       yylloc.first_line += 1;
       BEGIN(0); }
-
-`include {
-      BEGIN(PPINCLUDE); }
-
-<PPINCLUDE>\"[^\"]*\" {
-      ppinclude_filename(); }
-
-<PPINCLUDE>[ \t\b\f\r] { ; }
-
-<PPINCLUDE>\n {
-      BEGIN(0);
-      yylloc.first_line += 1;
-      ppdo_include(); }
 
 
 . {   cerr << yylloc.first_line << ": unmatched character (";
@@ -769,71 +757,40 @@ static verinum*make_unsized_dec(const char*txt)
       return make_dec_with_size(INTEGER_WIDTH, false, txt+1);
 }
 
-struct include_stack_t {
-      string path;
-      FILE*file;
-      unsigned lineno;
-      YY_BUFFER_STATE yybs;
-
-      struct include_stack_t*next;
-};
-
-static include_stack_t*include_stack = 0;
-
-static string ppinclude_path;
-
-static void ppinclude_filename()
-{
-      ppinclude_path = yytext+1;
-      ppinclude_path = ppinclude_path.substr(0, ppinclude_path.length()-1);
-}
-
-static void ppdo_include()
-{
-      FILE*file = fopen(ppinclude_path.c_str(), "r");
-      if (file == 0) {
-	    cerr << ppinclude_path << ": Unable to open include file." << endl;
-	    return;
-      }
-
-      include_stack_t*isp = new include_stack_t;
-      isp->path = vl_file;
-      isp->file = vl_input;
-      isp->lineno = yylloc.first_line;
-      isp->next = include_stack;
-      isp->yybs = YY_CURRENT_BUFFER;
-
-      vl_file = ppinclude_path;
-      vl_input = file;
-      yylloc.first_line = 1;
-      yylloc.text = vl_file.c_str();
-      yy_switch_to_buffer(yy_new_buffer(vl_input, YY_BUF_SIZE));
-      include_stack = isp;
-}
 
 static int yywrap()
 {
-      include_stack_t*isp = include_stack;
-      if (isp == 0)
-	    return 1;
+      return 1;
+}
 
-      yy_delete_buffer(YY_CURRENT_BUFFER);
-      fclose(vl_input);
+/*
+ * The line directive matches lines of the form #line "foo" N and
+ * calls this function. Here I parse out the file name and line
+ * number, and change the yylloc to suite.
+ */
+static void line_directive()
+{
+      char*qt1 = strchr(yytext, '"');
+      assert(qt1);
+      qt1 += 1;
 
-      vl_input = isp->file;
-      vl_file  = isp->path;
-      yy_switch_to_buffer(isp->yybs);
-      yylloc.first_line = isp->lineno;
-      yylloc.text = vl_file.c_str();
-      include_stack = isp->next;
-      delete isp;
-      return 0;
+      char*qt2 = strchr(qt1, '"');
+      assert(qt2);
+
+      char*buf = new char[qt2-qt1+1];
+      strncpy(buf, qt1, qt2-qt1);
+      buf[qt2-qt1] = 0;
+
+      delete[]yylloc.text;
+      yylloc.text = buf;
+
+      qt2 += 1;
+      yylloc.first_line = strtoul(qt2,0,0);
 }
 
 static void reset_lexor()
 {
       yyrestart(vl_input);
-      include_stack = 0;
       yylloc.first_line = 1;
-      yylloc.text = vl_file.c_str();
+      yylloc.text = strdup(vl_file.c_str());
 }

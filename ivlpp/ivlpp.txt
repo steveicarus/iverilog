@@ -22,7 +22,7 @@ THE IVL PREPROCESSOR
 The ivlpp command is a verilog preprocessor that handles file
 inclusion and macro substitution. The program runs separate from the
 actual compiler so as to ease the task of the compiler proper, and
-provide a means of preprocessing files off-line.
+provides a means of preprocessing files off-line.
 
 
 USAGE:
@@ -49,10 +49,10 @@ valid options include:
 	    flags as needed.
 
 	-L
-	    Add to the output #line directives. The ivl compiler
-	    understands these directives and uses them to keep track
-	    of the current line of the original source file. This
-	    makes error messages more meaningful.
+	    Generate #line directives. The ivl compiler understands
+	    these directives and uses them to keep track of the
+	    current line of the original source file. This makes error
+	    messages more meaningful.
 
 	-o <file>
 	    Send the output to the named file, instead of to standard
@@ -76,3 +76,30 @@ directories in the order that the -I flag appears.
 The exception to this process is include files that have a name that
 starts with the '/' character. These file names are ``rooted names''
 and must be in the rooted location specified.
+
+
+GENERATED LINE DIRECTIVES
+
+Compilers generally try to print along with their error messages the
+file and line number where the error occurred. Icarus Verilog is no
+exception. However, if a separate preprocessor is actually selecting
+and opening files, then the line numbers counted by the compiler
+proper will not reflect the actual line numbers in the source file.
+
+To handle this situation, the preprocessor can generate line
+directives. These directives are lines of the form:
+
+	#line <name> <num>
+
+where <name> is the file name in double-quotes and <num> is the line
+number in the file. The parser changes the filename and line number
+counters in such a way that the next line is line number <num>+1 in
+the file named <name>. For example:
+
+	#line "foo.vl" 5
+	// I am on line 6 in file foo.vl.
+
+The preprocessor generates a #line directive every time it switches
+files. That includes starting an included file (#line "foo.vlh" 0) or
+returning to the including file.
+
