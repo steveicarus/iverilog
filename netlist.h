@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.244 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: netlist.h,v 1.245 2002/06/23 18:22:43 steve Exp $"
 #endif
 
 /*
@@ -360,7 +360,7 @@ class NetNet  : public NetObj, public LineInfo {
       void set_signed(bool);
 
 	/* Used to maintain original type of net since integers are
-	   implemented as 'reg signed [31;0]' in Icarus */
+	   implemented as 'reg signed [31:0]' in Icarus */
       bool get_isint() const;
       void set_isint(bool);
 
@@ -2929,6 +2929,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.245  2002/06/23 18:22:43  steve
+ *  spelling error.
+ *
  * Revision 1.244  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *
