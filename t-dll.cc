@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.119 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.120 2003/08/22 04:14:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1537,6 +1537,9 @@ void dll_target::lpm_ff(const NetFF*net)
 	    obj->u_.ff.sclr = 0;
       }
 
+	/* XXXX Not supported yet. */
+      obj->u_.ff.sset = 0;
+
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
@@ -2144,6 +2147,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.120  2003/08/22 04:14:33  steve
+ *  Fix uninitialized sset member.
+ *
  * Revision 1.119  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *
