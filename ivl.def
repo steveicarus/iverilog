@@ -47,6 +47,8 @@ ivl_lpm_clk
 ivl_lpm_data
 ivl_lpm_datab
 ivl_lpm_data2
+ivl_lpm_enable
+ivl_lpm_memory
 ivl_lpm_name
 ivl_lpm_q
 ivl_lpm_select
