@@ -40,11 +40,11 @@
       return T_INSTR; }
 
 [0-9][0-9]* {
-      yylval.numb = strtoul(yytext, 0, 0);
+      yylval.numb = strtol(yytext, 0, 0);
       return T_NUMBER; }
 
 "0x"[0-9a-fA-F]+ {
-      yylval.numb = strtoul(yytext, 0, 0);
+      yylval.numb = strtol(yytext, 0, 0);
       return T_NUMBER; }
 
 

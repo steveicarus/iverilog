@@ -15,7 +15,7 @@ extern FILE*yyin;
 
 %union {
       char*text;
-      unsigned long numb;
+      long numb;
       struct textv_s textv;
       comp_operands_t opa;
 
