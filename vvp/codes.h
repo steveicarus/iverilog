@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.38 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: codes.h,v 1.39 2002/04/14 18:41:34 steve Exp $"
 #endif
 
 
@@ -52,6 +52,7 @@ extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);
+extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
@@ -151,6 +152,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.39  2002/04/14 18:41:34  steve
+ *  Support signed integer division.
+ *
  * Revision 1.38  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *
@@ -165,70 +169,5 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
  *
  * Revision 1.34  2001/08/26 22:59:32  steve
  *  Add the assign/x0 and set/x opcodes.
- *
- * Revision 1.33  2001/07/22 00:04:50  steve
- *  Add the load/x instruction for bit selects.
- *
- * Revision 1.32  2001/07/19 04:40:55  steve
- *  Add support for the delayx opcode.
- *
- * Revision 1.31  2001/06/30 21:07:26  steve
- *  Support non-const right shift (unsigned).
- *
- * Revision 1.30  2001/06/23 18:26:26  steve
- *  Add the %shiftl/i0 instruction.
- *
- * Revision 1.29  2001/06/18 01:09:32  steve
- *  More behavioral unary reduction operators.
- *  (Stephan Boettcher)
- *
- * Revision 1.28  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.27  2001/05/24 04:20:10  steve
- *  Add behavioral modulus.
- *
- * Revision 1.26  2001/05/09 04:23:18  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.25  2001/05/06 17:42:22  steve
- *  Add the %ix/get instruction. (Stephan Boettcher)
- *
- * Revision 1.24  2001/05/05 23:55:46  steve
- *  Add the beginnings of an interactive debugger.
- *
- * Revision 1.23  2001/05/02 23:16:50  steve
- *  Document memory related opcodes,
- *  parser uses numbv_s structures instead of the
- *  symbv_s and a mess of unions,
- *  Add the %is/sub instruction.
- *        (Stephan Boettcher)
- *
- * Revision 1.22  2001/05/02 01:57:25  steve
- *  Support behavioral subtraction.
- *
- * Revision 1.21  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.20  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.19  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.18  2001/04/15 04:07:56  steve
- *  Add support for behavioral xnor.
- *
- * Revision 1.17  2001/04/13 03:55:18  steve
- *  More complete reap of all threads.
- *
- * Revision 1.16  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.15  2001/04/01 22:25:33  steve
- *  Add the reduction nor instruction.
  */
 #endif

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.32 2002/01/26 02:08:07 steve Exp $
+ *  $Id: opcodes.txt,v 1.33 2002/04/14 18:41:34 steve Exp $
  */
 
 
@@ -160,10 +160,13 @@ the threads that are currently within that scope.
 
 
 * %div <bit-l>, <bit-r>, <wid>
+* %div/s <bit-l>, <bit-r>, <wid>
 
 This instruction arithmetically divides the <bit-l> vector by the
 <bit-r> vector, and leaves the result in the <bit-l> vector. IF any of
 the bits in either vector are x or z, the entire result is x.
+
+The %div/s instruction is the same as %div, but does signed division.
 
 
 * %force <fofu-label>, <width>

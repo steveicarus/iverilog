@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.67 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.68 2002/04/14 18:41:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -650,6 +650,94 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static void divide_bits(unsigned len, unsigned char*lbits,
+			const unsigned char*rbits)
+{
+      unsigned char *a, *b, *z, *t;
+      a = new unsigned char[len+1];
+      b = new unsigned char[len+1];
+      z = new unsigned char[len+1];
+      t = new unsigned char[len+1];
+
+      unsigned char carry;
+      unsigned char temp;
+
+      int mxa = -1, mxz = -1;
+      int i;
+      int current, copylen;
+
+
+      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+	    unsigned lb = lbits[idx];
+	    unsigned rb = rbits[idx];
+
+	    z[idx]=lb;
+	    a[idx]=1-rb;	// for 2s complement add..
+
+      }
+      z[len]=0;
+      a[len]=1;
+
+      for(i=0;i<(int)len+1;i++) {
+	    b[i]=0;
+      }
+
+      for(i=len-1;i>=0;i--) {
+	    if(!a[i]) {
+		  mxa=i;
+		  break;
+	    }
+      }
+         
+      for(i=len-1;i>=0;i--) {
+	    if(z[i]) {
+		  mxz=i;
+		  break;
+	    }
+      }
+
+      if((mxa>mxz)||(mxa==-1)) {
+	    if(mxa==-1) {
+		  fprintf(stderr, "Division By Zero error, exiting.\n");
+		  exit(255);
+	    }
+	                 
+	    goto tally;
+      }
+
+      copylen = mxa + 2;
+      current = mxz - mxa; 
+         
+      while(current > -1) {
+	    carry = 1;
+	    for(i=0;i<copylen;i++) {
+		  temp = z[i+current] + a[i] + carry;
+		  t[i] = (temp&1);
+		  carry = (temp>>1);
+	    }
+	                 
+	    if(carry) {
+		  for(i=0;i<copylen;i++) {
+			z[i+current] = t[i];
+		  }
+		  b[current] = 1;
+	    }
+       	  
+	    current--;
+      }
+
+ tally:
+      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+	      // n.b., z[] has the remainder...
+	    lbits[idx] = b[idx];
+      }
+
+      delete []t;
+      delete []z;
+      delete []b;
+      delete []a;
+}
+
 bool of_DIV(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -688,105 +776,144 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 
       } else {
 
-	    int len=cp->number;
-	    unsigned char *a, *b, *z, *t;
-	    a = new unsigned char[len+1];
-	    b = new unsigned char[len+1];
-	    z = new unsigned char[len+1];
-	    t = new unsigned char[len+1];
-
-	    unsigned char carry;
-	    unsigned char temp;
-
-	    int mxa = -1, mxz = -1;
-	    int i;
-	    int current, copylen;
-
+	      /* Make a string of the bits of the numbers to be
+		 divided. Then divide them, and write the results into
+		 the thread. */
+	    unsigned char*lbits = new unsigned char[cp->number];
+	    unsigned char*rbits = new unsigned char[cp->number];
 	    unsigned idx1 = cp->bit_idx[0];
 	    unsigned idx2 = cp->bit_idx[1];
-
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  unsigned lb = thr_get_bit(thr, idx1);
-		  unsigned rb = thr_get_bit(thr, idx2);
-
-		  if ((lb | rb) & 2) {
-			delete []t;
-			delete []z;
-			delete []b;
-			delete []a;
+		  lbits[idx] = thr_get_bit(thr, idx1);
+		  rbits[idx] = thr_get_bit(thr, idx2);
+		  if ((lbits[idx] | rbits[idx]) > 1) {
+			delete[]lbits;
+			delete[]rbits;
 			goto x_out;
 		  }
-
-		  z[idx]=lb;
-		  a[idx]=1-rb;	// for 2s complement add..
 
 		  idx1 += 1;
 		  if (idx2 >= 4)
 			idx2 += 1;
 	    }
-	    z[len]=0;
-	    a[len]=1;
 
-	    for(i=0;i<len+1;i++) {
-		  b[i]=0;
-	    }
+	    divide_bits(cp->number, lbits, rbits);
 
-	    for(i=len-1;i>=0;i--) {
-		  if(!a[i]) {
-	                mxa=i;
-			break;
-		  }
-	    }
-         
-	    for(i=len-1;i>=0;i--) {
-		  if(z[i]) {
-	                mxz=i;
-			break;
-		  }
-	    }
-
-	    if((mxa>mxz)||(mxa==-1)) {
-		  if(mxa==-1) {
-			fprintf(stderr, "Division By Zero error, exiting.\n");
-			exit(255);
-		  }
-	                 
-		  goto tally;
-	    }
-
-	    copylen = mxa + 2;
-	    current = mxz - mxa; 
-         
-	    while(current > -1) {
-		  carry = 1;
-		  for(i=0;i<copylen;i++) {
-	                temp = z[i+current] + a[i] + carry;
-	                t[i] = (temp&1);
-	                carry = (temp>>1);
-		  }
-	                 
-		  if(carry) {
-	                for(i=0;i<copylen;i++) {
-			      z[i+current] = t[i];
-			}
-	                b[current] = 1;
-		  }
-       	  
-		  current--;
-	    }
-
-      tally:
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		    // n.b., z[] has the remainder...
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, b[idx]);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]);
 	    }
 
-	    delete []t;
-	    delete []z;
-	    delete []b;
-	    delete []a;
+	    delete[]lbits;
+	    delete[]rbits;
 	    return true;
       }
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return true;
+}
+
+static void negate_bits(unsigned len, unsigned char*bits)
+{
+      unsigned char carry = 1;
+      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+	    carry += bits[idx]? 0 : 1;
+	    bits[idx] = carry & 1;
+	    carry >>= 1;
+      }
+}
+
+bool of_DIV_S(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      if(cp->number <= 8*sizeof(long)) {
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
+	    long lv = 0, rv = 0;
+
+	    unsigned lb = 0;
+	    unsigned rb = 0;
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  lb = thr_get_bit(thr, idx1);
+		  rb = thr_get_bit(thr, idx2);
+
+		  if ((lb | rb) & 2)
+			goto x_out;
+
+		  lv |= (long)lb << idx;
+		  rv |= (long)rb << idx;
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+
+	      /* Extend the sign to fill the native long. */
+	    for (unsigned idx = cp->number; idx < (8*sizeof lv); idx += 1) {
+		  lv |= (long)lb << idx;
+		  rv |= (long)rb << idx;
+	    }
+
+	    if (rv == 0)
+		  goto x_out;
+
+	    lv /= rv;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  lv >>= 1;
+	    }
+
+      } else {
+	    unsigned char*lbits = new unsigned char[cp->number];
+	    unsigned char*rbits = new unsigned char[cp->number];
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  lbits[idx] = thr_get_bit(thr, idx1);
+		  rbits[idx] = thr_get_bit(thr, idx2);
+		  if ((lbits[idx] | rbits[idx]) > 1) {
+			delete[]lbits;
+			delete[]rbits;
+			goto x_out;
+		  }
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+
+	      /* Signed division is unsigned division on the absolute
+		 values of the operands, then corrected for the number
+		 of signs. */
+	    unsigned sign_flag = 0;
+	    if (lbits[cp->number-1]) {
+		  sign_flag += 1;
+		  negate_bits(cp->number, lbits);
+	    }
+	    if (rbits[cp->number-1]) {
+		  sign_flag += 1;
+		  negate_bits(cp->number, rbits);
+	    }
+
+	    divide_bits(cp->number, lbits, rbits);
+
+	    if (sign_flag & 1) {
+		  negate_bits(cp->number, lbits);
+	    }
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]);
+	    }
+
+	    delete[]lbits;
+	    delete[]rbits;
+      }
+
+      return true;
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
@@ -1749,6 +1876,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.68  2002/04/14 18:41:34  steve
+ *  Support signed integer division.
+ *
  * Revision 1.67  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *

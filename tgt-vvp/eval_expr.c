@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.56 2002/02/03 05:53:00 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.57 2002/04/14 18:41:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -548,6 +548,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
+      const char*sign_string = ivl_expr_signed(exp)? "/s" : "";
+
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
 
@@ -582,7 +584,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '/':
-	    fprintf(vvp_out, "    %%div %u, %u, %u;\n", lv.base, rv.base, wid);
+	    fprintf(vvp_out, "    %%div%s %u, %u, %u;\n", sign_string,
+		    lv.base, rv.base, wid);
 	    break;
 
 	  case '%':
@@ -1503,6 +1506,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.57  2002/04/14 18:41:34  steve
+ *  Support signed integer division.
+ *
  * Revision 1.56  2002/02/03 05:53:00  steve
  *  Fix parameter bit select check for magic constants.
  *

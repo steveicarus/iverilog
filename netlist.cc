@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.181 2002/02/01 05:09:14 steve Exp $"
+#ident "$Id: netlist.cc,v 1.182 2002/04/14 18:41:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1825,6 +1825,8 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 	    expr_width(r->expr_width());
       else
 	    expr_width(l->expr_width());
+
+      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBAdd::~NetEBAdd()
@@ -1923,6 +1925,7 @@ NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
 	    w = r->expr_width();
 
       expr_width(w);
+      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBDiv::~NetEBDiv()
@@ -1978,6 +1981,7 @@ NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
       expr_width(l->expr_width() + r->expr_width());
+      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBMult::~NetEBMult()
@@ -2423,6 +2427,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.182  2002/04/14 18:41:34  steve
+ *  Support signed integer division.
+ *
  * Revision 1.181  2002/02/01 05:09:14  steve
  *  Propagate sign in unary minus.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.123 2002/04/14 02:56:19 steve Exp $"
+#ident "$Id: compile.cc,v 1.124 2002/04/14 18:41:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -95,6 +95,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%force",  of_FORCE,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -1408,6 +1409,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.124  2002/04/14 18:41:34  steve
+ *  Support signed integer division.
+ *
  * Revision 1.123  2002/04/14 02:56:19  steve
  *  Support signed expressions through to VPI.
  *
@@ -1438,25 +1442,5 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
  *
  * Revision 1.114  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.113  2001/11/06 03:07:21  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.112  2001/11/01 04:42:39  steve
- *  Handle procedural constant functor pointers.
- *
- * Revision 1.111  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.110  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.109  2001/10/18 17:30:25  steve
- *  Support rnpmos devices. (Philip Blundell)
- *
- * Revision 1.108  2001/10/16 02:47:37  steve
- *  Add arith/div object.
  */
 
