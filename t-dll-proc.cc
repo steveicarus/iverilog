@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.62 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.63 2004/05/19 03:18:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -234,7 +234,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 			cur->idx = expr_;
 			expr_ = 0;
 		  }
-	    } else {
+	    } else if (asn->mem()) {
 		  assert(asn->mem());
 		  cur->type_ = IVL_LVAL_MEM;
 		  cur->n.mem = find_memory(des_, asn->mem());
@@ -245,6 +245,12 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 		  asn->bmux()->expr_scan(this);
 		  cur->idx = expr_;
 		  expr_ = 0;
+	    } else {
+		  assert(asn->var());
+		  cur->type_ = IVL_LVAL_VAR;
+		  cur->idx = 0;
+		  cur->n.var = find_variable(des_, asn->var());
+
 	    }
       }
 
@@ -843,6 +849,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.63  2004/05/19 03:18:40  steve
+ *  Add ivl_target support for non-blocking assign of real.
+ *
  * Revision 1.62  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *
