@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.95 2003/05/10 02:38:49 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.96 2003/06/11 02:23:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1264,8 +1264,23 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       }
 
 	/* Pad the number up to the expression width. */
-      if (idx < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
+      if (idx < wid) {
+	    if (ivl_expr_signed(exp) && bits[nwid-1] == '1')
+		  fprintf(vvp_out, "    %%mov %u, 1, %u;\n",
+			  res.base+idx, wid-idx);
+
+	    else if (bits[nwid-1] == 'x')
+		  fprintf(vvp_out, "    %%mov %u, 2, %u;\n",
+			  res.base+idx, wid-idx);
+
+	    else if (bits[nwid-1] == 'z')
+		  fprintf(vvp_out, "    %%mov %u, 3, %u;\n",
+			  res.base+idx, wid-idx);
+
+	    else
+		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+			  res.base+idx, wid-idx);
+      }
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
@@ -2002,6 +2017,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.96  2003/06/11 02:23:45  steve
+ *  Proper pad of signed constants.
+ *
  * Revision 1.95  2003/05/10 02:38:49  steve
  *  Proper width handling of || expressions.
  *
