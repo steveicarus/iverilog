@@ -17,11 +17,25 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_proc.cc,v 1.1 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: net_proc.cc,v 1.2 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  <assert.h>
+
+NetDisable::NetDisable(NetScope*tgt)
+: target_(tgt)
+{
+}
+
+NetDisable::~NetDisable()
+{
+}
+
+const NetScope* NetDisable::target() const
+{
+      return target_;
+}
 
 NetForever::NetForever(NetProc*p)
 : statement_(p)
@@ -79,6 +93,9 @@ const NetExpr* NetRepeat::expr() const
 
 /*
  * $Log: net_proc.cc,v $
+ * Revision 1.2  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.1  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and

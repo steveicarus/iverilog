@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.91 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.92 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -565,6 +565,12 @@ void NetDeassign::dump(ostream&o, unsigned ind) const
 	<< "/* " << get_line() << " */" << endl;
 }
 
+void NetDisable::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "disable " << target_->name() << "; "
+	<< "/* " << get_line() << " */" << endl;
+}
+
 void NetEvProbe::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
@@ -981,6 +987,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.92  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.91  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *

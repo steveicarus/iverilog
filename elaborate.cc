@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.180 2000/07/26 05:08:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.181 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -1635,10 +1635,35 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
  */
 NetProc* PDisable::elaborate(Design*des, const string&path) const
 {
-      cerr << get_line() << ": sorry: disable not supported " << endl;
-      NetProc*cur = new NetProc;
-      des->errors += 1;
-      return cur;
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetScope*target = des->find_scope(scope, scope_);
+      if (target == 0) {
+	    cerr << get_line() << ": error: Cannot find scope "
+		 << scope_ << " in " << scope->name() << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      switch (target->type()) {
+	  case NetScope::FUNC:
+	    cerr << get_line() << ": error: Cannot disable functions." << endl;
+	    des->errors += 1;
+	    return 0;
+
+	  case NetScope::MODULE:
+	    cerr << get_line() << ": error: Cannot disable modules." << endl;
+	    des->errors += 1;
+	    return 0;
+
+	  default:
+	    break;
+      }
+
+      NetDisable*obj = new NetDisable(target);
+      obj->set_line(*this);
+      return obj;
 }
 
 /*
@@ -2489,6 +2514,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.181  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.180  2000/07/26 05:08:07  steve
  *  Parse disable statements to pform.
  *

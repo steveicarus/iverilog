@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.38 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: target.h,v 1.39 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -109,6 +109,7 @@ struct target_t {
       virtual bool proc_cassign(ostream&os, const NetCAssign*);
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual bool proc_deassign(ostream&os, const NetDeassign*);
+      virtual bool proc_disable(ostream&os, const NetDisable*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual bool proc_release(ostream&os, const NetRelease*);
@@ -159,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.39  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.38  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *

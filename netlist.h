@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.148 2000/07/22 22:09:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.149 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -1407,6 +1407,34 @@ class NetDeassign : public NetProc {
 };
 
 /*
+ * This node represents the behavioral disable statement. The Verilog
+ * source that produces it looks like:
+ *
+ *          disable <scope>;
+ *
+ * Where the scope is a named block or a task. It cannot be a module
+ * instance scope because module instances cannot be disabled.
+ */
+class NetDisable  : public NetProc {
+
+    public:
+      explicit NetDisable(NetScope*tgt);
+      ~NetDisable();
+
+      const NetScope*target() const;
+
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetScope*target_;
+
+    private: // not implemented
+      NetDisable(const NetDisable&);
+      NetDisable& operator= (const NetDisable&);
+};
+
+/*
  * A NetEvent is an object that represents an event object, that is
  * objects declared like so in Verilog:
  *
@@ -2691,6 +2719,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.149  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.148  2000/07/22 22:09:04  steve
  *  Parse and elaborate timescale to scopes.
  *

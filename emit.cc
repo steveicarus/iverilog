@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.45 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: emit.cc,v 1.46 2000/07/27 05:13:44 steve Exp $"
 #endif
 
 /*
@@ -185,6 +185,11 @@ bool NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
 bool NetDeassign::emit_proc(ostream&o, struct target_t*tgt) const
 {
       return tgt->proc_deassign(o, this);
+}
+
+bool NetDisable::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_disable(o, this);
 }
 
 bool NetForce::emit_proc(ostream&o, struct target_t*tgt) const
@@ -449,6 +454,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.46  2000/07/27 05:13:44  steve
+ *  Support elaboration of disable statements.
+ *
  * Revision 1.45  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *
