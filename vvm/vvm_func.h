@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.17 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.18 2000/01/13 06:05:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -160,6 +160,17 @@ vvm_bitset_t<WIDTH> vvm_binop_or(const vvm_bitset_t<WIDTH>&l,
       return result;
 }
 
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_nor(const vvm_bitset_t<WIDTH>&l,
+				 const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = not(l[idx] | r[idx]);
+
+      return result;
+}
+
 /*
  * Implement the binary + operator in the verilog way. This takes
  * vectors of identical width and returns another vector of same width
@@ -224,6 +235,17 @@ vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    result[idx] = l[idx] ^ r[idx];
+
+      return result;
+}
+
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_xnor(const vvm_bitset_t<WIDTH>&l,
+				   const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = not(l[idx] ^ r[idx]);
 
       return result;
 }
@@ -626,6 +648,9 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.18  2000/01/13 06:05:46  steve
+ *  Add the XNOR operator.
+ *
  * Revision 1.17  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

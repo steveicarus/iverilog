@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.96 2000/01/13 05:11:25 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.97 2000/01/13 06:05:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -431,6 +431,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< lres << "," << rres << ");" << endl;
 	  case 'r': // right shift(>>)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftr("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case 'X':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_xnor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
@@ -2036,6 +2040,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.97  2000/01/13 06:05:46  steve
+ *  Add the XNOR operator.
+ *
  * Revision 1.96  2000/01/13 05:11:25  steve
  *  Support for multiple VPI modules.
  *
