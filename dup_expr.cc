@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: dup_expr.cc,v 1.5 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.6 2001/11/19 01:54:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,14 +34,44 @@ NetEScope* NetEScope::dup_expr() const
 NetESFunc* NetESFunc::dup_expr() const
 {
       NetESFunc*tmp = new NetESFunc(name_, expr_width(), nparms());
-      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1)
+      assert(tmp);
+      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+	    assert(tmp->parm(idx));
 	    tmp->parm(idx, tmp->parm(idx)->dup_expr());
+      }
 
+      return tmp;
+}
+
+NetESignal* NetESignal::dup_expr() const
+{
+      NetESignal*tmp = new NetESignal(net_, msi_, lsi_);
+      assert(tmp);
+      tmp->expr_width(expr_width());
+      return tmp;
+}
+
+NetETernary* NetETernary::dup_expr() const
+{
+      NetETernary*tmp = new NetETernary(cond_->dup_expr(),
+					true_val_->dup_expr(),
+					false_val_->dup_expr());
+      return tmp;
+}
+
+NetEUnary* NetEUnary::dup_expr() const
+{
+      NetEUnary*tmp = new NetEUnary(op_, expr_->dup_expr());
+      assert(tmp);
       return tmp;
 }
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.6  2001/11/19 01:54:14  steve
+ *  Port close cropping behavior from mcrgb
+ *  Move window array reset to libmc.
+ *
  * Revision 1.5  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

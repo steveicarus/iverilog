@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.28 2001/10/22 15:31:21 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.29 2001/11/19 01:54:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -807,48 +807,49 @@ NetExpr* NetETernary::eval_tree()
 {
       NetExpr*tmp;
 
-	/* Evaluate the cond_ to a constant. If it already is a
-	   constant, then there is nothing to do. */
+      assert(cond_);
+      if (0 == dynamic_cast<NetEConst*>(cond_)) {
+	    tmp = cond_->eval_tree();
+	    if (tmp != 0) {
+		  delete cond_;
+		  cond_ = tmp;
+	    }
+      }
+
+      assert(true_val_);
+      if (0 == dynamic_cast<NetEConst*>(true_val_)) {
+	    tmp = true_val_->eval_tree();
+	    if (tmp != 0) {
+		  delete true_val_;
+		  true_val_ = tmp;
+	    }
+      }
+
+      assert(false_val_);
+      if (0 == dynamic_cast<NetEConst*>(false_val_)) {
+	    tmp = false_val_->eval_tree();
+	    if (tmp != 0) {
+		  delete false_val_;
+		  false_val_ = tmp;
+	    }
+      }
+
 
       NetEConst*c = dynamic_cast<NetEConst*>(cond_);
-      if (c == 0) {
-	    tmp = cond_->eval_tree();
-	    c = dynamic_cast<NetEConst*>(tmp);
-	    if (c == 0)
-		  return 0;
+      if (c == 0)
+	    return 0;
 
-	    assert(cond_ != c);
-	    delete cond_;
-	    cond_ = c;
-      }
 
 	/* If the condition is 1 or 0, return the true or false
 	   expression. Try to evaluate the expression down as far as
 	   we can. */
 
-      if (c->value().get(0) == verinum::V1) {
-	    tmp = dynamic_cast<NetEConst*>(true_val_);
-	    if (tmp) return tmp->dup_expr();
-
-	    tmp = true_val_->eval_tree();
-	    if (tmp) {
-		  delete true_val_;
-		  true_val_ = tmp;
-	    }
+      if (c->value().get(0) == verinum::V1)
 	    return true_val_->dup_expr();
-      }
 
-      if (c->value().get(0) == verinum::V0) {
-	    tmp = dynamic_cast<NetEConst*>(false_val_);
-	    if (tmp) return tmp->dup_expr();
 
-	    tmp = false_val_->eval_tree();
-	    if (tmp) {
-		  delete false_val_;
-		  false_val_ = tmp;
-	    }
+      if (c->value().get(0) == verinum::V0)
 	    return false_val_->dup_expr();
-      }
 
 
 	/* Here we have a more complex case. We need to evaluate both
@@ -856,27 +857,14 @@ NetExpr* NetETernary::eval_tree()
 	   build up a constant result. */
 
       NetEConst*t = dynamic_cast<NetEConst*>(true_val_);
-      if (t == 0) {
-	    tmp = true_val_->eval_tree();
-	    t = dynamic_cast<NetEConst*>(tmp);
-	    if (t == 0)
-		  return 0;
-
-	    delete true_val_;
-	    true_val_ = t;
-      }
+      if (t == 0)
+	    return 0;
 
 
       NetEConst*f = dynamic_cast<NetEConst*>(false_val_);
-      if (f == 0) {
-	    tmp = false_val_->eval_tree();
-	    f = dynamic_cast<NetEConst*>(tmp);
-	    if (f == 0)
-		  return 0;
+      if (f == 0)
+	    return 0;
 
-	    delete false_val_;
-	    false_val_ = f;
-      }
 
       unsigned size = t->expr_width();
       assert(size == f->expr_width());
@@ -899,6 +887,7 @@ NetExpr* NetETernary::eval_tree()
 
 void NetEUnary::eval_expr_()
 {
+      assert(expr_);
       if (dynamic_cast<NetEConst*>(expr_))
 	    return;
 
@@ -942,7 +931,6 @@ NetEConst* NetEUnary::eval_tree()
 	  }
 
 	  default:
-	    delete rval;
 	    return 0;
       }
 }
@@ -1013,6 +1001,10 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.29  2001/11/19 01:54:14  steve
+ *  Port close cropping behavior from mcrgb
+ *  Move window array reset to libmc.
+ *
  * Revision 1.28  2001/10/22 15:31:21  steve
  *  fix constant overrun in | operands.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.175 2001/11/06 04:32:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.176 2001/11/19 01:54:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2033,8 +2033,9 @@ NetEConcat* NetEConcat::dup_expr() const
       NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    if (parms_[idx]) {
-		  assert(parms_[idx]->dup_expr());
-		  dup->parms_[idx] = parms_[idx]->dup_expr();
+		  NetExpr*tmp = parms_[idx]->dup_expr();
+		  assert(tmp);
+		  dup->parms_[idx] = tmp;
 	    }
 
 
@@ -2251,11 +2252,6 @@ Link& NetESignal::bit(unsigned idx)
       return net_->pin(idx + lsi_);
 }
 
-NetESignal* NetESignal::dup_expr() const
-{
-      assert(0);
-}
-
 const NetNet* NetESignal::sig() const
 {
       return net_;
@@ -2327,11 +2323,6 @@ const NetExpr* NetETernary::false_expr() const
       return false_val_;
 }
 
-NetETernary* NetETernary::dup_expr() const
-{
-      assert(0);
-}
-
 NetEUnary::NetEUnary(char op, NetExpr*ex)
 : NetExpr(ex->expr_width()), op_(op), expr_(ex)
 {
@@ -2340,11 +2331,6 @@ NetEUnary::NetEUnary(char op, NetExpr*ex)
 NetEUnary::~NetEUnary()
 {
       delete expr_;
-}
-
-NetEUnary* NetEUnary::dup_expr() const
-{
-      assert(0);
 }
 
 NetEUBits::NetEUBits(char op, NetExpr*ex)
@@ -2416,6 +2402,10 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.176  2001/11/19 01:54:14  steve
+ *  Port close cropping behavior from mcrgb
+ *  Move window array reset to libmc.
+ *
  * Revision 1.175  2001/11/06 04:32:37  steve
  *  shift expressions can have definite widths.
  *

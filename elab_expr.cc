@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.43 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.44 2001/11/19 01:54:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,6 +45,10 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
  */
 NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope) const
 {
+      assert(left_);
+      assert(right_);
+
+
       NetExpr*lp = left_->elaborate_expr(des, scope);
       NetExpr*rp = right_->elaborate_expr(des, scope);
       if ((lp == 0) || (rp == 0)) {
@@ -636,6 +640,10 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.44  2001/11/19 01:54:14  steve
+ *  Port close cropping behavior from mcrgb
+ *  Move window array reset to libmc.
+ *
  * Revision 1.43  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *
