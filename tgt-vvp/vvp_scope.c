@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.36 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.37 2001/07/06 04:48:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -215,6 +215,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
@@ -925,6 +927,28 @@ static void draw_lpm_mux(ivl_lpm_t net)
 
 }
 
+static void draw_lpm_shiftl(ivl_lpm_t net)
+{
+      unsigned idx, width, selects;
+
+      width = ivl_lpm_width(net);
+      selects = ivl_lpm_selects(net);
+      fprintf(vvp_out, "L_%s .shift/l %u", 
+	      vvp_mangle_id(ivl_lpm_name(net)), width);
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(ivl_lpm_data(net, idx));
+      }
+
+      for (idx = 0 ;  idx < selects ;  idx += 1) {
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(ivl_lpm_select(net, idx));
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
@@ -946,6 +970,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_MUX:
 	    draw_lpm_mux(net);
+	    return;
+
+	  case IVL_LPM_SHIFTL:
+	    draw_lpm_shiftl(net);
 	    return;
 
 	  default:
@@ -1037,6 +1065,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.37  2001/07/06 04:48:04  steve
+ *  Generate code for structural left shift.
+ *
  * Revision 1.36  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *
