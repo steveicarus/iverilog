@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.15 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: functor.h,v 1.16 2001/04/26 15:52:22 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -83,6 +83,7 @@ struct functor_s {
 	    vvp_truth_t table;
 	    vvp_event_t event;
 	    struct vvp_udp_s *udp; // mode 3
+            struct vvp_fobj_s *obj;
       };
 
 	/* This is the output for the device. */
@@ -101,6 +102,21 @@ struct functor_s {
 };
 
 typedef struct functor_s *functor_t;
+
+/*
+ * This a an `obj' structute for mode-42 functors.  
+ * Each instance stores the get and set funtion pointers, for speed.
+ * Future, less important pointers may be pushed one level out to a 
+ * `per type' kind of table. 
+ */
+
+#define M42 42
+
+typedef struct vvp_fobj_s vvp_fobj_t;
+struct vvp_fobj_s {
+  unsigned (*get)(vvp_ipoint_t i, functor_t f);
+  void (*set)(vvp_ipoint_t i, functor_t f, bool push);
+};
 
 /*
  * If functor mode is 1, the event member is valid and the vvp_event_s
@@ -185,6 +201,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.16  2001/04/26 15:52:22  steve
+ *  Add the mode-42 functor concept to UDPs.
+ *
  * Revision 1.15  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.2 2001/04/26 03:10:55 steve Exp $"
+#ident "$Id: udp.cc,v 1.3 2001/04/26 15:52:22 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -27,6 +27,18 @@
 #include <malloc.h>
 
 static symbol_table_t udp_table;
+
+
+static void udp_functor_set(vvp_ipoint_t ptr, functor_t fp, bool)
+{
+  unsigned char out = udp_propagate(ptr);
+
+  if (out != fp->oval) 
+    {
+      fp->oval = out;
+      functor_propagate(ptr);
+    }
+}
 
 struct vvp_udp_s *udp_create(char *label)
 {
@@ -46,6 +58,9 @@ struct vvp_udp_s *udp_create(char *label)
   u->nin = 0;
   u->init = 3;
   u->table = 0x0;
+
+  u->get = 0x0;
+  u->set = udp_functor_set;
 
   return u;
 }
@@ -194,6 +209,9 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.3  2001/04/26 15:52:22  steve
+ *  Add the mode-42 functor concept to UDPs.
+ *
  * Revision 1.2  2001/04/26 03:10:55  steve
  *  Redo and simplify UDP behavior.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.42 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: compile.cc,v 1.43 2001/04/26 15:52:22 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -341,7 +341,7 @@ void compile_udp_functor(char*label, char*type,
       iobj->ival = 0xaa;
       iobj->old_ival = obj->ival;
       iobj->oval = u->init;
-      iobj->mode = 3;
+      iobj->mode = M42;
       if (idx)
 	{
 	  iobj->out = fdx;
@@ -957,6 +957,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.43  2001/04/26 15:52:22  steve
+ *  Add the mode-42 functor concept to UDPs.
+ *
  * Revision 1.42  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *
