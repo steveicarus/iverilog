@@ -23,8 +23,10 @@ AC_CHECK_SIZEOF(unsigned)
 # For the interactive debugger to work, readline must be installed,
 # and that in turn requires termcap. check that the libs really do
 # exist.
+if test "${enable_vvp_debug+set}" = set; then
 AC_CHECK_LIB(termcap, tputs)
 AC_CHECK_LIB(readline, readline)
+fi
 
 # --
 # Look for a dl library to use. First look for the standard dlopen
