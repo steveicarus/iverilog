@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.28 2003/04/02 04:25:26 steve Exp $"
+#ident "$Id: set_width.cc,v 1.29 2003/05/04 20:04:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -282,17 +282,27 @@ bool NetEConst::set_width(unsigned w)
       } else {
 	    unsigned use_w = w;
 	    bool flag = true;
+	    verinum::V pad_bit = value_.has_sign()
+		  ? value_[value_.len() - 1]
+		  : verinum::V0;
 
 	      // Don't reduce a number too small to hold all the
 	      // significant bits.
 	    for (unsigned idx = w ;  idx < value_.len() ;  idx += 1)
-		  if (value_[idx] != verinum::V0)
+		  if (value_[idx] != pad_bit)
 			use_w = idx+1;
+
+	      // Correct for the special case of signed value. We
+	      // cannot have the result change sign on us.
+	    if (value_.has_sign() && (use_w < value_.len())
+		&& (value_[use_w-1] != pad_bit))
+		use_w += 1;
 
 	    verinum tmp (verinum::V0, use_w, has_width());
 	    for (unsigned idx = 0 ;  idx < use_w ;  idx += 1)
 		  tmp.set(idx, value_[idx]);
 
+	    tmp.has_sign(value_.has_sign());
 	    value_ = tmp;
 	    expr_width(use_w);
 	    return use_w == w;
@@ -398,6 +408,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.29  2003/05/04 20:04:09  steve
+ *  Fix truncation of signed constant in constant addition.
+ *
  * Revision 1.28  2003/04/02 04:25:26  steve
  *  Fix xz extension of constants.
  *

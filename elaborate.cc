@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.279 2003/04/24 05:25:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.280 2003/05/04 20:04:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1033,7 +1033,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
 
-	    if (wid != rv->expr_width()) {
+	    if (wid > rv->expr_width()) {
 		  cerr << get_line() << ": error: Unable to match "
 			"expression width of " << rv->expr_width() <<
 			" to l-value width of " << wid << "." << endl;
@@ -2524,6 +2524,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.280  2003/05/04 20:04:08  steve
+ *  Fix truncation of signed constant in constant addition.
+ *
  * Revision 1.279  2003/04/24 05:25:55  steve
  *  Include port name in port assignment error message.
  *
