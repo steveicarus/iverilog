@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.10 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: Module.h,v 1.11 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 # include  <list>
@@ -88,6 +88,7 @@ class Module {
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
       PWire* get_wire(const string&name);
+      PGate* get_gate(const string&name);
 
       const list<PWire*>& get_wires() const { return wires_; }
       const list<PGate*>& get_gates() const { return gates_; }
@@ -114,6 +115,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.11  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.10  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

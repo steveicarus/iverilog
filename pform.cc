@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.47 1999/11/23 01:04:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.48 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -555,8 +555,16 @@ void pform_set_function(const string&name, svector<PExpr*>*ra, PFunction *func)
 void pform_set_attrib(const string&name, const string&key, const string&value)
 {
       PWire*cur = pform_cur_module->get_wire(name);
-      assert(cur);
-      cur->attributes[key] = value;
+      if (PWire*cur = pform_cur_module->get_wire(name)) {
+	    cur->attributes[key] = value;
+
+      } else if (PGate*cur = pform_cur_module->get_gate(name)) {
+	    cur->attributes[key] = value;
+
+      } else {
+	    VLerror("Unable to match name for setting attribute.");
+
+      }
 }
 
 /*
@@ -717,6 +725,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.48  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.47  1999/11/23 01:04:57  steve
  *  A file name of - means standard input.
  *

@@ -19,12 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.10 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: PGate.h,v 1.11 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 # include  "svector.h"
 # include  "LineInfo.h"
 # include  "PDelays.h"
+# include  <map>
+# include  <string>
 class PExpr;
 class PUdp;
 class Design;
@@ -61,6 +63,8 @@ class PGate : public LineInfo {
 
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
+
+      map<string,string> attributes;
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
@@ -180,6 +184,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.11  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.10  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

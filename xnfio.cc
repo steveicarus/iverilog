@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.9 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.10 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -209,6 +209,9 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
 		  continue;
 
+	    if (tmp->attribute("XNF-LCA") != "")
+		  continue;
+
 	      // Found a BUF, it is only useable if the only input is
 	      // the signal and there are no other inputs.
 	    if ((tmp->type() == NetLogic::BUF) &&
@@ -282,6 +285,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.10  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.9  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

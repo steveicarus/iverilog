@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.7 1999/09/17 02:06:25 steve Exp $"
+#ident "$Id: Module.cc,v 1.8 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 # include  "Module.h"
+# include  "PGate.h"
 # include  "PWire.h"
 
 Module::Module(const string&name, const svector<Module::port_t*>*pp)
@@ -98,9 +99,25 @@ PWire* Module::get_wire(const string&name)
       return 0;
 }
 
+PGate* Module::get_gate(const string&name)
+{
+      for (list<PGate*>::iterator cur = gates_.begin()
+		 ; cur != gates_.end()
+		 ; cur ++ ) {
+
+	    if ((*cur)->get_name() == name)
+		  return *cur;
+      }
+
+      return 0;
+}
+
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.8  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.7  1999/09/17 02:06:25  steve
  *  Handle unconnected module ports.
  *

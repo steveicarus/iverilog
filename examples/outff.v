@@ -28,18 +28,19 @@
  * That command causes an outff.xnf and outff.ncf file to be created.
  * Next, make the outff.ngd file with the command:
  *
- *    xnf2ngd -l xilinxun -u outff.xnf outff.ngd
+ *    xnf2ngd -l xilinxun -u outff.xnf outff.ngo
+ *    ngdbuild outff.ngo outff.ngd
  *
  * Finally, map the file to fully render it in the target part. The
  * par command is the step that actually optimizes the design and tries
  * to meet timing constraints.
  *
- *    map -o map.ngd outff.ngd
+ *    map -o map.ncd outff.ngd
  *    par -w map.ncd outff.ncd
  *
  * At this point, you can use the FPGA Editor to edit the outff.ncd
  * file to see that the AND gate is in a CLB and the IOB for pin 150
- * has its flip-flop in use.
+ * has its flip-flop in use, and that gbuf is a global buffer.
  */
 
 module main;
@@ -52,6 +53,13 @@ module main;
       // This simple logic gate get turned into a function unit.
       // The par program will map this into a CLB F or G unit.
    and (out, i0, i1);
+
+     // This creates a global clock buffer. Notice how I attach an
+     // attribute to the named gate to force it to be mapped to the
+     // desired XNF device. This device will not be pulled into the
+     // IOB associated with iclk because of the attribute.
+   buf gbuf(clk, iclk);
+   $attribute(gbuf, "XNF-LCA", "GCLK:O,I");
 
       // This is mapped to a DFF. Since o0 is connected to a PAD, it
       // is turned into a OUTFF so that it get placed into an IOB.

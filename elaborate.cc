@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.133 1999/12/05 02:24:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.134 1999/12/11 05:45:41 steve Exp $"
 #endif
 
 /*
@@ -327,7 +327,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		  break;
 	    }
 
-
+	    cur[idx]->set_attributes(attributes);
 	    cur[idx]->rise_time(rise_time);
 	    cur[idx]->fall_time(fall_time);
 	    cur[idx]->decay_time(decay_time);
@@ -2090,6 +2090,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.134  1999/12/11 05:45:41  steve
+ *  Fix support for attaching attributes to primitive gates.
+ *
  * Revision 1.133  1999/12/05 02:24:08  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *
