@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.52 2003/11/10 19:39:20 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.53 2004/02/15 04:23:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -584,6 +584,7 @@ NetNet* NetEConst::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
+      osig->set_signed(has_sign());
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       for (unsigned idx = 0 ;  idx < width;  idx += 1)
 	    connect(osig->pin(idx), con->pin(idx));
@@ -827,6 +828,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.53  2004/02/15 04:23:48  steve
+ *  Fix evaluation of compare to constant expression.
+ *
  * Revision 1.52  2003/11/10 19:39:20  steve
  *  Remove redundant scope tokens.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.122 2003/10/30 04:31:34 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.123 2004/02/15 04:23:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -408,20 +408,43 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
-	    *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
-      if (lsig == 0) {
+	/* Elaborate the operands of the compare first as expressions
+	   (so that the eval_tree method can reduce constant
+	   expressions, including parameters) then turn those results
+	   into synthesized nets. */
+      NetExpr*lexp = left_->elaborate_expr(des, scope);
+      if (lexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
-      if (rsig == 0) {
+
+      if (NetExpr*tmp = lexp->eval_tree()) {
+	    delete lexp;
+	    lexp = tmp;
+      }
+
+      NetNet*lsig = lexp->synthesize(des);
+      assert(lsig);
+      delete lexp;
+
+      NetExpr*rexp = right_->elaborate_expr(des, scope);
+      if (rexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
+
+      if (NetExpr*tmp = rexp->eval_tree()) {
+	    delete rexp;
+	    rexp = tmp;
+      }
+
+      NetNet*rsig = rexp->synthesize(des);
+      assert(rsig);
+      delete rexp;
 
       unsigned dwidth = lsig->pin_count();
       if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
@@ -2403,6 +2426,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.123  2004/02/15 04:23:48  steve
+ *  Fix evaluation of compare to constant expression.
+ *
  * Revision 1.122  2003/10/30 04:31:34  steve
  *  Catch real variables in net expressions.
  *
