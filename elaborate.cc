@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.217 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.218 2001/07/28 22:13:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1340,13 +1340,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       assert(scope);
 
       NetScope*task = des->find_task(scope, name_);
-      NetTaskDef*def = task->task_def();
-      if (def == 0) {
-	    cerr << get_line() << ": error: Enable of unknown task ``" <<
-		  scope->name() << "." << name_ << "''." << endl;
+      if (task == 0) {
+	    cerr << get_line() << ": error: Enable of unknown task "
+		 << "``" << name_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
       }
+
+      assert(task);
+      NetTaskDef*def = task->task_def();
 
       if (nparms() != def->port_count()) {
 	    cerr << get_line() << ": error: Port count mismatch in call to ``"
@@ -2343,6 +2345,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.218  2001/07/28 22:13:11  steve
+ *  Detect a missing task definition before it crashes me.
+ *
  * Revision 1.217  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
