@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.13 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.14 2002/05/10 16:00:57 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -91,6 +91,28 @@ static vpiHandle scope_get_handle(int code, vpiHandle obj)
       return 0;
 }
 
+static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
+{
+      unsigned mcnt = 0, ncnt = 0;
+      vpiHandle*args;
+
+      for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+	    if (ref->intern[idx]->vpi_type->type_code == code)
+		  mcnt += 1;
+
+      if (mcnt == 0)
+	    return 0;
+
+      args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
+      for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
+	    if (ref->intern[idx]->vpi_type->type_code == code)
+		  args[ncnt++] = ref->intern[idx];
+
+      assert(ncnt == mcnt);
+
+      return vpip_make_iterator(mcnt, args, true);
+}
+
 /*
  * This function implements the vpi_iterate method for vpiModule and
  * similar objects. The vpi_iterate allows the user to iterate over
@@ -112,24 +134,12 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 
 	      /* Generate and iterator for all the modules contained
 		 in this scope. */
+	  case vpiMemory:
 	  case vpiModule:
-	      { unsigned mcnt = 0, ncnt = 0;
-	        vpiHandle*args;
-	        for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
-		      if (ref->intern[idx]->vpi_type->type_code == vpiModule)
-			    mcnt += 1;
+	  case vpiNet:
+	  case vpiReg:
+	    return module_iter_subset(code, ref);
 
-		if (mcnt == 0)
-		      return 0;
-
-		args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
-		for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
-		      if (ref->intern[idx]->vpi_type->type_code == vpiModule)
-			    args[ncnt++] = ref->intern[idx];
-		assert(ncnt == mcnt);
-
-		return vpip_make_iterator(mcnt, args, true);
-	      }
       }
       return 0;
 }
@@ -371,6 +381,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.14  2002/05/10 16:00:57  steve
+ *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
+ *
  * Revision 1.13  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *

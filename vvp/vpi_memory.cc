@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.6 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.7 2002/05/10 16:00:57 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -48,6 +48,7 @@ struct __vpiMemoryWord {
 
 struct __vpiMemory {
       struct __vpiHandle base;
+      struct __vpiScope* scope;
 	/* The signal has a name (this points to static memory.) */
       struct __vpiMemoryWord word;
       vvp_memory_t mem;
@@ -63,11 +64,15 @@ static vpiHandle memory_get_handle(int code, vpiHandle obj)
       assert(obj->vpi_type->type_code==vpiMemory);
 
       switch(code){
-      case vpiLeftRange:
-	  return &(rfp->left_range->base);
+	  case vpiLeftRange:
+	    return &(rfp->left_range->base);
 
-      case vpiRightRange:
-	  return &(rfp->right_range->base);
+	  case vpiRightRange:
+	    return &(rfp->right_range->base);
+
+	  case vpiScope:
+	    return &rfp->scope->base;
+
       }
 
       return 0;
@@ -94,6 +99,8 @@ static char* memory_get_str(int code, vpiHandle ref)
       assert(ref->vpi_type->type_code==vpiMemory);
 
       switch (code) {
+	  case vpiName:
+	    return memory_name(rfp->mem);
 	  case vpiFullName:
 	    return memory_name(rfp->mem);
       }
@@ -356,6 +363,7 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 	    malloc(sizeof(struct __vpiMemory));
 
       obj->base.vpi_type = &vpip_memory_rt;
+      obj->scope = vpip_peek_current_scope();
       obj->mem = mem;
       obj->left_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_left_range(mem));
       obj->right_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_right_range(mem));
@@ -370,6 +378,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.7  2002/05/10 16:00:57  steve
+ *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
+ *
  * Revision 1.6  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.126 2002/05/07 04:15:43 steve Exp $"
+#ident "$Id: compile.cc,v 1.127 2002/05/10 16:00:57 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1036,6 +1036,7 @@ void compile_memory(char *label, char *name, int msb, int lsb,
 
   vpiHandle obj = vpip_make_memory(mem);
   compile_vpi_symbol(label, obj);
+  vpip_attach_to_current_scope(obj);
 
   free(label);
 }
@@ -1410,6 +1411,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.127  2002/05/10 16:00:57  steve
+ *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
+ *
  * Revision 1.126  2002/05/07 04:15:43  steve
  *  Fix uninitialized memory accesses.
  *
