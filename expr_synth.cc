@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.42 2003/04/08 04:33:55 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.43 2003/04/08 05:07:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -400,19 +400,63 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
 NetNet* NetEBShift::synthesize(Design*des)
 {
+      if (! dynamic_cast<NetEConst*>(right_)) {
+	    NetExpr*tmp = right_->eval_tree();
+	    if (tmp) {
+		  delete right_;
+		  right_ = tmp;
+	    }
+      }
+
       NetNet*lsig = left_->synthesize(des);
-      NetNet*rsig = right_->synthesize(des);
-
       if (lsig == 0)
-	    return 0;
-
-      if (rsig == 0)
 	    return 0;
 
       NetScope*scope = lsig->scope();
 
+	/* Detect the special case where the shift amount is
+	   constant. Evaluate the shift amount, and simply reconnect
+	   the left operand to the output, but shifted. */
+      if (NetEConst*rcon = dynamic_cast<NetEConst*>(right_)) {
+	    verinum shift_v = rcon->value();
+	    long shift = shift_v.as_long();
+
+	    if (op() == 'r')
+		  shift = 0-shift;
+
+	    assert(shift >= 0);
+	    if (shift == 0)
+		  return lsig;
+
+	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::IMPLICIT, expr_width());
+	    osig->local_flag(true);
+
+	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
+					 verinum::V0);
+	    des->add_node(zcon);
+	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, 1);
+	    connect(zcon->pin(0), zsig->pin(0));
+
+	    for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
+		  if (idx < shift) {
+			connect(osig->pin(idx), zsig->pin(0));
+		  } else {
+			connect(osig->pin(idx), lsig->pin(idx-shift));
+		  }
+	    }
+
+	    return osig;
+      }
+
+      NetNet*rsig = right_->synthesize(des);
+      if (rsig == 0)
+	    return 0;
+
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->local_flag(true);
 
       assert(op() == 'l');
       NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
@@ -434,6 +478,7 @@ NetNet* NetEBShift::synthesize(Design*des)
       NetNet*dir_n = new NetNet(scope, scope->local_symbol(),
 				NetNet::WIRE, 1);
       NetConst*dir = new NetConst(scope, scope->local_symbol(), dir_v);
+      des->add_node(dir);
       connect(dev->pin_Direction(), dir->pin(0));
       connect(dev->pin_Direction(), dir_n->pin(0));
 
@@ -683,6 +728,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.43  2003/04/08 05:07:15  steve
+ *  Detect constant shift distances in synthesis.
+ *
  * Revision 1.42  2003/04/08 04:33:55  steve
  *  Synthesize shift expressions.
  *
