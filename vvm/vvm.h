@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.30 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vvm.h,v 1.31 2000/02/23 04:43:43 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -83,7 +83,7 @@ inline vpip_bit_t greater_with_cascade(vpip_bit_t l, vpip_bit_t r, vpip_bit_t c)
 
 extern vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry);
 
-inline vpip_bit_t not(vpip_bit_t l)
+inline vpip_bit_t v_not(vpip_bit_t l)
 {
       switch (l) {
 	  case V0:
@@ -276,6 +276,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.31  2000/02/23 04:43:43  steve
+ *  Some compilers do not accept the not symbol.
+ *
  * Revision 1.30  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

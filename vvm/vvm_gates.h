@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.36 2000/02/23 02:56:57 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.37 2000/02/23 04:43:43 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -102,7 +102,7 @@ template <unsigned WIDTH> class vvm_add_sub {
 	    }
 
       void init_Add_Sub(unsigned, vpip_bit_t val)
-	    { ndir_ = not(val);
+	    { ndir_ = v_not(val);
 	    }
 
       void start() { compute_(); }
@@ -344,7 +344,7 @@ template <unsigned WIDTH> class vvm_compare {
 		    ev->schedule();
 	      }
 	      if (out_le_) {
-		    ev = new vvm_out_event(not(gt_), out_le_);
+		    ev = new vvm_out_event(v_not(gt_), out_le_);
 		    ev->schedule();
 	      }
 	      if (out_gt_) {
@@ -352,7 +352,7 @@ template <unsigned WIDTH> class vvm_compare {
 		    ev->schedule();
 	      }
 	      if (out_ge_) {
-		    ev = new vvm_out_event(not(lt_), out_ge_);
+		    ev = new vvm_out_event(v_not(lt_), out_ge_);
 		    ev->schedule();
 	      }
 	    }
@@ -724,7 +724,7 @@ template <unsigned long DELAY> class vvm_not  : private vvm_1bit_out {
       void start() { }
 
       void set_I(unsigned, vpip_bit_t val)
-	    { output(not(val)); }
+	    { output(v_not(val)); }
 
     private:
 };
@@ -963,6 +963,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.37  2000/02/23 04:43:43  steve
+ *  Some compilers do not accept the not symbol.
+ *
  * Revision 1.36  2000/02/23 02:56:57  steve
  *  Macintosh compilers do not support ident.
  *

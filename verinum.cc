@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.15 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: verinum.cc,v 1.16 2000/02/23 04:43:43 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -395,7 +395,7 @@ static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c)
 	    return verinum::V0;
 }
 
-verinum not(const verinum&left)
+verinum v_not(const verinum&left)
 {
       verinum val = left;
       for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -445,7 +445,7 @@ verinum operator + (const verinum&left, const verinum&right)
 
 verinum operator - (const verinum&left, const verinum&r)
 {
-      verinum right = not(r);
+      verinum right = v_not(r);
       unsigned min = left.len();
       if (right.len() < min) min = right.len();
 
@@ -471,6 +471,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.16  2000/02/23 04:43:43  steve
+ *  Some compilers do not accept the not symbol.
+ *
  * Revision 1.15  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

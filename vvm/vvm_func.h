@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.19 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.20 2000/02/23 04:43:43 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -103,7 +103,7 @@ vvm_bitset_t<1> vvm_unop_xor(const vvm_bitset_t<WIDTH>&r)
 
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
 	    if (r[idx] == V1)
-		  res[0] = not(res[0]);
+		  res[0] = v_not(res[0]);
       }
 
       return res;
@@ -112,7 +112,7 @@ vvm_bitset_t<1> vvm_unop_xor(const vvm_bitset_t<WIDTH>&r)
 template <unsigned WIDTH>
 vvm_bitset_t<1> vvm_unop_xnor(const vvm_bitset_t<WIDTH>&r)
 {
-     return not(vvm_unop_xor(r));
+     return v_not(vvm_unop_xor(r));
 }
 
 //
@@ -166,7 +166,7 @@ vvm_bitset_t<WIDTH> vvm_binop_nor(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = not(l[idx] | r[idx]);
+	    result[idx] = v_not(l[idx] | r[idx]);
 
       return result;
 }
@@ -245,7 +245,7 @@ vvm_bitset_t<WIDTH> vvm_binop_xnor(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = not(l[idx] ^ r[idx]);
+	    result[idx] = v_not(l[idx] ^ r[idx]);
 
       return result;
 }
@@ -511,7 +511,7 @@ vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
 			     const vvm_bitset_t<RW>&r)
 {
       vvm_bitset_t<1> result = vvm_binop_eq(l,r);
-      result[0] = not(result[0]);
+      result[0] = v_not(result[0]);
       return result;
 }
 
@@ -520,7 +520,7 @@ vvm_bitset_t<1> vvm_binop_nee(const vvm_bitset_t<LW>&l,
 			     const vvm_bitset_t<RW>&r)
 {
       vvm_bitset_t<1> result = vvm_binop_eeq(l,r);
-      result[0] = not(result[0]);
+      result[0] = v_not(result[0]);
       return result;
 }
 
@@ -648,6 +648,9 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.20  2000/02/23 04:43:43  steve
+ *  Some compilers do not accept the not symbol.
+ *
  * Revision 1.19  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *
