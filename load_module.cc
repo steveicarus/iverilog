@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.7 2002/05/28 20:40:37 steve Exp $"
+#ident "$Id: load_module.cc,v 1.8 2002/06/06 18:57:18 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
-# include  <iostream.h>
+# include  <iostream>
 # include  <map>
 # include  <string>
 # include  <sys/types.h>
@@ -180,6 +180,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.8  2002/06/06 18:57:18  steve
+ *  Use standard name for iostream.
+ *
  * Revision 1.7  2002/05/28 20:40:37  steve
  *  ivl indexes the search path for libraries, and
  *  supports case insensitive module-to-file lookup.

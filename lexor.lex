@@ -19,14 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.72 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: lexor.lex,v 1.73 2002/06/06 18:57:18 steve Exp $"
 #endif
 
 # include "config.h"
 
       //# define YYSTYPE lexval
 
-# include  <iostream.h>
+# include  <iostream>
 # include  "compiler.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.58 2002/05/28 20:40:37 steve Exp $"
+#ident "$Id: main.cc,v 1.59 2002/06/06 18:57:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,7 +41,7 @@ const char NOTICE[] =
 ;
 
 # include  <stdio.h>
-# include  <iostream.h>
+# include  <iostream>
 # include  <fstream>
 # include  <queue>
 # include  <list>
@@ -591,6 +591,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.59  2002/06/06 18:57:18  steve
+ *  Use standard name for iostream.
+ *
  * Revision 1.58  2002/05/28 20:40:37  steve
  *  ivl indexes the search path for libraries, and
  *  supports case insensitive module-to-file lookup.

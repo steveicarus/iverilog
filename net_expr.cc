@@ -17,12 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_expr.cc,v 1.4 2002/05/25 16:51:37 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.5 2002/06/06 18:57:18 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
-# include  <iostream.h>
+# include  <iostream>
 
 NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
 : parms_(cnt), repeat_(r)
@@ -147,6 +147,9 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.5  2002/06/06 18:57:18  steve
+ *  Use standard name for iostream.
+ *
  * Revision 1.4  2002/05/25 16:51:37  steve
  *  include iostream for gcc 3.1
  *

@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_attrib.cc,v 1.2 2002/06/03 03:55:14 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.3 2002/06/06 18:57:18 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "util.h"
 # include  "PExpr.h"
 # include  "netlist.h"
@@ -70,6 +71,9 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.3  2002/06/06 18:57:18  steve
+ *  Use standard name for iostream.
+ *
  * Revision 1.2  2002/06/03 03:55:14  steve
  *  compile warnings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.60 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: pform.h,v 1.61 2002/06/06 18:57:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -33,7 +33,7 @@
 # include  "PUdp.h"
 # include  "PWire.h"
 # include  "verinum.h"
-# include  <iostream.h>
+# include  <iostream>
 # include  <string>
 # include  <list>
 # include  <stdio.h>
@@ -256,6 +256,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.61  2002/06/06 18:57:18  steve
+ *  Use standard name for iostream.
+ *
  * Revision 1.60  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.
