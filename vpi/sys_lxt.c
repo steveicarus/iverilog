@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.17 2003/02/20 00:50:06 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.18 2003/02/21 01:36:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -306,8 +306,8 @@ static int sys_dumpoff_calltf(char*name)
             lt_set_time(dump_file, now.low);
       vcd_cur_time = now.low;
 
-      vcd_checkpoint_x();
       lt_set_dumpoff(dump_file);
+      vcd_checkpoint_x();
 
       return 0;
 }
@@ -327,14 +327,13 @@ static int sys_dumpon_calltf(char*name)
       if (dump_header_pending())
 	    return 0;
 
-      lt_set_dumpon(dump_file);
-
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time)
             lt_set_time(dump_file, now.low);
       vcd_cur_time = now.low;
 
+      lt_set_dumpon(dump_file);
       vcd_checkpoint();
 
       return 0;
@@ -767,6 +766,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.18  2003/02/21 01:36:25  steve
+ *  Move dumpon/dumpoff around to the right times.
+ *
  * Revision 1.17  2003/02/20 00:50:06  steve
  *  Update lxt_write implementation, and add compression control flags.
  *
