@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.21 2000/12/16 19:03:30 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.22 2001/01/12 04:31:27 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -154,6 +154,7 @@ string PEIdent::name() const
 bool PEIdent::is_constant(Module*mod) const
 {
       map<string,PExpr*>::const_iterator cur;
+      if (mod == 0) return false;
 
       cur = mod->parameters.find(text_);
       if (cur != mod->parameters.end()) return true;
@@ -245,6 +246,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.22  2001/01/12 04:31:27  steve
+ *  Handle error idents in constants not in any scope (PR#97)
+ *
  * Revision 1.21  2000/12/16 19:03:30  steve
  *  Evaluate <= and ?: in parameter expressions (PR#81)
  *
