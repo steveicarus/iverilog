@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.95 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.96 2002/08/14 03:57:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1912,11 +1912,19 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    if (val == 0)
 		  break;
 
+	    if (width == 0)
+		  width = val->len();
+
+	    assert(width > 0);
 	    sig = new NetNet(scope, scope->local_hsymbol(),
 			     NetNet::WIRE, width);
 	    sig->local_flag(true);
 
-	    verinum tmp(v_not(*val) + verinum(1UL, width), width);
+	      /* Take the 2s complement by taking the 1s complement
+		 and adding 1. */
+	    verinum tmp (v_not(*val));
+	    verinum one (1UL, width);
+	    tmp = tmp + one;
 	    NetConst*con = new NetConst(scope, scope->local_hsymbol(), tmp);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), con->pin(idx));
@@ -2126,6 +2134,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.96  2002/08/14 03:57:27  steve
+ *  Constants can self-size themselves in unsized contexts.
+ *
  * Revision 1.95  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
@@ -2166,38 +2177,5 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
  *
  * Revision 1.84  2001/12/31 04:23:59  steve
  *  Elaborate multiply nets with constant operands ad NetConst.
- *
- * Revision 1.83  2001/12/30 21:32:03  steve
- *  Support elaborate_net for PEString objects.
- *
- * Revision 1.82  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.81  2001/11/10 02:08:49  steve
- *  Coerse input to inout when assigned to.
- *
- * Revision 1.80  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.79  2001/11/07 04:26:46  steve
- *  elaborate_lnet uses scope instead of string path.
- *
- * Revision 1.78  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.77  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.76  2001/10/16 02:19:26  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.75  2001/09/14 04:20:49  steve
- *  dead code.
- *
- * Revision 1.74  2001/09/14 04:16:52  steve
- *  Elaborate == to NetCompare instead of XNOR and AND
- *  gates. This allows code generators to generate
- *  better code in certain cases.
  */
 
