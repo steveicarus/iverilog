@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.6 1999/10/05 06:19:46 steve Exp $"
+#ident "$Id: set_width.cc,v 1.7 2000/01/01 19:56:51 steve Exp $"
 #endif
 
 /*
@@ -176,11 +176,21 @@ bool NetEConcat::set_width(unsigned w)
 
 bool NetEConst::set_width(unsigned w)
 {
-      if (w > value_.len())
-	    return false;
+      if (w > value_.len()) {
+	    verinum tmp (verinum::V0, w);
+	    for (unsigned idx = 0 ;  idx < value_.len() ;  idx += 1)
+		  tmp.set(idx, value_[idx]);
 
-      assert(w <= value_.len());
-      value_ = verinum(value_, w);
+	    value_ = tmp;
+
+      } else {
+	    verinum tmp (verinum::V0, w);
+	    for (unsigned idx = 0 ;  idx < w ;  idx += 1)
+		  tmp.set(idx, value_[idx]);
+
+	    value_ = tmp;
+      }
+
       expr_width(w);
       return true;
 }
@@ -256,6 +266,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.7  2000/01/01 19:56:51  steve
+ *  Properly expand/shrink constants in expressions.
+ *
  * Revision 1.6  1999/10/05 06:19:46  steve
  *  Add support for reduction NOR.
  *
