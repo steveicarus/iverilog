@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.20 2001/07/30 02:44:05 steve Exp $"
+#ident "$Id: main.cc,v 1.21 2001/10/20 01:03:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,10 +29,16 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
-#if defined(HAVE_TIMES)
 # include  <unistd.h>
-# include  <sys/times.h>
-#endif
+
+#if defined(HAVE_SYS_RESOURCE_H)
+# include  <sys/time.h>
+# include  <sys/resource.h>
+# if defined(LINUX)
+#  include <asm/page.h> 
+# endif
+#endif // defined(HAVE_SYS_RESOURCE_H)
+
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -47,27 +53,60 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
-#if defined(HAVE_TIMES)
-static double cycles_diff(struct tms *a, struct tms *b)
+
+#if defined(HAVE_SYS_RESOURCE_H)
+static void my_getrusage(struct rusage *a)
 {
-      clock_t aa = a->tms_utime 
-	    +      a->tms_stime 
-	    +      a->tms_cutime 
-	    +      a->tms_cstime;
+      getrusage(RUSAGE_SELF, a);
 
-      clock_t bb = b->tms_utime 
-	    +      b->tms_stime 
-	    +      b->tms_cutime 
-	    +      b->tms_cstime;
-
-      return (aa-bb)/(double)sysconf(_SC_CLK_TCK);
+#     if defined(LINUX)
+      {
+	    FILE *statm;
+	    unsigned siz, rss, shd;
+	    statm = fopen("/proc/self/statm", "r");
+	    if (!statm) {
+		  perror("/proc/self/statm");
+		  return;
+	    }
+	    if (3<=fscanf(statm, "%u%u%u", &siz, &rss, &shd)) {
+		  a->ru_maxrss = PAGE_SIZE * siz;
+		  a->ru_idrss  = PAGE_SIZE * rss;
+		  a->ru_ixrss  = PAGE_SIZE * shd;
+	    }
+	    fclose(statm);
+      }
+#     endif
 }
-#else // ! defined(HAVE_TIMES)
+
+static void print_rusage(FILE *f, struct rusage *a, struct rusage *b)
+{
+      double delta = a->ru_utime.tv_sec
+	    +        a->ru_utime.tv_usec/1E6
+	    +        a->ru_stime.tv_sec
+	    +        a->ru_stime.tv_usec/1E6
+	    -        b->ru_utime.tv_sec
+	    -        b->ru_utime.tv_usec/1E6
+	    -        b->ru_stime.tv_sec
+	    -        b->ru_stime.tv_usec/1E6
+	    ;
+
+      fprintf(f,
+	      " ... %G seconds,"
+	      " %.1f/%.1f/%.1f KBytes size/rss/shared\n",
+	      delta,
+	      a->ru_maxrss/1024.0,
+	      (a->ru_idrss+a->ru_isrss)/1024.0,
+	      a->ru_ixrss/1024.0 );
+}
+
+#else // ! defined(HAVE_SYS_RESOURCE_H)
+
 // Provide dummies
-struct tms { int x; };
-inline static void times(struct tms *) { }
-inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
-#endif // ! defined(HAVE_TIMES)
+struct rusage { int x; };
+inline static void my_getrusage(struct rusage *) { }
+inline static void print_rusage(FILE *, struct rusage *, struct rusage *){};
+
+#endif // ! defined(HAVE_SYS_RESOURCE_H)
 
 
 unsigned module_cnt = 0;
@@ -83,7 +122,7 @@ int main(int argc, char*argv[])
       const char*design_path = 0;
       bool debug_flag = false;
       bool verbose_flag = false;
-      struct tms cycles[3];
+      struct rusage cycles[3];
       const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
 
@@ -158,12 +197,12 @@ int main(int argc, char*argv[])
 		  exit(1);
 	    }
       }
-	    
+
       if (verbose_flag) {
-	    times(cycles+0);
+	    my_getrusage(cycles+0);
 	    fprintf(stderr, "Compiling VVP ...\n");
-           if (logfile && logfile != stderr)
-                 fprintf(logfile, "Compiling VVP ...\n");
+	    if (logfile && logfile != stderr)
+		  fprintf(logfile, "Compiling VVP ...\n");
       }
 
       vpi_mcd_init(logfile);
@@ -180,24 +219,21 @@ int main(int argc, char*argv[])
       compile_cleanup();
 
       if (verbose_flag) {
-	    times(cycles+1);
-	    fprintf(stderr, 
-		    " ... %G seconds\n"
-		    "Running ...\n", 
-		    cycles_diff(cycles+1, cycles+0));
-           if (logfile && logfile != stderr)
-                 fprintf(logfile, 
-                         " ... %G seconds\n"
-                         "Running ...\n", 
-                         cycles_diff(cycles+1, cycles+0));
+	    my_getrusage(cycles+1);
+	    print_rusage(stderr, cycles+1, cycles+0);
+	    fprintf(stderr, "Running ...\n");
+	    if (logfile && logfile != stderr) {
+		  print_rusage(logfile, cycles+1, cycles+0);
+		  fprintf(logfile, "Running ...\n");
+	    }
       }
        
       if (compile_errors > 0) {
 	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
 		    design_path, compile_errors);
-           if (logfile && logfile != stderr)
-                 fprintf(logfile, "%s: Program not runnable, %u errors.\n",
-                         design_path, compile_errors);
+	    if (logfile && logfile != stderr)
+		  fprintf(logfile, "%s: Program not runnable, %u errors.\n",
+			  design_path, compile_errors);
 	    return compile_errors;
       }
 
@@ -209,12 +245,10 @@ int main(int argc, char*argv[])
       schedule_simulate();
 
       if (verbose_flag) {
-	    times(cycles+2);
-	    fprintf(stderr, " ... %G seconds\n", 
-		    cycles_diff(cycles+2, cycles+1));
-           if (logfile && logfile != stderr)
-                 fprintf(logfile, " ... %G seconds\n", 
-                         cycles_diff(cycles+2, cycles+1));
+	    my_getrusage(cycles+2);
+	    print_rusage(stderr, cycles+2, cycles+1);
+	    if (logfile && logfile != stderr)
+		  print_rusage(logfile, cycles+2, cycles+1);
       }
 
       return 0;
@@ -222,6 +256,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.21  2001/10/20 01:03:42  steve
+ *  Print memory usage information if requested (Stephan Boettcher)
+ *
  * Revision 1.20  2001/07/30 02:44:05  steve
  *  Cleanup defines and types for mingw compile.
  *
