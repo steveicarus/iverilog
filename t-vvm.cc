@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.122 2000/03/24 02:43:36 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.123 2000/03/24 03:47:01 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1289,17 +1289,67 @@ void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
 void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
 {
       string mname = mangle(ram->name());
+
       os << "static vvm_ram_dq<" << ram->width() << "," <<
 	    ram->awidth() << "," << ram->size() << "> " << mname <<
 	    "(&" << mangle(ram->mem()->name()) << ");" << endl;
 
-      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
-	    unsigned pin = ram->pin_Q(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, ram, pin);
-	    init_code << "      " << mangle(ram->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(ram, pin);
+      if (ram->pin_WE().is_linked()) {
+	    string nexus = nexus_from_link(&ram->pin_WE());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
+		      << ".key_WE());" << endl;
       }
+
+      if (ram->pin_InClock().is_linked()) {
+	    string nexus = nexus_from_link(&ram->pin_InClock());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
+		      << ".key_InClock());" << endl;
+      }
+
+	/* Connect the address inputs... */
+      for (unsigned idx = 0 ;  idx < ram->awidth() ;  idx += 1) {
+	    if (! ram->pin_Address(idx).is_linked())
+		  continue;
+
+	    string nexus = nexus_from_link(&ram->pin_Address(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
+		      << ".key_Address(" << idx << "));" << endl;
+      }
+
+	/* Connect the data inputs... */
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
+	    if (! ram->pin_Data(idx).is_linked())
+		  continue;
+
+	    string nexus = nexus_from_link(&ram->pin_Data(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
+		      << ".key_Data(" << idx << "));" << endl;
+      }
+
+	/* Connect the data outputs... */
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
+	    if (! ram->pin_Q(idx).is_linked())
+		  continue;
+
+	    string nexus = nexus_from_link(&ram->pin_Q(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
+      }
+
 }
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
@@ -2317,6 +2367,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.123  2000/03/24 03:47:01  steve
+ *  Update vvm_ram_dq to nexus style.
+ *
  * Revision 1.122  2000/03/24 02:43:36  steve
  *  vvm_unop and vvm_binop pass result by reference
  *  instead of returning a value.

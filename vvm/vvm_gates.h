@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.49 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.50 2000/03/24 03:47:01 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -422,66 +422,60 @@ class vvm_nor2  : public vvm_1bit_out, public vvm_nexus::recvr_t {
  * XXXX Only *synchronous* writes with WE are supported.
  */
 template <unsigned WIDTH, unsigned AWIDTH, unsigned SIZE>
-class vvm_ram_dq  : protected vvm_ram_callback {
+class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
 
     public:
       vvm_ram_dq(vvm_memory_t<WIDTH,SIZE>*mem)
       : mem_(mem)
 	    { mem->set_callback(this);
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    out_[idx] = 0;
-	      for (unsigned idx = 0 ;  idx < AWIDTH ;  idx += 1)
-		    addr_[idx] = Vx;
+	      for (unsigned idx = 0 ;  idx < AWIDTH+WIDTH+2 ;  idx += 1)
+		    ibits_[idx] = StX;
 	    }
 
       void init_Address(unsigned idx, vpip_bit_t val)
-	    { addr_[idx] = val; }
+	    { ibits_[idx] = val; }
 
       void init_Data(unsigned idx, vpip_bit_t val)
-	    { data_[idx] = val; }
+	    { ibits_[AWIDTH+idx] = val; }
 
       void init_WE(unsigned, vpip_bit_t val)
-	    { we_ = val; }
+	    { ibits_[AWIDTH+WIDTH] = val; }
 
       void init_InClock(unsigned, vpip_bit_t val)
-	    { iclk_ = val; }
+	    { ibits_[AWIDTH+WIDTH+1] = val; }
 
-      void set_Address(unsigned idx, vpip_bit_t val)
-	    { if (addr_[idx] == val) return;
-	      addr_[idx] = val;
-	      compute_();
-	      send_out_();
-	    }
+      unsigned key_Address(unsigned idx) const { return idx; }
+      unsigned key_Data(unsigned idx) const { return AWIDTH+idx; }
+      unsigned key_WE() const { return AWIDTH+WIDTH + 0; }
+      unsigned key_InClock() const { return AWIDTH+WIDTH + 1; }
 
-      void set_Data(unsigned idx, vpip_bit_t val)
-	    { data_[idx] = val; }
+      vvm_nexus::drive_t* config_rout(unsigned idx) { return out_+idx; }
 
-      void set_WE(unsigned, vpip_bit_t val)
-	    { we_ = val; }
+      void take_value(unsigned key, vpip_bit_t val)
+      { if (ibits_[key] == val) return;
+        if (key == key_InClock()) {
+	      vpip_bit_t tmp = ibits_[key];
+	      ibits_[key] = val;
+	      if (B_IS1(ibits_[key_WE()])) return;
+	      if (posedge(tmp, val)) mem_->set_word(addr_val_, ibits_+AWIDTH);
+	      return;
+	} else {
+	      ibits_[key] = val;
+	      if (key < AWIDTH) {
+		    compute_();
+		    send_out_();
+	      }
+	}
+      }
 
-      void set_InClock(unsigned, vpip_bit_t val)
-	    { if (val == iclk_) return;
-	      vpip_bit_t tmp = iclk_;
-	      iclk_ = val;
-	      if (we_ != V1) return;
-	      if (posedge(tmp, val)) mem_->set_word(addr_val_, data_);
-	    }
 
-      void handle_write(unsigned idx)
-	    { if (idx == addr_val_) send_out_(); }
-
-      void config_rout(unsigned idx, vvm_out_event::action_t o)
-	    { out_[idx] = o; }
+      void handle_write(unsigned idx) { if (idx == addr_val_) send_out_(); }
 
     private:
       vvm_memory_t<WIDTH,SIZE>*mem_;
 
-      vpip_bit_t addr_[AWIDTH];
-      vpip_bit_t data_[WIDTH];
-      vpip_bit_t we_;
-      vpip_bit_t iclk_;
-
-      vvm_out_event::action_t out_[WIDTH];
+      vpip_bit_t ibits_[AWIDTH+WIDTH+2];
+      vvm_nexus::drive_t out_[WIDTH];
 
       unsigned long addr_val_;
 
@@ -490,17 +484,15 @@ class vvm_ram_dq  : protected vvm_ram_callback {
 	      unsigned mask;
 	      addr_val_ = 0;
 	      for (bit = 0, mask = 1 ;  bit < AWIDTH ;  bit += 1, mask <<= 1)
-		    if (addr_[bit] == V1) addr_val_ |= mask;
+		    if (B_IS1(ibits_[bit])) addr_val_ |= mask;
 	    }
 
       void send_out_()
 	    { vvm_bitset_t<WIDTH>ov = mem_->get_word(addr_val_);
-	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1)
-		    if (out_[bit]) {
-			  vvm_event*ev = new vvm_out_event(ov[bit],
-							   out_[bit]);
-			  ev->schedule();
-		    }
+	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1) {
+		    vvm_out_event*ev = new vvm_out_event(ov[bit], out_+bit);
+		    ev->schedule();
+	      }
 	    }
 };
 
@@ -802,6 +794,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.50  2000/03/24 03:47:01  steve
+ *  Update vvm_ram_dq to nexus style.
+ *
  * Revision 1.49  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
