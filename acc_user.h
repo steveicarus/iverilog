@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: acc_user.h,v 1.4 2002/06/07 02:58:58 steve Exp $"
+#ident "$Id: acc_user.h,v 1.5 2002/06/11 15:19:12 steve Exp $"
 #endif
 
 /*
@@ -111,6 +111,9 @@ extern int acc_initialize(void);
 
 extern void acc_close(void);
 
+extern int   acc_fetch_argc(void);
+extern char**acc_fetch_argv(void);
+
 extern char* acc_fetch_fullname(handle obj);
 
 extern int   acc_fetch_tfarg_int(int n);
@@ -127,10 +130,15 @@ extern char*acc_product_version(void);
 extern int acc_set_value(handle obj, p_setval_value value,
 			 p_setval_delay delay);
 
+extern char* acc_version(void);
+
 EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.5  2002/06/11 15:19:12  steve
+ *  Add acc_fetch_argc/argv/version (mruff)
+ *
  * Revision 1.4  2002/06/07 02:58:58  steve
  *  Add a bunch of acc/tf functions. (mruff)
  *

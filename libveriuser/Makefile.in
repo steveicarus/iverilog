@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 2002/06/07 16:21:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 2002/06/11 15:19:12 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -44,9 +44,10 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
-A = a_close.o a_fetch_fullname.o a_fetch_tfarg.o a_handle_tfarg.o \
+A = a_close.o a_fetch_argc.o a_fetch_argv.o a_fetch_fullname.o \
+a_fetch_tfarg.o a_handle_tfarg.o \
 a_initialize.o a_next_topmod.o a_object_of_type.o a_product_version.o \
-a_set_value.o
+a_set_value.o a_version.o
 O = asynch.o finish.o getcstringp.o getinstance.o getlongp.o \
 getp.o getsimtime.o io_print.o mc_scan_plusargs.o nump.o putlongp.o \
 putp.o veriusertfs.o $A
