@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.116 2003/09/26 02:15:15 steve Exp $"
+#ident "$Id: vthread.cc,v 1.117 2003/11/10 20:19:32 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "vthread.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -2759,6 +2760,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.117  2003/11/10 20:19:32  steve
+ *  Include config.h
+ *
  * Revision 1.116  2003/09/26 02:15:15  steve
  *  Slight performance tweaks of scheduler.
  *
