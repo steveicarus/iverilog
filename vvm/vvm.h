@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.5 1999/03/16 04:43:46 steve Exp $"
+#ident "$Id: vvm.h,v 1.6 1999/04/22 04:56:58 steve Exp $"
 #endif
 
 # include  <vector>
@@ -115,6 +115,15 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 		  if (bits_[idx] != that.bits_[idx])
 			return false;
 	      return true;
+	    }
+
+      unsigned as_unsigned() const
+	    { unsigned result = 0;
+	      for (unsigned idx = WIDTH ;  idx > 0 ;  idx -= 1) {
+		    result <<= 1;
+		    if (bits_[idx-1]) result |= 1;
+	      }
+	      return result;
 	    }
 
     private:
@@ -243,12 +252,20 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 	      trigger(sim);
 	    }
 
+      void set(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
+	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		  set(sim, idx, val[idx]);
+	    }
+
     private:
       vvm_bitset_t<WIDTH>*bits_;
 };
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.6  1999/04/22 04:56:58  steve
+ *  Add to vvm proceedural memory references.
+ *
  * Revision 1.5  1999/03/16 04:43:46  steve
  *  Add some logical operators.
  *

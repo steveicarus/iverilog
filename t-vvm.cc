@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.15 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.16 1999/04/22 04:56:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -91,6 +91,15 @@ class vvm_proc_rval  : public expr_scan_t {
     private:
       virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_memory(const NetEMemory*mem)
+	    {
+		  mem->index()->expr_scan(this);
+		  string idx = make_temp();
+		  os_ << setw(indent_) << "" << "const unsigned " <<
+			idx << " = " << result << ".as_unsigned();" <<
+			endl;
+		  result = mangle(mem->name()) + "[" + idx + "]";
+	    }
       virtual void expr_signal(const NetESignal*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
@@ -224,22 +233,22 @@ class vvm_parm_rval  : public expr_scan_t {
       string result;
 
     private:
-      virtual void expr_const(const NetEConst*);
+      virtual void expr_const(const NetEConst*expr)
+	    {
+		  if (expr->value().is_string()) {
+			result = "\"";
+			result = result + expr->value().as_string() + "\"";
+			return;
+		  }
+	    }
+
       virtual void expr_ident(const NetEIdent*);
+
       virtual void expr_signal(const NetESignal*);
 
     private:
       ostream&os_;
 };
-
-void vvm_parm_rval::expr_const(const NetEConst*expr)
-{
-      if (expr->value().is_string()) {
-	    result = "\"";
-	    result = result + expr->value().as_string() + "\"";
-	    return;
-      }
-}
 
 void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 {
@@ -336,7 +345,8 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 void target_vvm::memory(ostream&os, const NetMemory*mem)
 {
       os << "static vvm_bitset_t<" << mem->width() << "> " <<
-	    mangle(mem->name()) << "[" << "];" << endl;
+	    mangle(mem->name()) << "[" << mem->count() << "]; " <<
+	    "/* " << mem->name() << " */" << endl;
 }
 
 /*
@@ -618,6 +628,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const NetObj*cur;
 	    unsigned pin;
+
 	    for (net->pin(idx).next_link(cur, pin)
 		       ; net->pin(idx) != cur->pin(pin)
 		       ; cur->pin(pin).next_link(cur, pin)) {
@@ -890,6 +901,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.16  1999/04/22 04:56:58  steve
+ *  Add to vvm proceedural memory references.
+ *
  * Revision 1.15  1999/04/19 01:59:37  steve
  *  Add memories to the parse and elaboration phases.
  *

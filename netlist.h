@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.23 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.24 1999/04/22 04:56:58 steve Exp $"
 #endif
 
 /*
@@ -282,6 +282,20 @@ class NetMemory  {
 
       const string&name() const { return name_; }
       unsigned width() const { return width_; }
+
+      unsigned count() const
+	    { if (idxh_ < idxl_)
+		    return idxl_ - idxh_ + 1;
+	      else
+		    return idxh_ - idxl_ + 1;
+	    }
+
+      unsigned index_to_address(long idx) const
+	    { if (idxh_ < idxl_)
+		    return idx - idxh_;
+	      else
+		    return idx - idxl_;
+	    }
 
       void set_attributes(const map<string,string>&a);
 
@@ -920,6 +934,9 @@ class NetEMemory  : public NetExpr {
       NetEMemory(NetMemory*mem, NetExpr*idx);
       virtual ~NetEMemory();
 
+      const string& name () const { return mem_->name(); }
+      const NetExpr* index() const { return idx_.ref(); }
+
       virtual void set_width(unsigned);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -1086,6 +1103,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.24  1999/04/22 04:56:58  steve
+ *  Add to vvm proceedural memory references.
+ *
  * Revision 1.23  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *
