@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.17 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: arith.h,v 1.18 2004/09/22 16:44:07 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -121,24 +121,34 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
 };
 
-class vvp_cmp_ge  : public vvp_arith_ {
+class vvp_cmp_gtge_base_ : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_gtge_base_(unsigned wid, bool signed_flag);
+
+    protected:
+      void set_base(vvp_ipoint_t i, bool push, unsigned val, unsigned str,
+		    unsigned out_if_equal);
+    private:
+      bool signed_flag_;
+};
+
+class vvp_cmp_ge  : public vvp_cmp_gtge_base_ {
 
     public:
       explicit vvp_cmp_ge(unsigned wid, bool signed_flag);
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
     private:
-      bool signed_flag_;
 };
 
-class vvp_cmp_gt  : public vvp_arith_ {
+class vvp_cmp_gt  : public vvp_cmp_gtge_base_ {
 
     public:
       explicit vvp_cmp_gt(unsigned wid, bool signed_flag);
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
     private:
-      bool signed_flag_;
 };
 
 class vvp_shiftl  : public vvp_arith_ {
@@ -159,6 +169,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.18  2004/09/22 16:44:07  steve
+ *  Fix LPM GE to match LPM GT behavior.
+ *
  * Revision 1.17  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *

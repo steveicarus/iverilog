@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.28 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: arith.cc,v 1.29 2004/09/22 16:44:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -472,58 +472,22 @@ void vvp_cmp_ne::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 }
 
 
-vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
+vvp_cmp_gtge_base_::vvp_cmp_gtge_base_(unsigned wid, bool flag)
 : vvp_arith_(wid), signed_flag_(flag)
 {
 }
 
 
-
-void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+void vvp_cmp_gtge_base_::set_base(vvp_ipoint_t i,
+				 bool push,
+				 unsigned val,
+				 unsigned,
+				 unsigned out_if_equal)
 {
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
-      unsigned out_val = 1;
-
-      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = obj->ival;
-	    if (val & 0x0a) {
-		  out_val = 2;
-		  break;
-	    }
-
-	    unsigned a = (val & 0x01)? 1 : 0;
-	    unsigned b = (val & 0x04)? 1 : 0;
-
-	    if (a > b) {
-		  out_val = 1;
-		  break;
-	    }
-
-	    if (a < b) {
-		  out_val = 0;
-		  break;
-	    }
-      }
-
-      put_oval(out_val, push);
-}
-
-vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
-: vvp_arith_(wid), signed_flag_(flag)
-{
-}
-
-void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
-{
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
-
-      unsigned out_val = 0;
+      unsigned out_val = out_if_equal;
 
       unsigned idx = wid_;
 
@@ -598,6 +562,29 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       put_oval(out_val, push);
 }
 
+
+
+vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
+: vvp_cmp_gtge_base_(wid, flag)
+{
+}
+
+
+
+void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned str)
+{
+      set_base(i, push, val, str, 1);
+}
+
+vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
+: vvp_cmp_gtge_base_(wid, flag)
+{
+}
+
+void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned str)
+{
+      set_base(i, push, val, str, 0);
+}
 
 void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
@@ -700,6 +687,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.29  2004/09/22 16:44:07  steve
+ *  Fix LPM GE to match LPM GT behavior.
+ *
  * Revision 1.28  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *
