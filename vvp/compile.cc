@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.84 2001/07/06 04:46:44 steve Exp $"
+#ident "$Id: compile.cc,v 1.85 2001/07/06 05:02:43 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -564,12 +564,24 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
 
 }
 
+/*
+ * A .shift/l statement creates an array of functors for the
+ * width. The 0 input is the data vector to be shifted and the 1 input
+ * is the amount of the shift. An unconnected shift amount is set to 0.
+ */
 void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
       if (argc < (wid+1)) {
 	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      if (argc > (wid*2)) {
+	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
 	    compile_errors += 1;
 	    free(label);
 	    return;
@@ -584,7 +596,11 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    obj->ival = 0xaa;
+	    if ((wid+idx) >= argc)
+		  obj->ival = 0x02;
+	    else
+		  obj->ival = 0x0a;
+
 	    obj->oval = 2;
 	    obj->odrive0 = 6;
 	    obj->odrive1 = 6;
@@ -1499,6 +1515,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.85  2001/07/06 05:02:43  steve
+ *  Properly initialize unconnected shift inputs.
+ *
  * Revision 1.84  2001/07/06 04:46:44  steve
  *  Add structural left shift (.shift/l)
  *
