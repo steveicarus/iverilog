@@ -8,13 +8,13 @@ forms, then passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
 switches.
 
-INVOKING
+INVOKING ivl
 
 The vl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator.
 
-Usage: vl <options>... file
-       vl -h
+Usage: ivl <options>... file
+       ivl -h
 
 -F <name>
 	Use this flag to request an optimization function be applied
@@ -39,7 +39,7 @@ Usage: vl <options>... file
 
 -N <file>
 	Dump the elaborated netlist to the named file. The netlist is
-	the folly elaborated netlist, after all the function modules
+	the fully elaborated netlist, after all the function modules
 	are applied and right before the output generator is
 	called. This is an aid for debugging the compiler, and the
 	output generator in particular.
@@ -56,9 +56,9 @@ Usage: vl <options>... file
 	the compiler.
 
 -s <module>
-	Normally, vl will elaborate the only module in the source
-	file. If there are multiple modules, use this option to select
-	the module to be used as the top-level module.
+	Normally, vl will elaborate the only top-level module in the
+	source file. If there are multiple modules, use this option to
+	select the module to be used as the top-level module.
 
 -t <name>
 	Select the output format for the compiled result. Use the

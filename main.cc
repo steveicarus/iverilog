@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.14 1999/04/23 04:34:32 steve Exp $"
+#ident "$Id: main.cc,v 1.15 1999/05/05 03:27:15 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -181,15 +181,32 @@ int main(int argc, char*argv[])
 	    }
       }
 
+      if (start_module == "") {
+	    for (map<string,Module*>::iterator mod = modules.begin()
+		       ; mod != modules.end()
+		       ; mod ++ ) {
+		  Module*cur = (*mod).second;
+		  if (cur->ports.size() == 0)
+			if (start_module == "") {
+			      start_module = cur->get_name();
+		        } else {
+			      cerr << "More then 1 top level module."
+				   << endl;
+			      return 1;
+			}
+	    }
+      }
 
 	/* Select a root module, and elaborate the design. */
       if (start_module == "") {
-	    start_module = "main";
+	    cerr << "No top level modules, and no -s option." << endl;
+	    return 1;
       }
 
       Design*des = elaborate(modules, primitives, start_module);
       if (des == 0) {
-	    cerr << "Unable to elaborate design." << endl;
+	    cerr << "Unable to elaborate module " << start_module <<
+		  "." << endl;
 	    return 1;
       }
       if (des->errors) {
@@ -232,6 +249,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.15  1999/05/05 03:27:15  steve
+ *  More intelligent selection of module to elaborate.
+ *
  * Revision 1.14  1999/04/23 04:34:32  steve
  *  Make debug output file parameters.
  *

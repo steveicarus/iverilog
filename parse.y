@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.19 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: parse.y,v 1.20 1999/05/05 03:27:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -752,6 +752,8 @@ statement
 		}
 	| delay statement_opt
 		{ PDelayStatement*tmp = new PDelayStatement($1, $2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 	| event_control statement_opt
