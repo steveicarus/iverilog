@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.11 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.12 2003/06/25 01:46:44 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -401,6 +401,18 @@ static void virtex2_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 
 	    obj = edif_cellref_create(edf, xilinx_cell_buf(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+	    edif_add_to_joint(jnt, obj, BUF_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
+	    edif_add_to_joint(jnt, obj, BUF_I);
+	    break;
+
+	  case IVL_LO_NOT:
+	    assert(ivl_logic_pins(net) == 2);
+
+	    obj = edif_cellref_create(edf, xilinx_cell_inv(xlib));
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
 	    edif_add_to_joint(jnt, obj, BUF_O);
@@ -1127,6 +1139,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.12  2003/06/25 01:46:44  steve
+ *  Virtex support for NOT gates.
+ *
  * Revision 1.11  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *
