@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.59 2000/04/23 03:45:25 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.60 2000/04/23 21:15:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -567,6 +567,20 @@ class vvm_buf  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       void take_value(unsigned, vpip_bit_t val);
 };
 
+class vvm_bufif0  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_bufif0(unsigned long d);
+      ~vvm_bufif0();
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
 class vvm_bufif1  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
@@ -916,6 +930,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.60  2000/04/23 21:15:07  steve
+ *  Emit code for the bufif devices.
+ *
  * Revision 1.59  2000/04/23 03:45:25  steve
  *  Add support for the procedural release statement.
  *

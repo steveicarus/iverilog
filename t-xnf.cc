@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.24 2000/04/20 02:34:47 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.25 2000/04/23 21:15:07 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -773,21 +773,46 @@ void target_xnf::logic(ostream&os, const NetLogic*net)
 	  case NetLogic::XOR:
 	    os << "XOR";
 	    break;
+	  case NetLogic::BUFIF0:
+	  case NetLogic::BUFIF1:
+	    os << "TBUF";
+	    break;
 	  default:
-	    cerr << "XNF: Unhandled logic type." << endl;
+	    cerr << "internal error: XNF: Unhandled logic type." << endl;
 	    break;
       }
       os << ", LIBVER=2.0.0" << endl;
 
+	/* All of these kinds of devices have an output on pin 0. */
       draw_pin(os, "O", net->pin(0));
 
-      if (net->pin_count() == 2) {
+	/* Most devices have inputs called I<N> for all the remaining
+	   pins. The TBUF devices are slightly different, but
+	   essentially the same structure. */
+      switch (net->type()) {
+
+	  case NetLogic::BUFIF0:
+	    assert(net->pin_count() == 3);
+	    draw_pin(os,  "I", net->pin(1));
+	    draw_pin(os, "~T", net->pin(2));
+	    break;
+
+	  case NetLogic::BUFIF1:
+	    assert(net->pin_count() == 3);
 	    draw_pin(os, "I", net->pin(1));
-      } else for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
-	    string name = "I";
-	    assert(net->pin_count() <= 11);
-	    name += (char)('0'+idx-1);
-	    draw_pin(os, name, net->pin(idx));
+	    draw_pin(os, "T", net->pin(2));
+	    break;
+
+	  default:
+	    if (net->pin_count() == 2) {
+		  draw_pin(os, "I", net->pin(1));
+	    } else for (unsigned idx = 1; idx < net->pin_count(); idx += 1) {
+		  string name = "I";
+		  assert(net->pin_count() <= 11);
+		  name += (char)('0'+idx-1);
+		  draw_pin(os, name, net->pin(idx));
+	    }
+	    break;
       }
 
       os << "END" << endl;
@@ -828,6 +853,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.25  2000/04/23 21:15:07  steve
+ *  Emit code for the bufif devices.
+ *
  * Revision 1.24  2000/04/20 02:34:47  steve
  *  Generate code for identity compare. Use gates.
  *

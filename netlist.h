@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.128 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.129 2000/04/23 21:15:07 steve Exp $"
 #endif
 
 /*
@@ -823,7 +823,8 @@ class NetConst  : public NetNode {
 
 /*
  * This class represents all manner of logic gates. Pin 0 is OUTPUT and
- * all the remaining pins are INPUT
+ * all the remaining pins are INPUT. The BUFIF[01] gates have the
+ * additional restriction that pin 1 is the enable.
  */
 class NetLogic  : public NetNode {
 
@@ -2440,6 +2441,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.129  2000/04/23 21:15:07  steve
+ *  Emit code for the bufif devices.
+ *
  * Revision 1.128  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

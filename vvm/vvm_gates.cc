@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.12 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.13 2000/04/23 21:15:07 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -149,6 +149,38 @@ void vvm_buf::take_value(unsigned, vpip_bit_t val)
       output(outval);
 }
 
+vvm_bufif0::vvm_bufif0(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+vvm_bufif0::~vvm_bufif0()
+{
+}
+
+void vvm_bufif0::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_bufif0::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if (! B_IS0(input_[1]))
+	    output(HiZ);
+      else if (B_ISXZ(input_[0]))
+	    output(StX);
+      else if (B_IS1(input_[0]))
+	    output(St1);
+      else
+	    output(St0);
+}
+
 vvm_bufif1::vvm_bufif1(unsigned long d)
 : vvm_1bit_out(d)
 {
@@ -160,8 +192,10 @@ vvm_bufif1::~vvm_bufif1()
 {
 }
 
-void vvm_bufif1::init_I(unsigned, vpip_bit_t)
+void vvm_bufif1::init_I(unsigned key, vpip_bit_t val)
 {
+      assert(key < 2);
+      input_[key] = val;
 }
 
 void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
@@ -173,7 +207,7 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
 	    output(HiZ);
       else if (B_ISXZ(input_[0]))
 	    output(StX);
-      else if (B_IS1(val))
+      else if (B_IS1(input_[0]))
 	    output(St1);
       else
 	    output(St0);
@@ -285,6 +319,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.13  2000/04/23 21:15:07  steve
+ *  Emit code for the bufif devices.
+ *
  * Revision 1.12  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
