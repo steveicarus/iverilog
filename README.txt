@@ -12,11 +12,10 @@ home page at <http://www.icarus.com/eda/verilog>.
  
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
-tools. These back-end tools currently include a simulator written in
-C++ called VVM, another faster simulator called VVP, an XNF (Xilinx
-Netlist Format) generator and an EDIF fpga netlist generator. In the
-future, backends are expected for EDIF/LPM, structural Verilog, VHDL,
-etc.
+tools. These back-end tools currently include a simulator engine
+called VVP, an XNF (Xilinx Netlist Format) generator and an EDIF fpga
+netlist generator. In the future, backends are expected for EDIF/LPM,
+structural Verilog, VHDL, etc.
 
     For instructions on how to run Icarus Verilog,
     see the ``iverilog'' man page.
@@ -237,6 +236,11 @@ between processing steps. Processing steps that are aware of others
 may place attributes on netlist objects to communicate information to
 later steps.
 
+Icarus Verilog also accepts the Verilog 2001 syntax for
+attributes. They have the same general meaning as with the $attribute
+syntax, but they are attached to objects by position instead of by
+name. Also, the key is a Verilog identifier instead of a string.
+
 4.0 Running iverilog
 
 The preferred way to invoke the compiler is with the iverilog(1)
@@ -289,14 +293,6 @@ Verilog web page for the current state of support for Verilog, and in
 particular, browse the bug report database for reported unsupported
 constructs.
 
-  - block disable not supported, i.e.:
-
-            begin : foo
-	        [...]
-		disable foo; // sorry
-		[...]
-	    end
-
   - real data types not supported. This includes real and
     realtime. However, floating point constants in delay expressions
     are supported so that `timescale works properly.
@@ -345,6 +341,24 @@ language that are defined.
 
 	Implementations of these system functions in VPI modules will
 	be ignored.
+
+    Preprocessing Library Modules
+
+	Icarus Verilog does preprocess modules that are loaded from
+	libraries via the -y mechinism. However, the only macros
+	defined during compilation of that file are those that it
+	defines itself (or includes) or that are defined on the
+	command line or command file.
+
+	Specifically, macros defined in the non-library source files
+	are not remembered when the library module is loaded. This is
+	intentional. If it were otherwise, then compilation results
+	might vary depending on the order that libraries are loaded,
+	and that is too unpredictable.
+
+	It is said that some commercial compilers do allow macro
+	definitions to span library modules. That's just plain weird.
+
 
 6.0 CREDITS
 
@@ -421,7 +435,7 @@ just the systems where precompiled binaries are publicly available.
 
 6.2 TEST SUITE MANAGER
 
-Steve Wilson <stevew@home.com> or <stevew@intrinsix.com> has taken on
+Steve Wilson <stevew@ka6s.com> or <stevew@intrinsix.com> has taken on
 the large task of managing the test suite. He has maintained the
 regression test scripts, the driver list, received submissions from
 myself and others, and has written a great many tests on his own. Any
