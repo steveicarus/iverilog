@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.83 2001/10/31 03:11:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.84 2001/11/10 02:08:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -772,12 +772,15 @@ void pform_makewire(const vlltype&li,
 	    delete range;
 }
 
-void pform_set_port_type(const string&nm, NetNet::PortType pt)
+void pform_set_port_type(const char*nm, NetNet::PortType pt,
+			 const char*file, unsigned lineno)
 {
       const string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, pt);
+	    cur->set_file(file);
+	    cur->set_lineno(lineno);
 	    pform_cur_module->add_wire(cur);
       }
 
@@ -955,7 +958,8 @@ void pform_set_defparam(const string&name, PExpr*expr)
       pform_cur_module->defparms[name] = expr;
 }
 
-void pform_set_port_type(list<char*>*names,
+void pform_set_port_type(const struct vlltype&li,
+			 list<char*>*names,
 			 svector<PExpr*>*range,
 			 NetNet::PortType pt)
 {
@@ -963,7 +967,7 @@ void pform_set_port_type(list<char*>*names,
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    char*txt = *cur;
-	    pform_set_port_type(txt, pt);
+	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    if (range)
 		  pform_set_net_range(txt, range, false);
 	    free(txt);
@@ -1102,6 +1106,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.84  2001/11/10 02:08:49  steve
+ *  Coerse input to inout when assigned to.
+ *
  * Revision 1.83  2001/10/31 03:11:15  steve
  *  detect module ports not declared within the module.
  *

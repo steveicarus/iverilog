@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.80 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.81 2001/11/10 02:08:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1250,6 +1250,15 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (sig->port_type() == NetNet::PINPUT) {
+	    cerr << get_line() << ": warning: assign l-value ``"
+		 << sig->name() << "'' is also an input to "
+		 << sig->scope()->name() << "." << endl;
+	    cerr << sig->get_line() << ": warning: input ``"
+		 << sig->name() << "'' is coerced to inout." << endl;
+	    sig->port_type(NetNet::PINOUT);
+      }
+
       if (msb_ && lsb_) {
 	      /* Detect a part select. Evaluate the bits and elaborate
 		 the l-value by creating a sub-net that links to just
@@ -1869,6 +1878,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.81  2001/11/10 02:08:49  steve
+ *  Coerse input to inout when assigned to.
+ *
  * Revision 1.80  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

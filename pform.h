@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.50 2001/10/31 03:11:15 steve Exp $"
+#ident "$Id: pform.h,v 1.51 2001/11/10 02:08:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -137,7 +137,8 @@ extern void pform_makewire(const struct vlltype&li,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
 			       const string&name, PExpr*expr);
-extern void pform_set_port_type(list<char*>*names, svector<PExpr*>*,
+extern void pform_set_port_type(const struct vlltype&li,
+				list<char*>*names, svector<PExpr*>*,
 				NetNet::PortType);
 extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*, bool);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
@@ -202,6 +203,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.51  2001/11/10 02:08:49  steve
+ *  Coerse input to inout when assigned to.
+ *
  * Revision 1.50  2001/10/31 03:11:15  steve
  *  detect module ports not declared within the module.
  *

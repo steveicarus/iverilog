@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.135 2001/11/06 02:52:19 steve Exp $"
+#ident "$Id: parse.y,v 1.136 2001/11/10 02:08:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1195,7 +1195,7 @@ module_item
 		}
 
 	| port_type range_opt list_of_variables ';'
-		{ pform_set_port_type($3, $2, $1);
+		{ pform_set_port_type(@1, $3, $2, $1);
 		}
 	| port_type range_opt error ';'
 		{ yyerror(@3, "error: Invalid variable list"
