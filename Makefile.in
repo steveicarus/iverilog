@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.169 2004/10/13 22:01:34 steve Exp $"
+#ident "$Id: Makefile.in,v 1.169.2.1 2005/02/23 18:40:23 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -103,6 +103,7 @@ distclean: clean
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f Makefile config.status config.log config.cache config.h
+	rm -rf autom4te.cache
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
