@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.136 2000/04/15 02:25:32 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.137 2000/04/15 19:51:30 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -956,15 +956,6 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       thread_class_ = name;
 
       os << "static bool " << name << "_step_0_(vvm_thread*thr);" << endl;
-
-#if 0
-      os << "class " << name << "  : public vvm_thread {" << endl;
-      os << "    public:" << endl;
-      os << "      " << name << "(vvm_thread*th)" << endl;
-      os << "      { step_ = " << name << "_step_0_; back_ = th; }" << endl;
-      os << "      ~" << name << "() { }" << endl;
-      os << "};" << endl;
-#endif
 
       defn << "static bool " << name << "_step_0_(vvm_thread*thr) {" << endl;
 
@@ -1984,11 +1975,81 @@ void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 
 bool target_vvm::proc_block(ostream&os, const NetBlock*net)
 {
-      if (net->type() == NetBlock::PARA) {
-	    cerr << "sorry: vvm cannot emit parallel blocks." << endl;
-	    return false;
+      if (net->type() == NetBlock::SEQU) {
+	    net->emit_recurse(os, this);
+	    return true;
       }
-      net->emit_recurse(os, this);
+
+      unsigned exit_step = thread_step_ + 1;
+
+      thread_step_ += 1;
+
+      const NetProc*cur;
+      unsigned cnt = 0;
+      unsigned idx;
+
+	// Declare the exit step...
+
+      os << "static bool " << thread_class_ << "_step_" << exit_step
+	 << "_(vvm_thread*thr);" << endl;
+
+
+	// Declare the first steps for all the threads to be created,
+	// and count those threads while I'm at it.
+
+      for (cur = net->proc_first() ;  cur ;  cur = net->proc_next(cur)) {
+	    cnt += 1;
+	    os << "static bool " << thread_class_ << "_step_"
+	       << (exit_step+cnt) << "_(vvm_thread*thr);" << endl;
+      }
+
+      thread_step_ += cnt;
+
+	// Write the code to start all the threads, then pause the
+	// current thread.
+
+      defn << "      thr->callee_ = new vvm_thread["<<cnt<<"];" << endl;
+      defn << "      thr->ncallee_ = " << cnt << ";" << endl;
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    defn << "      thr->callee_["<<idx<<"].back_ = thr;" << endl;
+	    defn << "      thr->callee_["<<idx<<"].step_ = &"
+		 << thread_class_ << "_step_" << (exit_step+idx+1)
+		 << "_;" << endl;
+	    defn << "      thr->callee_["<<idx<<"].thread_yield();" << endl;
+      }
+
+      defn << "      thr->step_ = &" << thread_class_ << "_step_"
+	   << exit_step << "_;" << endl;
+      defn << "      return false;" << endl;
+      defn << "}" << endl;
+
+	// Generate the thread steps. At the end of the thread proc,
+	// write code to manage the join.
+
+      for (idx = 0, cur = net->proc_first()
+		 ;  cur ;  idx +=1, cur = net->proc_next(cur)) {
+
+	    defn << "static bool " << thread_class_ << "_step_"
+		 << (exit_step+idx+1) << "_(vvm_thread*thr) {" << endl;
+
+	    cur->emit_proc(os, this);
+
+	    defn << "      thr->back_->ncallee_ -= 1;" << endl;
+	    defn << "      if (thr->back_->ncallee_ == 0)" << endl;
+	    defn << "          thr->back_->thread_yield();" << endl;
+	    defn << "      return false;" << endl;
+	    defn << "}" << endl;
+      }
+
+	// Finally, start the exit step.
+
+      defn << "static bool " << thread_class_ << "_step_" << exit_step
+	   << "_(vvm_thread*thr) {" << endl;
+
+      defn << "      delete[]thr->callee_;" << endl;
+      defn << "      thr->callee_ = 0;" << endl;
+
       return true;
 }
 
@@ -2565,6 +2626,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.137  2000/04/15 19:51:30  steve
+ *  fork-join support in vvm.
+ *
  * Revision 1.136  2000/04/15 02:25:32  steve
  *  Support chained events.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.89 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: parse.y,v 1.90 2000/04/15 19:51:30 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -425,6 +425,12 @@ event_expression_list
 	: event_expression
 		{ $$ = $1; }
 	| event_expression_list K_or event_expression
+		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
+		}
+	| event_expression_list ',' event_expression
 		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
 		  delete $1;
 		  delete $3;

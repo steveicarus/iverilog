@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.113 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.114 2000/04/15 19:51:30 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1590,6 +1590,22 @@ void NetBlock::append(NetProc*cur)
       }
 }
 
+const NetProc* NetBlock::proc_first() const
+{
+      if (last_ == 0)
+	    return 0;
+
+      return last_->next_;
+}
+
+const NetProc* NetBlock::proc_next(const NetProc*cur) const
+{
+      if (cur == last_)
+	    return 0;
+
+      return cur->next_;
+}
+
 NetBUFZ::NetBUFZ(const string&n)
 : NetNode(n, 2)
 {
@@ -2446,6 +2462,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.114  2000/04/15 19:51:30  steve
+ *  fork-join support in vvm.
+ *
  * Revision 1.113  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

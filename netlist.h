@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.121 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.122 2000/04/15 19:51:30 steve Exp $"
 #endif
 
 /*
@@ -996,7 +996,7 @@ class NetUDP_COMB  : public NetNode {
  * linked into the netlist. However, elaborating a process may cause
  * special nodes to be created to handle things like events.
  */
-class NetProc  : public LineInfo {
+class NetProc : public LineInfo {
 
     public:
       explicit NetProc();
@@ -1143,12 +1143,14 @@ class NetAssignMemNB : public NetAssignMem_ {
     private:
 };
 
-/* A block is stuff like begin-end blocks, that contain an ordered
-   list of NetProc statements.
-
-   NOTE: The emit method calls the target->proc_block function but
-   does not recurse. It is up to the target-supplied proc_block
-   function to call emit_recurse. */
+/*
+ * A block is stuff like begin-end blocks, that contain an ordered
+ * list of NetProc statements.
+ *
+ * NOTE: The emit method calls the target->proc_block function but
+ * does not recurse. It is up to the target-supplied proc_block
+ * function to call emit_recurse.
+ */
 class NetBlock  : public NetProc {
 
     public:
@@ -1161,7 +1163,14 @@ class NetBlock  : public NetProc {
 
       void append(NetProc*);
 
+      const NetProc*proc_first() const;
+      const NetProc*proc_next(const NetProc*cur) const;
+
+	// This version of emit_recurse scans all the statements of
+	// the begin-end block sequentially. It is typically of use
+	// for sequential blocks.
       void emit_recurse(ostream&, struct target_t*) const;
+
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -2344,6 +2353,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.122  2000/04/15 19:51:30  steve
+ *  fork-join support in vvm.
+ *
  * Revision 1.121  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

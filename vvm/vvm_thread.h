@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.8 2000/04/15 01:44:59 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.9 2000/04/15 19:51:30 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -85,6 +85,7 @@ class vvm_thread {
 
 	// These members are used to handle task invocations.
       vvm_thread*callee_;
+      unsigned  ncallee_;
       vvm_thread*back_;
 
 	// The sync class uses this to list all the threads blocked on it.
@@ -94,6 +95,9 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.9  2000/04/15 19:51:30  steve
+ *  fork-join support in vvm.
+ *
  * Revision 1.8  2000/04/15 01:44:59  steve
  *  Document the calling convention.
  *
