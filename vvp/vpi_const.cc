@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.8 2002/01/15 03:21:18 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -87,12 +87,22 @@ vpiHandle vpip_make_string_const(char*text)
 
 static int binary_get(int code, vpiHandle ref)
 {
+      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
 
       switch (code) {
 	  case vpiConstType:
 	    return vpiBinaryConst;
 
+	  case vpiSigned: // FIXME: Need to get signed flag right.
+	    return 0;
+
+	  case vpiSize:
+	    return rfp->nbits;
+
 	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		    "by vpiBinaryConst\n", code);
 	    assert(0);
 	    return 0;
       }
@@ -109,6 +119,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 
 	  case vpiObjTypeVal:
 	  case vpiBinStrVal:
+	    assert(rfp->nbits < sizeof buf);
 	    for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
 		  unsigned nibble = idx/4;
 		  unsigned shift  = 2 * (idx%4);
@@ -120,6 +131,49 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	    vp->value.str = buf;
 	    vp->format = vpiBinStrVal;
 	    break;
+
+	  case vpiDecStrVal: {
+		unsigned long val = 0;
+		unsigned count_x = 0, count_z = 0;
+
+		vp->value.str = buf;
+
+		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
+		      unsigned nibble = idx/4;
+		      unsigned shift  = 2 * (idx%4);
+		      unsigned bit_val = (rfp->bits[nibble] >> shift) & 3;
+		      switch (bit_val) {
+			  case 0:
+			    break;
+			  case 1:
+			    val |= 1 << idx;
+			    break;
+			  case 2:
+			    count_x += 1;
+			    break;
+			  case 3:
+			    count_z += 1;
+			    break;
+		      }
+		}
+
+		if (count_z == rfp->nbits) {
+		      sprintf(buf, "z");
+
+		} else if (count_x == rfp->nbits) {
+		      sprintf(buf, "x");
+
+		} else if ((count_z > 0) && (count_x == 0)) {
+		      sprintf(buf, "Z");
+
+		} else if (count_x > 0) {
+		      sprintf(buf, "X");
+
+		} else {
+		      sprintf(buf, "%lu", val);
+		}
+		break;
+	  }
 
 	  case vpiIntVal: {
 		unsigned val = 0;
@@ -197,6 +251,9 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.8  2002/01/15 03:21:18  steve
+ *  Support DesSTrVal for binary constants.
+ *
  * Revision 1.7  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
