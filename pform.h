@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.51 2001/11/10 02:08:49 steve Exp $"
+#ident "$Id: pform.h,v 1.52 2001/11/29 17:37:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -85,6 +85,12 @@ struct parmvalue_t {
 
 struct str_pair_t { PGate::strength_t str0, str1; };
 
+struct net_decl_assign_t {
+      char*name;
+      PExpr*expr;
+      struct net_decl_assign_t*next;
+};
+
 /* The lgate is gate instantiation information. */
 struct lgate {
       lgate(int =0)
@@ -134,6 +140,11 @@ extern void pform_makewire(const struct vlltype&li, const string&name,
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   list<char*>*names,
+			   NetNet::Type type);
+extern void pform_makewire(const struct vlltype&li,
+			   svector<PExpr*>*range,
+			   svector<PExpr*>*delay,
+			   net_decl_assign_t*assign_list,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
 			       const string&name, PExpr*expr);
@@ -203,6 +214,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.52  2001/11/29 17:37:51  steve
+ *  Properly parse net_decl assignments with delays.
+ *
  * Revision 1.51  2001/11/10 02:08:49  steve
  *  Coerse input to inout when assigned to.
  *

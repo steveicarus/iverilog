@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.84 2001/11/10 02:08:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.85 2001/11/29 17:37:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -772,6 +772,39 @@ void pform_makewire(const vlltype&li,
 	    delete range;
 }
 
+void pform_makewire(const vlltype&li,
+		    svector<PExpr*>*range,
+		    svector<PExpr*>*delay,
+		    net_decl_assign_t*decls,
+		    NetNet::Type type)
+{
+      net_decl_assign_t*first = decls->next;
+      decls->next = 0;
+
+      struct str_pair_t str;
+      str.str0 = PGate::STRONG;
+      str.str1 = PGate::STRONG;
+
+      while (first) {
+	    net_decl_assign_t*next = first->next;
+
+	    pform_makewire(li, first->name, type);
+	    if (range)
+		  pform_set_net_range(first->name, range, false);
+
+	    string name = scoped_name(first->name);
+	    PWire*cur = pform_cur_module->get_wire(name);
+	    if (cur != 0) {
+		  PEIdent*lval = new PEIdent(first->name);
+		  pform_make_pgassign(lval, first->expr, delay, str);
+	    }
+
+	    free(first->name);
+	    delete first;
+	    first = next;
+      }
+}
+
 void pform_set_port_type(const char*nm, NetNet::PortType pt,
 			 const char*file, unsigned lineno)
 {
@@ -1106,6 +1139,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.85  2001/11/29 17:37:51  steve
+ *  Properly parse net_decl assignments with delays.
+ *
  * Revision 1.84  2001/11/10 02:08:49  steve
  *  Coerse input to inout when assigned to.
  *

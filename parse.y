@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.136 2001/11/10 02:08:49 steve Exp $"
+#ident "$Id: parse.y,v 1.137 2001/11/29 17:37:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,6 +78,9 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
       Statement*statement;
       svector<Statement*>*statement_list;
 
+      struct { svector<PExpr*>*range; svector<PExpr*>*delay; } range_delay;
+      net_decl_assign_t*net_decl_assign;
+
       verinum* number;
 
       verireal* realtime;
@@ -124,8 +127,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <text> spec_notifier spec_notifier_opt
 %type <texts> register_variable_list list_of_variables
 
-%type <text> net_decl_assign
-%type <texts> net_decl_assigns
+%type <net_decl_assign> net_decl_assign net_decl_assigns
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mports> list_of_ports list_of_ports_opt
@@ -161,6 +163,8 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <event_statement> event_control
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
+
+%type <range_delay> range_delay
 
 %token K_TAND
 %right '?' ':'
@@ -1173,15 +1177,24 @@ module
 
 module_start : K_module | K_macromodule ;
 
+range_delay : range_opt delay3_opt
+		{ $$.range = $1; $$.delay = $2; }
+	;
+
+
 module_item
-	: net_type range_opt list_of_variables ';'
-		{ pform_makewire(@1, $2, $3, $1);
+	: net_type range_delay list_of_variables ';'
+		{ pform_makewire(@1, $2.range, $3, $1);
+		  if ($2.delay != 0) {
+			yyerror(@2, "sorry: net delays not supported.");
+			delete $2.delay;
+		  }
 		}
-	| net_type range_opt net_decl_assigns ';'
-		{ pform_makewire(@1, $2, $3, $1);
+	| net_type range_delay net_decl_assigns ';'
+		{ pform_makewire(@1, $2.range, $2.delay, $3, $1);
 		}
 	| net_type drive_strength { decl_strength = $2;} net_decl_assigns ';'
-		{ pform_makewire(@1, 0, $4, $1);
+		{ pform_makewire(@1, 0, 0, $4, $1);
 		    /* The strengths are handled in the
 		       net_decl_assigns using the decl_strength that I
 		       set in the rule. Right here, just restore the
@@ -1189,18 +1202,20 @@ module_item
 		  decl_strength.str0 = PGate::STRONG;
 		  decl_strength.str1 = PGate::STRONG;
 		}
-	| K_trireg charge_strength_opt range_opt delay3_opt list_of_variables ';'
+	| K_trireg charge_strength_opt range_delay list_of_variables ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
-		  delete $3;
+		  delete $3.range;
+		  delete $3.delay;
 		}
 
-	| port_type range_opt list_of_variables ';'
-		{ pform_set_port_type(@1, $3, $2, $1);
+	| port_type range_delay list_of_variables ';'
+		{ pform_set_port_type(@1, $3, $2.range, $1);
 		}
-	| port_type range_opt error ';'
+	| port_type range_delay error ';'
 		{ yyerror(@3, "error: Invalid variable list"
 			  " in port declaration.");
-		  if ($2) delete $2;
+		  if ($2.range) delete $2.range;
+		  if ($2.delay) delete $2.delay;
 		  yyerrok;
 		}
 	| block_item_decl
@@ -1381,32 +1396,23 @@ module_item_list
 
 net_decl_assign
 	: IDENTIFIER '=' expression
-		{ PEIdent*id = new PEIdent($1);
-		  PGAssign*tmp = pform_make_pgassign(id, $3, 0, decl_strength);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = $1;
-		}
-	| delay1 IDENTIFIER '=' expression
-		{ PEIdent*id = new PEIdent($2);
-		  PGAssign*tmp = pform_make_pgassign(id, $4, $1,
-						     decl_strength);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  $$ = $2;
+		{ net_decl_assign_t*tmp = new net_decl_assign_t;
+		  tmp->next = tmp;
+		  tmp->name = $1;
+		  tmp->expr = $3;
+		  $$ = tmp;
 		}
 	;
 
 net_decl_assigns
 	: net_decl_assigns ',' net_decl_assign
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
+		{ net_decl_assign_t*tmp = $1;
+		  $3->next = tmp->next;
+		  tmp->next = $3;
 		  $$ = tmp;
 		}
 	| net_decl_assign
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
-		  $$ = tmp;
+		{ $$ = $1;
 		}
 	;
 
