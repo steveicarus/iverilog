@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.19 2001/07/13 03:02:34 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.20 2001/07/16 18:48:07 steve Exp $"
 #endif
 
 /*
@@ -232,7 +232,17 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		if (hwid > 0) {
 		      hwid -= 1;
 		      buf[hwid] = hex_digits[hval];
-		      hval = 0;
+		      unsigned padd = 0;
+		      switch(buf[hwid]) {
+			  case 'X': padd = 2; break;
+			  case 'Z': padd = 3; break;
+		      }
+		      if (padd) {
+			    for (unsigned idx = wid % 4; idx < 4; idx += 1) {
+				  hval = hval | padd << 2*idx;
+			    }
+			    buf[hwid] = hex_digits[hval];
+		      }
 		}
 		vp->value.str = buf;
 		break;
@@ -257,7 +267,17 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		if (hwid > 0) {
 		      hwid -= 1;
 		      buf[hwid] = oct_digits[hval];
-		      hval = 0;
+		      unsigned padd = 0;
+		      switch(buf[hwid]) {
+			  case 'X': padd = 2; break;
+			  case 'Z': padd = 3; break;
+		      }
+		      if (padd) {
+			    for (unsigned idx = wid % 3; idx < 3; idx += 1) {
+				  hval = hval | padd << 2*idx;
+			    }
+			    buf[hwid] = oct_digits[hval];
+		      }
 		}
 		vp->value.str = buf;
 		break;
@@ -445,6 +465,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.20  2001/07/16 18:48:07  steve
+ *  Properly pad unknow values. (Stephan Boettcher)
+ *
  * Revision 1.19  2001/07/13 03:02:34  steve
  *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
  *
