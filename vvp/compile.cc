@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.145 2002/11/08 04:59:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.146 2002/11/21 22:43:13 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -137,7 +137,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%set/x",  of_SET_X,  3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1483,6 +1483,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.146  2002/11/21 22:43:13  steve
+ *  %set/x0 instruction to support bounds checking.
+ *
  * Revision 1.145  2002/11/08 04:59:58  steve
  *  Add the %assign/v0 instruction.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.44 2002/11/08 04:59:58 steve Exp $
+ *  $Id: opcodes.txt,v 1.45 2002/11/21 22:43:13 steve Exp $
  */
 
 
@@ -459,15 +459,17 @@ address zero is the LSB of the first memory word.  This instruction
 sets only a single bit.
 
 
-* %set/x <var-label>, <bit>, <idx>
+* %set/x0 <var-label>, <bit>, <top>
 
 This sets the bit of a variable functor, the address calculated by
-using the index register <idx> (0, 1, 2 or 3) to index the functor
-address of <var-label>.
+using the index register 0 to index the functor address of
+<var-label>.
 
-If the index value in index register <idx> is <0 (for example if
-%ix/get converted an unknown value into the register) then the set is
-not performed.
+If the index value in index register is <0 (for example if %ix/get
+converted an unknown value into the register) then the set is not
+performed. Also, if the index value is > the immediate top value, then
+the set is not performed. The 0 and <top> values suffice to provide
+complete bounds checking.
 
 
 * %shiftl/i0 <bit>, <wid>

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.93 2002/11/08 04:59:58 steve Exp $"
+#ident "$Id: vthread.cc,v 1.94 2002/11/21 22:43:14 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2191,17 +2191,19 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
  * The single bit goes into the indexed functor. Abort the instruction
  * if the index is <0.
  */
-bool of_SET_X(vthread_t thr, vvp_code_t cp)
+bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
-      long idx = thr->index[cp->bit_idx[1]&3];
+      long idx = thr->index[0];
 
 	/* If idx < 0, then the index value is probably generated from
 	   an undefined value. At any rate, this is defined to have no
 	   effect so quit now. */
-      if (idx < 0) {
+      if (idx < 0)
 	    return true;
-      }
+
+      if (idx > cp->bit_idx[1])
+	    return true;
 
 	/* Form the functor pointer from the base pointer and the
 	   index from the index register. */
@@ -2492,6 +2494,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.94  2002/11/21 22:43:14  steve
+ *  %set/x0 instruction to support bounds checking.
+ *
  * Revision 1.93  2002/11/08 04:59:58  steve
  *  Add the %assign/v0 instruction.
  *

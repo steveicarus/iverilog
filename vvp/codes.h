@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.53 2002/11/08 04:59:57 steve Exp $"
+#ident "$Id: codes.h,v 1.54 2002/11/21 22:43:13 steve Exp $"
 #endif
 
 
@@ -92,7 +92,7 @@ extern bool of_RELEASE(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
-extern bool of_SET_X(vthread_t thr, vvp_code_t code);
+extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
@@ -160,6 +160,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.54  2002/11/21 22:43:13  steve
+ *  %set/x0 instruction to support bounds checking.
+ *
  * Revision 1.53  2002/11/08 04:59:57  steve
  *  Add the %assign/v0 instruction.
  *

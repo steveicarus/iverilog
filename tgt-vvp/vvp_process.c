@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.75 2002/11/17 18:31:09 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.76 2002/11/21 22:43:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -79,8 +79,8 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
 
       if (ivl_lval_mux(lval)) {
 	    assert(wid == 1);
-	    fprintf(vvp_out, "    %%set/x V_%s, %u, 0;\n",
-		    vvp_signal_label(sig), bit);
+	    fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), bit, ivl_signal_pins(sig)-1);
       } else if (wid == 1) {
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
 		    vvp_signal_label(sig), idx+part_off, bit);
@@ -191,6 +191,8 @@ static int show_stmt_assign(ivl_statement_t net)
 		       value and write it into index0. */
 		  if (ivl_lval_mux(lval)) {
 			calculate_into_x0(ivl_lval_mux(lval));
+			  /* Generate code to skip around the set
+			     if the index has X values. */
 			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 			skip_set_flag = 1;
 		  }
@@ -198,6 +200,8 @@ static int show_stmt_assign(ivl_statement_t net)
 		  mem = ivl_lval_mem(lval);
 		  if (mem) {
 			draw_memory_index_expr(mem, ivl_lval_idx(lval));
+			  /* Generate code to skip around the set
+			     if the index has X values. */
 			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 			skip_set_flag = 1;
 		  }
@@ -234,14 +238,7 @@ static int show_stmt_assign(ivl_statement_t net)
 			      idx += cnt;
 			}
 
-#if 0
-			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			      set_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]), 1);
 
-			      cur_rbit += 1;
-			}
-#endif
 			if (bit_limit < ivl_lval_pins(lval)) {
 			      unsigned cnt = ivl_lval_pins(lval) - bit_limit;
 			      set_to_lvariable(lval, bit_limit, 0, cnt);
@@ -1452,6 +1449,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.76  2002/11/21 22:43:13  steve
+ *  %set/x0 instruction to support bounds checking.
+ *
  * Revision 1.75  2002/11/17 18:31:09  steve
  *  Generate unique labels for force functors.
  *
