@@ -30,8 +30,8 @@
 # define INCLUDEDIR "/usr/local/include"
 #endif
 
-#define REMOVE "rm -f"
-#define MOVE   "mv"
+const char VERSION[] = "$Name:  $ $State: Exp $";
+
 
 #define P_IF_SET(var) var.set ? var.name : ""
 
@@ -85,8 +85,9 @@ struct compileinfo {
   int pform;
   int execute;
   int elabnetlist;
+  int debug;
 };
-struct compileinfo compileinfo = {0, 0, 0};
+struct compileinfo compileinfo = {0, 0, 0, 0};
 
 
 void sorry(char optelem)
@@ -145,17 +146,16 @@ void preprocess(void)
 	  P_IF_SET(ivlppincdir),
 	  tmpPPfile,
 	  verilogfiles);
-#if DEBUG
-  printf("Executing command : \n%s\n", argument);
-#else
-  if (system(argument)) {
-    fprintf(stderr, "Preprocessing failed. Terminating compilation\n");
-    sprintf(argument, "%s %s", REMOVE, tmpPPfile);
-    system(argument);
-    free(argument);
-    exit(1);
+  if (compileinfo.debug) {
+    printf("Executing command : \n%s\n", argument);
+  } else {
+    if (system(argument)) {
+      fprintf(stderr, "Preprocessing failed. Terminating compilation\n");
+      unlink(tmpPPfile);
+      free(argument);
+      exit(1);
+    }
   }
-#endif
   
   free(argument);
   return;
@@ -168,34 +168,29 @@ void compile(void)
 
   argument = (char *)malloc(256);
 
-  sprintf(argument, "ivl %s %s %s -o %s %s",
+  /* VPI_MODULE_PATH should be better integrated. */
+  /* HACK */
+  sprintf(argument, "ivl %s %s %s %sVPI_MODULE_PATH=%s -o %s %s",
 	  P_IF_SET(topmodule),
-	  target.targetinfo.compsw,
-	  target.targetinfo.name,
+	  target.targetinfo.compsw, target.targetinfo.name,
+	  VPImodpath.compsw, VPImodpath.name,
 	  /* compileinfo.pform ? "-P whatever_pform" : "",
 	     compileinfo.elabnetlist ? "-E whatever_netlist" : "", */
 	  tmpCCfile,
 	  tmpPPfile);
-#if DEBUG
-  printf("Executing command : \n%s\n", argument);
-#else
-  if (system(argument)) {
-    fprintf(stderr, "Compilation failed. Terminating compilation\n");
-    sprintf(argument, "%s %s", REMOVE, tmpCCfile);
-    system(argument);
-    free(argument);
-    exit(1);
+  if (compileinfo.debug) {
+    printf("Executing command : \n%s\n", argument);
+    printf("Removing file %s\n", tmpPPfile);
+  } else {
+    if (system(argument)) {
+      fprintf(stderr, "Compilation failed. Terminating compilation\n");
+      unlink(tmpCCfile);
+      free(argument);
+      exit(1);
+    }
+    unlink(tmpPPfile);
   }
-#endif
-
   
-  sprintf(argument, "%s %s", REMOVE, tmpPPfile);
-#if DEBUG
-  printf("Executing command:\n %s\n", argument);
-#else
-  system(argument);
-#endif
-
   free(argument);
   return;
 }
@@ -216,56 +211,44 @@ void postprocess(void)
 	    cpplibdir.compsw, cpplibdir.name, /* Library dir */
 	    tmpCCfile,
 	    outputfile.name);
-#if DEBUG
-    printf("Executing command :\n%s\n", argument);
-#else
-    if (system(argument)) {
-      fprintf(stderr, "g++ compilation failed. Terminating compilation\n");
-      sprintf(argument, "%s %s", REMOVE, tmpCCfile);
-      system(argument);
-      free(argument);
-      exit(1);
+    if (compileinfo.debug) {
+      printf("Executing command :\n%s\n", argument);
+    } else {
+      if (system(argument)) {
+	fprintf(stderr, "g++ compilation failed. Terminating compilation\n");
+	unlink(tmpCCfile);
+	free(argument);
+	exit(1);
+      }
     }
-#endif
-  
-    sprintf(argument, "%s %s", REMOVE, tmpCCfile);
-#if DEBUG
-    printf("Executing command :\n%s\n", argument);
-#else
-    system(argument);
-#endif
-
+    unlink(tmpCCfile);
     break;
   case XNF:   /* Just move file as is */
-    sprintf(argument, "%s %s %s.xnf", MOVE, tmpCCfile, outputfile.name);
-#if DEBUG
-    printf("Executing command :\n%s\n", argument);
-#else
-    system(argument);
-#endif
+    if (compileinfo.debug) {
+      printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
+    } else {
+      rename(tmpCCfile, outputfile.name);
+    }
     break;
   case OTHER: /* Just move file as is */
-    sprintf(argument, "mv %s %s.%s", 
-	    tmpCCfile, 
-	    outputfile.name, 
-	    target.targetinfo.name);
-#if DEBUG
-    printf("Executing command :\n%s\n", argument);
-#else
-    system(argument);
-#endif
+    sprintf(outputfile.name, "%s.%s", outputfile.name, target.targetinfo.name);
+    if (compileinfo.debug) {
+      printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
+    } else {
+      rename(tmpCCfile, outputfile.name);
+    }
     break;
   default:
     fprintf(stderr, "Illegal target. This should never happen.\n");
     error_exit();
   }
-
+  
   if (compileinfo.execute) {
-#if DEBUG
-    printf("Executing command :\n%s\n", outputfile.name);
-#else
-    system(outputfile.name);
-#endif
+    if (compileinfo.debug) {
+      printf("Executing command :\n%s\n", outputfile.name);
+    } else {
+      system(outputfile.name);
+    }
   }
 
 
@@ -275,20 +258,14 @@ void postprocess(void)
 
 
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-  const char optstring[] = "D:I:Xxf:o:s:t:EP";
+  const char optstring[] = "D:I:Xxf:o:s:t:EPvd";
   int optelem = 0;
 
 
   while ((optelem = getopt(argc, argv, optstring)) != EOF) {
-    /*#if DEBUG
-    if (optarg == NULL)
-	printf("Option element %c\n", (char)optelem);
-    else
-	printf("Option element %c %s\n", (char)optelem, optarg);
-	#endif*/    
-
+    
     switch ((char)optelem) {
     case 'D': /* defines */
       sprintf(ivlppdefines.name, "%s %s%s", ivlppdefines.name, 
@@ -347,8 +324,19 @@ void main(int argc, char **argv)
     case 'P': /* dump pform */
       compileinfo.pform = 1;
       break;
+    case 'v':
+      printf("gverilog version %s\n", VERSION);
+      system("ivlpp -v");
+      printf("*****\n");
+      system("ivl -v");
+      printf("*****\n");
+      system("g++ -v");
+      return(0);
+    case 'd':
+      compileinfo.debug = 1;
+      break;
     case '?':
-      fprintf(stderr, "Not defined commandswitch\n", argv[optind]);
+      fprintf(stderr, "Not defined commandswitch %s\n", argv[optind]);
       error_exit();
     default:
       fprintf(stderr, "Not handled commandswitch %s\n", argv[optind]);
@@ -365,9 +353,6 @@ void main(int argc, char **argv)
   /* Resolve temporary file storage */
   sprintf(tmpPPfile, "/tmp/ivl%d.pp", (int)getpid());
   sprintf(tmpCCfile, "/tmp/ivl%d.cc", (int)getpid());
-  /*#if DEBUG  
-  printf("Temporary files are %s and %s\n", tmpPPfile, tmpCCfile);
-  #endif */
 
   /* Build list of verilog files */
   for(; optind != argc; optind++) {
@@ -386,5 +371,5 @@ void main(int argc, char **argv)
 
   postprocess();
   
-  return;
+  return(0);
 }
