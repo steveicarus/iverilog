@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.53 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.54 2001/07/07 03:01:37 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -476,6 +476,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    return net->u_.arith.a[idx];
 
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
 	    return net->u_.shift.d[idx];
 
@@ -564,6 +565,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 		  return net->u_.mux.q.pins[idx];
 
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
 	    return net->u_.shift.q[idx];
 
@@ -591,6 +593,7 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 		  return net->u_.mux.s.pins[idx];
 
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.select);
 	    return net->u_.shift.s[idx];
 
@@ -608,6 +611,7 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.select;
 	  default:
 	    assert(0);
@@ -647,6 +651,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
 	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.width;
 	  default:
 	    assert(0);
@@ -1248,6 +1253,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.54  2001/07/07 03:01:37  steve
+ *  Detect and make available to t-dll the right shift.
+ *
  * Revision 1.53  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *

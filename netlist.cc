@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.165 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.166 2001/07/07 03:01:37 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -321,16 +321,21 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
       assert(s);
 
       verinum::V init_value = verinum::Vz;
+      Link::DIR dir = Link::PASSIVE;
+
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
 	    init_value = verinum::Vx;
+	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY0:
 	    init_value = verinum::V0;
+	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY1:
 	    init_value = verinum::V1;
+	    dir = Link::OUTPUT;
 	    break;
 	  default:
 	    break;
@@ -338,6 +343,7 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
+	    pin(idx).set_dir(dir);
 	    pin(idx).set_init(init_value);
       }
 
@@ -2342,6 +2348,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.166  2001/07/07 03:01:37  steve
+ *  Detect and make available to t-dll the right shift.
+ *
  * Revision 1.165  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *

@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.53 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.54 2001/07/07 03:01:37 steve Exp $"
 #endif
 
 # include  "compiler.h"
 # include  "t-dll.h"
+# include  "netmisc.h"
 # include  <malloc.h>
 
 #if defined(__WIN32__)
@@ -703,6 +704,11 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+/*
+ * The lpm_clshift device represents both left and right shifts,
+ * depending on what is connected to the Direction pin. We convert
+ * this device into SHIFTL or SHIFTR devices.
+ */
 void dll_target::lpm_clshift(const NetCLShift*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -712,7 +718,22 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       obj->scope = find_scope(des_.root_, net->scope());
       assert(obj->scope);
 
-      assert(! net->pin_Direction().is_linked());
+	/* Look at the direction input of the device, and select the
+	   shift direction accordingly. */
+      if (net->pin_Direction().is_linked()) {
+	    assert( link_drivers_constant(net->pin_Direction()) );
+
+	    verinum::V dir = driven_value(net->pin_Direction());
+	    switch (dir) {
+		case verinum::V0:
+		  break;
+		case verinum::V1:
+		  obj->type = IVL_LPM_SHIFTR;
+		  break;
+		default:
+		  assert(0);
+	    }
+      }
 
       obj->u_.shift.width = net->width();
       obj->u_.shift.select = net->width_dist();
@@ -1439,6 +1460,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.54  2001/07/07 03:01:37  steve
+ *  Detect and make available to t-dll the right shift.
+ *
  * Revision 1.53  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *

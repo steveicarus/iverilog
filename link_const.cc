@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.8 2001/02/16 03:27:07 steve Exp $"
+#ident "$Id: link_const.cc,v 1.9 2001/07/07 03:01:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -61,11 +61,8 @@ bool link_drivers_constant(const Link&lnk)
 
 
 	      /* If the link is PASSIVE then it doesn't count as a
-		 driver if its initial value is Vz. This is pertinant
-		 because REGs are PASSIVE but can receive values from
-		 procedural assignments. */
-	    if ((cur->get_dir() == Link::PASSIVE)
-		&& (cur->get_init() == verinum::Vz))
+		 driver if its initial value is Vz. */
+	    if (cur->get_dir() == Link::PASSIVE)
 		  continue;
 
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
@@ -114,6 +111,9 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.9  2001/07/07 03:01:37  steve
+ *  Detect and make available to t-dll the right shift.
+ *
  * Revision 1.8  2001/02/16 03:27:07  steve
  *  links to root inputs are not constant.
  *
