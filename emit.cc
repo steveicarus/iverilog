@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.49 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: emit.cc,v 1.50 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 /*
@@ -26,7 +26,6 @@
  */
 # include  "target.h"
 # include  "netlist.h"
-# include  <iostream>
 # include  <typeinfo>
 # include  <cassert>
 
@@ -351,10 +350,13 @@ void NetWhile::emit_proc_recurse(struct target_t*tgt) const
       proc_->emit_proc(tgt);
 }
 
-bool Design::emit(ostream&o, struct target_t*tgt) const
+bool Design::emit(struct target_t*tgt) const
 {
       bool rc = true;
-      tgt->start_design(o, this);
+
+      rc = rc && tgt->start_design(this);
+      if (rc == false)
+	    return false;
 
 	// enumerate the scopes
       root_scope_->emit_scope(tgt);
@@ -448,12 +450,12 @@ void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_unary(this);
 }
 
-bool emit(ostream&o, const Design*des, const char*type)
+bool emit(const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
 	    const struct target*tgt = target_table[idx];
 	    if (tgt->name == type)
-		  return des->emit(o, tgt->meth);
+		  return des->emit(tgt->meth);
 
       }
 }
@@ -461,6 +463,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.50  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.49  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *

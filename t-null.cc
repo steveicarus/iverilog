@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.14 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: t-null.cc,v 1.15 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -30,6 +30,7 @@
 static class target_null_t  : public target_t {
 
     public:
+      bool start_design(const Design*) { return true; }
       void bufz(const NetBUFZ*) { }
       void event(const NetEvent*) { }
       void func_def(const NetFuncDef*) { }
@@ -53,6 +54,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.15  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.14  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *

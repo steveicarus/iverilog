@@ -17,17 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.42 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: target.cc,v 1.43 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  <typeinfo>
 
 target_t::~target_t()
-{
-}
-
-void target_t::start_design(ostream&os, const Design*)
 {
 }
 
@@ -398,6 +394,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.43  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.42  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.154 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.155 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 /*
@@ -2650,7 +2650,7 @@ class Design {
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
-      bool emit(ostream&, struct target_t*) const;
+      bool emit(struct target_t*) const;
 
 	// This is incremented by elaboration when an error is
 	// detected. It prevents code being emitted.
@@ -2722,6 +2722,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.155  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.154  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.36 2000/07/29 17:58:21 steve Exp $"
+#ident "$Id: main.cc,v 1.37 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -119,7 +119,6 @@ int main(int argc, char*argv[])
 {
       bool help_flag = false;
       const char* net_path = 0;
-      const char* out_path = 0;
       const char* pf_path = 0;
       const char* warn_en = "";
       int opt;
@@ -127,6 +126,7 @@ int main(int argc, char*argv[])
       queue<net_func> net_func_queue;
 
       flags["VPI_MODULE_LIST"] = "system";
+      flags["-o"] = "a.out";
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
@@ -155,7 +155,7 @@ int main(int argc, char*argv[])
 	    net_path = optarg;
 	    break;
 	  case 'o':
-	    out_path = optarg;
+	    flags["-o"] = optarg;
 	    break;
 	  case 'P':
 	    pf_path = optarg;
@@ -295,24 +295,9 @@ int main(int argc, char*argv[])
       }
 
 
-      bool emit_rc;
-      if (out_path) {
-	    ofstream out;
-	    out.open(out_path);
-	    if (! out.is_open()) {
-		  cerr << "Unable to open " << out_path << " for writing."
-		       << endl;
-		  return 1;
-	    }
-
-	    emit_rc = emit(out, des, target);
-
-      } else {
-	    emit_rc = emit(cout, des, target);
-      }
-
+      bool emit_rc = emit(des, target);
       if (!emit_rc) {
-	    cerr << "internal error: Code generation had errors." << endl;
+	    cerr << "error: Code generation had errors." << endl;
 	    return 1;
       }
 
@@ -321,6 +306,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.37  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.36  2000/07/29 17:58:21  steve
  *  Introduce min:typ:max support.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.12 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.13 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 /*
@@ -28,7 +28,7 @@
  * for debugging.
  */
 
-# include  <iostream>
+# include  <fstream>
 # include  <iomanip>
 # include  <strstream>
 # include  <typeinfo>
@@ -38,7 +38,7 @@ extern const struct target tgt_verilog;
 
 class target_verilog : public target_t {
     public:
-      virtual void start_design(ostream&os, const Design*);
+      virtual bool start_design(const Design*);
       virtual void signal(const NetNet*);
       virtual void logic(const NetLogic*);
       virtual void bufz(const NetBUFZ*);
@@ -54,8 +54,7 @@ class target_verilog : public target_t {
       void end_process(const NetProcTop*);
       unsigned indent_;
 
-      ostream*out_;
-# define OS (*out_)
+      ofstream out;
 
       void emit_expr_(ostream&os, const NetExpr*);
 };
@@ -67,11 +66,13 @@ class target_verilog : public target_t {
  * design.  Targets can use these hooks to generate header or footer
  * information if desired.
  */
-void target_verilog::start_design(ostream&os, const Design*)
+bool target_verilog::start_design(const Design*des)
 {
+      out.open(des->get_flag("-o").c_str(), ios::out | ios::trunc);
+
       indent_ = 0;
-      os << "module " << "main" << ";" << endl;
-      out_ = &os;
+      out << "module " << "main" << ";" << endl;
+      return true;
 }
 
 /*
@@ -81,14 +82,14 @@ void target_verilog::start_design(ostream&os, const Design*)
  */
 void target_verilog::signal(const NetNet*net)
 {
-      OS << "    " << net->type();
+      out << "    " << net->type();
       if (net->pin_count() > 1)
-	    OS << " [" << net->msb() << ":" << net->lsb() << "]";
+	    out << " [" << net->msb() << ":" << net->lsb() << "]";
 
       if (net->rise_time())
-	    OS << " #" << net->rise_time();
+	    out << " #" << net->rise_time();
 
-      OS << " " << mangle(net->name()) << ";" << endl;
+      out << " " << mangle(net->name()) << ";" << endl;
 }
 
 void target_verilog::logic(const NetLogic*net)
@@ -96,52 +97,52 @@ void target_verilog::logic(const NetLogic*net)
       switch (net->type()) {
 
 	  case NetLogic::AND:
-	    OS << "    and";
+	    out << "    and";
 	    break;
 	  case NetLogic::NAND:
-	    OS << "    nand";
+	    out << "    nand";
 	    break;
 	  case NetLogic::NOR:
-	    OS << "    nor";
+	    out << "    nor";
 	    break;
 	  case NetLogic::NOT:
-	    OS << "    not";
+	    out << "    not";
 	    break;
 	  case NetLogic::OR:
-	    OS << "    or";
+	    out << "    or";
 	    break;
 	  case NetLogic::XNOR:
-	    OS << "    xnor";
+	    out << "    xnor";
 	    break;
 	  case NetLogic::XOR:
-	    OS << "    xor";
+	    out << "    xor";
 	    break;
       }
 
-      OS << " #" << net->rise_time() << " " << mangle(net->name()) << "(";
+      out << " #" << net->rise_time() << " " << mangle(net->name()) << "(";
 
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
-      OS << mangle(sig->name()) << "[" << sidx << "]";
+      out << mangle(sig->name()) << "[" << sidx << "]";
       for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
 	    sig = find_link_signal(net, idx, sidx);
 	    assert(sig);
-	    OS << ", " << mangle(sig->name()) << "[" << sidx << "]";
+	    out << ", " << mangle(sig->name()) << "[" << sidx << "]";
       }
-      OS << ");" << endl;
+      out << ");" << endl;
 }
 
 void target_verilog::bufz(const NetBUFZ*net)
 {
       assert( net->pin_count() == 2 );
-      OS << "    assign ";
+      out << "    assign ";
 
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
-      OS << mangle(sig->name()) << "[" << sidx << "] = ";
+      out << mangle(sig->name()) << "[" << sidx << "] = ";
 
       sig = find_link_signal(net, 1, sidx);
-      OS << mangle(sig->name()) << "[" << sidx << "];" << endl;
+      out << mangle(sig->name()) << "[" << sidx << "];" << endl;
 }
 
 bool target_verilog::process(const NetProcTop*top)
@@ -156,10 +157,10 @@ void target_verilog::start_process(const NetProcTop*proc)
 {
       switch (proc->type()) {
 	  case NetProcTop::KINITIAL:
-	    OS << "    initial" << endl;
+	    out << "    initial" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
-	    OS << "    always" << endl;
+	    out << "    always" << endl;
 	    break;
       }
 
@@ -194,17 +195,17 @@ void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
 
 bool target_verilog::proc_block(const NetBlock*net)
 {
-      OS << setw(indent_) << "" << "begin" << endl;
+      out << setw(indent_) << "" << "begin" << endl;
       indent_ += 4;
       net->emit_recurse(this);
       indent_ -= 4;
-      OS << setw(indent_) << "" << "end" << endl;
+      out << setw(indent_) << "" << "end" << endl;
       return true;
 }
 
 bool target_verilog::proc_delay(const NetPDelay*net)
 {
-      OS << setw(indent_) << "" << "#" << net->delay() << endl;
+      out << setw(indent_) << "" << "#" << net->delay() << endl;
 
       indent_ += 4;
       bool flag = net->emit_proc_recurse(this);
@@ -230,18 +231,18 @@ static void vtask_parm(ostream&os, const NetExpr*ex)
 
 void target_verilog::proc_stask(const NetSTask*net)
 {
-      OS << setw(indent_) << "" << net->name();
+      out << setw(indent_) << "" << net->name();
       if (net->nparms() > 0) {
-	    OS << "(";
-	    vtask_parm(OS, net->parm(0));
+	    out << "(";
+	    vtask_parm(out, net->parm(0));
 	    for (unsigned idx = 1 ;  idx < net->nparms() ;  idx += 1) {
-		  OS << ", ";
-		  vtask_parm(OS, net->parm(idx));
+		  out << ", ";
+		  vtask_parm(out, net->parm(idx));
 	    }
-	    OS << ")";
+	    out << ")";
       }
 
-      OS << ";" << endl;
+      out << ";" << endl;
 }
 
 
@@ -251,7 +252,7 @@ void target_verilog::proc_stask(const NetSTask*net)
  */
 void target_verilog::end_design(const Design*)
 {
-      OS << "endmodule" << endl;
+      out << "endmodule" << endl;
 }
 
 static target_verilog tgt_verilog_obj;
@@ -263,6 +264,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.13  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.12  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *

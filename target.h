@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.41 2000/08/08 01:50:42 steve Exp $"
+#ident "$Id: target.h,v 1.42 2000/08/09 03:43:45 steve Exp $"
 #endif
 
 # include  "netlist.h"
-class ostream;
 
 /*
  * This header file describes the types and constants used to describe
@@ -54,7 +53,7 @@ struct target_t {
 
 	/* Start the design. This sets the main output file stream
 	   that the target should use. */
-      virtual void start_design(ostream&os, const Design*);
+      virtual bool start_design(const Design*) =0;
 
 	/* This is called once for each scope in the design, before
 	   anything else is called. */
@@ -148,7 +147,7 @@ struct expr_scan_t {
 /* The emit functions take a design and emit it to the output stream
    using the specified target. If the target is given by name, it is
    located in the target_table and used. */
-extern bool emit(ostream&o, const Design*des, const char*type);
+extern bool emit(const Design*des, const char*type);
 
 /* This function takes a fully qualified verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
@@ -161,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.42  2000/08/09 03:43:45  steve
+ *  Move all file manipulation out of target class.
+ *
  * Revision 1.41  2000/08/08 01:50:42  steve
  *  target methods need not take a file stream.
  *
