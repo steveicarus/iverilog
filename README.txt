@@ -273,8 +273,6 @@ verilog features.
 
   - `timescale directive
 
-  - Task declarations/calls that take paramters. (Parameterless calls work.)
-
   - Specify blocks
 
   - Named port parameters.
