@@ -223,11 +223,6 @@ IVL is in development - as such it still only supports a (growing) subset
 of verilog.  Below is a description of some of the currently unsupported
 verilog features.
 
-  - Lvalue bit ranges, i.e. values being assigned to. Examples:
-
-                    regval [3:1] = 3'b0;
-                    regval [7:0] = 8'b0;
-
   - The "?" operator. Example: count = val ? 1 : 0;
 
   - Ranges within parameter definitions:
@@ -266,12 +261,6 @@ verilog features.
   - Delay list. Example:  sample #(9,99) sample1(a,b);
 
   - Bit ranges within IF. Example: if (a[2:3])  do = 1;
- 
-  - List of targets for case statement:
-    Example:   
-             case (a)   // Not Okay - 1, 2, and 3 must be separate lines.
-                        1, 2, 3: $write("selected 1, 2, 3 (Not Ok)\n");    
-             endcase   
  
   - Forever key word.
 

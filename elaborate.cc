@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.44 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.45 1999/06/15 05:38:39 steve Exp $"
 #endif
 
 /*
@@ -1224,6 +1224,9 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       return cur;
 }
 
+/*
+ * Elaborate a case statement.
+ */
 NetProc* PCase::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
@@ -1233,18 +1236,51 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 	    return 0;
       }
 
-      NetCase*res = new NetCase(expr, items_->count());
-
+      unsigned icount = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
-	    NetExpr*gu = 0;
-	    NetProc*st = 0;
-	    if ((*items_)[idx]->expr)
-		  gu = (*items_)[idx]->expr->elaborate_expr(des, path);
+	    PCase::Item*cur = (*items_)[idx];
 
-	    if ((*items_)[idx]->stat)
-		  st = (*items_)[idx]->stat->elaborate(des, path);
+	    if (cur->expr.count() == 0)
+		  icount += 1;
+	    else
+		  icount += cur->expr.count();
+      }
 
-	    res->set_case(idx, gu, st);
+      NetCase*res = new NetCase(expr, icount);
+
+      unsigned inum = 0;
+      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+
+	    assert(inum < icount);
+	    PCase::Item*cur = (*items_)[idx];
+
+	    if (cur->expr.count() == 0) {
+		    /* If there are no expressions, then this is the
+		       default case. */
+		  NetProc*st = 0;
+		  if (cur->stat)
+			st = cur->stat->elaborate(des, path);
+
+		  res->set_case(inum, 0, st);
+		  inum += 1;
+
+	    } else for (unsigned e = 0; e < cur->expr.count(); e += 1) {
+
+		    /* If there are one or more expressions, then
+		       iterate over the guard expressions, elaborating
+		       a separate case for each. (Yes, the statement
+		       will be elaborated again for each.) */
+		  NetExpr*gu = 0;
+		  NetProc*st = 0;
+		  assert(cur->expr[e]);
+		  gu = cur->expr[e]->elaborate_expr(des, path);
+
+		  if (cur->stat)
+			st = cur->stat->elaborate(des, path);
+
+		  res->set_case(inum, gu, st);
+		  inum += 1;
+	    }
       }
 
       return res;
@@ -1527,6 +1563,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.45  1999/06/15 05:38:39  steve
+ *  Support case expression lists.
+ *
  * Revision 1.44  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

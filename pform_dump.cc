@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.21 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.22 1999/06/15 05:38:39 steve Exp $"
 #endif
 
 /*
@@ -310,14 +310,23 @@ void PCase::dump(ostream&out, unsigned ind) const
 	    get_line() << " */" << endl;
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
-	    if ((*items_)[idx]->expr)
-		  out << setw(ind+2) << "" << *(*items_)[idx]->expr << ":";
-	    else
+	    PCase::Item*cur = (*items_)[idx];
+
+	    if (cur->expr.count() == 0) {
 		  out << setw(ind+2) << "" << "default:";
 
-	    if ((*items_)[idx]->stat) {
+	    } else {
+		  out << setw(ind+2) << "" << *cur->expr[0];
+			
+		  for(unsigned e = 1 ; e < cur->expr.count() ; e += 1)
+			out << ", " << *cur->expr[e];
+
+		  out << ":";
+	    }
+
+	    if (cur->stat) {
 		  out << endl;
-		  (*items_)[idx]->stat->dump(out, ind+6);
+		  cur->stat->dump(out, ind+6);
 	    } else {
 		  out << " ;" << endl;
 	    }
@@ -480,6 +489,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.22  1999/06/15 05:38:39  steve
+ *  Support case expression lists.
+ *
  * Revision 1.21  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

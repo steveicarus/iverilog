@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.10 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: Statement.h,v 1.11 1999/06/15 05:38:39 steve Exp $"
 #endif
 
 # include  <string>
@@ -180,7 +180,7 @@ class PCase  : public Statement {
 
     public:
       struct Item {
-	    PExpr*expr;
+	    svector<PExpr*>expr;
 	    Statement*stat;
       };
 
@@ -301,6 +301,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.11  1999/06/15 05:38:39  steve
+ *  Support case expression lists.
+ *
  * Revision 1.10  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

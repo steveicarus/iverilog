@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.8 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: Statement.cc,v 1.9 1999/06/15 05:38:39 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -89,10 +89,8 @@ PCase::PCase(PExpr*ex, svector<PCase::Item*>*l)
 PCase::~PCase()
 {
       delete expr_;
-      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
-	    if ((*items_)[idx]->expr) delete (*items_)[idx]->expr;
+      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1)
 	    if ((*items_)[idx]->stat) delete (*items_)[idx]->stat;
-      }
 
       delete[]items_;
 }
@@ -117,6 +115,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.9  1999/06/15 05:38:39  steve
+ *  Support case expression lists.
+ *
  * Revision 1.8  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

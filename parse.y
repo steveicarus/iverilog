@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.41 1999/06/15 02:50:02 steve Exp $"
+#ident "$Id: parse.y,v 1.42 1999/06/15 05:38:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -153,22 +153,18 @@ source_file
 case_item
 	: expression_list ':' statement_opt
 		{ PCase::Item*tmp = new PCase::Item;
-		  if ($1->count() > 1) {
-			yyerror(@1, "Sorry, case expression lists not supported.");
-		  }
-		  tmp->expr = (*$1)[0];
+		  tmp->expr = *$1;
 		  tmp->stat = $3;
+		  delete $1;
 		  $$ = tmp;
 		}
 	| K_default ':' statement_opt
 		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->expr = 0;
 		  tmp->stat = $3;
 		  $$ = tmp;
 		}
 	| K_default  statement_opt
 		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->expr = 0;
 		  tmp->stat = $2;
 		  $$ = tmp;
 		}
