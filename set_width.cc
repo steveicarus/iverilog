@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.10 2000/04/21 02:46:42 steve Exp $"
+#ident "$Id: set_width.cc,v 1.11 2000/04/26 03:33:32 steve Exp $"
 #endif
 
 /*
@@ -191,16 +191,27 @@ bool NetEConst::set_width(unsigned w)
 
 	    value_ = tmp;
 
+	    expr_width(w);
+	    return true;
+
       } else {
-	    verinum tmp (verinum::V0, w);
-	    for (unsigned idx = 0 ;  idx < w ;  idx += 1)
+	    unsigned use_w = w;
+	    bool flag = true;
+
+	      // Don't reduce a number too small to hold all the
+	      // significant bits.
+	    for (unsigned idx = w ;  idx < value_.len() ;  idx += 1)
+		  if (value_[idx] != verinum::V0)
+			use_w = idx+1;
+
+	    verinum tmp (verinum::V0, use_w);
+	    for (unsigned idx = 0 ;  idx < use_w ;  idx += 1)
 		  tmp.set(idx, value_[idx]);
 
 	    value_ = tmp;
+	    expr_width(use_w);
+	    return use_w == w;
       }
-
-      expr_width(w);
-      return true;
 }
 
 bool NetEMemory::set_width(unsigned w)
@@ -275,6 +286,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.11  2000/04/26 03:33:32  steve
+ *  Do not set width too small to hold significant bits.
+ *
  * Revision 1.10  2000/04/21 02:46:42  steve
  *  Many Unary operators have known widths.
  *

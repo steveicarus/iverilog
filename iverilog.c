@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.4 2000/04/23 21:14:32 steve Exp $"
+#ident "$Id: iverilog.c,v 1.5 2000/04/26 03:33:32 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -36,27 +36,44 @@ const char*start = 0;
 
 int verbose_flag = 0;
 
-static char cmdline[8192];
+char tmp[4096];
 
-static int t_null()
+static int t_null(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      strcat(cmdline, " | ");
-      strcat(cmdline, base);
-      strcat(cmdline, "/ivl ");
+      sprintf(tmp, " | %s/ivl ", base);
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      ncmd += rc;
+      strcpy(cmd+ncmd, tmp);
+
       if (start) {
-	    strcat(cmdline, " -s ");
-	    strcat(cmdline, start);
+	    sprintf(tmp, " -s%s", start);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
       }
-      if (verbose_flag)
-	    strcat(cmdline, "-v ");
-      strcat(cmdline, "-- -");
+
+      if (verbose_flag) {
+	    sprintf(tmp, " -v");
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
+      sprintf(tmp, " -- -");
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
 
       if (verbose_flag)
-	    printf("translate: %s\n", cmdline);
+	    printf("translate: %s\n", cmd);
 
-      rc = system(cmdline);
+      rc = system(cmd);
       return rc;
 }
 
@@ -65,71 +82,93 @@ static int t_null()
  * ivl translator to get C++, then run g++ to make an executable
  * program out of that.
  */
-static int t_vvm()
+static int t_vvm(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      strcat(cmdline, " | ");
-      strcat(cmdline, base);
-      strcat(cmdline, "/ivl -o ");
-      strcat(cmdline, opath);
-      strcat(cmdline, ".cc -tvvm -Fcprop -Fnodangle -fVPI_MODULE_PATH=");
-      strcat(cmdline, base);
-      if (start) {
-	    strcat(cmdline, " -s ");
-	    strcat(cmdline, start);
-      }
-      strcat(cmdline, " -- -");
-      if (verbose_flag)
-	    printf("translate: %s\n", cmdline);
-      rc = system(cmdline);
+      sprintf(tmp, " | %s/ivl -o %s.cc -tvvm -Fcprop -Fnodangle -fVPI_MODULE_PATH=%s", base, opath, base);
 
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
+      if (start) {
+	    sprintf(tmp, " -s%s", start);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+      sprintf(tmp, " -- -");
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
+      if (verbose_flag)
+	    printf("translate: %s\n", cmd);
+
+      rc = system(cmd);
       if (rc != 0) {
 	    fprintf(stderr, "errors translating Verilog program.\n");
 	    return rc;
       }
 
-      sprintf(cmdline, "g++ -O -rdynamic -fno-exceptions -o %s -I%s "
+      sprintf(tmp, "g++ -O -rdynamic -fno-exceptions -o %s -I%s "
 	      "-L%s %s.cc -lvvm -ldl", opath, base, base, opath);
 
       if (verbose_flag)
-	    printf("compile: %s\n", cmdline);
+	    printf("compile: %s\n", tmp);
 
-      rc = system(cmdline);
+      rc = system(tmp);
       if (rc != 0) {
 	    fprintf(stderr, "errors compiling translated program.\n");
 	    return rc;
       }
 
-      sprintf(cmdline, "%s.cc", opath);
-      unlink(cmdline);
+      sprintf(tmp, "%s.cc", opath);
+      unlink(tmp);
 
       return 0;
 }
 
-static int t_xnf()
+static int t_xnf(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      strcat(cmdline, " | ");
-      strcat(cmdline, base);
-      strcat(cmdline, "/ivl -o ");
-      strcat(cmdline, opath);
+      sprintf(tmp, " | %s/ivl -o %s -txnf -Fcprop -Fsynth -Fnodangle -Fxnfio", base, opath);
+
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
       if (start) {
-	    strcat(cmdline, " -s ");
-	    strcat(cmdline, start);
+	    sprintf(tmp, " -s%s", start);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
       }
-      strcat(cmdline, " -txnf -Fcprop -Fsynth -Fnodangle -Fxnfio");
-      strcat(cmdline, " -- -");
+      sprintf(tmp, " -- -");
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
       if (verbose_flag)
-	    printf("translate: %s\n", cmdline);
-      rc = system(cmdline);
+	    printf("translate: %s\n", cmd);
+
+      rc = system(cmd);
 
       return rc;
 }
 
 int main(int argc, char **argv)
 {
+      char*cmd;
+      unsigned ncmd;
       int e_flag = 0;
       int opt, idx;
       char*cp;
@@ -161,47 +200,53 @@ int main(int argc, char **argv)
 	    }
       }
 
-	/* Now collect the verilog source files. */
-
-      strcpy(cmdline, base);
-      cp = cmdline + strlen(cmdline);
-      strcpy(cp, "/ivlpp");
-      cp += strlen(cp);
-      if (verbose_flag) {
-	    strcpy(cp, " -v");
-	    cp += strlen(cp);
-      }
-
       if (optind == argc) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
 	    return 1;
       }
 
+	/* Start building the preprocess command line. */
+
+      sprintf(tmp, "%s/ivlpp");
+      if (verbose_flag)
+	    strcat(tmp, " -v");
+
+      ncmd = strlen(tmp);
+      cmd = malloc(ncmd + 1);
+
+	/* Add all the verilog source files to the preprocess command line. */
+
       for (idx = optind ;  idx < argc ;  idx += 1) {
-	    sprintf(cp, " %s", argv[idx]);
-	    cp += strlen(cp);
+	    sprintf(tmp, " %s", argv[idx]);
+	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
+	    strcat(cmd, tmp);
+	    ncmd += strlen(tmp);
       }
+
 
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
 	   user wants it. */
       if (e_flag) {
 	    if (strcmp(opath,"-") != 0) {
-		  sprintf(cp, " > %s", opath);
-		  cp += strlen(cp);
+		  sprintf(tmp, " > %s", opath);
+		  cmd = realloc(cmd, ncmd+strlen(tmp)+1);
+		  strcpy(cmd+ncmd, tmp);
+		  ncmd += strlen(tmp);
 	    }
-	    if (verbose_flag)
-		  printf("preprocess: %s\n", cmdline);
 
-	    return system(cmdline);
+	    if (verbose_flag)
+		  printf("preprocess: %s\n", cmd);
+
+	    return system(cmd);
       }
 
       if (strcmp(targ,"null") == 0)
-	    return t_null();
+	    return t_null(cmd, ncmd);
       else if (strcmp(targ,"vvm") == 0)
-	    return t_vvm();
+	    return t_vvm(cmd, ncmd);
       else if (strcmp(targ,"xnf") == 0)
-	    return t_xnf();
+	    return t_xnf(cmd, ncmd);
       else {
 	    fprintf(stderr, "Unknown target: %s\n", targ);
 	    return 1;
@@ -212,6 +257,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.5  2000/04/26 03:33:32  steve
+ *  Do not set width too small to hold significant bits.
+ *
  * Revision 1.4  2000/04/23 21:14:32  steve
  *  The -s flag.
  *
