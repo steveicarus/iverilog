@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.73 2002/11/07 05:19:55 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.74 2002/11/08 05:00:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -122,6 +122,19 @@ static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
 	    fprintf(vvp_out, "    %%assign%s V_%s[%u], %u, %u;\n",
 		    delay_suffix, vvp_signal_label(sig),
 		    idx+part_off, delay, bit);
+}
+
+static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
+			      unsigned bit, unsigned delay, unsigned width)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      unsigned part_off = ivl_lval_part_off(lval);
+      assert(ivl_lval_mux(lval) == 0);
+
+      fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+      fprintf(vvp_out, "    %%assign/v0 V_%s[%u], %u, %u;\n",
+	      vvp_signal_label(sig), part_off+idx, delay, bit);
+
 }
 
 static void assign_to_memory(ivl_memory_t mem, unsigned idx, 
@@ -379,6 +392,54 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 				   ; idx += 1) {
 			      assign_to_memory(mem, idx, 0, delay);
 			}
+
+		  } else if ((del == 0) && (bit_limit > 2)) {
+
+			  /* We have a vector, but no runtime
+			     calculated delays, to try to use vector
+			     assign instructions. */
+			idx = 0;
+			while (idx < bit_limit) {
+			      unsigned wid = 0;
+
+			      do {
+				    wid += 1;
+				    if ((idx + wid) == bit_limit)
+					  break;
+
+			      } while (bits[cur_rbit] == bits[cur_rbit+wid]);
+
+			      switch (wid) {
+				  case 1:
+				    assign_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       delay, 0);
+				    break;
+				  case 2:
+				    assign_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       delay, 0);
+				    assign_to_lvariable(lval, idx+1,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       delay, 0);
+				    break;
+				  default:
+				    assign_to_lvector(lval, idx,
+					      bitchar_to_idx(bits[cur_rbit]),
+					      delay, wid);
+				    break;
+			      }
+
+			      idx += wid;
+			      cur_rbit += wid;
+			}
+
+			if (bit_limit < ivl_lval_pins(lval)) {
+			      unsigned wid = ivl_lval_pins(lval) - bit_limit;
+			      assign_to_lvector(lval, bit_limit,
+						0, delay, wid);
+			}
+
 		  } else {
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      if (del != 0)
@@ -446,29 +507,39 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      if (bit_limit > ivl_lval_pins(lval))
 		    bit_limit = ivl_lval_pins(lval);
 
-	      for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+	      if ((bit_limit > 2) && (mem == 0) && (del == 0)) {
+
 		    unsigned bidx = res.base < 4
 			  ? res.base
 			  : (res.base+cur_rbit);
-		    if (mem)
-			  assign_to_memory(mem, idx, bidx, delay);
-		    else if (del != 0)
-			  assign_to_lvariable(lval, idx, bidx,
-					      1, 1);
-		    else
-			  assign_to_lvariable(lval, idx, bidx,
-					      delay, 0);
+		    assign_to_lvector(lval, 0, bidx, delay, bit_limit);
+		    cur_rbit += bit_limit;
 
-		    cur_rbit += 1;
+	      } else {
+		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			  unsigned bidx = res.base < 4
+				? res.base
+				: (res.base+cur_rbit);
+			  if (mem)
+				assign_to_memory(mem, idx, bidx, delay);
+			  else if (del != 0)
+				assign_to_lvariable(lval, idx, bidx,
+						    1, 1);
+			  else
+				assign_to_lvariable(lval, idx, bidx,
+						    delay, 0);
+
+			  cur_rbit += 1;
+		    }
 	      }
 
-	      for (idx = bit_limit ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		    if (mem)
-			  assign_to_memory(mem, idx, 0, delay);
-		    else if (del != 0)
-			  assign_to_lvariable(lval, idx, 0, 1, 1);
-		    else
-			  assign_to_lvariable(lval, idx, 0, delay, 0);
+	      for (idx = bit_limit; idx < ivl_lval_pins(lval); idx += 1)
+			  if (mem)
+				assign_to_memory(mem, idx, 0, delay);
+			  else if (del != 0)
+				assign_to_lvariable(lval, idx, 0, 1, 1);
+			  else
+				assign_to_lvariable(lval, idx, 0, delay, 0);
 
 
 	      if (skip_set_flag) {
@@ -1379,6 +1450,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.74  2002/11/08 05:00:31  steve
+ *  Use the vectorized %assign where appropriate.
+ *
  * Revision 1.73  2002/11/07 05:19:55  steve
  *  Use Vector %set to set constants in variables.
  *
