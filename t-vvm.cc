@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.54 1999/10/01 03:15:00 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.55 1999/10/01 03:58:37 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1166,6 +1166,11 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       }
 }
 
+/*
+ * Generate an assignment to a memory location. This causes the index
+ * expression to be evaluated (run-time) and the index used as the
+ * location to store the value.
+ */
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
       string index = emit_proc_rval(defn, 8, amem->index());
@@ -1173,8 +1178,24 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
       const NetMemory*mem = amem->memory();
 
       defn << "      /* " << amem->get_line() << " */" << endl;
-      defn << "      " << mangle(mem->name())
-	 << "[" << index << ".as_unsigned()] = " << rval << ";" << endl;
+      if (mem->width() == amem->rval()->expr_width()) {
+	    defn << "      " << mangle(mem->name())
+		 << "[" << index << ".as_unsigned()] = " << rval <<
+		  ";" << endl;
+
+      } else {
+	    assert(mem->width() <= amem->rval()->expr_width());
+	    string tmp = make_temp();
+	    defn << "      vvm_bitset_t<" << mem->width() << ">" <<
+		  tmp << ";" << endl;
+	    for (unsigned idx = 0 ;  idx < mem->width() ;  idx += 1)
+		  defn << "      " << tmp << "[" << idx << "] = " <<
+			rval << "[" << idx << "];" << endl;
+
+	    defn << "      " << mangle(mem->name())
+		 << "[" << index << ".as_unsigned()] = " << tmp << ";"
+		 << endl;
+      }
 }
 
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
@@ -1648,6 +1669,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.55  1999/10/01 03:58:37  steve
+ *  More resilient assignment to memory location.
+ *
  * Revision 1.54  1999/10/01 03:15:00  steve
  *  Rewrite vvm output to separateclass declarations
  *  from method definitions. This is required to allow

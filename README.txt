@@ -244,8 +244,12 @@ current state of support for Verilog.
 
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
-  - Non-scalar memories, i.e. other than registers. 
-    Example: reg [1:0] b [2:0]; 
+  - Memories work, but only in procedural code.
+
+            reg [1:0] b [2:0], bar;
+	    wire [1:0] foo;
+            always foo = b[i]; // sorry
+	    always @(i) bar = b[i]; // OK
 
   - `timescale directive
 
@@ -262,7 +266,8 @@ current state of support for Verilog.
 
   - fork/join is not supported in vvm runtime
 
-  - structural arithmetic operators are in general not supported.
+  - structural arithmetic operators are in general not
+    supported. Procedural expressions are OK.
 
             assign foo = a + b; // sorry
             always @(a or b) foo = a + b; // OK
