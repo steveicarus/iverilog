@@ -311,17 +311,22 @@ constructs.
   - force to nets are not supported. Force to variables, and
     assign/deassign, are supported.
 
-5.1 Nonstandard Constructs
+5.1 Nonstandard Constructs or Behaviors
 
 Icarus Verilog includes some features that are not part of the
-IEEE1364 standard, but have well defined meaning. These are extensions
-to the language.
+IEEE1364 standard, but have well defined meaning, and also sometimes
+gives nonstandard (but extended) meanings to some features of the
+language that are defined.
 
     $sizeof(<expr>)
-	This system function returns the size in bits of the
+    $bits(<expr>)
+	The $bits system function returns the size in bits of the
 	expression that is its argument. The result of this
 	function is undefined if the argument doesn't have a
 	self-determined size.
+
+	The $sizeof function is deprecated in favor of $bits, which is
+	the same thing, but included in the SystemVerilog definition.
 
     Builtin system functions
 
@@ -330,9 +335,10 @@ to the language.
 	using runtime VPI code. Doing so means that VPI cannot
 	override the definitions of functions handled in this
 	manner. On the other hand, this makes them synthesizeable, and
-	also allows for more agressive constant propagation. The
+	also allows for more aggressive constant propagation. The
 	functions handled in this manner are:
 
+		$bits
 		$signed
 		$sizeof
 		$unsigned

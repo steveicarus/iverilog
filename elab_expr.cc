@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.59 2002/05/06 02:30:27 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.60 2002/05/24 00:44:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -186,13 +186,18 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	   the bit width of the sub-expression. The value of the
 	   sub-expression is not used, so the expression itself can be
 	   deleted. */
-      if (strcmp(path_.peek_name(0), "$sizeof") == 0) {
+      if ((strcmp(path_.peek_name(0), "$sizeof") == 0)
+	  || (strcmp(path_.peek_name(0), "$bits") == 0)) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $sizeof() function "
+		  cerr << get_line() << ": error: The $bits() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
+
+	    if (strcmp(path_.peek_name(0), "$sizeof") == 0)
+		  cerr << get_line() << ": warning: $sizeof is deprecated."
+		       << " Use $bits() instead." << endl;
 
 	    PExpr*expr = parms_[0];
 	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
@@ -864,6 +869,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.60  2002/05/24 00:44:54  steve
+ *  Add support for $bits (SystemVerilog)
+ *
  * Revision 1.59  2002/05/06 02:30:27  steve
  *  Allow parameters in concatenation of widths are defined.
  *
