@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.7 2003/03/13 20:31:40 steve Exp $"
+#ident "$Id: stop.cc,v 1.8 2003/05/16 03:50:28 steve Exp $"
 #endif
 
 /*
@@ -34,8 +34,10 @@
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <ctype.h>
-#ifdef HAVE_LIBREADLINE
+#ifdef HAVE_READLINE_READLINE_H
 # include  <readline/readline.h>
+#endif
+#ifdef HAVE_READLINE_HISTORY_H
 # include  <readline/history.h>
 #endif
 # include  <string.h>
@@ -45,6 +47,8 @@
 #endif
 
 struct __vpiScope*stop_current_scope = 0;
+
+#ifdef USE_READLINE
 
 static bool interact_flag = true;
 
@@ -409,7 +413,9 @@ void stop_handler(int rc)
 		  first += 1;
 
 	    if (first[0] != 0) {
+#ifdef HAVE_READLINE_HISTORY
 		  add_history(first);
+#endif
 		  invoke_command(first);
 	    }
 
@@ -419,8 +425,25 @@ void stop_handler(int rc)
       printf("** Continue **\n");
 }
 
+#else
+
+void stop_handler(int rc)
+{
+      printf("** VVP Stop(%d) **\n", rc);
+      printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
+      		schedule_simtime());
+
+      printf("** Interactive mode not supported, exiting simulation.\n");
+      exit(0);
+}
+
+#endif
+
 /*
  * $Log: stop.cc,v $
+ * Revision 1.8  2003/05/16 03:50:28  steve
+ *  Fallback functionality if readline is not present.
+ *
  * Revision 1.7  2003/03/13 20:31:40  steve
  *  Warnings about long long time.
  *

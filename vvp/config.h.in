@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.13 2003/03/13 20:31:40 steve Exp $"
+#ident "$Id: config.h.in,v 1.14 2003/05/16 03:50:28 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -35,6 +35,16 @@
 # undef HAVE_GETOPT_H
 # undef HAVE_MALLOC_H
 # undef HAVE_LIBREADLINE
+# undef HAVE_READLINE_READLINE_H
+# undef HAVE_READLINE_HISTORY_H
+
+/* Figure if I can use readline. */
+#undef USE_READLINE
+#ifdef HAVE_LIB_READLINE
+#ifdef HAVE_READLINE_READLINE_H
+# define USE_READLINE
+#endif
+#endif
 
 #ifndef MODULE_DIR
 # define MODULE_DIR "."
@@ -63,6 +73,7 @@ typedef unsigned long vvp_time64_t;
 # undef HAVE_SYS_RESOURCE_H
 # undef LINUX
 
+
 /*
  * When doing dynamic linking, we need a uniform way to identify the
  * symbol. Some compilers put leading _, some trailing _. The
@@ -83,6 +94,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.14  2003/05/16 03:50:28  steve
+ *  Fallback functionality if readline is not present.
+ *
  * Revision 1.13  2003/03/13 20:31:40  steve
  *  Warnings about long long time.
  *
