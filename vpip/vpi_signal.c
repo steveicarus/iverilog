@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.12 2001/01/06 22:22:17 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -127,6 +127,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.12  2001/01/06 22:22:17  steve
  *  Support signed decimal display of variables.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.9 2000/11/01 03:19:36 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -125,6 +125,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.9  2000/11/01 03:19:36  steve
  *  Add the general $time system function.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.17 2001/01/07 18:22:15 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -456,6 +456,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.17  2001/01/07 18:22:15  steve
  *  Assert on length of bit vector.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_vlog_info.c,v 1.3 2000/09/30 03:20:48 steve Exp $"
+#ident "$Id: vpi_vlog_info.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 #include <vpi_priv.h>

@@ -1,0 +1,6 @@
+libvpip.a
+Makefile
+configure
+config.log
+config.status
+dep

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_bit.c,v 1.5 2000/05/11 01:37:33 steve Exp $"
+#ident "$Id: vpi_bit.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -134,6 +134,9 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
 /*
  * $Log: vpi_bit.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.5  2000/05/11 01:37:33  steve
  *  Calculate the X output value from drive0 and drive1
  *

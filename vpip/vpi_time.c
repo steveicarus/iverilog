@@ -17,57 +17,67 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_iter.c,v 1.3 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_time.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
-/*
- * Find here the methods functions in support of iterator objects.
- */
-
 # include  "vpi_priv.h"
-# include  <stdlib.h>
 # include  <assert.h>
+# include  <stdio.h>
 
-static const struct __vpirt vpip_iterator_rt = {
-      vpiIterator,
+/*
+ * IEEE-1364 VPI pretty much mandates the existance of this sort of
+ * thing. (Either this or a huge memory leak.) Sorry.
+ */
+static char buf_obj[128];
+
+static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
+{
+      struct __vpiTimeVar*rfp = (struct __vpiTimeVar*)ref;
+      assert(ref->vpi_type->type_code == vpiTimeVar);
+
+      switch (vp->format) {
+	  case vpiObjTypeVal:
+	  case vpiTimeVal:
+	    rfp->time_obj.low = rfp->time;
+	    vp->value.time = &rfp->time_obj;
+	    vp->format = vpiTimeVal;
+	    break;
+
+	  case vpiDecStrVal:
+	    sprintf(buf_obj, "%lu", rfp->time);
+	    vp->value.str = buf_obj;
+	    break;
+
+	  default:
+	    vp->format = vpiSuppressVal;
+	    vp->value.str = 0;
+	    break;
+      }
+}
+
+
+static const struct __vpirt vpip_time_var_rt = {
+      vpiTimeVar,
       0,
       0,
-      0,
+      timevar_get_value,
       0,
       0,
       0
 };
 
-vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args)
+vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref, const char*val)
 {
-      struct __vpiIterator*res = calloc(1, sizeof(struct __vpiIterator));
-      res->base.vpi_type = &vpip_iterator_rt;
-      res->args = args;
-      res->nargs = nargs;
-      res->next  = 0;
-
-      return &(res->base);
+      ref->base.vpi_type = &vpip_time_var_rt;
+      ref->name = val;
+      return &(ref->base);
 }
 
 /*
- * The vpi_scan function only applies to iterators. It returns the
- * next vpiHandle in the iterated list.
- */
-vpiHandle vpi_scan(vpiHandle ref)
-{
-      struct __vpiIterator*hp = (struct __vpiIterator*)ref;
-      assert(ref->vpi_type->type_code == vpiIterator);
-
-      if (hp->next == hp->nargs) {
-	    vpi_free_object(ref);
-	    return 0;
-      }
-
-      return hp->args[hp->next++];
-}
-
-/*
- * $Log: vpi_iter.c,v $
+ * $Log: vpi_time.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.3  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

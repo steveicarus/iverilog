@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_null.c,v 1.4 2000/10/06 23:11:39 steve Exp $"
+#ident "$Id: vpi_null.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -43,6 +43,9 @@ extern struct __vpiNull *vpip_get_null(void)
 
 /*
  * $Log: vpi_null.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.4  2000/10/06 23:11:39  steve
  *  Replace data references with function calls. (Venkat)
  *

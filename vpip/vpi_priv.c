@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.11 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -235,6 +235,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.1  2001/03/14 19:27:44  steve
+ *  Rearrange VPI support libraries.
+ *
  * Revision 1.11  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls
