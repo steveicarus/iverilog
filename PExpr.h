@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.22 1999/10/31 20:08:24 steve Exp $"
+#ident "$Id: PExpr.h,v 1.23 1999/11/05 21:45:19 steve Exp $"
 #endif
 
 # include  <string>
@@ -248,6 +248,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_cmp_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
 };
 
 /*
@@ -297,6 +302,10 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.23  1999/11/05 21:45:19  steve
+ *  Fix NetConst being set to zero width, and clean
+ *  up elaborate_set_cmp_ for NetEBinary.
+ *
  * Revision 1.22  1999/10/31 20:08:24  steve
  *  Include subtraction in LPM_ADD_SUB device.
  *

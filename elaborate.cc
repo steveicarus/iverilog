@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.121 1999/11/04 03:53:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.122 1999/11/05 21:45:19 steve Exp $"
 #endif
 
 /*
@@ -907,34 +907,6 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 
       return sig;
 }
-
-/*
- * Elaborate a number as a NetConst object.
- */
-NetNet* PENumber::elaborate_net(Design*des, const string&path,
-				unsigned lwidth,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay) const
-{
-      unsigned width = value_->len();
-      if (lwidth < width)
-	    width = lwidth;
-
-      NetNet*net = new NetNet(des->local_symbol(path),
-			      NetNet::IMPLICIT, width);
-      net->local_flag(true);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-	    NetConst*tmp = new NetConst(des->local_symbol(path),
-					value_->get(idx));
-	    des->add_node(tmp);
-	    connect(net->pin(idx), tmp->pin(0));
-      }
-
-      des->add_signal(net);
-      return net;
-}
-
 
 NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned width,
@@ -2357,6 +2329,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.122  1999/11/05 21:45:19  steve
+ *  Fix NetConst being set to zero width, and clean
+ *  up elaborate_set_cmp_ for NetEBinary.
+ *
  * Revision 1.121  1999/11/04 03:53:26  steve
  *  Patch to synthesize unary ~ and the ternary operator.
  *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
