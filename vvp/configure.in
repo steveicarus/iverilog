@@ -174,4 +174,26 @@ AC_MSG_RESULT("$CC_LEADING_UNDERSCORE $CC_TRAILING_UNDERSCORE")
 ## end of test for underscores
 #######################
 
+
+
+AC_MSG_CHECKING("for ident support in C compiler")
+ident_support='-DHAVE_CVS_IDENT=1'
+case "${host}" in
+
+     *-*-cygwin*)
+	ident_support=
+	;;
+
+     *-*-darwin*)
+	ident_support=
+	;;
+
+     *-*-machten*)
+	ident_support=
+	;;
+esac
+
+AC_SUBST(ident_support)
+AC_MSG_RESULT($ident_support)
+
 AC_OUTPUT(Makefile)

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2001/11/17 17:57:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2002/08/12 00:27:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -47,7 +47,7 @@ all: fpga.tgt
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 D = d-generic.o d-generic-edif.o d-virtex.o

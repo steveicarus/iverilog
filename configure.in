@@ -231,10 +231,30 @@ case "${host}" in
 esac
 
 AC_SUBST(shared)
-
 AC_MSG_RESULT($shared)
 
 
-AC_CONFIG_SUBDIRS(vpip vvp tgt-vvp tgt-fpga libveriuser)
+AC_MSG_CHECKING("for ident support in C compiler")
+ident_support='-DHAVE_CVS_IDENT=1'
+case "${host}" in
+
+     *-*-cygwin*)
+	ident_support=
+	;;
+
+     *-*-darwin*)
+	ident_support=
+	;;
+
+     *-*-machten*)
+	ident_support=
+	;;
+esac
+
+AC_SUBST(ident_support)
+AC_MSG_RESULT($ident_support)
+
+
+AC_CONFIG_SUBDIRS(vvp tgt-vvp tgt-fpga libveriuser)
 
 AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
