@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 2003/02/16 02:23:54 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 2003/02/22 04:29:14 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -55,7 +55,7 @@ all: cadpli.vpl
 
 O = cadpli.o
 
-SYSTEM_VPI_LDFLAGS = -Wl,-whole-archive ../libveriuser/libveriuser.a -Wl,-no-whole-archive -L../vvp -lvpi
+SYSTEM_VPI_LDFLAGS = @whole_archive@ ../libveriuser/libveriuser.a @no_whole_archive@ -L../vvp -lvpi
 ifeq (@WIN32@,yes)
     SYSTEM_VPI_LDFLAGS += -liberty
 endif
