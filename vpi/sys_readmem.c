@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem.c,v 1.9 2002/01/31 04:28:17 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.10 2002/02/06 04:50:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -256,9 +256,9 @@ static int sys_readmem_calltf(char*name)
 
       /* Configure the readmem lexer */
       if (strcmp(name,"$readmemb") == 0)
-	    sys_readmem_start_file(file, 1, wwid, value.value.vector);
+	  sys_readmem_start_file(file, 1, wwid, value.value.vector);
       else
-	    sys_readmem_start_file(file, 0, wwid, value.value.vector);
+	  sys_readmem_start_file(file, 0, wwid, value.value.vector);
 
 
       /*======================================== Read memory file */
@@ -306,13 +306,27 @@ static int sys_writemem_calltf(char*name)
 {
       int wwid;
       char*path;
+      char*mem_name;
       FILE*file;
+      unsigned addr = 0;
       unsigned cnt = 0;
       s_vpi_value value;
       vpiHandle words;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
+      vpiHandle mitem;
+      vpiHandle start_item;
+      vpiHandle stop_item;
+      vpiHandle word_index;
+      vpiHandle left_range;
+      vpiHandle right_range;
+
+      int left_addr, right_addr;
+      int start_addr, stop_addr, addr_incr;
+      int min_addr, max_addr;
+
+      /*======================================== Get parameters */
 
       if (item == 0) {
 	    vpi_printf("%s: file name parameter missing.\n", name);
@@ -326,7 +340,7 @@ static int sys_writemem_calltf(char*name)
       }
 
       if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_printf("ERROR: %s parameter must be a string\n", name);
 	    vpi_free_object(argv);
 	    return 0;
       }
@@ -336,24 +350,54 @@ static int sys_writemem_calltf(char*name)
       path = strdup(value.value.str);
 
 	/* Get and check the second parameter. It must be a memory. */
-      item = vpi_scan(argv);
-      if (item == 0) {
+      mitem = vpi_scan(argv);
+      if (mitem == 0) {
 	    vpi_printf("%s: Missing memory parameter\n", name);
 	    free(path);
 	    return 0;
       }
 
-      if (vpi_get(vpiType, item) != vpiMemory) {
+      if (vpi_get(vpiType, mitem) != vpiMemory) {
 	    vpi_printf("%s: Second parameter must be a memory.\n", name);
 	    free(path);
 	    vpi_free_object(argv);
 	    return 0;
       }
 
-	/* XXXX remaining parameters not supported. */
-      vpi_free_object(argv);
+      mem_name = vpi_get_str(vpiFullName, mitem);
 
-	/* Open the data file. */
+      /* Get optional third parameter. It must be a constant. */
+      start_item = vpi_scan(argv);
+      if (start_item!=0){
+	  if (check_integer_constant(name, start_item) == 0){
+	      vpi_free_object(argv);
+	      return 0;
+	  }
+
+	  /* Get optional forth parameter. It must be a constant. */
+	  stop_item = vpi_scan(argv);
+	  if (stop_item!=0){
+	      if (check_integer_constant(name, stop_item) == 0){
+		  vpi_free_object(argv);
+		  return 0;
+	      }
+
+	      /* Check that ther is no 5th parameter */
+	      if (vpi_scan(argv) != 0){
+		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
+		  vpi_free_object(argv);
+		  return 0;
+	      }
+
+	  }
+      }
+      else{
+	  stop_item = 0;
+      }
+
+      /*======================================== Process parameters */
+
+      /* Open the data file. */
       file = fopen(path, "w");
       if (file == 0) {
 	    vpi_printf("%s: Unable to open %s for writeing.\n", name, path);
@@ -361,21 +405,99 @@ static int sys_writemem_calltf(char*name)
 	    return 0;
       }
 
-      words = vpi_iterate(vpiMemoryWord, item);
-      assert(words);
-
-      wwid = vpi_get(vpiSize, item);
-
+      /* Get left addr of memory */
+      left_range = vpi_handle(vpiLeftRange, mitem);
       value.format = vpiIntVal;
+      vpi_get_value(left_range, &value);
+      left_addr = value.value.integer;
 
-      while ((item = vpi_scan(words))) {
-	    if (cnt%16 == 0)
-		  fprintf(file, "// 0x%08x\n", cnt);
-	    cnt += 1;
-	    vpi_get_value(item, &value);
-	    fprintf(file, "%lx\n", (unsigned long)value.value.integer);
+      /* Get right addr of memory */
+      right_range = vpi_handle(vpiRightRange, mitem);
+      value.format = vpiIntVal;
+      vpi_get_value(right_range, &value);
+      right_addr = value.value.integer;
+
+      /* Get start_addr, stop_addr and addr_incr */
+      if (start_item==0){
+	  start_addr = left_addr<right_addr ? left_addr  : right_addr;
+	  stop_addr  = left_addr<right_addr ? right_addr : left_addr;
+	  addr_incr = 1;
+      }
+      else{
+	  s_vpi_value value;
+	  value.format = vpiIntVal;
+	  vpi_get_value(start_item, &value);
+	  start_addr = value.value.integer;
+
+	  if (stop_item==0){
+	      stop_addr = left_addr<right_addr ? right_addr : left_addr;
+	      addr_incr = 1;
+	  }
+	  else{
+	      s_vpi_value value;
+	      value.format = vpiIntVal;
+	      vpi_get_value(stop_item, &value);
+	      stop_addr = value.value.integer;
+
+	      addr_incr = start_addr<stop_addr ? 1 : -1;
+	  }
       }
 
+      min_addr = start_addr<stop_addr ? start_addr : stop_addr ;
+      max_addr = start_addr<stop_addr ? stop_addr  : start_addr;
+
+      /* Check that start_addr and stop_addr are within the memory
+	 range */
+      if (left_addr<right_addr){
+	  if (start_addr<left_addr || start_addr > right_addr) {
+	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
+	      return 0;
+	  }
+
+	  if (stop_addr<left_addr || stop_addr > right_addr) {
+	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
+	      return 0;
+	  }
+      }
+      else{
+	  if (start_addr<right_addr || start_addr > left_addr) {
+	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
+	      return 0;
+	  }
+
+	  if (stop_addr<right_addr || stop_addr > left_addr) {
+	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
+	      return 0;
+	  }
+      }
+
+
+      words = vpi_iterate(vpiMemoryWord, mitem);
+      assert(words);
+
+      item = vpi_scan(words);
+      wwid = vpi_get(vpiSize, item);
+
+      if (strcmp(name,"$writememb")==0){
+	  value.format = vpiBinStrVal;
+      }
+      else{
+	  value.format = vpiHexStrVal;
+      }
+
+      /*======================================== Write memory file */
+
+      cnt=0;
+      for(addr=start_addr; addr!=stop_addr+addr_incr; addr+=addr_incr, ++cnt){
+	  if (cnt%16 == 0)
+	      fprintf(file, "// 0x%08x\n", cnt);
+
+	  word_index = vpi_handle_by_index(mitem, addr); 
+	  assert(word_index);
+	  vpi_get_value(word_index, &value);
+	  fprintf(file, "%s\n", value.value.str);
+      }
+      
       fclose(file);
       return 0;
 }
@@ -407,10 +529,21 @@ void sys_readmem_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememh";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$writememb";
+      tf_data.calltf    = sys_writemem_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$writememb";
+      vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.10  2002/02/06 04:50:22  steve
+ *  Add writememb (Tom Verbeure)
+ *
  * Revision 1.9  2002/01/31 04:28:17  steve
  *  Full support for $readmem ranges (Tom Verbeure)
  *
