@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2001 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: main.c,v 1.17 2001/06/27 02:22:26 steve Exp $"
-#endif
+#ident "$Id: main.c,v 1.18 2001/06/30 00:59:24 steve Exp $"
 
 const char HELP[] =
 "Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]
@@ -79,7 +77,7 @@ const char sep = '\\';
 const char sep = '/';
 #endif
 
-const char*base = IVL_ROOT;
+const char*base = 0;
 const char*mtm  = 0;
 const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
@@ -105,7 +103,7 @@ FILE *fp;
 char line[MAXSIZE];
 char tmp[MAXSIZE];
 
-static char ivl_install_dir[MAXSIZE];
+static char ivl_root[MAXSIZE];
 
 /*
  * This is the default target type. It looks up the bits that are
@@ -326,6 +324,43 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
+#ifdef __MINGW32__
+      { char * s;
+	char basepath[1024];
+	GetModuleFileName(NULL,basepath,1024);
+
+	  /* Calculate the ivl_root from the path to the command. This
+	     is necessary because of the installation process in
+	     Windows. Mostly, it is those darn drive letters, but oh
+	     well. We know the command path is formed like this:
+
+	         D:\iverilog\bin\iverilog.exe
+
+	     The IVL_ROOT in a Windows installation is the path:
+
+	         D:\iverilog\lib\ivl
+
+	     so we chop the file name and the last directory by
+	     turning the last two \ characters to null. Then we append
+	     the lib\ivl to finish. */
+
+        strncpy(ivl_root, basepath, MAXSIZE);
+	s = strrchr(ivl_root, sep);
+	if (s) *s = 0;
+	s = strrchr(ivl_root, sep);
+	if (s) *s = 0;
+	strcat(ivl_root, "\\lib\\ivl");
+
+	base = ivl_root;
+      }
+#else
+        /* In a UNIX environment, the IVL_ROOT from the Makefile is
+	   dependable. It points to the $prefix/lib/ivl directory,
+	   where the sub-parts are installed. */
+      strcpy(ivl_root, IVL_ROOT);
+      base = ivl_root;
+#endif
+
       while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
@@ -449,28 +484,6 @@ int main(int argc, char **argv)
  	    fprintf(stderr, "%s\n", HELP);
 	    return 1;
       }
-
-      /* Calculate the install directory.
-      ** This could be passed directly from the Makefile.
-      ** Is it just the $prefix option to configure?
-      **/
-#ifdef __MINGW32__
-      {
-        char * s;
-	static char basepath[1024];
-	GetModuleFileName(NULL,basepath,1024);
-	base = basepath;
-        /* truncate last 2 directories */
-        strncpy(ivl_install_dir,base,MAXSIZE);
-        s = ivl_install_dir + strlen(ivl_install_dir);
-        while (*s != sep) s--;
-        s--;
-        while (*s != sep) s--; 
-        *s = NULL;
-      }
-#else
-      strcpy(ivl_install_dir, IVL_ROOT);
-#endif
 
 	/* Load the iverilog.conf file to get our substitution
 	   strings. */
@@ -606,6 +619,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.18  2001/06/30 00:59:24  steve
+ *  Redo the ivl_root calculator for mingw.
+ *
  * Revision 1.17  2001/06/27 02:22:26  steve
  *  Get include and lib paths from Makefile.
  *
