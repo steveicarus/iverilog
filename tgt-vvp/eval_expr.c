@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.31 2001/06/18 01:09:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.32 2001/06/21 04:53:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -743,7 +743,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, name, idx);
+		    res.base+idx, vvp_mangle_id(name), idx);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -817,7 +817,7 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 	    if (idx)
 		  fprintf(vvp_out, "    %%ix/add 3, 1;\n");
 	    fprintf(vvp_out, "    %%load/m  %u, M_%s;\n",
-		    res.base+idx, name);
+		    res.base+idx, vvp_mangle_id(name));
       }
 
 	/* Pad the signal value with zeros. */
@@ -913,7 +913,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 	    bit = res.base;
 	    for (pin = 0 ;  pin < res.wid ;  pin += 1) {
 		  fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-			  port, pin, bit);
+			  vvp_mangle_id(port), pin, bit);
 		  if (bit >= 4)
 			bit += 1;
 	    }
@@ -923,8 +923,8 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
 
 	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s, S_%s;\n", ivl_scope_name(def),
-	      ivl_scope_name(def));
+      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+      fprintf(vvp_out, ", S_%s;\n", vvp_mangle_id(ivl_scope_name(def)));
       fprintf(vvp_out, "    %%join;\n");
 
 	/* The return value is in a signal that has the name of the
@@ -936,7 +936,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, name, idx);
+		    res.base+idx, vvp_mangle_id(name), idx);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -1067,6 +1067,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.32  2001/06/21 04:53:59  steve
+ *  Escaped identifiers in behavioral expressions. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/06/18 01:09:32  steve
  *  More behavioral unary reduction operators.
  *  (Stephan Boettcher)
