@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.46 2002/08/10 22:36:59 steve Exp $"
+#ident "$Id: main.c,v 1.47 2002/08/12 01:27:48 steve Exp $"
 
 # include "config.h"
 
@@ -133,7 +133,7 @@ static const char*my_tempfile(const char*str, FILE**fout)
 	    tmpdir = getenv("TEMP");
 #ifdef __MINGW32__
       if (tmpdir == 0)
-	    tmpdir = "C:\TEMP";
+	    tmpdir = "C:\\TEMP";
 #else
       if (tmpdir == 0)
 	    tmpdir = "/tmp";
@@ -657,6 +657,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.47  2002/08/12 01:27:48  steve
+ *  Escape the backslash in the windows file name.
+ *
  * Revision 1.46  2002/08/10 22:36:59  steve
  *  No longer any nead for -rdynamic flag
  *
