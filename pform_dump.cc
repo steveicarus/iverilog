@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.40 1999/09/29 18:36:04 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.41 1999/09/29 20:23:53 steve Exp $"
 #endif
 
 /*
@@ -290,7 +290,9 @@ void PGModule::dump(ostream&out) const
       }
       out << get_name() << "(";
       if (pins_) {
-	    out << "." << pins_[0].name << "(" << *pins_[0].parm << ")";
+	    out << "." << pins_[0].name << "(";
+	    if (pins_[0].parm) out << *pins_[0].parm;
+	    out << ")";
 	    for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
 		  out << ", ." << pins_[idx].name << "(" <<
 			*pins_[idx].parm << ")";
@@ -656,6 +658,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.41  1999/09/29 20:23:53  steve
+ *  Handle empty named ports in the dump.
+ *
  * Revision 1.40  1999/09/29 18:36:04  steve
  *  Full case support
  *
