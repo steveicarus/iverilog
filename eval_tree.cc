@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.27 2001/10/20 00:11:24 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.28 2001/10/22 15:31:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,11 +116,11 @@ NetEConst* NetEBBits::eval_tree()
 
 		if (lwid < rwid)
 		      for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-			    res.set(idx, lval.get(idx));
+			    res.set(idx, rval.get(idx));
 
 		if (rwid < lwid)
 		      for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
-			    res.set(idx, rval.get(idx));
+			    res.set(idx, lval.get(idx));
 
 		break;
 	  }
@@ -1013,6 +1013,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.28  2001/10/22 15:31:21  steve
+ *  fix constant overrun in | operands.
+ *
  * Revision 1.27  2001/10/20 00:11:24  steve
  *  Evaluate constant == when operands differ in width.
  *
