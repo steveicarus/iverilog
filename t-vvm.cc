@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.162 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.163 2000/07/26 03:53:11 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -922,6 +922,8 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       init_code << "{" << endl;
       init_code << "      vpip_init_simulation();"
 		<< endl;
+      init_code << "      vpip_time_scale("
+		<< mod->get_precision() << ");" << endl;
       start_code << "static void design_start()" << endl;
       start_code << "{" << endl;
 }
@@ -3086,6 +3088,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.163  2000/07/26 03:53:11  steve
+ *  Make simulation precision available to VPI.
+ *
  * Revision 1.162  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.7 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.8 2000/07/26 03:53:12 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -111,10 +111,25 @@ int vpi_free_object(vpiHandle ref)
       return 0;
 }
 
+static int vpip_get_global(int property)
+{
+      switch (property) {
+	  case vpiTimePrecision:
+	    return vpip_simulation_obj.time_precision;
+
+	  default:
+	    assert(0);
+	    return -1;
+      }
+}
+
 int vpi_get(int property, vpiHandle ref)
 {
       if (property == vpiType)
 	    return ref->vpi_type->type_code;
+
+      if (ref == 0)
+	    return vpip_get_global(property);
 
       if (ref->vpi_type->vpi_get_ == 0)
 	    return -1;
@@ -219,6 +234,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.8  2000/07/26 03:53:12  steve
+ *  Make simulation precision available to VPI.
+ *
  * Revision 1.7  2000/05/07 18:20:08  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.18 2000/05/31 01:32:16 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.19 2000/07/26 03:53:12 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -133,6 +133,8 @@ typedef struct t_vpi_value {
 #define vpiName       2
 #define vpiFullName   3
 #define vpiSize       4
+#define vpiTimeUnit      11
+#define vpiTimePrecision 12
 #define vpiConstType 43
 #   define vpiDecConst    1
 #   define vpiRealConst   2
@@ -246,6 +248,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.19  2000/07/26 03:53:12  steve
+ *  Make simulation precision available to VPI.
+ *
  * Revision 1.18  2000/05/31 01:32:16  steve
  *  typ vpiRealType.
  *

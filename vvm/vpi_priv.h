@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.21 2000/05/18 03:27:32 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.22 2000/07/26 03:53:12 steve Exp $"
 #endif
 
 /*
@@ -340,11 +340,16 @@ struct vpip_simulation {
 	/* List of simulation cycles, starting with the next time. */
       struct vpip_simulation_cycle*sim;
       int going_flag;
+
+	/* This is the precision of the simulation clock. It may be
+	   used by the run time to scale time values. */
+      short time_precision;
 };
 
 extern struct vpip_simulation vpip_simulation_obj;
 
 extern void vpip_init_simulation();
+extern void vpip_time_scale(int precision);
 extern void vpip_simulation_run();
 
 /*
@@ -379,6 +384,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.22  2000/07/26 03:53:12  steve
+ *  Make simulation precision available to VPI.
+ *
  * Revision 1.21  2000/05/18 03:27:32  steve
  *  Support writing scalars and vectors to signals.
  *
