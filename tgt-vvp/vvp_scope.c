@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.106 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.107 2005/01/10 01:42:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1201,7 +1201,7 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
       fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
 }
 
-static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned ndata)
+static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base, unsigned ndata)
 {
       unsigned idx;
       for (idx = 0 ;  idx < ndata ;  idx += 1) {
@@ -1209,7 +1209,8 @@ static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned ndata)
 	    unsigned pdx;
 
 	    assert(width > 0);
-	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
+
+	    ivl_nexus_t nex = ivl_lpm_data(net, base+idx);
 	    ivl_signal_t sig = 0;
 
 	    ivl_nexus_ptr_t np;
@@ -1292,30 +1293,98 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
-static void draw_lpm_concat(ivl_lpm_t net)
+/*
+ * This function draws the arguments to a .const node using the
+ * lpm inputs starting at "start" and for "cnt" inputs. This input
+ * count must be <= 4. It is up to the caller to write the header part
+ * of the statement, and to organize the data into multiple
+ * statements.
+ *
+ * Return the width of the final concatenation.
+ */
+static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start, unsigned cnt)
 {
       unsigned idx;
-      unsigned icnt = ivl_lpm_selects(net);
+      unsigned wid = 0;
 
-	/* XXXX For now, only handle concatenation of 4 values. */
-      assert(icnt <= 4);
+      assert(cnt <= 4);
 
-      fprintf(vvp_out, "L_%p .concat [", net);
+	/* First, draw the [L M N O] part of the statement, the list
+	   of widths for the .concat statement. */
+      fprintf(vvp_out, "[");
 
-      for (idx = 0 ;  idx < icnt ;  idx += 1) {
-	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_data(net, start+idx);
 	    unsigned nexus_width = width_of_nexus(nex);
 	    fprintf(vvp_out, " %u", nexus_width);
+	    wid += nexus_width;
       }
 
-      for ( ;  idx < 4 ;  idx += 1)
+      for ( ; idx < 4 ;  idx += 1)
 	    fprintf(vvp_out, " 0");
 
       fprintf(vvp_out, "]");
 
-      draw_lpm_data_inputs(net, icnt);
+	/* Now draw the input references themselves. */
+      draw_lpm_data_inputs(net, start, cnt);
 
       fprintf(vvp_out, ";\n");
+      return wid;
+}
+
+static void draw_lpm_concat(ivl_lpm_t net)
+{
+      unsigned icnt = ivl_lpm_selects(net);
+
+      if (icnt <= 4) {
+	    fprintf(vvp_out, "L_%p .concat ", net);
+	    lpm_concat_inputs(net, 0, icnt);
+
+      } else {
+	    unsigned idx, depth;
+	    struct concat_tree {
+		  unsigned base;
+		  unsigned wid;
+	    } *tree;
+
+	    tree = malloc((icnt + 3)/4 * sizeof(struct concat_tree));
+
+	    for (idx = 0 ;  idx < icnt ;  idx += 4) {
+		  unsigned wid = 0;
+		  unsigned trans = 4;
+		  if ((idx + trans) > icnt)
+			trans = icnt - idx;
+
+		  fprintf(vvp_out, "LS_%p_0_%u .concat ", net, idx);
+		  wid = lpm_concat_inputs(net, idx, trans);
+
+		  tree[idx/4].base = idx;
+		  tree[idx/4].wid  = wid;
+	    }
+
+	    depth = 1;
+	    icnt = (icnt + 3)/4;
+	    while (icnt > 4) {
+		    /* XXXX For now, only 4*4==16 inputs are
+		       supported. To support an arbitrary count, this
+		       loop needs to be filled in. */
+		  assert(0);
+		  depth += 1;
+		  icnt = (icnt + 3)/4;
+	    }
+
+	    fprintf(vvp_out, "L_%p .concat [", net);
+	    for (idx = 0 ;  idx < icnt ;  idx += 1)
+		  fprintf(vvp_out, " %u", tree[idx].wid);
+	    fprintf(vvp_out, "]");
+
+	    for (idx = 0 ;  idx < icnt ;  idx += 1)
+		  fprintf(vvp_out, ", LS_%p_%u_%u",
+			  net, depth-1, tree[idx].base);
+
+	    fprintf(vvp_out, ";\n");
+	    free(tree);
+      }
 }
 
 /*
@@ -1762,6 +1831,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.107  2005/01/10 01:42:59  steve
+ *  Handle concatenations with up to 16 inputs.
+ *
  * Revision 1.106  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *
