@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.309 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.310 2004/12/12 18:13:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1692,8 +1692,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 }
 
 /*
- * Elaborate a proceedural continuous assign. This really looks very
- * much like other prodeedural assignments, at this point, but there
+ * Elaborate a procedural continuous assign. This really looks very
+ * much like other procedural assignments, at this point, but there
  * is no delay to worry about. The code generator will take care of
  * the differences between continuous assign and normal assignments.
  */
@@ -1710,11 +1710,16 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       if (rexp == 0)
 	    return 0;
 
+      unsigned lwid = count_lval_width(lval);
+
+      rexp->set_width(lwid);
+      rexp = pad_to_width(rexp, lwid);
+
       dev = new NetCAssign(lval, rexp);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: ELaborate cassign,"
-		 << " lval width=" << lval->lwidth()
+	    cerr << get_line() << ": debug: Elaborate cassign,"
+		 << " lval width=" << lwid
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
 		 << endl;
@@ -2757,6 +2762,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.310  2004/12/12 18:13:39  steve
+ *  Fix r-value width of continuous assign.
+ *
  * Revision 1.309  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
