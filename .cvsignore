@@ -3,6 +3,7 @@ parse.h
 parse.cc
 parse.cc.output
 syn-rules.cc
+syn-rules.cc.output
 lexor.cc
 ivl
 dep
