@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.17 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.18 2000/11/09 22:19:34 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -131,6 +131,12 @@ bool dll_target::start_design(const Design*des)
       des_.self = des;
       des_.root_ = new struct ivl_scope_s;
       des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
+      des_.root_->child_ = 0;
+      des_.root_->sibling_ = 0;
+      des_.root_->nsigs_ = 0;
+      des_.root_->sigs_ = 0;
+      des_.root_->nlog_ = 0;
+      des_.root_->log_ = 0;
 
       target_ = (target_design_f)dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -324,6 +330,12 @@ void dll_target::scope(const NetScope*net)
       } else {
 	    scope = new struct ivl_scope_s;
 	    scope->name_ = strdup(net->name().c_str());
+	    scope->child_ = 0;
+	    scope->sibling_ = 0;
+	    scope->nsigs_ = 0;
+	    scope->sigs_ = 0;
+	    scope->nlog_ = 0;
+	    scope->log_ = 0;
 
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
 	    assert(parent != 0);
@@ -498,6 +510,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.18  2000/11/09 22:19:34  steve
+ *  Initialize scope when creating it.
+ *
  * Revision 1.17  2000/10/31 17:49:02  steve
  *  Support time variables.
  *
