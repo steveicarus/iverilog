@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.33 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.34 2001/01/14 23:04:55 steve Exp $"
 #endif
 
 
@@ -267,6 +267,12 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
       }
 
       return tmp;
+}
+
+NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope) const
+{
+      long val = value_->as_long();
+      return new NetEConst(verinum(val));
 }
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
@@ -539,6 +545,12 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.34  2001/01/14 23:04:55  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.33  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

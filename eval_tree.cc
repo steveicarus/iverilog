@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.20 2001/01/04 16:49:50 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.21 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -574,6 +574,13 @@ NetExpr* NetEParam::eval_tree()
 
       assert(scope_);
       const NetExpr*expr = scope_->get_parameter(name_);
+      if (expr == 0) {
+	    cerr << get_line() << ": internal error: Unable to match "
+		 << "parameter " << name_ << " in scope "
+		 << scope_->name() << endl;
+	    return 0;
+      }
+
       assert(expr);
 
       NetExpr*nexpr = expr->dup_expr();
@@ -815,6 +822,12 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.21  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.20  2001/01/04 16:49:50  steve
  *  Evaluate constant === and !== expressions.
  *

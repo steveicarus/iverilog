@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.204 2001/01/10 03:13:23 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.205 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 /*
@@ -1538,19 +1538,22 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 	   floating point number. In this case, we need to scale the
 	   delay to the units of the design. */
 
-      if (const PEFNumber*fn = dynamic_cast<const PEFNumber*>(delay_)) {
+      if (verireal*fn = delay_? delay_->eval_rconst(des, scope) : 0) {
 	    int shift = scope->time_unit() - des->get_precision();
 
-	    long delay = fn->value().as_long(shift);
+	    long delay = fn->as_long(shift);
 	    if (delay < 0)
 		  delay = 0;
 
+	    delete fn;
+
 	    if (statement_)
-		  return new NetPDelay(delay, statement_->elaborate(des, path));
+		return new NetPDelay(delay, statement_->elaborate(des, path));
 	    else
-		  return new NetPDelay(delay, 0);
+		return new NetPDelay(delay, 0);
 
       }
+
 
       verinum*num = delay_->eval_const(des, path);
       if (num == 0) {
@@ -1567,6 +1570,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 	/* Convert the delay in the units of the scope to the
 	   precision of the design as a whole. */
       unsigned long val = des->scale_to_precision(num->as_ulong(), scope);
+      delete num;
 
 	/* If there is a statement, then elaborate it and create a
 	   NetPDelay statement to contain it. Note that we create a
@@ -2351,6 +2355,12 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.205  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.204  2001/01/10 03:13:23  steve
  *  Build task outputs as lval instead of nets. (PR#98)
  *

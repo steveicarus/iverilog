@@ -1,7 +1,5 @@
-#ifndef __util_H
-#define __util_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,30 +17,30 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.h,v 1.2 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: eval_rconst.cc,v 1.1 2001/01/14 23:04:56 steve Exp $"
 #endif
 
-# include  <string>
+# include  "PExpr.h"
+
+verireal* PExpr::eval_rconst(const Design*, const NetScope*) const
+{
+      return 0;
+}
+
+verireal* PEFNumber::eval_rconst(const Design*, const NetScope*) const
+{
+      verireal*res = new verireal;
+      *res = *value_;
+      return res;
+}
 
 /*
- * This function returns the first name of a hierarchical path, and
- * sets the parameter to what's left. If there is no path, then the
- * parameter is set to "".
- */
-extern string parse_first_name(string&path);
-
-extern string parse_last_name(string&path);
-
-/*
- * $Log: util.h,v $
- * Revision 1.2  2001/01/14 23:04:56  steve
+ * $Log: eval_rconst.cc,v $
+ * Revision 1.1  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.
  *
  *  Allow parameters to be referenced by hierarchical name.
  *
- * Revision 1.1  2000/04/29 04:53:44  steve
- *  missing header file.
- *
  */
-#endif
+

@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.7 2001/01/02 04:21:13 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.8 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "PExpr.h"
+# include  "util.h"
 
 NetExpr*PExpr::elaborate_pexpr(Design*des, NetScope*sc) const
 {
@@ -103,6 +104,11 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
       return tmp;
 }
 
+NetExpr*PEFNumber::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      return elaborate_expr(des, scope);
+}
+
 /*
  * Parameter expressions may reference other parameters, but only in
  * the current scope. Preserve the parameter reference in the
@@ -111,7 +117,16 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
  */
 NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      const NetExpr*ex = scope->get_parameter(text_);
+      string path = text_;
+      string name = parse_last_name(path);
+
+      NetScope*pscope = scope;
+      if (path != "")
+	    pscope = des->find_scope(scope, path);
+
+      assert(pscope);
+
+      const NetExpr*ex = pscope->get_parameter(name);
       if (ex == 0) {
 	    cerr << get_line() << ": error: identifier ``" << text_ <<
 		  "'' is not a parameter in " << scope->name() << "." << endl;
@@ -119,7 +134,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetExpr*res = new NetEParam(des, scope, text_);
+      NetExpr*res = new NetEParam(des, pscope, name);
       assert(res);
       return res;
 }
@@ -184,6 +199,12 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.8  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.7  2001/01/02 04:21:13  steve
  *  Support a bunch of unary operators in parameter expressions.
  *

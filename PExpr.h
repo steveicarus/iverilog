@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.47 2000/12/16 19:03:30 steve Exp $"
+#ident "$Id: PExpr.h,v 1.48 2001/01/14 23:04:55 steve Exp $"
 #endif
 
 # include  <string>
@@ -87,6 +87,11 @@ class PExpr : public LineInfo {
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
       virtual verinum* eval_const(const Design*des, const string&path) const;
+
+	// This attempts to evaluate a constant expression as a
+	// decimal floating point. This is used when calculating delay
+	// constants.
+      virtual verireal* eval_rconst(const Design*, const NetScope*) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -178,6 +183,15 @@ class PEFNumber : public PExpr {
 	   gets the *integer* value of the number. This accounts for
 	   any rounding that is needed to get the value. */
       virtual verinum* eval_const(const Design*des, const string&path) const;
+
+	/* This method returns the full floating point value. */
+      virtual verireal* eval_rconst(const Design*, const NetScope*) const;
+
+	/* A PEFNumber is a constant, so this returns true. */
+      virtual bool is_constant(Module*) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual void dump(ostream&) const;
 
@@ -432,6 +446,12 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.48  2001/01/14 23:04:55  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.47  2000/12/16 19:03:30  steve
  *  Evaluate <= and ?: in parameter expressions (PR#81)
  *

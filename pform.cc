@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.71 2001/01/10 05:32:44 steve Exp $"
+#ident "$Id: pform.cc,v 1.72 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -525,6 +525,7 @@ void pform_make_modgates(const string&type,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
+#if 0
       if (overrides && overrides->by_order)
 	    for (unsigned idx = 0 ;  idx < overrides->by_order->count() ;  idx += 1)
 		  if (! pform_expression_is_constant((*overrides->by_order)[idx])) {
@@ -532,7 +533,7 @@ void pform_make_modgates(const string&type,
 				" must be constant.");
 			return;
 		  }
-
+#endif
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
@@ -1010,6 +1011,12 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.72  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.71  2001/01/10 05:32:44  steve
  *  Match memories within task scopes. (PR#101)
  *

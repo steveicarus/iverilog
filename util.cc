@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.cc,v 1.1 2000/04/28 16:50:53 steve Exp $"
+#ident "$Id: util.cc,v 1.2 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "util.h"
@@ -36,8 +36,28 @@ string parse_first_name(string&path)
       return res;
 }
 
+string parse_last_name(string&path)
+{
+      unsigned pos = path.rfind('.');
+      if (pos > path.length()) {
+	    string res = path;
+	    path = "";
+	    return res;
+      }
+
+      string res = path.substr(pos+1, path.length());
+      path = path.substr(0, pos);
+      return res;
+}
+
 /*
  * $Log: util.cc,v $
+ * Revision 1.2  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.1  2000/04/28 16:50:53  steve
  *  Catch memory word parameters to tasks.
  *

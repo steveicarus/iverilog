@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.17 2001/01/04 04:47:51 steve Exp $"
+#ident "$Id: eval.cc,v 1.18 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  "compiler.h"
 
 verinum* PExpr::eval_const(const Design*, const string&) const
 {
@@ -104,6 +105,7 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
       return res;
 }
 
+
 /*
  * Evaluate an identifier as a constant expression. This is only
  * possible if the identifier is that of a parameter.
@@ -183,6 +185,12 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.18  2001/01/14 23:04:56  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.17  2001/01/04 04:47:51  steve
  *  Add support for << is signal indices.
  *

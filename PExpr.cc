@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.22 2001/01/12 04:31:27 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.23 2001/01/14 23:04:55 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -133,6 +133,11 @@ const verireal& PEFNumber::value() const
       return *value_;
 }
 
+bool PEFNumber::is_constant(Module*) const
+{
+      return true;
+}
+
 PEIdent::PEIdent(const string&s)
 : text_(s), msb_(0), lsb_(0), idx_(0)
 {
@@ -246,6 +251,12 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.23  2001/01/14 23:04:55  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.22  2001/01/12 04:31:27  steve
  *  Handle error idents in constants not in any scope (PR#97)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.117 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: parse.y,v 1.118 2001/01/14 23:04:56 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -793,9 +793,10 @@ expr_primary
 		  $$ = tmp;
 		}
 	| REALTIME
-		{ yyerror(@1, "sorry: real constants not supported.");
-		  delete $1;
-		  $$ = 0;
+		{ PEFNumber*tmp = new PEFNumber($1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| STRING
 		{ PEString*tmp = new PEString($1);

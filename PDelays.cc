@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.2 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.3 2001/01/14 23:04:55 steve Exp $"
 #endif
 
 # include  "PDelays.h"
@@ -52,30 +52,49 @@ void PDelays::set_delays(const svector<PExpr*>*del)
 	    delay_[idx] = (*del)[idx];
 }
 
-void PDelays::eval_delays(Design*des, const string&path,
-			unsigned long&rise_time,
-			unsigned long&fall_time,
-			unsigned long&decay_time) const
+static unsigned long calculate_val(Design*des, const NetScope*scope,
+				   const PExpr*expr)
 {
-      verinum*dv;
+      assert(expr);
+      unsigned long val;
+
+      int shift = scope->time_unit() - des->get_precision();
+
+      if (verireal*dr = expr->eval_rconst(des, scope)) {
+	    val = dr->as_long(shift);
+	    delete dr;
+
+      } else {
+	    verinum*dv = expr->eval_const(des, scope->name());
+	    assert(dv);
+	    val = dv->as_ulong();
+	    val = des->scale_to_precision(val, scope);
+	    delete dv;
+      }
+
+      return val;
+}
+
+void PDelays::eval_delays(Design*des, const string&path,
+			  unsigned long&rise_time,
+			  unsigned long&fall_time,
+			  unsigned long&decay_time) const
+{
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      int shift = scope->time_unit() - des->get_precision();
+
 
       if (delay_[0]) {
-	    dv = delay_[0]->eval_const(des, path);
-	    assert(dv);
-	    rise_time = dv->as_ulong();
-	    delete dv;
+	    rise_time = calculate_val(des, scope, delay_[0]);
 
 	    if (delay_[1]) {
-		  dv = delay_[1]->eval_const(des, path);
-		  assert(dv);
-		  fall_time = dv->as_ulong();
-		  delete dv;
+		  fall_time = calculate_val(des, scope, delay_[1]);
 
 		  if (delay_[2]) {
-			dv = delay_[2]->eval_const(des, path);
-			assert(dv);
-			decay_time = dv->as_ulong();
-			delete dv;
+			decay_time = calculate_val(des, scope, delay_[2]);
+
 		  } else {
 			if (rise_time < fall_time)
 			      decay_time = rise_time;
@@ -96,6 +115,12 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.3  2001/01/14 23:04:55  steve
+ *  Generalize the evaluation of floating point delays, and
+ *  get it working with delay assignment statements.
+ *
+ *  Allow parameters to be referenced by hierarchical name.
+ *
  * Revision 1.2  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *
