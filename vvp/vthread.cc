@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.77 2002/05/31 20:04:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.78 2002/06/02 18:55:58 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -569,6 +569,49 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 	    if ((sig1 == 0) && (sig2 == 1))
 		  lt = 0;
       }
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+      thr_put_bit(thr, 6, eeq);
+
+      return true;
+}
+
+bool of_CMPIU(vthread_t thr, vvp_code_t cp)
+{
+      unsigned eq = 1;
+      unsigned eeq = 1;
+      unsigned lt = 0;
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned imm  = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lv = thr_get_bit(thr, idx1);
+	    unsigned rv = imm & 1;
+	    imm >>= 1;
+
+	    if (lv > rv) {
+		  lt = 0;
+		  eeq = 0;
+	    } else if (lv < rv) {
+		  lt = 1;
+		  eeq = 0;
+	    }
+	    if (eq != 2) {
+		  if ((lv == 0) && (rv != 0))
+			eq = 0;
+		  if ((lv == 1) && (rv != 1))
+			eq = 0;
+		  if ((lv | rv) >= 2)
+			eq = 2;
+	    }
+
+	    if (idx1 >= 4) idx1 += 1;
+      }
+
+      if (eq == 2)
+	    lt = 2;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -2165,6 +2208,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.78  2002/06/02 18:55:58  steve
+ *  Add %cmpi/u instruction.
+ *
  * Revision 1.77  2002/05/31 20:04:22  steve
  *  Add the %muli instruction.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.43 2002/05/31 20:04:22 steve Exp $"
+#ident "$Id: codes.h,v 1.44 2002/06/02 18:55:58 steve Exp $"
 #endif
 
 
@@ -45,6 +45,7 @@ extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
@@ -155,6 +156,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.44  2002/06/02 18:55:58  steve
+ *  Add %cmpi/u instruction.
+ *
  * Revision 1.43  2002/05/31 20:04:22  steve
  *  Add the %muli instruction.
  *

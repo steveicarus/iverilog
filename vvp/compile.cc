@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.129 2002/05/31 20:04:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.130 2002/06/02 18:55:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -93,6 +93,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%deassign",of_DEASSIGN,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -1413,6 +1414,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.130  2002/06/02 18:55:58  steve
+ *  Add %cmpi/u instruction.
+ *
  * Revision 1.129  2002/05/31 20:04:22  steve
  *  Add the %muli instruction.
  *
