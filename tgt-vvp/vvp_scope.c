@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.72 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.73 2002/07/08 04:04:07 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -508,7 +508,7 @@ const char* draw_net_input(ivl_nexus_t nex)
  * functor inputs to. Sort the signals in the nexus by name, and
  * choose the lexically earliest one.
  */
-static void draw_input_from_net(ivl_nexus_t nex)
+void draw_input_from_net(ivl_nexus_t nex)
 {
       const char*nex_private = (const char*)ivl_nexus_get_private(nex);
       if (nex_private == 0)
@@ -1236,123 +1236,6 @@ static void draw_lpm_eq(ivl_lpm_t net)
       }
 }
 
-static void draw_lpm_mux_bitwide(ivl_lpm_t net)
-{
-      unsigned sel = ivl_lpm_selects(net);
-      unsigned size = ivl_lpm_size(net);
-      unsigned seldx, idx;
-      ivl_nexus_t s;
-
-      assert(size <= (1 << sel));
-
-      s = ivl_lpm_select(net, 0);
-
-	/* Draw the leaf mux devices that take inputs from the
-	   net. These also use up the least significant bit of the
-	   select vector. */
-      for (idx = 0 ;  idx < size ;  idx += 2) {
-
-	    fprintf(vvp_out, "L_%s/0/%u/%u .functor MUXZ, ",
-		    vvp_mangle_id(ivl_lpm_name(net)), sel, idx);
-
-	    {
-		  ivl_nexus_t a = ivl_lpm_data2(net, idx+0, 0);
-		  draw_input_from_net(a);
-		  fprintf(vvp_out, ", ");
-	    }
-
-	    if ((idx+1) < size) {
-		  ivl_nexus_t b = ivl_lpm_data2(net, idx+1, 0);
-		  draw_input_from_net(b);
-		  fprintf(vvp_out, ", ");
-	    } else {
-		  fprintf(vvp_out, "C<x>, ");
-	    }
-
-	    draw_input_from_net(s);
-	    fprintf(vvp_out, ", C<1>;\n");
-      }
-
-	/* Draw the tree of MUXZ devices to connect the inner tree
-	   nodes. */
-      for (seldx = 1 ;  seldx < (sel-1) ;  seldx += 1) {
-	    unsigned level = sel - seldx;
-	    unsigned span = 2 << seldx;
-	    s = ivl_lpm_select(net, seldx);
-
-	    for (idx = 0 ;  idx < size ;  idx += span) {
-		  fprintf(vvp_out, "L_%s/0/%u/%u .functor MUXZ, ",
-			  vvp_mangle_id(ivl_lpm_name(net)), level, idx);
-
-		  fprintf(vvp_out, "L_%s/0/%u/%u, ",
-			  vvp_mangle_id(ivl_lpm_name(net)),
-			  level+1, idx);
-
-		  if ((idx + span/2) < size) {
-			fprintf(vvp_out, "L_%s/0/%u/%u, ",
-				vvp_mangle_id(ivl_lpm_name(net)),
-				level+1, idx+span/2);
-		  } else {
-			fprintf(vvp_out, "C<x>, ");
-		  }
-
-		  draw_input_from_net(s);
-		  fprintf(vvp_out, ", C<1>;\n");
-	    }
-      }
-
-      s = ivl_lpm_select(net, sel-1);
-
-      fprintf(vvp_out, "L_%s/0 .functor MUXZ, ",
-	      vvp_mangle_id(ivl_lpm_name(net)));
-
-      fprintf(vvp_out, "L_%s/0/2/0, ", vvp_mangle_id(ivl_lpm_name(net)));
-
-
-      if ((2 << (sel-1))/2 < size) {
-	    fprintf(vvp_out, "L_%s/0/2/%u, ",
-		    vvp_mangle_id(ivl_lpm_name(net)),
-		    (2 << (sel-1))/2);
-      } else {
-	    fprintf(vvp_out, "C<x>, ");
-      }
-
-      draw_input_from_net(s);
-      fprintf(vvp_out, ", C<1>;\n");
-}
-
-static void draw_lpm_mux(ivl_lpm_t net)
-{
-      ivl_nexus_t s;
-      unsigned idx, width;
-
-      if ((ivl_lpm_width(net) == 1) && (ivl_lpm_size(net) > 2)) {
-	    draw_lpm_mux_bitwide(net);
-	    return;
-      }
-
-	/* Only support A-B muxes at this oint. */
-      assert(ivl_lpm_size(net) == 2);
-      assert(ivl_lpm_selects(net) == 1);
-
-      width = ivl_lpm_width(net);
-      s = ivl_lpm_select(net, 0);
-
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
-	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
-	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
-		    vvp_mangle_id(ivl_lpm_name(net)), idx);
-	    draw_input_from_net(a);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(b);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(s);
-	    fprintf(vvp_out, ", C<1>;\n");
-      }
-
-}
-
 static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned idx, width, selects;
@@ -1577,6 +1460,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.73  2002/07/08 04:04:07  steve
+ *  Generate code for wide muxes.
+ *
  * Revision 1.72  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.14 2002/06/02 18:57:17 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.15 2002/07/08 04:04:07 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -49,6 +49,8 @@ extern int draw_func_definition(ivl_scope_t scope);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
+extern void draw_lpm_mux(ivl_lpm_t net);
+
 /*
  * Given a nexus, draw a string that represents the functor output
  * that feeds the nexus. This function can be used to get the input to
@@ -58,6 +60,8 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 extern void draw_nexus_input(ivl_nexus_t nex);
 
 extern const char* draw_net_input(ivl_nexus_t nex);
+
+extern void draw_input_from_net(ivl_nexus_t nex);
 
 /*
  * The draw_eval_expr function writes out the code to evaluate a
@@ -93,6 +97,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.15  2002/07/08 04:04:07  steve
+ *  Generate code for wide muxes.
+ *
  * Revision 1.14  2002/06/02 18:57:17  steve
  *  Generate %cmpi/u where appropriate.
  *
