@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.232 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.233 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 /*
@@ -134,6 +134,7 @@ class NetObj {
 class Link {
 
       friend void connect(Link&, Link&);
+      friend void connect(Nexus*, Link&);
       friend class NetObj;
       friend class Nexus;
 
@@ -246,6 +247,7 @@ class Link {
 class Nexus {
 
       friend void connect(Link&, Link&);
+      friend void connect(Nexus*, Link&);
       friend class Link;
 
     public:
@@ -274,6 +276,29 @@ class Nexus {
       Nexus& operator= (const Nexus&);
 };
 
+class NexusSet {
+
+    public:
+      ~NexusSet();
+      NexusSet();
+
+      unsigned count() const;
+
+      void add(Nexus*that);
+      void add(const NexusSet&that);
+
+      Nexus* operator[] (unsigned idx);
+
+    private:
+      Nexus**items_;
+      unsigned nitems_;
+
+      unsigned bsearch_(Nexus*that);
+
+    private: // not implemented
+      NexusSet(const NexusSet&);
+      NexusSet& operator= (const NexusSet&);
+};
 
 /*
  * A NetNode is a device of some sort, where each pin has a different
@@ -895,6 +920,11 @@ class NetExpr  : public LineInfo {
 	// any. This is a deep copy operation.
       virtual NetExpr*dup_expr() const =0;
 
+	// Get the Nexus that are the input to this
+	// expression. Normally this descends down to the reference to
+	// a signal that reads from its input.
+      virtual NexusSet* nex_input() =0;
+
 	// Return a version of myself that is structural. This is used
 	// for converting expressions to gates.
       virtual NetNet*synthesize(Design*);
@@ -934,6 +964,7 @@ class NetEConst  : public NetExpr {
 
       virtual NetEConst* dup_expr() const;
       virtual NetNet*synthesize(Design*);
+      virtual NexusSet* nex_input();
 
     private:
       verinum value_;
@@ -1139,6 +1170,11 @@ class NetProc : public LineInfo {
       explicit NetProc();
       virtual ~NetProc();
 
+	// Find the Nexa that are input by the statement. This is used
+	// for example by @* to find the inputs to the process for the
+	// sensitivity list.
+      virtual NexusSet* nex_input();
+
 	// This method is called to emit the statement to the
 	// target. The target returns true if OK, false for errors.
       virtual bool emit_proc(struct target_t*) const;
@@ -1263,6 +1299,7 @@ class NetAssign : public NetAssignBase {
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1411,6 +1448,7 @@ class NetCase  : public NetProc {
       const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
+      virtual NexusSet* nex_input();
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1960,6 +1998,7 @@ class NetEUFunc  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
+      virtual NexusSet* nex_input();
 
     private:
       NetScope*func_;
@@ -2096,6 +2135,7 @@ class NetEBinary  : public NetExpr {
       virtual bool has_width() const;
 
       virtual NetEBinary* dup_expr() const;
+      virtual NexusSet* nex_input();
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2295,6 +2335,7 @@ class NetEConcat  : public NetExpr {
       unsigned nparms() const { return parms_.count() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
+      virtual NexusSet* nex_input();
       virtual bool set_width(unsigned w);
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
@@ -2322,6 +2363,7 @@ class NetEParam  : public NetExpr {
       NetEParam(class Design*des, NetScope*scope, const hname_t&name);
       ~NetEParam();
 
+      virtual NexusSet* nex_input();
       virtual bool set_width(unsigned w);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2353,6 +2395,7 @@ class NetESelect  : public NetExpr {
       const NetExpr*sub_expr() const;
       const NetExpr*select() const;
 
+      virtual NexusSet* nex_input();
       virtual bool set_width(unsigned w);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2378,6 +2421,7 @@ class NetEScope  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEScope* dup_expr() const;
+      virtual NexusSet* nex_input();
 
       virtual void dump(ostream&os) const;
 
@@ -2403,6 +2447,7 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
+      virtual NexusSet* nex_input();
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
 
@@ -2439,6 +2484,7 @@ class NetETernary  : public NetExpr {
       virtual NetETernary* dup_expr() const;
       virtual NetExpr* eval_tree();
 
+      virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
       virtual NetNet*synthesize(Design*);
@@ -2478,6 +2524,7 @@ class NetEUnary  : public NetExpr {
       virtual NetEUnary* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2530,6 +2577,7 @@ class NetEMemory  : public NetExpr {
       NetExpr* eval_tree();
       virtual NetEMemory*dup_expr() const;
 
+      virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2563,6 +2611,7 @@ class NetESignal  : public NetExpr {
 
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des);
+      NexusSet* nex_input();
 
 	// These methods actually reference the properties of the
 	// NetNet object that I point to.
@@ -2605,6 +2654,7 @@ class NetEBitSel  : public NetExpr {
 
       NetEBitSel* dup_expr() const;
 
+      virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2920,6 +2970,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.233  2002/04/21 04:59:08  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.232  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.25 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: Statement.cc,v 1.26 2002/04/21 04:59:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -188,6 +188,7 @@ PDisable::~PDisable()
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
 : expr_(ee), statement_(0)
 {
+      assert(expr_.count() > 0);
 }
 
 
@@ -195,6 +196,11 @@ PEventStatement::PEventStatement(PEEvent*ee)
 : expr_(1), statement_(0)
 {
       expr_[0] = ee;
+}
+
+PEventStatement::PEventStatement(void)
+: statement_(0)
+{
 }
 
 PEventStatement::~PEventStatement()
@@ -287,6 +293,11 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.26  2002/04/21 04:59:07  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.25  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

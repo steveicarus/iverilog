@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.183 2002/04/14 19:02:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.184 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1537,40 +1537,6 @@ NetBUFZ::~NetBUFZ()
 }
 
 
-NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
-: type_(c), expr_(ex), nitems_(cnt)
-{
-      assert(expr_);
-      items_ = new Item[nitems_];
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    items_[idx].statement = 0;
-      }
-}
-
-NetCase::~NetCase()
-{
-      delete expr_;
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    delete items_[idx].guard;
-	    if (items_[idx].statement) delete items_[idx].statement;
-      }
-      delete[]items_;
-}
-
-NetCase::TYPE NetCase::type() const
-{
-      return type_;
-}
-
-void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
-{
-      assert(idx < nitems_);
-      items_[idx].guard = e;
-      items_[idx].statement = p;
-      if (items_[idx].guard)
-	    items_[idx].guard->set_width(expr_->expr_width());
-}
-
 NetCaseCmp::NetCaseCmp(NetScope*s, const string&n)
 : NetNode(s, n, 3)
 {
@@ -2428,6 +2394,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.184  2002/04/21 04:59:08  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.183  2002/04/14 19:02:34  steve
  *  Ternary expressions can be signed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.69 2002/01/26 05:28:28 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.70 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -555,13 +555,17 @@ void PDisable::dump(ostream&out, unsigned ind) const
 
 void PEventStatement::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "@(" << *(expr_[0]);
-      if (expr_.count() > 1)
-	    for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
-		  out << " or " << *(expr_[idx]);
+      if (expr_.count() == 0) {
+	    out << setw(ind) << "" << "@* ";
 
-      out << ")";
+      } else {
+	    out << setw(ind) << "" << "@(" << *(expr_[0]);
+	    if (expr_.count() > 1)
+		  for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
+			out << " or " << *(expr_[idx]);
 
+	    out << ")";
+      }
 
       if (statement_) {
 	    out << endl;
@@ -820,6 +824,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.70  2002/04/21 04:59:08  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.69  2002/01/26 05:28:28  steve
  *  Detect scalar/vector declarion mismatch.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +17,47 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_proc.cc,v 1.3 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_proc.cc,v 1.4 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  <assert.h>
+
+NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
+: type_(c), expr_(ex), nitems_(cnt)
+{
+      assert(expr_);
+      items_ = new Item[nitems_];
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    items_[idx].statement = 0;
+      }
+}
+
+NetCase::~NetCase()
+{
+      delete expr_;
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    delete items_[idx].guard;
+	    if (items_[idx].statement) delete items_[idx].statement;
+      }
+      delete[]items_;
+}
+
+NetCase::TYPE NetCase::type() const
+{
+      return type_;
+}
+
+void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
+{
+      assert(idx < nitems_);
+      items_[idx].guard = e;
+      items_[idx].statement = p;
+      if (items_[idx].guard)
+	    items_[idx].guard->set_width(expr_->expr_width());
+}
 
 NetDisable::NetDisable(NetScope*tgt)
 : target_(tgt)
@@ -95,6 +129,11 @@ const NetExpr* NetRepeat::expr() const
 
 /*
  * $Log: net_proc.cc,v $
+ * Revision 1.4  2002/04/21 04:59:08  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.3  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

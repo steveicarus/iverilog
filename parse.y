@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.147 2002/04/12 02:57:08 steve Exp $"
+#ident "$Id: parse.y,v 1.148 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2256,9 +2256,11 @@ statement
 		  }
 		}
 	| '@' '*' statement_opt
-		{ yyerror(@2, "sorry: Combinational event control "
-			  "is not supported yet.");
-		  $$ = $3;
+		{ PEventStatement*tmp = new PEventStatement;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  tmp->set_statement($3);
+		  $$ = tmp;
 		}
 	| lpvalue '=' expression ';'
 		{ PAssign*tmp = new PAssign($1,$3);

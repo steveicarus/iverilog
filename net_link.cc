@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.5 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_link.cc,v 1.6 2002/04/21 04:59:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,28 @@
 # include  <strstream>
 # include  <string>
 # include  <typeinfo>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
+
+void connect(Nexus*l, Link&r)
+{
+      assert(l);
+      assert(r.nexus_);
+
+      if (l == r.nexus_)
+	    return;
+
+
+      Nexus*tmp = r.nexus_;
+      while (Link*cur = tmp->first_nlink()) {
+	    tmp->unlink(cur);
+	    l->relink(cur);
+      }
+
+      assert(tmp->list_ == 0);
+      delete tmp;
+}
 
 void connect(Link&l, Link&r)
 {
@@ -352,8 +374,82 @@ const char* Nexus::name() const
       return name_;
 }
 
+
+NexusSet::NexusSet()
+{
+      items_ = 0;
+      nitems_ = 0;
+}
+
+NexusSet::~NexusSet()
+{
+      if (nitems_ > 0) {
+	    assert(items_ != 0);
+	    delete[] items_;
+      } else {
+	    assert(items_ == 0);
+      }
+}
+
+unsigned NexusSet::count() const
+{
+      return nitems_;
+}
+
+void NexusSet::add(Nexus*that)
+{
+      if (nitems_ == 0) {
+	    assert(items_ == 0);
+	    items_ = (Nexus**)malloc(sizeof(Nexus*));
+	    items_[0] = that;
+	    nitems_ = 1;
+	    return;
+      }
+
+      unsigned ptr = bsearch_(that);
+      if ((ptr < nitems_) && (items_[ptr] == that))
+	    return;
+
+      items_ = (Nexus**)realloc(items_, (nitems_+1) * sizeof(Nexus*));
+      for (unsigned idx = nitems_ ;  idx > ptr ;  idx -= 1)
+	    items_[idx] = items_[idx-1];
+
+      items_[ptr] = that;
+      nitems_ += 1;
+}
+
+void NexusSet::add(const NexusSet&that)
+{
+      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1)
+	    add(that.items_[idx]);
+}
+
+Nexus* NexusSet::operator[] (unsigned idx)
+{
+      assert(idx < nitems_);
+      return items_[idx];
+}
+
+unsigned NexusSet::bsearch_(Nexus*that)
+{
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    if (items_[idx] < that)
+		  continue;
+
+	    return idx;
+      }
+
+      return nitems_;
+}
+
+
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.6  2002/04/21 04:59:08  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.5  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

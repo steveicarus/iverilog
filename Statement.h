@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.31 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: Statement.h,v 1.32 2002/04/21 04:59:07 steve Exp $"
 #endif
 
 # include  <string>
@@ -308,6 +308,7 @@ class PDisable  : public Statement {
  *
  *      @name <statement>;
  *      @(expr) <statement>;
+ *      @* <statement>;
  */
 class PEventStatement  : public Statement {
 
@@ -315,6 +316,8 @@ class PEventStatement  : public Statement {
 
       explicit PEventStatement(const svector<PEEvent*>&ee);
       explicit PEventStatement(PEEvent*ee);
+	// Make an @* statement.
+      explicit PEventStatement(void);
 
       ~PEventStatement();
 
@@ -450,6 +453,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.32  2002/04/21 04:59:07  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.31  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

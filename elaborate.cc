@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.242 2002/04/13 02:33:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.243 2002/04/21 04:59:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1843,7 +1843,38 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       NetEvWait*wa = new NetEvWait(enet);
       wa->set_line(*this);
 
-      for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
+	/* If there are no expressions, this is a signal that it is an
+	   @* statement. Generate an expression to use. */
+
+      if (expr_.count() == 0) {
+	    assert(enet);
+	    NexusSet*nset = enet->nex_input();
+	    if (nset == 0) {
+		  cerr << get_line() << ": internal error: No NexusSet"
+		       << " from statement." << endl;
+		  enet->dump(cerr, 6);
+		  des->errors += 1;
+		  return enet;
+	    }
+
+	    if (nset->count() == 0) {
+		  cerr << get_line() << ": warning: No inputs to statement."
+		       << " Ignoring @*." << endl;
+		  return enet;
+	    }
+
+	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_hsymbol(),
+					   ev, NetEvProbe::ANYEDGE,
+					   nset->count());
+	    for (unsigned idx = 0 ;  idx < nset->count() ;  idx += 1)
+		  connect(nset[0][idx], pr->pin(idx));
+
+	    delete nset;
+	    des->add_node(pr);
+
+	    expr_count = 1;
+
+      } else for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
 
 	    assert(expr_[idx]->expr());
 
@@ -2423,6 +2454,11 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.243  2002/04/21 04:59:07  steve
+ *  Add support for conbinational events by finding
+ *  the inputs to expressions and some statements.
+ *  Get case and assignment statements working.
+ *
  * Revision 1.242  2002/04/13 02:33:17  steve
  *  Detect missing indices to memories (PR#421)
  *
