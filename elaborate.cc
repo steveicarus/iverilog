@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.164 2000/04/28 22:17:47 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.165 2000/04/28 23:12:12 steve Exp $"
 #endif
 
 /*
@@ -1461,12 +1461,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       NetBlock*block = new NetBlock(NetBlock::SEQU);
 
 
-	/* Detect the case where the definition of the task is
+	/* Detect the case where the definition of the task is known
 	   empty. In this case, we need not bother with calls to the
 	   task, all the assignments, etc. Just return a no-op. */
-
-      if (def->proc() == 0)
-	    return block;
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
 	    if (tp->proc_first() == 0)
@@ -2353,6 +2350,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.165  2000/04/28 23:12:12  steve
+ *  Overly aggressive eliding of task calls.
+ *
  * Revision 1.164  2000/04/28 22:17:47  steve
  *  Skip empty tasks.
  *
