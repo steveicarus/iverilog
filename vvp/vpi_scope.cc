@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.23 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.24 2003/02/11 05:20:45 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -138,7 +138,8 @@ static int compare_types(int code, int type)
 
       if ( code == vpiVariables &&
 	     (type == vpiIntegerVar ||
-	     type == vpiTimeVar))
+	      type == vpiTimeVar    ||
+	      type == vpiRealVar))
       	    return 1;
 
       return 0;
@@ -447,6 +448,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.24  2003/02/11 05:20:45  steve
+ *  Include vpiRealVar objects in vpiVariables scan.
+ *
  * Revision 1.23  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
