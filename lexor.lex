@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.67 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: lexor.lex,v 1.68 2001/12/29 19:00:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -193,7 +193,7 @@ W [ \t\b\f\r]+
  }
 
 
-\\[^ \t\b\f\r]+         {
+\\[^ \t\b\f\r\n]+         {
       yylval.text = strdup(yytext+1);
       return IDENTIFIER; }
 
