@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.22 2003/02/24 06:35:45 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.23 2003/03/10 19:14:27 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -335,8 +335,11 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	  case vpiIntVal: {
 		unsigned val = 0;
 		unsigned bit_val = 0;
+		unsigned bit_limit = rfp->nbits;
+		if (bit_limit > 8*sizeof(val))
+		      bit_limit = 8*sizeof(val);
 
-		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
+		for (unsigned idx = 0 ;  idx < bit_limit ;  idx += 1) {
 		      unsigned nibble = idx/4;
 		      unsigned shift  = 2 * (idx%4);
 		      bit_val = (rfp->bits[nibble] >> shift) & 3;
@@ -582,6 +585,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.23  2003/03/10 19:14:27  steve
+ *  More carful about shifting beyond word size.
+ *
  * Revision 1.22  2003/02/24 06:35:45  steve
  *  Interactive task calls take string arguments.
  *
