@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.59 2002/06/02 18:57:17 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.60 2002/08/03 22:30:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -78,10 +78,10 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx, unsigned bit)
 
       if (ivl_lval_mux(lval))
 	    fprintf(vvp_out, "    %%set/x V_%s, %u, 0;\n",
-		    vvp_mangle_id(ivl_signal_name(sig)), bit);
+		    vvp_signal_label(sig), bit);
       else
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-		    vvp_mangle_id(ivl_signal_name(sig)), idx+part_off, bit);
+		    vvp_signal_label(sig), idx+part_off, bit);
 }
 
 static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
@@ -109,12 +109,10 @@ static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
 
       if (ivl_lval_mux(lval))
 	    fprintf(vvp_out, "    %%assign/x0%s V_%s, %u, %u;\n",
-		    delay_suffix,
-		    vvp_mangle_id(ivl_signal_name(sig)), delay, bit);
+		    delay_suffix, vvp_signal_label(sig), delay, bit);
       else
 	    fprintf(vvp_out, "    %%assign%s V_%s[%u], %u, %u;\n",
-		    delay_suffix,
-		    vvp_mangle_id(ivl_signal_name(sig)),
+		    delay_suffix, vvp_signal_label(sig),
 		    idx+part_off, delay, bit);
 }
 
@@ -536,6 +534,7 @@ static int show_stmt_cassign(ivl_statement_t net)
       ivl_lval_t lval;
       ivl_signal_t lsig;
       unsigned idx;
+      char*tmp_label;
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
@@ -546,11 +545,13 @@ static int show_stmt_cassign(ivl_statement_t net)
       assert(ivl_signal_pins(lsig) == ivl_stmt_nexus_count(net));
       assert(ivl_lval_part_off(lval) == 0);
 
+      tmp_label = strdup(vvp_signal_label(lsig));
       for (idx = 0 ;  idx < ivl_stmt_nexus_count(net) ;  idx += 1) {
 	    fprintf(vvp_out, "    %%cassign V_%s[%u], %s;\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
+		    tmp_label, idx,
 		    draw_net_input(ivl_stmt_nexus(net, idx)));
       }
+      free(tmp_label);
 
       return 0;
 }
@@ -571,7 +572,7 @@ static int show_stmt_deassign(ivl_statement_t net)
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "    %%deassign V_%s[%u], 1;\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+		    vvp_signal_label(lsig), idx);
       }
       return 0;
 }
@@ -682,14 +683,14 @@ static int show_stmt_force(ivl_statement_t net)
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "f_%s.%u .force V_%s[%u], %s;\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
+		    vvp_signal_label(lsig), idx,
+		    vvp_signal_label(lsig), idx,
 		    draw_net_input(ivl_stmt_nexus(net, idx)));
       }
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "    %%force f_%s.%u, 1;\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+		    vvp_signal_label(lsig), idx);
       }
       return 0;
 }
@@ -772,11 +773,11 @@ static int show_stmt_release(ivl_statement_t net)
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "    %%load 4, V_%s[%u];\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+		    vvp_signal_label(lsig), idx);
 	    fprintf(vvp_out, "    %%set V_%s[%u], 4;\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+		    vvp_signal_label(lsig), idx);
 	    fprintf(vvp_out, "    %%release V_%s[%u];\n",
-		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+		    vvp_signal_label(lsig), idx);
       }
       return 0;
 }
@@ -974,7 +975,7 @@ static int show_system_task_call(ivl_statement_t net)
 			break;
 		  } else {
 			fprintf(vvp_out, ", V_%s", 
-				vvp_mangle_id(ivl_expr_name(expr)));
+				vvp_signal_label(ivl_expr_signal(expr)));
 			continue;
 		  }
 
@@ -1220,6 +1221,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.60  2002/08/03 22:30:48  steve
+ *  Eliminate use of ivl_signal_name for signal labels.
+ *
  * Revision 1.59  2002/06/02 18:57:17  steve
  *  Generate %cmpi/u where appropriate.
  *

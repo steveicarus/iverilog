@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.15 2002/07/08 04:04:07 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.16 2002/08/03 22:30:48 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -36,6 +36,12 @@ extern FILE* vvp_out;
  */
 extern const char *vvp_mangle_id(const char *);
 extern const char *vvp_mangle_name(const char *);
+
+/*
+ * This generates a string from a signal that uniquely identifies
+ * that signal with letters that can be used in a label.
+ */
+extern const char* vvp_signal_label(ivl_signal_t sig);
 
 /*
  * This function draws a process (initial or always) into the output
@@ -97,6 +103,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.16  2002/08/03 22:30:48  steve
+ *  Eliminate use of ivl_signal_name for signal labels.
+ *
  * Revision 1.15  2002/07/08 04:04:07  steve
  *  Generate code for wide muxes.
  *

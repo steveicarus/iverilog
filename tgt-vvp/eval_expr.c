@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.65 2002/07/12 18:10:45 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.66 2002/08/03 22:30:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -881,7 +881,7 @@ static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
       res.wid = wid;
 
       fprintf(vvp_out, "    %%load/x %u, V_%s, 0;\n", res.base,
-	      vvp_mangle_id(ivl_signal_name(sig)));
+	      vvp_signal_label(sig));
 
       return res;
 }
@@ -1092,7 +1092,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       unsigned idx;
       unsigned lsi = ivl_expr_lsi(exp);
       unsigned swid = ivl_expr_width(exp);
-      const char*name = ivl_expr_name(exp);
+      ivl_signal_t sig = ivl_expr_signal(exp);
       struct vector_info res;
 
       if (swid > wid)
@@ -1103,7 +1103,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, vvp_mangle_id(name), idx+lsi);
+		    res.base+idx, vvp_signal_label(sig), idx+lsi);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -1359,7 +1359,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 
 		case IVL_EX_SIGNAL:
 		  fprintf(vvp_out, ", V_%s", 
-			  vvp_mangle_id(ivl_expr_name(expr)));
+			  vvp_signal_label(ivl_expr_signal(expr)));
 		  continue;
 
 		case IVL_EX_STRING:
@@ -1446,7 +1446,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 	    assert(res.wid <= ivl_signal_pins(port));
 	    for (pin = 0 ;  pin < res.wid ;  pin += 1) {
 		  fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-			  vvp_mangle_id(ivl_signal_name(port)),
+			  vvp_signal_label(port),
 			  pin, bit);
 		  if (bit >= 4)
 			bit += 1;
@@ -1475,7 +1475,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 	for (idx = 0 ;  idx < load_wid ;  idx += 1)
 	      fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
 		      res.base+idx,
-		      vvp_mangle_id(ivl_signal_name(retval)), idx);
+		      vvp_signal_label(retval), idx);
 
 	if (load_wid < swid)
 	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
@@ -1726,6 +1726,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.66  2002/08/03 22:30:48  steve
+ *  Eliminate use of ivl_signal_name for signal labels.
+ *
  * Revision 1.65  2002/07/12 18:10:45  steve
  *  Use all bits of ?: condit expression.
  *

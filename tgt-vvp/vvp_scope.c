@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.74 2002/07/18 02:06:37 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.75 2002/08/03 22:30:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -124,6 +124,19 @@ const char *vvp_mangle_name(const char *id)
       
       strcpy(out+iout, inp);
       return out;
+}
+
+/*
+ * Given a signal, generate a string name that is suitable for use as
+ * a label. The only rule is that the same signal will always have the
+ * same label. The result is stored in static memory, so remember to
+ * copy it out.
+ */
+const char* vvp_signal_label(ivl_signal_t sig)
+{
+      static char buf[32];
+      sprintf(buf, "$%p", sig);
+      return buf;
 }
 
 ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
@@ -274,8 +287,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       sptr = ivl_nexus_ptr_sig(nptr);
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-	    sprintf(result, "V_%s[%u]", vvp_mangle_id(ivl_signal_name(sptr)),
-		    nptr_pin);
+	    sprintf(result, "V_%s[%u]", vvp_signal_label(sptr), nptr_pin);
 	    return result;
       }
 
@@ -534,7 +546,7 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 			       ivl_signal_signed(sig)? "/s" : "";
 
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
-	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
+	      vvp_signal_label(sig), signed_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
 }
 
@@ -566,7 +578,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
       }
 
       fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
-	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
+	      vvp_signal_label(sig), signed_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
 	    fprintf(vvp_out, ", %s", args[idx]);
@@ -1308,7 +1320,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
 	    for (bit = 0 ; bit < ivl_signal_pins(psig) ; bit += 1) {
 		  fprintf(vvp_out, "%c V_%s[%u]", comma,
-			  vvp_mangle_id(ivl_signal_name(psig)), bit);
+			  vvp_signal_label(psig), bit);
 		  comma = ',';
 	    }
       }
@@ -1321,7 +1333,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	comma = ' ';
 	for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 	      fprintf(vvp_out, "%c V_%s[%u]", comma,
-		      vvp_mangle_id(ivl_signal_name(psig)),
+		      vvp_signal_label(psig),
 		      idx);
 	      comma = ',';
 	}
@@ -1466,6 +1478,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.75  2002/08/03 22:30:48  steve
+ *  Eliminate use of ivl_signal_name for signal labels.
+ *
  * Revision 1.74  2002/07/18 02:06:37  steve
  *  Need driver for sure in assign feedback and other cases.
  *
