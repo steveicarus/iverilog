@@ -1,0 +1,115 @@
+#ifndef __target_H
+#define __target_H
+/*
+ * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT)
+#ident "$Id: target.h,v 1.1 1998/11/03 23:29:06 steve Exp $"
+#endif
+
+# include  "netlist.h"
+class ostream;
+
+/*
+ * This header file describes the types and constants used to describe
+ * the possible target output types of the compiler. The backends
+ * provide one of these in order to tell the previous steps what the
+ * backend is able to do.
+ */
+
+/*
+ * The backend driver is hooked into the compiler, and given a name,
+ * by creating an instance of the target structure. The structure has
+ * the name that the compiler will use to locate the driver, and a
+ * pointer to a target_t object that is the actual driver.
+ */
+struct target {
+      string name;
+      struct target_t* meth;
+};
+
+/*
+ * The emit process uses a target_t driver to send the completed
+ * design to a file. It is up to the driver object to follow along in
+ * the iteration through the design, generating output as it can.
+ */
+
+struct target_t {
+      virtual ~target_t();
+
+	/* Start the design. */
+      virtual void start_design(ostream&os, const Design*);
+
+	/* Output a signal (called for each signal) */
+      virtual void signal(ostream&os, const NetNet*);
+
+	/* Output a gate (called for each gate) */
+      virtual void logic(ostream&os, const NetLogic*);
+      virtual void bufz(ostream&os, const NetBUFZ*);
+      virtual void net_assign(ostream&os, const NetAssign*);
+      virtual void net_pevent(ostream&os, const NetPEvent*);
+
+	/* Output a process (called for each process) */
+      virtual void start_process(ostream&os, const NetProcTop*);
+
+	/* Various kinds of process nodes are dispatched through these. */
+      virtual void proc_assign(ostream&os, const NetAssign*);
+      virtual void proc_block(ostream&os, const NetBlock*);
+      virtual void proc_task(ostream&os, const NetTask*);
+
+      virtual void proc_event(ostream&os, const NetPEvent*);
+      virtual void proc_delay(ostream&os, const NetPDelay*);
+
+	/* (called for each process) */
+      virtual void end_process(ostream&os, const NetProcTop*);
+
+	/* Done with the design. */
+      virtual void end_design(ostream&os, const Design*);
+};
+
+/* This class is used by the NetExpr class to help with the scanning
+   of expressions. */
+struct expr_scan_t {
+      virtual ~expr_scan_t();
+      virtual void expr_const(const NetEConst*);
+      virtual void expr_ident(const NetEIdent*);
+      virtual void expr_unary(const NetEUnary*);
+};
+
+
+/* The emit functions take a design and emit it to the output stream
+   using the specified target. If the target is given by name, it is
+   located in the target_table and used. */
+extern void emit(ostream&o, const Design*des, const char*type);
+
+/* This function takes a fully qualified verilog name (which may have,
+   for example, dots in it) and produces a mangled version that can be
+   used by most any language. */
+extern string mangle(const string&str);
+
+/* This is the table of supported output targets. It is a null
+   terminated array of pointers to targets. */
+extern const struct target *target_table[];
+
+/*
+ * $Log: target.h,v $
+ * Revision 1.1  1998/11/03 23:29:06  steve
+ *  Introduce verilog to CVS.
+ *
+ */
+#endif
