@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.97 2000/01/13 06:05:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.98 2000/01/18 04:53:57 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -429,6 +429,7 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	  case 'o': // logical or (||)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_lor("
 		<< lres << "," << rres << ");" << endl;
+	    break;
 	  case 'r': // right shift(>>)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftr("
 		<< lres << "," << rres << ");" << endl;
@@ -2040,6 +2041,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.98  2000/01/18 04:53:57  steve
+ *  missing break is switch.
+ *
  * Revision 1.97  2000/01/13 06:05:46  steve
  *  Add the XNOR operator.
  *
