@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.49 2002/09/11 16:06:57 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.50 2002/11/25 23:33:45 steve Exp $"
 #endif
 
 /*
@@ -428,9 +428,10 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	  }
 
 	  default:
-	    fprintf(stderr, "vvp internal error: signal_get_value: "
-		    "value type %u not implemented.\n", vp->format);
-
+	    fprintf(stderr, "vvp internal error: get_value: "
+		    "value type %u not implemented."
+		    " Signal is %s in scope %s\n",
+		    vp->format, rfp->name, rfp->scope->name);
 	    assert(0);
       }
 }
@@ -448,6 +449,36 @@ static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
       vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
       functor_t fu = functor_index(ptr);
       fu->put_ostr(val, str, true);
+}
+
+static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
+				 const char*str)
+{
+      unsigned idx;
+      const char*cp;
+
+      cp = str + strlen(str);
+      idx = 0;
+
+      while ((idx < wid) && (cp > str)) {
+	    unsigned byte = *--cp;
+	    int bit;
+
+	    for (bit = 0 ;  bit < 8 ;  bit += 1) {
+		  if (byte & 1)
+			functor_poke(rfp, idx, 1, St1);
+		  else
+			functor_poke(rfp, idx, 0, St0);
+
+		  byte >>= 1;
+		  idx += 1;
+	    }
+      }
+
+      while (idx < wid) {
+	    functor_poke(rfp, 0, 0, St0);
+	    idx += 1;
+      }
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
@@ -641,7 +672,15 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		break;
 	  }
 
+	  case vpiStringVal:
+	    signal_put_stringval(rfp, wid, vp->value.str);
+	    break;
+
 	  default:
+	    fprintf(stderr, "vvp internal error: put_value: "
+		    "value type %u not implemented."
+		    " Signal is %s in scope %s\n",
+		    vp->format, rfp->name, rfp->scope->name);
 	    assert(0);
 
       }
@@ -722,6 +761,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.50  2002/11/25 23:33:45  steve
+ *  Support put of vpiStringVal to signals.
+ *
  * Revision 1.49  2002/09/11 16:06:57  steve
  *  Fix wrecked rbuf in vpi_get_str of signals and memories.
  *
