@@ -13,7 +13,7 @@ INVOKING
 The vl command is the compiler driver, that invokes the parser,
 optimization functions and the code generator.
 
-Usage: vl [-s <module>] [-o <file>] [-D] [-F <name>] [-t <name>] file
+Usage: vl <options>... file
        vl -h
 
 -F <name>
@@ -37,10 +37,23 @@ Usage: vl [-s <module>] [-o <file>] [-D] [-F <name>] [-t <name>] file
 	target specific information to the target backend, or
 	options/parameters to optimization functions, if any are defined.
 
+-N <file>
+	Dump the elaborated netlist to the named file. The netlist is
+	the folly elaborated netlist, after all the function modules
+	are applied and right before the output generator is
+	called. This is an aid for debugging the compiler, and the
+	output generator in particular.
+
 -o <file>
 	Normally, the generated result is sent to standard
 	output. Use the -o flag to specify an output file for the
 	generated result.
+
+-P <file>
+	Write the PForm of the parsed input to the specified file.
+	The pform is the compiler's understanding of the input after
+	parsing and before elaboration. This is an aid for debugging
+	the compiler.
 
 -s <module>
 	Normally, vl will elaborate the only module in the source

@@ -4,3 +4,8 @@ parse.cc.output
 lexor.cc
 ivl
 dep
+configure
+Makefile
+config.status
+config.log
+config.cache
