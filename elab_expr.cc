@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.25 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.26 2000/05/19 01:55:09 steve Exp $"
 #endif
 
 
@@ -362,6 +362,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 		  return node;
 	    }
 	    assert(msb_ != 0);
+	    if (lsb_) {
+		  cerr << get_line() << ": error: part select of a memory: "
+		       << mem->name() << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    assert(lsb_ == 0);
 	    assert(idx_ == 0);
 	    NetExpr*i = msb_->elaborate_expr(des, scope);
@@ -463,6 +470,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.26  2000/05/19 01:55:09  steve
+ *  Catch part select of memories as an error.
+ *
  * Revision 1.25  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.
