@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.13 2000/12/11 00:31:44 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.14 2001/02/07 21:47:13 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -122,16 +122,16 @@ void vvm_binop_minus(vvm_bitset_t&v, const vvm_bitset_t&l,
 
 void vvm_binop_nor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
+      assert(v.nbits <= l.nbits);
+      assert(v.nbits <= r.nbits);
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
 	    v[idx] = B_NOT(B_OR(l[idx], r[idx]));
 }
 
 void vvm_binop_or(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
+      assert(v.nbits <= l.nbits);
+      assert(v.nbits <= r.nbits);
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
 	    v[idx] = B_OR(l[idx], r[idx]);
 }
@@ -167,16 +167,16 @@ void vvm_binop_shiftr(vvm_bitset_t&v,
 
 void vvm_binop_xnor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
+      assert(v.nbits <= l.nbits);
+      assert(v.nbits <= r.nbits);
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
 	    v[idx] = B_NOT(B_XOR(l[idx], r[idx]));
 }
 
 void vvm_binop_xor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
-      assert(v.nbits == l.nbits);
-      assert(v.nbits == r.nbits);
+      assert(v.nbits <= l.nbits);
+      assert(v.nbits <= r.nbits);
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
 	    v[idx] = B_XOR(l[idx], r[idx]);
 }
@@ -607,6 +607,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.14  2001/02/07 21:47:13  steve
+ *  Fix expression widths for rvalues and parameters (PR#131,132)
+ *
  * Revision 1.13  2000/12/11 00:31:44  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.205 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.206 2001/02/07 21:47:13 steve Exp $"
 #endif
 
 /*
@@ -1280,7 +1280,7 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 	    return 0;
       }
 
-      if (! expr->set_width(1)) {
+      if (expr->expr_width() > 1) {
 	    assert(expr->expr_width() > 1);
 	    verinum zero (verinum::V0, expr->expr_width());
 	    NetEConst*ezero = new NetEConst(zero);
@@ -1955,6 +1955,7 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
  */
 NetProc* PForStatement::elaborate(Design*des, const string&path) const
 {
+      NetExpr*etmp;
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
@@ -1980,7 +1981,13 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
 	    connect(lv->pin(idx), sig->pin(idx));
       des->add_node(lv);
-      NetAssign*init = new NetAssign(lv, expr1_->elaborate_expr(des, scope));
+
+	/* Make the r-value of the initial assignment, and size it
+	   properly. Then use it to build the assignment statement. */
+      etmp = expr1_->elaborate_expr(des, scope);
+      etmp->set_width(lv->lwidth());
+
+      NetAssign*init = new NetAssign(lv, etmp);
 
       top->append(init);
 
@@ -2004,7 +2011,12 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
 	    connect(lv->pin(idx), sig->pin(idx));
       des->add_node(lv);
-      NetAssign*step = new NetAssign(lv, expr2_->elaborate_expr(des, scope));
+
+	/* Make the rvalue of the increment expression, and size it
+	   for the lvalue. */
+      etmp = expr2_->elaborate_expr(des, scope);
+      etmp->set_width(lv->lwidth());
+      NetAssign*step = new NetAssign(lv, etmp);
 
       body->append(step);
 
@@ -2355,6 +2367,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.206  2001/02/07 21:47:13  steve
+ *  Fix expression widths for rvalues and parameters (PR#131,132)
+ *
  * Revision 1.205  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

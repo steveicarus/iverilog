@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.23 2001/02/07 02:46:31 steve Exp $"
+#ident "$Id: verinum.cc,v 1.24 2001/02/07 21:47:13 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -144,11 +144,13 @@ verinum& verinum::operator= (const verinum&that)
 
 verinum::V verinum::get(unsigned idx) const
 {
+      assert(idx < nbits_);
       return bits_[idx];
 }
 
 verinum::V verinum::set(unsigned idx, verinum::V val)
 {
+      assert(idx < nbits_);
       return bits_[idx] = val;
 }
 
@@ -688,6 +690,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.24  2001/02/07 21:47:13  steve
+ *  Fix expression widths for rvalues and parameters (PR#131,132)
+ *
  * Revision 1.23  2001/02/07 02:46:31  steve
  *  Support constant evaluation of / and % (PR#124)
  *

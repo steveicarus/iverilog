@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.15 2001/01/27 05:41:48 steve Exp $"
+#ident "$Id: set_width.cc,v 1.16 2001/02/07 21:47:13 steve Exp $"
 #endif
 
 /*
@@ -105,18 +105,48 @@ bool NetEBAdd::set_width(unsigned w)
 
 /*
  * The bitwise logical operators have operands the same size as the
- * result. Anything else is a mess.
+ * result. Anything else is a mess. I first try to get the operands to
+ * shrink to the desired size. I then expand operands that are too small.
  */
 bool NetEBBits::set_width(unsigned w)
 {
-      bool flag = true;
+	/* First, give the operands a chance to adjust themselves to
+	   the requested width. */
+      left_->set_width(w);
+      right_->set_width(w);
 
-      flag = left_->set_width(w) && flag;
-      flag = right_->set_width(w) && flag;
-      if (flag)
-	    expr_width(w);
+	/* Now increase me up to the size of the largest operand. This
+	   accounts for operands that can't shrink. */
 
-      return flag;
+      unsigned use_width = w;
+#if 0
+      if (use_width < left_->expr_width())
+	    use_width = left_->expr_width();
+
+      if (use_width < right_->expr_width())
+	    use_width = right_->expr_width();
+#endif
+
+	/* If the operands end up too small, then pad them to suit. */
+
+      if (left_->expr_width() < use_width) {
+	    NetExpr*tmp = pad_to_width(left_, use_width);
+	    assert(tmp);
+	    left_ = tmp;
+      }
+
+      if (right_->expr_width() < w) {
+	    NetExpr*tmp = pad_to_width(right_, use_width);
+	    assert(tmp);
+	    right_ = tmp;
+      }
+
+
+	/* And here is the final width. If this is not the size the
+	   caller requested, then return false. Otherwise, return
+	   true. */
+      expr_width(use_width);
+      return w == use_width;
 }
 
 /*
@@ -313,6 +343,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.16  2001/02/07 21:47:13  steve
+ *  Fix expression widths for rvalues and parameters (PR#131,132)
+ *
  * Revision 1.15  2001/01/27 05:41:48  steve
  *  Fix sign extension of evaluated constants. (PR#91)
  *

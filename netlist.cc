@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.154 2001/01/18 03:16:35 steve Exp $"
+#ident "$Id: netlist.cc,v 1.155 2001/02/07 21:47:13 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1780,9 +1780,16 @@ bool NetExpr::has_width() const
       return true;
 }
 
+/*
+ * Create a bitwise operator node from the opcode and the left and
+ * right expressions. Don't worry about the width of the expression
+ * yet, we'll get that from the l-value, whatever that turns out to
+ * be.
+ */
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+#if 0
       if (l->expr_width() > r->expr_width())
 	    r->set_width(l->expr_width());
 
@@ -1794,7 +1801,7 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 
       if (r->expr_width() < l->expr_width())
 	    l->set_width(r->expr_width());
-
+#endif
       if (r->expr_width() > l->expr_width())
 	    expr_width(r->expr_width());
       else
@@ -1812,9 +1819,17 @@ NetEBAdd* NetEBAdd::dup_expr() const
       return result;
 }
 
+/*
+ * Create a bitwise operator node from the opcode and the left and
+ * right expressions. Don't worry about the width of the expression
+ * yet, we'll get that from the l-value, whatever that turns out to
+ * be. However, if we don't, our default will be the width of the
+ * largest operand.
+ */
 NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+#if 0
 	/* First try to naturally adjust the size of the
 	   expressions to match. */
       if (l->expr_width() > r->expr_width())
@@ -1838,6 +1853,11 @@ NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 
       assert(left_->expr_width() == right_->expr_width());
       expr_width(left_->expr_width());
+#endif
+      if (r->expr_width() > l->expr_width())
+	    expr_width(r->expr_width());
+      else
+	    expr_width(l->expr_width());
 }
 
 NetEBBits::~NetEBBits()
@@ -2473,6 +2493,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.155  2001/02/07 21:47:13  steve
+ *  Fix expression widths for rvalues and parameters (PR#131,132)
+ *
  * Revision 1.154  2001/01/18 03:16:35  steve
  *  NetMux needs a scope. (PR#115)
  *
