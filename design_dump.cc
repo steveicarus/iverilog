@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.120 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.121 2001/12/31 00:03:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -884,6 +884,8 @@ void NetESFunc::dump(ostream&o) const
 
 void NetESignal::dump(ostream&o) const
 {
+      if (has_sign())
+	    o << "+";
       o << name() << "[" << msi_<<":"<<lsi_ << "]";
 }
 
@@ -970,6 +972,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.121  2001/12/31 00:03:05  steve
+ *  Include s indicator in dump of signed numbers.
+ *
  * Revision 1.120  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.29 2001/11/19 02:54:12 steve Exp $"
+#ident "$Id: verinum.cc,v 1.30 2001/12/31 00:02:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -351,15 +351,16 @@ ostream& operator<< (ostream&o, verinum::V v)
  */
 ostream& operator<< (ostream&o, const verinum&v)
 {
-      if (v.has_sign()) {
-	    o << "+";
-      }
-
 	/* If the verinum number has a fixed length, dump all the bits
 	   literally. This is how we express the fixed length in the
 	   output. */
       if (v.has_len()) {
-	    o << v.len() << "'b";
+	    o << v.len();
+	    if (v.has_sign())
+		  o << "'sb";
+	    else
+		  o << "'sb";
+
 	    if (v.len() == 0) {
 		  o << "0";
 		  return o;
@@ -374,13 +375,19 @@ ostream& operator<< (ostream&o, const verinum&v)
 	/* If the number is fully defined (no x or z) then print it
 	   out as a decimal number. */
       if (v.is_defined()) {
-	    o << "'d" << v.as_ulong();
+	    if (v.has_sign())
+		  o << "'sd" << v.as_ulong();
+	    else
+		  o << "'d" << v.as_ulong();
 	    return o;
       }
 
 	/* Oh, well. Print the minimum to get the value properly
 	   displayed. */
-      o << "'b";
+      if (v.has_sign())
+	    o << "'sb";
+      else
+	    o << "'b";
 
       if (v.len() == 0) {
 	    o << "0";
@@ -786,6 +793,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.30  2001/12/31 00:02:33  steve
+ *  Include s indicator in dump of signed numbers.
+ *
  * Revision 1.29  2001/11/19 02:54:12  steve
  *  Handle division and modulus by zero while
  *  evaluating run-time constants.
