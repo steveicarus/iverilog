@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.179 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: parse.y,v 1.180 2003/06/19 18:54:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1419,14 +1419,14 @@ assign_list
      section, with optional ports, then an optional list of module
      items, and finally an end marker. */
 
-module  : module_start IDENTIFIER
-		{ pform_startmodule($2, @1.text, @1.first_line); }
+module  : attribute_list_opt module_start IDENTIFIER
+		{ pform_startmodule($3, @2.text, @2.first_line); }
 	  list_of_ports_opt ';'
-		{ pform_module_set_ports($4); }
+		{ pform_module_set_ports($5); }
 	  module_item_list_opt
 	  K_endmodule
-		{ pform_endmodule($2);
-		  delete $2;
+		{ pform_endmodule($3);
+		  delete $3;
 		}
 
 	;
