@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.89 2004/08/26 03:52:07 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.90 2004/08/28 15:42:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -190,6 +190,20 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    PExpr*expr = parms_[0];
 	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
 	    sub->cast_signed(true);
+	    return sub;
+      }
+      /* add $unsigned to match $signed */
+      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $unsigned() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    sub->cast_signed(false);
 	    return sub;
       }
 
@@ -991,6 +1005,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.90  2004/08/28 15:42:11  steve
+ *  Add support for $unsigned.
+ *
  * Revision 1.89  2004/08/26 03:52:07  steve
  *  Add the $is_signed function.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.133 2004/06/30 02:16:26 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.134 2004/08/28 15:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1194,6 +1194,21 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
 					     fall, decay, drive0, drive1);
 	    sub->set_signed(true);
+	    return sub;
+      }
+      /* handle $unsigned like $signed */
+      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $unsigned() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
+					     fall, decay, drive0, drive1);
+	    sub->set_signed(false);
 	    return sub;
       }
 
@@ -2473,6 +2488,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.134  2004/08/28 15:42:12  steve
+ *  Add support for $unsigned.
+ *
  * Revision 1.133  2004/06/30 02:16:26  steve
  *  Implement signed divide and signed right shift in nets.
  *
