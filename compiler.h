@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.24 2004/09/10 23:51:42 steve Exp $"
+#ident "$Id: compiler.h,v 1.25 2004/09/25 01:58:44 steve Exp $"
 #endif
 
 # include  <list>
@@ -83,6 +83,7 @@ extern bool verbose_flag;
 
 extern bool debug_scopes;
 extern bool debug_eval_tree;
+extern bool debug_elaborate;
 
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
@@ -135,6 +136,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.25  2004/09/25 01:58:44  steve
+ *  Add a debug_elaborate flag
+ *
  * Revision 1.24  2004/09/10 23:51:42  steve
  *  Fix the evaluation of constant ternary expressions.
  *

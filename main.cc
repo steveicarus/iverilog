@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.84 2004/09/10 23:51:42 steve Exp $"
+#ident "$Id: main.cc,v 1.85 2004/09/25 01:58:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -111,6 +111,7 @@ bool error_implicit = false;
  */
 bool debug_scopes = false;
 bool debug_eval_tree = false;
+bool debug_elaborate = false;
 /*
  * Verbose messages enabled.
  */
@@ -310,6 +311,9 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"eval_tree") == 0) {
 			debug_eval_tree = true;
 			cerr << "debug: Enable eval_tree debug" << endl;
+		  } else if (strcmp(cp,"elaborate") == 0) {
+			debug_elaborate = true;
+			cerr << "debug: Enable elaborate debug" << endl;
 		  } else {
 		  }
 
@@ -740,6 +744,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.85  2004/09/25 01:58:44  steve
+ *  Add a debug_elaborate flag
+ *
  * Revision 1.84  2004/09/10 23:51:42  steve
  *  Fix the evaluation of constant ternary expressions.
  *
