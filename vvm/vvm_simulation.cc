@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_simulation.cc,v 1.4 1999/06/19 03:31:33 steve Exp $"
+#ident "$Id: vvm_simulation.cc,v 1.5 1999/09/29 02:53:33 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -195,7 +195,6 @@ void vvm_simulation::s_finish()
 
 void vvm_simulation::thread_delay(unsigned long delay, vvm_thread*thr)
 {
-      assert(delay > 0);
       delay_event*ev = new delay_event(thr);
       insert_event(delay, ev);
 }
@@ -209,6 +208,9 @@ void vvm_simulation::thread_active(vvm_thread*thr)
 
 /*
  * $Log: vvm_simulation.cc,v $
+ * Revision 1.5  1999/09/29 02:53:33  steve
+ *  Useless assertion.
+ *
  * Revision 1.4  1999/06/19 03:31:33  steve
  *  End run if events run out.
  *
