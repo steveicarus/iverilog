@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.27 2001/07/13 03:02:34 steve Exp $"
+#ident "$Id: functor.h,v 1.28 2001/07/16 17:57:51 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -140,8 +140,9 @@ struct functor_s {
       unsigned odrive1    : 3;
 	/* Strength form of the output value. */
       unsigned ostr       : 8;
-	/* set this flag if there might be a waiting callback. */
-      unsigned callback   : 1;
+	/* set this flag if there might be a waiting callback. 
+	   union member sig must be valid */
+      unsigned callback   : 1; 
 #if defined(WITH_DEBUG)
 	/* True if this functor triggers a breakpoint. */
       unsigned breakpoint : 1;
@@ -151,9 +152,9 @@ struct functor_s {
       unsigned mode       : 2;
       union {
  	    unsigned char old_ival; // mode 3
+	    /* Which signal are we representing */
+	    struct __vpiSignal *sig;
       };
-        /* Which signal are we representing */
-      struct __vpiSignal *sig;
 };
 
 typedef struct functor_s *functor_t;
@@ -297,6 +298,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.28  2001/07/16 17:57:51  steve
+ *  Merge sig and old_ival into union to save space.
+ *
  * Revision 1.27  2001/07/13 03:02:34  steve
  *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
  *
