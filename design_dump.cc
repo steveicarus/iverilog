@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.26 1999/05/31 15:46:20 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.27 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 /*
@@ -124,6 +124,17 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Procedural assign: " << *rval_ << endl;
+      dump_node_pins(o, ind+4);
+}
+
+void NetAssignNB::dump_node(ostream&o, unsigned ind) const
+{
+      if (bmux_)
+	    o << setw(ind) << "" << "Procedural NB assign: " << name()
+	      << "[" << *bmux_ << "] <= " << *rval_ << endl;
+      else
+	    o << setw(ind) << "" << "Procedural NB assign: " << name()
+	      << " <= " << *rval_ << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -298,6 +309,19 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       
       rval_->dump(o);
       o << ";" << endl;
+}
+
+void NetAssignNB::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+
+      if (bmux_) {
+	    o << name() << "[" << *bmux_ << "] <= " << *rval_ << ";" <<
+		  endl;
+
+      } else {
+	    o << name() << " <= " << *rval_ << ";" << endl;
+      }
 }
 
 void NetAssignMem::dump(ostream&o, unsigned ind) const
@@ -598,6 +622,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.27  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.26  1999/05/31 15:46:20  steve
  *  Compilation warning.
  *

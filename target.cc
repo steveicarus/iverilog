@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.9 1999/05/12 04:03:19 steve Exp $"
+#ident "$Id: target.cc,v 1.10 1999/06/06 20:45:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -61,6 +61,12 @@ void target_t::net_assign(ostream&os, const NetAssign*)
 {
 }
 
+void target_t::net_assign_nb(ostream&os, const NetAssignNB*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled non-blocking assignment node." << endl;
+}
+
 void target_t::net_const(ostream&os, const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -91,6 +97,12 @@ void target_t::proc_assign_mem(ostream&os, const NetAssignMem*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory assignment." << endl;
+}
+
+void target_t::proc_assign_nb(ostream&os, const NetAssignNB*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled non-blocking assignment." << endl;
 }
 
 void target_t::proc_block(ostream&os, const NetBlock*)
@@ -190,6 +202,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.10  1999/06/06 20:45:39  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.9  1999/05/12 04:03:19  steve
  *  emit NetAssignMem objects in vvm target.
  *

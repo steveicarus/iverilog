@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.22 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: pform.cc,v 1.23 1999/06/06 20:45:39 steve Exp $"
 #endif
 
+# include  "compiler.h"
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "PUdp.h"
@@ -466,6 +467,17 @@ static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
       }
 }
 
+void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
+{
+      assert(range->count() == 2);
+
+      for (list<string>::const_iterator cur = names->begin()
+		 ; cur != names->end()
+		 ; cur ++ ) {
+	    pform_set_net_range(*cur, range);
+      }
+}
+
 void pform_set_parameter(const string&name, PExpr*expr)
 {
       cur_module->parameters[name] = expr;
@@ -480,14 +492,23 @@ void pform_set_port_type(list<string>*names, NetNet::PortType pt)
       }
 }
 
-void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
+static void pform_set_reg_integer(const string&name)
 {
-      assert(range->count() == 2);
+      PWire*cur = cur_module->get_wire(name);
+      assert(cur);
+      assert(cur->type == NetNet::REG);
+      cur->type = NetNet::INTEGER;
 
+      cur->msb = new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH));
+      cur->lsb = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+}
+
+void pform_set_reg_integer(list<string>*names)
+{
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    pform_set_net_range(*cur, range);
+	    pform_set_reg_integer(*cur);
       }
 }
 
@@ -561,6 +582,11 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.23  1999/06/06 20:45:39  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.22  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *

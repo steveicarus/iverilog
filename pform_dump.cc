@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.17 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.18 1999/06/06 20:45:39 steve Exp $"
 #endif
 
 /*
@@ -261,6 +261,13 @@ void PAssign::dump(ostream&out, unsigned ind) const
       out << "  /* " << get_line() << " */" << endl;
 }
 
+void PAssignNB::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "";
+      out << *lval_ << " <= " << *rval_ << ";";
+      out << "  /* " << get_line() << " */" << endl;
+}
+
 void PBlock::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "begin" << endl;
@@ -297,15 +304,15 @@ void PCase::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "case (" << *expr_ << ") /* " <<
 	    get_line() << " */" << endl;
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx].expr)
-		  out << setw(ind+2) << "" << *items_[idx].expr << ":";
+      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+	    if ((*items_)[idx]->expr)
+		  out << setw(ind+2) << "" << *(*items_)[idx]->expr << ":";
 	    else
 		  out << setw(ind+2) << "" << "default:";
 
-	    if (items_[idx].stat) {
+	    if ((*items_)[idx]->stat) {
 		  out << endl;
-		  items_[idx].stat->dump(out, ind+6);
+		  (*items_)[idx]->stat->dump(out, ind+6);
 	    } else {
 		  out << " ;" << endl;
 	    }
@@ -356,8 +363,8 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
 
 void PForStatement::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "for (" << name1_ << " = " << *expr1_
-	  << "; " << *cond_ << "; " << name2_ << " = " << *expr2_ <<
+      out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
+	  << "; " << *cond_ << "; " << *name2_ << " = " << *expr2_ <<
 	    ")" << endl;
       statement_->dump(out, ind+3);
 }
@@ -468,6 +475,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.18  1999/06/06 20:45:39  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.17  1999/05/29 02:36:17  steve
  *  module parameter bind by name.
  *

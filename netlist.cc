@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.31 1999/06/03 05:16:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.32 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -29,6 +29,9 @@ ostream& operator<< (ostream&o, NetNet::Type t)
       switch (t) {
 	  case NetNet::IMPLICIT:
 	    o << "wire /*implicit*/";
+	    break;
+	  case NetNet::INTEGER:
+	    o << "integer";
 	    break;
 	  case NetNet::REG:
 	    o << "reg";
@@ -288,6 +291,36 @@ NetAssign::NetAssign(Design*des, NetNet*lv, NetExpr*rv)
 NetAssign::~NetAssign()
 {
 }
+
+NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
+: NetNode(n, w), rval_(rv), bmux_(0)
+{
+      bool flag = rval_->set_width(w);
+      if (flag == false) {
+	    cerr << rv->get_line() << ": Expression bit width" <<
+		  " conflicts with l-value bit width." << endl;
+	    des->errors += 1;
+      }
+}
+
+NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
+			 NetExpr*mu, NetExpr*rv)
+: NetNode(n, w), rval_(rv), bmux_(mu)
+{
+      bool flag = rval_->set_width(1);
+      if (flag == false) {
+	    cerr << rv->get_line() << ": Expression bit width" <<
+		  " conflicts with l-value bit width." << endl;
+	    des->errors += 1;
+      }
+}
+
+NetAssignNB::~NetAssignNB()
+{
+      delete rval_;
+      delete bmux_;
+}
+
 
 NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
 : mem_(m), index_(i), rval_(r)
@@ -588,12 +621,15 @@ NetESignal::~NetESignal()
 {
 }
 
+/*
+ * The signal should automatically pad with zeros to get to th desired
+ * width. Do not allow signal bits to be truncated, however.
+ */
 bool NetESignal::set_width(unsigned w)
 {
-      if (w != pin_count())
+      if (w < pin_count())
 	    return false;
 
-      assert(w == pin_count());
       expr_width(w);
       return true;
 }
@@ -1118,6 +1154,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.32  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.31  1999/06/03 05:16:25  steve
  *  Compile time evalutation of constant expressions.
  *

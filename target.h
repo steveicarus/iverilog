@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.9 1999/05/12 04:03:20 steve Exp $"
+#ident "$Id: target.h,v 1.10 1999/06/06 20:45:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -66,6 +66,7 @@ struct target_t {
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os,  const NetUDP*);
       virtual void net_assign(ostream&os, const NetAssign*);
+      virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
@@ -76,6 +77,7 @@ struct target_t {
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
+      virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -122,6 +124,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.10  1999/06/06 20:45:39  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.9  1999/05/12 04:03:20  steve
  *  emit NetAssignMem objects in vvm target.
  *

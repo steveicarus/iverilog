@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.6 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: Statement.cc,v 1.7 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -25,6 +25,18 @@
 
 Statement::~Statement()
 {
+}
+
+PAssign::~PAssign()
+{
+      delete lval_;
+      delete expr_;
+}
+
+PAssignNB::~PAssignNB()
+{
+      delete lval_;
+      delete rval_;
 }
 
 PBlock::PBlock(BL_TYPE t, const list<Statement*>&st)
@@ -52,28 +64,17 @@ PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
 {
 }
 
-PCase::PCase(PExpr*ex, list<PCase::Item*>*l)
-: expr_(ex)
+PCase::PCase(PExpr*ex, svector<PCase::Item*>*l)
+: expr_(ex), items_(l)
 {
-      nitems_ = l->size();
-      items_ = new Item[nitems_];
-
-      list<PCase::Item*>::const_iterator cur;
-      unsigned idx;
-      for (cur = l->begin(), idx = 0  ; cur != l->end() ;  cur ++, idx += 1) {
-	    items_[idx] = *(*cur);
-	    delete (*cur);
-      }
-
-      delete l;
 }
 
 PCase::~PCase()
 {
       delete expr_;
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx].expr) delete items_[idx].expr;
-	    if (items_[idx].stat) delete items_[idx].stat;
+      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
+	    if ((*items_)[idx]->expr) delete (*items_)[idx]->expr;
+	    if ((*items_)[idx]->stat) delete (*items_)[idx]->stat;
       }
 
       delete[]items_;
@@ -99,6 +100,11 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.7  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.6  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

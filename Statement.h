@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.8 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: Statement.h,v 1.9 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 # include  <string>
@@ -82,6 +82,8 @@ class PAssign  : public Statement {
       explicit PAssign(PExpr*lval, PExpr*ex)
       : lval_(lval), expr_(ex) { }
 
+      ~PAssign();
+
       const PExpr* lval() const { return lval_; }
       const PExpr* get_expr() const { return expr_; }
 
@@ -94,6 +96,24 @@ class PAssign  : public Statement {
 
       NetProc*assign_to_memory_(class NetMemory*, PExpr*,
 				Design*des, const string&path) const;
+};
+
+class PAssignNB  : public Statement {
+
+    public:
+      explicit PAssignNB(PExpr*lval, PExpr*ex)
+      : lval_(lval), rval_(ex) { }
+      ~PAssignNB();
+
+      const PExpr* lval() const { return lval_; }
+      const PExpr* rval() const { return rval_; }
+
+      virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+
+    private:
+      PExpr* lval_;
+      PExpr* rval_;
 };
 
 /*
@@ -160,7 +180,7 @@ class PCase  : public Statement {
 	    Statement*stat;
       };
 
-      PCase(PExpr*ex, list<Item*>*);
+      PCase(PExpr*ex, svector<Item*>*);
       ~PCase();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
@@ -169,8 +189,7 @@ class PCase  : public Statement {
     private:
       PExpr*expr_;
 
-      Item*items_;
-      unsigned nitems_;
+      svector<Item*>*items_;
 
     private: // not implemented
       PCase(const PCase&);
@@ -278,6 +297,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.9  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.8  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

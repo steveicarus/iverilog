@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.11 1999/05/12 04:03:19 steve Exp $"
+#ident "$Id: emit.cc,v 1.12 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,11 @@ void NetUDP::emit_node(ostream&o, struct target_t*tgt) const
 void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_assign(o, this);
+}
+
+void NetAssignNB::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_assign_nb(o, this);
 }
 
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
@@ -83,6 +88,11 @@ void NetProc::emit_proc(ostream&o, struct target_t*tgt) const
 void NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign(o, this);
+}
+
+void NetAssignNB::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_assign_nb(o, this);
 }
 
 void NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
@@ -258,6 +268,11 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.12  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.11  1999/05/12 04:03:19  steve
  *  emit NetAssignMem objects in vvm target.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.32 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: parse.y,v 1.33 1999/06/06 20:45:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -35,7 +35,7 @@ extern void lex_end_table();
       list<string>*strings;
 
       PCase::Item*citem;
-      list<PCase::Item*>*citems;
+      svector<PCase::Item*>*citems;
 
       lgate*gate;
       svector<lgate>*gates;
@@ -169,13 +169,14 @@ case_item
 
 case_items
 	: case_items case_item
-		{ list<PCase::Item*>*tmp = $1;
-		  tmp->push_back($2);
+		{ svector<PCase::Item*>*tmp;
+		  tmp = new svector<PCase::Item*>(*$1, $2);
+		  delete $1;
 		  $$ = tmp;
 		}
 	| case_item
-		{ list<PCase::Item*>*tmp = new list<PCase::Item*>;
-		  tmp->push_back($1);
+		{ svector<PCase::Item*>*tmp = new svector<PCase::Item*>(1);
+		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	;
@@ -825,8 +826,10 @@ module_item
 		}
 	| K_reg register_variable_list ';'
 		{ delete $2; }
-	| K_integer list_of_variables ';'
-		{ yyerror(@1, "Sorry, integer types not supported."); }
+	| K_integer register_variable_list ';'
+		{ pform_set_reg_integer($2);
+		  delete $2;
+		}
 	| K_parameter parameter_assign_list ';'
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
@@ -1177,8 +1180,7 @@ statement
 		  $$ = tmp;
 		}
 	| lpvalue K_LE expression ';'
-		{ yyerror(@1, "Sorry, non-blocking assignment not implemented.");
-		  PAssign*tmp = new PAssign($1,$3);
+		{ PAssignNB*tmp = new PAssignNB($1,$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;

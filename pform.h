@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.17 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: pform.h,v 1.18 1999/06/06 20:45:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -113,6 +113,7 @@ extern void pform_makewire(const struct vlltype&li, const list<string>*names,
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
+extern void pform_set_reg_integer(list<string>*names);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
@@ -151,6 +152,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.18  1999/06/06 20:45:39  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.17  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *

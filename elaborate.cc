@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.33 1999/06/03 05:16:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.34 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 /*
@@ -938,6 +938,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       if (reg == 0) {
 	    cerr << get_line() << ": Could not match signal: " <<
 		  id->name() << endl;
+	    des->errors += 1;
 	    return 0;
       }
       assert(reg);
@@ -952,7 +953,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       NetExpr*rval = expr_->elaborate_expr(des, path);
       if (rval == 0) {
-	    cerr << get_line() << ": " << "failed to elaborate expression."
+	    cerr << get_line() << ": failed to elaborate expression."
 		 << endl;
 	    return 0;
       }
@@ -964,6 +965,87 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       return cur;
 }
+
+/*
+ * The l-value of a procedural assignment is a very much constrained
+ * expression. To wit, only identifiers, bit selects and part selects
+ * are allowed. I therefore can elaborate the l-value by hand, without
+ * the help of recursive elaboration.
+ *
+ * (For now, this does not yet support concatenation in the l-value.)
+ */
+NetProc* PAssignNB::elaborate(Design*des, const string&path) const
+{
+	/* Get the l-value, and assume that it is an identifier. */
+      const PEIdent*id = dynamic_cast<const PEIdent*>(lval_);
+      assert(id);
+
+	/* Get the signal referenced by the identifier, and make sure
+	   it is a register. */
+      NetNet*reg = des->find_signal(path+"."+id->name());
+
+      if (reg == 0) {
+	    cerr << get_line() << ": Could not match signal: " <<
+		  id->name() << endl;
+	    return 0;
+      }
+      assert(reg);
+
+      if (reg->type() != NetNet::REG) {
+	    cerr << get_line() << ": " << *lval() << " is not a register."
+		 << endl;
+	    return 0;
+      }
+      assert(reg->type() == NetNet::REG);
+      assert(rval_);
+
+	/* Elaborate the r-value expression. This generates a
+	   procedural expression that I attach to the assignment. */
+      NetExpr*rval = rval_->elaborate_expr(des, path);
+      if (rval == 0) {
+	    cerr << get_line() << ": " << "failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
+      assert(rval);
+
+	/* Notice and handle bit selects of the signal. This is done
+	   by making a mux expression to attach to the assignment
+	   node. */
+      NetAssignNB*cur;
+      if (id->msb_) {
+	    assert(id->lsb_ == 0);
+	    verinum*v = id->msb_->eval_const(des, path);
+	    if (v == 0) {
+		  NetExpr*m = id->msb_->elaborate_expr(des, path);
+		  assert(m);
+		  cur = new NetAssignNB(des->local_symbol(path), des,
+					reg->pin_count(), m, rval);
+
+		  for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
+			connect(cur->pin(idx), reg->pin(idx));
+
+	    } else {
+
+		  cur = new NetAssignNB(des->local_symbol(path), des, 1, rval);
+		  connect(cur->pin(0), reg->pin(v->as_ulong()));
+	    }
+
+      } else {
+	    cur = new NetAssignNB(des->local_symbol(path), des,
+				  reg->pin_count(), rval);
+
+	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx));
+      }
+
+
+	/* All done with this node. mark its line number and check it in. */
+      cur->set_line(*this);
+      des->add_node(cur);
+      return cur;
+}
+
 
 /*
  * This is the elaboration method for a begin-end block. Try to
@@ -996,16 +1078,16 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 NetProc* PCase::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
-      NetCase*res = new NetCase(expr, nitems_);
+      NetCase*res = new NetCase(expr, items_->count());
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    NetExpr*gu = 0;
 	    NetProc*st = 0;
-	    if (items_[idx].expr)
-		  gu = items_[idx].expr->elaborate_expr(des, path);
+	    if ((*items_)[idx]->expr)
+		  gu = (*items_)[idx]->expr->elaborate_expr(des, path);
 
-	    if (items_[idx].stat)
-		  st = items_[idx].stat->elaborate(des, path);
+	    if ((*items_)[idx]->stat)
+		  st = (*items_)[idx]->stat->elaborate(des, path);
 
 	    res->set_case(idx, gu, st);
       }
@@ -1142,6 +1224,12 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       NetBlock*top = new NetBlock(NetBlock::SEQU);
       NetNet*sig = des->find_signal(path+"."+id1->name());
+      if (sig == 0) {
+	    cerr << id1->get_line() << ": register ``" << id1->name()
+		 << "'' unknown in this context." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
       assert(sig);
       NetAssign*init = new NetAssign(des, sig,
 				     expr1_->elaborate_expr(des, path));
@@ -1272,6 +1360,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.34  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.33  1999/06/03 05:16:25  steve
  *  Compile time evalutation of constant expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.35 1999/06/03 05:16:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.36 1999/06/06 20:45:38 steve Exp $"
 #endif
 
 /*
@@ -216,7 +216,7 @@ class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, WIRE, TRI, TRI1, SUPPLY0, WAND, TRIAND,
-		  TRI0, SUPPLY1, WOR, TRIOR, REG };
+		  TRI0, SUPPLY1, WOR, TRIOR, REG, INTEGER };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -583,6 +583,35 @@ class NetAssign  : public NetProc, public NetNode, public LineInfo {
 
     private:
       NetExpr* rval_;
+};
+
+/*
+ * ... and this is a non-blocking version of above.
+ */
+class NetAssignNB  : public NetProc, public NetNode, public LineInfo {
+    public:
+      explicit NetAssignNB(const string&, Design*des, unsigned w, NetExpr*rv);
+      explicit NetAssignNB(const string&, Design*des, unsigned w,
+			   NetExpr*mux, NetExpr*rv);
+      ~NetAssignNB();
+
+	// This is the (procedural) value that is to be assigned when
+	// the assignment is executed.
+      const NetExpr*rval() const { return rval_; }
+
+	// If this expression exists, then only a single bit is to be
+	// set from the rval, and the value of this expression selects
+	// the pin that gets the value.
+      const NetExpr*bmux() const { return bmux_; }
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr* rval_;
+      NetExpr* bmux_;
 };
 
 /*
@@ -1178,6 +1207,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.36  1999/06/06 20:45:38  steve
+ *  Add parse and elaboration of non-blocking assignments,
+ *  Replace list<PCase::Item*> with an svector version,
+ *  Add integer support.
+ *
  * Revision 1.35  1999/06/03 05:16:25  steve
  *  Compile time evalutation of constant expressions.
  *
