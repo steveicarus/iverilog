@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.5 2001/07/19 02:20:55 steve Exp $"
+#ident "$Id: debug.cc,v 1.6 2001/08/09 22:25:30 steve Exp $"
 #endif
 
 /*
@@ -90,13 +90,14 @@ static void cmd_functor(unsigned argc, char*argv[])
 		  continue;
 	    }
 
-	    printf("out pointer  = 0x%x\n", fp->out);
-	    printf("input values = %c (%02x) %c (%02x) %c (%02x) %c (%02x)\n",
+	    printf("0x%x: out pointer  = 0x%x\n", fnc, fp->out);
+	    printf("0x%x: input values = %c (%02x) %c (%02x)"
+		   " %c (%02x) %c (%02x)\n", fnc,
 		   bitval_tab[fp->ival&3], fp->istr[0],
 		   bitval_tab[(fp->ival>>2)&3], fp->istr[1],
 		   bitval_tab[(fp->ival>>4)&3], fp->istr[2],
 		   bitval_tab[(fp->ival>>6)&3], fp->istr[3]);
-	    printf("out value    = %c (%02x)\n",
+	    printf("0x%x: out value    = %c (%02x)\n", fnc,
 		   bitval_tab[fp->oval], fp->ostr);
       }
 }
@@ -170,6 +171,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.6  2001/08/09 22:25:30  steve
+ *  Include functor address in debug functor print.
+ *
  * Revision 1.5  2001/07/19 02:20:55  steve
  *  EOF is the same as resume.
  *
