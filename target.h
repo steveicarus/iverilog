@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.24 1999/11/14 23:43:46 steve Exp $"
+#ident "$Id: target.h,v 1.25 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -71,6 +71,7 @@ struct target_t {
       virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mux(ostream&os, const NetMux*);
+      virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
@@ -141,6 +142,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.25  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.24  1999/11/14 23:43:46  steve
  *  Support combinatorial comparators.
  *

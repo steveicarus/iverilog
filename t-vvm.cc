@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.76 1999/11/14 23:43:45 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.77 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -64,6 +64,7 @@ class target_vvm : public target_t {
       virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mux(ostream&os, const NetMux*);
+      virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
 
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
@@ -937,6 +938,22 @@ void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
       }
 }
 
+void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
+{
+      string mname = mangle(ram->name());
+      os << "static vvm_ram_dq<" << ram->width() << "," <<
+	    ram->awidth() << "," << ram->size() << "> " << mname <<
+	    "(&" << mangle(ram->mem()->name()) << ");" << endl;
+
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
+	    unsigned pin = ram->pin_Q(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, ram, pin);
+	    init_code << "      " << mangle(ram->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(ram, pin);
+      }
+}
+
 void target_vvm::logic(ostream&os, const NetLogic*gate)
 {
       string outfun = defn_gate_outputfun_(os, gate, 0);
@@ -1417,8 +1434,9 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 
       defn << "      /* " << amem->get_line() << " */" << endl;
       if (mem->width() == amem->rval()->expr_width()) {
-	    defn << "      " << mangle(mem->name()) << ".set_word(" <<
-		  index << ".as_unsigned(), " << rval << ");" << endl;
+	    defn << "      " << mangle(mem->name()) <<
+		  ".set_word(sim_, " << index << ".as_unsigned(), " <<
+		  rval << ");" << endl;
 
       } else {
 	    assert(mem->width() <= amem->rval()->expr_width());
@@ -1429,8 +1447,8 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 		  defn << "      " << tmp << "[" << idx << "] = " <<
 			rval << "[" << idx << "];" << endl;
 
-	    defn << "      " << mangle(mem->name()) << ".set_word(" <<
-		  index << ".as_unsigned(), " << tmp << ");" << endl;
+	    defn << "      " << mangle(mem->name()) << ".set_word(sim_, "
+		 << index << ".as_unsigned(), " << tmp << ");" << endl;
       }
 }
 
@@ -1902,6 +1920,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.77  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.76  1999/11/14 23:43:45  steve
  *  Support combinatorial comparators.
  *

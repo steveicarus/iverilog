@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.89 1999/11/19 05:02:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.90 1999/11/21 00:13:08 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -996,6 +996,120 @@ const NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s) const
       assert(w < width_);
       assert(s < size_);
       return pin(2+width_+swidth_+s*width_+w);
+}
+
+
+NetRamDq::NetRamDq(const string&n, NetMemory*mem, unsigned awid)
+: NetNode(n, 3+2*mem->width()+awid), mem_(mem), awidth_(awid)
+{
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("InClock", 0);
+      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("OutClock", 0);
+      pin(2).set_dir(NetObj::Link::INPUT); pin(2).set_name("WE", 0);
+
+      for (unsigned idx = 0 ;  idx < awidth_ ;  idx += 1) {
+	    pin(3+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+idx).set_name("Address", idx);
+      }
+
+      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+	    pin(3+awidth_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+awidth_+idx).set_name("Data", idx);
+      }
+
+      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+	    pin(3+awidth_+width()+idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(3+awidth_+width()+idx).set_name("Q", idx);
+      }
+}
+
+NetRamDq::~NetRamDq()
+{
+}
+
+unsigned NetRamDq::width() const
+{
+      return mem_->width();
+}
+
+unsigned NetRamDq::awidth() const
+{
+      return awidth_;
+}
+
+unsigned NetRamDq::size() const
+{
+      return mem_->count();
+}
+
+const NetMemory* NetRamDq::mem() const
+{
+      return mem_;
+}
+
+NetObj::Link& NetRamDq::pin_InClock()
+{
+      return pin(0);
+}
+
+const NetObj::Link& NetRamDq::pin_InClock() const
+{
+      return pin(0);
+}
+
+NetObj::Link& NetRamDq::pin_OutClock()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetRamDq::pin_OutClock() const
+{
+      return pin(1);
+}
+
+NetObj::Link& NetRamDq::pin_WE()
+{
+      return pin(2);
+}
+
+const NetObj::Link& NetRamDq::pin_WE() const
+{
+      return pin(2);
+}
+
+NetObj::Link& NetRamDq::pin_Address(unsigned idx)
+{
+      assert(idx < awidth_);
+      return pin(3+idx);
+}
+
+const NetObj::Link& NetRamDq::pin_Address(unsigned idx) const
+{
+      assert(idx < awidth_);
+      return pin(3+idx);
+}
+
+NetObj::Link& NetRamDq::pin_Data(unsigned idx)
+{
+      assert(idx < width());
+      return pin(3+awidth_+idx);
+}
+
+const NetObj::Link& NetRamDq::pin_Data(unsigned idx) const
+{
+      assert(idx < width());
+      return pin(3+awidth_+idx);
+}
+
+NetObj::Link& NetRamDq::pin_Q(unsigned idx)
+{
+      assert(idx < width());
+      return pin(3+awidth_+width()+idx);
+}
+
+const NetObj::Link& NetRamDq::pin_Q(unsigned idx) const
+{
+      assert(idx < width());
+      return pin(3+awidth_+width()+idx);
 }
 
 /*
@@ -2404,6 +2518,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.90  1999/11/21 00:13:08  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.89  1999/11/19 05:02:37  steve
  *  handle duplicate connect to a nexus.
  *

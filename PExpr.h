@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.24 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: PExpr.h,v 1.25 1999/11/21 00:13:08 steve Exp $"
 #endif
 
 # include  <string>
@@ -159,6 +159,12 @@ class PEIdent : public PExpr {
 	// If this is a reference to a memory, this is the index
 	// expression.
       PExpr*idx_;
+
+      NetNet* elaborate_net_ram_(Design*des, const string&path,
+				 NetMemory*mem, unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
 };
 
 class PENumber : public PExpr {
@@ -307,6 +313,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.25  1999/11/21 00:13:08  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.24  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.57 1999/11/14 23:43:45 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.58 1999/11/21 00:13:08 steve Exp $"
 #endif
 
 /*
@@ -237,6 +237,14 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	<< "," << fall_time() << "," << decay_time() << ") " << name()
 	<< endl;
 
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetRamDq::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
+	<< name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -834,6 +842,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.58  1999/11/21 00:13:08  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.57  1999/11/14 23:43:45  steve
  *  Support combinatorial comparators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.6 1999/11/14 23:43:45 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.7 1999/11/21 00:13:08 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -493,6 +493,258 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
       return osig;
 }
 
+NetNet* PEIdent::elaborate_net(Design*des, const string&path,
+			       unsigned lwidth,
+			       unsigned long rise,
+			       unsigned long fall,
+			       unsigned long decay) const
+{
+      NetNet*sig = des->find_signal(path, text_);
+
+      if (sig == 0) {
+	      /* If the identifier is a memory instead of a signal,
+		 then handle it elsewhere. Create a RAM. */
+	    if (NetMemory*mem = des->find_memory(path+"."+text_))
+		  return elaborate_net_ram_(des, path, mem, lwidth,
+					    rise, fall, decay);
+
+
+	    if (const NetExpr*pe = des->find_parameter(path, text_)) {
+
+		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
+		  assert(pc);
+		  verinum pvalue = pc->value();
+		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT,
+				   pc->expr_width());
+		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1) {
+			NetConst*cp = new NetConst(des->local_symbol(path),
+						   pvalue[idx]);
+			connect(sig->pin(idx), cp->pin(0));
+			des->add_node(cp);
+		  }
+
+	    } else {
+
+		  sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+		  des->add_signal(sig);
+		  cerr << get_line() << ": warning: Implicitly defining "
+			"wire " << path << "." << text_ << "." << endl;
+	    }
+      }
+
+      assert(sig);
+
+      if (msb_ && lsb_) {
+	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << msb_->get_line() << ": error: unable to "
+			"evaluate constant expression: " << *msb_ <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    verinum*lval = lsb_->eval_const(des, path);
+	    if (lval == 0) {
+		  cerr << lsb_->get_line() << ": error: unable to "
+			"evaluate constant expression: " << *lsb_ <<
+			endl;
+		  delete mval;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    assert(mval);
+	    assert(lval);
+	    unsigned midx = sig->sb_to_idx(mval->as_long());
+	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+
+	    if (midx >= lidx) {
+		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+					  midx-lidx+1);
+		  des->add_signal(tmp);
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": bit select out of "
+			     << "range for " << sig->name() << endl;
+			return sig;
+		  }
+
+		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
+			connect(tmp->pin(idx-lidx), sig->pin(idx));
+
+		  sig = tmp;
+
+	    } else {
+		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+					  lidx-midx+1);
+		  des->add_signal(tmp);
+		  assert(tmp->pin_count() <= sig->pin_count());
+		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
+			connect(tmp->pin(idx-midx), sig->pin(idx));
+
+		  sig = tmp;
+	    }
+
+      } else if (msb_) {
+	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << text_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    assert(mval);
+	    unsigned idx = sig->sb_to_idx(mval->as_long());
+	    if (idx >= sig->pin_count()) {
+		  cerr << get_line() << "; index " << sig->name() <<
+			"[" << mval->as_long() << "] out of range." << endl;
+		  des->errors += 1;
+		  idx = 0;
+	    }
+	    NetTmp*tmp = new NetTmp(des->local_symbol(path), 1);
+	    des->add_signal(tmp);
+	    connect(tmp->pin(0), sig->pin(idx));
+	    sig = tmp;
+      }
+
+      return sig;
+}
+
+/*
+ * When I run into an identifier in an expression that referrs to a
+ * memory, create a RAM port object.
+ */
+NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
+				    NetMemory*mem, unsigned lwidth,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const
+{
+      if (msb_ == 0) {
+	    cerr << get_line() << ": error: memory reference without"
+		  " the required index expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetNet*adr = msb_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (adr == 0)
+	    return 0;
+
+
+      NetRamDq*ram = new NetRamDq(des->local_symbol(mem->name()),
+				  mem, adr->pin_count());
+      des->add_node(ram);
+
+      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
+	    connect(ram->pin_Address(idx), adr->pin(idx));
+
+      NetNet*osig = new NetTmp(des->local_symbol(mem->name()), ram->width());
+      des->add_signal(osig);
+
+      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
+	    connect(ram->pin_Q(idx), osig->pin(idx));
+
+      return osig;
+}
+
+/*
+ * Identifiers in continuous assignment l-values are limited to wires
+ * and that ilk. Detect registers and memories here and report errors.
+ */
+NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
+{
+      NetNet*sig = des->find_signal(path, text_);
+      if (sig == 0) {
+	      /* Don't allow memories here. Is it a memory? */
+	    if (des->find_memory(path+"."+text_)) {
+		  cerr << get_line() << ": error: memories (" << text_
+		       << ") cannot be l-values in continuous "
+		       << "assignments." << endl;
+		  return 0;
+	    }
+
+	      /* Fine, create an implicit wire as an l-value. */
+	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+	    des->add_signal(sig);
+	    cerr << get_line() << ": warning: Implicitly defining "
+		  "wire " << path << "." << text_ << "." << endl;
+      }
+
+      assert(sig);
+
+	/* Don't allow registers as assign l-values. */
+      if (sig->type() == NetNet::REG) {
+	    cerr << get_line() << ": error: registers (" << sig->name()
+		 << ") cannot be l-values in continuous"
+		 << " assignments." << endl;
+	    return 0;
+      }
+
+      if (msb_ && lsb_) {
+	      /* Detect a part select. Evaluate the bits and elaborate
+		 the l-value by creating a sub-net that links to just
+		 the right pins. */ 
+	    verinum*mval = msb_->eval_const(des, path);
+	    assert(mval);
+	    verinum*lval = lsb_->eval_const(des, path);
+	    assert(lval);
+	    unsigned midx = sig->sb_to_idx(mval->as_long());
+	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+
+	    if (midx >= lidx) {
+		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+					  midx-lidx+1);
+		  des->add_signal(tmp);
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": bit select out of "
+			     << "range for " << sig->name() << endl;
+			return sig;
+		  }
+
+		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
+			connect(tmp->pin(idx-lidx), sig->pin(idx));
+
+		  sig = tmp;
+
+	    } else {
+		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+					  lidx-midx+1);
+		  des->add_signal(tmp);
+		  assert(tmp->pin_count() <= sig->pin_count());
+		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
+			connect(tmp->pin(idx-midx), sig->pin(idx));
+
+		  sig = tmp;
+	    }
+
+      } else if (msb_) {
+	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << text_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    assert(mval);
+	    unsigned idx = sig->sb_to_idx(mval->as_long());
+	    if (idx >= sig->pin_count()) {
+		  cerr << get_line() << "; index " << sig->name() <<
+			"[" << mval->as_long() << "] out of range." << endl;
+		  des->errors += 1;
+		  idx = 0;
+	    }
+	    NetTmp*tmp = new NetTmp(des->local_symbol(path), 1);
+	    des->add_signal(tmp);
+	    connect(tmp->pin(0), sig->pin(idx));
+	    sig = tmp;
+      }
+
+      return sig;
+}
+
 /*
  * Elaborate a number as a NetConst object.
  */
@@ -564,6 +816,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.7  1999/11/21 00:13:08  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.6  1999/11/14 23:43:45  steve
  *  Support combinatorial comparators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.23 1999/11/15 00:42:31 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.24 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -553,6 +553,62 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nor {
       vvm_out_event::action_t output_;
 };
 
+template <unsigned WIDTH, unsigned AWIDTH, unsigned SIZE>
+class vvm_ram_dq  : protected vvm_ram_callback {
+
+    public:
+      vvm_ram_dq(vvm_memory_t<WIDTH,SIZE>*mem)
+      : mem_(mem)
+	    { mem->set_callback(this);
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    out_[idx] = 0;
+	      for (unsigned idx = 0 ;  idx < AWIDTH ;  idx += 1)
+		    addr_[idx] = Vx;
+	    }
+
+      void init_Address(unsigned idx, vpip_bit_t val)
+	    { addr_[idx] = val; }
+
+      void set_Address(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (addr_[idx] == val) return;
+	      addr_[idx] = val;
+	      compute_();
+	      send_out_(sim);
+	    }
+
+      void handle_write(vvm_simulation*sim, unsigned idx)
+	    { if (idx == addr_val_) send_out_(sim); }
+
+      void config_rout(unsigned idx, vvm_out_event::action_t o)
+	    { out_[idx] = o; }
+
+    private:
+      vvm_memory_t<WIDTH,SIZE>*mem_;
+      vpip_bit_t addr_[AWIDTH];
+      vvm_out_event::action_t out_[WIDTH];
+
+      unsigned long addr_val_;
+
+      void compute_()
+	    { unsigned bit;
+	      unsigned mask;
+	      addr_val_ = 0;
+	      for (bit = 0, mask = 1 ;  bit < AWIDTH ;  bit += 1, mask <<= 1)
+		    if (addr_[bit] == V1) addr_val_ |= mask;
+	    }
+
+      void send_out_(vvm_simulation*sim)
+	    { vvm_bitset_t<WIDTH>ov = mem_->get_word(addr_val_);
+	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1)
+		    if (out_[bit]) {
+			  vvm_event*ev = new vvm_out_event(sim,
+							   ov[bit],
+							   out_[bit]);
+			  sim->active_event(ev);
+		    }
+	    }
+};
+
 template <unsigned long DELAY> class vvm_bufif1 {
 
     public:
@@ -931,6 +987,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.24  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.23  1999/11/15 00:42:31  steve
  *  Fixup to include right shift support.
  *

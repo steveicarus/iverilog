@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.91 1999/11/19 05:02:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.92 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 /*
@@ -512,6 +512,50 @@ class NetMux  : public NetNode {
       unsigned width_;
       unsigned size_;
       unsigned swidth_;
+};
+
+/*
+ * This device represents an LPM_RAM_DQ device. The actual content is
+ * represented by a NetMemory object allocated elsewhere, but that
+ * object fixes the width and size of the device. The pin count of the
+ * address input is given in the constructor.
+ */
+class NetRamDq  : public NetNode {
+
+    public:
+      NetRamDq(const string&name, NetMemory*mem, unsigned awid);
+      ~NetRamDq();
+
+      unsigned width() const;
+      unsigned awidth() const;
+      unsigned size() const;
+      const NetMemory*mem() const;
+
+      NetObj::Link& pin_InClock();
+      NetObj::Link& pin_OutClock();
+      NetObj::Link& pin_WE();
+
+      NetObj::Link& pin_Address(unsigned idx);
+      NetObj::Link& pin_Data(unsigned idx);
+      NetObj::Link& pin_Q(unsigned idx);
+
+      const NetObj::Link& pin_InClock() const;
+      const NetObj::Link& pin_OutClock() const;
+      const NetObj::Link& pin_WE() const;
+
+      const NetObj::Link& pin_Address(unsigned idx) const;
+      const NetObj::Link& pin_Data(unsigned idx) const;
+      const NetObj::Link& pin_Q(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      friend class NetMemory;
+      NetMemory*mem_;
+      NetRamDq*next_;
+      unsigned awidth_;
+
 };
 
 /* =========
@@ -1933,6 +1977,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.92  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.91  1999/11/19 05:02:37  steve
  *  handle duplicate connect to a nexus.
  *

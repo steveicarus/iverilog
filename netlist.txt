@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.5 1999/11/02 04:55:34 steve Exp $"
+#ident "$Id: netlist.txt,v 1.6 1999/11/21 00:13:09 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -113,6 +113,35 @@ inheritance we have therefore that the assignment is both a NetNode
 and a NetProc. The NetAssign_ node has pins that represent the l-value
 of the statement, and carries behavioral expressions that represent
 the r-value of the assignment.
+
+MEMORIES
+
+The netlist form includes the NetMemory type to hold the content of a
+memory. Instances of this type represent the declaration of a memory,
+and occur once for each memory. References to the memory are managed
+by the NetEMemory and NetAssignMem_ classes.
+
+An instance of the NetEMemory class is created whenever a procedural
+expression references a memory element. The operand is the index to
+use to address (and read) the memory.
+
+An instance of the NetAssignMem_ class is created when there is a
+procedural assignment to the memory. The NetAssignMem_ object
+represents the l-value reference (a write) to the memory. As with the
+NetEMemory class, this is a procedural reference only.
+
+When a memory reference appears in structural context (i.e. continuous
+assignments) elaboration creates a NetRamDq. This is a LPM_RAM_DQ
+device. Elaboration leaves the write control and data input pins
+unconnected for now, because memories cannot appear is l-values of
+continuous assignments. However, the synthesis functor may connect
+signals to the write control lines to get a fully operational RAM.
+
+By the time elaboration completes, there may be many NetAssignMem_,
+NetEMemory and NetRamDq objects referencing the same NetMemory
+object. Each represents a port into the memory. It is up to the
+synthesis steps (and the target code) to figure out what to do with
+these ports.
 
 EXPRESSIONS
 
@@ -214,6 +243,9 @@ some task calls. C++ programmers recognize this as inlining a task.)
 
 
  $Log: netlist.txt,v $
+ Revision 1.6  1999/11/21 00:13:09  steve
+  Support memories in continuous assignments.
+
  Revision 1.5  1999/11/02 04:55:34  steve
   Add the synthesize method to NetExpr to handle
   synthesis of expressions, and use that method

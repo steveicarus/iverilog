@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.28 1999/11/14 23:43:45 steve Exp $"
+#ident "$Id: emit.cc,v 1.29 1999/11/21 00:13:08 steve Exp $"
 #endif
 
 /*
@@ -88,6 +88,11 @@ void NetFF::emit_node(ostream&o, struct target_t*tgt) const
 void NetMux::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->lpm_mux(o, this);
+}
+
+void NetRamDq::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_ram_dq(o, this);
 }
 
 void NetNEvent::emit_node(ostream&o, struct target_t*tgt) const
@@ -377,6 +382,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.29  1999/11/21 00:13:08  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.28  1999/11/14 23:43:45  steve
  *  Support combinatorial comparators.
  *

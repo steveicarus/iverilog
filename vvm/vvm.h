@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.21 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: vvm.h,v 1.22 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  <vector>
@@ -254,14 +254,27 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 	    }
 };
 
+struct vvm_ram_callback {
+      vvm_ram_callback();
+      virtual ~vvm_ram_callback();
+      virtual void handle_write(vvm_simulation*sim, unsigned idx) =0;
+      vvm_ram_callback*next_;
+};
+
 template <unsigned WIDTH, unsigned SIZE>
 class vvm_memory_t : public __vpiMemory {
 
     public:
-      void set_word(unsigned addr, const vvm_bitset_t<WIDTH>&val)
+      vvm_memory_t()
+	    { cb_list_ = 0;
+	    }
+
+      void set_word(vvm_simulation*sim, unsigned addr,
+		    const vvm_bitset_t<WIDTH>&val)
 	    { unsigned base = WIDTH * addr;
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    bits[base+idx] = val[idx];
+	      call_list_(sim, addr);
 	    }
 
       vvm_bitset_t<WIDTH> get_word(unsigned addr) const
@@ -271,10 +284,25 @@ class vvm_memory_t : public __vpiMemory {
 		    val[idx] = bits[base+idx];
 	      return val;
 	    }
+
+      void set_callback(vvm_ram_callback*ram)
+	    { ram->next_ = cb_list_;
+	      cb_list_ = ram;
+	    }
+
+    private:
+      vvm_ram_callback*cb_list_;
+      void call_list_(vvm_simulation*sim, unsigned idx)
+	    { for (vvm_ram_callback*cur = cb_list_; cur; cur = cur->next_)
+		    cur->handle_write(sim, idx);
+	    }
 };
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.22  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.21  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *

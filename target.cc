@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.25 1999/11/14 23:43:45 steve Exp $"
+#ident "$Id: target.cc,v 1.26 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -97,6 +97,12 @@ void target_t::lpm_mux(ostream&, const NetMux*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetMux." << endl;
+}
+
+void target_t::lpm_ram_dq(ostream&, const NetRamDq*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetRamDq." << endl;
 }
 
 void target_t::net_assign(ostream&os, const NetAssign*)
@@ -299,6 +305,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.26  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.25  1999/11/14 23:43:45  steve
  *  Support combinatorial comparators.
  *

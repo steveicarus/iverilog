@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.4 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.5 1999/11/21 00:13:09 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -68,6 +68,14 @@ vvm_bits_t::~vvm_bits_t()
 {
 }
 
+vvm_ram_callback::vvm_ram_callback()
+{
+}
+
+vvm_ram_callback::~vvm_ram_callback()
+{
+}
+
 vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 {
       unsigned li, ri, ci;
@@ -114,6 +122,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.5  1999/11/21 00:13:09  steve
+ *  Support memories in continuous assignments.
+ *
  * Revision 1.4  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of
