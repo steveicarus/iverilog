@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.22 2001/06/15 04:14:18 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.23 2001/07/07 01:38:45 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -38,13 +38,13 @@ NetNet* NetEBAdd::synthesize(Design*des)
 {
       assert((op()=='+') || (op()=='-'));
 
-      string path = des->local_symbol("SYNTH");
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
       
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
+      string path = lsig->scope()->name()+"."+lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
 
       string oname = des->local_symbol(path);
@@ -298,7 +298,7 @@ NetNet* NetEConcat::synthesize(Design*des)
       assert(scope);
       assert(repeat_ == 1);
 
-      string path = des->local_symbol("SYNTH");
+      string path = scope->name() + "." + scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
@@ -323,7 +323,7 @@ NetNet* NetEConst::synthesize(Design*des)
       NetScope*scope = des->find_root_scope();
       assert(scope);
 
-      string path = des->local_symbol("SYNTH");
+      string path = scope->name() + "." + scope->local_symbol();
       unsigned width=expr_width();
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
@@ -416,10 +416,11 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
 NetNet* NetETernary::synthesize(Design *des)
 {
-      string path = des->local_symbol("SYNTH");
       NetNet*csig = cond_->synthesize(des);
       NetNet*tsig = true_val_->synthesize(des);
       NetNet*fsig = false_val_->synthesize(des);
+
+      string path = csig->scope()->name()+"."+csig->scope()->local_symbol();
 
       assert(csig->pin_count() == 1);
       assert(tsig->pin_count() == fsig->pin_count());
@@ -447,6 +448,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.23  2001/07/07 01:38:45  steve
+ *  Put synthesized signals in proper scope.
+ *
  * Revision 1.22  2001/06/15 04:14:18  steve
  *  Generate vvp code for GT and GE comparisons.
  *
