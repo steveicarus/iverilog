@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.15 2002/01/06 17:35:01 steve Exp $"
+#ident "$Id: udp.cc,v 1.16 2002/01/20 23:27:51 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -74,7 +74,7 @@ typedef unsigned int udp_vec_t;
 struct udp_table_entry_s 
 {
   udp_vec_t not_0;          // all inputs that must not be 0
-  udp_vec_t not_1x;         // all inputs that bust not be 1 or x
+  udp_vec_t not_1x;         // all inputs that must not be 1, x
   unsigned char edge_idx;   // input index of the edge
   unsigned char edge_type;  // permissible transitions. 0: no edge.
   unsigned char out;        // new output, 0..2
@@ -163,7 +163,7 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
     }
 
   if (ret>2)
-    ret = fu->get();
+    ret = fu->get_oval();
 
   return ret;
 }
@@ -350,6 +350,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.16  2002/01/20 23:27:51  steve
+ *  return calculated oval from UDP (Stephan Boettcher)
+ *
  * Revision 1.15  2002/01/06 17:35:01  steve
  *  Feedback output, not propagated output. (Stephan Boettcher)
  *
