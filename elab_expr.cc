@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.26 2000/05/19 01:55:09 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.27 2000/08/26 01:31:29 steve Exp $"
 #endif
 
 
@@ -273,7 +273,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 
 	      // If this is a part select of a signal, then make a new
 	      // temporary signal that is connected to just the
-	      // selected bits.
+	      // selected bits. The lsb_ and msb_ expressions are from
+	      // the foo[msb:lsb] expression in the original.
 	    if (lsb_) {
 		  assert(msb_);
 		  verinum*lsn = lsb_->eval_const(des, scope->name());
@@ -288,11 +289,47 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 
 		  assert(lsn);
 		  assert(msn);
-		  unsigned long lsv = lsn->as_ulong();
-		  unsigned long msv = msn->as_ulong();
+
+		    /* The indices of part selects are signed
+		       integers, so allow negative values. However,
+		       the width that they represent is
+		       unsigned. Remember that any order is possible,
+		       i.e. [1:0], [-4,6], etc. */
+
+		  long lsv = lsn->as_long();
+		  long msv = msn->as_long();
 		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
+		  if (wid > net->pin_count()) {
+			cerr << get_line() << ": error: part select ["
+			     << msv << ":" << lsv << "] out of range."
+			     << endl;
+			des->errors += 1;
+			delete lsn;
+			delete msn;
+			return 0;
+		  }
 		  assert(wid <= net->pin_count());
-		  assert(net->sb_to_idx(msv) >= net->sb_to_idx(lsv));
+
+		  if (net->sb_to_idx(msv) < net->sb_to_idx(lsv)) {
+			cerr << get_line() << ": error: part select ["
+			     << msv << ":" << lsv << "] out of order."
+			     << endl;
+			des->errors += 1;
+			delete lsn;
+			delete msn;
+			return 0;
+		  }
+
+
+		  if (net->sb_to_idx(msv) >= net->pin_count()) {
+			cerr << get_line() << ": error: part select ["
+			     << msv << ":" << lsv << "] out of range."
+			     << endl;
+			des->errors += 1;
+			delete lsn;
+			delete msn;
+			return 0;
+		  }
 
 		  string tname = des->local_symbol(scope->name());
 		  NetTmp*tsig = new NetTmp(scope, tname, wid);
@@ -470,6 +507,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.27  2000/08/26 01:31:29  steve
+ *  Handle out of range part select expressions.
+ *
  * Revision 1.26  2000/05/19 01:55:09  steve
  *  Catch part select of memories as an error.
  *
