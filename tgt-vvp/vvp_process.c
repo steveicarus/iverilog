@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.4 2001/03/22 05:06:21 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.5 2001/03/23 01:54:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -34,6 +34,23 @@ static unsigned thread_count = 0;
  * executable code for the processes.
  */
 
+unsigned bitchar_to_idx(char bit)
+{
+      switch (bit) {
+	  case '0':
+	    return 0;
+	  case '1':
+	    return 1;
+	  case 'x':
+	    return 2;
+	  case 'z':
+	    return 3;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 /*
  * These functions handle the blocking assignment. Use the %set
  * instruction to perform the actual assignment, and calculate any
@@ -47,7 +64,7 @@ static unsigned thread_count = 0;
  * nexus.
  */
 
-static void set_to_nexus(ivl_nexus_t nex, char bit)
+static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
 {
       unsigned idx;
 
@@ -59,18 +76,7 @@ static void set_to_nexus(ivl_nexus_t nex, char bit)
 	    if (sig == 0)
 		  continue;
 
-	    switch (bit) {
-		case '0':
-		case '1':
-		  break;
-		case 'x':
-		  bit = '2';
-		  break;
-		case 'z':
-		  bit = '3';
-		  break;
-	    }
-	    fprintf(vvp_out, "    %%set V_%s[%u], %c;\n",
+	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
 		    ivl_signal_name(sig), pin, bit);
       }
 }
@@ -97,12 +103,33 @@ static void show_stmt_assign(ivl_statement_t net)
 	    assert(ivl_lval_mux(lval) == 0);
 
 	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		  set_to_nexus(ivl_lval_pin(lval, idx), bits[idx]);
+		  set_to_nexus(ivl_lval_pin(lval, idx),
+			       bitchar_to_idx(bits[idx]));
 
 	    return;
       }
 
-      fprintf(stderr, "XXXX EXPRESSION TOO COMPLEX FOR ME?\n");
+      { struct vector_info res = draw_eval_expr(rval);
+        unsigned wid = res.wid;
+	unsigned idx;
+
+	  /* XXXX Only single l-value supported for now */
+	assert(ivl_stmt_lvals(net) == 1);
+
+	lval = ivl_stmt_lval(net, 0);
+	  /* XXXX No mux support yet. */
+	assert(ivl_lval_mux(lval) == 0);
+
+	if (ivl_lval_pins(lval) < wid)
+	      wid = ivl_lval_pins(lval);
+
+	for (idx = 0 ;  idx < wid ;  idx += 1)
+	      set_to_nexus(ivl_lval_pin(lval, idx), res.base+idx);
+
+	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
+      }
+
 }
 
 static void show_stmt_condit(ivl_statement_t net)
@@ -281,6 +308,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.5  2001/03/23 01:54:32  steve
+ *  assignments with non-trival r-values.
+ *
  * Revision 1.4  2001/03/22 05:06:21  steve
  *  Geneate code for conditional statements.
  *
