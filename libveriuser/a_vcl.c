@@ -17,12 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.3 2003/04/24 02:02:37 steve Exp $"
+#ident "$Id: a_vcl.c,v 1.4 2003/04/30 01:09:29 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
+#include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 #include  <malloc.h>
+#endif
 #include  "priv.h"
 
 struct vcl_record {
@@ -87,6 +90,9 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 /*
  * $Log: a_vcl.c,v $
+ * Revision 1.4  2003/04/30 01:09:29  steve
+ *  Conditionally include malloc.h
+ *
  * Revision 1.3  2003/04/24 02:02:37  steve
  *  Clean up some simple warnings.
  *
