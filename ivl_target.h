@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.55 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.56 2001/04/29 20:19:10 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -174,6 +174,8 @@ typedef enum ivl_logic_e {
       IVL_LO_NOTIF0,
       IVL_LO_NOTIF1,
       IVL_LO_OR,
+      IVL_LO_PULLDOWN,
+      IVL_LO_PULLUP,
       IVL_LO_RNMOS,
       IVL_LO_RPMOS,
       IVL_LO_PMOS,
@@ -792,6 +794,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.56  2001/04/29 20:19:10  steve
+ *  Add pullup and pulldown devices.
+ *
  * Revision 1.55  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *

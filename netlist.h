@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.204 2001/04/24 02:23:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.205 2001/04/29 20:19:10 steve Exp $"
 #endif
 
 /*
@@ -995,12 +995,17 @@ class NetConst  : public NetNode {
  *       0  -- output
  *       1  -- input data
  *       2  -- enable
+ *
+ * The pullup and pulldown gates have no inputs at all, and pin0 is
+ * the output 1 or 0, depending on the gate type. It is the strength
+ * of that value that is important.
  */
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NMOS, NOR, NOT, NOTIF0,
-		  NOTIF1, OR, RNMOS, RPMOS, PMOS, XNOR, XOR };
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NMOS, NOR, NOT,
+		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RNMOS, RPMOS,
+		  PMOS, XNOR, XOR };
 
       explicit NetLogic(NetScope*s, const string&n, unsigned pins, TYPE t);
 
@@ -2802,6 +2807,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.205  2001/04/29 20:19:10  steve
+ *  Add pullup and pulldown devices.
+ *
  * Revision 1.204  2001/04/24 02:23:58  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

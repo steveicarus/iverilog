@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.36 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.37 2001/04/29 20:19:10 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -365,6 +365,12 @@ void dll_target::logic(const NetLogic*net)
 	    break;
 	  case NetLogic::OR:
 	    obj->type_ = IVL_LO_OR;
+	    break;
+	  case NetLogic::PULLDOWN:
+	    obj->type_ = IVL_LO_PULLDOWN;
+	    break;
+	  case NetLogic::PULLUP:
+	    obj->type_ = IVL_LO_PULLUP;
 	    break;
 	  case NetLogic::RNMOS:
 	    obj->type_ = IVL_LO_RNMOS;
@@ -879,6 +885,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.37  2001/04/29 20:19:10  steve
+ *  Add pullup and pulldown devices.
+ *
  * Revision 1.36  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.112 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.113 2001/04/29 20:19:10 steve Exp $"
 #endif
 
 /*
@@ -297,6 +297,12 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	    break;
 	  case OR:
 	    o << "or";
+	    break;
+	  case PULLDOWN:
+	    o << "pulldown";
+	    break;
+	  case PULLUP:
+	    o << "pullup";
 	    break;
 	  case RNMOS:
 	    o << "rnmos";
@@ -936,6 +942,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.113  2001/04/29 20:19:10  steve
+ *  Add pullup and pulldown devices.
+ *
  * Revision 1.112  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

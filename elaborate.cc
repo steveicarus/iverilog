@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.212 2001/04/28 23:18:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.213 2001/04/29 20:19:10 steve Exp $"
 #endif
 
 /*
@@ -334,6 +334,14 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		case PMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::PMOS);
+		  break;
+		case PULLDOWN:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::PULLDOWN);
+		  break;
+		case PULLUP:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::PULLUP);
 		  break;
 		case XNOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
@@ -2307,6 +2315,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.213  2001/04/29 20:19:10  steve
+ *  Add pullup and pulldown devices.
+ *
  * Revision 1.212  2001/04/28 23:18:08  steve
  *  UDP instances need not have user supplied names.
  *
