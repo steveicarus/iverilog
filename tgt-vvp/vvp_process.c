@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.64 2002/08/19 00:06:12 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.65 2002/08/27 05:39:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -125,6 +125,10 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
 	      vvp_memory_label(mem), delay, bit);
 }
 
+/*
+ * This function, in addition to setting the value into index 0, sets
+ * bit 4 to 1 if the value is unknown.
+ */
 static void calculate_into_x0(ivl_expr_t expr)
 {
       struct vector_info vec = draw_eval_expr(expr);
@@ -156,39 +160,58 @@ static int show_stmt_assign(ivl_statement_t net)
 	    unsigned cur_rbit = 0;
 
 	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+		  unsigned skip_set = transient_id++;
+		  unsigned skip_set_flag = 0;
 		  unsigned idx;
 		  unsigned bit_limit = wid - cur_rbit;
 		  lval = ivl_stmt_lval(net, lidx);
 
 		    /* If there is a mux for the lval, calculate the
 		       value and write it into index0. */
-		  if (ivl_lval_mux(lval))
+		  if (ivl_lval_mux(lval)) {
 			calculate_into_x0(ivl_lval_mux(lval));
+			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+			skip_set_flag = 1;
+		  }
 
 		  mem = ivl_lval_mem(lval);
-		  if (mem) 
+		  if (mem) {
 			draw_memory_index_expr(mem, ivl_lval_idx(lval));
+			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+			skip_set_flag = 1;
+		  }
 
 		  if (bit_limit > ivl_lval_pins(lval))
 			bit_limit = ivl_lval_pins(lval);
 
-		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			if (mem)
+		  if (mem) {
+			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      set_to_memory(mem, idx,
 					    bitchar_to_idx(bits[cur_rbit]));
-			else
+
+			      cur_rbit += 1;
+			}
+
+			for (idx = bit_limit
+				   ; idx < ivl_lval_pins(lval) ; idx += 1)
+			      set_to_memory(mem, idx, 0);
+
+
+		  } else {
+			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      set_to_lvariable(lval, idx,
 					       bitchar_to_idx(bits[cur_rbit]));
 
-			cur_rbit += 1;
+			      cur_rbit += 1;
+			}
+
+			for (idx = bit_limit
+				   ; idx < ivl_lval_pins(lval) ; idx += 1)
+			      set_to_lvariable(lval, idx, 0);
 		  }
 
-		  for (idx = bit_limit ; idx < ivl_lval_pins(lval) ; idx += 1)
-			if (mem)
-			      set_to_memory(mem, idx, 0);
-			else
-			      set_to_lvariable(lval, idx, 0);
-
+		  if (skip_set_flag)
+			fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    }
 
 	    return 0;
@@ -200,18 +223,26 @@ static int show_stmt_assign(ivl_statement_t net)
 	unsigned cur_rbit = 0;
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	      unsigned skip_set = transient_id++;
+	      unsigned skip_set_flag = 0;
 	      unsigned idx;
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
 		/* If there is a mux for the lval, calculate the
 		   value and write it into index0. */
-	      if (ivl_lval_mux(lval))
+	      if (ivl_lval_mux(lval)) {
 		    calculate_into_x0(ivl_lval_mux(lval));
+		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		    skip_set_flag = 1;
+	      }
 
 	      mem = ivl_lval_mem(lval);
-	      if (mem) 
+	      if (mem) {
 		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
+		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		    skip_set_flag = 1;
+	      }
 
 	      if (bit_limit > ivl_lval_pins(lval))
 		    bit_limit = ivl_lval_pins(lval);
@@ -233,6 +264,9 @@ static int show_stmt_assign(ivl_statement_t net)
 			  set_to_memory(mem, idx, 0);
 		    else
 			  set_to_lvariable(lval, idx, 0);
+
+	      if (skip_set_flag)
+		    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
 	}
 
@@ -715,13 +749,16 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       unsigned cnt = ivl_stmt_block_count(net);
 
       unsigned out = transient_id++;
+      unsigned id_base = transient_id;
+      transient_id += cnt-1;
+
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
-		    transient_id+idx, 
+		    id_base+idx, 
 		    vvp_mangle_id(ivl_scope_name(sscope)));
       }
 
@@ -735,7 +772,7 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "    %%jmp t_%u;\n", out);
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
-	    fprintf(vvp_out, "t_%u ;\n", transient_id+idx);
+	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
@@ -743,8 +780,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
       fprintf(vvp_out, "t_%u ;\n", out);
-
-      transient_id += cnt-1;
 
       return rc;
 }
@@ -1232,6 +1267,13 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.65  2002/08/27 05:39:57  steve
+ *  Fix l-value indexing of memories and vectors so that
+ *  an unknown (x) index causes so cell to be addresses.
+ *
+ *  Fix tangling of label identifiers in the fork-join
+ *  code generator.
+ *
  * Revision 1.64  2002/08/19 00:06:12  steve
  *  Allow release to handle removal of target net.
  *

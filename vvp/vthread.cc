@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.81 2002/08/22 03:38:40 steve Exp $"
+#ident "$Id: vthread.cc,v 1.82 2002/08/27 05:39:57 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1260,21 +1260,26 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
  * vector and <wid> is the width in bits.
  *
  * Index registers only hold binary values, so if any of the
- * bits of the vector are x or z, then set the value to 0
- * and give up.
+ * bits of the vector are x or z, then set the value to 0,
+ * set bit[4] to 1, and give up.
  */
 bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 {
       unsigned long v = 0;
+      bool unknown_flag = false;
+
       for (unsigned i = 0; i<cp->number; i++) {
 	    unsigned char vv = thr_get_bit(thr, cp->bit_idx[1] + i);
 	    if (vv&2) {
 		  v = 0UL;
+		  unknown_flag = true;
 		  break;
 	    }
 	    v |= vv << i;
       }
       thr->index[cp->bit_idx[0] & 3] = v;
+	/* Set bit 4 as a flag if the input is unknown. */
+      thr_put_bit(thr, 4, unknown_flag? 1 : 0);
       return true;
 }
 
@@ -2243,6 +2248,13 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.82  2002/08/27 05:39:57  steve
+ *  Fix l-value indexing of memories and vectors so that
+ *  an unknown (x) index causes so cell to be addresses.
+ *
+ *  Fix tangling of label identifiers in the fork-join
+ *  code generator.
+ *
  * Revision 1.81  2002/08/22 03:38:40  steve
  *  Fix behavioral eval of x?a:b expressions.
  *

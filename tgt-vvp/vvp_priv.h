@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.18 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.19 2002/08/27 05:39:57 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -91,6 +91,13 @@ struct vector_info {
 
 extern struct vector_info draw_eval_expr(ivl_expr_t exp);
 extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w);
+
+/*
+ * This function draws code to evaluate the index expression exp for
+ * the memory mem. The result is loaded into index register i3, and
+ * the flag bit 4 is set to 0 if the numerical value is defined, or 1
+ * if not.
+ */
 extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 
 extern unsigned short allocate_vector(unsigned short wid);
@@ -108,6 +115,13 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.19  2002/08/27 05:39:57  steve
+ *  Fix l-value indexing of memories and vectors so that
+ *  an unknown (x) index causes so cell to be addresses.
+ *
+ *  Fix tangling of label identifiers in the fork-join
+ *  code generator.
+ *
  * Revision 1.18  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *

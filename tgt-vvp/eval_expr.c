@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.70 2002/08/22 03:38:40 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.71 2002/08/27 05:39:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1123,6 +1123,7 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 		unsigned nbits = ivl_expr_width(ae);
 		const char*bits = ivl_expr_bits(ae);
 		unsigned long v = 0;
+		int unknown_flag = 0;
 		unsigned idx;
 		for (idx = 0 ;  idx < nbits ;  idx += 1) 
 		      switch (bits[idx]) {
@@ -1134,14 +1135,18 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 			    break;
 			  default:
 			    v = ~0UL;
+			    unknown_flag = 1;
 			    break;
 		      }
 		fprintf(vvp_out, "    %%ix/load 3, %lu;\n", (v-root)*width);
+		fprintf(vvp_out, "    %%mov 4, %c, 1;\n",
+			unknown_flag?'1':'0');
 		break;
 	  }
 	  case IVL_EX_ULONG: {
 		unsigned v = ivl_expr_uvalue(ae); 
 		fprintf(vvp_out, "    %%ix/load 3, %u;\n", (v-root)*width);
+		fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
 		break;
 	  }
 	  default: {
@@ -1745,6 +1750,13 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.71  2002/08/27 05:39:57  steve
+ *  Fix l-value indexing of memories and vectors so that
+ *  an unknown (x) index causes so cell to be addresses.
+ *
+ *  Fix tangling of label identifiers in the fork-join
+ *  code generator.
+ *
  * Revision 1.70  2002/08/22 03:38:40  steve
  *  Fix behavioral eval of x?a:b expressions.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.37 2002/08/22 03:38:40 steve Exp $
+ *  $Id: opcodes.txt,v 1.38 2002/08/27 05:39:57 steve Exp $
  */
 
 
@@ -234,7 +234,16 @@ thread bit space, and <wid> is the width of the vector.
 
 The function converts the 4-value bits into a binary number, without
 sign extension. If any of the bits of the vector is x or z, then the
-index register gets the value (-1).
+index register gets the value 0.
+
+The function also writes into bit 4 a 1 if any of the bits of the
+input vector are x or z. This is a flag that the 0 value written into
+the index register is really the result of calculating from unknown
+bits.
+
+	4: unknown value
+	5: (reserved)
+	6: (reserved)
 
 
 * %ix/load <idx>, <value>
