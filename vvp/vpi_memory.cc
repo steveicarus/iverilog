@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.14 2002/07/03 23:39:57 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.15 2002/07/04 16:37:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -484,7 +484,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiVectorVal: {
 		  unsigned hwid = (width - 1)/32 + 1;
 
-		  rbuf = need_result_buf(hwid, 0);
+		  rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), 0);
 		  s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 		  vp->value.vector = op;
 
@@ -579,6 +579,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.15  2002/07/04 16:37:07  steve
+ *  Fix s_vpi_vecval array byte size.
+ *
  * Revision 1.14  2002/07/03 23:39:57  steve
  *  Dynamic size result buffer for _str and _get_value functions.
  *
