@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.25 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.26 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 /*
@@ -724,7 +724,9 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
 {
       assert(value_);
-      return new NetEConst(*value_);
+      NetEConst*tmp = new NetEConst(*value_);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
@@ -789,7 +791,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
 {
       cerr << "Cannot elaborate expression: " << *this << endl;
-      return new NetEConst(verinum());
+      return 0;
 }
 
 NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
@@ -1148,6 +1150,12 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.26  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.25  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

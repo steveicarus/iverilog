@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.25 1999/05/13 04:02:09 steve Exp $"
+#ident "$Id: netlist.cc,v 1.26 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -507,6 +507,11 @@ NetEConst::~NetEConst()
 
 void NetEConst::set_width(unsigned w)
 {
+      if (w > value_.len()) {
+	    cerr << get_line() << ": Cannot expand " << *this
+		 << " to " << w << " bits." << endl;
+	    assert(0);
+      }
       assert(w <= value_.len());
       value_ = verinum(value_, w);
       expr_width(w);
@@ -1054,6 +1059,12 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.26  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.25  1999/05/13 04:02:09  steve
  *  More precise handling of verinum bit lengths.
  *

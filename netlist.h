@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.30 1999/05/12 04:03:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.31 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 /*
@@ -327,7 +327,7 @@ class NetMemory  {
  * being referenced, so can handle garbage collection. Also, this
  * trick can be used to replace subexpressions.
  */
-class NetExpr {
+class NetExpr  : public LineInfo {
     public:
       explicit NetExpr(unsigned w =0) : width_(w), reflist_(0)  { }
       virtual ~NetExpr() =0;
@@ -881,15 +881,22 @@ class NetProcTop  : public LineInfo {
  *
  *   ^  -- Bit-wise exclusive OR
  *   +  -- Arithmetic add
- *   -  -- Arighmetic minus
+ *   -  -- Arithmetic minus
+ *   *  -- Arithmetic multiply
+ *   /  -- Arithmetic divide
+ *   %  -- Arithmetic modulus
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
+ *   L  -- Less or equal
+ *   G  -- Greater or equal
  *   n  -- Logical inequality (!=)
  *   N  -- Case inequality (!==)
  *   a  -- Logical AND (&&)
  *   o  -- Logical OR (||)
+ *   l  -- Left shift (<<)
+ *   r  -- Right shift (>>)
  */
 class NetEBinary  : public NetExpr {
 
@@ -1178,6 +1185,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.31  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.30  1999/05/12 04:03:19  steve
  *  emit NetAssignMem objects in vvm target.
  *

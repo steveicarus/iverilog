@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.17 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: pform.cc,v 1.18 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -80,6 +80,11 @@ void pform_endmodule(const string&name)
       assert(name == cur_module->get_name());
       vl_modules[name] = cur_module;
       cur_module = 0;
+}
+
+bool pform_expression_is_constant(const PExpr*ex)
+{
+      return ex->is_constant(cur_module);
 }
 
 void pform_make_udp(string*name, list<string>*parms,
@@ -421,13 +426,6 @@ void pform_set_parameter(const string&name, PExpr*expr)
       cur_module->parameters[name] = expr;
 }
 
-bool pform_is_parameter(const string&name)
-{
-      map<string,PExpr*>::const_iterator cur =
-	    cur_module->parameters.find(name);
-      return cur != cur_module->parameters.end();
-}
-
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
 {
       for (list<string>::const_iterator cur = names->begin()
@@ -518,6 +516,12 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.18  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.17  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

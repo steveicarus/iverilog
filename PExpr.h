@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.8 1999/05/10 00:16:57 steve Exp $"
+#ident "$Id: PExpr.h,v 1.9 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 # include  <string>
@@ -28,6 +28,7 @@
 # include  "LineInfo.h"
 
 class Design;
+class Module;
 class NetNet;
 class NetExpr;
 
@@ -57,6 +58,12 @@ class PExpr : public LineInfo {
 	// this expression. This method is used for comparing
 	// expressions that must be structurally "identical".
       virtual bool is_the_same(const PExpr*that) const;
+
+	// Return true if this expression is a valid constant
+	// expression. the Module pointer is needed to find parameter
+	// identifiers and any other module specific interpretations
+	// of expresions.
+      virtual bool is_constant(Module*) const;
 };
 
 ostream& operator << (ostream&, const PExpr&);
@@ -99,6 +106,7 @@ class PEIdent : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
 
 	// XXXX
@@ -132,6 +140,7 @@ class PENumber : public PExpr {
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
       virtual bool is_the_same(const PExpr*that) const;
+      virtual bool is_constant(Module*) const;
 
     private:
       verinum*const value_;
@@ -146,6 +155,8 @@ class PEString : public PExpr {
       string value() const { return text_; }
       virtual void dump(ostream&) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+
+      virtual bool is_constant(Module*) const;
 
     private:
       const string text_;
@@ -185,6 +196,12 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.9  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.8  1999/05/10 00:16:57  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

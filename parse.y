@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.25 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: parse.y,v 1.26 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -61,7 +61,7 @@ extern void lex_end_table();
 
 %token <text>   IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
-%token K_LE K_GE K_EQ K_NE K_CEQ K_CNE
+%token K_LE K_GE K_EQ K_NE K_CEQ K_CNE K_LS K_RS
 %token K_LOR K_LAND
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
@@ -101,7 +101,7 @@ extern void lex_end_table();
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <expr>  bitsel delay delay_opt expression expr_primary const_expression
+%type <expr>  delay delay_opt expression expr_primary
 %type <expr>  lavalue lpvalue
 %type <exprs> expression_list
 
@@ -122,7 +122,9 @@ extern void lex_end_table();
 %left '&'
 %left K_EQ K_NE K_CEQ K_CNE
 %left K_GE K_LE '<' '>'
+%left K_LS K_RS
 %left '+' '-'
+%left '*' '/' '%'
 %left UNARY_PREC
 
 %%
@@ -130,11 +132,6 @@ extern void lex_end_table();
 source_file
 	: description
 	| source_file description
-	;
-
-bitsel
-	: '[' const_expression ']'
-		{ $$ = $2; }
 	;
 
 case_item
@@ -167,52 +164,6 @@ case_items
 	| case_item
 		{ list<PCase::Item*>*tmp = new list<PCase::Item*>;
 		  tmp->push_back($1);
-		  $$ = tmp;
-		}
-	;
-
-  /* const_expressions are restricted expressions that have guaranteed
-     known values at compile time. I treat them differently at parse
-     time so that I can tack correctness checking onto the parse
-     process. */
-const_expression
-	: NUMBER
-		{ verinum*tmp = $1;
-		  if (tmp == 0) {
-			yyerror(@1, "XXXX internal error: const_expression.");
-			$$ = 0;
-		  } else {
-			PENumber*tmp = new PENumber($1);
-			tmp->set_file(@1.text);
-			tmp->set_lineno(@1.first_line);
-			$$ = tmp;
-		  }
-		}
-	| STRING
-		{ PEString*tmp = new PEString(*$1);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| IDENTIFIER
-		{ if (!pform_is_parameter(*$1)) {
-		        yyerror(@1, "Identifier in constant expression"
-			        " must be a parameter name.");
-			delete $1;
-			$$ = 0;
-		  } else {
-			PEIdent*tmp = new PEIdent(*$1);
-			tmp->set_file(@1.text);
-			tmp->set_lineno(@1.first_line);
-			$$ = tmp;
-			delete $1;
-		  }
-		}
-	| const_expression '-' const_expression
-		{ PEBinary*tmp = new PEBinary('-', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	;
@@ -332,6 +283,15 @@ expression
 	| expression '^' expression
 		{ $$ = new PEBinary('^', $1, $3);
 		}
+	| expression '*' expression
+		{ $$ = new PEBinary('*', $1, $3);
+		}
+	| expression '/' expression
+		{ $$ = new PEBinary('/', $1, $3);
+		}
+	| expression '%' expression
+		{ $$ = new PEBinary('%', $1, $3);
+		}
 	| expression '+' expression
 		{ $$ = new PEBinary('+', $1, $3);
 		}
@@ -350,11 +310,23 @@ expression
 	| expression '>' expression
 		{ $$ = new PEBinary('>', $1, $3);
 		}
+	| expression K_LS expression
+		{ $$ = new PEBinary('l', $1, $3);
+		}
+	| expression K_RS expression
+		{ $$ = new PEBinary('r', $1, $3);
+		}
 	| expression K_EQ expression
 		{ $$ = new PEBinary('e', $1, $3);
 		}
 	| expression K_CEQ expression
 		{ $$ = new PEBinary('E', $1, $3);
+		}
+	| expression K_LE expression
+		{ $$ = new PEBinary('L', $1, $3);
+		}
+	| expression K_GE expression
+		{ $$ = new PEBinary('G', $1, $3);
 		}
 	| expression K_NE expression
 		{ $$ = new PEBinary('n', $1, $3);
@@ -396,7 +368,10 @@ expr_primary
 		        yyerror(@1, "XXXX No number value in primary?");
 			$$ = 0;
 		  } else {
-			$$ = new PENumber($1);
+			PENumber*tmp = new PENumber($1);
+			tmp->set_file(@1.text);
+			tmp->set_lineno(@1.first_line);
+			$$ = tmp;
 		  }
 		}
 	| STRING
@@ -579,9 +554,16 @@ lavalue
 		  delete $1;
 		  $$ = tmp;
 		}
-	| IDENTIFIER bitsel
+	| IDENTIFIER '[' expression ']'
 		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->msb_ = $2;
+		  PExpr*sel = $3;
+		  if (! pform_expression_is_constant(sel)) {
+			yyerror(@2, "Bit select in lvalue must "
+			        "contain a constant expression.");
+			delete sel;
+		  } else {
+			tmp->msb_ = sel;
+		  }
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -622,6 +604,14 @@ lpvalue
 		  delete $1;
 
 		  $$ = tmp;
+		}
+	| identifier '[' expression ':' expression ']'
+		{ yyerror(@1, "Sorry, part selects"
+		          " not supported in lvalue.");
+		  $$ = 0;
+		  delete $1;
+		  delete $3;
+		  delete $5;
 		}
 	| '{' expression_list '}'
 		{ yyerror(@1, "Sorry, concatenation expressions"
@@ -721,14 +711,25 @@ net_type
 	;
 
 parameter_assign
-	: IDENTIFIER '=' const_expression
-		{ pform_set_parameter(*$1, $3);
+	: IDENTIFIER '=' expression
+		{ PExpr*tmp = $3;
+		  if (!pform_expression_is_constant(tmp)) {
+			yyerror(@3, "parameter value must be constant.");
+			delete tmp;
+			tmp = 0;
+		  }
+		  pform_set_parameter(*$1, tmp);
 		  delete $1;
 		}
 	;
 
 parameter_assign_list
 	: parameter_assign
+	| range parameter_assign
+		{ yyerror(@1, "Ranges in parameter definition "
+		          "are not supported.");
+		  delete $1;
+		}
 	| parameter_assign_list ',' parameter_assign
 	;
 
@@ -738,12 +739,25 @@ port
 		  $$->port_type = NetNet::PIMPLICIT;
 		  delete $1;
 		}
-	| IDENTIFIER '[' const_expression ':' const_expression ']'
-		{ $$ = new PWire(*$1, NetNet::IMPLICIT);
-		  $$->port_type = NetNet::PIMPLICIT;
-		  $$->msb = $3;
-		  $$->lsb = $5;
+	| IDENTIFIER '[' expression ':' expression ']'
+		{ PWire*tmp = new PWire(*$1, NetNet::IMPLICIT);
+		  tmp->port_type = NetNet::PIMPLICIT;
+		  if (!pform_expression_is_constant($3)) {
+			yyerror(@3, "msb expression of port bit select "
+			        "must be constant.");
+			delete $3;
+		  } else {
+			tmp->msb = $3;
+		  }
+		  if (!pform_expression_is_constant($5)) {
+			yyerror(@3, "lsb expression of port bit select "
+			        "must be constant.");
+			delete $5;
+		  } else {
+			tmp->msb = $5;
+		  }
 		  delete $1;
+		  $$ = tmp;
 		}
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "invalid port bit select");
@@ -754,9 +768,13 @@ port
 	;
 
 port_name
-	: PORTNAME '(' IDENTIFIER ')'
+	: PORTNAME '(' expression ')'
 		{ delete $1;
 		  delete $3;
+		}
+	| PORTNAME '(' error ')'
+		{ yyerror(@3, "invalid port connection expression.");
+		  delete $1;
 		}
 	| PORTNAME '(' ')'
 		{ delete $1;
@@ -775,10 +793,20 @@ port_type
 	;
 
 range
-	: '[' const_expression ':' const_expression ']'
+	: '[' expression ':' expression ']'
 		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
-		  (*tmp)[0] = $2;
-		  (*tmp)[1] = $4;
+		  if (!pform_expression_is_constant($2)) {
+			yyerror(@2, "msb of range must be constant.");
+			delete $2;
+		  } else {
+			(*tmp)[0] = $2;
+		  }
+		  if (!pform_expression_is_constant($4)) {
+			yyerror(@4, "msb of range must be constant.");
+			delete $4;
+		  } else {
+			(*tmp)[1] = $4;
+		  }
 		  $$ = tmp;
 		}
 	;
@@ -798,8 +826,12 @@ register_variable
 		{ pform_makewire(*$1, NetNet::REG);
 		  $$ = $1;
 		}
-	| IDENTIFIER '[' const_expression ':' const_expression ']'
+	| IDENTIFIER '[' expression ':' expression ']'
 		{ pform_makewire(*$1, NetNet::REG);
+		  if (! pform_expression_is_constant($3))
+			yyerror(@3, "msb of register range must be constant.");
+		  if (! pform_expression_is_constant($5))
+			yyerror(@3, "lsb of register range must be constant.");
 		  pform_set_reg_idx(*$1, $3, $5);
 		  $$ = $1;
 		}

@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.2 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.3 1999/05/16 05:08:42 steve Exp $"
 #endif
 
 # include  "PExpr.h"
+# include  "Module.h"
 # include  <typeinfo>
 
 PExpr::~PExpr()
@@ -32,6 +33,21 @@ bool PExpr::is_the_same(const PExpr*that) const
       return typeid(this) == typeid(that);
 }
 
+bool PExpr::is_constant(Module*) const
+{
+      return false;
+}
+
+/*
+ * An identifier can be in a constant expresion if (and only if) it is
+ * a parameter.
+ */
+bool PEIdent::is_constant(Module*mod) const
+{
+      map<string,PExpr*>::const_iterator cur = mod->parameters.find(text_);
+      return cur != mod->parameters.end();
+}
+
 bool PENumber::is_the_same(const PExpr*that) const
 {
       const PENumber*obj = dynamic_cast<const PENumber*>(that);
@@ -41,8 +57,24 @@ bool PENumber::is_the_same(const PExpr*that) const
       return *value_ == *obj->value_;
 }
 
+bool PENumber::is_constant(Module*) const
+{
+      return true;
+}
+
+bool PEString::is_constant(Module*) const
+{
+      return true;
+}
+
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.3  1999/05/16 05:08:42  steve
+ *  Redo constant expression detection to happen
+ *  after parsing.
+ *
+ *  Parse more operators and expressions.
+ *
  * Revision 1.2  1998/11/11 00:01:51  steve
  *  Check net ranges in declarations.
  *
