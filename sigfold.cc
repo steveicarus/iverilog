@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sigfold.cc,v 1.2 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: sigfold.cc,v 1.3 1999/11/06 04:51:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -80,6 +80,24 @@ static void clear_extra_signals(NetNet*net, unsigned npin)
 	      // Skip the node if it isn't even a signal.
 	    if (sig == 0) {
 		  cur->pin(pin).next_link(cur, pin);
+		  continue;
+	    }
+
+	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig)) {
+		  cerr << "internal warning: sigfold found NetTmp--"
+			"deleting it." << endl;
+
+		    // save the next link, ...
+		  NetObj*nxt;
+		  unsigned pnxt;
+		  cur->pin(pin).next_link(nxt, pnxt);
+
+		    // disconnect the target signal, ...
+		  sig->pin(pin).unlink();
+
+		    // And onward.
+		  cur = nxt;
+		  pin = pnxt;
 		  continue;
 	    }
 
@@ -152,10 +170,13 @@ void sigfold(Design*des)
 
 /*
  * $Log: sigfold.cc,v $
+ * Revision 1.3  1999/11/06 04:51:11  steve
+ *  Catch NetTmp objects.
+ *
  * Revision 1.2  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
+ *  constant propagation is more careful with wide links,
  *  Signal folding is aware of attributes, and
  *  the XNF target can dump UDP objects based on LCA
  *  attributes.
