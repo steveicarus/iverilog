@@ -19,13 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.64 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: PExpr.h,v 1.65 2003/02/08 19:49:21 steve Exp $"
 #endif
 
 # include  <string>
 # include  "netlist.h"
 # include  "verinum.h"
-# include  "verireal.h"
 # include  "LineInfo.h"
 
 class Design;
@@ -91,11 +90,6 @@ class PExpr : public LineInfo {
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
-
-	// This attempts to evaluate a constant expression as a
-	// decimal floating point. This is used when calculating delay
-	// constants.
-      virtual verireal* eval_rconst(const Design*, const NetScope*) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -190,9 +184,6 @@ class PEFNumber : public PExpr {
 	   any rounding that is needed to get the value. */
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
-	/* This method returns the full floating point value. */
-      virtual verireal* eval_rconst(const Design*, const NetScope*) const;
-
 	/* A PEFNumber is a constant, so this returns true. */
       virtual bool is_constant(Module*) const;
 
@@ -243,7 +234,6 @@ class PEIdent : public PExpr {
 
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const NetScope*sc) const;
-      verireal*eval_rconst(const Design*des, const NetScope*sc) const;
 
       const hname_t& path() const;
 
@@ -301,7 +291,6 @@ class PENumber : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
 
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
-      virtual verireal*eval_rconst(const Design*, const NetScope*) const;
 
       virtual bool is_the_same(const PExpr*that) const;
       virtual bool is_constant(Module*) const;
@@ -389,7 +378,6 @@ class PEBinary : public PExpr {
 					bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
-      virtual verireal*eval_rconst(const Design*des, const NetScope*sc) const;
 
     private:
       char op_;
@@ -504,6 +492,13 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.65  2003/02/08 19:49:21  steve
+ *  Calculate delay statement delays using elaborated
+ *  expressions instead of pre-elaborated expression
+ *  trees.
+ *
+ *  Remove the eval_pexpr methods from PExpr.
+ *
  * Revision 1.64  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

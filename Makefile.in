@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.143 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.144 2003/02/08 19:49:21 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -123,7 +123,7 @@ FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
 
 O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_lval.o elab_net.o elab_anet.o elab_pexpr.o elab_scope.o \
-elab_sig.o emit.o eval.o eval_attrib.o eval_rconst.o \
+elab_sig.o emit.o eval.o eval_attrib.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
 load_module.o netlist.o netmisc.o net_assign.o \
 net_design.o net_event.o net_expr.o net_force.o net_func.o \

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.9 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.10 2003/02/08 19:49:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -62,34 +62,51 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
       delete_flag_ = df;
 }
 
-static unsigned long calculate_val(Design*des, const NetScope*scope,
+static unsigned long calculate_val(Design*des, NetScope*scope,
 				   const PExpr*expr)
 {
-      assert(expr);
-      unsigned long val;
 
-      int shift = scope->time_unit() - des->get_precision();
-
-      if (verireal*dr = expr->eval_rconst(des, scope)) {
-	    val = dr->as_long(shift);
-	    delete dr;
-
-      } else {
-	    verinum*dv = expr->eval_const(des, scope);
-	    if (dv == 0) {
-		  cerr << expr->get_line() << ": sorry: non-constant "
-		       << "delays not supported here: " << *expr << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    assert(dv);
-	    val = dv->as_ulong();
-	    val = des->scale_to_precision(val, scope);
-	    delete dv;
+      NetExpr*dex = expr->elaborate_expr(des, scope);
+      if (NetExpr*tmp = dex->eval_tree()) {
+	    delete dex;
+	    dex = tmp;
       }
 
-      return val;
+	/* If the delay expression is a real constant or vector
+	   constant, then evaluate it, scale it to the local time
+	   units, and return an adjusted value. */
+
+      if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
+	    verireal fn = tmp->value();
+
+	    int shift = scope->time_unit() - des->get_precision();
+	    long delay = fn.as_long(shift);
+	    if (delay < 0)
+		  delay = 0;
+
+	    delete tmp;
+	    return delay;
+      }
+
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
+	    verinum fn = tmp->value();
+
+	    unsigned long delay =
+		  des->scale_to_precision(fn.as_ulong(), scope);
+
+	    delete tmp;
+	    return delay;
+      }
+
+	/* Oops, cannot evaluate down to a constant. Error message. */
+      delete dex;
+
+      cerr << expr->get_line() << ": sorry: non-constant "
+	   << "delays not supported here: " << *expr << endl;
+      des->errors += 1;
+      return 0;
+
 }
 
 void PDelays::eval_delays(Design*des, NetScope*scope,
@@ -131,6 +148,13 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.10  2003/02/08 19:49:21  steve
+ *  Calculate delay statement delays using elaborated
+ *  expressions instead of pre-elaborated expression
+ *  trees.
+ *
+ *  Remove the eval_pexpr methods from PExpr.
+ *
  * Revision 1.9  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
