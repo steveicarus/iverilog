@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.4 2000/09/10 15:43:59 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.5 2000/10/26 17:09:46 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -103,6 +103,13 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope);
+
+	      /* If the l-value doesn't elaborate, the error was
+		 already detected and printed. We just skip it and let
+		 the compiler catch more errors. */
+	    if (tmp == 0)
+		  continue;
+
 	    assert(tmp);
 
 	      /* If adjacent l-values in the concatenation are not bit
@@ -274,6 +281,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.5  2000/10/26 17:09:46  steve
+ *  Fix handling of errors in behavioral lvalues. (PR#28)
+ *
  * Revision 1.4  2000/09/10 15:43:59  steve
  *  Some error checking.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.193 2000/10/07 19:45:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.194 2000/10/26 17:09:46 steve Exp $"
 #endif
 
 /*
@@ -501,9 +501,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    assert(sig);
 
 	      // Check that the parts have matching pin counts. If
-	      // not, they are different widths.
+	      // not, they are different widths. Note that idx is 0
+	      // based, but users count parameter positions from 1.
 	    if (prts_pin_count != sig->pin_count()) {
-		  cerr << get_line() << ": error: Port " << idx << " of "
+		  cerr << get_line() << ": error: Port " << (idx+1) << " of "
 		       << type_ << " expects " << prts_pin_count <<
 			" pins, got " << sig->pin_count() << " from "
 		       << sig->name() << endl;
@@ -2282,6 +2283,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.194  2000/10/26 17:09:46  steve
+ *  Fix handling of errors in behavioral lvalues. (PR#28)
+ *
  * Revision 1.193  2000/10/07 19:45:42  steve
  *  Put logic devices into scopes.
  *
