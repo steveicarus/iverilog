@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.22 2003/03/13 05:07:10 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.23 2003/03/14 05:00:44 steve Exp $"
 #endif
 
 /*
@@ -69,6 +69,21 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
       };
 }
 
+static PLI_INT32 systask_get(int type, vpiHandle ref)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      switch (type) {
+	  case vpiTimeUnit:
+	    return rfp->scope->time_units;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
 /*
  * the get_str function only needs to support vpiName
  */
@@ -111,7 +126,7 @@ static vpiHandle systask_iter(int type, vpiHandle ref)
 
 static const struct __vpirt vpip_systask_rt = {
       vpiSysTaskCall,
-      0,
+      systask_get,
       systask_get_str,
       0,
       0,
@@ -456,6 +471,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.23  2003/03/14 05:00:44  steve
+ *  Support vpi_get of vpiTimeUnit.
+ *
  * Revision 1.22  2003/03/13 05:07:10  steve
  *  signed/unsigned warnings.
  *
