@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.86 2003/05/17 04:38:19 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.87 2003/05/26 04:45:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -79,8 +79,19 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
 
       if (ivl_lval_mux(lval)) {
 	    assert(wid == 1);
-	    fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
-		    vvp_signal_label(sig), bit, ivl_signal_pins(sig)-1);
+	    if ((ivl_signal_pins(sig)-1) <= 0xffffU) {
+		  fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
+			  vvp_signal_label(sig), bit, ivl_signal_pins(sig)-1);
+	    } else {
+		    /* If the target bound is too big for the %set/x0
+		       instruction, then use the %set/x0/x instruction
+		       instead. */
+		  fprintf(vvp_out, "    %%ix/load 3, %u;\n",
+			  ivl_signal_pins(sig)-1);
+		  fprintf(vvp_out, "    %%set/x0/x V_%s, %u, 3;\n",
+			  vvp_signal_label(sig), bit);
+	    }
+			  
       } else if (wid == 1) {
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
 		    vvp_signal_label(sig), idx+part_off, bit);
@@ -1511,6 +1522,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.87  2003/05/26 04:45:37  steve
+ *  Use set/x0/x if the target vector is too wide for set/x0.
+ *
  * Revision 1.86  2003/05/17 04:38:19  steve
  *  Account for nested fork scopes in disable.
  *
