@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.23 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: synth2.cc,v 1.24 2003/03/25 04:04:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -196,27 +196,68 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
       assert(cur == sel_pins);
 
+	/* Hook up the output of th mux to the mapped output pins. */
       for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
 	    connect(nex_out->pin(idx), mux->pin_Result(idx));
 
+      NetProc**statement_map = new NetProc*[1 << sel_pins];
+      for (unsigned item = 0 ;  item < (1<<sel_pins) ;  item += 1)
+	    statement_map[item] = 0;
+
+	/* Assign the input statements to MUX inputs. This involves
+	   calculating the guard value, passing that through the
+	   guard2sel map, then saving the statement in the
+	   statement_map. If I find a default case, then save that for
+	   use later. */
+      NetProc*default_statement = 0;
       for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
-	    assert(items_[item].guard);
-	    assert(items_[item].statement);
+	      /* Skip the default case this pass. */
+	    if (items_[item].guard == 0) {
+		  default_statement = items_[item].statement;
+		  continue;
+	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
 	    assert(ge);
 	    verinum gval = ge->value();
 	    unsigned sel_idx = guard2sel[gval.as_ulong()];
 
+	    assert(items_[item].statement);
+	    statement_map[sel_idx] = items_[item].statement;
+      }
+
+	/* Now that statements matches with mux inputs, synthesize the
+	   sub-statements. If I get to an input that has no statement,
+	   then use the default statement there. */
+      NetNet*default_sig = 0;
+      for (unsigned item = 0 ;  item < (1<<sel_pins) ;  item += 1) {
+
+	      /* Detect the case that this is a default input, and I
+		 have a precalculated default_sig. */
+	    if ((statement_map[item] == 0) && (default_sig != 0)) {
+		for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
+		      connect(mux->pin_Data(idx, item), default_sig->pin(idx));
+		continue;
+	    }
+
 	    NetNet*sig = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, nex_map->pin_count());
 	    sig->local_flag(true);
-	    items_[item].statement->synth_async(des, scope, nex_map, sig);
+
+	    if (statement_map[item] == 0) {
+		  statement_map[item] = default_statement;
+		  default_statement = 0;
+		  default_sig = sig;
+	    }
+
+	    assert(statement_map[item]);
+	    statement_map[item]->synth_async(des, scope, nex_map, sig);
 
 	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-		  connect(mux->pin_Data(idx, sel_idx), sig->pin(idx));
+		  connect(mux->pin_Data(idx, item), sig->pin(idx));
       }
-
+	    
+      delete[]statement_map;
       des->add_node(mux);
 
       return true;
@@ -738,6 +779,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.24  2003/03/25 04:04:29  steve
+ *  Handle defaults in synthesized case statements.
+ *
  * Revision 1.23  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *
