@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.44 2001/06/18 01:09:32 steve Exp $"
+#ident "$Id: vthread.cc,v 1.45 2001/06/22 00:03:05 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -297,14 +297,23 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+# define CPU_BITS (8*sizeof(unsigned long))
+# define TOP_BIT (1UL << (CPU_BITS-1))
+
 bool of_ADD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
-      assert(cp->number <= 8*sizeof(unsigned long));
 
       unsigned idx1 = cp->bit_idx1;
       unsigned idx2 = cp->bit_idx2;
-      unsigned long lv = 0, rv = 0;
+
+      unsigned awid = cp->number / (8*sizeof(unsigned long)) + 1;
+      unsigned long*lva = new unsigned long [awid+1];
+      unsigned long*rva = new unsigned long [awid+1];
+      for (unsigned idx = 0 ;  idx < awid ;  idx += 1) {
+	    lva[idx] = 0;
+	    rva[idx] = 0;
+      }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lb = thr_get_bit(thr, idx1);
@@ -313,24 +322,36 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 	    if ((lb | rb) & 2)
 		  goto x_out;
 
-	    lv |= lb << idx;
-	    rv |= rb << idx;
+	    lva[idx/CPU_BITS] |= lb << (idx % CPU_BITS);
+	    rva[idx/CPU_BITS] |= rb << (idx % CPU_BITS);
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
 
-      lv += rv;
+      unsigned long carry;
+      carry = 0;
+      for (unsigned idx = 0 ;  idx < awid ;  idx += 1) {
+	    unsigned long tmp = (lva[idx] | rva[idx]) & TOP_BIT;
+	    lva[idx] += rva[idx] + carry;
+	    carry = (tmp > lva[idx]) ? 1 : 0;
+      }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
-	    lv >>= 1;
+	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
+	    thr_put_bit(thr, cp->bit_idx1+idx, (bit&1) ? 1 : 0);
       }
+
+      delete[]lva;
+      delete[]rva;
 
       return true;
 
  x_out:
+      delete[]lva;
+      delete[]rva;
+
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
 
@@ -1205,6 +1226,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.45  2001/06/22 00:03:05  steve
+ *  Infinitely wide behavioral add.
+ *
  * Revision 1.44  2001/06/18 01:09:32  steve
  *  More behavioral unary reduction operators.
  *  (Stephan Boettcher)
