@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.13 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -195,13 +195,13 @@ unsigned Link::get_pin() const
       return pin_;
 }
 
-void Link::set_name(const string&n, unsigned i)
+void Link::set_name(perm_string n, unsigned i)
 {
       name_ = n;
       inst_ = i;
 }
 
-const string& Link::get_name() const
+perm_string Link::get_name() const
 {
       return name_;
 }
@@ -499,6 +499,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.13  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *

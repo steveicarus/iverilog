@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.42 2003/11/10 20:59:03 steve Exp $"
+#ident "$Id: net_design.cc,v 1.43 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,7 +80,7 @@ unsigned long Design::scale_to_precision(unsigned long val,
       return val;
 }
 
-NetScope* Design::make_root_scope(const char*root)
+NetScope* Design::make_root_scope(perm_string root)
 {
       NetScope *root_scope_;
       root_scope_ = new NetScope(0, root, NetScope::MODULE);
@@ -617,6 +617,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.43  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.42  2003/11/10 20:59:03  steve
  *  Design::get_flag returns const char* instead of string.
  *

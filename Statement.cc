@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.cc,v 1.28 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Statement.cc,v 1.29 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,7 +86,7 @@ PAssignNB::~PAssignNB()
 {
 }
 
-PBlock::PBlock(const string&n, BL_TYPE t, const svector<Statement*>&st)
+PBlock::PBlock(perm_string n, BL_TYPE t, const svector<Statement*>&st)
 : name_(n), bl_type_(t), list_(st)
 {
 }
@@ -295,6 +295,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.29  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.28  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

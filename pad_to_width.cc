@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.14 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.15 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,9 +80,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 	    return net;
 
       verinum pad(verinum::V0, wid - net->pin_count());
-      NetConst*con = new NetConst(scope,
-				  path + "." + scope->local_symbol(),
-				  pad);
+      NetConst*con = new NetConst(scope, scope->local_symbol(), pad);
       des->add_node(con);
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
@@ -99,6 +97,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.15  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.14  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *
@@ -121,27 +122,5 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
  * Revision 1.8  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.7  2001/02/16 03:25:09  steve
- *  Missing . in names generated from scope locals.
- *
- * Revision 1.6  2001/02/15 06:59:36  steve
- *  FreeBSD port has a maintainer now.
- *
- * Revision 1.5  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.4  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  2000/02/16 03:58:27  steve
- *  Fix up width matching in structural bitwise operators.
- *
- * Revision 1.2  2000/01/01 06:17:25  steve
- *  Propogate line number information when expanding expressions.
- *
- * Revision 1.1  1999/09/29 00:42:51  steve
- *  Allow expanding of additive operators.
- *
  */
 

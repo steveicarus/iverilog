@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.32 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: Module.h,v 1.33 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
 # include  "svector.h"
+# include  "StringHeap.h"
 # include  "HName.h"
 # include  "named.h"
 # include  "LineInfo.h"
@@ -63,7 +64,7 @@ class Module : public LineInfo {
     public:
 	/* The name passed here is the module name, not the instance
 	   name. This make must be a permallocated string. */
-      explicit Module(const char*name);
+      explicit Module(perm_string name);
       ~Module();
 
 
@@ -115,7 +116,7 @@ class Module : public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
 
-      const char*mod_name() const { return name_; }
+      perm_string mod_name() const { return name_; }
 
       void add_gate(PGate*gate);
 
@@ -125,8 +126,8 @@ class Module : public LineInfo {
       PWire* add_wire(PWire*wire);
 
       void add_behavior(PProcess*behave);
-      void add_task(const string&name, PTask*def);
-      void add_function(const string&name, PFunction*def);
+      void add_task(perm_string name, PTask*def);
+      void add_function(perm_string name, PFunction*def);
 
       unsigned port_count() const;
       const svector<PEIdent*>& get_port(unsigned idx) const;
@@ -135,7 +136,7 @@ class Module : public LineInfo {
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
       PWire* get_wire(const hname_t&name) const;
-      PGate* get_gate(const string&name);
+      PGate* get_gate(perm_string name);
 
       const map<hname_t,PWire*>& get_wires() const;
       const list<PGate*>& get_gates() const;
@@ -149,13 +150,13 @@ class Module : public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      const char* name_;
+      perm_string name_;
 
       map<hname_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
-      map<string,PTask*> tasks_;
-      map<string,PFunction*> funcs_;
+      map<perm_string,PTask*> tasks_;
+      map<perm_string,PFunction*> funcs_;
 
     private: // Not implemented
       Module(const Module&);
@@ -165,6 +166,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.33  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.32  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-xnf.cc,v 1.50 2003/11/10 20:59:04 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.51 2004/02/18 17:11:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -119,6 +119,7 @@ class target_xnf  : public target_t {
 
     private:
       static string mangle(const string&);
+      static string mangle(perm_string);
       static string choose_sig_name(const Link*lnk);
       static void draw_pin(ostream&os, const string&name,
 			   const Link&lnk);
@@ -153,6 +154,11 @@ string target_xnf::mangle(const string&name)
       return result;
 }
 
+string target_xnf::mangle(perm_string name)
+{
+      return mangle(string(name));
+}
+
 /*
  * This method takes a signal and pin number as a nexus. Scan the
  * nexus to decide which name to use if there are lots of attached
@@ -160,7 +166,7 @@ string target_xnf::mangle(const string&name)
  */
 string target_xnf::choose_sig_name(const Link*lnk)
 {
-      return mangle( lnk->nexus()->name() );
+      return mangle( string(lnk->nexus()->name()) );
 }
 
 void target_xnf::draw_pin(ostream&os, const string&name,
@@ -932,6 +938,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.51  2004/02/18 17:11:58  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.50  2003/11/10 20:59:04  steve
  *  Design::get_flag returns const char* instead of string.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,18 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.cc,v 1.1 2003/07/15 05:07:13 steve Exp $"
+#ident "$Id: PUdp.cc,v 1.2 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  "PUdp.h"
 
-PUdp::PUdp(const string&n, unsigned nports)
+PUdp::PUdp(perm_string n, unsigned nports)
 : ports(nports), sequential(false), initial(verinum::Vx), name_(n)
 {
 }
 
 /*
  * $Log: PUdp.cc,v $
+ * Revision 1.2  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.1  2003/07/15 05:07:13  steve
  *  Move PUdp constructor into compiled file.
  *

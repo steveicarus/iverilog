@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.189 2004/02/15 17:48:16 steve Exp $"
+#ident "$Id: parse.y,v 1.190 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "parse_misc.h"
+# include  "compiler.h"
 # include  "pform.h"
 # include  <sstream>
 
@@ -531,7 +532,8 @@ description
 	: module
 	| udp_primitive
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
-		{ pform_set_type_attrib($3, $5, $7);
+		{ perm_string tmp3 = lex_strings.make($3);
+		  pform_set_type_attrib(tmp3, $5, $7);
 		  delete $3;
 		  delete $5;
 		}
@@ -1609,7 +1611,8 @@ module_item
      but then can have parameter lists. */
 
 	| IDENTIFIER parameter_value_opt gate_instance_list ';'
-		{ pform_make_modgates($1, $2, $3);
+		{ perm_string tmp1 = lex_strings.make($1);
+		  pform_make_modgates(tmp1, $2, $3);
 		  delete $1;
 		}
 
@@ -1645,11 +1648,12 @@ module_item
 	  task_item_list_opt statement_opt
 	  K_endtask
 		{ PTask*tmp = new PTask;
+		  perm_string tmp2 = lex_strings.make($2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_ports($5);
 		  tmp->set_statement($6);
-		  pform_set_task($2, tmp);
+		  pform_set_task(tmp2, tmp);
 		  pform_pop_scope();
 		  delete $2;
 		}
@@ -1719,7 +1723,8 @@ module_item
      extensions. Then catch the parameters of the $attribute keyword. */
 
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
-		{ pform_set_attrib($3, $5, $7);
+		{ perm_string tmp3 = lex_strings.make($3);
+		  pform_set_attrib(tmp3, $5, $7);
 		  delete $3;
 		  delete $5;
 		}
@@ -2464,7 +2469,8 @@ statement
 	  block_item_decls_opt
 	  statement_list K_end
 		{ pform_pop_scope();
-		  PBlock*tmp = new PBlock($3, PBlock::BL_SEQ, *$6);
+		  PBlock*tmp = new PBlock(lex_strings.make($3),
+					  PBlock::BL_SEQ, *$6);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $3;
@@ -2496,7 +2502,8 @@ statement
 	  block_item_decls_opt
 	  statement_list K_join
 		{ pform_pop_scope();
-		  PBlock*tmp = new PBlock($3, PBlock::BL_PAR, *$6);
+		  PBlock*tmp = new PBlock(lex_strings.make($3),
+					  PBlock::BL_PAR, *$6);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $3;
@@ -3012,7 +3019,8 @@ udp_primitive
 	    udp_init_opt
 	    udp_body
 	  K_endprimitive
-		{ pform_make_udp($2, $4, $7, $9, $8,
+		{ perm_string tmp2 = lex_strings.make($2);
+		  pform_make_udp(tmp2, $4, $7, $9, $8,
 				 @2.text, @2.first_line);
 		  delete[]$2;
 		}

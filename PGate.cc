@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.cc,v 1.15 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: PGate.cc,v 1.16 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,7 @@
 # include  "verinum.h"
 # include  <assert.h>
 
-PGate::PGate(const string&name,
+PGate::PGate(perm_string name,
 	     svector<PExpr*>*pins,
 	     const svector<PExpr*>*del)
 : name_(name), pins_(pins)
@@ -37,7 +37,7 @@ PGate::PGate(const string&name,
       str1_ = STRONG;
 }
 
-PGate::PGate(const string&name,
+PGate::PGate(perm_string name,
 	     svector<PExpr*>*pins,
 	     PExpr*del)
 : name_(name), pins_(pins)
@@ -47,7 +47,7 @@ PGate::PGate(const string&name,
       str1_ = STRONG;
 }
 
-PGate::PGate(const string&name, svector<PExpr*>*pins)
+PGate::PGate(perm_string name, svector<PExpr*>*pins)
 : name_(name), pins_(pins)
 {
       str0_ = STRONG;
@@ -99,13 +99,13 @@ void PGate::eval_delays(Design*des, NetScope*scope,
 }
 
 PGAssign::PGAssign(svector<PExpr*>*pins)
-: PGate("", pins)
+: PGate(perm_string(), pins)
 {
       assert(pins->count() == 2);
 }
 
 PGAssign::PGAssign(svector<PExpr*>*pins, svector<PExpr*>*dels)
-: PGate("", pins, dels)
+: PGate(perm_string(), pins, dels)
 {
       assert(pins->count() == 2);
 }
@@ -114,14 +114,14 @@ PGAssign::~PGAssign()
 {
 }
 
-PGBuiltin::PGBuiltin(Type t, const string&name,
+PGBuiltin::PGBuiltin(Type t, perm_string name,
 		     svector<PExpr*>*pins,
 		     svector<PExpr*>*del)
 : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
 {
 }
 
-PGBuiltin::PGBuiltin(Type t, const string&name,
+PGBuiltin::PGBuiltin(Type t, perm_string name,
 		     svector<PExpr*>*pins,
 		     PExpr*del)
 : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
@@ -142,14 +142,14 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
-PGModule::PGModule(const char*type, const string&name, svector<PExpr*>*pins)
+PGModule::PGModule(perm_string type, perm_string name, svector<PExpr*>*pins)
 : PGate(name, pins), overrides_(0), pins_(0),
   npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
       type_ = type;
 }
 
-PGModule::PGModule(const char*type, const string&name,
+PGModule::PGModule(perm_string type, perm_string name,
 		   named<PExpr*>*pins, unsigned npins)
 : PGate(name, 0), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
@@ -184,13 +184,16 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
-const char* PGModule::get_type()
+perm_string PGModule::get_type()
 {
       return type_;
 }
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.16  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.15  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *

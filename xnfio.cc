@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.27 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.28 2004/02/18 17:11:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -129,7 +129,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 
 	// Can't seem to find a way to rearrange the existing netlist,
 	// so I am stuck creating a new buffer, the OBUF.
-      NetLogic*buf = new NetLogic(scope, des->local_symbol(scope->name()),
+      NetLogic*buf = new NetLogic(scope, scope->local_symbol(),
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
@@ -239,7 +239,7 @@ static void make_ibuf(Design*des, NetNet*net)
       }
 
 	// I give up, create an IBUF.
-      NetLogic*buf = new NetLogic(scope, des->local_symbol(scope->name()),
+      NetLogic*buf = new NetLogic(scope, scope->local_symbol(),
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
@@ -256,7 +256,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	// this case and create a new signal.
       if (count_signals(buf->pin(0)) == 0) {
 	    NetNet*tmp = new NetNet(scope,
-				    des->local_symbol(scope->name()),
+				    scope->local_symbol(),
 				    NetNet::WIRE);
 	    connect(buf->pin(0), tmp->pin(0));
       }
@@ -361,6 +361,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.28  2004/02/18 17:11:58  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.27  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.27 2003/09/13 01:01:51 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.28 2004/02/18 17:11:55 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -171,12 +171,12 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// elaborate_scope method of the PTask for detailed
 	// processing.
 
-      typedef map<string,PTask*>::const_iterator tasks_it_t;
+      typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
 
       for (tasks_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++ ) {
 
-	    NetScope*task_scope = new NetScope(scope, (*cur).first.c_str(),
+	    NetScope*task_scope = new NetScope(scope, (*cur).first,
 					       NetScope::TASK);
 	    (*cur).second->elaborate_scope(des, task_scope);
       }
@@ -186,12 +186,12 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// perspective of scopes. So handle them exactly the same
 	// way.
 
-      typedef map<string,PFunction*>::const_iterator funcs_it_t;
+      typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
 
       for (funcs_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++ ) {
 
-	    NetScope*func_scope = new NetScope(scope, (*cur).first.c_str(),
+	    NetScope*func_scope = new NetScope(scope, (*cur).first,
 					       NetScope::FUNC);
 	    (*cur).second->elaborate_scope(des, func_scope);
       }
@@ -288,7 +288,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       }
 
 	// Create the new scope as a MODULE with my name.
-      NetScope*my_scope = new NetScope(sc, get_name().c_str(), NetScope::MODULE);
+      NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
       my_scope->set_module_name(mod->mod_name());
 
 	// Set time units and precision.
@@ -439,8 +439,8 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 {
       NetScope*my_scope = scope;
 
-      if (name_ != "") {
-	    my_scope = new NetScope(scope, name_.c_str(), bl_type_==BL_PAR
+      if (name_ != 0) {
+	    my_scope = new NetScope(scope, name_, bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
       }
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.28  2004/02/18 17:11:55  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.27  2003/09/13 01:01:51  steve
  *  Spelling fixes.
  *

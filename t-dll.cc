@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.125 2003/12/12 05:43:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.126 2004/02/18 17:11:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -534,7 +534,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
-      const char *name = s->basename();
+      perm_string name = s->basename();
       root_->name_ = name;
       root_->child_ = 0;
       root_->sibling_ = 0;
@@ -1012,7 +1012,7 @@ void dll_target::udp(const NetUDP*net)
 
       obj->type_ = IVL_LO_UDP;
 
-      static map<string,ivl_udp_t> udps;
+      static map<perm_string,ivl_udp_t> udps;
       ivl_udp_t u;
 
       if (udps.find(net->udp_name()) != udps.end())
@@ -1030,7 +1030,7 @@ void dll_target::udp(const NetUDP*net)
 	  u->sequ = net->is_sequential();
 	  if (u->sequ)
 	    u->init = net->get_initial();
-	  u->name = strings_.add(net->udp_name().c_str());
+	  u->name = net->udp_name();
 	  string inp;
 	  char out;
 	  unsigned int i = 0;
@@ -1088,7 +1088,7 @@ void dll_target::memory(const NetMemory*net)
       ivl_memory_t obj = new struct ivl_memory_s;
 
       obj->scope_    = find_scope(des_, net->scope());
-      obj->basename_ = strings_.add(net->name());
+      obj->basename_ = strings_.make(net->name());
       obj->width_    = net->width();
       obj->signed_   = 0;
       obj->size_     = net->count();
@@ -1997,12 +1997,12 @@ void dll_target::scope(const NetScope*net)
 		      }
 		      assert(def);
 		      scope->type_ = IVL_SCT_TASK;
-		      scope->tname_ = strings_.add(def->name().c_str());
+		      scope->tname_ = strings_.make(def->name().c_str());
 		      break;
 		}
 		case NetScope::FUNC:
 		  scope->type_ = IVL_SCT_FUNCTION;
-		  scope->tname_ = strings_.add(net->func_def()->name().c_str());
+		  scope->tname_ = strings_.make(net->func_def()->name().c_str());
 		  break;
 		case NetScope::BEGIN_END:
 		  scope->type_ = IVL_SCT_BEGIN;
@@ -2176,6 +2176,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.126  2004/02/18 17:11:58  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.125  2003/12/12 05:43:08  steve
  *  Some systems dlsym requires leading _ or not on whim.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.119 2004/02/15 17:48:28 steve Exp $"
+#ident "$Id: pform.cc,v 1.120 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,8 +35,8 @@
 # include  <typeinfo>
 # include  <sstream>
 
-map<string,Module*> pform_modules;
-map<string,PUdp*> pform_primitives;
+map<perm_string,Module*> pform_modules;
+map<perm_string,PUdp*> pform_primitives;
 
 /*
  * The lexor accesses the vl_* variables.
@@ -120,7 +120,7 @@ void pform_set_timescale(int unit, int prec,
 		 << "confusing timing results.  Affected modules are:"
 		 << endl;
 
-	    map<string,Module*>::iterator mod;
+	    map<perm_string,Module*>::iterator mod;
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; mod++) {
 		  const Module*mp = (*mod).second;
@@ -188,7 +188,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 {
       assert( pform_cur_module == 0 );
 
-      const char*lex_name = lex_strings.add(name);
+      perm_string lex_name = lex_strings.make(name);
       pform_cur_module = new Module(lex_name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
@@ -254,9 +254,12 @@ void pform_module_set_ports(svector<Module::port_t*>*ports)
 void pform_endmodule(const char*name)
 {
       assert(pform_cur_module);
-      assert(strcmp(name, pform_cur_module->mod_name()) == 0);
+      perm_string mod_name = pform_cur_module->mod_name();
+      assert(strcmp(name, mod_name) == 0);
 
-      map<string,Module*>::const_iterator test = pform_modules.find(name);
+      map<perm_string,Module*>::const_iterator test = 
+	    pform_modules.find(mod_name);
+
       if (test != pform_modules.end()) {
 	    ostringstream msg;
 	    msg << "Module " << name << " was already declared here: "
@@ -265,7 +268,7 @@ void pform_endmodule(const char*name)
 	    pform_cur_module = 0;
 	    return;
       }
-      pform_modules[name] = pform_cur_module;
+      pform_modules[mod_name] = pform_cur_module;
       pform_cur_module = 0;
 }
 
@@ -320,7 +323,7 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       return res;
 }
 
-void pform_make_udp(const char*name, list<string>*parms,
+void pform_make_udp(perm_string name, list<string>*parms,
 		    svector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr,
 		    const char*file, unsigned lineno)
@@ -686,7 +689,8 @@ void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
-      PGBuiltin*cur = new PGBuiltin(type, info.name, info.parms, delay);
+      perm_string dev_name = lex_strings.make(info.name);
+      PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
@@ -732,8 +736,8 @@ void pform_makegates(PGBuiltin::Type type,
  * functions handle the instantiations of modules (and UDP objects) by
  * making PGModule objects.
  */
-static void pform_make_modgate(const char*type,
-			       const string&name,
+static void pform_make_modgate(perm_string type,
+			       perm_string name,
 			       struct parmvalue_t*overrides,
 			       svector<PExpr*>*wires,
 			       PExpr*msb, PExpr*lsb,
@@ -763,8 +767,8 @@ static void pform_make_modgate(const char*type,
       pform_cur_module->add_gate(cur);
 }
 
-static void pform_make_modgate(const char*type,
-			       const string&name,
+static void pform_make_modgate(perm_string type,
+			       perm_string name,
 			       struct parmvalue_t*overrides,
 			       svector<named_pexpr_t*>*bind,
 			       PExpr*msb, PExpr*lsb,
@@ -803,18 +807,17 @@ static void pform_make_modgate(const char*type,
       pform_cur_module->add_gate(cur);
 }
 
-void pform_make_modgates(const char*type,
+void pform_make_modgates(perm_string type,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
-	// Get a permallocated version of the type string.
-      type = lex_strings.add(type);
 
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
+	    perm_string cur_name = lex_strings.make(cur.name);
 
 	    if (cur.parms_by_name) {
-		  pform_make_modgate(type, cur.name, overrides,
+		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
 				     cur.range[0], cur.range[1],
 				     cur.file, cur.lineno);
@@ -828,14 +831,14 @@ void pform_make_modgates(const char*type,
 			delete cur.parms;
 			cur.parms = new svector<PExpr*>(0);
 		  }
-		  pform_make_modgate(type, cur.name, overrides,
+		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
 				     cur.range[0], cur.range[1],
 				     cur.file, cur.lineno);
 
 	    } else {
 		  svector<PExpr*>*wires = new svector<PExpr*>(0);
-		  pform_make_modgate(type, cur.name, overrides,
+		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
 				     cur.range[0], cur.range[1],
 				     cur.file, cur.lineno);
@@ -1213,7 +1216,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
       return res;
 }
 
-void pform_set_task(const string&name, PTask*task)
+void pform_set_task(perm_string name, PTask*task)
 {
       pform_cur_module->add_task(name, task);
 }
@@ -1253,10 +1256,10 @@ void pform_set_function(const char*name, NetNet::Type ntype,
 
       pform_cur_module->add_wire(out);
       func->set_output(out);
-      pform_cur_module->add_function(name, func);
+      pform_cur_module->add_function(lex_strings.make(name), func);
 }
 
-void pform_set_attrib(const char*name, const string&key, char*value)
+void pform_set_attrib(perm_string name, const string&key, char*value)
 {
       hname_t path (name);
 
@@ -1277,10 +1280,10 @@ void pform_set_attrib(const char*name, const string&key, char*value)
  * Set the attribute of a TYPE. This is different from an object in
  * that this applies to every instantiation of the given type.
  */
-void pform_set_type_attrib(const string&name, const string&key,
+void pform_set_type_attrib(perm_string name, const string&key,
 			   char*value)
 {
-      map<string,PUdp*>::const_iterator udp = pform_primitives.find(name);
+      map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(name);
       if (udp == pform_primitives.end()) {
 	    VLerror("type name is not (yet) defined.");
 	    free(value);
@@ -1516,6 +1519,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.120  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.119  2004/02/15 17:48:28  steve
  *  Better error checking of primitive tables.
  *

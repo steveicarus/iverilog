@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.32 2003/09/20 05:24:00 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.33 2004/02/18 17:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@
 # include  "PGate.h"
 # include  "PTask.h"
 # include  "PWire.h"
+# include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -174,7 +175,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       }
 
 
-      typedef map<string,PFunction*>::const_iterator mfunc_it_t;
+      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
 
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
@@ -195,7 +196,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	// elaborate the ports of the tasks defined within this
 	// module. Run through them now.
 
-      typedef map<string,PTask*>::const_iterator mtask_it_t;
+      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
 
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
@@ -234,7 +235,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
  */
 void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 {
-      string fname = scope->basename();
+      perm_string fname = scope->basename();
       assert(scope->type() == NetScope::FUNC);
 
 	/* Make sure the function has at least one input port. If it
@@ -271,8 +272,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		       as two components: <func>.<port>. */
 
 		  hname_t path = (*ports_)[idx]->path();
-		  string pname = path.peek_name(1);
-		  string ppath = path.peek_name(0);
+		  perm_string pname = lex_strings.make(path.peek_name(1));
+		  perm_string ppath = lex_strings.make(path.peek_name(0));
 
 		  if (ppath != scope->basename()) {
 			cerr << get_line() << ": internal error: function "
@@ -514,7 +515,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete lexp;
 	    delete rexp;
 
-	    string name = hname_.peek_tail_name();
+	    perm_string name = lex_strings.make(hname_.peek_tail_name());
 
 	    long lnum = lval.as_long();
 	    long rnum = rval.as_long();
@@ -525,7 +526,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else {
 
-	    string name = hname_.peek_tail_name();
+	    perm_string name = lex_strings.make(hname_.peek_tail_name());
 	    NetNet*sig = new NetNet(scope, name, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
@@ -539,6 +540,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.33  2004/02/18 17:11:55  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.32  2003/09/20 05:24:00  steve
  *  Evaluate memory index constants using elab_and_eval.
  *

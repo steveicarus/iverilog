@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.80 2004/02/15 00:19:29 steve Exp $"
+#ident "$Id: main.cc,v 1.81 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,11 +86,11 @@ generation_t generation_flag = GN_DEFAULT;
 map<string,const char*> flags;
 char*vpi_module_list = 0;
 
-map<string,unsigned> missing_modules;
+map<perm_string,unsigned> missing_modules;
 
 list<const char*> library_suff;
 
-list<const char*> roots;
+list<perm_string> roots;
 
 char*ivlpp_string = 0;
 
@@ -334,7 +334,7 @@ static void read_iconfig_file(const char*ipath)
 		  flags["-o"] = strdup(cp);
 
 	    } else if (strcmp(buf, "root") == 0) {
-		  roots.push_back(strdup(cp));
+		  roots.push_back(lex_strings.make(cp));
 
 	    } else if (strcmp(buf,"warnings") == 0) {
 		    /* Scan the warnings enable string for warning flags. */
@@ -384,7 +384,7 @@ static void read_iconfig_file(const char*ipath)
       }
 }
 
-extern Design* elaborate(list <const char*>root);
+extern Design* elaborate(list <perm_string> root);
 
 #if defined(HAVE_TIMES)
 static double cycles_diff(struct tms *a, struct tms *b)
@@ -526,13 +526,13 @@ int main(int argc, char*argv[])
       if (pf_path) {
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP MODULES:" << endl;
-	    for (map<string,Module*>::iterator mod = pform_modules.begin()
+	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()
 		       ; mod != pform_modules.end()
 		       ; mod ++ ) {
 		  pform_dump(out, (*mod).second);
 	    }
 	    out << "PFORM DUMP PRIMITIVES:" << endl;
-	    for (map<string,PUdp*>::iterator idx = pform_primitives.begin()
+	    for (map<perm_string,PUdp*>::iterator idx = pform_primitives.begin()
 		       ; idx != pform_primitives.end()
 		       ; idx ++ ) {
 		  (*idx).second->dump(out);
@@ -548,8 +548,8 @@ int main(int argc, char*argv[])
 	   then look for modules that are not instantiated anywhere.  */
 
       if (roots.empty()) {
-	    map<string,bool> mentioned_p;
-	    map<string,Module*>::iterator mod;
+	    map<perm_string,bool> mentioned_p;
+	    map<perm_string,Module*>::iterator mod;
 	    if (verbose_flag)
 		  cout << "LOCATING TOP-LEVEL MODULES" << endl << "  ";
 	    for (mod = pform_modules.begin()
@@ -618,7 +618,7 @@ int main(int argc, char*argv[])
       des->set_flags(flags);
 
 	/* Done iwth all the pform data. Delete the modules. */
-      for (map<string,Module*>::iterator idx = pform_modules.begin()
+      for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
 		 ; idx != pform_modules.end() ; idx ++) {
 
 	    delete (*idx).second;
@@ -700,7 +700,7 @@ int main(int argc, char*argv[])
       if (missing_modules.size() > 0) {
 	    cerr << "*** These modules were missing:" << endl;
 
-	    map<string,unsigned>::const_iterator idx;
+	    map<perm_string,unsigned>::const_iterator idx;
 	    for (idx = missing_modules.begin()
 		       ; idx != missing_modules.end()
 		       ; idx ++)
@@ -716,6 +716,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.81  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.80  2004/02/15 00:19:29  steve
  *  Report elaboration errors without crashing.
  *

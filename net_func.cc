@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.4 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: net_func.cc,v 1.5 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -35,8 +35,8 @@ static unsigned count_def_pins(const NetFuncDef*def)
       return sum;
 }
 
-NetUserFunc::NetUserFunc(NetScope*s, const char*n, NetScope*d)
-: NetNode(s, lex_strings.add(n), count_def_pins(d->func_def())),
+NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d)
+: NetNode(s, n, count_def_pins(d->func_def())),
   def_(d)
 {
       NetFuncDef*def = def_->func_def();
@@ -147,6 +147,9 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.5  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.4  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_api.h,v 1.2 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: parse_api.h,v 1.3 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include  <stdio.h>
+# include  "StringHeap.h"
 # include  <string>
 # include  <map>
 
@@ -34,8 +35,8 @@ class PUdp;
  * Verilog source into pform for elaboration. The parser adds modules
  * to these maps as it compiles modules in the verilog source.
  */
-extern map<string,Module*> pform_modules;
-extern map<string,PUdp*>   pform_primitives;
+extern map<perm_string,Module*> pform_modules;
+extern map<perm_string,PUdp*>   pform_primitives;
 
 /*
  * This code actually invokes the parser to make modules. The first
@@ -50,6 +51,9 @@ extern string vl_file;
 
 /*
  * $Log: parse_api.h,v $
+ * Revision 1.3  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.2  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

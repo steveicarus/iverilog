@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_udp.cc,v 1.8 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.9 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -26,14 +26,14 @@
 
 # include  "netlist.h"
 
-NetUDP::NetUDP(NetScope*s, const string&n, unsigned pins, PUdp *u)
-  : NetNode(s, lex_strings.add(n.c_str()), pins), udp(u)
+NetUDP::NetUDP(NetScope*s, perm_string n, unsigned pins, PUdp *u)
+  : NetNode(s, n, pins), udp(u)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name("O", 0);
+      pin(0).set_name(perm_string::literal("O"), 0);
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name("I", idx-1);
+	    pin(idx).set_name(perm_string::literal("I"), idx-1);
       }
 }
 
@@ -92,6 +92,9 @@ char NetUDP::get_initial() const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.9  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.8  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.307 2003/12/17 16:52:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.308 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,7 @@
 # include  <list>
 # include  "verinum.h"
 # include  "verireal.h"
+# include  "StringHeap.h"
 # include  "HName.h"
 # include  "LineInfo.h"
 # include  "svector.h"
@@ -88,13 +89,13 @@ class NetObj  : public Attrib, public virtual LineInfo {
     public:
 	// The name of the object must be a permallocated string. A
 	// lex_strings string, for example.
-      explicit NetObj(NetScope*s, const char*n, unsigned npins);
+      explicit NetObj(NetScope*s, perm_string n, unsigned npins);
       virtual ~NetObj();
 
       NetScope* scope();
       const NetScope* scope() const;
 
-      const char* name() const { return name_; }
+      perm_string name() const { return name_; }
 
       unsigned pin_count() const { return npins_; }
 
@@ -114,7 +115,7 @@ class NetObj  : public Attrib, public virtual LineInfo {
 
     private:
       NetScope*scope_;
-      const char* name_;
+      perm_string name_;
       Link*pins_;
       const unsigned npins_;
       unsigned delay1_;
@@ -192,8 +193,8 @@ class Link {
 	// A link of an object (sometimes called a "pin") has a
 	// name. It is convenient for the name to have a string and an
 	// integer part.
-      void set_name(const string&, unsigned inst =0);
-      const string& get_name() const;
+      void set_name(perm_string, unsigned inst =0);
+      perm_string get_name() const;
       unsigned get_inst() const;
 
     private:
@@ -209,8 +210,8 @@ class Link {
 	// These members name the pin of the link. If the name
 	// has width, then the inst_ member is the index of the
 	// pin.
-      string   name_;
-      unsigned inst_;
+      perm_string name_;
+      unsigned    inst_;
 
     private:
       Link *next_;
@@ -323,7 +324,7 @@ class NetNode  : public NetObj {
 
     public:
 	// The name parameter must be a permallocated string.
-      explicit NetNode(NetScope*s, const char*n, unsigned npins);
+      explicit NetNode(NetScope*s, perm_string n, unsigned npins);
 
       virtual ~NetNode();
 
@@ -367,9 +368,9 @@ class NetNet  : public NetObj {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
-      explicit NetNet(NetScope*s, const string&n, Type t, unsigned npins =1);
+      explicit NetNet(NetScope*s, perm_string n, Type t, unsigned npins =1);
 
-      explicit NetNet(NetScope*s, const string&n, Type t, long ms, long ls);
+      explicit NetNet(NetScope*s, perm_string n, Type t, long ms, long ls);
 
       virtual ~NetNet();
 
@@ -456,7 +457,7 @@ class NetNet  : public NetObj {
 class NetAddSub  : public NetNode {
 
     public:
-      NetAddSub(NetScope*s, const string&n, unsigned width);
+      NetAddSub(NetScope*s, perm_string n, unsigned width);
       ~NetAddSub();
 
 	// Get the width of the device (that is, the width of the
@@ -490,7 +491,7 @@ class NetAddSub  : public NetNode {
 class NetCLShift  : public NetNode {
 
     public:
-      NetCLShift(NetScope*s, const string&n, unsigned width,
+      NetCLShift(NetScope*s, perm_string n, unsigned width,
 		 unsigned width_dist);
       ~NetCLShift();
 
@@ -533,7 +534,7 @@ class NetCLShift  : public NetNode {
 class NetCompare  : public NetNode {
 
     public:
-      NetCompare(NetScope*scope, const string&n, unsigned width);
+      NetCompare(NetScope*scope, perm_string n, unsigned width);
       ~NetCompare();
 
       unsigned width() const;
@@ -587,7 +588,7 @@ class NetCompare  : public NetNode {
 class NetDivide  : public NetNode {
 
     public:
-      NetDivide(NetScope*scope, const string&n,
+      NetDivide(NetScope*scope, perm_string n,
 		unsigned width, unsigned wa, unsigned wb);
       ~NetDivide();
 
@@ -626,7 +627,7 @@ class NetDivide  : public NetNode {
 class NetModulo  : public NetNode {
 
     public:
-      NetModulo(NetScope*s, const string&n,
+      NetModulo(NetScope*s, perm_string n,
 		unsigned width, unsigned wa, unsigned wb);
       ~NetModulo();
 
@@ -659,7 +660,7 @@ class NetModulo  : public NetNode {
 class NetFF  : public NetNode {
 
     public:
-      NetFF(NetScope*s, const char*n, unsigned width);
+      NetFF(NetScope*s, perm_string n, unsigned width);
       ~NetFF();
 
       unsigned width() const;
@@ -711,12 +712,12 @@ class NetFF  : public NetNode {
 class NetMemory  {
 
     public:
-      NetMemory(NetScope*sc, const string&n, long w, long s, long e);
+      NetMemory(NetScope*sc, perm_string n, long w, long s, long e);
       ~NetMemory();
 
 	// This is the BASE name of the memory object. It does not
 	// include scope name, get that from the scope itself.
-      const char*name() const;
+      perm_string name() const;
 
 	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
@@ -735,7 +736,7 @@ class NetMemory  {
       void dump(ostream&o, unsigned lm) const;
 
     private:
-      char* name_;
+      perm_string name_;
       unsigned width_;
       long idxh_;
       long idxl_;
@@ -763,7 +764,7 @@ class NetMemory  {
 class NetMult  : public NetNode {
 
     public:
-      NetMult(NetScope*sc, const string&n, unsigned width,
+      NetMult(NetScope*sc, perm_string n, unsigned width,
 	      unsigned wa, unsigned wb, unsigned width_s =0);
       ~NetMult();
 
@@ -819,7 +820,7 @@ class NetMult  : public NetNode {
 class NetMux  : public NetNode {
 
     public:
-      NetMux(NetScope*scope, const string&n,
+      NetMux(NetScope*scope, perm_string n,
 	     unsigned width, unsigned size, unsigned selw);
       ~NetMux();
 
@@ -860,7 +861,7 @@ class NetMux  : public NetNode {
 class NetRamDq  : public NetNode {
 
     public:
-      NetRamDq(NetScope*s, const string&name, NetMemory*mem, unsigned awid);
+      NetRamDq(NetScope*s, perm_string name, NetMemory*mem, unsigned awid);
       ~NetRamDq();
 
       unsigned width() const;
@@ -910,7 +911,7 @@ class NetRamDq  : public NetNode {
 class NetUserFunc  : public NetNode {
 
     public:
-      NetUserFunc(NetScope*s, const char*n, NetScope*def);
+      NetUserFunc(NetScope*s, perm_string n, NetScope*def);
       ~NetUserFunc();
 
       unsigned port_count() const;
@@ -1133,7 +1134,7 @@ class NetSubnet  : public NetNet {
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(NetScope*s, const string&n);
+      explicit NetBUFZ(NetScope*s, perm_string n);
       ~NetBUFZ();
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1154,7 +1155,7 @@ class NetBUFZ  : public NetNode {
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(NetScope*s, const string&n);
+      explicit NetCaseCmp(NetScope*s, perm_string n);
       ~NetCaseCmp();
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1172,8 +1173,8 @@ class NetCaseCmp  : public NetNode {
 class NetConst  : public NetNode {
 
     public:
-      explicit NetConst(NetScope*s, const string&n, verinum::V v);
-      explicit NetConst(NetScope*s, const string&n, const verinum&val);
+      explicit NetConst(NetScope*s, perm_string n, verinum::V v);
+      explicit NetConst(NetScope*s, perm_string n, const verinum&val);
       ~NetConst();
 
       verinum::V value(unsigned idx) const;
@@ -1207,7 +1208,7 @@ class NetLogic  : public NetNode {
 		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RNMOS, RPMOS,
 		  PMOS, XNOR, XOR };
 
-      explicit NetLogic(NetScope*s, const string&n, unsigned pins, TYPE t);
+      explicit NetLogic(NetScope*s, perm_string n, unsigned pins, TYPE t);
 
       TYPE type() const { return type_; }
 
@@ -1272,7 +1273,7 @@ class NetLogic  : public NetNode {
 class NetUDP  : public NetNode {
 
     public:
-      explicit NetUDP(NetScope*s, const string&n, unsigned pins, PUdp*u);
+      explicit NetUDP(NetScope*s, perm_string n, unsigned pins, PUdp*u);
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1287,7 +1288,7 @@ class NetUDP  : public NetNode {
 
       unsigned nin() const { return pin_count()-1; }
       bool is_sequential() const { return udp->sequential; }
-      string udp_name() const { return udp->name_; }
+      perm_string udp_name() const { return udp->name_; }
       char get_initial() const;
 
     private:
@@ -1409,7 +1410,7 @@ class NetAssign_ {
       unsigned lwidth() const;
 
 	// Get the name of the underlying object.
-      const char*name() const;
+      perm_string name() const;
 
       NetNet* sig() const;
       NetMemory*mem() const;
@@ -1613,7 +1614,7 @@ class NetCase  : public NetProc {
 class NetCAssign  : public NetProc, public NetNode {
 
     public:
-      explicit NetCAssign(NetScope*s, const string&n, NetNet*l);
+      explicit NetCAssign(NetScope*s, perm_string n, NetNet*l);
       ~NetCAssign();
 
       const Link& lval_pin(unsigned) const;
@@ -1910,7 +1911,7 @@ class NetEvProbe  : public NetNode {
     public:
       enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
 
-      explicit NetEvProbe(NetScope*s, const string&n,
+      explicit NetEvProbe(NetScope*s, perm_string n,
 			  NetEvent*tgt, edge_t t, unsigned p);
       ~NetEvProbe();
 
@@ -1943,7 +1944,7 @@ class NetEvProbe  : public NetNode {
 class NetForce  : public NetProc, public NetNode {
 
     public:
-      explicit NetForce(NetScope*s, const string&n, NetNet*l);
+      explicit NetForce(NetScope*s, perm_string n, NetNet*l);
       ~NetForce();
 
       const Link& lval_pin(unsigned) const;
@@ -2886,7 +2887,7 @@ class NetEMemory  : public NetExpr {
       NetEMemory(NetMemory*mem, NetExpr*idx =0);
       virtual ~NetEMemory();
 
-      const string name () const;
+      perm_string name () const;
       const NetExpr* index() const;
 
       virtual bool set_width(unsigned);
@@ -2923,7 +2924,7 @@ class NetESignal  : public NetExpr {
       NetESignal(NetNet*n, unsigned msi, unsigned lsi);
       ~NetESignal();
 
-      string name() const;
+      perm_string name() const;
       virtual bool set_width(unsigned);
 
       virtual NetESignal* dup_expr() const;
@@ -2962,7 +2963,7 @@ class NetEBitSel  : public NetExpr {
       NetEBitSel(NetESignal*sig, NetExpr*ex);
       ~NetEBitSel();
 
-      string name() const;
+      perm_string name() const;
       const NetExpr*index() const { return idx_; }
 
       virtual bool set_width(unsigned);
@@ -2994,7 +2995,7 @@ class NetScope : public Attrib {
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
-      NetScope(NetScope*up, const char*name, TYPE t);
+      NetScope(NetScope*up, perm_string name, TYPE t);
       ~NetScope();
 
 	/* Parameters exist within a scope, and these methods allow
@@ -3034,7 +3035,7 @@ class NetScope : public Attrib {
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
 
-      NetNet* find_signal(const string&name);
+      NetNet* find_signal(const char*name);
       NetNet* find_signal_in_child(const hname_t&name);
 
 
@@ -3050,22 +3051,25 @@ class NetScope : public Attrib {
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent();
-      NetScope* child(const string&name);
+      NetScope* child(const char*name);
       const NetScope* parent() const;
-      const NetScope* child(const string&name) const;
+      const NetScope* child(const char*name) const;
 
       TYPE type() const;
 
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);
-      void set_module_name(const char*);
+      void set_module_name(perm_string);
 
       NetTaskDef* task_def();
       NetFuncDef* func_def();
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
-      const char*module_name() const;
+
+	/* If the scope represents a module instance, the module_name
+	   is the name of the module itself. */
+      perm_string module_name() const;
 
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e., -3 is
@@ -3084,7 +3088,7 @@ class NetScope : public Attrib {
 	/* The name of the scope is the fully qualified hierarchical
 	   name, whereas the basename is just my name within my parent
 	   scope. */
-      const char* basename() const;
+      perm_string basename() const;
       string name() const;
 
       void run_defparams(class Design*);
@@ -3092,7 +3096,7 @@ class NetScope : public Attrib {
 
 	/* This method generates a non-hierarchical name that is
 	   guaranteed to be unique within this scope. */
-      string local_symbol();
+      perm_string local_symbol();
 	/* This method generates a hierarchical name that is
 	   guaranteed to be unique globally. */
       string local_hsymbol();
@@ -3126,7 +3130,7 @@ class NetScope : public Attrib {
 
     private:
       TYPE type_;
-      const char* name_;
+      perm_string name_;
 
       signed char time_unit_, time_prec_;
 
@@ -3135,10 +3139,10 @@ class NetScope : public Attrib {
       NetNet   *signals_;
       NetMemory*memories_;
 
+      perm_string module_name_;
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
-	    const char*module_name_;
       };
 
       NetScope*up_;
@@ -3170,7 +3174,7 @@ class Design {
 
       const char* get_flag(const string&key) const;
 
-      NetScope* make_root_scope(const char*name);
+      NetScope* make_root_scope(perm_string name);
       NetScope* find_root_scope();
       list<NetScope*> find_root_scopes();
 
@@ -3311,6 +3315,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.308  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.307  2003/12/17 16:52:39  steve
  *  Debug dumps for synth2.
  *

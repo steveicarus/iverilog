@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.29 2003/09/13 01:30:07 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.30 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,7 +35,7 @@
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
+NetScope::NetScope(NetScope*up, perm_string n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
 {
       memories_ = 0;
@@ -63,12 +63,12 @@ NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
 	    func_ = 0;
 	    break;
 	  case NetScope::MODULE:
-	    module_name_ = 0;
+	    module_name_ = perm_string();
 	    break;
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
       }
-      name_ = lex_strings.add(n);
+      name_ = n;
 }
 
 NetScope::~NetScope()
@@ -184,13 +184,13 @@ const NetFuncDef* NetScope::func_def() const
       return func_;
 }
 
-void NetScope::set_module_name(const char*n)
+void NetScope::set_module_name(perm_string n)
 {
       assert(type_ == MODULE);
       module_name_ = n; /* NOTE: n mus have been permallocated. */
 }
 
-const char* NetScope::module_name() const
+perm_string NetScope::module_name() const
 {
       assert(type_ == MODULE);
       return module_name_;
@@ -216,7 +216,7 @@ int NetScope::time_precision() const
       return time_prec_;
 }
 
-const char* NetScope::basename() const
+perm_string NetScope::basename() const
 {
       return name_;
 }
@@ -224,9 +224,9 @@ const char* NetScope::basename() const
 string NetScope::name() const
 {
       if (up_)
-	    return up_->name() + "." + name_;
+	    return up_->name() + "." + string(name_);
       else
-	    return name_;
+	    return string(name_);
 }
 
 void NetScope::add_event(NetEvent*ev)
@@ -308,7 +308,7 @@ void NetScope::rem_signal(NetNet*net)
  * is assumed to be the base name of the signal, so no sub-scopes are
  * searched. 
  */
-NetNet* NetScope::find_signal(const string&key)
+NetNet* NetScope::find_signal(const char*key)
 {
       if (signals_ == 0)
 	    return 0;
@@ -380,7 +380,7 @@ NetMemory* NetScope::find_memory(const string&key)
 
       NetMemory*cur = memories_;
       do {
-	    if (cur->name() == key)
+	    if (cur->name() == key.c_str())
 		  return cur;
 	    cur = cur->sprev_;
       } while (cur != memories_);
@@ -399,12 +399,12 @@ void NetScope::add_variable(NetVariable*var)
  * This method locates a child scope by name. The name is the simple
  * name of the child, no hierarchy is searched.
  */
-NetScope* NetScope::child(const string&name)
+NetScope* NetScope::child(const char*name)
 {
       if (sub_ == 0) return 0;
 
       NetScope*cur = sub_;
-      while (cur->name_ != name) {
+      while (strcmp(cur->name_, name) != 0) {
 	    if (cur->sib_ == 0) return 0;
 	    cur = cur->sib_;
       }
@@ -412,12 +412,12 @@ NetScope* NetScope::child(const string&name)
       return cur;
 }
 
-const NetScope* NetScope::child(const string&name) const
+const NetScope* NetScope::child(const char*name) const
 {
       if (sub_ == 0) return 0;
 
       NetScope*cur = sub_;
-      while (cur->name_ != name) {
+      while (strcmp(cur->name_, name) != 0) {
 	    if (cur->sib_ == 0) return 0;
 	    cur = cur->sib_;
       }
@@ -435,21 +435,24 @@ const NetScope* NetScope::parent() const
       return up_;
 }
 
-string NetScope::local_symbol()
+perm_string NetScope::local_symbol()
 {
       ostringstream res;
       res << "_s" << (lcounter_++);
-      return res.str();
+      return lex_strings.make(res.str());
 }
 
 string NetScope::local_hsymbol()
 {
-      return name() + "." + local_symbol();
+      return string(name()) + "." + string(local_symbol());
 }
 
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.30  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.29  2003/09/13 01:30:07  steve
  *  Missing case warnings.
  *

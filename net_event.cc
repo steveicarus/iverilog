@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_event.cc,v 1.23 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: net_event.cc,v 1.24 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -245,13 +245,13 @@ const NetEvent* NetEvTrig::event() const
       return event_;
 }
 
-NetEvProbe::NetEvProbe(NetScope*s, const string&n, NetEvent*tgt,
+NetEvProbe::NetEvProbe(NetScope*s, perm_string n, NetEvent*tgt,
 		       edge_t t, unsigned p)
-: NetNode(s, lex_strings.add(n.c_str()), p), event_(tgt), edge_(t)
+: NetNode(s, n, p), event_(tgt), edge_(t)
 {
       for (unsigned idx = 0 ;  idx < p ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name("P", idx);
+	    pin(idx).set_name(perm_string::literal("P"), idx);
       }
 
       enext_ = event_->probes_;
@@ -449,6 +449,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.24  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.23  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

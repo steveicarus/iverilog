@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.6 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.7 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -37,7 +37,7 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 
       verinum val_v (abs_val, width);
 
-      NetConst*val_c = new NetConst(scope, scope->local_hsymbol(), val_v);
+      NetConst*val_c = new NetConst(scope, scope->local_symbol(), val_v);
 
       NetNet*val_s = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, width);
@@ -90,6 +90,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.7  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.6  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -1,7 +1,7 @@
 #ifndef __PGate_H
 #define __PGate_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.25 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: PGate.h,v 1.26 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  "svector.h"
+# include  "StringHeap.h"
 # include  "named.h"
 # include  "LineInfo.h"
 # include  "PDelays.h"
@@ -53,17 +54,17 @@ class PGate : public LineInfo {
     public:
       enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
 
-      explicit PGate(const string&name, svector<PExpr*>*pins,
+      explicit PGate(perm_string name, svector<PExpr*>*pins,
 		     const svector<PExpr*>*del);
 
-      explicit PGate(const string&name, svector<PExpr*>*pins,
+      explicit PGate(perm_string name, svector<PExpr*>*pins,
 		     PExpr*del);
 
-      explicit PGate(const string&name, svector<PExpr*>*pins);
+      explicit PGate(perm_string name, svector<PExpr*>*pins);
 
       virtual ~PGate();
 
-      const string& get_name() const { return name_; }
+      perm_string get_name() const { return name_; }
 
       void eval_delays(Design*des, NetScope*scope,
 		       unsigned long&rise_time,
@@ -93,7 +94,7 @@ class PGate : public LineInfo {
       void dump_delays(ostream&out) const;
 
     private:
-      const string name_;
+      perm_string name_;
       PDelays delay_;
       svector<PExpr*>*pins_;
 
@@ -141,10 +142,10 @@ class PGBuiltin  : public PGate {
 		  TRANIF1, RTRANIF0, RTRANIF1 };
 
     public:
-      explicit PGBuiltin(Type t, const string&name,
+      explicit PGBuiltin(Type t, perm_string name,
 			 svector<PExpr*>*pins,
 			 svector<PExpr*>*del);
-      explicit PGBuiltin(Type t, const string&name,
+      explicit PGBuiltin(Type t, perm_string name,
 			 svector<PExpr*>*pins,
 			 PExpr*del);
       ~PGBuiltin();
@@ -171,17 +172,16 @@ class PGBuiltin  : public PGate {
 class PGModule  : public PGate {
 
     public:
-	// NOTE: The type parameter to all the constructors is assumed
-	// to have been permallocated.
+	// The name is the *instance* name of the gate.
 
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
-      explicit PGModule(const char*type, const string&name,
+      explicit PGModule(perm_string type, perm_string name,
 			svector<PExpr*>*pins);
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
-      explicit PGModule(const char*type, const string&name,
+      explicit PGModule(perm_string type, perm_string name,
 			named<PExpr*>*pins, unsigned npins);
 
 
@@ -203,10 +203,10 @@ class PGModule  : public PGate {
 
 	// This returns the module name of this module. It is a
 	// permallocated string.
-      const char* get_type();
+      perm_string get_type();
 
     private:
-      const char* type_;
+      perm_string type_;
       svector<PExpr*>*overrides_;
       named<PExpr*>*pins_;
       unsigned npins_;
@@ -227,6 +227,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.26  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.25  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *

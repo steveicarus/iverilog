@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.16 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.17 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,14 +98,14 @@ unsigned NetAssign_::lwidth() const
       else return lwid_;
 }
 
-const char*NetAssign_::name() const
+perm_string NetAssign_::name() const
 {
       if (sig_) {
 	    return sig_->name();
       } else if (mem_) {
 	    return mem_->name();
       } else {
-	    return "";
+	    return perm_string::literal("");
       }
 }
 
@@ -254,6 +254,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.17  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.16  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

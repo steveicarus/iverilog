@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_force.cc,v 1.11 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: net_force.cc,v 1.12 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -45,13 +45,13 @@
  * output pins to connect to the netlist? But that would cause the
  * link ring to grow, and that is not quite correct either. Hmm...
  */
-NetCAssign::NetCAssign(NetScope*s, const string&n, NetNet*l)
-: NetNode(s, lex_strings.add(n.c_str()), l->pin_count()), lval_(l)
+NetCAssign::NetCAssign(NetScope*s, perm_string n, NetNet*l)
+: NetNode(s, n, l->pin_count()), lval_(l)
 {
       lval_->incr_eref();
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name("I", idx);
+	    pin(idx).set_name(perm_string::literal("I"), idx);
       }
 }
 
@@ -87,14 +87,14 @@ const NetNet*NetDeassign::lval() const
       return lval_;
 }
 
-NetForce::NetForce(NetScope*s, const string&n, NetNet*l)
-: NetNode(s, lex_strings.add(n.c_str()), l->pin_count()), lval_(l)
+NetForce::NetForce(NetScope*s, perm_string n, NetNet*l)
+: NetNode(s, n, l->pin_count()), lval_(l)
 {
       lval_->incr_eref();
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name("I", idx);
+	    pin(idx).set_name(perm_string::literal("I"), idx);
       }
 }
 
@@ -137,6 +137,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.12  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.11  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_modulo.cc,v 1.6 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.7 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,23 +31,23 @@
 # include  "compiler.h"
 
 
-NetModulo::NetModulo(NetScope*s, const string&n, unsigned wr,
+NetModulo::NetModulo(NetScope*s, perm_string n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(s, lex_strings.add(n.c_str()), wr+wa+wb),
+: NetNode(s, n, wr+wa+wb),
   width_r_(wr), width_a_(wa), width_b_(wb)
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
 	    pin(p).set_dir(Link::OUTPUT);
-	    pin(p).set_name("Result", idx);
+	    pin(p).set_name(perm_string::literal("Result"), idx);
       }
       for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
 	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name("DataA", idx);
+	    pin(p).set_name(perm_string::literal("DataA"), idx);
       }
       for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
 	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name("DataB", idx);
+	    pin(p).set_name(perm_string::literal("DataB"), idx);
       }
 }
 
@@ -108,6 +108,9 @@ const Link& NetModulo::pin_DataB(unsigned idx) const
 
 /*
  * $Log: net_modulo.cc,v $
+ * Revision 1.7  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.6  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.145 2003/12/17 16:52:39 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.146 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -686,7 +686,9 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 
 void NetScope::dump(ostream&o) const
 {
+	/* This is a constructed hierarchical name. */
       o << name();
+
       switch (type_) {
 	  case BEGIN_END:
 	    o << " sequential block";
@@ -698,7 +700,7 @@ void NetScope::dump(ostream&o) const
 	    o << " function";
 	    break;
 	  case MODULE:
-	    o << " module <" << (module_name_? module_name_ : "") << ">";
+	    o << " module <" << (module_name_? module_name_.str() : "") << ">";
 	    break;
 	  case TASK:
 	    o << " task";
@@ -1077,6 +1079,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.146  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.145  2003/12/17 16:52:39  steve
  *  Debug dumps for synth2.
  *

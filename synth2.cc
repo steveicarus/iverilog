@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.34 2003/12/20 00:59:31 steve Exp $"
+#ident "$Id: synth2.cc,v 1.35 2004/02/18 17:11:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -126,6 +126,9 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 	    return true;
       }
 
+      const perm_string tmp1 = perm_string::literal("tmp1");
+      const perm_string tmp2 = perm_string::literal("tmp2");
+
       bool flag = true;
       NetProc*cur = last_;
       do {
@@ -134,14 +137,14 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-	    NetNet*tmp_map = new NetNet(scope, "tmp1", NetNet::WIRE,
+	    NetNet*tmp_map = new NetNet(scope, tmp1, NetNet::WIRE,
 					tmp_set.count());
 	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
 		  connect(tmp_set[idx], tmp_map->pin(idx));
 
 	      /* Create also a temporary net_out to collect the
 		 output. */
-	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
+	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
 					tmp_set.count());
 
 	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out);
@@ -376,7 +379,8 @@ bool NetProcTop::synth_async(Design*des)
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
-      NetNet*nex_out = new NetNet(scope(), "tmp", NetNet::WIRE,
+      const perm_string tmp1 = perm_string::literal("tmp");
+      NetNet*nex_out = new NetNet(scope(), tmp1, NetNet::WIRE,
 				  nex_set.count());
       for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
 	    connect(nex_set[idx], nex_out->pin(idx));
@@ -414,6 +418,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       bool flag = true;
 
+      const perm_string tmp1 = perm_string::literal("tmp1");
+      const perm_string tmp2 = perm_string::literal("tmp2");
+
 	/* Keep an accounting of which statement accounts for which
 	   bit slice of the FF bank. This is used for error checking. */
       NetProc**pin_accounting = new NetProc* [ff->pin_count()];
@@ -427,7 +434,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-	    NetNet*tmp_map = new NetNet(scope, "tmp1", NetNet::WIRE,
+	    NetNet*tmp_map = new NetNet(scope, tmp1, NetNet::WIRE,
 					tmp_set.count());
 	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
 		  connect(tmp_set[idx], tmp_map->pin(idx));
@@ -441,7 +448,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 output. The tmp1 and tmp2 map and out sets together
 		 are used to collect the outputs from the substatement
 		 for the inputs of the FF bank. */
-	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
+	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
 					tmp_map->pin_count());
 
 	    verinum tmp_aset = ff->aset_value();
@@ -451,7 +458,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 block. Connect this NetFF to the associated pins of
 		 the existing wide NetFF device. While I'm at it, also
 		 copy the aset_value bits for the new ff device. */
-	    NetFF*ff2 = new NetFF(scope, scope->local_symbol().c_str(),
+	    NetFF*ff2 = new NetFF(scope, scope->local_symbol(),
 				  tmp_out->pin_count());
 	    des->add_node(ff2);
 
@@ -745,7 +752,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       if (ff->pin_Enable().is_linked()) {
 	    NetLogic*ce_and = new NetLogic(scope,
-					   scope->local_hsymbol(), 3,
+					   scope->local_symbol(), 3,
 					   NetLogic::AND);
 	    des->add_node(ce_and);
 	    connect(ff->pin_Enable(), ce_and->pin(1));
@@ -848,7 +855,7 @@ bool NetProcTop::synth_sync(Design*des)
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
-      NetFF*ff = new NetFF(scope(), scope()->local_symbol().c_str(),
+      NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
 			   nex_set.count());
       des->add_node(ff);
       ff->attribute("LPM_FFType", verinum("DFF"));
@@ -865,7 +872,8 @@ bool NetProcTop::synth_sync(Design*des)
 	/* The Q outputs of the DFF will connect to the actual outputs
 	   of the process. Thus, the DFF will be between the outputs
 	   of the process and the outputs of the substatement. */
-      NetNet*nex_q = new NetNet(scope(), "tmpq", NetNet::WIRE,
+      const perm_string tmpq = perm_string::literal("tmpq");
+      NetNet*nex_q = new NetNet(scope(), tmpq, NetNet::WIRE,
 				nex_set.count());
       for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
 	    connect(nex_set[idx], nex_q->pin(idx));
@@ -962,6 +970,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.35  2004/02/18 17:11:58  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.34  2003/12/20 00:59:31  steve
  *  Synthesis debug messages.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.123 2004/02/15 04:23:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.124 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1140,7 +1140,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 
 
       NetUserFunc*net = new NetUserFunc(scope,
-					scope->local_symbol().c_str(),
+					scope->local_symbol(),
 					dscope);
       des->add_node(net);
 
@@ -1372,7 +1372,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    assert(pc);
 	    verinum pvalue = pc->value();
 
-	    sig = new NetNet(scope, path_.peek_name(0),
+	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 			     NetNet::IMPLICIT, pc->expr_width());
 	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
 				       pvalue);
@@ -1391,7 +1391,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	/* Fallback, this may be an implicitly declared net. */
       if (sig == 0) {
 
-	    sig = new NetNet(scope, path_.peek_name(0),
+	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 			     NetNet::IMPLICIT, 1);
 
 	    if (error_implicit) {
@@ -1653,7 +1653,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 
 	    if (implicit_net_ok && !error_implicit) {
 
-		  sig = new NetNet(scope, path_.peek_name(0),
+		  sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 				   NetNet::IMPLICIT, 1);
 
 		  if (warn_implicit) {
@@ -2426,6 +2426,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.124  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.123  2004/02/15 04:23:48  steve
  *  Fix evaluation of compare to constant expression.
  *

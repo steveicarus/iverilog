@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.5 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: StringHeap.cc,v 1.6 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -62,6 +62,11 @@ const char* StringHeap::add(const char*text)
       assert(cell_ptr_ <= HEAPCELL);
 
       return res;
+}
+
+perm_string StringHeap::make(const char*text)
+{
+      return perm_string(add(text));
 }
 
 
@@ -121,8 +126,64 @@ const char* StringHeapLex::add(const char*text)
       return res;
 }
 
+perm_string StringHeapLex::make(const char*text)
+{
+      return perm_string(add(text));
+}
+
+perm_string StringHeapLex::make(const string&text)
+{
+      return perm_string(add(text.c_str()));
+}
+
+bool operator == (perm_string a, const char*b)
+{
+      if (a.str() == b)
+	    return true;
+
+      if (! (a.str() && b))
+	    return false;
+
+      if (strcmp(a.str(), b) == 0)
+	    return true;
+
+      return false;
+}
+
+bool operator == (perm_string a, perm_string b)
+{
+      return a == b.str();
+}
+
+bool operator != (perm_string a, const char*b)
+{
+      return ! (a == b);
+}
+
+bool operator != (perm_string a, perm_string b)
+{
+      return ! (a == b);
+}
+
+bool operator < (perm_string a, perm_string b)
+{
+      if (b.str() && !a.str())
+	    return true;
+
+      if (b.str() == a.str())
+	    return false;
+
+      if (strcmp(a.str(), b.str()) < 0)
+	    return true;
+
+      return false;
+}
+
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.6  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.5  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

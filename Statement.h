@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.38 2003/05/19 02:50:58 steve Exp $"
+#ident "$Id: Statement.h,v 1.39 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  <string>
@@ -148,7 +148,7 @@ class PBlock  : public Statement {
     public:
       enum BL_TYPE { BL_SEQ, BL_PAR };
 
-      explicit PBlock(const string&n, BL_TYPE t, const svector<Statement*>&st);
+      explicit PBlock(perm_string n, BL_TYPE t, const svector<Statement*>&st);
       explicit PBlock(BL_TYPE t, const svector<Statement*>&st);
       explicit PBlock(BL_TYPE t);
       ~PBlock();
@@ -161,7 +161,7 @@ class PBlock  : public Statement {
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
-      string name_;
+      perm_string name_;
       const BL_TYPE bl_type_;
       svector<Statement*>list_;
 };
@@ -455,6 +455,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.39  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.38  2003/05/19 02:50:58  steve
  *  Implement the wait statement behaviorally instead of as nets.
  *

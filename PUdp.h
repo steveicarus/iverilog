@@ -1,7 +1,7 @@
 #ifndef __PUdp_H
 #define __PUdp_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.10 2003/07/15 05:07:13 steve Exp $"
+#ident "$Id: PUdp.h,v 1.11 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  <map>
+# include  "StringHeap.h"
 # include  "svector.h"
 # include  "verinum.h"
 
@@ -52,7 +53,7 @@ class PExpr;
 class PUdp {
 
     public:
-      explicit PUdp(const string&n, unsigned nports);
+      explicit PUdp(perm_string n, unsigned nports);
 
       svector<string>ports;
       bool sequential;
@@ -67,7 +68,7 @@ class PUdp {
 
       void dump(ostream&out) const;
 
-      const string name_;
+      perm_string name_;
     private:
 
     private: // Not implemented
@@ -77,6 +78,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.11  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.10  2003/07/15 05:07:13  steve
  *  Move PUdp constructor into compiled file.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.19 2003/11/13 05:55:33 steve Exp $"
+#ident "$Id: compiler.h,v 1.20 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include  <list>
@@ -102,12 +102,20 @@ extern generation_t generation_flag;
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
 
-extern map<string,unsigned> missing_modules;
+extern map<perm_string,unsigned> missing_modules;
 
+/*
+ * the lex_strings are perm_strings made up of tokens from the source
+ * file. Identifiers are so likely to be used many times that it makes
+ * much sense to use a StringHeapLex to hold them.
+ */
 extern StringHeapLex lex_strings;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.20  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.19  2003/11/13 05:55:33  steve
  *  Move the DLL= flag to target config files.
  *

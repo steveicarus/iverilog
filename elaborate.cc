@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.295 2004/01/21 04:35:03 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.296 2004/02/18 17:11:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -176,8 +176,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 			} else {
 			      verinum tmpv (0UL, lval->pin_count()-cnt);
 			      NetConst*tmp = new NetConst(scope,
-							scope->local_symbol(),
-							tmpv);
+				                      scope->local_symbol(),
+						      tmpv);
 			      des->add_node(tmp);
 			      for (idx = cnt
 					 ;  idx < lval->pin_count()
@@ -191,8 +191,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       strength and delays. */
 		  unsigned idx;
 		  for (idx = 0 ; idx < cnt ;  idx += 1) {
-			NetBUFZ*dev = new NetBUFZ(scope,
-						  scope->local_symbol());
+			NetBUFZ*dev = new NetBUFZ(scope,scope->local_symbol());
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
 			dev->rise_time(rise_time);
@@ -212,8 +211,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 			} else {
 			      NetConst*dev = new NetConst(scope,
-						      scope->local_symbol(),
-						       verinum::V0);
+					      scope->local_symbol(),
+					      verinum::V0);
 			
 			      des->add_node(dev);
 			      dev->pin(0).drive0(drive0);
@@ -269,7 +268,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 {
       unsigned count = 1;
       long low = 0, high = 0;
-      string name = get_name();
+      string name = string(get_name());
 
       if (name == "")
 	    name = scope->local_symbol();
@@ -351,7 +350,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  index = low - idx;
 
 	    tmp << name << "<" << index << ">";
-	    const string inm = tmp.str();
+	    perm_string inm = lex_strings.make(tmp.str());
 
 	    switch (type()) {
 		case AND:
@@ -494,7 +493,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 {
 	// Missing module instance names have already been rejected.
-      assert(get_name() != "");
+      assert(get_name() != 0);
 
       if (msb_) {
 	    cerr << get_line() << ": sorry: Module instantiation arrays "
@@ -778,8 +777,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 {
 
-      string my_name = get_name();
-      if (my_name == "")
+      perm_string my_name = get_name();
+      if (my_name == 0)
 	    my_name = scope->local_symbol();
 
 	/* When the parser notices delay expressions in front of a
@@ -837,7 +836,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end())
 	    return elaborate_sig_mod_(des, scope, (*mod).second);
 
@@ -848,14 +847,14 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 void PGModule::elaborate(Design*des, NetScope*scope) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
 	    elaborate_mod_(des, (*mod).second, scope);
 	    return;
       }
 
 	// Try a primitive type
-      map<string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
+      map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end()) {
 	    elaborate_udp_(des, (*udp).second, scope);
 	    return;
@@ -868,14 +867,14 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
 	    elaborate_scope_mod_(des, (*mod).second, sc);
 	    return;
       }
 
 	// Try a primitive type
-      map<string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
+      map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end())
 	    return;
 
@@ -1171,7 +1170,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    : NetBlock::SEQU;
 
       NetScope*nscope = 0;
-      if (name_.length()) {
+      if (name_.str() != 0) {
 	    nscope = scope->child(name_);
 	    if (nscope == 0) {
 		  cerr << get_line() << ": internal error: "
@@ -1195,7 +1194,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	// statement. There is no need to keep the block node. Also,
 	// don't elide named blocks, because they might be referenced
 	// elsewhere.
-      if ((list_.count() == 1) && (name_.length() == 0)) {
+      if ((list_.count() == 1) && (name_.str() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
@@ -1802,7 +1801,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	   list. The NetEvProbe objects all refer back to the NetEvent
 	   object. */
 
-      NetEvent*ev = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
+      NetEvent*ev = new NetEvent(scope->local_symbol());
       ev->set_line(*this);
       unsigned expr_count = 0;
 
@@ -2004,7 +2003,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 		 << "block permanently." << endl;
       }
 
-      NetEvent*wait_event = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
+      NetEvent*wait_event = new NetEvent(scope->local_symbol());
       scope->add_event(wait_event);
 
       NetEvWait*wait = new NetEvWait(0 /* noop */);
@@ -2408,7 +2407,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 
 	// Elaborate functions.
-      typedef map<string,PFunction*>::const_iterator mfunc_it_t;
+      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
 
@@ -2420,7 +2419,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// Elaborate the task definitions. This is done before the
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
-      typedef map<string,PTask*>::const_iterator mtask_it_t;
+      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
 
@@ -2530,7 +2529,7 @@ struct root_elem {
       NetScope *scope;
 };
 
-Design* elaborate(list<const char*>roots)
+Design* elaborate(list<perm_string>roots)
 {
       svector<root_elem*> root_elems(roots.size());
       bool rc = true;
@@ -2540,12 +2539,12 @@ Design* elaborate(list<const char*>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
-      for (list<const char*>::const_iterator root = roots.begin()
+      for (list<perm_string>::const_iterator root = roots.begin()
 		 ; root != roots.end()
 		 ; root++) {
 
 	      // Look for the root module in the list.
-	    map<string,Module*>::const_iterator mod = pform_modules.find(*root);
+	    map<perm_string,Module*>::const_iterator mod = pform_modules.find(*root);
 	    if (mod == pform_modules.end()) {
 		  cerr << "error: Unable to find the root module \""
 		       << (*root) << "\" in the Verilog source." << endl; 
@@ -2627,6 +2626,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.296  2004/02/18 17:11:55  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.295  2004/01/21 04:35:03  steve
  *  Get rid of useless warning.
  *

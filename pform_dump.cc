@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.82 2003/07/05 20:42:08 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.83 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -437,7 +437,7 @@ void PAssignNB::dump(ostream&out, unsigned ind) const
 void PBlock::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "begin";
-      if (name_.length())
+      if (name_ != 0)
 	    out << " : " << name_;
       out << endl;
 
@@ -795,7 +795,7 @@ void Module::dump(ostream&out) const
       }
 
 	// Dump the task definitions.
-      typedef map<string,PTask*>::const_iterator task_iter_t;
+      typedef map<perm_string,PTask*>::const_iterator task_iter_t;
       for (task_iter_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ; cur ++) {
 	    out << "    task " << (*cur).first << ";" << endl;
@@ -804,7 +804,7 @@ void Module::dump(ostream&out) const
       }
 
 	// Dump the function definitions.
-      typedef map<string,PFunction*>::const_iterator func_iter_t;
+      typedef map<perm_string,PFunction*>::const_iterator func_iter_t;
       for (func_iter_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ; cur ++) {
 	    out << "    function " << (*cur).first << ";" << endl;
@@ -881,6 +881,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.83  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.82  2003/07/05 20:42:08  steve
  *  Fix some enumeration warnings.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.53 2004/02/15 04:23:48 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.54 2004/02/18 17:11:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,11 +54,11 @@ NetNet* NetEBAdd::synthesize(Design*des)
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
-      string path = lsig->scope()->local_symbol();
+      perm_string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
-      string oname = osig->scope()->local_symbol();
+      perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(lsig->pin(idx), adder->pin_DataA(idx));
@@ -111,7 +111,7 @@ NetNet* NetEBBits::synthesize(Design*des)
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    string oname = scope->local_hsymbol();
+	    perm_string oname = scope->local_symbol();
 	    NetLogic*gate;
 
 	      /* If the rsig bit is constant, then look for special
@@ -190,12 +190,12 @@ NetNet* NetEBComp::synthesize(Design*des)
 	    switch (op_) {
 		case 'e':
 		case 'E':
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  break;
 		case 'n':
 		case 'N':
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      lsig->pin_count()+1, NetLogic::OR);
 		  break;
 
@@ -204,11 +204,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		       is very much like sig != 0. (0 > sig) shouldn't
 		       happen. */
 		  if (rcon) {
-			gate = new NetLogic(scope, scope->local_hsymbol(),
+			gate = new NetLogic(scope, scope->local_symbol(),
 					    lsig->pin_count()+1, NetLogic::OR);
 		  } else {
 			assert(0);
-			gate = new NetLogic(scope, scope->local_hsymbol(),
+			gate = new NetLogic(scope, scope->local_symbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  }
 		  break;
@@ -216,11 +216,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		case '<':
 		    /* 0 < sig is handled like sig > 0. */
 		  if (! rcon) {
-			gate = new NetLogic(scope, scope->local_hsymbol(),
+			gate = new NetLogic(scope, scope->local_symbol(),
 					    lsig->pin_count()+1, NetLogic::OR);
 		  } else {
 			assert(0);
-			gate = new NetLogic(scope, scope->local_hsymbol(),
+			gate = new NetLogic(scope, scope->local_symbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  }
 		  break;
@@ -257,7 +257,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
-	    NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XNOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -270,7 +270,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   operation. This is similar to single bit equality, but uses
 	   an XOR instead of an XNOR gate. */
       if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
-	    NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -394,7 +394,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 		 comparison with a single wide OR gate. So handle this
 		 magically. */
 
-	    string oname = scope->local_hsymbol();
+	    perm_string oname = scope->local_symbol();
 
 	    NetLogic*olog = new NetLogic(scope, oname,
 					 lsig->pin_count()+rsig->pin_count()+1,
@@ -418,7 +418,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 	      /* Create the logic AND gate. This is a single bit
 		 output, with inputs for each of the operands. */
 	    NetLogic*olog;
-	    string oname = scope->local_hsymbol();
+	    perm_string oname = scope->local_symbol();
 
 	    olog = new NetLogic(scope, oname, 3, NetLogic::AND);
 
@@ -551,7 +551,7 @@ NetNet* NetEConcat::synthesize(Design*des)
       assert(scope);
 
 	/* Make a NetNet object to carry the output vector. */
-      string path = scope->local_symbol();
+      perm_string path = scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
@@ -579,7 +579,7 @@ NetNet* NetEConst::synthesize(Design*des)
       NetScope*scope = des->find_root_scope();
       assert(scope);
 
-      string path = scope->local_symbol();
+      perm_string path = scope->local_symbol();
       unsigned width=expr_width();
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
@@ -617,7 +617,7 @@ NetNet* NetEUBits::synthesize(Design*des)
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    string oname = scope->local_hsymbol();
+	    perm_string oname = scope->local_symbol();
 	    NetLogic*gate;
 
 	    switch (op()) {
@@ -648,7 +648,7 @@ NetNet* NetEUReduce::synthesize(Design*des)
 			       NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
-      string oname = scope->local_hsymbol();
+      perm_string oname = scope->local_symbol();
       NetLogic*gate;
 
       switch (op()) {
@@ -747,7 +747,7 @@ NetNet* NetETernary::synthesize(Design *des)
       NetNet*tsig = true_val_->synthesize(des);
       NetNet*fsig = false_val_->synthesize(des);
 
-      string path = csig->scope()->local_symbol();
+      perm_string path = csig->scope()->local_symbol();
 
       assert(csig->pin_count() == 1);
 
@@ -762,7 +762,7 @@ NetNet* NetETernary::synthesize(Design *des)
       assert(width <= tsig->pin_count());
       assert(width <= fsig->pin_count());
 
-      string oname = csig->scope()->local_symbol();
+      perm_string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(tsig->pin(idx), mux->pin_Data(idx, 1));
@@ -816,7 +816,7 @@ NetNet* NetESignal::synthesize(Design*des)
       NetScope*scope = net_->scope();
       assert(scope);
 
-      string name = scope->local_symbol();
+      perm_string name = scope->local_symbol();
       NetNet*tmp = new NetNet(scope, name, NetNet::WIRE, wid);
       tmp->local_flag(true);
 
@@ -828,6 +828,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.54  2004/02/18 17:11:56  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.53  2004/02/15 04:23:48  steve
  *  Fix evaluation of compare to constant expression.
  *

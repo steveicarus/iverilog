@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.108 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: t-dll.h,v 1.109 2004/02/18 17:11:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -425,7 +425,7 @@ struct ivl_net_logic_s {
  * UDP definition.
  */
 struct ivl_udp_s {
-      const char* name;
+      perm_string name;
       unsigned nin;
       unsigned sequ;
       char init;
@@ -475,7 +475,7 @@ struct ivl_nexus_s {
  * Memory.
  */
 struct ivl_memory_s {
-      const char*basename_;
+      perm_string basename_;
       ivl_scope_t scope_;
       unsigned width_;
       unsigned signed_ : 1;
@@ -517,8 +517,8 @@ struct ivl_process_s {
 struct ivl_scope_s {
       ivl_scope_t child_, sibling_, parent;
 
-      const char* name_;
-      const char* tname_;
+      perm_string name_;
+      perm_string tname_;
       ivl_scope_type_t type_;
 
       unsigned nsigs_;
@@ -683,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.109  2004/02/18 17:11:58  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.108  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.21 2003/04/02 03:00:14 steve Exp $"
+#ident "$Id: Module.cc,v 1.22 2004/02/18 17:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,7 +28,7 @@
 # include  <assert.h>
 
 /* n is a permallocated string. */
-Module::Module(const char*n)
+Module::Module(perm_string n)
 : name_(n)
 {
 }
@@ -42,12 +42,12 @@ void Module::add_gate(PGate*gate)
       gates_.push_back(gate);
 }
 
-void Module::add_task(const string&name, PTask*task)
+void Module::add_task(perm_string name, PTask*task)
 {
       tasks_[name] = task;
 }
 
-void Module::add_function(const string &name, PFunction *func)
+void Module::add_function(perm_string name, PFunction *func)
 {
       funcs_[name] = func;
 }
@@ -118,7 +118,7 @@ PWire* Module::get_wire(const hname_t&name) const
 	    return (*obj).second;
 }
 
-PGate* Module::get_gate(const string&name)
+PGate* Module::get_gate(perm_string name)
 {
       for (list<PGate*>::iterator cur = gates_.begin()
 		 ; cur != gates_.end()
@@ -149,6 +149,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.22  2004/02/18 17:11:54  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.21  2003/04/02 03:00:14  steve
  *  Cope with empty module ports while binding by name.
  *

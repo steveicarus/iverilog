@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.73 2003/07/04 03:57:19 steve Exp $"
+#ident "$Id: pform.h,v 1.74 2004/02/18 17:11:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -137,7 +137,7 @@ extern Module::port_t* pform_module_port_reference(char*name,
 						   unsigned lineno);
 extern void pform_endmodule(const char*);
 
-extern void pform_make_udp(const char*name, list<string>*parms,
+extern void pform_make_udp(perm_string name, list<string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
 			   const char*file, unsigned lineno);
@@ -194,7 +194,7 @@ extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*, bool);
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<char*>*names);
 extern void pform_set_reg_time(list<char*>*names);
-extern void pform_set_task(const string&, PTask*);
+extern void pform_set_task(perm_string name, PTask*);
 extern void pform_set_function(const char*, NetNet::Type,
 			       svector<PExpr*>*, PFunction*);
 
@@ -202,9 +202,9 @@ extern void pform_set_function(const char*, NetNet::Type,
      $attribute syntax, which can only set string values to
      attributes. The functions keep the value strings that are
      passed in. */
-extern void pform_set_attrib(const char*name, const string&key,
+extern void pform_set_attrib(perm_string name, const string&key,
 			     char*value);
-extern void pform_set_type_attrib(const string&name, const string&key,
+extern void pform_set_type_attrib(perm_string name, const string&key,
 				  char*value);
 
 extern void pform_set_parameter(const string&name,
@@ -250,7 +250,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 			    svector<lgate>*gates,
 			    svector<named_pexpr_t*>*attr);
 
-extern void pform_make_modgates(const char*type,
+extern void pform_make_modgates(perm_string type,
 				struct parmvalue_t*overrides,
 				svector<lgate>*gates);
 
@@ -283,6 +283,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.74  2004/02/18 17:11:57  steve
+ *  Use perm_strings for named langiage items.
+ *
  * Revision 1.73  2003/07/04 03:57:19  steve
  *  Allow attributes on Verilog 2001 port declarations.
  *
