@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.136 2005/01/29 16:47:20 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.137 2005/01/29 18:46:18 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -644,6 +644,12 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *    ivl_logic_attr_val returns the value of the attribute.
  *
  * SEMANTIC NOTES
+ * The ivl_logic_width applies to all the pins of a logic device. If a
+ * logic device has width, that means that it is actually an array of
+ * logic devices tha each process a bit slice of the
+ * inputs/output. That implies that the widths of all the inputs and
+ * the output must be identical.
+ *
  * The ivl_logic_width  and ivl_logic_pins are *not* related. A logic
  * device has a number of pins that is the number of inputs to a logic
  * array of identical gates, and the ivl_logic_width, is the width of
@@ -1464,6 +1470,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.137  2005/01/29 18:46:18  steve
+ *  Netlist boolean expressions generate gate vectors.
+ *
  * Revision 1.136  2005/01/29 16:47:20  steve
  *  Clarify width of nexus.
  *

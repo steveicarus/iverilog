@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.147 2005/01/29 16:46:22 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.148 2005/01/29 18:46:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -276,23 +276,23 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (lsig->pin_count() < rsig->pin_count())
-	    lsig = pad_to_width(des, lsig, rsig->pin_count());
-      if (rsig->pin_count() < lsig->pin_count())
-	    rsig = pad_to_width(des, rsig, lsig->pin_count());
+      if (lsig->vector_width() < rsig->vector_width())
+	    lsig = pad_to_width(des, lsig, rsig->vector_width());
+      if (rsig->vector_width() < lsig->vector_width())
+	    rsig = pad_to_width(des, rsig, lsig->vector_width());
 
-      if (lsig->pin_count() != rsig->pin_count()) {
-	    cerr << get_line() << ": internal error: lsig pin count ("
-		 << lsig->pin_count() << ") != rsig pin count ("
-		 << rsig->pin_count() << ")." << endl;
+      if (lsig->vector_width() != rsig->vector_width()) {
+	    cerr << get_line() << ": internal error: lsig width ("
+		 << lsig->vector_width() << ") != rsig pin width ("
+		 << rsig->vector_width() << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      assert(lsig->pin_count() == rsig->pin_count());
+      assert(lsig->vector_width() == rsig->vector_width());
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
-			       lsig->pin_count());
+			       lsig->vector_width());
       osig->local_flag(true);
 
       NetLogic::TYPE gtype=NetLogic::AND;
@@ -306,17 +306,16 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 	  default: assert(0);
       }
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-	  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, gtype, 1);
-	  connect(gate->pin(1), lsig->pin(idx));
-	  connect(gate->pin(2), rsig->pin(idx));
-	  connect(gate->pin(0), osig->pin(idx));
-	  gate->rise_time(rise);
-	  gate->fall_time(fall);
-	  gate->decay_time(decay);
-	  des->add_node(gate);
-       }
+      NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
+				   3, gtype, osig->vector_width());
+      gate->set_line(*this);
+      connect(gate->pin(0), osig->pin(0));
+      connect(gate->pin(1), lsig->pin(0));
+      connect(gate->pin(2), rsig->pin(0));
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
+      des->add_node(gate);
 
       return osig;
 }
@@ -2452,6 +2451,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.148  2005/01/29 18:46:18  steve
+ *  Netlist boolean expressions generate gate vectors.
+ *
  * Revision 1.147  2005/01/29 16:46:22  steve
  *  Elaborate parameter reference to desired width without concats.
  *

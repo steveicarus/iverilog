@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.103 2005/01/29 16:47:52 steve Exp $"
+#ident "$Id: stub.c,v 1.104 2005/01/29 18:46:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -794,6 +794,11 @@ static void show_signal(ivl_signal_t net)
 
 }
 
+/*
+ * All logic gates have inputs and outputs that match exactly in
+ * width. For example, and AND gate with 4 bit inputs generates a 4
+ * bit output, and all the inputs are 4 bits.
+ */
 static void show_logic(ivl_net_logic_t net)
 {
       unsigned npins, idx;
@@ -852,13 +857,32 @@ static void show_logic(ivl_net_logic_t net)
       for (idx = 1 ;  idx < npins ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(net,idx);
 
-	    if (nex == 0)
+	    if (nex == 0) {
 		  fprintf(out, ", <HiZ>");
-	    else
+	    } else {
 		  fprintf(out, ", %s", ivl_nexus_name(nex));
+
+		  if (ivl_logic_width(net) != width_of_nexus(nex)) {
+			fprintf(stderr,
+				"ERROR: Logic pin %u width mismatch.",
+				idx);
+			fprintf(stderr,
+				" Expect width=%u, nexus width=%u\n",
+				ivl_logic_width(net), width_of_nexus(nex));
+			stub_errors += 1;
+		  }
+	    }
       }
 
       fprintf(out, "); <width=%u>\n", ivl_logic_width(net));
+
+      if (ivl_logic_width(net) != width_of_nexus(ivl_logic_pin(net,0))) {
+	    fprintf(stderr, "ERROR: Logic output pin width mismatch.");
+	    fprintf(stderr, " Expect width=%u, nexus width=%u\n",
+		    ivl_logic_width(net),
+		    width_of_nexus(ivl_logic_pin(net,0)));
+	    stub_errors += 1;
+      }
 
       npins = ivl_logic_attr_cnt(net);
       for (idx = 0 ;  idx < npins ;  idx += 1) {
@@ -974,6 +998,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.104  2005/01/29 18:46:18  steve
+ *  Netlist boolean expressions generate gate vectors.
+ *
  * Revision 1.103  2005/01/29 16:47:52  steve
  *  Check width of constant attached to nexus.
  *
