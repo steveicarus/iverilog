@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.56 2001/04/29 20:19:10 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.57 2001/04/29 23:17:38 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -142,6 +142,17 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * explicit values so that the binary API is a bit more resilient to
  * changes and additions to the enumerations.
  */
+
+typedef enum ivl_drive_e {
+      IVL_DR_HiZ    = 0,
+      IVL_DR_SMALL  = 1,
+      IVL_DR_MEDIUM = 2,
+      IVL_DR_WEAK   = 3,
+      IVL_DR_LARGE  = 4,
+      IVL_DR_PULL   = 5,
+      IVL_DR_STRONG = 6,
+      IVL_DR_SUPPLY = 7
+} ivl_drive_t;
 
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
@@ -538,6 +549,10 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  *    nexus. The problem is that LPM devices do not have a pinout per
  *    se, the pins all have specific names.
  *
+ * ivl_nexus_ptr_con
+ *    If this is a pointer to a magic constant device, then this
+ *    returns the net_const object.
+ *
  * ivl_nexus_ptr_log
  *    If the target object is an ivl_net_logic_t, this method returns
  *    the object. Otherwise, this method returns 0.
@@ -555,7 +570,10 @@ extern const char*     ivl_nexus_name(ivl_nexus_t net);
 extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
 extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
 
+extern ivl_drive_t  ivl_nexus_ptr_drive0(ivl_nexus_ptr_t net);
+extern ivl_drive_t  ivl_nexus_ptr_drive1(ivl_nexus_ptr_t net);
 extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
+extern ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net);
 extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
@@ -794,6 +812,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.57  2001/04/29 23:17:38  steve
+ *  Carry drive strengths in the ivl_nexus_ptr_t, and
+ *  handle constant devices in targets.'
+ *
  * Revision 1.56  2001/04/29 20:19:10  steve
  *  Add pullup and pulldown devices.
  *

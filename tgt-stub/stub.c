@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.38 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: stub.c,v 1.39 2001/04/29 23:17:38 steve Exp $"
 #endif
 
 /*
@@ -382,26 +382,44 @@ static void show_signal(ivl_signal_t net)
 	    fprintf(out, "    [%u]: nexus=%s\n", pin, ivl_nexus_name(nex));
 
 	    for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+		  ivl_net_const_t con;
 		  ivl_net_logic_t log;
 		  ivl_lpm_t lpm;
 		  ivl_signal_t sig;
 		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
+		  static const char* str_tab[8] = {
+			"HiZ", "small", "medium", "weak",
+			"large", "pull", "strong", "supply"};
+
+		  const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
+		  const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
+
 		  if ((sig = ivl_nexus_ptr_sig(ptr))) {
-			fprintf(out, "      %s[%u]\n",
+			fprintf(out, "      %s[%u] (%s0, %s1)\n",
 				ivl_signal_name(sig),
-				ivl_nexus_ptr_pin(ptr));
+				ivl_nexus_ptr_pin(ptr), dr0, dr1);
 
 		  } else if ((log = ivl_nexus_ptr_log(ptr))) {
-			fprintf(out, "      %s[%u]\n",
+			fprintf(out, "      %s[%u] (%s0, %s1)\n",
 				ivl_logic_name(log),
-				ivl_nexus_ptr_pin(ptr));
+				ivl_nexus_ptr_pin(ptr), dr0, dr1);
 
 		  } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
-			fprintf(out, "      LPM %s\n", ivl_lpm_name(lpm));
+			fprintf(out, "      LPM %s (%s0, %s1)\n",
+				ivl_lpm_name(lpm), dr0, dr1);
+
+		  } else if ((con = ivl_nexus_ptr_con(ptr))) {
+			const char*bits = ivl_const_bits(con);
+			unsigned pin = ivl_nexus_ptr_pin(ptr);
+
+			fprintf(out, "      const-%c (%s0, %s1)\n",
+				bits[pin], dr0, dr1);
+
 
 		  } else {
-			fprintf(out, "      ?[%u]\n", ivl_nexus_ptr_pin(ptr));
+			fprintf(out, "      ?[%u] (%s0, %s1)\n",
+				ivl_nexus_ptr_pin(ptr), dr0, dr1);
 		  }
 	    }
       }
@@ -530,6 +548,10 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.39  2001/04/29 23:17:38  steve
+ *  Carry drive strengths in the ivl_nexus_ptr_t, and
+ *  handle constant devices in targets.'
+ *
  * Revision 1.38  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *

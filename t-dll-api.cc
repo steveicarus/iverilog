@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.41 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.42 2001/04/29 23:17:38 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -550,10 +550,31 @@ extern "C" ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx)
       return net->ptrs_ + idx;
 }
 
+extern "C" ivl_drive_t ivl_nexus_ptr_drive0(ivl_nexus_ptr_t net)
+{
+      assert(net);
+      return (ivl_drive_t)(net->drive0);
+}
+
+extern "C" ivl_drive_t ivl_nexus_ptr_drive1(ivl_nexus_ptr_t net)
+{
+      assert(net);
+      return (ivl_drive_t)(net->drive1);
+}
+
 extern "C" unsigned ivl_nexus_ptr_pin(ivl_nexus_ptr_t net)
 {
       assert(net);
       return net->pin_;
+}
+
+extern "C" ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_CON)
+	    return 0;
+      return net->l.con;
 }
 
 extern "C" ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net)
@@ -1033,6 +1054,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.42  2001/04/29 23:17:38  steve
+ *  Carry drive strengths in the ivl_nexus_ptr_t, and
+ *  handle constant devices in targets.'
+ *
  * Revision 1.41  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *

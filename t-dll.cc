@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.37 2001/04/29 20:19:10 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.38 2001/04/29 23:17:38 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -89,9 +89,11 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
       tmp->nptr_ = 1;
       tmp->ptrs_ = (struct ivl_nexus_ptr_s*)
 	    malloc(sizeof(struct ivl_nexus_ptr_s));
-      tmp->ptrs_[0].pin_  = pin;
-      tmp->ptrs_[0].type_ = __NEXUS_PTR_SIG;
-      tmp->ptrs_[0].l.sig = net;
+      tmp->ptrs_[0].pin_   = pin;
+      tmp->ptrs_[0].type_  = __NEXUS_PTR_SIG;
+      tmp->ptrs_[0].drive0 = IVL_DR_HiZ;
+      tmp->ptrs_[0].drive1 = IVL_DR_HiZ;
+      tmp->ptrs_[0].l.sig  = net;
       return tmp;
 }
 
@@ -103,6 +105,8 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_SIG;
+      nex->ptrs_[top-1].drive0 = IVL_DR_HiZ;
+      nex->ptrs_[top-1].drive1 = IVL_DR_HiZ;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.sig= net;
 }
@@ -115,6 +119,8 @@ static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_LOG;
+      nex->ptrs_[top-1].drive0 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
+      nex->ptrs_[top-1].drive1 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.log= net;
 }
@@ -127,6 +133,8 @@ static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
+      nex->ptrs_[top-1].drive0 = IVL_DR_STRONG;
+      nex->ptrs_[top-1].drive1 = IVL_DR_STRONG;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.con= net;
 }
@@ -885,6 +893,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.38  2001/04/29 23:17:38  steve
+ *  Carry drive strengths in the ivl_nexus_ptr_t, and
+ *  handle constant devices in targets.'
+ *
  * Revision 1.37  2001/04/29 20:19:10  steve
  *  Add pullup and pulldown devices.
  *

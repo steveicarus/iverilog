@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.40 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: t-dll.h,v 1.41 2001/04/29 23:17:38 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -295,10 +295,19 @@ struct ivl_udp_s {
  * The ivl_nexus_t is a single-bit link of some number of pins of
  * devices. the __nexus_ptr structure is a helper that actually does
  * the pointing.
+ *
+ * The type_ member specifies which of the object pointers in the
+ * union are valid.
+ *
+ * The drive01 members gives the strength of the drive that the device
+ * is applying to the nexus, with 0 HiZ and 3 supply. If the pin is an
+ * input to the device, then the drives are both HiZ.
  */
 struct ivl_nexus_ptr_s {
       unsigned pin_  :24;
       unsigned type_ : 8;
+      unsigned drive0 : 3;
+      unsigned drive1 : 3;
       union {
 	    ivl_signal_t    sig; /* type 0 */
 	    ivl_net_logic_t log; /* type 1 */
@@ -468,6 +477,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.41  2001/04/29 23:17:38  steve
+ *  Carry drive strengths in the ivl_nexus_ptr_t, and
+ *  handle constant devices in targets.'
+ *
  * Revision 1.40  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *
