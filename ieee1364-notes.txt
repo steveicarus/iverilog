@@ -404,8 +404,33 @@ parameter range (i.e. parameter [5:0] foo = 9;) so Icarus Verilog will
 (or should) use the explicitly declared vector dimensions to interpret
 bit and part selects.
 
-$Id: ieee1364-notes.txt,v 1.13 2002/08/20 04:11:53 steve Exp $
+
+* EDGES OF VECTORS
+
+Consider this exapmle:
+
+   reg [ 5:0] clock;
+   always @(posedge clock) [do stuff]
+
+The IEEE1364 standard clearly states that the @(posedge clock) looks
+only at the bit clock[0] (the least significant bit) to search for
+edges. It has been pointed out by some that Verilog XL instead
+implements it as "@(posedge |clock)": it looks for a rise in the
+reduction or of the vector. Cadence Design Systems technical support
+has been rumored to claim that the IEEE1364 specification is wrong,
+but NC-Verilog behaves according to the specification, and thus
+different from XL.
+
+Icarus Verilog, therefore, takes the position that the specification
+is clear and correct, and it behaves as does NC-Verilog in this
+matter.
+
+
+$Id: ieee1364-notes.txt,v 1.14 2003/02/06 17:51:36 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.14  2003/02/06 17:51:36  steve
+ Edge of vectors notes.
+
 Revision 1.13  2002/08/20 04:11:53  steve
  Support parameters with defined ranges.
 
