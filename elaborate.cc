@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.53 1999/07/12 00:59:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.54 1999/07/13 04:08:26 steve Exp $"
 #endif
 
 /*
@@ -1161,30 +1161,50 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       NetAssign*cur;
 
 	/* Rewrite delayed assignments as assignments that are
-	   delayed. This only works if the l-value has no mux
-	   expression. */
-      if (dex && (mux == 0)) {
-	    string tp = des->local_symbol(path);
-	    unsigned wid = msb - lsb + 1;
-	    cur = new NetAssign(tp, des, wid, rv);
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx+lsb));
+	   delayed. For example, a = #<d> b; becomes:
 
-	    cur->set_line(*this);
-	    des->add_node(cur);
-	    NetPDelay*dep = new NetPDelay(dex->as_ulong(), cur);
+	     begin
+	        tmp = b;
+		#<d> a = tmp;
+	     end
 
-	    delete dex;
-	    return dep;
-      }
+	   This rewriting of the expression allows me to not bother to
+	   actually and literally represent the delayed assign in the
+	   netlist. The compound statement is exactly equivilent. */
 
       if (dex) {
-	    delete dex;
-	    cerr << delay()->get_line() << ": Sorry, delay expression "
-		  "(or l-value) too complicated." << endl;
-	    des->errors += 1;
-      }
+	    string n = des->local_symbol(path);
+	    unsigned wid = msb - lsb + 1;
+	    NetNet*tmp = new NetNet(n, NetNet::REG, wid);
+	    tmp->set_line(*this);
+	    des->add_signal(tmp);
 
+	    n = des->local_symbol(path);
+	    NetAssign*a1 = new NetAssign(n, des, wid, rv);
+	    a1->set_line(*this);
+	    des->add_node(a1);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(a1->pin(idx), tmp->pin(idx));
+
+	    n = des->local_symbol(path);
+	    NetESignal*sig = des->get_esignal(tmp);
+	    NetAssign*a2 = new NetAssign(n, des, wid, sig);
+	    a2->set_line(*this);
+	    des->add_node(a2);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(a2->pin(idx), reg->pin(idx+lsb));
+
+	    NetPDelay*de = new NetPDelay(dex->as_ulong(), a2);
+
+	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
+	    bl->append(a1);
+	    bl->append(de);
+
+	    delete dex;
+	    return bl;
+      }
 
       if (mux == 0) {
 	    unsigned wid = msb - lsb + 1;
@@ -1763,6 +1783,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.54  1999/07/13 04:08:26  steve
+ *  Construct delayed assignment as an equivilent block.
+ *
  * Revision 1.53  1999/07/12 00:59:36  steve
  *  procedural blocking assignment delays.
  *
