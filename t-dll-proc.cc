@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.53 2002/08/13 05:35:00 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.54 2002/08/19 00:06:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -591,11 +591,21 @@ bool dll_target::proc_release(const NetRelease*net)
 
       stmt_cur_->type_ = IVL_ST_RELEASE;
 
+	/* If there is no signal attached to the release, then it is
+	   the victom of an elided net. In that case, simply state
+	   that there are no lvals, and that's all. */
+      const NetNet*lsig = net->lval();
+      if (lsig == 0) {
+	    stmt_cur_->u_.cassign_.lvals = 0;
+	    return true;
+      }
+
+      assert(lsig);
       stmt_cur_->u_.cassign_.lvals = 1;
       stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
 	    calloc(1, sizeof(struct ivl_lval_s));
 
-      const NetNet*lsig = net->lval();
+
       ivl_signal_t sig = find_signal(des_, lsig);
       assert(sig);
 
@@ -812,6 +822,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.54  2002/08/19 00:06:12  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.53  2002/08/13 05:35:00  steve
  *  Do not elide named blocks.
  *

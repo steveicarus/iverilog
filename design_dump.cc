@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.132 2002/08/13 05:35:00 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.133 2002/08/19 00:06:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -658,8 +658,12 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
 
 void NetRelease::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "release " << lval_->name() << "; "
-	<< "/* " << get_line() << " */" << endl;
+      if (lval_)
+	    o << setw(ind) << "" << "release " << lval_->name() << "; "
+	      << "/* " << get_line() << " */" << endl;
+      else
+	    o << setw(ind) << "" << "release (null); "
+	      << "/* " << get_line() << " */" << endl;
 }
 
 void NetRepeat::dump(ostream&o, unsigned ind) const
@@ -987,6 +991,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.133  2002/08/19 00:06:11  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.132  2002/08/13 05:35:00  steve
  *  Do not elide named blocks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_force.cc,v 1.8 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_force.cc,v 1.9 2002/08/19 00:06:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,10 +116,16 @@ const NetNet* NetForce::lval() const
 NetRelease::NetRelease(NetNet*l)
 : lval_(l)
 {
+	/* Put myself into a release list that the net is
+	   keeping. This is so that the NetNet can detach itself if
+	   and when it is deleted by the optimizer. */
+      release_next_ = lval_->release_list_;
+      lval_->release_list_ = this;
 }
 
 NetRelease::~NetRelease()
 {
+      assert(lval_ == 0);
 }
 
 const NetNet*NetRelease::lval() const
@@ -130,6 +136,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.9  2002/08/19 00:06:12  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.8  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

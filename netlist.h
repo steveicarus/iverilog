@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.259 2002/08/18 22:07:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.260 2002/08/19 00:06:12 steve Exp $"
 #endif
 
 /*
@@ -49,6 +49,7 @@ class Nexus;
 class NetNode;
 class NetProc;
 class NetProcTop;
+class NetRelease;
 class NetScope;
 class NetExpr;
 class NetESignal;
@@ -415,6 +416,12 @@ class NetNet  : public NetObj, public LineInfo {
 	// The NetScope class uses this for listing signals.
       friend class NetScope;
       NetNet*sig_next_, *sig_prev_;
+
+	// Keep a list of release statements that reference me. I may
+	// need to know this in order to fix them up when I am
+	// deleted.
+      friend class NetRelease;
+      NetRelease*release_list_;
 
     private:
       Type   type_;
@@ -1930,6 +1937,9 @@ class NetRelease : public NetProc {
 
     private:
       NetNet*lval_;
+	// Used to manage list within NetNet objects.
+      friend class NetNet;
+      NetRelease*release_next_;
 };
 
 
@@ -3016,6 +3026,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.260  2002/08/19 00:06:12  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.259  2002/08/18 22:07:16  steve
  *  Detect temporaries in sequential block synthesis.
  *

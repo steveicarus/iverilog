@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.197 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: netlist.cc,v 1.198 2002/08/19 00:06:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -240,6 +240,8 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 {
       assert(s);
 
+      release_list_ = 0;
+
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
 
@@ -277,6 +279,8 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
+
+      release_list_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -326,6 +330,15 @@ NetNet::~NetNet()
       assert(lref_count_ == 0);
       if (scope())
 	    scope()->rem_signal(this);
+
+	/* Detach me from all the NetRelease objects that refer to me. */
+      while (release_list_) {
+	    NetRelease*tmp = release_list_;
+	    release_list_ = tmp->release_next_;
+	    assert(tmp->lval_ == this);
+	    tmp->lval_ = 0;
+	    tmp->release_next_ = 0;
+      }
 }
 
 NetNet::Type NetNet::type() const
@@ -2311,6 +2324,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.198  2002/08/19 00:06:12  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.197  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

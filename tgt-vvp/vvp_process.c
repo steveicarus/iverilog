@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.63 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.64 2002/08/19 00:06:12 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -763,6 +763,12 @@ static int show_stmt_release(ivl_statement_t net)
       ivl_signal_t lsig;
       unsigned idx;
 
+	/* If there are no l-vals (the target signal has been elided)
+	   then turn the release into a no-op. In other words, we are
+	   done before we start. */
+      if (ivl_stmt_lvals(net) == 0)
+	    return 0;
+
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
 
@@ -1226,6 +1232,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.64  2002/08/19 00:06:12  steve
+ *  Allow release to handle removal of target net.
+ *
  * Revision 1.63  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *
