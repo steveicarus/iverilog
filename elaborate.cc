@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.262 2002/08/15 02:11:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.263 2002/08/28 18:54:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1107,11 +1107,22 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
       assert(rval());
 
-	/* Elaborate the r-value expression. This generates a
-	   procedural expression that I attach to the assignment. */
-      NetExpr*rv = rval()->elaborate_expr(des, scope);
-      if (rv == 0)
+      NetExpr*rv;
+
+	/* Evaluate the rval expression if possible, otherwise just
+	   elaborate it. */
+      if (verinum*val = rval()->eval_const(des, scope)) {
+	    rv = new NetEConst(*val);
+	    delete val;
+
+      } else if (rv = rval()->elaborate_expr(des, scope)) {
+
+	      /* OK, go on. */
+
+      } else {
+	      /* Unable to elaborate expression. Retreat. */
 	    return 0;
+      }
 
       assert(rv);
 
@@ -2511,6 +2522,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.263  2002/08/28 18:54:36  steve
+ *  Evaluate nonblocking assign r-values.
+ *
  * Revision 1.262  2002/08/15 02:11:54  steve
  *  Handle special case of empty system task argument list.
  *
