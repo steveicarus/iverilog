@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.115 2003/09/01 04:03:38 steve Exp $"
+#ident "$Id: vthread.cc,v 1.116 2003/09/26 02:15:15 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -333,9 +333,6 @@ void vthread_run(vthread_t thr)
 	    for (;;) {
 		  vvp_code_t cp = thr->pc;
 		  thr->pc += 1;
-
-		  assert(cp);
-		  assert(cp->opcode);
 
 		    /* Run the opcode implementation. If the execution of
 		       the opcode returns false, then the thread is meant to
@@ -2762,6 +2759,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.116  2003/09/26 02:15:15  steve
+ *  Slight performance tweaks of scheduler.
+ *
  * Revision 1.115  2003/09/01 04:03:38  steve
  *  32bit vs 64bit handling in SUBI.
  *

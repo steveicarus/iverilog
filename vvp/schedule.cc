@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.26 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: schedule.cc,v 1.27 2003/09/26 02:15:15 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -452,7 +452,6 @@ void schedule_simulate(void)
 
 	      /* ctim is the current time step. */
 	    struct event_time_s* ctim = sched_list;
-	    assert(ctim);
 
 	      /* If the time is advancing, then first run the
 		 postponed sync events. Run them all. */
@@ -489,7 +488,6 @@ void schedule_simulate(void)
 			continue;
 		  }
 	    }
-	    assert(ctim->active);
 
 	      /* Pull the first item off the list. If this is the last
 		 cell in the list, then clear the list. Execute that
@@ -515,19 +513,11 @@ void schedule_simulate(void)
 
 		case TYPE_ASSIGN:
 		  count_assign_events += 1;
-		  switch (cur->val) {
-		      case 0:
-			functor_set(cur->fun, cur->val, St0, false);
-			break;
-		      case 1:
-			functor_set(cur->fun, cur->val, St1, false);
-			break;
-		      case 2:
-			functor_set(cur->fun, cur->val, StX, false);
-			break;
-		      case 3:
-			functor_set(cur->fun, cur->val, HiZ, false);
-			break;
+		  { static const unsigned val_table[4] = {St0, St1, StX, HiZ};
+		    functor_set(cur->fun,
+				cur->val,
+				val_table[cur->val],
+				false);
 		  }
 		  break;
 
@@ -566,6 +556,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.27  2003/09/26 02:15:15  steve
+ *  Slight performance tweaks of scheduler.
+ *
  * Revision 1.26  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *
