@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.22 2003/03/13 04:34:35 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.23 2003/03/13 18:26:12 steve Exp $"
 #endif
 
 
@@ -54,13 +54,13 @@ typedef struct __vpiHandle *vpiHandle;
  * into the application that the compiler/simulator can access.
  */
 typedef struct t_vpi_systf_data {
-      int type;
-      int subtype;
-      char *tfname;
-      int (*calltf)(char*);
-      int (*compiletf)(char*);
-      int (*sizetf)();
-      char *user_data;
+      PLI_INT32 type;
+      PLI_INT32 subtype;
+      char      *tfname;
+      PLI_INT32 (*calltf)(char*);
+      PLI_INT32 (*compiletf)(char*);
+      PLI_INT32 (*sizetf)();
+      char      *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
 /* The type in the above structure can have one of the following
@@ -70,17 +70,17 @@ typedef struct t_vpi_systf_data {
 
 typedef struct t_vpi_vlog_info
 {
-      int argc;
-      char **argv;
-      char *product;
-      char *version;
+      PLI_INT32 argc;
+      char      **argv;
+      char      *product;
+      char      *version;
 } s_vpi_vlog_info, *p_vpi_vlog_info;
 
 
 typedef struct t_vpi_time {
-      int type;
-      unsigned int high;
-      unsigned int low;
+      PLI_INT32 type;
+      PLI_UINT32 high;
+      PLI_UINT32 low;
       double real;
 } s_vpi_time, *p_vpi_time;
 
@@ -89,12 +89,12 @@ typedef struct t_vpi_time {
 #define vpiSuppressTime   3
 
 typedef struct t_vpi_vecval {
-      int aval, bval; /* ab encoding: 00=0, 10=1, 11=X, 01=Z */
+      PLI_INT32 aval, bval; /* ab encoding: 00=0, 10=1, 11=X, 01=Z */
 } s_vpi_vecval, *p_vpi_vecval;
 
 typedef struct t_vpi_strengthval {
-      int logic;
-      int s0, s1;
+      PLI_INT32 logic;
+      PLI_INT32 s0, s1;
 } s_vpi_strengthval, *p_vpi_strengthval;
 
 /*
@@ -102,16 +102,16 @@ typedef struct t_vpi_strengthval {
  * the simulator and the application.
  */
 typedef struct t_vpi_value {
-      int format;
+      PLI_INT32 format;
       union {
-	    char*str;
-	    int scalar;
-	    int integer;
+	    char      *str;
+	    PLI_INT32 scalar;
+	    PLI_INT32 integer;
 	    double real;
 	    struct t_vpi_time *time;
 	    struct t_vpi_vecval *vector;
 	    struct t_vpi_strengthval *strength;
-	    char*misc;
+	    char      *misc;
       } value;
 } s_vpi_value, *p_vpi_value;
 
@@ -221,26 +221,26 @@ extern void vpi_printf(const char*fmt, ...)
   /* vpi_vprintf is non-standard. */
 extern void vpi_vprintf(const char*fmt, va_list ap);
 
-extern unsigned int vpi_mcd_close(unsigned int mcd);
-extern char *vpi_mcd_name(unsigned int mcd);
-extern unsigned int vpi_mcd_open(char *name);
-extern unsigned int vpi_mcd_open_x(char *name, char *mode);
-extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
+extern PLI_UINT32 vpi_mcd_close(unsigned int mcd);
+extern char      *vpi_mcd_name(PLI_UINT32 mcd);
+extern PLI_UINT32 vpi_mcd_open(char      *name);
+extern PLI_UINT32 vpi_mcd_open_x(char      *name, char *mode);
+extern PLI_INT32  vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
       __attribute__((format (printf,2,3)));
-extern int vpi_mcd_fputc(unsigned int mcd, unsigned char x);
-extern int vpi_mcd_fgetc(unsigned int mcd);
+extern PLI_INT32  vpi_mcd_fputc(unsigned int mcd, unsigned char x);
+extern PLI_INT32  vpi_mcd_fgetc(unsigned int mcd);
 
 /*
  * support for VPI callback functions.
  */
 typedef struct t_cb_data {
-      int reason;
-      int (*cb_rtn)(struct t_cb_data*cb);
+      PLI_INT32 reason;
+      PLI_INT32 (*cb_rtn)(struct t_cb_data*cb);
       vpiHandle obj;
       p_vpi_time time;
       p_vpi_value value;
-      int index;
-      char*user_data;
+      PLI_INT32 index;
+      char      *user_data;
 } s_cb_data, *p_cb_data;
 
 #define cbValueChange        1
@@ -269,7 +269,7 @@ typedef struct t_cb_data {
 #define cbUnresolvedSystf   24
 
 extern vpiHandle vpi_register_cb(p_cb_data data);
-extern int vpi_remove_cb(vpiHandle ref);
+extern PLI_INT32 vpi_remove_cb(vpiHandle ref);
 
 /*
  * This function allows a vpi application to control the simulation
@@ -286,24 +286,24 @@ extern int vpi_remove_cb(vpiHandle ref);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-extern void vpi_control(int operation, ...);
+extern void vpi_control(PLI_INT32 operation, ...);
 #define vpiStop 1
 #define vpiFinish 2
 #define vpiReset  3
 #define vpiSetInteractiveScope 4
 
 /* vpi_sim_control is the incorrect name for vpi_control. */
-extern void vpi_sim_control(int operation, ...);
+extern void vpi_sim_control(PLI_INT32 operation, ...);
 
-extern vpiHandle  vpi_handle(int type, vpiHandle ref);
-extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
+extern vpiHandle  vpi_handle(PLI_INT32 type, vpiHandle ref);
+extern vpiHandle  vpi_iterate(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
-extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 index);
 extern vpiHandle  vpi_handle_by_name(const char*name, vpiHandle scope);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
-extern int   vpi_get(int property, vpiHandle ref);
-extern char* vpi_get_str(int property, vpiHandle ref);
+extern PLI_INT32 vpi_get(int property, vpiHandle ref);
+extern char      *vpi_get_str(PLI_INT32 property, vpiHandle ref);
 extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
 
 /*
@@ -326,30 +326,30 @@ extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
  *      assignment in behavioral code.
  */
 extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
-			       p_vpi_time when, int flags);
+			       p_vpi_time when, PLI_INT32 flags);
 
-extern int vpi_free_object(vpiHandle ref);
-extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
+extern PLI_INT32 vpi_free_object(vpiHandle ref);
+extern PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 /*
  * These functions support attaching user data to an instance of a
  * system task or function. These functions only apply to
  * vpiSysTaskCall or vpiSysFuncCall handles.
  */
-extern int  vpi_put_userdata(vpiHandle obj, void*data);
+extern PLI_INT32 vpi_put_userdata(vpiHandle obj, void*data);
 extern void*vpi_get_userdata(vpiHandle obj);
 
 /*
  * Support for handling errors.
  */
 typedef struct t_vpi_error_info {
-      int state;
-      int level;
-      char*message;
-      char*product;
-      char*code;
-      char*file;
-      int  line;
+      PLI_INT32 state;
+      PLI_INT32 level;
+      char      *message;
+      char      *product;
+      char      *code;
+      char      *file;
+      PLI_INT32 line;
 } s_vpi_error_info, *p_vpi_error_info;
 
 /* error_info states */
@@ -364,7 +364,7 @@ typedef struct t_vpi_error_info {
 # define  vpiSystem    4
 # define  vpiInternal  5
 
-extern int vpi_chk_error(p_vpi_error_info info);
+extern PLI_INT32 vpi_chk_error(p_vpi_error_info info);
 
 
 /* This is the table of startup routines included in each module. */
@@ -374,6 +374,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.23  2003/03/13 18:26:12  steve
+ *  Verilog 2001 standart types.
+ *
  * Revision 1.22  2003/03/13 04:34:35  steve
  *  Add VPI_TRACE tracing of VPI calls.
  *  vpi_handle_by_name takes a const char*.
