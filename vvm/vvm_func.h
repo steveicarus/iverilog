@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.1 1998/11/09 23:44:11 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.2 1999/03/15 02:42:44 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -42,6 +42,36 @@ vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
 	  default:
 	    result[idx] = Vx;
       }
+      return result;
+}
+
+/*
+ * Implement the binary AND operator. This is a bitwise and with all
+ * the parameters and the result having the same width.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_and(const vvm_bitset_t<WIDTH>&l,
+				  const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = l[idx] & r[idx];
+
+      return result;
+}
+
+/*
+ * Implement the binary OR operator. This is a bitwise and with all
+ * the parameters and the result having the same width.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_or(const vvm_bitset_t<WIDTH>&l,
+				 const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = l[idx] | r[idx];
+
       return result;
 }
 
@@ -165,6 +195,9 @@ vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.2  1999/03/15 02:42:44  steve
+ *  Add the AND and OR bitwise operators.
+ *
  * Revision 1.1  1998/11/09 23:44:11  steve
  *  Add vvm library.
  *
