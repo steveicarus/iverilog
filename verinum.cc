@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.19 2000/09/27 18:28:37 steve Exp $"
+#ident "$Id: verinum.cc,v 1.20 2000/09/28 03:55:55 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -135,56 +135,66 @@ verinum::V verinum::set(unsigned idx, verinum::V val)
 
 unsigned long verinum::as_ulong() const
 {
-      assert(nbits_ <= 8 * sizeof(unsigned long));
-
       if (nbits_ == 0)
 	    return 0;
 
+      if (!is_defined())
+	    return 0;
+
+      unsigned top = nbits_;
+      if (top >= (8 * sizeof(unsigned long)))
+	  top = 8 * sizeof(unsigned long);
+
       unsigned long val = 0;
-      for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 1) {
-	    val <<= 1;
-	    switch (bits_[idx-1]) {
-		case V0:
-		  break;
-		case V1:
-		  val |= 1;
-		  break;
-		case Vx:
-		case Vz:
-		    // what should I do here? Throw an exception?
-		  break;
-	    }
-      }
+      unsigned long mask = 1;
+      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1)
+		  val |= mask;
+
       return val;
 }
 
+/*
+ * This function returns the native long integer that represents the
+ * value of this object. It accounts for sign extension if the value
+ * is signed.
+ *
+ * If the value is undefined, return 0.
+ *
+ * This function presumes that the native format is 2s compliment
+ * (pretty safe these days) and masks/sets bits accordingly. If the
+ * value is too large for the lative form, it truncates the high bits.
+ */
 signed long verinum::as_long() const
 {
-      assert(nbits_ <= 8 * sizeof(signed long));
-
       if (nbits_ == 0)
+	    return 0;
+
+      if (!is_defined())
 	    return 0;
 
       signed long val = 0;
 
-	// Extend the sign bit to fill the long. (But only for signed
-	// numbers.)
-      if (has_sign_ && (bits_[nbits_-1] == V1))
-	    val = -1;
+      if (has_sign_ && (bits_[nbits_-1] == V1)) {
+	    unsigned top = nbits_;
+	    if (top > (8 * sizeof(long) - 1))
+		  top = 8 * sizeof(long) - 1;
 
-      for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 1) {
-	    val <<= 1;
-	    switch (bits_[idx-1]) {
-		case V0:
-		  break;
-		case V1:
-		  val |= 1;
-		  break;
-		case Vx:
-		case Vz:
-		    // what should I do here? Throw an exception?
-		  break;
-	    }
+	    val = -1;
+	    signed long mask = ~1L;
+	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
+		  if (bits_[idx] == V0)
+			val &= mask;
+
+      } else {
+	    unsigned top = nbits_;
+	    if (top > (8 * sizeof(long) - 1))
+		  top = 8 * sizeof(long) - 1;
+
+	    signed long mask = 1;
+	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
+		  if (bits_[idx] == V1)
+			val |= mask;
       }
 
       return val;
@@ -521,6 +531,9 @@ verinum operator * (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.20  2000/09/28 03:55:55  steve
+ *  handel, by truncation, verinums that are to long for long integers.
+ *
  * Revision 1.19  2000/09/27 18:28:37  steve
  *  multiply in parameter expressions.
  *
