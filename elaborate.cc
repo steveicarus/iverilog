@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.258 2002/07/24 16:22:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.259 2002/07/31 23:55:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -644,9 +644,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
 	    if (prts_pin_count != sig->pin_count()) {
-		  cerr << get_line() << ": warning: Port " << (idx+1) << " of "
+		  cerr << get_line() << ": warning: Port " << (idx+1)
+		       << " (" << rmod->ports[idx]->name << ") of "
 		       << type_ << " expects " << prts_pin_count <<
-			" pins, got " << sig->pin_count() << "." << endl;
+			" bits, got " << sig->pin_count() << "." << endl;
 
 		  if (prts_pin_count > sig->pin_count()) {
 			cerr << get_line() << ":        : Leaving "
@@ -656,7 +657,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  } else {
 			cerr << get_line() << ":        : Leaving "
 			     << (sig->pin_count()-prts_pin_count)
-			     << " high bits of the parameter dangling."
+			     << " high bits of the expression dangling."
 			     << endl;
 		  }
 	    }
@@ -2501,6 +2502,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.259  2002/07/31 23:55:38  steve
+ *  Add port name to pin size error message.
+ *
  * Revision 1.258  2002/07/24 16:22:59  steve
  *  Save event matching for nodangle.
  *
