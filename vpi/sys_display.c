@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.50 2003/02/01 05:49:13 steve Exp $"
+#ident "$Id: sys_display.c,v 1.51 2003/02/04 04:06:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -353,6 +353,338 @@ static void format_strength(unsigned int mcd, s_vpi_value*value)
       vpi_mcd_printf(mcd, "%s", str);
 }
 
+static void format_error_msg(const char*msg, int leading_zero,
+			     int fsize, int ffsize, char fmt)
+{
+      if ((fsize < 0) && (ffsize < 0)) {
+	    if (leading_zero > 0)
+		  vpi_printf("\nERROR: %s: %%0%c\n", msg, fmt);
+	    else
+		  vpi_printf("\nERROR: %s: %%%c\n", msg, fmt);
+
+      } else if (ffsize < 0) {
+	    if ((leading_zero > 0) && (fsize > 0))
+		  vpi_printf("\nERROR: %s: %%0%d%c\n", msg,
+			     fsize, fmt);
+	    else
+		  vpi_printf("\nERROR: %s: %%%d%c\n", msg,
+			     fsize, fmt);
+
+      } else {
+	    vpi_printf("\nERROR: %s: %%%d.%d%c\n", msg,
+		       fsize, ffsize, fmt);
+      }
+}
+
+/*
+ * The format_str uses this function to do the special job of
+ * interpreting the next item depending on the format code. The caller
+ * has already parsed the %x.yf format string.
+ *
+ * The return code is the number of arguments that were consumed.
+ */
+static int format_str_char(vpiHandle scope, unsigned int mcd,
+			   int leading_zero, int fsize, int ffsize,
+			   char fmt, int argc, vpiHandle*argv, int idx)
+{
+      s_vpi_value value;
+      int use_count = 0;
+
+	/* Time units of the current scope. */
+      int time_units = vpi_get(vpiTimeUnit, scope);
+
+      switch (fmt) {
+
+	  case 0:
+	    return 0;
+
+	  case '%':
+	    if (fsize != -1 && ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+		  ffsize = -1;
+	    }
+
+	    vpi_mcd_printf(mcd, "%%");
+
+	    use_count = 0;
+	    break;
+
+	  case 'e':
+	  case 'g':
+	      // new Verilog 2001 format specifiers...
+	  case 'l':
+	  case 'L':
+	  case 'u':
+	  case 'U':
+	  case 'z':
+	  case 'Z':
+	    format_error_msg("Unsupported format", leading_zero,
+				 fsize, ffsize, fmt);
+	    vpi_mcd_printf(mcd, "%c", fmt);
+
+	    use_count = 0;
+	    break;
+
+	  default:
+	    format_error_msg("Illegal format", leading_zero,
+			     fsize, ffsize, fmt);
+	    vpi_mcd_printf(mcd, "%c", fmt);
+	    break;
+
+	      /* Print numeric value in binary/hex/octal format. */
+	  case 'b':
+	  case 'B':
+	  case 'h':
+	  case 'H':
+	  case 'o':
+	  case 'O':
+	  case 'x':
+	  case 'X':
+	    if (ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+	    }
+
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    switch (fmt) {
+		case 'b':
+		case 'B':
+		  value.format = vpiBinStrVal;
+		  break;
+		case 'h':
+		case 'H':
+		case 'x':
+		case 'X':
+		  value.format = vpiHexStrVal;
+		  break;
+		case 'o':
+		case 'O':
+		  value.format = vpiOctStrVal;
+		  break;
+	    }
+
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    { char* value_str = value.value.str;
+	      if (leading_zero==1){
+		      // Strip away all leading zeros from string
+		    int i=0;
+		    while(i< (strlen(value_str)-1) && value_str[i]=='0')
+			  i++;
+		    value_str += i;
+	      }
+
+	      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+	    }
+
+	    use_count = 1;
+	    break;
+
+	      /* Print character */
+	  case 'c':
+	  case 'C':
+	    if (fsize != -1 && ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+		  ffsize = -1;
+	    }
+
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    value.format = vpiStringVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
+
+	    use_count = 1;
+	    break;
+	
+	      /* Print numeric value is decimal integer format. */
+	  case 'd':
+	  case 'D':
+	    if (ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+	    }
+
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    value.format = vpiDecStrVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    if (fsize==-1){
+		    // simple %d parameter. 
+		    // Size is now determined by the width
+		    // of the vector or integer
+		  fsize = vpi_get_dec_size(argv[idx]);
+	    }
+
+	    vpi_mcd_printf(mcd, "%*s", fsize, value.value.str);
+
+	    use_count = 1;
+	    break;
+
+
+	  case 'f':
+	  case 'F':
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    value.format = vpiRealVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    vpi_mcd_printf(mcd, "%f", value.value.real);
+
+	    use_count = 1;
+	    break;
+
+	      /* Print the current scope. */
+	  case 'm':
+	  case 'M':
+	    if (ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+	    }
+	    if (fsize == -1)
+		  fsize = 0;
+	    assert(scope);
+	    vpi_mcd_printf(mcd, "%*s",
+			   fsize,
+			   vpi_get_str(vpiFullName, scope));
+	    break;
+
+
+	      /* Print vector as a string value. */
+	  case 's':
+	  case 'S':
+	    if (ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+	    }
+
+	    value.format = vpiStringVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    if (fsize==-1){
+		  vpi_mcd_printf(mcd, "%s", value.value.str);
+
+	    } else {
+		  char* value_str = value.value.str;
+
+		  if (leading_zero==1){
+			  // Remove leading spaces from the value 
+			  // string *except* if the argument is a 
+			  // constant string... (hey, that's how 
+			  // the commerical guys behave...)
+
+			if (!(vpi_get(vpiType, argv[idx]) == vpiConstant 
+			      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
+			      int i=0;
+				// Strip away all leading zeros from string
+			      while((i < (strlen(value_str)-1))
+				    && (value_str[i]==' '))
+				    i += 1;
+			      
+			      value_str += i;
+			}
+
+		  }
+
+		  vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+	    }
+
+	    use_count = 1;
+	    break;
+
+	  case 't':
+	  case 'T':
+	    if (ffsize != -1) {
+		  format_error_msg("Illegal format", leading_zero,
+				       fsize, ffsize, fmt);
+		  fsize = -1;
+	    }
+
+	    value.format = vpiDecStrVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    format_time(mcd, fsize, value.value.str, time_units);
+
+	    use_count = 1;
+	    break;
+
+	  case 'v':
+	  case 'V':
+	    value.format = vpiStrengthVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    format_strength(mcd, &value);
+
+	    use_count = 1;
+	    break;
+
+      }
+
+      return use_count;
+}
+
 /*
  * If $display discovers a string as a parameter, this function is
  * called to process it as a format string. I need the argv handle as
@@ -362,13 +694,9 @@ static void format_strength(unsigned int mcd, s_vpi_value*value)
 static int format_str(vpiHandle scope, unsigned int mcd,
 		      char*fmt, int argc, vpiHandle*argv)
 {
-      s_vpi_value value;
       char buf[256];
       char*cp = fmt;
-      char format_char = ' ';
       int idx;
-	/* Time units of the current scope. */
-      int time_units = vpi_get(vpiTimeUnit, scope);
 
       assert(fmt);
 
@@ -386,7 +714,6 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 	    } else if (*cp == '%') {
 		  int leading_zero = -1, fsize = -1, ffsize = -1;
-		  int do_arg = 0;
 
 		  cp += 1;
 		  if (*cp == '0')
@@ -397,271 +724,11 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cp += 1;
 			ffsize = strtoul(cp, &cp, 10);
 		  }
-		  switch (*cp) {
-		      case 0:
-			break;
 
-		      case 'b':
-		      case 'B':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 'b';
-			do_arg = 1;
-			value.format = vpiBinStrVal;
-			cp += 1;
-			break;
-
-		      case 'd':
-		      case 'D':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 'd';
-			do_arg = 1;
-			value.format = vpiDecStrVal;
-			cp += 1;
-			break;
-
-		      case 'f':
-		      case 'F':
-			format_char = 'f';
-			do_arg = 1;
-			value.format = vpiRealVal;
-			cp += 1;
-			break;
-
-		      case 'h':
-		      case 'H':
-		      case 'x':
-		      case 'X':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 'h';
-			do_arg = 1;
-			value.format = vpiHexStrVal;
-			cp += 1;
-			break;
-
-		      case 'c':
-		      case 'C':
-			if (fsize != -1 && ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			     ffsize = -1;
-			}
-			format_char = 'c';
-			do_arg = 1;
-			value.format = vpiStringVal;
-			cp += 1;
-			break;
-
-		      case 'm':
-		      case 'M':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			if (fsize == -1)
-			    fsize = 0;
-			assert(scope);
-			vpi_mcd_printf(mcd, "%*s",
-				       fsize,
-				       vpi_get_str(vpiFullName, scope));
-			cp += 1;
-			break;
-
-		      case 'o':
-		      case 'O':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 'o';
-			do_arg = 1;
-			value.format = vpiOctStrVal;
-			cp += 1;
-			break;
-
-		      case 's':
-		      case 'S':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 's';
-			do_arg = 1;
-			value.format = vpiStringVal;
-			cp += 1;
-			break;
-
-		      case 't':
-		      case 'T':
-			if (ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			}
-			format_char = 't';
-			do_arg = 1;
-			value.format = vpiDecStrVal;
-			cp += 1;
-			break;
-
-		      case 'v':
-		      case 'V':
-			format_char = 'v';
-			do_arg = 1;
-			value.format = vpiStrengthVal;
-			cp += 1;
-			break;
-
-		      case '%':
-			if (fsize != -1 && ffsize != -1) {
-			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			     fsize = -1;
-			     ffsize = -1;
-			}
-			vpi_mcd_printf(mcd, "%%");
-			cp += 1;
-			break;
-
-		      case 'e':
-		      case 'g':
-			  // new Verilog 2001 format specifiers...
-		      case 'l':
-		      case 'L':
-		      case 'u':
-		      case 'U':
-		      case 'z':
-		      case 'Z':
-		        vpi_printf("\nERROR: Unsupported format \"%s\"\n", fmt);
-			vpi_mcd_printf(mcd, "%c", *cp);
-			cp += 1;
-			break;
-
-		      default:
-		        vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
-			vpi_mcd_printf(mcd, "%c", *cp);
-			cp += 1;
-			break;
-		  }
-
-		    /* If we encountered a numeric format string, then
-		       grab the number value from the next parameter
-		       and display it in the requested format. */
-		  if (do_arg) {
-			if (idx >= argc) {
-			      vpi_printf("\ntoo few arguments for format %s\n",
-					 fmt);
-			} else {
-			      vpi_get_value(argv[idx], &value);
-			      if (value.format == vpiSuppressVal){
-				  vpi_printf("\nERROR: parameter does not have a printable value!\n");
-				  goto bail_out;
-			      }
-
-			      switch(format_char){
-			      case 'c':
-				vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
-				break;
-
-			      case 'f':
-				vpi_mcd_printf(mcd, "%f",
-					       value.value.real);
-				break;
-
-			      case 't':
-				format_time(mcd, fsize,
-					    value.value.str, time_units);
-				break;
-
-			      case 'd':
-				  if (fsize==-1){
-				      // simple %d parameter. 
-				      // Size is now determined by the width
-				      // of the vector or integer
-				      fsize = vpi_get_dec_size(argv[idx]);
-				  }
-
-				  vpi_mcd_printf(mcd, "%*s", fsize,
-						 value.value.str);
-				  break;
-
-			      case 'b':
-			      case 'h':
-			      case 'x':
-			      case 'o':
-				  if (fsize==-1){
-				      // For hex, oct and binary values, the string is already
-				      // prefixed with the correct number of zeros...
-				      vpi_mcd_printf(mcd, "%s", value.value.str);
-				  }
-				  else{ 
-				      char* value_str = value.value.str;
-
-				      if (leading_zero==1){
-					  // Strip away all leading zeros from string
-					  int i=0;
-					  while(i< (strlen(value_str)-1) && value_str[i]=='0')
-					      i++;
-					  
-					  value_str += i;
-				      }
-
-				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
-				  }
-				  break;
-
-			      case 's':
-				  if (fsize==-1){
-				      vpi_mcd_printf(mcd, "%s", value.value.str);
-				  }
-				  else{ 
-				      char* value_str = value.value.str;
-
-				      if (leading_zero==1){
-					  // Remove leading spaces from the value 
-					  // string *except* if the argument is a 
-					  // constant string... (hey, that's how 
-					  // the commerical guys behave...)
-
-					  if (!(vpi_get(vpiType, argv[idx]) == vpiConstant 
-					      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
-					      int i=0;
-					      // Strip away all leading zeros from string
-					      while(i< (strlen(value_str)-1) && value_str[i]==' ')
-						  i++;
-					  
-					      value_str += i;
-					  }
-
-				      }
-
-				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
-				  }
-				  break;
-
-			      case 'v':
-				format_strength(mcd, &value);
-				break;
-
-			      default:
-				    if (fsize > 0)
-					  vpi_mcd_printf(mcd, "%*s", fsize,
-							 value.value.str);
-				    else
-					  vpi_mcd_printf(mcd, "%s",
-							 value.value.str);
-			      }
-
-			bail_out:
-			      idx++;
-			}
-		  }
+		  idx += format_str_char(scope, mcd, leading_zero,
+					 fsize, ffsize, *cp,
+					 argc, argv, idx);
+		  cp += 1;
 
 	    } else {
 
@@ -1599,6 +1666,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.51  2003/02/04 04:06:36  steve
+ *  Rearrange format-string formatting code.
+ *
  * Revision 1.50  2003/02/01 05:49:13  steve
  *  Display $time and $realtime specially.
  *
