@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.71 2002/09/27 20:24:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.72 2002/11/07 03:12:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -71,17 +71,25 @@ unsigned bitchar_to_idx(char bit)
  * nexus.
  */
 
-static void set_to_lvariable(ivl_lval_t lval, unsigned idx, unsigned bit)
+static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
+			     unsigned bit, unsigned wid)
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
 
-      if (ivl_lval_mux(lval))
+      if (ivl_lval_mux(lval)) {
+	    assert(wid == 1);
 	    fprintf(vvp_out, "    %%set/x V_%s, %u, 0;\n",
 		    vvp_signal_label(sig), bit);
-      else
+      } else if (wid == 1) {
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
 		    vvp_signal_label(sig), idx+part_off, bit);
+
+      } else {
+	    fprintf(vvp_out, "    %%set/v V_%s[%u], %u, %u;\n",
+		    vvp_signal_label(sig), idx+part_off, bit, wid);
+
+      }
 }
 
 static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
@@ -200,14 +208,14 @@ static int show_stmt_assign(ivl_statement_t net)
 		  } else {
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      set_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]));
+					       bitchar_to_idx(bits[cur_rbit]), 1);
 
 			      cur_rbit += 1;
 			}
 
 			for (idx = bit_limit
 				   ; idx < ivl_lval_pins(lval) ; idx += 1)
-			      set_to_lvariable(lval, idx, 0);
+			      set_to_lvariable(lval, idx, 0, 1);
 		  }
 
 		  if (skip_set_flag) {
@@ -249,23 +257,45 @@ static int show_stmt_assign(ivl_statement_t net)
 	      if (bit_limit > ivl_lval_pins(lval))
 		    bit_limit = ivl_lval_pins(lval);
 
-	      for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+	      if (mem) {
+		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			  unsigned bidx = res.base < 4
+				? res.base
+				: (res.base+cur_rbit);
+			  set_to_memory(mem, idx, bidx);
+			  cur_rbit += 1;
+		    }
+
+		    for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
+			  set_to_memory(mem, idx, 0);
+
+	      } else {
+#if 0
+		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			  unsigned bidx = res.base < 4
+				? res.base
+				: (res.base+cur_rbit);
+			  set_to_lvariable(lval, idx, bidx, 1);
+
+			  cur_rbit += 1;
+		    }
+
+		    for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
+			  set_to_lvariable(lval, idx, 0, 1);
+#else
 		    unsigned bidx = res.base < 4
 			  ? res.base
 			  : (res.base+cur_rbit);
-		    if (mem)
-			  set_to_memory(mem, idx, bidx);
-		    else
-			  set_to_lvariable(lval, idx, bidx);
+		    set_to_lvariable(lval, 0, bidx, bit_limit);
+		    cur_rbit += bit_limit;
 
-		    cur_rbit += 1;
+		    if (bit_limit < ivl_lval_pins(lval)) {
+			  unsigned cnt = ivl_lval_pins(lval) - bit_limit;
+			  set_to_lvariable(lval, bit_limit, 0, cnt);
+		    }
+#endif
 	      }
 
-	      for (idx = bit_limit ; idx < ivl_lval_pins(lval) ; idx += 1)
-		    if (mem)
-			  set_to_memory(mem, idx, 0);
-		    else
-			  set_to_lvariable(lval, idx, 0);
 
 	      if (skip_set_flag) {
 		    fprintf(vvp_out, "t_%u ;\n", skip_set);
@@ -1345,6 +1375,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.72  2002/11/07 03:12:18  steve
+ *  Vectorize load from REG variables.
+ *
  * Revision 1.71  2002/09/27 20:24:42  steve
  *  Allow expression lookaside map to spam statements.
  *

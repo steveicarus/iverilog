@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.83 2002/11/06 05:41:37 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.84 2002/11/07 03:12:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1187,9 +1187,22 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
       if (swid > res.wid)
 	    swid = res.wid;
 
-      for (idx = 0 ;  idx < swid ;  idx += 1)
-	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, vvp_signal_label(sig), idx+lsi);
+      if (ivl_signal_type(sig) == IVL_SIT_REG) {
+	      /* If this is a REG (a variable) then I can do a vector
+		 read. */
+	    fprintf(vvp_out, "    %%load/v %u, V_%s[%u], %u;\n",
+		    res.base, vvp_signal_label(sig), lsi, swid);
+
+      } else {
+	      /* Vector reads of nets do not in general work because
+		 they are not really functors but references to
+		 scattered functors. So generate an array of loads. */
+	    for (idx = 0 ;  idx < swid ;  idx += 1) {
+		  fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
+			  res.base+idx, vvp_signal_label(sig), idx+lsi);
+	    }
+      }
+
 
 	/* Pad the signal value with zeros. */
       if (swid < res.wid)
@@ -1914,6 +1927,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.84  2002/11/07 03:12:17  steve
+ *  Vectorize load from REG variables.
+ *
  * Revision 1.83  2002/11/06 05:41:37  steve
  *  Concatenation can evaluate sub-expressions in place.
  *
