@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.7 2003/06/13 19:23:42 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.8 2003/06/14 01:16:17 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -58,8 +58,7 @@ double acc_fetch_itfarg(PLI_INT32 n, handle obj)
 
 double acc_fetch_tfarg(int n)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
-      return acc_fetch_itfarg_int(n, hand);
+      return acc_fetch_itfarg_int(n, vpi_handle(vpiSysTfCall,0));
 }
 
 
@@ -94,8 +93,7 @@ PLI_INT32 acc_fetch_itfarg_int(PLI_INT32 n, handle obj)
 
 PLI_INT32 acc_fetch_tfarg_int(PLI_INT32 n)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
-      return acc_fetch_itfarg_int(n, hand);
+      return acc_fetch_itfarg_int(n, vpi_handle(vpiSysTfCall,0));
 }
 
 
@@ -131,12 +129,14 @@ char *acc_fetch_itfarg_str(PLI_INT32 n, handle obj)
 
 char *acc_fetch_tfarg_str(PLI_INT32 n)
 {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
-      return acc_fetch_itfarg_str(n, hand);
+      return acc_fetch_itfarg_str(n, vpi_handle(vpiSysTfCall,0));
 }
 
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.8  2003/06/14 01:16:17  steve
+ *  ihand is system task, not scope.
+ *
  * Revision 1.7  2003/06/13 19:23:42  steve
  *  Add a bunch more PLI1 routines.
  *
