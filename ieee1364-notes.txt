@@ -139,6 +139,13 @@ match the range of the integer/time declaration, but the range of
 integers is unspecified. This, by the way, also applies to module
 ports.
 
+With the above in mind, I have decided to *allow* function and task
+ports to be declared with types, as long as the types are variable
+types, such ag reg or integer. Without this, there would be no
+portable way to pass integers into functions/tasks. The standard does
+not say it is allowed, but it doesn't *disallow* it, and other
+commercial tools seem to work similarly.
+
 
 * ROUNDING OF TIME
 
@@ -261,8 +268,11 @@ comparison operators or the reduction operators. Icarus Verilog will
 generate appropriate error messages.
 
 
-$Id: ieee1364-notes.txt,v 1.6 2001/02/12 16:48:04 steve Exp $
+$Id: ieee1364-notes.txt,v 1.7 2001/02/17 05:27:31 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.7  2001/02/17 05:27:31  steve
+ I allow function ports to have types.
+
 Revision 1.6  2001/02/12 16:48:04  steve
  Rant about bit widths.
 
