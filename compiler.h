@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.3 2000/03/17 21:50:25 steve Exp $"
+#ident "$Id: compiler.h,v 1.4 2000/08/20 04:13:56 steve Exp $"
 #endif
 
 /*
@@ -34,6 +34,25 @@
 #endif
 
 /*
+ * When doing dynamic linking, we need a uniform way to identify the
+ * symbol. Some compilers put leading _, some trailing _. The
+ * configure script figures out which is the local convention and
+ * defines NEED_LU and NEED_TU as required.
+ */
+#ifdef NEED_LU
+#define LU "_"
+#else
+#define LU ""
+#endif
+
+#ifdef NEED_TU
+#define TU "_"
+#else
+#define TU ""
+#endif
+
+
+/*
  * These are flags to enable various sorts of warnings. By default all
  * the warnings are of, the -W<list> parameter arranges for each to be
  * enabled. 
@@ -44,6 +63,10 @@ extern bool warn_implicit;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.4  2000/08/20 04:13:56  steve
+ *  Add ivl_target support for logic gates, and
+ *  make the interface more accessible.
+ *
  * Revision 1.3  2000/03/17 21:50:25  steve
  *  Switch to control warnings.
  *

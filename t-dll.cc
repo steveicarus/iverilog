@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.3 2000/08/19 18:12:42 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.4 2000/08/20 04:13:57 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
+# include  "compiler.h"
 # include  <dlfcn.h>
 
 struct ivl_design_s {
@@ -30,6 +31,10 @@ struct ivl_design_s {
 
 struct ivl_net_const_s {
       const NetConst*con_;
+};
+
+struct ivl_net_logic_s {
+      const NetLogic*dev_;
 };
 
 struct ivl_process_s {
@@ -95,13 +100,13 @@ bool dll_target::start_design(const Design*des)
       start_design_ = (start_design_f)dlsym(dll_, "target_start_design");
       end_design_   = (end_design_f)  dlsym(dll_, "target_end_design");
 
-      net_bufz_   = (net_bufz_f)  dlsym(dll_, "target_net_bufz");
-      net_const_  = (net_const_f) dlsym(dll_, "target_net_const");
-      net_event_  = (net_event_f) dlsym(dll_, "target_net_event");
-      net_logic_  = (net_logic_f) dlsym(dll_, "target_net_logic");
-      net_probe_  = (net_probe_f) dlsym(dll_, "target_net_probe");
-      process_    = (process_f)   dlsym(dll_, "target_process");
-      scope_      = (scope_f)     dlsym(dll_, "target_scope");
+      net_bufz_   = (net_bufz_f)  dlsym(dll_, LU "target_net_bufz" TU);
+      net_const_  = (net_const_f) dlsym(dll_, LU "target_net_const" TU);
+      net_event_  = (net_event_f) dlsym(dll_, LU "target_net_event" TU);
+      net_logic_  = (net_logic_f) dlsym(dll_, LU "target_net_logic" TU);
+      net_probe_  = (net_probe_f) dlsym(dll_, LU "target_net_probe" TU);
+      process_    = (process_f)   dlsym(dll_, LU "target_process" TU);
+      scope_      = (scope_f)     dlsym(dll_, LU "target_scope" TU);
 
       (start_design_)(&ivl_des);
       return true;
@@ -143,8 +148,11 @@ void dll_target::event(const NetEvent*net)
 
 void dll_target::logic(const NetLogic*net)
 {
+      struct ivl_net_logic_s obj;
+      obj.dev_ = net;
+
       if (net_logic_) {
-	    (net_logic_)(net->name().c_str(), 0);
+	    (net_logic_)(net->name().c_str(), &obj);
 
       } else {
 	    cerr << dll_path_ << ": internal error: target DLL lacks "
@@ -227,8 +235,24 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
       return des->des_->get_flag(key).c_str();
 }
 
+extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
+{
+      switch (net->dev_->type()) {
+	  case NetLogic::AND:
+	    return IVL_AND;
+	  case NetLogic::OR:
+	    return IVL_OR;
+      }
+      assert(0);
+      return IVL_AND;
+}
+
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.4  2000/08/20 04:13:57  steve
+ *  Add ivl_target support for logic gates, and
+ *  make the interface more accessible.
+ *
  * Revision 1.3  2000/08/19 18:12:42  steve
  *  Add target calls for scope, events and logic.
  *

@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.3
-Release: 2
+Version: 0.4
+Release: x
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/v0.3/verilog-0.3.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/v0.4/verilog-0.4.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -20,7 +20,7 @@ engineering formats, including a C++ simulation. It strives to be
 true to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-0.3
+%setup -n verilog-0.4
 
 %build
 ./configure --prefix=/usr
@@ -39,6 +39,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/ivlpp
 %attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/libvvm.a
+%attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_priv.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/vvm.h

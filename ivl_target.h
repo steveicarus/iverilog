@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.3 2000/08/19 18:12:42 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.4 2000/08/20 04:13:57 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -38,11 +38,25 @@ _BEGIN_DECL
  * module. The main program can load these modules and access the
  * functions within the loaded module to implement the backend
  * behavior.
+ *
+ * The interface is divided into two parts: the entry points within
+ * the core that are called by the module, and then entry points in
+ * the module that are called by the core. It is the latter that
+ * causes the module to be invoked in the first place, but most of the
+ * interesting information about the design is accessed through the
+ * various access functions that the modules calls into the core.
  */
 
 
-/* This is the opaque type of an entire design. This type is used when
-   requesting an operation that affects the entire netlist. */
+/* 
+ * In order to grab onto data in the design, the core passes cookies
+ * to the various functions of the module. These cookies can in turn
+ * be passed to access functions in the core to get more detailed
+ * information.
+ *
+ * The following typedefs list the various cookies that may be passed
+ * around.
+ */
 typedef struct ivl_design_s *ivl_design_t;
 
 typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
@@ -67,7 +81,23 @@ typedef struct ivl_scope_s    *ivl_scope_t;
 extern const char* ivl_get_flag(ivl_design_t, const char*key);
 
 
-  /* TARGET MODULE ENTRY POINTS */
+/* Given an ivl_net_logic_t cookie, get the type of the gate. */
+typedef enum ivl_logic_e { IVL_AND, IVL_BUF, IVL_BUFIF0, IVL_BUFIF1,
+			   IVL_NAND, IVL_NOR, IVL_NOT, IVL_NOTIF0,
+			   IVL_NOTIF1, IVL_OR, IVL_XNOR, IVL_XOR } ivl_logic_t;
+
+extern ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net);
+
+
+/* TARGET MODULE ENTRY POINTS
+ *
+ * The module entry points generally take a cookie and possibly a name
+ * as parameters. They use the cookie to get the required detailed
+ * information, and they do their job. The functions return an integer
+ * value which usually should be 0 for success, or less then 0 for any
+ * errors. How the error is interpreted depends on the function
+ * returning the error.
+ */
 
 /* target_start_design  (required)
 
@@ -150,6 +180,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.4  2000/08/20 04:13:57  steve
+ *  Add ivl_target support for logic gates, and
+ *  make the interface more accessible.
+ *
  * Revision 1.3  2000/08/19 18:12:42  steve
  *  Add target calls for scope, events and logic.
  *
