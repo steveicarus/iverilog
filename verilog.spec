@@ -44,6 +44,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/ivl/null.tgt
 %attr(-,root,root) /usr/lib/ivl/vvp.tgt
+%attr(-,root,root) /usr/lib/ivl/fpga.tgt
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %attr(-,root,root) /usr/lib/libvpi.a
 %attr(-,root,root) /usr/lib/libvvm.a
