@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.170 2000/09/02 20:54:21 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.171 2000/09/03 17:58:14 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -166,6 +166,7 @@ class target_vvm : public target_t {
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
               void udp_sequ_(ostream&os, const NetUDP*);
+      virtual void net_assign(const NetAssign_*) { }
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
@@ -3112,6 +3113,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.171  2000/09/03 17:58:14  steve
+ *  Properly ignore NetAssign_ objects.
+ *
  * Revision 1.170  2000/09/02 20:54:21  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *
