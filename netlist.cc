@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.42 1999/07/16 04:33:41 steve Exp $"
+#ident "$Id: netlist.cc,v 1.43 1999/07/17 03:08:31 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -693,6 +693,11 @@ NetESignal::NetESignal(NetNet*n)
       }
 }
 
+NetESignal::NetESignal(const string&n, unsigned np)
+: NetExpr(np), NetNode(n, np)
+{
+}
+
 NetESignal::~NetESignal()
 {
 }
@@ -1240,6 +1245,13 @@ NetESignal* Design::get_esignal(NetNet*net)
       return node;
 }
 
+void Design::set_esignal(NetESignal*sig)
+{
+      NetESignal*&node = esigs_[sig->name()];
+      assert( node == 0 );
+      node = sig;
+}
+
 void Design::add_process(NetProcTop*pro)
 {
       pro->next_ = procs_;
@@ -1304,6 +1316,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.43  1999/07/17 03:08:31  steve
+ *  part select in expressions.
+ *
  * Revision 1.42  1999/07/16 04:33:41  steve
  *  set_width for NetESubSignal.
  *

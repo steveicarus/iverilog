@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.45 1999/07/16 04:33:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.46 1999/07/17 03:08:32 steve Exp $"
 #endif
 
 /*
@@ -1156,6 +1156,7 @@ class NetESignal  : public NetExpr, public NetNode {
 
     public:
       NetESignal(NetNet*n);
+      NetESignal(const string&name, unsigned npins);
       ~NetESignal();
 
       const string& name() const { return NetNode::name(); }
@@ -1246,6 +1247,7 @@ class Design {
 
 	// ESIGNALS
       NetESignal* get_esignal(NetNet*net);
+      void set_esignal(NetESignal*sig);
 
 	// PROCESSES
       void add_process(NetProcTop*);
@@ -1340,6 +1342,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.46  1999/07/17 03:08:32  steve
+ *  part select in expressions.
+ *
  * Revision 1.45  1999/07/16 04:33:41  steve
  *  set_width for NetESubSignal.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.54 1999/07/13 04:08:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.55 1999/07/17 03:08:31 steve Exp $"
 #endif
 
 /*
@@ -949,19 +949,62 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
       if (NetNet*net = des->find_signal(path, text_)) {
+
+	      // If this is a part select of a signal, then make a new
+	      // temporary signal that is connected to just the
+	      // selected bits.
+	    if (lsb_) {
+		  assert(msb_);
+		  verinum*lsn = lsb_->eval_const(des, path);
+		  verinum*msn = msb_->eval_const(des, path);
+		  unsigned long lsv = lsn->as_ulong();
+		  unsigned long msv = msn->as_ulong();
+		  assert(msv >= lsv);
+		  unsigned long wid = msv-lsv+1;
+
+		  string tname = des->local_symbol(path);
+		  NetESignal*tmp = new NetESignal(tname, wid);
+		  tmp->set_line(*this);
+		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+			connect(tmp->pin(idx), net->pin(idx+lsv));
+
+		  des->add_node(tmp);
+		  des->set_esignal(tmp);
+		  return tmp;
+	    }
+
+	      // If the bit select is constant, then treat it similar
+	      // to the part select, so that I save the effort of
+	      // making a mux part in the netlist.
+	    verinum*msn;
+	    if (msb_ && (msn = msb_->eval_const(des, path))) {
+		  assert(idx_ == 0);
+		  unsigned long msv = msn->as_ulong();
+
+		  string tname = des->local_symbol(path);
+		  NetESignal*tmp = new NetESignal(tname, 1);
+		  tmp->set_line(*this);
+		  connect(tmp->pin(0), net->pin(msv));
+
+		  des->add_node(tmp);
+		  des->set_esignal(tmp);
+		  return tmp;
+	    }
+
 	    NetESignal*node = des->get_esignal(net);
 	    assert(idx_ == 0);
-	    if (lsb_) {
-		  cerr << get_line() << ": Sorry, I cannot yet elaborate "
-			"bit ranges in this context." << endl;
-		  des->errors += 1;
-	    }
+
+	      // Non-constant bit select? punt and make a subsignal
+	      // device to mux the bit in the net.
 	    if (msb_) {
 		  NetExpr*ex = msb_->elaborate_expr(des, path);
 		  NetESubSignal*ss = new NetESubSignal(node, ex);
 		  ss->set_line(*this);
 		  return ss;
 	    }
+
+	      // All else fails, return the signal itself as the
+	      // expression.
 	    assert(msb_ == 0);
 	    return node;
       }
@@ -1783,6 +1826,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.55  1999/07/17 03:08:31  steve
+ *  part select in expressions.
+ *
  * Revision 1.54  1999/07/13 04:08:26  steve
  *  Construct delayed assignment as an equivilent block.
  *
