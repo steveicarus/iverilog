@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.19 2000/11/18 04:10:37 steve Exp $"
+#ident "$Id: cprop.cc,v 1.20 2000/11/18 05:13:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -224,13 +224,142 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 	    count += 1;
 	    return;
 
+	  case NetLogic::NOR:
+	  case NetLogic::OR: {
+		unsigned top = obj->pin_count();
+		unsigned idx = 1;
+
+
+		  /* Eliminate all the 0 inputs. They have no effect
+		     on the output of an OR gate. */
+
+		while (idx < top) {
+		      if (! link_drivers_constant(obj->pin(idx))) {
+			    idx += 1;
+			    continue;
+		      }
+
+		      if (driven_value(obj->pin(idx)) == verinum::V0) {
+			    obj->pin(idx).unlink();
+			    top -= 1;
+			    if (idx < top) {
+				  connect(obj->pin(idx), obj->pin(top));
+				  obj->pin(top).unlink();
+			    }
+
+			    continue;
+		      }
+
+		      if (driven_value(obj->pin(idx)) != verinum::V1) {
+			    idx += 1;
+			    continue;
+		      }
+
+			/* Oops! We just stumbled on a driven-1 input
+			   to the OR gate. That means we can replace
+			   the whole bloody thing with a constant
+			   driver and exit now. */
+		      NetConst*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::OR:
+			    tmp = new NetConst(obj->name(), verinum::V1);
+			    break;
+			  case NetLogic::NOR:
+			    tmp = new NetConst(obj->name(), verinum::V0);
+			    break;
+			  default:
+			    assert(0);
+		      }
+
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If all the inputs were eliminated, then replace
+		     the gate with a constant 0 and I am done. */
+		if (top == 1) {
+		      NetConst*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::OR:
+			    tmp = new NetConst(obj->name(), verinum::V0);
+			    break;
+			  case NetLogic::NOR:
+			    tmp = new NetConst(obj->name(), verinum::V1);
+			    break;
+			  default:
+			    assert(0);
+		      }
+
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If we are down to only one input, then replace
+		     the OR with a BUF and exit now. */
+		if (top == 2) {
+		      NetLogic*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::OR:
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::BUF);
+			    break;
+			  case NetLogic::NOR:
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::NOT);
+			    break;
+			  default:
+			    assert(0);
+		      }
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+		      connect(obj->pin(1), tmp->pin(1));
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* Finally, this cleans up the gate by creating a
+		     new [N]OR gate that has the right number of
+		     inputs, connected in the right place. */
+		if (top < obj->pin_count()) {
+		      NetLogic*tmp = new NetLogic(obj->scope(),
+						  obj->name(), top,
+						  obj->type());
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      for (unsigned idx = 0 ;  idx < top ;  idx += 1)
+			    connect(tmp->pin(idx), obj->pin(idx));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+		break;
+	  }
+
 	  case NetLogic::XOR: {
 		unsigned top = obj->pin_count();
 		unsigned idx = 1;
 
 		  /* Eliminate all the 0 inputs. They have no effect
-		     on the output of an XOR gate. Don't remove the
-		     last input, though. */
+		     on the output of an XOR gate. */
 		while (idx < top) {
 		      if (! link_drivers_constant(obj->pin(idx))) {
 			    idx += 1;
@@ -372,7 +501,9 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      count += 1;
 		      return;
 		}
+		break;
 	    }
+
 	  default:
 	    break;
       }
@@ -531,6 +662,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.20  2000/11/18 05:13:27  steve
+ *  Thorough constant propagation for or and nor gates.
+ *
  * Revision 1.19  2000/11/18 04:10:37  steve
  *  Handle constant propagation through XOR gates,
  *  including reducing the gate to a constant,
