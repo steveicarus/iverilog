@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.38 2001/04/15 02:58:11 steve Exp $"
+#ident "$Id: t-dll.h,v 1.39 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -57,6 +57,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
+      void udp(const NetUDP*);
       void lpm_ff(const NetFF*);
       void net_assign(const NetAssign_*);
       bool net_const(const NetConst*);
@@ -251,6 +252,7 @@ struct ivl_net_const_s {
  */
 struct ivl_net_logic_s {
       ivl_logic_t type_;
+      ivl_udp_t udp;
 
       char* name_;
       ivl_scope_t scope_;
@@ -259,6 +261,18 @@ struct ivl_net_logic_s {
       ivl_nexus_t*pins_;
 };
 
+
+/*
+ * UDP definition.
+ */
+struct ivl_udp_s {
+      char* name;
+      unsigned nin;
+      unsigned short sequ;
+      char init;
+      unsigned nrows;
+      char **table; // zero terminated array of pointers
+};
 
 /*
  * The ivl_nexus_t is a single-bit link of some number of pins of
@@ -437,6 +451,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.39  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.38  2001/04/15 02:58:11  steve
  *  vvp support for <= with internal delay.
  *

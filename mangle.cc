@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: mangle.cc,v 1.5 2000/12/11 01:06:24 steve Exp $"
+#ident "$Id: mangle.cc,v 1.6 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -32,7 +32,7 @@ string mangle(const string&str)
       string tmp = str;
 
       while (tmp.length() > 0) {
-	    size_t pos = tmp.find_first_of(".<\\[]");
+	    size_t pos = tmp.find_first_of(".<\\[]/");
 	    if (pos > tmp.length())
 		  pos = tmp.length();
 
@@ -59,6 +59,10 @@ string mangle(const string&str)
 		  res << "$$";
 		  tmp = tmp.substr(1);
 		  break;
+		case '/':
+		  res << "$sl$";
+		  tmp = tmp.substr(1);
+		  break;
 		case '[':
 		  res << "$lb$";
 		  tmp = tmp.substr(1);
@@ -73,8 +77,37 @@ string mangle(const string&str)
       return res.str();
 }
 
+string stresc(const string&str)
+{
+      ostrstream res;
+      string tmp = str;
+
+      while (tmp.length() > 0) {
+	    size_t pos = tmp.find_first_of("\\");
+	    if (pos > tmp.length())
+		  pos = tmp.length();
+
+	    res << tmp.substr(0, pos);
+	    if (pos >= tmp.length())
+		  break;
+
+	    tmp = tmp.substr(pos);
+	    switch (tmp[0]) {
+		case '\\':
+		  res << "\\\\";
+		  tmp = tmp.substr(1);
+		  break;
+	    }
+      }
+      res << ends;
+      return res.str();
+}
+
 /*
  * $Log: mangle.cc,v $
+ * Revision 1.6  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.5  2000/12/11 01:06:24  steve
  *  Mangle [] characters. (PR#67)
  *

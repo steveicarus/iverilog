@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.159 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.160 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2322,154 +2322,10 @@ const NetProc*NetTaskDef::proc() const
 }
 
 /*
- * This method takes the input string, which contains exactly one
- * edge, and connects it to the correct output state. The output state
- * will be generated if needed, and the value compared.
- */
-bool NetUDP::set_sequ_(const string&input, char output)
-{
-      if (output == '-')
-	    output = input[0];
-
-      string frm = input;
-      string to  = input;
-      to[0] = output;
-
-      unsigned edge = frm.find_first_not_of("01x");
-      assert(frm.find_last_not_of("01x") == edge);
-
-      switch (input[edge]) {
-	  case 'r':
-	    frm[edge] = '0';
-	    to[edge] = '1';
-	    break;
-	  case 'R':
-	    frm[edge] = 'x';
-	    to[edge] = '1';
-	    break;
-	  case 'f':
-	    frm[edge] = '1';
-	    to[edge] = '0';
-	    break;
-	  case 'F':
-	    frm[edge] = 'x';
-	    to[edge] = '0';
-	    break;
-	  case 'P':
-	    frm[edge] = '0';
-	    to[edge] = 'x';
-	    break;
-	  case 'N':
-	    frm[edge] = '1';
-	    to[edge] = 'x';
-	    break;
-	  default:
-	    assert(0);
-      }
-
-      state_t_*sfrm = find_state_(frm);
-      state_t_*sto  = find_state_(to);
-
-      switch (to[edge]) {
-	  case '0':
-	      // Notice that I might have caught this edge already
-	    if (sfrm->pins[edge].zer != sto) {
-		  assert(sfrm->pins[edge].zer == 0);
-		  sfrm->pins[edge].zer = sto;
-	    }
-	    break;
-	  case '1':
-	      // Notice that I might have caught this edge already
-	    if (sfrm->pins[edge].one != sto) {
-		    assert(sfrm->pins[edge].one == 0);
-		    sfrm->pins[edge].one = sto;
-	    }
-	    break;
-	  case 'x':
-	      // Notice that I might have caught this edge already
-	    if (sfrm->pins[edge].xxx != sto) {
-		    assert(sfrm->pins[edge].xxx == 0);
-		    sfrm->pins[edge].xxx = sto;
-	    }
-	    break;
-      }
-
-      return true;
-}
-
-bool NetUDP::sequ_glob_(string input, char output)
-{
-      for (unsigned idx = 0 ;  idx < input.length() ;  idx += 1)
-	    switch (input[idx]) {
-		case '0':
-		case '1':
-		case 'x':
-		case 'r':
-		case 'R':
-		case 'f':
-		case 'F':
-		case 'P':
-		case 'N':
-		  break;
-
-		case '?': // Iterate over all the levels
-		  input[idx] = '0';
-		  sequ_glob_(input, output);
-		  input[idx] = '1';
-		  sequ_glob_(input, output);
-		  input[idx] = 'x';
-		  sequ_glob_(input, output);
-		  return true;
-
-		case 'n': // Iterate over (n) edges
-		  input[idx] = 'f';
-		  sequ_glob_(input, output);
-		  input[idx] = 'F';
-		  sequ_glob_(input, output);
-		  input[idx] = 'N';
-		  sequ_glob_(input, output);
-		  return true;
-
-		case 'p': // Iterate over (p) edges
-		  input[idx] = 'r';
-		  sequ_glob_(input, output);
-		  input[idx] = 'R';
-		  sequ_glob_(input, output);
-		  input[idx] = 'P';
-		  sequ_glob_(input, output);
-		  return true;
-
-		case '_': // Iterate over (?0) edges
-		  input[idx] = 'f';
-		  sequ_glob_(input, output);
-		  input[idx] = 'F';
-		  sequ_glob_(input, output);
-		  return true;
-
-		case '*': // Iterate over all the edges
-		  input[idx] = 'r';
-		  sequ_glob_(input, output);
-		  input[idx] = 'R';
-		  sequ_glob_(input, output);
-		  input[idx] = 'f';
-		  sequ_glob_(input, output);
-		  input[idx] = 'F';
-		  sequ_glob_(input, output);
-		  input[idx] = 'P';
-		  sequ_glob_(input, output);
-		  input[idx] = 'N';
-		  sequ_glob_(input, output);
-		  return true;
-
-		default:
-		  assert(0);
-	    }
-
-      return set_sequ_(input, output);
-}
-
-/*
  * $Log: netlist.cc,v $
+ * Revision 1.160  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.159  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

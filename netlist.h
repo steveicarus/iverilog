@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.202 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.203 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 /*
@@ -1025,12 +1025,6 @@ class NetLogic  : public NetNode {
  * In any case, pin 0 is an output, and all the remaining pins are
  * inputs.
  *
- * The sequential truth table is canonically represented as a finite state
- * machine with the current state representing the inputs and the
- * current output, and the next state carrying the new output value to
- * use. All the outgoing transitions from a state represent a single
- * edge.
- *
  * Set_table takes as input a string with one letter per pin. The
  * parser translates the written sequences to one of these. The
  * valid characters are:
@@ -1046,8 +1040,8 @@ class NetLogic  : public NetNode {
  * It also takes one of the following glob letters to represent more
  * then one item.
  *
- *      p   -- 01, 0x or x1
- *      n   -- 10, 1x or x0
+ *      p   -- 01, 0x or x1 // check this with the lexer
+ *      n   -- 10, 1x or x0 // check this with the lexer
  *      ?   -- 0, 1, or x
  *      *   -- any edge
  *      +   -- 01 or x1
@@ -1068,20 +1062,15 @@ class NetLogic  : public NetNode {
  * 1 are listed.
  *
  */
-class NetUDP_COMB  : public NetNode {
+#include "PUdp.h"
+
+class NetUDP  : public NetNode {
 
     public:
-      explicit NetUDP_COMB(const string&n, unsigned pins, bool sequ = false);
+      explicit NetUDP(const string&n, unsigned pins, PUdp*u);
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
-
-	/* append a new truth table row. */
-      bool set_table(const string&input, char output);
-
-	/* After the primitive is built up, this method is called to
-	   clean up redundancies, and possibly optimize the table. */
-      void cleanup_table();
 
 	/* Use these methods to scan the truth table of the
 	   device. "first" returns the first item in the table, and
@@ -1089,77 +1078,18 @@ class NetUDP_COMB  : public NetNode {
 	   return false when the scan is done. */
       bool first(string&inp, char&out) const;
       bool next(string&inp, char&out) const;
+      unsigned rows() const { return udp->tinput.count(); }
 
-      bool is_sequential() const { return sequential_; }
-
-    protected:
-
-	// A combinational primitive is more simply represented as a
-	// simple map of input signals to a single output.
-      typedef map<string,char> CM_;
-      CM_ cm_;
+      unsigned nin() const { return pin_count()-1; }
+      bool is_sequential() const { return udp->sequential; }
+      string udp_name() const { return udp->name_; }
+      char get_initial() const;
 
     private:
-
-      bool sequential_;
-
-      mutable CM_::const_iterator idx_;
+      mutable unsigned table_idx;
+      PUdp *udp;
 };
 
-
-
-class NetUDP  : public NetUDP_COMB {
-
-    public:
-      explicit NetUDP(const string&n, unsigned pins, bool sequ = true)
-	: NetUDP_COMB(n, pins, sequ), init_('x') {};
-      
-      virtual bool emit_node( struct target_t*) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
-
-	/* return false if the entry conflicts with an existing
-	   entry. In any case, the new output overrides. */
-      bool set_table(const string&input, char output);
-      void cleanup_table();
-
-	/* Return the next output from the passed state. Each letter
-	   of the input string represents the pin of the same
-	   position. */
-      char table_lookup(const string&from, char to, unsigned pin) const;
-
-      void set_initial(char);
-      char get_initial() const { return init_; }
-
-    private:
-      char init_;
-
-      struct state_t_;
-      struct pin_t_ {
-	    state_t_*zer;
-	    state_t_*one;
-	    state_t_*xxx;
-
-	    explicit pin_t_() : zer(0), one(0), xxx(0) { }
-      };
-
-      struct state_t_ {
-	    char out;
-	    pin_t_*pins;
-
-	    state_t_(unsigned n) : out(0), pins(new pin_t_[n]) {}
-	    ~state_t_() { delete[]pins; }
-      };
-
-      typedef map<string,state_t_*> FSM_;
-      FSM_ fsm_;
-      bool set_sequ_(const string&in, char out);
-      bool sequ_glob_(string, char out);
-
-      state_t_*find_state_(const string&);
-
-      void dump_sequ_(ostream&o, unsigned ind) const;
-      void dump_comb_(ostream&o, unsigned ind) const;
-};
 
 /* =========
  * A process is a behavioral-model description. A process is a
@@ -2872,6 +2802,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.203  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.202  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.58 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: emit.cc,v 1.59 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 /*
@@ -38,12 +38,6 @@ bool NetNode::emit_node(struct target_t*tgt) const
 bool NetLogic::emit_node(struct target_t*tgt) const
 {
       tgt->logic(this);
-      return true;
-}
-
-bool NetUDP_COMB::emit_node(struct target_t*tgt) const
-{
-      tgt->udp_comb(this);
       return true;
 }
 
@@ -478,6 +472,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.59  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.58  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

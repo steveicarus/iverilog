@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.52 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: target.cc,v 1.53 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -70,12 +70,6 @@ void target_t::udp(const NetUDP*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled UDP." << endl;
-}
-
-void target_t::udp_comb(const NetUDP_COMB*)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled combinational primitive." << endl;
 }
 
 void target_t::lpm_add_sub(const NetAddSub*)
@@ -389,6 +383,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.53  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.52  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

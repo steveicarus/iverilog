@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.39 2001/04/21 00:55:46 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.40 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -334,6 +334,49 @@ extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
       assert(pin < net->npins_);
       return net->pins_[pin];
 }
+
+extern "C" ivl_udp_t ivl_logic_udp(ivl_net_logic_t net)
+{
+      assert(net->type_ == IVL_LO_UDP);
+      assert(net->udp);
+      return net->udp;
+}
+
+
+extern "C" unsigned    ivl_udp_sequ(ivl_udp_t net)
+{
+      return net->sequ;
+}
+
+extern "C" unsigned    ivl_udp_nin(ivl_udp_t net)
+{
+      return net->nin;
+}
+
+extern "C" unsigned    ivl_udp_init(ivl_udp_t net)
+{
+      return net->init;
+}
+
+extern "C" const char* ivl_udp_row(ivl_udp_t net, unsigned idx)
+{
+      assert(idx < net->nrows);
+      assert(net->table);
+      assert(net->table[idx]);
+      return net->table[idx];
+}
+
+extern "C" unsigned    ivl_udp_rows(ivl_udp_t net)
+{
+      return net->nrows;
+}
+
+extern "C" const char* ivl_udp_name(ivl_udp_t net)
+{
+      assert(net->name);
+      return net->name;
+}
+
 
 extern "C" ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net)
 {
@@ -906,6 +949,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.40  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.39  2001/04/21 00:55:46  steve
  *  Generate code for disable.
  *

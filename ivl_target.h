@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.53 2001/04/21 00:55:46 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.54 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -135,6 +135,7 @@ typedef struct ivl_lpm_ff_s   *ivl_lpm_ff_t;
 typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
+typedef struct ivl_udp_s      *ivl_udp_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
@@ -184,7 +185,9 @@ typedef enum ivl_logic_e {
       IVL_LO_RPMOS,
       IVL_LO_PMOS,
       IVL_LO_XNOR,
-      IVL_LO_XOR
+      IVL_LO_XOR,
+
+      IVL_LO_UDP
 } ivl_logic_t;
 
 /* This is the type of an LPM object. */
@@ -421,6 +424,19 @@ extern const char* ivl_logic_basename(ivl_net_logic_t net);
 extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
+extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
+
+/* UDP
+ * 
+ */
+
+extern unsigned    ivl_udp_sequ(ivl_udp_t net);
+extern unsigned    ivl_udp_nin(ivl_udp_t net);
+extern unsigned    ivl_udp_init(ivl_udp_t net);
+extern const char* ivl_udp_row(ivl_udp_t net, unsigned idx);
+extern unsigned    ivl_udp_rows(ivl_udp_t net);
+extern const char* ivl_udp_name(ivl_udp_t net);
+
 
 /* LPM
  * These functions support access to the properties of LPM devices.
@@ -765,6 +781,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.54  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.53  2001/04/21 00:55:46  steve
  *  Generate code for disable.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.51 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: target.h,v 1.52 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -87,7 +87,6 @@ struct target_t {
       virtual void logic(const NetLogic*);
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
-      virtual void udp_comb(const NetUDP_COMB*);
       virtual void net_assign(const NetAssign_*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
@@ -154,12 +153,19 @@ extern bool emit(const Design*des, const char*type);
    used by most any language. */
 extern string mangle(const string&str);
 
+/* This function takes a string and produces an escaped version that can be
+   used inside a string constant for a C++ compiler. */
+extern string stresc(const string&str);
+
 /* This is the table of supported output targets. It is a null
    terminated array of pointers to targets. */
 extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.52  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.51  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.33 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.34 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -409,6 +409,66 @@ void dll_target::logic(const NetLogic*net)
       scope_add_logic(scope, obj);
 }
 
+void dll_target::udp(const NetUDP*net)
+{
+      struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
+
+      obj->type_ = IVL_LO_UDP;
+
+      static map<string,ivl_udp_t> udps;
+
+      ivl_udp_t u = udps[net->udp_name()];
+      if (!u)
+	{
+	  u = new ivl_udp_s;
+	  u->nrows = net->rows();
+	  u->table = (char**)malloc((u->nrows+1)*sizeof(char*));
+	  assert(u->table);
+	  u->table[u->nrows] = 0x0;
+	  u->nin = net->nin();
+	  u->sequ = net->is_sequential();
+	  if (u->sequ)
+	    u->init = net->get_initial();
+	  u->name = strdup(net->udp_name().c_str());
+	  string inp;
+	  char out;
+	  int i = 0;
+	  if (net->first(inp, out))
+	    do
+	      {
+		string tt = inp+out;
+		u->table[i++] = strdup(tt.c_str());
+	      } while (net->next(inp, out));
+
+	  udps[net->udp_name()] = u;
+	}
+      
+      obj->udp = u;
+      
+      // Some duplication of code here, see: dll_target::logic()
+
+        /* Connect all the ivl_nexus_t objects to the pins of the
+	   device. */
+
+      obj->npins_ = net->pin_count();
+      obj->pins_ = new ivl_nexus_t[obj->npins_];
+      for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
+	    const Nexus*nex = net->pin(idx).nexus();
+	    assert(nex->t_cookie());
+	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_log_add(obj->pins_[idx], obj, idx);
+      }
+
+      assert(net->scope());
+      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      assert(scope);
+
+      obj->scope_= scope;
+      obj->name_ = strdup(net->name());
+
+      scope_add_logic(scope, obj);
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_ff_t obj = new struct ivl_lpm_ff_s;
@@ -746,6 +806,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.34  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.33  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

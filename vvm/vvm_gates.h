@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.70 2001/01/16 03:57:46 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.71 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -841,6 +841,7 @@ class vvm_udp_sequ1 : public vvm_udp_comb
  public:
   explicit vvm_udp_sequ1(unsigned w, const char*t)
     : vvm_udp_comb(w+1, t) {};
+  void init_I(unsigned idx, vpip_bit_t val);
  private:
   void take_value(unsigned key, vpip_bit_t val);
 };
@@ -959,6 +960,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.71  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.70  2001/01/16 03:57:46  steve
  *  Get rid of gate templates.
  *

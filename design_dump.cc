@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.111 2001/02/17 05:13:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.112 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 /*
@@ -367,76 +367,11 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "endtask" << endl;
 }
 
-void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
-{
-      string tmp = "";
-      for (unsigned idx = 0 ;  idx < ind ;  idx += 1)
-	    tmp += " ";
-
-      o << tmp << "Sequential UDP" << " #(" << rise_time() <<
-	    "," << fall_time() << "," << decay_time() << ") " << name() <<
-	    endl;
-
-      for (FSM_::const_iterator ent = fsm_.begin()
-		 ; ent != fsm_.end() ;  ent++) {
-	    o << setw(ind+6) << "" << (*ent).first << " -->";
-
-	    state_t_*st = (*ent).second;
-	    assert((*ent).first[0] == st->out);
-	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
-		  string tmp = (*ent).first;
-		  if (st->pins[idx].zer) {
-			tmp[0] = st->pins[idx].zer->out;
-			tmp[idx] = '0';
-			o << " " << tmp;
-		  }
-
-		  if (st->pins[idx].one) {
-			tmp[0] = st->pins[idx].one->out;
-			tmp[idx] = '1';
-			o << " " << tmp;
-		  }
-
-		  if (st->pins[idx].xxx) {
-			tmp[0] = st->pins[idx].xxx->out;
-			tmp[idx] = 'x';
-			o << " " << tmp;
-		  }
-	    }
-
-	    o << endl;
-      }
-
-      o << setw(ind+6) << ""  << "initial value == " << init_ << endl;
-
-      dump_node_pins(o, ind+4);
-      dump_obj_attr(o, ind+4);
-}
-
-void NetUDP::dump_comb_(ostream&o, unsigned ind) const
-{
-      assert(0);
-}
-
 void NetUDP::dump_node(ostream&o, unsigned ind) const
 {
-      if (is_sequential())
-	    dump_sequ_(o, ind);
-      else
-	    dump_comb_(o, ind);
-}
-
-void NetUDP_COMB::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "Combinational primitive: ";
+      o << setw(ind) << "" << "UDP (" << udp_name() << "): ";
       o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
 	    ") " << name() << endl;
-
-      for (map<string,char>::const_iterator ent = cm_.begin()
-		 ; ent != cm_.end() ;  ent++) {
-	    o << setw(ind+6) << "" << (*ent).first << " --> " <<
-		  (*ent).second << endl;
-      }
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -1001,6 +936,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.112  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.111  2001/02/17 05:13:36  steve
  *  Check that the port really exists here.
  *

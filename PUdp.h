@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PUdp.h,v 1.4 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PUdp.h,v 1.5 2001/04/22 23:09:45 steve Exp $"
 #endif
 
 # include  <map>
@@ -72,8 +72,8 @@ class PUdp {
 
       void dump(ostream&out) const;
 
-    private:
       const string name_;
+    private:
 
     private: // Not implemented
       PUdp(const PUdp&);
@@ -82,6 +82,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.5  2001/04/22 23:09:45  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.4  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

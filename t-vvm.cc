@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.205 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.206 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -166,7 +166,6 @@ class target_vvm : public target_t {
       virtual void logic(const NetLogic*);
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
-      virtual void udp_comb(const NetUDP_COMB*);
       virtual void net_assign(const NetAssign_*) { }
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
@@ -499,7 +498,7 @@ void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
       tgt_->defn << "      vpip_bit_t " << retval << "_bits["<<retwid<<"];"
 		 << endl;
 
-      tgt_->defn << "      vpip_callfunc(\"" << fun->name() << "\", "
+      tgt_->defn << "      vpip_callfunc(\"" << stresc(fun->name()) << "\", "
 		 << retwid << ", " << retval<<"_bits";
 
       if (fun->nparms() == 0)
@@ -1031,7 +1030,7 @@ void target_vvm::scope(const NetScope*scope)
       }
 
       init_code << "      vpip_make_scope(&" << hname << ", " <<
-	    type_code << ", \"" << scope->name() << "\");" << endl;
+	    type_code << ", \"" << stresc(scope->name()) << "\");" << endl;
 
       if (const NetScope*par = scope->parent()) {
 	    string pname = mangle(par->name()) + "_scope";
@@ -1149,7 +1148,7 @@ int target_vvm::end_design(const Design*mod)
 		  name = vpi_module_list;
 		  vpi_module_list = "";
 	    }
-	    out << "      vvm_load_vpi_module(\"" << name << ".vpi\");" << endl;
+	    out << "      vvm_load_vpi_module(\"" << stresc(name) << ".vpi\");" << endl;
       }
       out << "      design_init();" << endl;
       out << "      design_start();" << endl;
@@ -1269,7 +1268,7 @@ void target_vvm::signal(const NetNet*sig)
       signal_counter += 1;
 
       init_code << "      vpip_make_reg(&" << net_name
-		<< ", \"" << sig->name() << "\", signal_bit_table+"
+		<< ", \"" << stresc(sig->name()) << "\", signal_bit_table+"
 		<< signal_bit_counter << ", " << sig->pin_count()
 		<< ", " << (sig->get_signed()? "1" : "0") << ");" << endl;
 
@@ -1353,7 +1352,7 @@ void target_vvm::memory(const NetMemory*mem)
       out << "static vvm_memory_t " << mname << ";"
 	    " /* " << mem->name() << " */" << endl;
       init_code << "      vpip_make_memory(&" << mname << ", \"" <<
-	    mem->name() << "\", " << mem->width() << ", " <<
+	    stresc(mem->name()) << "\", " << mem->width() << ", " <<
 	    mem->count() << ");" << endl;
 }
 
@@ -2087,12 +2086,14 @@ bool target_vvm::bufz(const NetBUFZ*gate)
       return true;
 }
 
-void target_vvm::udp_comb(const NetUDP_COMB*gate)
+void target_vvm::udp(const NetUDP*gate)
 {
       string mname = mangle(gate->name());
       string nexus;
       unsigned ncode;
 
+      // TODO: maintain a map<string,PUdp*> of tables already 
+      // emited, and only print the table for each UDP once.
 
       out << "static const char*" << mname << "_ctab =" << endl;
 
@@ -2130,12 +2131,6 @@ void target_vvm::udp_comb(const NetUDP_COMB*gate)
 
 }
 
-
-void target_vvm::udp(const NetUDP*gate)
-{
-      assert(gate->is_sequential());
-      udp_comb(gate);
-}
 
 void target_vvm::net_case_cmp(const NetCaseCmp*gate)
 {
@@ -3402,7 +3397,7 @@ void target_vvm::proc_stask(const NetSTask*net)
 	   parameters. we don't need a parameter array for this. */
 
       if (net->nparms() == 0) {
-	    defn << "      vpip_calltask(thr->scope, \"" << net->name()
+	    defn << "      vpip_calltask(thr->scope, \"" << stresc(net->name())
 		 << "\", 0, 0);" << endl;
 	    defn << "      if (vpip_finished()) return false;" << endl;
 	    return;
@@ -3425,7 +3420,7 @@ void target_vvm::proc_stask(const NetSTask*net)
 	       << endl;
       }
 
-      defn << "      vpip_calltask(thr->scope, \"" << net->name() << "\", "
+      defn << "      vpip_calltask(thr->scope, \"" << stresc(net->name()) << "\", "
 	   << net->nparms() << ", " << ptmp << ");" << endl;
       defn << "      if (vpip_finished()) return false;" << endl;
 }
@@ -3639,6 +3634,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.206  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.205  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.18 2000/05/06 15:41:56 steve Exp $"
+#ident "$Id: PGate.h,v 1.19 2001/04/22 23:09:45 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -211,14 +211,16 @@ class PGModule  : public PGate {
       PExpr*lsb_;
 
       void elaborate_mod_(Design*, Module*mod, const string&path) const;
-      void elaborate_sudp_(Design*, PUdp  *udp, const string&path) const;
-      void elaborate_cudp_(Design*, PUdp  *udp, const string&path) const;
+      void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.19  2001/04/22 23:09:45  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.18  2000/05/06 15:41:56  steve
  *  Carry assignment strength to pform.
  *

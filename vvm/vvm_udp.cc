@@ -17,10 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_udp.cc,v 1.2 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: vvm_udp.cc,v 1.3 2001/04/22 23:09:46 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
+
+#ifdef UDP_DEBUG
+#include <iostream>
+#endif
 
 vvm_udp_comb::vvm_udp_comb(unsigned w, const char*t)
 : vvm_1bit_out(0), width_(w), table_(t)
@@ -32,6 +36,11 @@ vvm_udp_comb::vvm_udp_comb(unsigned w, const char*t)
 vvm_udp_comb::~vvm_udp_comb()
 {
       delete[]ibits_;
+}
+
+void vvm_udp_sequ1::init_I(unsigned idx, vpip_bit_t val)
+{
+  vvm_udp_comb::init_I(idx, val);
 }
 
 void vvm_udp_comb::init_I(unsigned idx, vpip_bit_t val)
@@ -50,6 +59,12 @@ void vvm_udp_sequ1::take_value(unsigned key, vpip_bit_t val)
   assert(key < width_ - 1);
   ibits_[0] = obit_;
   vvm_udp_comb::take_value(key+1, val);
+#ifdef UDP_DEBUG
+  static int max_deb = UDP_DEBUG;
+  if (max_deb>0)
+    if (--max_deb<1000)
+      cerr<<"sUDP(\""<<table_<<"\", \""<<ibits_<<"\")=\""<<obit_<<"\""<<endl;
+#endif
 }
 
 void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
@@ -103,12 +118,20 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 			    if (old_bit=='x' && new_bit=='0')
 			      continue;
 			    break;
+			  case 'p':
+			    if (old_bit=='0')
+			      continue;
+			    break;
+			  case 'n':
+			    if (old_bit=='1')
+			      continue;
+			    break;
 			  case 'P':
-			    if (old_bit=='1' && new_bit=='x')
+			    if (old_bit=='0' && new_bit=='x')
 			      continue;
 			    break;
 			  case 'N':
-			    if (old_bit=='0' && new_bit=='x')
+			    if (old_bit=='1' && new_bit=='x')
 			      continue;
 			    break;
 			  }
@@ -144,13 +167,19 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 	      }
       }
 
-      output(StX);
-      obit_ = 'x';
+      if (obit_ != 'x')
+	{
+	  output(StX);
+	  obit_ = 'x';
+	}
 }
 
 
 /*
  * $Log: vvm_udp.cc,v $
+ * Revision 1.3  2001/04/22 23:09:46  steve
+ *  More UDP consolidation from Stephan Boettcher.
+ *
  * Revision 1.2  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *
