@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.13 2000/11/05 06:05:59 steve Exp $"
+#ident "$Id: Module.cc,v 1.14 2000/11/15 20:31:05 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -76,11 +76,12 @@ unsigned Module::port_count() const
 const svector<PEIdent*>& Module::get_port(unsigned idx) const
 {
       assert(idx < ports_.count());
+      static svector<PEIdent*> zero;
 
       if (ports_[idx])
 	    return ports_[idx]->expr;
       else
-	    return svector<PEIdent*>();
+	    return zero;
 }
 
 unsigned Module::find_port(const string&name) const
@@ -134,6 +135,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.14  2000/11/15 20:31:05  steve
+ *  Fix warning about temporaries.
+ *
  * Revision 1.13  2000/11/05 06:05:59  steve
  *  Handle connectsion to internally unconnected modules (PR#38)
  *
