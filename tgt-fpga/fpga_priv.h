@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga_priv.h,v 1.7 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: fpga_priv.h,v 1.8 2003/07/02 00:48:03 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -50,44 +50,12 @@ extern void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
 
 extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
 
-/*
- * These are generic EDIF functions that EDIF targets use.
- *
- * edif_show_header_generic
- *   This function draws the header part of the EDIF file, including
- *   the ports of the module, if there are any. Also include the
- *   library string where the external library would go.
- *
- * edif_show_footer
- *   This completes the net items, draws the constant references, then
- *   writes out the final declarations of the EDIF file.
- *
- * edif_set_nexus_joint
- *   This stores joint information in the nexus, and save the nexus in
- *   a list the edif_show_footer function later uses that list to draw
- *   all the join records.
- *
- * edif_show_generic_dff
- *   The edif DFF is an FDCE. This function draws an FDCE for the lpm
- *   DFF of the design.
- *
- * edif_uref
- *   This global variable keeps count of the devices drawn. Since the
- *   EDIF format has very simple names, each device instead has a uref
- *   and a name of the form U%u. A (rename U% "foo") preserves the
- *   real name.
- */
-extern void edif_show_header_generic(ivl_design_t des, const char*library);
-extern void edif_show_footer(ivl_design_t des);
-extern void edif_set_nexus_joint(ivl_nexus_t nex, const char*joint);
-
-extern void edif_show_generic_dff(ivl_lpm_t net);
-
-extern unsigned edif_uref;
-
 
 /*
  * $Log: fpga_priv.h,v $
+ * Revision 1.8  2003/07/02 00:48:03  steve
+ *  No longer export generic-edif functions.
+ *
  * Revision 1.7  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *

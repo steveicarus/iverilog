@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.15 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.16 2003/07/02 00:48:03 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -36,9 +36,9 @@ struct nexus_recall {
 };
 static struct nexus_recall*net_list = 0;
 
-unsigned edif_uref = 0;
+static unsigned edif_uref = 0;
 
-void edif_set_nexus_joint(ivl_nexus_t nex, const char*joint)
+static void edif_set_nexus_joint(ivl_nexus_t nex, const char*joint)
 {
       size_t newlen;
       struct nexus_recall*rec;
@@ -115,7 +115,7 @@ static void show_root_ports_edif(ivl_scope_t root)
 }
 
 
-void edif_show_header_generic(ivl_design_t des, const char*library)
+static void edif_show_header_generic(ivl_design_t des, const char*library)
 {
       ivl_scope_t root = ivl_design_root(des);
 
@@ -262,7 +262,7 @@ static void edif_show_consts(ivl_design_t des)
 
 }
 
-void edif_show_footer(ivl_design_t des)
+static void edif_show_footer(ivl_design_t des)
 {
       unsigned nref = 0;
       struct nexus_recall*cur;
@@ -387,7 +387,7 @@ static void edif_show_logic(ivl_net_logic_t net)
       }
 }
 
-void edif_show_generic_dff(ivl_lpm_t net)
+static void edif_show_generic_dff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       char jbuf[1024];
@@ -476,6 +476,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.16  2003/07/02 00:48:03  steve
+ *  No longer export generic-edif functions.
+ *
  * Revision 1.15  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *
