@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.14 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.15 2000/01/02 19:39:03 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -936,8 +936,142 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       return sig;
 }
 
+NetNet* PEUnary::elaborate_net(Design*des, const string&path,
+			       unsigned width,
+			       unsigned long rise,
+			       unsigned long fall,
+			       unsigned long decay) const
+{
+      NetNet* sub_sig = expr_->elaborate_net(des, path, width,
+					     0, 0, 0);
+      if (sub_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
+      assert(sub_sig);
+
+      NetNet* sig;
+      NetLogic*gate;
+      switch (op_) {
+	  case '~': // Bitwise NOT
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
+			     sub_sig->pin_count());
+	    sig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 2,
+				      NetLogic::NOT);
+		  connect(gate->pin(1), sub_sig->pin(idx));
+		  connect(gate->pin(0), sig->pin(idx));
+		  des->add_node(gate);
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+	    }
+	    des->add_signal(sig);
+	    break;
+
+	  case 'N': // Reduction NOR
+	  case '!': // Reduction NOT
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::NOR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case '&': // Reduction AND
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::AND);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case '|': // Reduction OR
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::OR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case '^': // Reduction XOR
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::XOR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case 'X': // Reduction XNOR
+	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::XNOR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  default:
+	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
+	    sig = 0;
+      }
+
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(sub_sig))
+	    delete tmp;
+
+      return sig;
+}
+
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.15  2000/01/02 19:39:03  steve
+ *  Structural reduction XNOR.
+ *
  * Revision 1.14  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *
