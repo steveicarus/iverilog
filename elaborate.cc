@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.304 2004/06/20 15:59:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.305 2004/06/30 15:32:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1170,6 +1170,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	    } else {
 		  NetPDelay*de = new NetPDelay(delay, a2);
+		  de->set_line(*this);
 		  st = de;
 	    }
 
@@ -2719,6 +2720,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.305  2004/06/30 15:32:02  steve
+ *  Propagate source line number in synthetic delay statements.
+ *
  * Revision 1.304  2004/06/20 15:59:06  steve
  *  Only pad the width of vector r-values.
  *
