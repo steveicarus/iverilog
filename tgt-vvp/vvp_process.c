@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.91 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.92 2004/05/19 03:25:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -425,6 +425,51 @@ static int show_stmt_assign(ivl_statement_t net)
       return 0;
 }
 
+/*
+ * This function handles the case of non-blocking assign to word
+ * variables such as real, i.e:
+ *
+ *     read foo;
+ *     foo <= 1.0;
+ *
+ * In this case we know (by Verilog syntax) that there is only exactly
+ * 1 l-value, the target identifier, so it should be relatively easy.
+ */
+static int show_stmt_assign_nb_var(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_variable_t var;
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t del  = ivl_stmt_delay_expr(net);
+
+      int word;
+      unsigned long delay;
+
+	/* Must be exactly 1 l-value. */
+      assert(ivl_stmt_lvals(net) == 1);
+
+      delay = 0;
+      if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
+	    delay = ivl_expr_uvalue(del);
+	    del = 0;
+      }
+
+	/* XXXX For now, presume delays are constant. */
+      assert(del == 0);
+
+	/* Evaluate the r-value */
+      word = draw_eval_real(rval);
+
+      lval = ivl_stmt_lval(net, 0);
+      var = ivl_lval_var(lval);
+      assert(var != 0);
+
+      fprintf(vvp_out, "    %%assign/wr W_%s, %lu, %u;\n",
+	      vvp_word_label(var), delay, word);
+
+      return 0;
+}
+
 static int show_stmt_assign_nb(ivl_statement_t net)
 {
       ivl_lval_t lval;
@@ -433,6 +478,13 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_memory_t mem;
 
       unsigned long delay = 0;
+
+	/* Catch the case we are assigning to a real/word
+	   l-value. Handle that elsewhere. */
+      if (ivl_lval_var(ivl_stmt_lval(net, 0))) {
+	    return show_stmt_assign_nb_var(net);
+      }
+
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
 	    delay = ivl_expr_uvalue(del);
 	    del = 0;
@@ -1574,6 +1626,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.92  2004/05/19 03:25:42  steve
+ *  Generate code for nb assign to reals.
+ *
  * Revision 1.91  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *
