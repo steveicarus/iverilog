@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.103 2001/08/10 00:40:00 steve Exp $"
+#ident "$Id: Makefile.in,v 1.104 2001/09/20 03:21:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -37,6 +37,7 @@ includedir = $(prefix)/include
 
 dllib=@DLLIB@
 rdynamic=@rdynamic@
+strip_dynamic=@strip_dynamic@
 
 CC = @CC@
 CXX = @CXX@
@@ -132,6 +133,7 @@ Makefile: Makefile.in config.h.in config.status
 libvpi.a: vpithunk.o
 	rm -f $@
 	ar cvq $@ vpithunk.o
+	ranlib $@
 
 # The vpithunk.c file (that makes up the libvpi.a library) needs to
 # be make with PIC flags, because shared objects load it.
@@ -197,7 +199,7 @@ $(libdir)/libvpi.a : ./libvpi.a
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
-	$(STRIP) $(libdir)/ivl/ivl@EXEEXT@
+	$(STRIP) $(strip_dynamic) $(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/iverilog.conf: $(srcdir)/iverilog.conf
 	$(INSTALL_DATA) $(srcdir)/iverilog.conf $(libdir)/ivl/iverilog.conf

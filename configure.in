@@ -152,6 +152,12 @@ esac
 AC_SUBST(EXTRALIBS)
 AC_MSG_RESULT($EXTRALIBS)
    
+# Darwin requires -no-cpp-precomp
+case "${host}" in
+    *-*-darwin*)
+	CFLAGS="-no-cpp-precomp"
+	;;
+esac
 
 # The -rdynamic flag is used by iverilog when compiling the target,
 # to know how to export symbols of the main program to loadable modules
@@ -176,9 +182,17 @@ case "${host}" in
     *-*-hpux*)
 	rdynamic="-E"
 	;;
+
+    *-*-darwin*)
+	rdynamic="-Wl,-all_load"
+	strip_dynamic="-SX"
+	;;
+
 esac
 AC_SUBST(rdynamic)
 AC_MSG_RESULT($rdynamic)
+AC_SUBST(strip_dynamic)
+AC_MSG_RESULT($strip_dynamic)
 
 AC_MSG_CHECKING("for shared library link flag")
 shared=-shared
@@ -195,6 +209,9 @@ case "${host}" in
 	shared="-b"
 	;;
 
+     *-*-darwin*)
+	shared="-bundle -undefined suppress"
+	;;
 esac
 
 AC_SUBST(shared)

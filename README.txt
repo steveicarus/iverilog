@@ -447,6 +447,9 @@ removed from the list) send e-mail to me.
       Macintosh -- MacO/S
 	Yasuhisa Kato <ykato@mac.com>
 
+      Mac O/S X
+        Timothy J. Wood <tjw@omnigroup.com>
+
       NetBSD/*
 	Dan McMahill <mcmahill@mtl.mit.edu>
 

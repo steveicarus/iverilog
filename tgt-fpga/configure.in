@@ -47,6 +47,11 @@ case "${host}" in
 	shared="-b"
 	;;
 
+
+     *-*-darwin*)
+	shared="-bundle -undefined suppress"
+	;;
+
 esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)

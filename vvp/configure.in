@@ -77,6 +77,11 @@ case "${host}" in
     *-*-hpux*)
 	rdynamic="-E"
 	;;
+
+    *-*-darwin*)
+	rdynamic="-Wl,-all_load"
+	;;
+
 esac
 AC_SUBST(rdynamic)
 AC_MSG_RESULT($rdynamic)
