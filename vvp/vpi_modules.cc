@@ -17,14 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.6 2001/07/26 03:13:51 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.7 2001/07/28 03:29:42 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
-# include  <stdio.h>
 # include  "vpithunk.h"
+# include  <stdio.h>
+# include  <string.h>
 
 typedef void (*vlog_startup_routines_t)(void);
 typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
@@ -47,19 +48,34 @@ void vpip_load_module(const char*name)
 #endif
 
       ivl_dll_t dll = 0;
-      for (unsigned idx = 0
-		 ; (dll == 0) && (idx < vpip_module_path_cnt)
-		 ;  idx += 1) {
-	    char buf[4096];
-	    sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
-	      //printf("Load %s...\n", buf);
 
-	    dll = ivl_dlopen(buf);
-      }
+      if (strchr(name, sep)) {
+	      /* If the name has at least one directory character in
+		 it, then assume it is a complete name, including any
+		 possble .vpi suffix. */
+	    dll = ivl_dlopen(name);
 
-      if (dll == 0) {
-	    fprintf(stderr, "%s: Unable to find %s.vpi module\n", name, name);
-	    return;
+	    if (dll == 0) {
+		  fprintf(stderr, "%s: Unable to link this module\n", name);
+		  return;
+	    }
+
+      } else {
+	    for (unsigned idx = 0
+		       ; (dll == 0) && (idx < vpip_module_path_cnt)
+		       ;  idx += 1) {
+		  char buf[4096];
+		  sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
+
+		  dll = ivl_dlopen(buf);
+	    }
+
+	    if (dll == 0) {
+		  fprintf(stderr, "%s: Unable to find a "
+			  "%s.vpi module\n", name, name); 
+		  return;
+	    }
+
       }
 
       void *regsub = ivl_dlsym(dll, LU "vpi_register_sim" TU);
@@ -72,7 +88,7 @@ void vpip_load_module(const char*name)
 
       extern vpi_thunk vvpt;
       if (((simreg)(&vvpt)) == 0) {
-	fprintf(stderr, "%s: : vpi_register_sim returned zero", name);
+	fprintf(stderr, "%s: vpi_register_sim returned zero", name);
 	ivl_dlclose(dll);
 	return;
       }
@@ -93,6 +109,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.7  2001/07/28 03:29:42  steve
+ *  If module name has a /, skip the path search.
+ *
  * Revision 1.6  2001/07/26 03:13:51  steve
  *  Make the -M flag add module search paths.
  *

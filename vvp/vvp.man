@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2001/07/26 03:13:51 $" Version "$Date: 2001/07/26 03:13:51 $"
+.TH vvp 1 "$Date: 2001/07/28 03:29:42 $" Version "$Date: 2001/07/28 03:29:42 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -34,6 +34,12 @@ simulation. The \fBsystem.vpi\fP module is loaded by default, but
 additional modules, including modules that you compiled locally, can
 be specified with this flag. Any number of modules can be loaded, and
 they will be linked in the order they are listed on the command line.
+
+Normally, you only need to specify the name of the module, without any
+directory path or .vpi suffix and the search path is scanned to find
+the module. However, if the name includes at least one directory
+character, then the search path is not scanned and the name is assumed
+to be a complete file name.
 .TP 8
 .B -v
 Turn on verbose messages. This will cause information about run time
