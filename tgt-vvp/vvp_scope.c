@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.108 2005/01/12 03:16:35 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.109 2005/01/12 05:31:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1204,7 +1204,9 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
 /*
  * This function draws any functors needed to calculate the input to
  * this nexus, and leaves in the data array strings that can be used
- * as functor arguments.
+ * as functor arguments. The strings are from the draw_net_input
+ * function, which in turn returns nexus names, so the strings are
+ * safe to pass around.
  */
 static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base,
 				 unsigned ndata, const char**src_table)
@@ -1218,6 +1220,7 @@ static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base,
 
 static void draw_lpm_add(ivl_lpm_t net)
 {
+      const char*src_table[2];
       unsigned width;
       const char*type = "";
 
@@ -1246,11 +1249,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%p .arith/%s %u", net, type, width);
-
-      draw_lpm_arith_a_b_inputs(net);
-
-      fprintf(vvp_out, ";\n");
+      draw_lpm_data_inputs(net, 0, 2, src_table);
+      fprintf(vvp_out, "L_%p .arith/%s %u, %s, %s;\n",
+	      net, type, width, src_table[0], src_table[1]);
 }
 
 static void draw_lpm_cmp(ivl_lpm_t net)
@@ -1826,6 +1827,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.109  2005/01/12 05:31:50  steve
+ *  More robust input code generation for LPM_ADD.
+ *
  * Revision 1.108  2005/01/12 03:16:35  steve
  *  More complete drawing of concat inputs.
  *
