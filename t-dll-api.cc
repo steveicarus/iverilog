@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.35 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.36 2001/04/05 03:20:57 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -684,6 +684,7 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	  case IVL_ST_CASEZ:
 	    return net->u_.case_.cond;
 
+	  case IVL_ST_REPEAT:
 	  case IVL_ST_WHILE:
 	    return net->u_.while_.cond_;
 
@@ -830,6 +831,7 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 	    return net->u_.forever_.stmt_;
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.stmt_;
+	  case IVL_ST_REPEAT:
 	  case IVL_ST_WHILE:
 	    return net->u_.while_.stmt_;
 	  default:
@@ -841,6 +843,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.36  2001/04/05 03:20:57  steve
+ *  Generate vvp code for the repeat statement.
+ *
  * Revision 1.35  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

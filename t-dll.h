@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.34 2001/04/04 04:50:35 steve Exp $"
+#ident "$Id: t-dll.h,v 1.35 2001/04/05 03:20:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -84,6 +84,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_condit(const NetCondit*);
       bool proc_delay(const NetPDelay*);
       void proc_forever(const NetForever*);
+      void proc_repeat(const NetRepeat*);
       void proc_stask(const NetSTask*);
       bool proc_trigger(const NetEvTrig*);
       void proc_utask(const NetUTask*);
@@ -406,7 +407,7 @@ struct ivl_statement_s {
 		  ivl_statement_t stmt_;
 	    } wait_;
 
-	    struct { /* IVL_ST_WHILE */
+	    struct { /* IVL_ST_WHILE IVL_ST_REPEAT */
 		  ivl_expr_t cond_;
 		  ivl_statement_t stmt_;
 	    } while_;
@@ -415,6 +416,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.35  2001/04/05 03:20:58  steve
+ *  Generate vvp code for the repeat statement.
+ *
  * Revision 1.34  2001/04/04 04:50:35  steve
  *  Support forever loops in the tgt-vvp target.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.24 2001/04/04 04:50:35 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.25 2001/04/05 03:20:58 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -413,6 +413,30 @@ static int show_stmt_noop(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_repeat(ivl_statement_t net)
+{
+      int rc = 0;
+      unsigned lab_top = local_count++, lab_out = local_count++;
+      ivl_expr_t exp = ivl_stmt_cond_expr(net);
+      struct vector_info cnt = draw_eval_expr(exp);
+
+	/* Test that 0 < expr */
+      fprintf(vvp_out, "T_%u.%u %%cmp/u 0, %u, %u;\n", thread_count,
+	      lab_top, cnt.base, cnt.wid);
+      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, lab_out);
+	/* This adds -1 (all ones in 2's complement) to the count. */
+      fprintf(vvp_out, "    %%add %u, 1, %u;\n", cnt.base, cnt.wid);
+
+      rc += show_statement(ivl_stmt_sub_stmt(net));
+
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
+
+      clr_vector(cnt);
+
+      return rc;
+}
+
 static int show_stmt_trigger(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_event(net);
@@ -578,6 +602,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_noop(net);
 	    break;
 
+	  case IVL_ST_REPEAT:
+	    rc += show_stmt_repeat(net);
+	    break;
+
 	  case IVL_ST_STASK:
 	    rc += show_system_task_call(net);
 	    break;
@@ -673,6 +701,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.25  2001/04/05 03:20:58  steve
+ *  Generate vvp code for the repeat statement.
+ *
  * Revision 1.24  2001/04/04 04:50:35  steve
  *  Support forever loops in the tgt-vvp target.
  *

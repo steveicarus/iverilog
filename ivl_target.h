@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.48 2001/04/05 01:12:27 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.49 2001/04/05 03:20:57 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -249,6 +249,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_DELAYX,
       IVL_ST_FOREVER,
       IVL_ST_FORK,
+      IVL_ST_REPEAT,
       IVL_ST_STASK,
       IVL_ST_TRIGGER,
       IVL_ST_UTASK,
@@ -699,7 +700,7 @@ extern unsigned ivl_stmt_case_count(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
   /* IVL_ST_CASE */
 extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
-  /* IVL_ST_CONDIT, IVL_ST_CASE IVL_ST_WHILE */
+  /* IVL_ST_CONDIT IVL_ST_CASE IVL_ST_REPEAT IVL_ST_WHILE */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
@@ -723,7 +724,7 @@ extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
-  /* IVL_ST_DELAY, IVL_ST_FOREVER, IVL_ST_WAIT, IVL_ST_WHILE */
+  /* IVL_ST_DELAY, IVL_ST_FOREVER, IVL_ST_REPEAT IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
 
@@ -744,6 +745,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.49  2001/04/05 03:20:57  steve
+ *  Generate vvp code for the repeat statement.
+ *
  * Revision 1.48  2001/04/05 01:12:27  steve
  *  Get signed compares working correctly in vvp.
  *
