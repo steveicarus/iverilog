@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2003/08/09 04:31:44 $" Version "$Date: 2003/08/09 04:31:44 $"
+.TH iverilog 1 "$Date: 2003/11/18 06:31:46 $" Version "$Date: 2003/11/18 06:31:46 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESVv] [-Cpath] [-ccmdfile] [-g1|-g2|-g3.0] [-Dmacro[=defn]] [-pflag=value]
+[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g3.0] [-Dmacro[=defn]] [-pflag=value]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -21,25 +21,18 @@ types are added as code generators are implemented.
 \fIiverilog\fP accepts the following options:
 .TP 8
 .B -B\fIbase\fP
-The \fIiverilog\fP program uses external programs to preprocess and
-compile the Verilog source. Normally, the path used to locate these
-tools is built into the \fIiverilog\fP program. However, the \fB-B\fP
-switch allows the user to select a different set of programs. The path
-given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
+The \fIiverilog\fP program uses external programs and configuration
+files to preprocess and compile the Verilog source. Normally, the path
+used to locate these tools is built into the \fIiverilog\fP
+program. However, the \fB-B\fP switch allows the user to select a
+different set of programs. The path given is used to locate
+\fIivlpp\fP, \fIivl\fP, code generators and the VPI modules.
 .TP 8
 .B -c\fIfile\fP
 This flag specifies an input file that contains a list of Verilog
 source files. This is similar to the \fIcommand file\fP of other
 Verilog simulators, in that it is a file that contains the file names
 instead of taking them on the command line. See \fBCommand Files\fP below.
-.TP 8
-.B -C\fIpath\fP
-This flag selects the driver configuration file to use. Normally, the
-iverilog program will read its configuration file from
-/usr/lib/ivl/iverilog.conf (or the install path configured at compile
-time) but the user can specify the path to a different configuration
-file. This is useful when testing new configuration files. See the
-installed configuration file for a summary of the file format.
 .TP 8
 .B -D\fImacro\fP
 Defines macro \fImacro\fP with the string `1' as its definition. This

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.21 2003/09/26 21:25:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.22 2003/11/18 06:31:46 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -57,16 +57,10 @@ clean:
 distclean: clean
 	rm -f Makefile
 
-O = main.o build_string.o lexor.o parse.o substit.o cflexor.o cfparse.o
+O = main.o substit.o cflexor.o cfparse.o
 
 iverilog@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog@EXEEXT@ @EXTRALIBS@
-
-lexor.c: lexor.lex
-	flex -s -olexor.c $(srcdir)/lexor.lex
-
-parse.h parse.c: parse.y
-	bison --verbose -t -d -o parse.c $(srcdir)/parse.y
 
 cflexor.c: cflexor.lex
 	flex -s -Pcf -ocflexor.c $(srcdir)/cflexor.lex
@@ -79,8 +73,6 @@ main.o: main.c globals.h
 	$(CC) $(CFLAGS) -c -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 
 build_string.o: build_string.c globals.h
-lexor.o: lexor.c parse.h globals.h
-parse.o: parse.c globals.h
 cflexor.o: cflexor.c cfparse.h cfparse_misc.h globals.h
 cfparse.o: cfparse.c globals.h cfparse_misc.h
 

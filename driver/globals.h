@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.18 2003/11/13 04:09:49 steve Exp $"
+#ident "$Id: globals.h,v 1.19 2003/11/18 06:31:46 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -75,12 +75,11 @@ extern char warning_flags[];
 extern char* library_flags;
 extern char* library_flags2;
 
-extern const char*lookup_pattern(const char*key);
-
-extern int build_string(char*out, size_t olen, const char*pattern);
-
 /*
  * $Log: globals.h,v $
+ * Revision 1.19  2003/11/18 06:31:46  steve
+ *  Remove the iverilog.conf file.
+ *
  * Revision 1.18  2003/11/13 04:09:49  steve
  *  Pass flags through the temporary config file.
  *
@@ -101,44 +100,5 @@ extern int build_string(char*out, size_t olen, const char*pattern);
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library
  *  modules through the preprocessor.
- *
- * Revision 1.12  2002/05/24 01:13:00  steve
- *  Support language generation flag -g.
- *
- * Revision 1.11  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.10  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
- *
- * Revision 1.9  2001/11/13 03:30:26  steve
- *  The +incdir+ plusarg can take multiple directores,
- *  and add initial support for +define+ in the command file.
- *
- * Revision 1.8  2001/11/12 18:47:32  steve
- *  Support +incdir in command files, and ignore other
- *  +args flags. Also ignore -a and -v flags.
- *
- * Revision 1.7  2001/11/12 01:26:36  steve
- *  More sophisticated command file parser.
- *
- * Revision 1.6  2001/10/23 00:37:30  steve
- *  The -s flag can now be repeated on the iverilog command.
- *
- * Revision 1.5  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.4  2001/07/03 04:09:25  steve
- *  Generate verbuse status messages (Stephan Boettcher)
- *
- * Revision 1.3  2000/11/09 21:58:00  steve
- *  Remember to include the -S condition.
- *
- * Revision 1.2  2000/10/28 03:45:47  steve
- *  Use the conf file to generate the vvm ivl string.
- *
- * Revision 1.1  2000/10/08 22:36:56  steve
- *  iverilog with an iverilog.conf configuration file.
- *
  */
 #endif

@@ -61,7 +61,6 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/fpga-s.conf
 %attr(-,root,root) /usr/lib/ivl/xnf.conf
 %attr(-,root,root) /usr/lib/ivl/xnf-s.conf
-%attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %ifarch x86_64
 %attr(-,root,root) /usr/bin/vvp32
 %attr(-,root,root) /usr/lib/ivl/vpi64/system.vpi

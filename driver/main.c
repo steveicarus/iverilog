@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.60 2003/11/13 05:55:33 steve Exp $"
+#ident "$Id: main.c,v 1.61 2003/11/18 06:31:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile] [-g1|-g2|-g3.0]\n"
+"Usage: iverilog [-ESvV] [-B base] [-c cmdfile] [-g1|-g2|-g3.0]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -211,31 +211,52 @@ static const char*my_tempfile(const char*str, FILE**fout)
  */
 static int t_default(char*cmd, unsigned ncmd)
 {
-      int rc;
-      const char*pattern;
+      unsigned rc;
+      unsigned ncmd_start = ncmd;
 
-      pattern = lookup_pattern("<ivl>");
-      if (pattern == 0) {
-	    fprintf(stderr, "No such target: %s\n", targ);
-	    return -1;
+      snprintf(tmp, sizeof tmp, " | %s/ivl", base);
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
+      if (verbose_flag) {
+	    const char*vv = " -v";
+	    rc = strlen(vv);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, vv);
+	    ncmd += rc;
       }
 
-      tmp[0] = ' ';
-      tmp[1] = '|';
-      tmp[2] = ' ';
-      rc = build_string(tmp+3, sizeof tmp - 3, pattern);
-      cmd = realloc(cmd, ncmd+3+rc+1);
+      if (npath != 0) {
+	    snprintf(tmp, sizeof tmp, " -N%s", npath);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
+      snprintf(tmp, sizeof tmp, " -C%s", iconfig_path);
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
+      snprintf(tmp, sizeof tmp, " -C%s -- -", iconfig_common_path);
+      rc = strlen(tmp);
+      cmd = realloc(cmd, ncmd+rc+1);
+      strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
+
 #ifdef __MINGW32__
       {
 	char *t;
-	for (t = tmp; *t; t++)
+	for (t = cmd+ncmd_start; *t; t++)
 	  {
 	    if (*t == '/') *t = '\\';
 	  }
       }
 #endif
-
-      strcpy(cmd+ncmd, tmp);
 
 
       if (verbose_flag)
@@ -375,7 +396,6 @@ int process_generation(const char*name)
 
 int main(int argc, char **argv)
 {
-      const char*config_path = 0;
       char*cmd;
       unsigned ncmd;
       int e_flag = 0;
@@ -453,14 +473,11 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
 		  base = optarg;
-		  break;
-		case 'C':
-		  config_path = optarg;
 		  break;
  		case 'c':
 		  command_filename = malloc(strlen(optarg)+1);
@@ -604,24 +621,6 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
-	/* Load the iverilog.conf file to get our substitution
-	   strings. */
-
-      { char path[1024];
-        FILE*fd;
-	if (config_path) {
-	      strcpy(path, config_path);
-	} else {
-	      sprintf(path, "%s%civerilog.conf", base,sep);
-	}
-	fd = fopen(path, "r");
-	if (fd == 0) {
-	      fprintf(stderr, "Config file \"%s\" not found\n",path);
-	      return 1;
-	}
-	reset_lexor(fd);
-	yyparse();
-      }
 
 	/* Start building the preprocess command line. */
 
@@ -704,6 +703,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.61  2003/11/18 06:31:46  steve
+ *  Remove the iverilog.conf file.
+ *
  * Revision 1.60  2003/11/13 05:55:33  steve
  *  Move the DLL= flag to target config files.
  *
