@@ -23,36 +23,21 @@ The special module name "system.vpi" is part of the core Icarus
 Verilog distribution and includes implementations of the standard
 system tasks/functions.
 
-COMPILING A VPI MODULE (LINUX)
+COMPILING A VPI MODULE
 
-To compile a module, first compile down to object files all the PLI
-applications that you wish to include in the module. Then, create a
-small "C" source file that defines only the startup table like so:
+See the iverilog-vpi documentation.
 
-    extern void hello_register();
-    void (*vlog_startup_routines[])() = {
-        hello_register,
-	0
-    };
+TRACING VPI USE
 
-Compile this table source down to its object file, as well. Finally,
-link the application with the command:
+The vvp command includes the ability to trace VPI calls. This is
+useful if you are trying to debug a problem with your code. To
+activate tracing simply set the VPI_TRACE environment variable, with
+the path to a file where trace text gets written. For example:
 
-    cc -o foo.vpi -shared <all the .o files> -lvpi
+	setenv VPI_TRACE /tmp/foo.txt
 
-The -lvpi flag brings in the interface library that handles the
-interface between the module you are making and the simulator run-time
-that is loading this module. This contains the supported vpi functions
-as stubs that bind to the appropriate implementations.
+This tracing is pretty verbose, so you don't want to run like this
+normally. Also, the format of the tracing messages will change
+according to my needs (and whim) so don't expect to be able to parse
+it in software.
 
-The resulting foo.vpi file is the vpi module. Place it in a location
-where the product to use it can locate it.
-
-
-CAVEAT EMPTOR
-
-Only the calltf function is supported in general. The sizetf function
-is used by the vvp runtime if the object is a function, but only to
-check that the function width really is what the compiler already
-guessed.  The compiletf function may be supported by the vvp runtime
-sometime in the future but not yet.
