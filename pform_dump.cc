@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.34 1999/08/03 04:49:13 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.35 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 /*
@@ -268,7 +268,16 @@ void PGBuiltin::dump(ostream&out) const
 
 void PGModule::dump(ostream&out) const
 {
-      out << "    " << type_ << " " << get_name() << "(";
+      out << "    " << type_ << " ";
+      if (overrides_) {
+            out << "#(";
+	    out << *((*overrides_)[0]);
+	    for (unsigned idx = 1 ;  idx < overrides_->count() ;  idx += 1) {
+	          out << "," << *((*overrides_)[idx]);
+	    }
+	    out << ") ";
+      }
+      out << get_name() << "(";
       if (pins_) {
 	    out << "." << pins_[0].name << "(" << *pins_[0].parm << ")";
 	    for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
@@ -619,6 +628,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.35  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.34  1999/08/03 04:49:13  steve
  *  Proper port type names.
  *

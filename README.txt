@@ -292,6 +292,7 @@ especially testing from many people, including (in alphabetical order):
 	Larry Doolittle <LRDoolittle@lbl.gov>
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
+	Peter Monta <pmonta@halibut.imedia.com>
 	Stefan Petersen <spe@geda.seul.org>
 	Jason Schonberg <schon@mips.com>
 	Stuart Sutherland <stuart@sutherland.com>

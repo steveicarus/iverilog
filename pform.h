@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.27 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: pform.h,v 1.28 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -141,7 +141,9 @@ extern void pform_makegates(PGBuiltin::Type type,
 			    svector<PExpr*>*delay,
 			    svector<lgate>*gates);
 
-extern void pform_make_modgates(const string&type, svector<lgate>*gates);
+extern void pform_make_modgates(const string&type,
+				svector<PExpr*>*overrides,
+				svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
@@ -167,6 +169,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.28  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.27  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.8 1999/08/01 21:18:55 steve Exp $"
+#ident "$Id: PGate.h,v 1.9 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -150,8 +150,8 @@ class PGModule  : public PGate {
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
       explicit PGModule(const string&type, const string&name,
-			svector<PExpr*>*pins)
-      : PGate(name, pins), type_(type), pins_(0), npins_(0) { }
+			svector<PExpr*>*overrides, svector<PExpr*>*pins)
+      : PGate(name, pins), type_(type), overrides_(overrides), pins_(0), npins_(0) { }
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
@@ -160,8 +160,8 @@ class PGModule  : public PGate {
 	    PExpr* parm;
       };
       explicit PGModule(const string&type, const string&name,
-			bind_t*pins, unsigned npins)
-      : PGate(name, 0), type_(type), pins_(pins), npins_(npins) { }
+			svector<PExpr*>*overrides, bind_t*pins, unsigned npins)
+      : PGate(name, 0), type_(type), overrides_(overrides), pins_(pins), npins_(npins) { }
 
 
       virtual void dump(ostream&out) const;
@@ -169,6 +169,7 @@ class PGModule  : public PGate {
 
     private:
       string type_;
+      svector<PExpr*>*overrides_;
       bind_t*pins_;
       unsigned npins_;
 
@@ -178,6 +179,10 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.9  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.8  1999/08/01 21:18:55  steve
  *  elaborate rise/fall/decay for continuous assign.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.37 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.38 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -296,6 +296,7 @@ void pform_makegates(PGBuiltin::Type type,
  */
 static void pform_make_modgate(const string&type,
 			       const string&name,
+			       svector<PExpr*>*overrides,
 			       svector<PExpr*>*wires,
 			       const string&fn, unsigned ln)
 {
@@ -306,7 +307,7 @@ static void pform_make_modgate(const string&type,
 	    return;
       }
 
-      PGate*cur = new PGModule(type, name, wires);
+      PGate*cur = new PGModule(type, name, overrides, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
       pform_cur_module->add_gate(cur);
@@ -314,6 +315,7 @@ static void pform_make_modgate(const string&type,
 
 static void pform_make_modgate(const string&type,
 			       const string&name,
+			       svector<PExpr*>*overrides,
 			       svector<portname_t*>*bind,
 			       const string&fn, unsigned ln)
 {
@@ -332,27 +334,29 @@ static void pform_make_modgate(const string&type,
 	    pins[idx].parm = curp->parm;
       }
 
-      PGate*cur = new PGModule(type, name, pins, npins);
+      PGate*cur = new PGModule(type, name, overrides, pins, npins);
       cur->set_file(fn);
       cur->set_lineno(ln);
       pform_cur_module->add_gate(cur);
 }
 
-void pform_make_modgates(const string&type, svector<lgate>*gates)
+void pform_make_modgates(const string&type,
+			 svector<PExpr*>*overrides,
+			 svector<lgate>*gates)
 {
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
 	    if (cur.parms_by_name) {
-		  pform_make_modgate(type, cur.name, cur.parms_by_name,
+		  pform_make_modgate(type, cur.name, overrides, cur.parms_by_name,
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
-		  pform_make_modgate(type, cur.name, cur.parms, cur.file,
+		  pform_make_modgate(type, cur.name, overrides, cur.parms, cur.file,
 				     cur.lineno);
 	    } else {
 		  svector<PExpr*>*wires = new svector<PExpr*>(0);
-		  pform_make_modgate(type, cur.name, wires, cur.file,
+		  pform_make_modgate(type, cur.name, overrides, wires, cur.file,
 				     cur.lineno);
 	    }
       }
@@ -573,6 +577,7 @@ void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
 void pform_set_parameter(const string&name, PExpr*expr)
 {
       pform_cur_module->parameters[name] = expr;
+      pform_cur_module->param_names.push_back(name);
 }
 
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
@@ -655,6 +660,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.38  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.37  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.

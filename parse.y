@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.58 1999/08/03 04:48:51 steve Exp $"
+#ident "$Id: parse.y,v 1.59 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -990,12 +990,8 @@ module_item
 		{ pform_makegates($1, $2, $3);
 		}
 	| IDENTIFIER delay_opt gate_instance_list ';'
-		{ pform_make_modgates($1, $3);
+		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
-		  if ($2) {
-		      yyerror(@2, "Sorry, parameter override not supported.");
-		      delete $2;
-		  }
 		}
 	| K_assign delay_opt lavalue '=' expression ';'
 		{ PGAssign*tmp = pform_make_pgassign($3, $5, $2);

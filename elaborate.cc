@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.71 1999/08/18 04:00:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.72 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 /*
@@ -463,7 +463,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, my_name);
+      rmod->elaborate(des, my_name, overrides_);
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters. Scan
@@ -643,29 +643,35 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 
       switch (op_) {
 	  case '^': // XOR
-	    assert(lsig->pin_count() == 1);
-	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XOR);
-	    connect(gate->pin(1), lsig->pin(0));
-	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
 	    osig->local_flag(true);
-	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::XOR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  des->add_node(gate);
+	    }
 	    des->add_signal(osig);
-	    des->add_node(gate);
 	    break;
 
 	  case '&': // AND
-	    assert(lsig->pin_count() == 1);
-	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
-	    connect(gate->pin(1), lsig->pin(0));
-	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
 	    osig->local_flag(true);
-	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::AND);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  des->add_node(gate);
+	    }
 	    des->add_signal(osig);
-	    des->add_node(gate);
 	    break;
 
 	  case '|': // Bitwise OR
@@ -1941,7 +1947,7 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
       return loop;
 }
 
-bool Module::elaborate(Design*des, const string&path) const
+bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_) const
 {
       bool result_flag = true;
 
@@ -1953,6 +1959,19 @@ bool Module::elaborate(Design*des, const string&path) const
 	    string pname = path + "." + (*cur).first;
 	    NetExpr*expr = (*cur).second->elaborate_expr(des, path);
 	    des->set_parameter(pname, expr);
+      }
+
+        // Override parameters
+        // FIXME: need to check if too many overrides given
+	// FIXME: need to release the replaced expression.
+
+      if (overrides_) {
+            list<string>::const_iterator cur = param_names.begin();
+            for (unsigned idx = 0 ;  idx < overrides_->count(); idx += 1, cur++) {
+	          string pname = path + "." + (*cur);
+	          NetExpr*expr = (*overrides_)[idx]->elaborate_expr(des, path);
+	          des->set_parameter(pname, expr);
+            }
       }
 
 	// Get all the explicitly declared wires of the module and
@@ -2037,7 +2056,7 @@ Design* elaborate(const map<string,Module*>&modules,
 
       modlist = &modules;
       udplist = &primitives;
-      bool rc = rmod->elaborate(des, root);
+      bool rc = rmod->elaborate(des, root, (svector<PExpr*>*)0);
       modlist = 0;
       udplist = 0;
 
@@ -2051,6 +2070,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.72  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.71  1999/08/18 04:00:02  steve
  *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
  *

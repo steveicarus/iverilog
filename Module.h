@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.8 1999/08/04 02:13:02 steve Exp $"
+#ident "$Id: Module.h,v 1.9 1999/08/23 16:48:39 steve Exp $"
 #endif
 
 # include  <list>
@@ -64,6 +64,14 @@ class Module {
 	   into this map. */
       map<string,PExpr*>parameters;
 
+        /* Parameters may be overridden at instantiation time;
+           the overrides do not contain explicit parameter names,
+           but rather refer to parameters in the order they
+           appear in the instantiated module.  Therefore a
+           list of names in module-order is needed to pass from
+           a parameter-index to its name. */
+      list<string> param_names;
+
       const string&get_name() const { return name_; }
 
       void add_gate(PGate*gate);
@@ -85,7 +93,7 @@ class Module {
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
       void dump(ostream&out) const;
-      bool elaborate(Design*, const string&path) const;
+      bool elaborate(Design*, const string&path, svector<PExpr*>*overrides_) const;
 
     private:
       const string name_;
@@ -105,6 +113,10 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.9  1999/08/23 16:48:39  steve
+ *  Parameter overrides support from Peter Monta
+ *  AND and XOR support wide expressions.
+ *
  * Revision 1.8  1999/08/04 02:13:02  steve
  *  Elaborate module ports that are concatenations of
  *  module signals.
