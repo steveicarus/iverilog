@@ -59,6 +59,8 @@ ivl_scope_lpm
 ivl_scope_name
 ivl_scope_sigs
 ivl_scope_sig
+ivl_scope_type
+ivl_scope_tname
 
 ivl_signal_attr
 ivl_signal_pin

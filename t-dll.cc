@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.25 2001/01/06 06:31:59 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.26 2001/01/15 00:47:02 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -196,6 +196,8 @@ bool dll_target::start_design(const Design*des)
       des_.root_->log_ = 0;
       des_.root_->nlpm_ = 0;
       des_.root_->lpm_ = 0;
+      des_.root_->type_ = IVL_SCT_MODULE;
+      des_.root_->tname_ = des_.root_->name_;
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -463,6 +465,29 @@ void dll_target::scope(const NetScope*net)
 	    scope->nlpm_ = 0;
 	    scope->lpm_ = 0;
 
+	    switch (net->type()) {
+		case NetScope::MODULE:
+		  scope->type_ = IVL_SCT_MODULE;
+		  scope->tname_ = net->module_name();
+		  break;
+		case NetScope::TASK:
+		  scope->type_ = IVL_SCT_TASK;
+		  scope->tname_ = strdup(net->task_def()->name().c_str());
+		  break;
+		case NetScope::FUNC:
+		  scope->type_ = IVL_SCT_FUNCTION;
+		  scope->tname_ = strdup(net->func_def()->name().c_str());
+		  break;
+		case NetScope::BEGIN_END:
+		  scope->type_ = IVL_SCT_BEGIN;
+		  scope->tname_ = scope->name_;
+		  break;
+		case NetScope::FORK_JOIN:
+		  scope->type_ = IVL_SCT_FORK;
+		  scope->tname_ = scope->name_;
+		  break;
+	    }
+
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
 	    assert(parent != 0);
 
@@ -639,6 +664,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.26  2001/01/15 00:47:02  steve
+ *  Pass scope type information to the target module.
+ *
  * Revision 1.25  2001/01/06 06:31:59  steve
  *  declaration initialization for time variables.
  *

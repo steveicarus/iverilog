@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.20 2000/12/15 05:45:25 steve Exp $"
+#ident "$Id: t-dll.h,v 1.21 2001/01/15 00:47:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -266,6 +266,8 @@ struct ivl_scope_s {
       ivl_scope_t child_, sibling_;
 
       char* name_;
+      const char* tname_;
+      ivl_scope_type_t type_;
 
       unsigned nsigs_;
       ivl_signal_t*sigs_;
@@ -363,6 +365,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.21  2001/01/15 00:47:02  steve
+ *  Pass scope type information to the target module.
+ *
  * Revision 1.20  2000/12/15 05:45:25  steve
  *  Autoconfigure the dlopen functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.20 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.21 2001/01/15 00:47:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -424,6 +424,18 @@ extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
       return net->sigs_[idx];
 }
 
+extern "C" ivl_scope_type_t ivl_scope_type(ivl_scope_t net)
+{
+      assert(net);
+      return net->type_;
+}
+
+extern "C" const char* ivl_scope_tname(ivl_scope_t net)
+{
+      assert(net);
+      return net->tname_;
+}
+
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 {
       if (net->nattr_ == 0)
@@ -634,6 +646,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.21  2001/01/15 00:47:02  steve
+ *  Pass scope type information to the target module.
+ *
  * Revision 1.20  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *

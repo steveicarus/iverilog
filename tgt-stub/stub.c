@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.27 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: stub.c,v 1.28 2001/01/15 00:47:02 steve Exp $"
 #endif
 
 /*
@@ -346,8 +346,31 @@ static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
 
-      fprintf(out, "scope: %s (%u signals, %u logic)\n", ivl_scope_name(net),
-	      ivl_scope_sigs(net), ivl_scope_logs(net));
+      fprintf(out, "scope: %s (%u signals, %u logic)",
+	      ivl_scope_name(net), ivl_scope_sigs(net),
+	      ivl_scope_logs(net));
+
+      switch (ivl_scope_type(net)) {
+	  case IVL_SCT_MODULE:
+	    fprintf(out, " module %s\n", ivl_scope_tname(net));
+	    break;
+	  case IVL_SCT_FUNCTION:
+	    fprintf(out, " function %s\n", ivl_scope_tname(net));
+	    break;
+	  case IVL_SCT_BEGIN:
+	    fprintf(out, " begin : %s\n", ivl_scope_tname(net));
+	    break;
+	  case IVL_SCT_FORK:
+	    fprintf(out, " fork : %s\n", ivl_scope_tname(net));
+	    break;
+	  case IVL_SCT_TASK:
+	    fprintf(out, " task %s\n", ivl_scope_tname(net));
+	    break;
+	  default:
+	    fprintf(out, " type(%u) %s\n", ivl_scope_type(net),
+		    ivl_scope_tname(net));
+	    break;
+      }
 
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
@@ -392,6 +415,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.28  2001/01/15 00:47:02  steve
+ *  Pass scope type information to the target module.
+ *
  * Revision 1.27  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *
