@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.4 1999/11/06 16:00:18 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.5 1999/11/06 16:52:16 steve Exp $"
 #endif
 
 /*
@@ -36,6 +36,9 @@ extern "C" {
 
 struct __vpirt;
 enum vpip_bit_t { V0 = 0, V1, Vx, Vz };
+
+extern void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits,
+				s_vpi_value*vp);
 
 /*
  * This structure is the very base of a vpiHandle. Every handle
@@ -236,6 +239,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.5  1999/11/06 16:52:16  steve
+ *  complete value retrieval for number constants.
+ *
  * Revision 1.4  1999/11/06 16:00:18  steve
  *  Put number constants into a static table.
  *
