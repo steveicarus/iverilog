@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.16 2000/10/26 16:42:25 steve Exp $"
+#ident "$Id: verilog.c,v 1.17 2000/11/07 06:14:06 steve Exp $"
 #endif
 
 /*
@@ -50,7 +50,13 @@ static void draw_scoped_objects(ivl_design_t des)
 
 	    switch (ivl_signal_type(sig)) {
 		case IVL_SIT_REG:
-		  fprintf(out, "    reg %s;\n", ivl_signal_basename(sig));
+		  if (ivl_signal_pins(sig) > 1)
+			fprintf(out, "    reg [%u:0] %s;\n",
+				ivl_signal_pins(sig),
+				ivl_signal_basename(sig));
+		  else
+			fprintf(out, "    reg %s;\n",
+				ivl_signal_basename(sig));
 		  break;
 		case IVL_SIT_WIRE:
 		  fprintf(out, "    wire %s;\n", ivl_signal_basename(sig));
@@ -132,6 +138,10 @@ static int draw_logic(ivl_net_logic_t net)
       return 0;
 }
 
+/*
+ * Scan the scope and its children for logic gates. Ise the draw_logic
+ * function to draw the actual gate.
+ */
 static int draw_scope_logic(ivl_scope_t scope)
 {
       unsigned cnt = ivl_scope_logs(scope);
@@ -197,6 +207,11 @@ static void show_expression(ivl_expr_t net)
       }
 }
 
+/*
+ * An assignment is one of a possible list of l-values to a behavioral
+ * assignment. Each l-value is either a part select of a signal or a
+ * non-constant bit select.
+ */
 static void show_assign_lval(ivl_lval_t lval)
 {
       ivl_nexus_t nex;
@@ -204,30 +219,42 @@ static void show_assign_lval(ivl_lval_t lval)
       ivl_signal_t sig;
 
       unsigned idx;
+      unsigned lsb;
 
-      assert(ivl_lval_pins(lval) == 1);
       assert(ivl_lval_mux(lval) == 0);
 
       nex = ivl_lval_pin(lval, 0);
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    unsigned pin;
+
 	    ptr = ivl_nexus_ptr(nex, idx);
 	    sig = ivl_nexus_ptr_sig(ptr);
 	    if (sig == 0)
 		  continue;
 
-	    assert(ivl_signal_type(sig) == IVL_SIT_REG);
+	    lsb = ivl_nexus_ptr_pin(ptr);
+
+	    for (pin = 1 ;  pin < ivl_lval_pins(lval) ;  pin += 1) {
+		  if (ivl_signal_pin(sig, lsb+pin) != ivl_lval_pin(lval,pin))
+			break;
+	    }
+
+	    if (pin < ivl_lval_pins(lval))
+		  continue;
+
 	    break;
       }
 
       assert(sig);
 
-      if (ivl_signal_pins(sig) == 1) {
-	    fprintf(out, "%s", ivl_signal_name(sig));
+      if ((lsb > 0) || (lsb + ivl_lval_pins(lval)) < ivl_signal_pins(sig)) {
+	    fprintf(out, "%s[%u:%u]", ivl_signal_name(sig),
+		    lsb+ivl_lval_pins(lval)-1, lsb);
 
       } else {
-	    fprintf(out, "%s[%u]", ivl_signal_name(sig),
-		    ivl_nexus_ptr_pin(ptr));
+	    fprintf(out, "%s", ivl_signal_name(sig));
+
       }
 }
 
@@ -395,6 +422,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.17  2000/11/07 06:14:06  steve
+ *  Display l-values with width.
+ *
  * Revision 1.16  2000/10/26 16:42:25  steve
  *  draw proper signal references for the gates.
  *
