@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.8 2000/12/14 23:36:34 steve Exp $"
+#ident "$Id: sys_table.c,v 1.9 2001/04/26 00:01:33 steve Exp $"
 #endif
 #include "vpi_user.h"
 
 extern void sys_finish_register();
+extern void sys_deposit_register();
 extern void sys_display_register();
 extern void sys_random_register();
 extern void sys_readmem_register();
@@ -30,6 +31,7 @@ extern void sys_vcd_register();
 
 void (*vlog_startup_routines[])() = {
       sys_finish_register,
+      sys_deposit_register,
       sys_display_register,
       sys_random_register,
       sys_readmem_register,
@@ -45,6 +47,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.9  2001/04/26 00:01:33  steve
+ *  Support $deposit to a wire or reg.
+ *
  * Revision 1.8  2000/12/14 23:36:34  steve
  *  include vpi_user.h.
  *

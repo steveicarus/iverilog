@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.8 2001/04/25 04:45:52 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.9 2001/04/26 00:01:33 steve Exp $"
 #endif
 
 /*
@@ -262,6 +262,17 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
       switch (vp->format) {
 
+	  case vpiIntVal: {
+		assert(wid <= sizeof(long));
+
+		long val = vp->value.integer;
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		      functor_set(ipoint_index(rfp->bits,idx), val&1, true);
+		      val >>= 1;
+		}
+		break;
+	  }
+
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
@@ -383,6 +394,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.9  2001/04/26 00:01:33  steve
+ *  Support $deposit to a wire or reg.
+ *
  * Revision 1.8  2001/04/25 04:45:52  steve
  *  Implement vpi_put_value for signals.
  *
