@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.c,v 1.7 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.8 2000/06/28 18:38:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -184,6 +184,8 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
       ref->base.vpi_type = &vpip_memory_rt;
       ref->name = name;
       ref->bits = calloc(wid*siz, sizeof(vpip_bit_t));
+      for (idx = 0 ;  idx < wid*siz ;  idx += 1)
+	    ref->bits[idx] = StX;
       ref->words = calloc(siz, sizeof(struct __vpiMemoryWord));
       ref->args = 0;
       ref->width = wid;
@@ -199,6 +201,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.8  2000/06/28 18:38:00  steve
+ *  Initialize memories as they are create.
+ *
  * Revision 1.7  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
