@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.81 1999/09/10 04:04:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.82 1999/09/12 01:16:51 steve Exp $"
 #endif
 
 /*
@@ -1609,6 +1609,20 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
       NetAssignNB*cur;
       if (mux == 0) {
 	    unsigned wid = msb - lsb + 1;
+
+	    rv->set_width(wid);
+
+	      /* If the l-value is larger then the r-value, then pad
+		 the r-value with 0s. */
+	    if (wid > rv->expr_width()) {
+		  verinum pad(verinum::V0, wid-rv->expr_width());
+		  NetEConst*co = new NetEConst(pad);
+		  NetEConcat*cc = new NetEConcat(2);
+		  cc->set(0, co);
+		  cc->set(1, rv);
+		  cc->set_width(wid);
+		  rv = cc;
+	    }
 	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(cur->pin(idx), reg->pin(idx+lsb));
@@ -2320,6 +2334,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.82  1999/09/12 01:16:51  steve
+ *  Pad r-values in certain assignments.
+ *
  * Revision 1.81  1999/09/10 04:04:06  steve
  *  Add ternary elaboration.
  *

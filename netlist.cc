@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.59 1999/09/11 04:43:17 steve Exp $"
+#ident "$Id: netlist.cc,v 1.60 1999/09/12 01:16:51 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -832,8 +832,8 @@ bool NetEBinary::set_width(unsigned w)
       switch (op_) {
 	  case 'a': // logical and (&&)
 	  case 'o': // logical or (||)
-	    assert(w == 1);
-	    expr_width(w);
+	    expr_width(1);
+	    flag = false;
 	    break;
 
 	  case 'l': // left shift  (<<)
@@ -1762,6 +1762,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.60  1999/09/12 01:16:51  steve
+ *  Pad r-values in certain assignments.
+ *
  * Revision 1.59  1999/09/11 04:43:17  steve
  *  Support ternary and <= operators in vvm.
  *
