@@ -10,9 +10,13 @@ AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_PROGS(XGPERF,gperf,none)
 if test "$XGPERF" = "none"
 then
-        echo "*** Error: No suitable gperf found. ***"
-        echo "    Please install the 'gperf' package."
-        exit 1
+	echo ""
+        echo "*** Warning: No suitable gperf found. ***"
+	echo "    The gperf package is essential for building ivl from"
+	echo "    CVS sources, or modifying the parse engine of ivl itself."
+	echo "    You can get away without it when simply building from"
+	echo "    snapshots or major releases."
+	echo ""
 fi
 
 AC_CHECK_PROGS(LEX,flex,none)
