@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.114 2000/03/17 19:23:59 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.115 2000/03/17 20:21:14 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -817,8 +817,8 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
       os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
 	    net_name<< "_bits; /* " << sig->name() <<
 	    " */" << endl;
-      os << "static vvm_signal_t<" << sig->pin_count() << "> " <<
-	    net_name << "(&" << net_name << "_bits);" << endl;
+      os << "static vvm_signal_t " << net_name << "(" << net_name <<
+	    "_bits.bits, " << sig->pin_count() << ");" << endl;
 
       init_code << "      vpip_make_reg(&" << net_name <<
 	    ", \"" << sig->name() << "\");" << endl;
@@ -2245,6 +2245,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.115  2000/03/17 20:21:14  steve
+ *  Detemplatize the vvm_signal_t class.
+ *
  * Revision 1.114  2000/03/17 19:23:59  steve
  *  nor2 and and2 optimized gates.
  *

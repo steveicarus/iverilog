@@ -17,10 +17,32 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.1 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.2 2000/03/17 20:21:14 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
+
+vvm_signal_t::vvm_signal_t(vpip_bit_t*b, unsigned nb)
+{
+      bits = b;
+      nbits = nb;
+}
+
+vvm_signal_t::~vvm_signal_t()
+{
+}
+
+void vvm_signal_t::init_P(unsigned idx, vpip_bit_t val)
+{
+      assert(idx < nbits);
+      bits[idx] = val;
+}
+
+void vvm_signal_t::take_value(unsigned key, vpip_bit_t val)
+{
+      bits[key] = val;
+      vpip_run_value_changes(this);
+}
 
 vvm_ram_callback::vvm_ram_callback()
 {
@@ -32,6 +54,9 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.2  2000/03/17 20:21:14  steve
+ *  Detemplatize the vvm_signal_t class.
+ *
  * Revision 1.1  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

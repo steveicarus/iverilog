@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.1 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.2 2000/03/17 20:21:14 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -68,27 +68,19 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 /*
  * The vvm_signal_t template is the real object that handles the
  * receiving of assignments and doing whatever is done. It also
- * connects VPI to the C++/vvm design.
+ * connects VPI to the C++/vvm design. The vvm_bitset_t stores the
+ * actual bits, this just attaches the name and vpiSignal stuff to the
+ * set. 
  */
-template <unsigned WIDTH>
 class vvm_signal_t  : public __vpiSignal, public vvm_nexus::recvr_t  {
 
     public:
-      vvm_signal_t(vvm_bitset_t<WIDTH>*b)
-	    { bits = b->bits;
-	      nbits = WIDTH;
-	    }
-      ~vvm_signal_t() { }
+      vvm_signal_t(vpip_bit_t*b, unsigned nb);
+      ~vvm_signal_t();
 
-      void init_P(unsigned idx, vpip_bit_t val)
-	    { bits[idx] = val; }
+      void init_P(unsigned idx, vpip_bit_t val);
 
-      void set_P(unsigned idx, vpip_bit_t val)
-	    { bits[idx] = val;
-	      vpip_run_value_changes(this);
-	    }
-
-      void take_value(unsigned key, vpip_bit_t val) { set_P(key, val); }
+      void take_value(unsigned key, vpip_bit_t val);
 };
 
 struct vvm_ram_callback {
@@ -163,6 +155,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.2  2000/03/17 20:21:14  steve
+ *  Detemplatize the vvm_signal_t class.
+ *
  * Revision 1.1  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and
