@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.6 1999/09/22 16:57:24 steve Exp $"
+#ident "$Id: t-null.cc,v 1.7 1999/09/30 21:27:29 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -42,12 +42,16 @@ static class target_null_t  : public target_t {
       void proc_forever(ostream&, const NetForever*) { }
       void proc_repeat(ostream&, const NetRepeat*) { }
       void proc_stask(ostream&, const NetSTask*) { }
+      void proc_utask(ostream&os, const NetUTask*) { }
 
 } target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.7  1999/09/30 21:27:29  steve
+ *  Ignore user task definitions.
+ *
  * Revision 1.6  1999/09/22 16:57:24  steve
  *  Catch parallel blocks in vvm emit.
  *
