@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/05/15 15:09:08 $" Version "$Date: 2001/05/15 15:09:08 $"
+.TH iverilog 1 "$Date: 2001/06/30 22:59:40 $" Version "$Date: 2001/06/30 22:59:40 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -130,15 +130,15 @@ The null target causes no code to be generated. It is useful for
 checking the syntax of the Verilog source.
 .TP 8
 .B vvm
-This is the default. The target is an executable program that uses the
-vvm simulation runtime. The compiler actually generates C++ code, then
-compiles and links that code to make the output executable.
+The target is an executable program that uses the vvm simulation
+runtime. The compiler actually generates C++ code, then compiles and
+links that code to make the output executable.
 .TP 8
 .B vvp
-The vvp target generates code for the vvp runtime. The output is a
-complete program that simulates the design (like with vvm) but must be
-run by the \fivvp\fP command. This target is much faster then the
-\fBvvm\fP target, but not quite as complete.
+This is the default. The vvp target generates code for the vvp
+runtime. The output is a complete program that simulates the design
+(like with vvm) but must be run by the \fivvp\fP command. This target
+is much faster then the \fBvvm\fP target, but not quite as complete.
 .TP 8
 .B xnf
 This is the Xilinx Netlist Format used by many tools for placing
@@ -172,7 +172,7 @@ To compile hello.v to an executable file called hello:
 
 	iverilog -o hello hello.v
 
-To compile and run using the vvp runtime:
+To compile and run explicitly using the vvp runtime:
 
 	iverilog -ohello.vvp -tvvp hello.v
 
