@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.134 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: compile.cc,v 1.135 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -32,6 +32,7 @@
 # include  "schedule.h"
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
+# include  "statistics.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -1377,10 +1378,11 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       vvp_ipoint_t fdx = functor_allocate(wid);
       define_functor_symbol(label, fdx);
 
+      functor_t fu = new var_functor_s [wid];
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    functor_t fu = new var_functor_s;
-	    functor_define(ipoint_index(fdx, idx), fu);
+	    functor_define(ipoint_index(fdx, idx), fu+idx);
       }
+      count_functors_var += wid;
 
 	/* Make the vpiHandle for the reg. */
       vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
@@ -1421,6 +1423,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.135  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.134  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *

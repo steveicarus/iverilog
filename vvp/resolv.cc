@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.12 2001/12/18 05:32:11 steve Exp $"
+#ident "$Id: resolv.cc,v 1.13 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "resolv.h"
 # include  "schedule.h"
+# include  "statistics.h"
 # include  <assert.h>
 
 /*
@@ -135,6 +136,7 @@ static unsigned blend(unsigned a, unsigned b)
 
 resolv_functor_s::resolv_functor_s(unsigned char pull)
 {
+      count_functors_resolv += 1;
       istr[0]=istr[1]=istr[2]=istr[3]=StX;
       hiz_ = pull;
 }
@@ -201,6 +203,9 @@ void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.13  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.12  2001/12/18 05:32:11  steve
  *  Improved functor debug dumps.
  *

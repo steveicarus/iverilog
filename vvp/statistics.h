@@ -19,13 +19,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.h,v 1.3 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: statistics.h,v 1.4 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  <stddef.h>
 
 extern unsigned long count_opcodes;
 extern unsigned long count_functors;
+extern unsigned long count_functors_table;
+extern unsigned long count_functors_bufif;
+extern unsigned long count_functors_resolv;
+extern unsigned long count_functors_var;
 extern unsigned long count_vpi_nets;
 extern unsigned long count_vpi_scopes;
 extern unsigned long count_vpi_memories;
@@ -34,6 +38,9 @@ extern size_t size_opcodes;
 
 /*
  * $Log: statistics.h,v $
+ * Revision 1.4  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.3  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *

@@ -17,12 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.6 2001/12/19 23:43:03 steve Exp $"
+#ident "$Id: bufif.cc,v 1.7 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "bufif.h"
 # include  "functor.h"
 # include  "schedule.h"
+# include  "statistics.h"
+
+vvp_bufif_s::vvp_bufif_s(bool en_invert, bool out_invert)
+: pol_(en_invert? 1 : 0), inv_(out_invert? 1 : 0)
+{
+      count_functors_bufif += 1;
+}
 
 void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 {
@@ -91,6 +98,9 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.7  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.6  2001/12/19 23:43:03  steve
  *  clarify bufif output strenghts.
  *

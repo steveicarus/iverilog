@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.h,v 1.3 2002/01/12 04:02:16 steve Exp $"
+#ident "$Id: logic.h,v 1.4 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "functor.h"
+# include  <stddef.h>
 
 /*
  *  Table driven functor.  oval = table[ival];
@@ -62,6 +63,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.4  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.3  2002/01/12 04:02:16  steve
  *  Support the BUFZ logic device.
  *

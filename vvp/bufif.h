@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.h,v 1.3 2001/12/14 06:03:17 steve Exp $"
+#ident "$Id: bufif.h,v 1.4 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -27,8 +27,7 @@
 class vvp_bufif_s  : public functor_s {
 
     public:
-      vvp_bufif_s(bool en_invert, bool out_invert)
-      : pol_(en_invert? 1 : 0), inv_(out_invert? 1 : 0) {}
+      vvp_bufif_s(bool en_invert, bool out_invert);
 
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
@@ -39,6 +38,9 @@ class vvp_bufif_s  : public functor_s {
 
 /*
  * $Log: bufif.h,v $
+ * Revision 1.4  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.3  2001/12/14 06:03:17  steve
  *  Arrange bufif to support notif as well.
  *

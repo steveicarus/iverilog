@@ -17,20 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.8 2002/03/17 05:48:49 steve Exp $"
+#ident "$Id: logic.cc,v 1.9 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "logic.h"
 # include  "compile.h"
 # include  "bufif.h"
 # include  "npmos.h"
-
+# include  "statistics.h"
 # include  <string.h>
 # include  <assert.h>
 # include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+
 
 /*
  *   Implementation of the table functor, which provides logic with up
@@ -40,6 +41,7 @@
 table_functor_s::table_functor_s(truth_t t, unsigned str0, unsigned str1) 
 : table(t) 
 {
+      count_functors_table += 1;
       assert(str0 <= 7);
       assert(str1 <= 7);
       odrive0 = str0;
@@ -162,6 +164,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.9  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.8  2002/03/17 05:48:49  steve
  *  Do not push values through logic gates.
  *

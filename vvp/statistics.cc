@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.cc,v 1.3 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: statistics.cc,v 1.4 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "statistics.h"
@@ -28,6 +28,10 @@
 unsigned long count_opcodes = 0;
 
 unsigned long count_functors = 0;
+unsigned long count_functors_table = 0;
+unsigned long count_functors_bufif = 0;
+unsigned long count_functors_resolv= 0;
+unsigned long count_functors_var   = 0;
 
 unsigned long count_vpi_nets = 0;
 
@@ -40,6 +44,9 @@ size_t size_opcodes = 0;
 
 /*
  * $Log: statistics.cc,v $
+ * Revision 1.4  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.3  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *

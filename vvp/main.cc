@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.27 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: main.cc,v 1.28 2002/07/05 20:08:44 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -239,6 +239,10 @@ int main(int argc, char*argv[])
 
       if (verbose_flag) {
 	    fprintf(stderr, " ... %8lu functors\n", count_functors);
+	    fprintf(stderr, "           %8lu table\n",  count_functors_table);
+	    fprintf(stderr, "           %8lu bufif\n",  count_functors_bufif);
+	    fprintf(stderr, "           %8lu resolv\n", count_functors_resolv);
+	    fprintf(stderr, "           %8lu variable\n", count_functors_var);
 	    fprintf(stderr, " ... %8lu opcodes (%lu bytes)\n",
 		    count_opcodes, size_opcodes);
 	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
@@ -275,6 +279,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.28  2002/07/05 20:08:44  steve
+ *  Count different types of functors.
+ *
  * Revision 1.27  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *
