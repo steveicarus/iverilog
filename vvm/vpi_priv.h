@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.19 2000/05/09 21:16:35 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.20 2000/05/11 01:37:33 steve Exp $"
 #endif
 
 /*
@@ -87,14 +87,23 @@ typedef unsigned char vpip_bit_t;
 # define StX 0xe6
 # define HiZ 0x08
 
-      /* Compare the logic values of two vpip_bit_t variables, or test
-	 the logical value of the bit. */
+	/* Compare the logic values of two vpip_bit_t variables. This
+	   is like the === operator of Verilog, it ignored strengths. */
 # define B_EQ(l,r) (((l)&0x88) == ((r)&0x88))
+
+	/* Test and return true if the value has ambiguous
+	   strength. The logic value may yet be knowable. */
+# define B_ISAMBIG(v) (((v)&0x0f) != (((v)>>4)&0x0f))
+
+	/* Test whether the value is of the specified logic value. It
+	   is possible for even ambiguous signals to have a known
+	   logic value. */
 # define B_IS0(v)  (((v)&0x88) == 0x00)
 # define B_IS1(v)  (((v)&0x88) == 0x88)
 # define B_ISX(v)  (((v)&0x88) == 0x80)
 # define B_ISZ(v)  ((v) == HiZ)
 # define B_ISXZ(v) (1 & (((v)>>7) ^ ((v)>>3)))
+
 
       /* Take as input an array of bits, and return the resolved
 	 value. The result accounts for the strengths involved. */
@@ -368,6 +377,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.20  2000/05/11 01:37:33  steve
+ *  Calculate the X output value from drive0 and drive1
+ *
  * Revision 1.19  2000/05/09 21:16:35  steve
  *  Give strengths to logic and bufz devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.15 2000/05/09 21:16:35 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.16 2000/05/11 01:37:33 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -52,16 +52,13 @@ vvm_1bit_out::~vvm_1bit_out()
 void vvm_1bit_out::drive0(vpip_bit_t v)
 {
       drive0_ = v;
+      driveX_ = (drive1_&0xf0) | (drive0_&0x0f);
 }
 
 void vvm_1bit_out::drive1(vpip_bit_t v)
 {
       drive1_ = v;
-}
-
-void vvm_1bit_out::driveX(vpip_bit_t v)
-{
-      driveX_ = v;
+      driveX_ = (drive1_&0xf0) | (drive0_&0x0f);
 }
 
 void vvm_1bit_out::driveZ(vpip_bit_t v)
@@ -353,6 +350,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.16  2000/05/11 01:37:33  steve
+ *  Calculate the X output value from drive0 and drive1
+ *
  * Revision 1.15  2000/05/09 21:16:35  steve
  *  Give strengths to logic and bufz devices.
  *

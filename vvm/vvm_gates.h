@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.62 2000/05/09 21:16:35 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.63 2000/05/11 01:37:33 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -71,7 +71,6 @@ class vvm_1bit_out  : public vvm_nexus::drive_t  {
 
       void drive0(vpip_bit_t);
       void drive1(vpip_bit_t);
-      void driveX(vpip_bit_t);
       void driveZ(vpip_bit_t);
 
     private:
@@ -940,6 +939,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.63  2000/05/11 01:37:33  steve
+ *  Calculate the X output value from drive0 and drive1
+ *
  * Revision 1.62  2000/05/09 21:16:35  steve
  *  Give strengths to logic and bufz devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_bit.c,v 1.4 2000/05/09 21:16:35 steve Exp $"
+#ident "$Id: vpi_bit.c,v 1.5 2000/05/11 01:37:33 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -28,7 +28,7 @@
  * bits are identical. This means that the VSSSvsss bits of the 8bit
  * value have V==v and SSS==sss.
  */
-#define UNAMBIG(v) (((v)&0x0f) == (((v)>>4)&0x0f))
+#define UNAMBIG(v) (! B_ISAMBIG(v))
 
 
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
@@ -134,6 +134,9 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
 /*
  * $Log: vpi_bit.c,v $
+ * Revision 1.5  2000/05/11 01:37:33  steve
+ *  Calculate the X output value from drive0 and drive1
+ *
  * Revision 1.4  2000/05/09 21:16:35  steve
  *  Give strengths to logic and bufz devices.
  *
