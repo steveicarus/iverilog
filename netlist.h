@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.298 2003/08/28 04:11:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.299 2003/09/13 01:01:52 steve Exp $"
 #endif
 
 /*
@@ -316,7 +316,7 @@ class NexusSet {
 
 /*
  * A NetNode is a device of some sort, where each pin has a different
- * meaning. (i.e. pin(0) is the output to an and gate.) NetNode
+ * meaning. (i.e., pin(0) is the output to an and gate.) NetNode
  * objects are listed in the nodes_ of the Design object.
  */
 class NetNode  : public NetObj {
@@ -3065,7 +3065,7 @@ class NetScope : public Attrib {
       const char*module_name() const;
 
 	/* Scopes have their own time units and time precision. The
-	   unit and precision are given as power of 10, i.e. -3 is
+	   unit and precision are given as power of 10, i.e., -3 is
 	   units of milliseconds.
 
 	   If a NetScope is created with a parent scope, the new scope
@@ -3185,7 +3185,7 @@ class Design {
 	   the delay value scaled to the precision of the design. */
       unsigned long scale_to_precision(unsigned long, const NetScope*)const;
 
-	/* look up a scope. If no starting scope is passed, then the
+	/* Look up a scope. If no starting scope is passed, then the
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
@@ -3300,7 +3300,7 @@ extern void connect(Link&, Link&);
 inline bool connected(const Link&l, const Link&r)
 { return l.is_linked(r); }
 
-/* return the number of links in the ring that are of the specified
+/* Return the number of links in the ring that are of the specified
    type. */
 extern unsigned count_inputs(const Link&pin);
 extern unsigned count_outputs(const Link&pin);
@@ -3322,6 +3322,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.299  2003/09/13 01:01:52  steve
+ *  Spelling fixes.
+ *
  * Revision 1.298  2003/08/28 04:11:19  steve
  *  Spelling patch.
  *

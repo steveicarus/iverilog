@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.26 2003/08/28 04:11:17 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.27 2003/09/13 01:01:51 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -364,7 +364,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 /*
  * Elaborate the datum within the module. This variable may be
- * within a subscope (i.e. a function or task) so use the components
+ * within a subscope (i.e., a function or task) so use the components
  * of the name to find the precise scope where this item goes.
  */
 void PData::elaborate_scope(Design*des, NetScope*scope) const
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.27  2003/09/13 01:01:51  steve
+ *  Spelling fixes.
+ *
  * Revision 1.26  2003/08/28 04:11:17  steve
  *  Spelling patch.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.287 2003/09/04 20:28:05 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.288 2003/09/13 01:01:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -133,7 +133,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  }
 	    }
 
-	      /* If the nets are different type (i.e., reg vs tri) then
+	      /* If the nets are different type (i.e., reg vs. tri) then
 		 a driver is needed. */
 	    if (rid->type() != lval->type())
 		  need_driver_flag = true;
@@ -1162,7 +1162,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       if (delay_ != 0)
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
-	/* All done with this node. mark its line number and check it in. */
+	/* All done with this node. Mark its line number and check it in. */
       NetAssignNB*cur = new NetAssignNB(lv, rv);
       cur->set_delay(delay);
       cur->set_line(*this);
@@ -2043,7 +2043,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       NetWhile*loop = new NetWhile(expr, wait);
       loop->set_line(*this);
 
-	/* If there is no real substatement (i.e. "wait (foo) ;") then
+	/* If there is no real substatement (i.e., "wait (foo) ;") then
 	   we are done. */
       if (enet == 0)
 	    return loop;
@@ -2615,6 +2615,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.288  2003/09/13 01:01:51  steve
+ *  Spelling fixes.
+ *
  * Revision 1.287  2003/09/04 20:28:05  steve
  *  Support time0 resolution of combinational threads.
  *

@@ -432,7 +432,7 @@ language that are defined.
 	by arranging for always statements with ANYEDGE sensitivity
 	lists to be scheduled before any other threads. This causes
 	combinational always blocks to be triggered when the values in
-	the sensitivity list are initialzed by initial threads.
+	the sensitivity list are initialized by initial threads.
 
 6.0 CREDITS
 
