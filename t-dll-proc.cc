@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.57 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.58 2003/05/07 19:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -730,7 +730,8 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
       if (net->nevents() != 1) {
-	    cerr << "internal error: multiple events not supported." << endl;
+	    cerr << net->get_line() << ": internal error: "
+		 << "multiple events not supported." << endl;
 	    return false;
       }
 
@@ -828,6 +829,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.58  2003/05/07 19:56:20  steve
+ *  Improve internal error message.
+ *
  * Revision 1.57  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names
