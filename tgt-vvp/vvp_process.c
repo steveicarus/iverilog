@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.14 2001/03/31 19:02:13 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.15 2001/03/31 19:08:22 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -346,6 +346,12 @@ static int show_system_task_call(ivl_statement_t net)
 		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
 		  break;
 
+		case IVL_EX_SFUNC:
+		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
+			fprintf(vvp_out, ", $time");
+		  else
+			fprintf(vvp_out, ", ?");
+		  break;
 		default:
 		  fprintf(vvp_out, ", ?");
 		  break;
@@ -473,6 +479,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.15  2001/03/31 19:08:22  steve
+ *  Handle $time as system task parameter.
+ *
  * Revision 1.14  2001/03/31 19:02:13  steve
  *  Clear results of condition expressions.
  *
