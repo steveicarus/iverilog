@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.53 2001/08/26 22:59:32 steve Exp $"
+#ident "$Id: vthread.cc,v 1.54 2001/09/07 23:29:28 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -153,7 +153,7 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
       unsigned long*val = new unsigned long[awid];
 
       for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
-	    val[0] = 0;
+	    val[idx] = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    unsigned bit = thr_get_bit(thr, addr);
@@ -905,9 +905,7 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 
       } else {
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-		  thr_put_bit(thr,
-			      cp->bit_idx1+idx,
-			      thr_get_bit(thr, cp->bit_idx2));
+		  thr_put_bit(thr, cp->bit_idx1+idx, cp->bit_idx2);
       }
 
       return true;
@@ -1214,18 +1212,20 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 	    goto x_out;
 
 
-      unsigned long carry;
+      unsigned carry;
       carry = 1;
-      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
-	    unsigned long r_inv = ~lvb[idx];
-	    unsigned long tmp = (lva[idx] | r_inv) & TOP_BIT;
-	    lva[idx] += r_inv + carry;
-	    carry = (tmp > lva[idx]) ? 1 : 0;
-      }
-
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
-	    thr_put_bit(thr, cp->bit_idx1+idx, (bit&1) ? 1 : 0);
+	    unsigned long tmp;
+	    unsigned sum = carry;
+
+	    tmp = lva[idx/CPU_BITS];
+	    sum += 1 &  (tmp >> (idx%CPU_BITS));
+
+	    tmp = lvb[idx/CPU_BITS];
+	    sum += 1 & ~(tmp >> (idx%CPU_BITS));
+
+	    carry = sum / 2;
+	    thr_put_bit(thr, cp->bit_idx1+idx, (sum&1) ? 1 : 0);
       }
 
       delete[]lva;
@@ -1353,6 +1353,13 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.54  2001/09/07 23:29:28  steve
+ *  Redo of_SUBU in a more obvious algorithm, that
+ *  is not significantly slower. Also, clean up the
+ *  implementation of %mov from a constant.
+ *
+ *  Fix initial clearing of vector by vector_to_array
+ *
  * Revision 1.53  2001/08/26 22:59:32  steve
  *  Add the assign/x0 and set/x opcodes.
  *
