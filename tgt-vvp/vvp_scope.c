@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.92 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.93 2003/05/13 01:56:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -684,12 +684,20 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	  vvp_mangle_id(ivl_udp_name(udp)));
   draw_delay(lptr);
   
-  for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) 
-    {
-      ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
-      fprintf(vvp_out, ", ");
-      draw_input_from_net(nex);
-    }
+  for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
+	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
+
+	  /* Unlike other logic gates, primitives may have unconnected
+	     inputs. The proper behavior is to attach a HiZ to the
+	     port. */
+	if (nex == 0) {
+	      fprintf(vvp_out, ", C<z>");
+
+	} else {
+	      fprintf(vvp_out, ", ");
+	      draw_input_from_net(nex);
+	}
+  }
   
   fprintf(vvp_out, ";\n");
 }
@@ -708,12 +716,21 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       typedef const char*const_charp;
       const_charp*input_strings = calloc(ninp, sizeof(const_charp));
 
-      for (pdx = 0 ;  pdx < ninp ;  pdx += 1)
-	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
+      for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
+	    if (nex == 0) {
+		    /* Only UDPs can have unconnected inputs. */
+		  assert(ivl_logic_type(lptr) == IVL_LO_UDP);
+		  input_strings[pdx] = 0;
+	    } else {
+		  input_strings[pdx] = draw_net_input(nex);
+	    }
+      }
       
       switch (ivl_logic_type(lptr)) {
 
           case IVL_LO_UDP:
+	    free(input_strings);
 	    draw_udp_in_scope(lptr);
 	    return;
 
@@ -746,6 +763,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	      /* Skip pullup and pulldown objects. Things that have
 		 pull objects as inputs will instead generate the
 		 appropriate C<?> symbol. */
+	    free(input_strings);
 	    return;
 
 	  case IVL_LO_AND:
@@ -1629,6 +1647,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.93  2003/05/13 01:56:15  steve
+ *  Allow primitives to hvae unconnected input ports.
+ *
  * Revision 1.92  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

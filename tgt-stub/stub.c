@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.77 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: stub.c,v 1.78 2003/05/13 01:56:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -731,6 +731,12 @@ static void show_logic(ivl_net_logic_t net)
 	    fprintf(out, "  xor %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
+
+	  case IVL_LO_UDP:
+	    fprintf(out, "  primitive %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+
 	  default:
 	    fprintf(out, "  unsupported gate %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
@@ -738,8 +744,14 @@ static void show_logic(ivl_net_logic_t net)
       }
 
       npins = ivl_logic_pins(net);
-      for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
+      for (idx = 1 ;  idx < npins ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(net,idx);
+
+	    if (nex == 0)
+		  fprintf(out, ", <HiZ>");
+	    else
+		  fprintf(out, ", %s", ivl_nexus_name(nex));
+      }
 
       fprintf(out, ");\n");
 
@@ -840,6 +852,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.78  2003/05/13 01:56:15  steve
+ *  Allow primitives to hvae unconnected input ports.
+ *
  * Revision 1.77  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

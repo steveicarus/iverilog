@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.110 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.111 2003/05/13 01:56:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1026,6 +1026,12 @@ void dll_target::udp(const NetUDP*net)
       obj->pins_ = new ivl_nexus_t[obj->npins_];
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
+
+	      /* Skip unconnected input pins. These will take on HiZ
+		 values by the code generators. */
+	    if (nex->t_cookie() == 0)
+		  continue;
+
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
 	    nexus_log_add(obj->pins_[idx], obj, idx);
@@ -2120,6 +2126,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.111  2003/05/13 01:56:15  steve
+ *  Allow primitives to hvae unconnected input ports.
+ *
  * Revision 1.110  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.
