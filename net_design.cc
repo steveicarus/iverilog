@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.6 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: net_design.cc,v 1.7 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 /*
@@ -269,49 +269,27 @@ string Design::get_flag(const string&key) const
  * This method looks for a string given a current context as a
  * starting point.
  */
-NetNet* Design::find_signal(const string&path, const string&name)
+NetNet* Design::find_signal(NetScope*scope, const string&name)
 {
-      NetScope*scope = find_scope(path);
-      if (scope == 0) {
-	    cerr << "internal error: invalid scope: " << path << endl;
-	    return 0;
-      }
       assert(scope);
 
       while (scope) {
 	    if (NetNet*net = scope->find_signal(name))
 		  return net;
-
 	    scope = scope->parent();
       }
 
       return 0;
 }
 
-void Design::add_memory(NetMemory*mem)
+NetMemory* Design::find_memory(NetScope*scope, const string&name)
 {
-      memories_[mem->name()] = mem;
-}
-
-NetMemory* Design::find_memory(const string&path, const string&name)
-{
-      string root = path;
-
-      for (;;) {
-	    string fulname = root + "." + name;
-	    map<string,NetMemory*>::const_iterator cur
-		  = memories_.find(fulname);
-
-	    if (cur != memories_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
+      assert(scope);
+      while (scope) {
+	    if (NetMemory*mem = scope->find_memory(name))
+		  return mem;
+	    scope = scope->parent();
       }
-
       return 0;
 }
 
@@ -321,29 +299,20 @@ void Design::find_symbol(NetScope*scope, const string&key,
       sig = 0;
       mem = 0;
 
-      for (;;) {
+      while (scope) {
+
 	      /* Form the full heirarchical name for lookups. */
-	    string fulname = scope? (scope->name() + "." + key) : key;
+	    string fulname = scope->name() + "." + key;
 
-	    if (scope)
-		  if (NetNet*cur = scope->find_signal(fulname)) {
-			sig = cur;
-			return;
-		  }
-
-	      /* Is this a memory? If so, we are again done. */
-	    map<string,NetMemory*>::const_iterator cur
-		  = memories_.find(fulname);
-
-	    if (cur != memories_.end()) {
-		  mem = (*cur).second;
+	    if (NetNet*cur = scope->find_signal(fulname)) {
+		  sig = cur;
 		  return;
 	    }
 
-	      /* Neither a signal nor memory are found, so go up a
-		 scope level and try again. */
-	    if (scope == 0)
+	    if (NetMemory*cur = scope->find_memory(fulname)) {
+		  mem = cur;
 		  return;
+	    }
 
 	    scope = scope->parent();
       }
@@ -504,6 +473,9 @@ NetNode* Design::find_node(bool (*func)(const NetNode*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.7  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.6  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

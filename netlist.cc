@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.120 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: netlist.cc,v 1.121 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2124,9 +2124,16 @@ NetEMemory::~NetEMemory()
 {
 }
 
-NetMemory::NetMemory(const string&n, long w, long s, long e)
-: name_(n), width_(w), idxh_(s), idxl_(e), ram_list_(0)
+NetMemory::NetMemory(NetScope*sc, const string&n, long w, long s, long e)
+: name_(n), width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
 {
+      scope_->add_memory(this);
+}
+
+NetMemory::~NetMemory()
+{
+      assert(scope_);
+      scope_->rem_memory(this);
 }
 
 unsigned NetMemory::count() const
@@ -2545,6 +2552,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.121  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.120  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

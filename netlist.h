@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.133 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: netlist.h,v 1.134 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 /*
@@ -495,12 +495,16 @@ class NetFF  : public NetNode {
 class NetMemory  {
 
     public:
-      NetMemory(const string&n, long w, long s, long e);
+      NetMemory(NetScope*sc, const string&n, long w, long s, long e);
+      ~NetMemory();
 
       const string&name() const { return name_; }
 
 	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
+
+      NetScope*scope();
+      const NetScope*scope() const;
 
 	// This is the number of memory positions.
       unsigned count() const;
@@ -524,6 +528,14 @@ class NetMemory  {
 
       friend class NetRamDq;
       NetRamDq* ram_list_;
+
+      friend class NetScope;
+      NetMemory*snext_, *sprev_;
+      NetScope*scope_;
+
+    private: // not implemented
+      NetMemory(const NetMemory&);
+      NetMemory& operator= (const NetMemory&);
 };
 
 /*
@@ -2267,6 +2279,16 @@ class NetScope {
 
       NetNet* find_signal(const string&name);
 
+
+	/* ... and these methods manage memory the same way as signals
+	   are managed above. */
+
+      void add_memory(NetMemory*);
+      void rem_memory(NetMemory*);
+
+      NetMemory* find_memory(const string&name);
+
+
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent();
@@ -2310,8 +2332,9 @@ class NetScope {
       map<string,NetExpr*>parameters_;
       map<string,NetExpr*>localparams_;
 
-      NetEvent*events_;
-      NetNet  *signals_;
+      NetEvent *events_;
+      NetNet   *signals_;
+      NetMemory*memories_;
 
       NetScope*up_;
       NetScope*sib_;
@@ -2367,11 +2390,10 @@ class Design {
 	   this method, unlike the NetScope::find_signal method,
 	   handles global name binding. */
 
-      NetNet*find_signal(const string&path, const string&name);
+      NetNet*find_signal(NetScope*scope, const string&name);
 
 	// Memories
-      void add_memory(NetMemory*);
-      NetMemory* find_memory(const string&path, const string&name);
+      NetMemory* find_memory(NetScope*scope, const string&name);
 
 	/* This is a more general lookup that finds the named signal
 	   or memory, whichever is first in the search path. */
@@ -2415,8 +2437,6 @@ class Design {
 	// Keep a tree of scopes. The NetScope class handles the wide
 	// tree and per-hop searches for me.
       NetScope*root_scope_;
-
-      map<string,NetMemory*> memories_;
 
 	// List the function definitions in the design.
       map<string,NetFuncDef*> funcs_;
@@ -2485,6 +2505,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.134  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.133  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

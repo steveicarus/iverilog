@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.31 2000/05/02 00:58:11 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.32 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -886,12 +886,12 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			       unsigned long decay) const
 {
       NetScope*scope = des->find_scope(path);
-      NetNet*sig = des->find_signal(path, text_);
+      NetNet*sig = des->find_signal(scope, text_);
 
       if (sig == 0) {
 	      /* If the identifier is a memory instead of a signal,
 		 then handle it elsewhere. Create a RAM. */
-	    if (NetMemory*mem = des->find_memory(path, text_))
+	    if (NetMemory*mem = des->find_memory(scope, text_))
 		  return elaborate_net_ram_(des, path, mem, lwidth,
 					    rise, fall, decay);
 
@@ -1045,10 +1045,10 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*sig = des->find_signal(path, text_);
+      NetNet*sig = des->find_signal(scope, text_);
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
-	    if (des->find_memory(path, text_)) {
+	    if (des->find_memory(scope, text_)) {
 		  cerr << get_line() << ": error: memories (" << text_
 		       << ") cannot be l-values in continuous "
 		       << "assignments." << endl;
@@ -1410,6 +1410,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.32  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.31  2000/05/02 00:58:11  steve
  *  Move signal tables to the NetScope class.
  *

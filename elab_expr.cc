@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.22 2000/05/02 00:58:11 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.23 2000/05/02 03:13:30 steve Exp $"
 #endif
 
 
@@ -164,6 +164,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       }
       assert(def);
 
+      NetScope*dscope = des->find_scope(def->name());
+      assert(dscope);
 
       svector<NetExpr*> parms (parms_.count());
 
@@ -183,7 +185,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 	   of the function, that has the name of the function. The
 	   function code assigns to this signal to return a value. */
 
-      NetNet*res = des->find_signal(def->name(), name_);
+      NetNet*res = des->find_signal(dscope, name_);
       if (res == 0) {
 	    cerr << get_line() << ": internal error: Unable to locate "
 		  "function return value for " << name_ << " in " <<
@@ -260,7 +262,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
-      if (NetNet*net = des->find_signal(scope->name(), text_)) {
+      if (NetNet*net = des->find_signal(scope, text_)) {
 
 	      // If this is a part select of a signal, then make a new
 	      // temporary signal that is connected to just the
@@ -346,7 +348,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	// If the identifier names a memory, then this is a
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
-      if (NetMemory*mem = des->find_memory(scope->name(), text_)) {
+      if (NetMemory*mem = des->find_memory(scope, text_)) {
 	    if (msb_ == 0) {
 		  NetEMemory*node = new NetEMemory(mem);
 		  node->set_line(*this);
@@ -454,6 +456,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.23  2000/05/02 03:13:30  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.22  2000/05/02 00:58:11  steve
  *  Move signal tables to the NetScope class.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.80 2000/05/02 00:58:11 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.81 2000/05/02 03:13:30 steve Exp $"
 #endif
 
 /*
@@ -677,6 +677,15 @@ void NetScope::dump(ostream&o) const
 	    } while (cur != signals_->sig_next_);
       }
 
+	// Dump the memories,
+      if (memories_) {
+	    NetMemory*cur = memories_->snext_;
+	    do {
+		  cur->dump(o, 4);
+		  cur = cur->snext_;
+	    } while (cur != memories_->snext_);
+      }
+
 	/* Dump any sub-scopes. */
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->dump(o);
@@ -876,15 +885,6 @@ void Design::dump(ostream&o) const
       o << "SCOPES:" << endl;
       root_scope_->dump(o);
 
-      o << "ELABORATED MEMORIES:" << endl;
-      {
-	    map<string,NetMemory*>::const_iterator pp;
-	    for (pp = memories_.begin()
-		       ; pp != memories_.end() ; pp ++) {
-		  (*pp).second->dump(o, 0);
-	    }
-      }
-
       o << "ELABORATED FUNCTION DEFINITIONS:" << endl;
       {
 	    map<string,NetFuncDef*>::const_iterator pp;
@@ -924,6 +924,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.81  2000/05/02 03:13:30  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.80  2000/05/02 00:58:11  steve
  *  Move signal tables to the NetScope class.
  *

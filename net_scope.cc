@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.5 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.6 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -34,6 +34,7 @@
 NetScope::NetScope(const string&n)
 : type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
 {
+      memories_ = 0;
       signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
@@ -42,6 +43,7 @@ NetScope::NetScope(const string&n)
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 : type_(t), name_(n), up_(up), sib_(0), sub_(0)
 {
+      memories_ = 0;
       signals_ = 0;
       events_ = 0;
       sib_ = up_->sub_;
@@ -184,6 +186,51 @@ NetNet* NetScope::find_signal(const string&key)
       return 0;
 }
 
+void NetScope::add_memory(NetMemory*mem)
+{
+      if (memories_ == 0) {
+	    mem->snext_ = mem;
+	    mem->sprev_ = mem;
+      } else {
+	    mem->snext_ = memories_->snext_;
+	    mem->sprev_ = memories_;
+	    mem->snext_->sprev_ = mem;
+	    mem->sprev_->snext_ = mem;
+      }
+      memories_ = mem;
+      mem->scope_ = this;
+}
+
+void NetScope::rem_memory(NetMemory*mem)
+{
+      assert(mem->scope_ == this);
+      if (memories_ == mem)
+	    memories_ = mem->sprev_;
+
+      if (memories_ == mem) {
+	    memories_ = 0;
+      } else {
+	    mem->sprev_->snext_ = mem->snext_;
+	    mem->snext_->sprev_ = mem->sprev_;
+      }
+      mem->scope_ = 0;
+}
+
+NetMemory* NetScope::find_memory(const string&key)
+{
+      if (memories_ == 0)
+	    return 0;
+
+      string fulname = name()+"."+key;
+      NetMemory*cur = memories_;
+      do {
+	    if (cur->name() == fulname)
+		  return cur;
+	    cur = cur->sprev_;
+      } while (cur != memories_);
+      return 0;
+}
+
 /*
  * This method locates a child scope by name. The name is the simple
  * name of the child, no heirarchy is searched.
@@ -234,6 +281,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.6  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.5  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

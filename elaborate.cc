@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.166 2000/05/02 00:58:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.167 2000/05/02 03:13:31 steve Exp $"
 #endif
 
 /*
@@ -146,9 +146,9 @@ void PWire::elaborate(Design*des, NetScope*scope) const
 	    long rnum = rval->as_long();
 	    delete lval;
 	    delete rval;
-	    NetMemory*sig = new NetMemory(path+"."+basename, wid, lnum, rnum);
+	    NetMemory*sig = new NetMemory(scope, path+"."+basename,
+					  wid, lnum, rnum);
 	    sig->set_attributes(attributes);
-	    des->add_memory(sig);
 
       } else {
 
@@ -409,7 +409,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// already, so just look it up as a child of the current scope.
       NetScope*my_scope = scope->child(get_name());
       assert(my_scope);
-      const string my_name = my_scope -> name();
 
       const svector<PExpr*>*pins;
 
@@ -499,7 +498,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    unsigned prts_pin_count = 0;
 	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
 		  PWire*pport = mport[ldx];
-		  prts[ldx] = des->find_signal(my_name, pport->name());
+		  prts[ldx] = des->find_signal(my_scope, pport->name());
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
 	    }
@@ -815,7 +814,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. (Wires are not allows in this context. */
-      NetNet*reg = des->find_signal(path, id->name());
+      NetNet*reg = des->find_signal(scope, id->name());
 
       if (reg == 0) {
 	    cerr << get_line() << ": error: Could not match signal ``" <<
@@ -907,11 +906,11 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    NetNet*net = des->find_signal(path, id->name());
+	    NetNet*net = des->find_signal(scope, id->name());
 	    if (net && (net->scope() == scope))
 		  break;
 
-	    if (NetMemory*mem = des->find_memory(path, id->name()))
+	    if (NetMemory*mem = des->find_memory(scope, id->name()))
 		  return assign_to_memory_(mem, id->msb_, des, path);
 
       } while(0);
@@ -1123,7 +1122,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    if (NetMemory*mem = des->find_memory(path, id->name()))
+	    if (NetMemory*mem = des->find_memory(scope, id->name()))
 		  return assign_to_memory_(mem, id->msb_, des, path);
 
       } while(0);
@@ -1933,7 +1932,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
 	   very specifically an assignment. */
-      NetNet*sig = des->find_signal(path, id1->name());
+      NetNet*sig = des->find_signal(scope, id1->name());
       if (sig == 0) {
 	    cerr << id1->get_line() << ": register ``" << id1->name()
 		 << "'' unknown in this context." << endl;
@@ -1962,7 +1961,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	/* Elaborate the increment assignment statement at the end of
 	   the for loop. This is also a very specific assignment
 	   statement. Put this into the "body" block. */
-      sig = des->find_signal(path, id2->name());
+      sig = des->find_signal(scope, id2->name());
       assert(sig);
       NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr2_->elaborate_expr(des, scope));
@@ -2431,6 +2430,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.167  2000/05/02 03:13:31  steve
+ *  Move memories to the NetScope object.
+ *
  * Revision 1.166  2000/05/02 00:58:11  steve
  *  Move signal tables to the NetScope class.
  *
