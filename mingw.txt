@@ -1,0 +1,113 @@
+
+
+MINGW PORT OF ICARUS VERILOG
+
+    Copyright 2001 Stephen Williams  <steve@icarus.com>
+
+
+Icarus Verilog source can be compiled with the mingw C/C++ compilers
+to get a Windows binary that does not require the posix compatibility
+cruft of the Cygwin.dll library. The configure scripts automatically
+detect that the compilers in use are the mingw compilers and will
+configure the Makefiles appropriately.
+
+However, the mingw tools do not include all the other cruft around the
+compiler, including the shell interpreter for the configure script,
+bison, flex, gperf, etc. Therefore, you still need Cygwin to compile
+Icarus Verilog, even if you don't need the Cygwin compilers.
+
+* Install Cygwin
+
+So, step 1 is "Download and Install Cygwin." See the web page
+http://www.cygwin.com for instructions and the files to do
+this. Cygwin *is* a kool package, and is worth having anyhow.
+
+* Install mingw
+
+The obvious step 2, then, is install the mingw compilers. These can be
+found as the web page <http://www.mingw.org>.
+
+* Unpack Icarus Verilog source
+
+Most of the remaining steps are best done in a Cygwin window. When you
+installed Cygwin, a start menu entry was created to allow you to start
+up the Cygwin window. I'll use the string "$ " to represent a command
+prompt in this window, because that is the usual bash prompt.
+
+Anyhow, unpack the compressed tar file (.tar.gz) of the source with a
+command like this:
+
+	$ gunzip -d verilog-20010623.tar.gz | tar xvf -
+
+This will create a directory "verilog-20010623" that contains all the
+source. Descend into that directory, as that is where we will work
+from now on.
+
+	$ cd verilog-20010623
+
+* Select the mingw compilers
+
+In your cygwin window, if you type "which c++" you will get the
+response base "/usr/bin/c++" which is the cygwin compiler. This is not
+the one we want to use, however. Tell the shell where th mingw
+compilers are by setting the search path like so:
+
+	$ PATH=/cygdrive/d/mingw/bin:$PATH
+
+This assumes that you installed mingw in D:\mingw. The actual programs
+are in the bin directory under the root. After this command, check
+that you are now getting the right compilers with this "which"
+command:
+
+	$ which c++
+	/cygdrive/d/mingw/bin/c++
+
+Good!
+
+
+* Configure Icarus Verilog
+
+Now we are all set to configure and compile Icarus Verilog. Choose a
+destination path where you will want to install the binaries. I chose
+on my system the directory "D:\iverilog". This choice is not
+permanent, so don't get too much angst over it. Just choose a name
+without white space.
+
+Now, configure the source to make the makefiles and configuration
+details. Run this command:
+
+	$ ./configure --prefix=/cygdrive/d/iverilog
+
+Substitute your chosen directory for the prefix. This will cause the
+makefiles to build and the source code to configure. The configure
+program will detect that this is a mingw environment and set things up
+to build properly.
+
+
+* Compile Icarus Verilog
+
+This, believe it or not, should be the easy part:
+
+	$ make
+
+It could take a while. Now is a good time to go get some coffee or
+take a tea break.
+
+
+* Install Icarus Verilog
+
+If the compile ran OK, then next you install Icarus Verilog in the
+directory you have chosen. This is how:
+
+	$ make install
+
+This is part of what the configure program did for you. The Makefiles
+now know to put the files under the D:\iverilog (or whatever directory
+you chose) directory, and away you go.
+
+
+* Running Icarus Verilog
+
+Finally, put the D:\iverilog\bin directory in your Windows path, and
+you should be able to run the iverilog and vvp commands to your
+heart's content.
