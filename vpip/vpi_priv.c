@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.2 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.3 2001/06/19 14:57:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -210,7 +210,7 @@ extern void vpi_vprintf(const char*fmt, va_list ap)
 extern void vpi_printf(const char *fmt, ...)
 {
   va_list ap;
-  va_start(fmt,ap);
+  va_start(ap,fmt);
   vpi_vprintf(fmt,ap);
   va_end(ap);
 }
@@ -241,6 +241,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.3  2001/06/19 14:57:10  steve
+ *  Get va_start arguments in right order.
+ *
  * Revision 1.2  2001/06/12 03:53:10  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.
