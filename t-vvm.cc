@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.176 2000/09/20 02:53:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.177 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -341,7 +341,6 @@ class vvm_proc_rval  : public expr_scan_t {
     private:
       virtual void expr_const(const NetEConst*);
       virtual void expr_concat(const NetEConcat*);
-      virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*mem);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
@@ -432,11 +431,6 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 		 << number_off << ", " << expr->expr_width() << ");" << endl;
 
       result = tname;
-}
-
-void vvm_proc_rval::expr_ident(const NetEIdent*expr)
-{
-      result = mangle(expr->name());
 }
 
 /*
@@ -3391,6 +3385,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.177  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.176  2000/09/20 02:53:15  steve
  *  Correctly measure comples l-values of assignments.
  *
@@ -3461,142 +3458,5 @@ extern const struct target tgt_vvm = {
  *
  * Revision 1.156  2000/06/06 02:32:45  steve
  *  Expand constants in its special case assignment. (Stephan Boettcher)
- *
- * Revision 1.155  2000/06/03 02:13:43  steve
- *  Do not attach temporaries to scopes.
- *
- * Revision 1.154  2000/05/31 03:52:07  steve
- *  The NetESignal shortcut cannot expand an rvalue.
- *
- * Revision 1.153  2000/05/25 06:02:12  steve
- *  Emin init code only once per nexus.
- *
- * Revision 1.152  2000/05/25 01:45:35  steve
- *  Optimize assignment from signals.
- *
- * Revision 1.151  2000/05/20 02:48:51  steve
- *  Add vpi numbers to the bits table.
- *
- * Revision 1.150  2000/05/20 02:26:23  steve
- *  Combine constants into a bit table.
- *
- * Revision 1.149  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.148  2000/05/09 21:16:35  steve
- *  Give strengths to logic and bufz devices.
- *
- * Revision 1.147  2000/05/07 21:17:21  steve
- *  non-blocking assignment to a bit select.
- *
- * Revision 1.146  2000/05/07 19:40:26  steve
- *  Fix connection of Direction of LMP_CLSHIFT
- *  to constant values. Remember to add a signal
- *  to the nexus and connect the receiver in vvm.
- *
- * Revision 1.145  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.144  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.143  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.142  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.141  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.140  2000/04/26 18:35:11  steve
- *  Handle assigning small values to big registers.
- *
- * Revision 1.139  2000/04/23 03:45:24  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.138  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.137  2000/04/15 19:51:30  steve
- *  fork-join support in vvm.
- *
- * Revision 1.136  2000/04/15 02:25:32  steve
- *  Support chained events.
- *
- * Revision 1.135  2000/04/14 23:31:53  steve
- *  No more class derivation from vvm_thread.
- *
- * Revision 1.134  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
- *
- * Revision 1.133  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.132  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.131  2000/04/09 16:55:42  steve
- *  Donot create tables that have no entries.
- *
- * Revision 1.130  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.129  2000/04/02 04:26:07  steve
- *  Remove the useless sref template.
- *
- * Revision 1.128  2000/04/01 21:40:23  steve
- *  Add support for integer division.
- *
- * Revision 1.127  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.126  2000/03/26 16:28:31  steve
- *  vvm_bitset_t is no longer a template.
- *
- * Revision 1.125  2000/03/25 05:02:24  steve
- *  signal bits are referenced at run time by the vpiSignal struct.
- *
- * Revision 1.124  2000/03/25 02:43:56  steve
- *  Remove all remain vvm_bitset_t return values,
- *  and disallow vvm_bitset_t copying.
- *
- * Revision 1.123  2000/03/24 03:47:01  steve
- *  Update vvm_ram_dq to nexus style.
- *
- * Revision 1.122  2000/03/24 02:43:36  steve
- *  vvm_unop and vvm_binop pass result by reference
- *  instead of returning a value.
- *
- * Revision 1.121  2000/03/23 03:24:39  steve
- *  Do not create 0 length parameters to system tasks.
- *
- * Revision 1.120  2000/03/22 04:26:40  steve
- *  Replace the vpip_bit_t with a typedef and
- *  define values for all the different bit
- *  values, including strengths.
- *
- * Revision 1.119  2000/03/20 17:40:33  steve
- *  Do not link adder pins that ar unconnected.
  */
 

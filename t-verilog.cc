@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.14 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.15 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 /*
@@ -179,10 +179,6 @@ void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
 
 	    os << pp->value();
 
-      } else if (const NetEIdent*pp = dynamic_cast<const NetEIdent*>(expr)) {
-
-	    os << mangle(pp->name());
-
       } else if (const NetEUnary*pp = dynamic_cast<const NetEUnary*>(expr)) {
 
 	    os << pp->op() << "(";
@@ -223,9 +219,6 @@ static void vtask_parm(ostream&os, const NetExpr*ex)
 	    else
 		  os << pp->value();
 
-      } else if (const NetEIdent*pp = dynamic_cast<const NetEIdent*>(ex)) {
-	    os << mangle(pp->name());
-
       } else {
       }
 }
@@ -265,6 +258,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.15  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.14  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *
@@ -289,45 +285,5 @@ const struct target tgt_verilog = {
  *  Do not generate NetPEvent or NetNEvent objects in
  *  elaboration. NetEvent, NetEvWait and NetEvProbe
  *  take over those functions in the netlist.
- *
- * Revision 1.9  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.8  1999/09/22 16:57:24  steve
- *  Catch parallel blocks in vvm emit.
- *
- * Revision 1.7  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.6  1999/07/03 02:12:52  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.5  1999/06/13 16:30:06  steve
- *  Unify the NetAssign constructors a bit.
- *
- * Revision 1.4  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.3  1998/12/01 00:42:15  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.2  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.1  1998/11/03 23:29:05  steve
- *  Introduce verilog to CVS.
- *
  */
 

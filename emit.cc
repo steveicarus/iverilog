@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.53 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: emit.cc,v 1.54 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 /*
@@ -417,11 +417,6 @@ void NetEConst::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_const(this);
 }
 
-void NetEIdent::expr_scan(struct expr_scan_t*tgt) const
-{
-      tgt->expr_ident(this);
-}
-
 void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_memory(this);
@@ -481,6 +476,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.54  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.53  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *
@@ -540,117 +538,5 @@ bool emit(const Design*des, const char*type)
  *  Do not generate NetPEvent or NetNEvent objects in
  *  elaboration. NetEvent, NetEvWait and NetEvProbe
  *  take over those functions in the netlist.
- *
- * Revision 1.38  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.37  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.36  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.35  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.34  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.33  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.32  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.31  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.30  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.29  1999/11/21 00:13:08  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.28  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.27  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.26  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.25  1999/11/01 02:07:40  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.24  1999/10/10 01:59:54  steve
- *  Structural case equals device.
- *
- * Revision 1.23  1999/09/22 16:57:23  steve
- *  Catch parallel blocks in vvm emit.
- *
- * Revision 1.22  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
- * Revision 1.21  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.20  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.19  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.18  1999/07/17 19:50:59  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.17  1999/07/17 03:39:11  steve
- *  simplified process scan for targets.
- *
- * Revision 1.16  1999/07/07 04:20:57  steve
- *  Emit vvm for user defined tasks.
- *
- * Revision 1.15  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.14  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.13  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.12  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.11  1999/05/12 04:03:19  steve
- *  emit NetAssignMem objects in vvm target.
- *
- * Revision 1.10  1999/05/07 01:21:18  steve
- *  Handle total lack of nodes and signals.
- *
- * Revision 1.9  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.8  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.97 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.98 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 /*
@@ -871,11 +871,6 @@ void NetEConst::dump(ostream&o) const
 	    o << value_;
 }
 
-void NetEIdent::dump(ostream&o) const
-{
-      o << name_;
-}
-
 void NetEScope::dump(ostream&o) const
 {
       o << "<scope=" << scope_->name() << ">";
@@ -976,6 +971,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.98  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.97  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *
@@ -1063,43 +1061,5 @@ void Design::dump(ostream&o) const
  *  Get synthesis working with the NetEvWait class,
  *  and get started supporting multiple events in a
  *  wait in vvm.
- *
- * Revision 1.75  2000/04/12 04:23:57  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.74  2000/04/10 05:26:05  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.73  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.72  2000/04/02 04:26:06  steve
- *  Remove the useless sref template.
- *
- * Revision 1.71  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.70  2000/03/29 04:37:10  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.69  2000/03/12 17:09:40  steve
- *  Support localparam.
- *
- * Revision 1.68  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.46 2000/09/17 21:26:16 steve Exp $"
+#ident "$Id: target.h,v 1.47 2000/09/26 01:35:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -131,7 +131,6 @@ struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
       virtual void expr_concat(const NetEConcat*);
-      virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
       virtual void expr_sfunc(const NetESFunc*);
@@ -160,6 +159,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.47  2000/09/26 01:35:43  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.46  2000/09/17 21:26:16  steve
  *  Add support for modulus (Eric Aardoom)
  *
@@ -193,36 +195,5 @@ extern const struct target *target_table[];
  * Revision 1.37  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.
- *
- * Revision 1.36  2000/04/23 03:45:25  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.35  2000/04/22 04:20:20  steve
- *  Add support for force assignment.
- *
- * Revision 1.34  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.33  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.32  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.31  2000/04/01 21:40:23  steve
- *  Add support for integer division.
- *
- * Revision 1.30  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
  */
 #endif

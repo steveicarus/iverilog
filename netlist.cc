@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.137 2000/09/24 15:44:44 steve Exp $"
+#ident "$Id: netlist.cc,v 1.138 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1945,11 +1945,6 @@ NetEConst* NetEConst::dup_expr() const
       return tmp;
 }
 
-NetEIdent* NetEIdent::dup_expr() const
-{
-      assert(0);
-}
-
 NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
 : NetExpr(m->width()), mem_(m), idx_(i)
 {
@@ -2400,6 +2395,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.138  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.137  2000/09/24 15:44:44  steve
  *  Move some NetNet method out of the header file.
  *
@@ -2465,75 +2463,5 @@ bool NetUDP::sequ_glob_(string input, char output)
  * Revision 1.122  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.
- *
- * Revision 1.121  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.120  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.119  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.118  2000/04/23 03:45:24  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.117  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.116  2000/04/18 01:02:54  steve
- *  Minor cleanup of NetTaskDef.
- *
- * Revision 1.115  2000/04/16 23:32:19  steve
- *  Synthesis of comparator in expressions.
- *
- *  Connect the NetEvent and related classes
- *  together better.
- *
- * Revision 1.114  2000/04/15 19:51:30  steve
- *  fork-join support in vvm.
- *
- * Revision 1.113  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
- *
- * Revision 1.112  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.111  2000/04/02 04:26:06  steve
- *  Remove the useless sref template.
- *
- * Revision 1.110  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.109  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.108  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- * Revision 1.107  2000/03/10 06:20:48  steve
- *  Handle defparam to partial hierarchical names.
- *
- * Revision 1.106  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.105  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.104  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.103  2000/01/10 01:35:24  steve
- *  Elaborate parameters afer binding of overrides.
- *
- * Revision 1.102  1999/12/30 04:19:12  steve
- *  Propogate constant 0 in low bits of adders.
  */
 

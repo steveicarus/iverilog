@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.166 2000/09/24 17:41:13 steve Exp $"
+#ident "$Id: netlist.h,v 1.167 2000/09/26 01:35:42 steve Exp $"
 #endif
 
 /*
@@ -2393,24 +2393,6 @@ class NetEUBits : public NetEUnary {
 
 };
 
-/* System identifiers are represented here. */
-class NetEIdent  : public NetExpr {
-
-    public:
-      NetEIdent(const string&n, unsigned w)
-      : NetExpr(w), name_(n) { }
-
-      const string& name() const { return name_; }
-
-      NetEIdent* dup_expr() const;
-
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(ostream&) const;
-
-    private:
-      string name_;
-};
-
 /*
  * A reference to a memory is represented by this expression. If the
  * index is not supplied, then the node is only valid in certain
@@ -2799,6 +2781,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.167  2000/09/26 01:35:42  steve
+ *  Remove the obsolete NetEIdent class.
+ *
  * Revision 1.166  2000/09/24 17:41:13  steve
  *  fix null pointer when elaborating undefined task.
  *
@@ -2837,200 +2822,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *
  * Revision 1.155  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
- *
- * Revision 1.154  2000/08/08 01:50:42  steve
- *  target methods need not take a file stream.
- *
- * Revision 1.153  2000/08/02 14:48:15  steve
- *  cleanup.
- *
- * Revision 1.152  2000/08/01 02:48:42  steve
- *  Support <= in synthesis of DFF and ram devices.
- *
- * Revision 1.151  2000/07/30 18:25:44  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- *
- * Revision 1.150  2000/07/29 16:21:08  steve
- *  Report code generation errors through proc_delay.
- *
- * Revision 1.149  2000/07/27 05:13:44  steve
- *  Support elaboration of disable statements.
- *
- * Revision 1.148  2000/07/22 22:09:04  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.147  2000/07/16 04:56:08  steve
- *  Handle some edge cases during node scans.
- *
- * Revision 1.146  2000/07/15 05:13:44  steve
- *  Detect muxing Vz as a bufufN.
- *
- * Revision 1.145  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.144  2000/07/07 04:53:54  steve
- *  Add support for non-constant delays in delay statements,
- *  Support evaluating ! in constant expressions, and
- *  move some code from netlist.cc to net_proc.cc.
- *
- * Revision 1.143  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.142  2000/06/24 22:55:20  steve
- *  Get rid of useless next_link method.
- *
- * Revision 1.141  2000/06/13 03:24:48  steve
- *  Index in memory assign should be a NetExpr.
- *
- * Revision 1.140  2000/05/31 02:26:49  steve
- *  Globally merge redundant event objects.
- *
- * Revision 1.139  2000/05/27 19:33:23  steve
- *  Merge similar probes within a module.
- *
- * Revision 1.138  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.137  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.136  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.135  2000/05/04 03:37:58  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.134  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.133  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.132  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.131  2000/04/28 16:50:53  steve
- *  Catch memory word parameters to tasks.
- *
- * Revision 1.130  2000/04/23 21:17:31  steve
- *  Better comments about bufif devices.
- *
- * Revision 1.129  2000/04/23 21:15:07  steve
- *  Emit code for the bufif devices.
- *
- * Revision 1.128  2000/04/23 03:45:24  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.127  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.126  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- *
- * Revision 1.125  2000/04/18 04:50:20  steve
- *  Clean up unneeded NetEvent objects.
- *
- * Revision 1.124  2000/04/18 01:02:54  steve
- *  Minor cleanup of NetTaskDef.
- *
- * Revision 1.123  2000/04/16 23:32:19  steve
- *  Synthesis of comparator in expressions.
- *
- *  Connect the NetEvent and related classes
- *  together better.
- *
- * Revision 1.122  2000/04/15 19:51:30  steve
- *  fork-join support in vvm.
- *
- * Revision 1.121  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
- *
- * Revision 1.120  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.119  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.118  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.117  2000/04/02 04:26:06  steve
- *  Remove the useless sref template.
- *
- * Revision 1.116  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.115  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.114  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- * Revision 1.113  2000/03/11 03:25:52  steve
- *  Locate scopes in statements.
- *
- * Revision 1.112  2000/03/10 06:20:48  steve
- *  Handle defparam to partial hierarchical names.
- *
- * Revision 1.111  2000/03/08 04:36:54  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.110  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.109  2000/02/13 04:35:43  steve
- *  Include some block matching from Larry.
- *
- * Revision 1.108  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.107  2000/01/10 01:35:24  steve
- *  Elaborate parameters afer binding of overrides.
- *
- * Revision 1.106  2000/01/01 06:18:00  steve
- *  Handle synthesis of concatenation.
- *
- * Revision 1.105  1999/12/30 04:19:12  steve
- *  Propogate constant 0 in low bits of adders.
- *
- * Revision 1.104  1999/12/17 06:18:16  steve
- *  Rewrite the cprop functor to use the functor_t interface.
- *
- * Revision 1.103  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
  */
 #endif
