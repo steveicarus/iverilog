@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.314 2004/06/30 02:16:26 steve Exp $"
+#ident "$Id: netlist.h,v 1.315 2004/06/30 15:32:18 steve Exp $"
 #endif
 
 /*
@@ -2058,6 +2058,8 @@ class NetPDelay  : public NetProc {
       const NetExpr*expr() const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&);
+
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3341,6 +3343,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.315  2004/06/30 15:32:18  steve
+ *  nex_output for NetPDelay statements.
+ *
  * Revision 1.314  2004/06/30 02:16:26  steve
  *  Implement signed divide and signed right shift in nets.
  *

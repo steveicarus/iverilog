@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.8 2003/12/20 00:59:31 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.9 2004/06/30 15:32:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,6 +33,9 @@ void NetProc::nex_output(NexusSet&out)
 {
       cerr << get_line()
 	   << ": internal error: NetProc::nex_output not implemented"
+	   << endl;
+      cerr << get_line()
+	   << ":               : on object type " << typeid(*this).name()
 	   << endl;
 }
 
@@ -92,6 +95,11 @@ void NetEvWait::nex_output(NexusSet&out)
       statement_->nex_output(out);
 }
 
+void NetPDelay::nex_output(NexusSet&out)
+{
+      if (statement_) statement_->nex_output(out);
+}
+
 void NetWhile::nex_output(NexusSet&out)
 {
       if (proc_ != 0)
@@ -100,6 +108,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.9  2004/06/30 15:32:18  steve
+ *  nex_output for NetPDelay statements.
+ *
  * Revision 1.8  2003/12/20 00:59:31  steve
  *  Synthesis debug messages.
  *
