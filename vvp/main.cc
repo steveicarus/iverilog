@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.33 2003/01/18 23:55:35 steve Exp $"
+#ident "$Id: main.cc,v 1.34 2003/02/07 02:45:05 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -143,7 +143,7 @@ int main(int argc, char*argv[])
       }
 #endif
 
-      while ((opt = getopt(argc, argv, "dhl:M:m:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+dhl:M:m:v")) != EOF) switch (opt) {
 	  case 'd':
 	    debug_flag = true;
 	    break;
@@ -297,6 +297,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.34  2003/02/07 02:45:05  steve
+ *  Mke getopt ignore options after the file name.
+ *
  * Revision 1.33  2003/01/18 23:55:35  steve
  *  Add a means to clear the module search path.
  *
