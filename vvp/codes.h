@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.61 2003/05/26 04:44:54 steve Exp $"
+#ident "$Id: codes.h,v 1.62 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 
@@ -138,7 +138,7 @@ struct vvp_code_s {
       };
 
       union {
-	    unsigned short bit_idx[2];
+	    unsigned bit_idx[2];
 	    vvp_ipoint_t iptr2;
 	    vvp_cpoint_t cptr2;
 	    struct ufunc_core*ufunc_core_ptr;
@@ -173,6 +173,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.62  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.61  2003/05/26 04:44:54  steve
  *  Add the set/x0/x instruction.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.108 2003/05/26 04:44:54 steve Exp $"
+#ident "$Id: vthread.cc,v 1.109 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -103,7 +103,7 @@ struct vthread_s {
 	    double w_real;
       } words[16];
 
-      unsigned nbits :16;
+      unsigned nbits;
 	/* My parent sets this when it wants me to wake it up. */
       unsigned schedule_parent_on_end :1;
       unsigned i_have_ended      :1;
@@ -128,7 +128,6 @@ struct vthread_s {
 
 static void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
-      assert(addr < 0x10000);
       while (thr->nbits <= addr) {
 	    unsigned word_cnt = thr->nbits/(CPU_WORD_BITS/2) + 1;
 	    thr->bits = (unsigned long*)
@@ -528,7 +527,6 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       assert(wid > 0);
-      assert(wid < 0x10000);
 
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
@@ -2724,6 +2722,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.109  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.108  2003/05/26 04:44:54  steve
  *  Add the set/x0/x instruction.
  *

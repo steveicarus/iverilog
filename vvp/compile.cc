@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.164 2003/05/26 04:44:54 steve Exp $"
+#ident "$Id: compile.cc,v 1.165 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1254,14 +1254,6 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			yyerror("operand format");
 			break;
 		  }
-
-		  // Make sure we dont overflow the short index
-		  if (opa->argv[idx].numb > 65535) {
-		      fprintf(stderr, "%lu overflows index for instruction %s\n",
-			      opa->argv[idx].numb, mnem);
-		      assert(0);
-		  }
-
 		  code->bit_idx[0] = opa->argv[idx].numb;
 		  break;
 
@@ -1270,14 +1262,6 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			yyerror("operand format");
 			break;
 		  }
-
-		  // Make sure we dont overflow the short index
-		  if (opa->argv[idx].numb > 65535) {
-		      fprintf(stderr, "%lu overflows index for instruction %s\n",
-			      opa->argv[idx].numb, mnem);
-		      assert(0);
-		  }
-
 		  code->bit_idx[1] = opa->argv[idx].numb;
 		  break;
 
@@ -1556,6 +1540,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.165  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.164  2003/05/26 04:44:54  steve
  *  Add the set/x0/x instruction.
  *

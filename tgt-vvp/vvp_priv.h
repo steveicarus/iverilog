@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.26 2003/06/05 04:18:50 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.27 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -110,8 +110,8 @@ extern void draw_input_from_net(ivl_nexus_t nex);
  *        result in any of the 4-7 vthread bits.
  */
 struct vector_info {
-      unsigned short base;
-      unsigned short wid;
+      unsigned base;
+      unsigned wid;
 };
 
 extern struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag);
@@ -157,15 +157,15 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
  *    lookaside. If it finds it, return a reallocated base for the
  *    expression. Otherwise, return 0.
  */
-extern unsigned short allocate_vector(unsigned wid);
+extern unsigned allocate_vector(unsigned wid);
 extern void clr_vector(struct vector_info vec);
 
 extern void clear_expression_lookaside(void);
-extern void save_expression_lookaside(unsigned short addr,
+extern void save_expression_lookaside(unsigned addr,
 				      ivl_expr_t exp,
-				      unsigned short wid);
+				      unsigned wid);
 
-extern unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned wid);
+extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
@@ -192,6 +192,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.27  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.26  2003/06/05 04:18:50  steve
  *  Better width testing for thread vector allocation.
  *

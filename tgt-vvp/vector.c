@@ -16,17 +16,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.2 2003/06/05 04:18:50 steve Exp $"
+#ident "$Id: vector.c,v 1.3 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
 
+/* Maximum vector bits in a thread. If a thread co-processor is
+ * implemented, this value may need to be reduced. At that time
+ * wider operatons will need to be partitioned. For example
+ * shift operations on WIDE (say > 64k bit) registers.
+ */
+#define MAX_VEC	(128*1024)
+
 static struct allocation_score_s {
       ivl_expr_t exp;
-      unsigned   bit   :16;
+      unsigned   bit;
       unsigned   alloc : 1;
-} allocation_map[0x10000] = { {0} };
+} allocation_map[MAX_VEC] = { {0} };
 
 /* This is the largest bit to have lookaside values. */
 static unsigned lookaside_top = 0;
@@ -70,13 +77,13 @@ void clr_vector(struct vector_info vec)
  * set. It never returns a bit addressed <8 (0-3 are constant, 4-7 are
  * condition codes).
  */
-unsigned short allocate_vector(unsigned wid)
+unsigned allocate_vector(unsigned wid)
 {
       unsigned base = 8;
       unsigned idx = 0;
 
       while (idx < wid) {
-	    assert((base + idx) < 0x10000);
+	    assert((base + idx) < MAX_VEC);
 	    if (peek_bit(base+idx)) {
 		  base = base + idx + 1;
 		  idx = 0;
@@ -109,12 +116,12 @@ void clear_expression_lookaside(void)
       lookaside_top = 0;
 }
 
-void save_expression_lookaside(unsigned short addr, ivl_expr_t exp,
-			       unsigned short wid)
+void save_expression_lookaside(unsigned addr, ivl_expr_t exp,
+			       unsigned wid)
 {
       unsigned idx;
       assert(addr >= 8);
-      assert((addr+wid) <= 0x10000);
+      assert((addr+wid) <= MAX_VEC);
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    allocation_map[addr+idx].exp = exp;
@@ -155,7 +162,7 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
       return 0;
 }
 
-static unsigned short find_expression_lookaside(ivl_expr_t exp,
+static unsigned find_expression_lookaside(ivl_expr_t exp,
 						unsigned wid)
 {
       unsigned top;
@@ -187,10 +194,10 @@ static unsigned short find_expression_lookaside(ivl_expr_t exp,
       return 0;
 }
 
-unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned wid)
+unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
-      unsigned short la = find_expression_lookaside(exp, wid);
+      unsigned la = find_expression_lookaside(exp, wid);
 
       for (idx = 0 ;  idx < wid ;  idx += 1)
 	    if (allocation_map[la+idx].alloc)
@@ -204,6 +211,9 @@ unsigned short allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.3  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.2  2003/06/05 04:18:50  steve
  *  Better width testing for thread vector allocation.
  *

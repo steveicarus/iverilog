@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.100 2003/06/16 22:14:15 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.101 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -180,7 +180,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
       if (lv.base < 8) {
-	    unsigned short base = allocate_vector(ewid);
+	    unsigned base = allocate_vector(ewid);
 	    fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	    lv.base = base;
 	    lv.wid = ewid;
@@ -188,7 +188,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
 
       } else if (lv.wid < ewid) {
-	    unsigned short base = allocate_vector(ewid);
+	    unsigned base = allocate_vector(ewid);
 	    if (lv.base >= 8)
 		  clr_vector(lv);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", base,
@@ -348,7 +348,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
-      { unsigned short base = allocate_vector(ewid);
+      { unsigned base = allocate_vector(ewid);
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	lv.base = base;
 	lv.wid = ewid;
@@ -421,7 +421,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	    return lv;
 
 	/* Write the result into a zero-padded result. */
-      { unsigned short base = allocate_vector(wid);
+      { unsigned base = allocate_vector(wid);
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	clr_vector(lv);
 	lv.base = base;
@@ -499,7 +499,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    return lv;
 
 	/* Write the result into a zero-padded result. */
-      { unsigned short base = allocate_vector(wid);
+      { unsigned base = allocate_vector(wid);
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	clr_vector(lv);
 	lv.base = base;
@@ -627,7 +627,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
-      { unsigned short base = allocate_vector(wid);
+      { unsigned base = allocate_vector(wid);
         fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
 	lv.base = base;
 	lv.wid = wid;
@@ -2036,6 +2036,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.101  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.100  2003/06/16 22:14:15  steve
  *  Fix fprintf warning.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.17 2003/06/11 05:07:31 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.18 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 /*
@@ -37,8 +37,8 @@
 
 struct __vpiVThrVec {
       struct __vpiHandle base;
-      unsigned short bas;
-      unsigned short wid;
+      unsigned bas;
+      unsigned wid;
       unsigned signed_flag : 1;
       char *name;
 };
@@ -400,7 +400,7 @@ struct __vpiVThrWord {
       struct __vpiHandle base;
       char* name;
       int subtype;
-      unsigned short index;
+      unsigned index;
 };
 
 static int vthr_word_get(int code, vpiHandle ref)
@@ -519,6 +519,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.18  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.17  2003/06/11 05:07:31  steve
  *  support vpiVectorVal for value of thread vector.
  *

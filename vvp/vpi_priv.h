@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.55 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.56 2003/06/17 19:17:42 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -256,8 +256,8 @@ struct __vpiSysTaskCall {
 	/* Support for vpi_get_userdata. */
       void*userdata;
 	/* These represent where in the vthread to put the return value. */
-      unsigned short vbit;
-      signed short   vwid;
+      unsigned vbit;
+      signed   vwid;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -418,6 +418,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.56  2003/06/17 19:17:42  steve
+ *  Remove short int restrictions from vvp opcodes.
+ *
  * Revision 1.55  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *
