@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.28 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: sys_display.c,v 1.29 2001/08/16 03:26:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -177,6 +177,19 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			vpi_mcd_printf(mcd, "\n");
 			cp += 1;
 			break;
+		      case 't':
+			vpi_mcd_printf(mcd, "\t");
+			cp += 1;
+			break;
+		      case '\\':
+			vpi_mcd_printf(mcd, "\\");
+			cp += 1;
+			break;
+		      case '"':
+			vpi_mcd_printf(mcd, "\"");
+			cp += 1;
+			break;
+			
 		      default:
 			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
@@ -728,6 +741,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.29  2001/08/16 03:26:04  steve
+ *  Add some missing print escape sequences.
+ *
  * Revision 1.28  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
