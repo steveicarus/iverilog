@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.26 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.27 2001/05/20 01:02:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -848,6 +848,22 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+
+	/* XXXX no parameters, for now. */
+      assert(ivl_expr_parms(exp) == 0);
+
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+
+      fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
+	      ivl_expr_name(exp), res.base, res.wid);
+
+      return res;
+}
+
 /*
  * A call to a user defined function generates a result that is the
  * result of this expression.
@@ -990,6 +1006,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_memory_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_SFUNC:
+	    res = draw_sfunc_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_UFUNC:
 	    res = draw_ufunc_expr(exp, wid);
 	    break;
@@ -1009,6 +1029,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.27  2001/05/20 01:02:55  steve
+ *  Initial support for system functions.
+ *
  * Revision 1.26  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *
