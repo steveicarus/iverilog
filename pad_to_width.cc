@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.12 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.13 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,7 +26,7 @@
 # include  "netmisc.h"
 
 /*
- * This funciton transforms an expression by padding the high bits
+ * This function transforms an expression by padding the high bits
  * with V0 until the expression has the desired width. This may mean
  * not transforming the expression at all, if it is already wide
  * enough.
@@ -99,6 +99,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.13  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.12  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.32 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: net_design.cc,v 1.33 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,7 +107,7 @@ const list<NetScope*> Design::find_root_scopes() const
 
 /*
  * This method locates a scope in the design, given its rooted
- * heirarchical name. Each component of the key is used to scan one
+ * hierarchical name. Each component of the key is used to scan one
  * more step down the tree until the name runs out or the search
  * fails.
  */
@@ -625,6 +625,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.33  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.32  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.269 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.270 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,7 +110,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 
 	      /* If the right hand net is the same type as the left
-		 side net (i.e. WIRE/WIRE) then it is enough to just
+		 side net (i.e., WIRE/WIRE) then it is enough to just
 		 connect them together. Otherwise, put a bufz between
 		 them to carry strengths from the rval.
 
@@ -133,7 +133,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  }
 	    }
 
-	      /* If the nets are different type (i.e. reg vs tri) then
+	      /* If the nets are different type (i.e., reg vs tri) then
 		 a driver is needed. */
 	    if (rid->type() != lval->type())
 		  need_driver_flag = true;
@@ -254,7 +254,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       else
 	    name = scope->name()+"."+name;
 
-	/* If the verilog source has a range specification for the
+	/* If the Verilog source has a range specification for the
 	   gates, then I am expected to make more then one
 	   gate. Figure out how many are desired. */
       if (msb_) {
@@ -292,10 +292,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	/* Calculate the gate delays from the delay expressions
 	   given in the source. For logic gates, the decay time
 	   is meaningless because it can never go to high
-	   impedence. However, the bufif devices can generate
+	   impedance. However, the bufif devices can generate
 	   'bz output, so we will pretend that anything can.
 
-	   If only one delay value expression is given (i.e. #5
+	   If only one delay value expression is given (i.e., #5
 	   nand(foo,...)) then rise, fall and decay times are
 	   all the same value. If two values are given, rise and
 	   fall times are use, and the decay time is the minimum
@@ -529,7 +529,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      /* Handle the special case that no ports are
 		 connected. It is possible that this is an empty
-		 connect-by-name list, su we'll allow it and assume
+		 connect-by-name list, so we'll allow it and assume
 		 that is the case. */
 
 	    svector<PExpr*>*tmp = new svector<PExpr*>(rmod->port_count());
@@ -571,7 +571,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// bind them to the port of the elaborated module.
 
 	// This can get rather complicated because the port can be
-	// unconnected (meaning an empty paramter is passed) connected
+	// unconnected (meaning an empty parameter is passed) connected
 	// to a concatenation, or connected to an internally
 	// unconnected port.
 
@@ -584,7 +584,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // Inside the module, the port is zero or more signals
 	      // that were already elaborated. List all those signals
-	      // and the NetNet equivilents.
+	      // and the NetNet equivalents.
 	    svector<PEIdent*> mport = rmod->get_port(idx);
 	    svector<NetNet*>prts (mport.count());
 
@@ -603,7 +603,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // If I find that the port in unconnected inside the
 	      // module, then there is nothing to connect. Skip the
-	      // paramter.
+	      // parameter.
 	    if (prts_pin_count == 0) {
 		  continue;
 	    }
@@ -1187,7 +1187,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	    }
       }
 
-	/* Count the items in the case statement. Note that ther may
+	/* Count the items in the case statement. Note that there may
 	   be some cases that have multiple guards. Count each as a
 	   separate item. */
       unsigned icount = 0;
@@ -1564,7 +1564,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * Elaborate the delay statment (of the form #<expr> <statement>) as a
+ * Elaborate the delay statement (of the form #<expr> <statement>) as a
  * NetPDelay object. If the expression is constant, evaluate it now
  * and make a constant delay. If not, then pass an elaborated
  * expression to the constructor of NetPDelay so that the code
@@ -1697,7 +1697,7 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
  * classes. The NetEvWait class represents the part of the netlist
  * that is executed by behavioral code. The process starts waiting on
  * the NetEvent when it executes the NetEvWait step. Net NetEvProbe
- * and NetEvTrig are structural and behavioral equivilents that
+ * and NetEvTrig are structural and behavioral equivalents that
  * trigger the event, and awakens any processes blocking in the
  * associated wait.
  *
@@ -1728,7 +1728,7 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
  *         always @(reset or posedge clk) <stmt>;
  *
  * Conjunctions like this cause a NetEvent object be created to
- * represent the overall conjuction, and NetEvProbe objects for each
+ * represent the overall conjunction, and NetEvProbe objects for each
  * event expression.
  *
  * If the NetEvent object represents a named event from the source,
@@ -1780,7 +1780,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	         <statement>
 	       end
 
-	   This is equivilent, and uses the existing capapilities of
+	   This is equivalent, and uses the existing capapilities of
 	   the netlist format. The resulting netlist should look like
 	   this:
 
@@ -1835,7 +1835,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	      /* If we don't have a sub-statement after all, then we
 		 don't really need the block and we can save the
-		 node. (i.e. wait (foo==1) ;) However, the common case
+		 node. (i.e., wait (foo==1) ;) However, the common case
 		 has a statement in the wait so we create a sequential
 		 block to join the wait and the statement. */
 
@@ -1866,9 +1866,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
       }
 
-	/* Create A single NetEvent and NetEvWait. Then, create a
+	/* Create a single NetEvent and NetEvWait. Then, create a
 	   NetEvProbe for each conjunctive event in the event
-	   list. The NetEvProbe object al refer back to the NetEvent
+	   list. The NetEvProbe objects all refer back to the NetEvent
 	   object. */
 
       NetEvent*ev = new NetEvent(scope->local_symbol());
@@ -2251,7 +2251,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
  * of the task will include a foo.blah for the blah port. This port is
  * bound to a NetNet object by looking up the name. All of this is
  * handled by the PTask::elaborate_sig method and the results stashed
- * in the created NetDaskDef attached to the scope.
+ * in the created NetTaskDef attached to the scope.
  *
  * Elaboration pass 2 for the task definition causes the statement of
  * the task to be elaborated and attached to the NetTaskDef object
@@ -2463,7 +2463,7 @@ Design* elaborate(list<const char*>roots)
 	// defparam assignments to apply to the parameters in the
 	// various scopes. This needs to be done after all the scopes
 	// and basic parameters are taken care of because the defparam
-	// can assign to a paramter declared *after* it.
+	// can assign to a parameter declared *after* it.
       des->run_defparams();
 
 
@@ -2507,6 +2507,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.270  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.269  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

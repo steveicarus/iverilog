@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.25 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.26 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,23 +29,23 @@
 
 /*
  * These methods generate a NetAssign_ object for the l-value of the
- * assignemnt. This is common code for the = and <= statements.
+ * assignment. This is common code for the = and <= statements.
  *
  * What gets generated depends on the structure of the l-value. If the
- * l-value is a simple name (i.e. foo <= <value>) the the NetAssign_
+ * l-value is a simple name (i.e., foo <= <value>) the the NetAssign_
  * is created the width of the foo reg and connected to all the
  * bits.
  *
- * If there is a part select (i.e. foo[3:1] <= <value>) the NetAssign_
+ * If there is a part select (i.e., foo[3:1] <= <value>) the NetAssign_
  * is made only as wide as it needs to be (3 bits in this example) and
  * connected to the correct bits of foo. A constant bit select is a
  * special case of the part select. 
  *
- * If the bit-select is non-constant (i.e. foo[<expr>] = <value>) the
+ * If the bit-select is non-constant (i.e., foo[<expr>] = <value>) the
  * NetAssign_ is made wide enough to connect to all the bits of foo,
  * then the mux expression is elaborated and attached to the
  * NetAssign_ node as a b_mux value. The target must interpret the
- * presense of a bmux value as taking a single bit and assigning it to
+ * presence of a bmux value as taking a single bit and assigning it to
  * the bit selected by the bmux expression.
  *
  * If the l-value expression is non-trivial, but can be fully
@@ -55,7 +55,7 @@
  * l-value.
  *
  * This last case can turn up in statements like: {a, b[1]} = c;
- * rather then create a NetAssign_ for each item in the contatenation,
+ * rather then create a NetAssign_ for each item in the concatenation,
  * elaboration makes a single NetAssign_ and connects it up properly.
  */
 
@@ -347,6 +347,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.26  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.25  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

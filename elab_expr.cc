@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.68 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.69 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,7 +227,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	   be interpreted as a single empty parameter.
 
 	   Functions cannot really take empty parameters, but the
-	   case ``func()'' is the same as no parmaters at all. So
+	   case ``func()'' is the same as no parameters at all. So
 	   catch that special case here. */
       unsigned nparms = parms_.count();
       if ((nparms == 1) && (parms_[0] == 0))
@@ -447,7 +447,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  verinum*msn = msb_->eval_const(des, scope);
 		  if ((lsn == 0) || (msn == 0)) {
 			cerr << get_line() << ": error: "
-			      "Part select expresions must be "
+			      "Part select expressions must be "
 			      "constant expressions." << endl;
 			des->errors += 1;
 			return 0;
@@ -568,7 +568,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  verinum*msn = msb_->eval_const(des, scope);
 		  if ((lsn == 0) || (msn == 0)) {
 			cerr << get_line() << ": error: "
-			      "Part select expresions must be "
+			      "Part select expressions must be "
 			      "constant expressions." << endl;
 			des->errors += 1;
 			return 0;
@@ -581,7 +581,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       integers, so allow negative values. However,
 		       the width that they represent is
 		       unsigned. Remember that any order is possible,
-		       i.e. [1:0], [-4,6], etc. */
+		       i.e., [1:0], [-4,6], etc. */
 
 		  long lsv = lsn->as_long();
 		  long msv = msn->as_long();
@@ -733,7 +733,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
-	// that, search globally for a heirarchical name.
+	// that, search globally for a hierarchical name.
       if ((path_.peek_name(1) == 0))
 	    if (NetScope*nsc = scope->child(path_.peek_name(0))) {
 		  NetEScope*tmp = new NetEScope(nsc);
@@ -900,6 +900,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.69  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.68  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

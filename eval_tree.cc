@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.44 2002/12/05 02:14:33 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.45 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -541,7 +541,7 @@ NetEConst* NetEBComp::eval_tree()
 }
 
 /*
- * The NetEBDiv operator includes the / and % opeators. First evaluate
+ * The NetEBDiv operator includes the / and % operators. First evaluate
  * the sub-expressions, then perform the required operation.
  */
 NetEConst* NetEBDiv::eval_tree()
@@ -1187,6 +1187,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.45  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.44  2002/12/05 02:14:33  steve
  *  Support bit select in constant expressions.
  *

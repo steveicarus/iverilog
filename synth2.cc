@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.20 2002/11/09 23:29:29 steve Exp $"
+#ident "$Id: synth2.cc,v 1.21 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -516,7 +516,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	     if (expr_) <true statement>;
 
-	   The expr_ expression has alreacy been synthesized to the ce
+	   The expr_ expression has already been synthesized to the ce
 	   net, so we connect it here to the FF. What's left is to
 	   synthesize the substatement as a combinational
 	   statement.
@@ -637,7 +637,7 @@ bool NetProcTop::synth_sync(Design*des)
       ff->attribute("LPM_FFType", verinum("DFF"));
 
 	/* The D inputs to the DFF device will receive the output from
-	   the statments of the process. */
+	   the statements of the process. */
       NetNet*nex_d = new NetNet(scope(), scope()->local_hsymbol().c_str(),
 				NetNet::WIRE, nex_set.count());
       nex_d->local_flag(true);
@@ -738,6 +738,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.21  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.20  2002/11/09 23:29:29  steve
  *  Handle nested-if chip enables.
  *

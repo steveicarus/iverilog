@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.105 2003/01/19 00:35:39 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.106 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,7 +69,7 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	  case '^':
 	  case 'A': // Bitwise NAND (~&)
 	  case 'O': // Bitwise NOR (~|)
-	  case 'X': // Exclusing NOR
+	  case 'X': // Exclusive NOR
 	    return elaborate_net_bit_(des, scope, width, rise, fall, decay);
 	  case 'E': // === (case equals)
 	  case 'e': // ==
@@ -588,7 +588,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 }
 
 /*
- * Elaborate a divider gate. This function create a NetDevide gate
+ * Elaborate a divider gate. This function create a NetDivide gate
  * which has exactly the right sized DataA, DataB and Result ports. If
  * the l-value is wider then the result, then pad.
  */
@@ -825,7 +825,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       verinum*rnum = right_->eval_const(des, scope);
 
 	/* Detect and handle the special case that both the operands
-	   of the multiply are constant expressions. Evalulate the
+	   of the multiply are constant expressions. Evaluate the
 	   value and make this a simple constant. */
       if (lnum && rnum) {
 	    verinum prod = *lnum * *rnum;
@@ -1393,7 +1393,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 }
 
 /*
- * When I run into an identifier in an expression that referrs to a
+ * When I run into an identifier in an expression that refers to a
  * memory, create a RAM port object.
  */
 NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
@@ -2284,6 +2284,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.106  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.105  2003/01/19 00:35:39  steve
  *  Detect null arguments to concatenation operator.
  *

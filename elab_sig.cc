@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.25 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.26 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -360,7 +360,7 @@ bool PGate::elaborate_sig(Design*des, NetScope*scope) const
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
- * multiple properties of a wire (i.e. "input wire") so come the
+ * multiple properties of a wire (i.e., "input wire") so come the
  * elaboration this creates an object in the design that represent the
  * defined item.
  */
@@ -396,7 +396,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    unsigned count_scalars = 0;
 
 	      /* There may be multiple declarations of ranges, because
-		 the symbol may have its range declared in i.e. input
+		 the symbol may have its range declared in e.g., input
 		 and reg declarations. Calculate *all* the numbers
 		 here. I will resolve the values later. */
 
@@ -525,6 +525,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.26  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.25  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

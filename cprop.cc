@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.39 2002/08/20 04:12:22 steve Exp $"
+#ident "$Id: cprop.cc,v 1.40 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,7 +30,7 @@
 
 
 /*
- * The cprop function below invokes constant propogation where
+ * The cprop function below invokes constant propagation where
  * possible. The elaboration generates NetConst objects. I can remove
  * these and replace the gates connected to it with simpler ones. I
  * may even be able to replace nets with a new constant.
@@ -897,7 +897,7 @@ struct cprop_dc_functor  : public functor_t {
 void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 {
 	// 'bz constant values drive high impedance to whatever is
-	// connected to it. In otherwords, it is a noop.
+	// connected to it. In other words, it is a noop.
       { unsigned tmp = 0;
         for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
 	      if (obj->value(idx) == verinum::Vz) {
@@ -994,6 +994,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.40  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.39  2002/08/20 04:12:22  steve
  *  Copy gate delays when doing gate delay substitutions.
  *

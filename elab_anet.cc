@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.5 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.6 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,7 +34,7 @@
 NetNet* PExpr::elaborate_anet(Design*des, NetScope*scope) const
 {
       cerr << get_line() << ": error: Invalid expression on left side "
-	   << "of precedural continuous asignment." << endl;
+	   << "of procedural continuous assignment." << endl;
       return 0;
 }
 
@@ -110,7 +110,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 	    if (NetMemory*mem = des->find_memory(scope, path_)) {
 		  cerr << get_line() << ": error: memories not allowed "
 		       << "on left side of procedural continuous "
-		       << "asignment." << endl;
+		       << "assignment." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -138,7 +138,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
       if (msb_ || lsb_) {
 
 	    cerr << get_line() << ": error: bit/part selects not allowed "
-		 << "on left side of procedural continuous asignment."
+		 << "on left side of procedural continuous assignment."
 		 << endl; 
 	    des->errors += 1;
 	    return 0;
@@ -149,6 +149,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.6  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.5  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.32 2002/11/09 19:20:48 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.33 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,7 +154,7 @@ const hname_t& PEIdent::path() const
 }
 
 /*
- * An identifier can be in a constant expresion if (and only if) it is
+ * An identifier can be in a constant expression if (and only if) it is
  * a parameter.
  */
 bool PEIdent::is_constant(Module*mod) const
@@ -256,6 +256,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.33  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.32  2002/11/09 19:20:48  steve
  *  Port expressions for output ports are lnets, not nets.
  *

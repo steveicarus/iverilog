@@ -15,15 +15,9 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- *  ---
- *    You should also have recieved a copy of the Picture Elements
- *    Binary Software License offer along with the source. This offer
- *    allows you to obtain the right to redistribute the software in
- *    binary (compiled) form. If you have not received it, contact
- *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.3 2003/01/16 21:44:46 steve Exp $"
+#ident "$Id: StringHeap.cc,v 1.4 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -43,7 +37,7 @@ StringHeap::StringHeap()
 
 StringHeap::~StringHeap()
 {
-	// This is a planned memory leak. The string heap is indended
+	// This is a planned memory leak. The string heap is intended
 	// to hold permanently-allocated strings.
 }
 
@@ -72,6 +66,9 @@ const char* StringHeap::add(const char*text)
 
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.4  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.3  2003/01/16 21:44:46  steve
  *  Keep some debugging status.
  *

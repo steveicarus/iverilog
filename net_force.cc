@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_force.cc,v 1.9 2002/08/19 00:06:12 steve Exp $"
+#ident "$Id: net_force.cc,v 1.10 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
 
 /*
- * This file contains implementatsion of the NetForce, NetRelease,
+ * This file contains implementation of the NetForce, NetRelease,
  * NetCAssign and NetDeassign classes. These are similar or related in
  * that they handle the procedural continuous assign and force
  * statements.
@@ -35,7 +35,7 @@
 /*
  * Construct the procedural continuous assignment statement. This is a
  * bit different from a normal assignment because the the lval is only
- * intermittantly connected. The deassign in particular disconnects
+ * intermittently connected. The deassign in particular disconnects
  * the signals when they are not being assigned anymore. Because of
  * this, there is no other reference to the lval to make it stay put
  * so we increment the eref.
@@ -136,6 +136,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.10  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.9  2002/08/19 00:06:12  steve
  *  Allow release to handle removal of target net.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.23 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.24 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -397,7 +397,7 @@ void NetScope::add_variable(NetVariable*var)
 
 /*
  * This method locates a child scope by name. The name is the simple
- * name of the child, no heirarchy is searched.
+ * name of the child, no hierarchy is searched.
  */
 NetScope* NetScope::child(const string&name)
 {
@@ -450,6 +450,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.24  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.23  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.18 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.19 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -138,7 +138,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// It is OK to elaborate the expressions of the defparam here
 	// because Verilog requires that the expressions only use
 	// local parameter names. It is *not* OK to do the override
-	// here becuase the parameter receiving the assignment may be
+	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
       for (hparm_it_t cur = defparms.begin()
@@ -292,7 +292,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	// Look for module parameter replacements. The "replace" map
 	// maps parameter name to replacement expression that is
-	// passed. It is built up by the ordered overrices or named
+	// passed. It is built up by the ordered overrides or named
 	// overrides.
 
       typedef map<string,PExpr*>::const_iterator mparm_it_t;
@@ -414,7 +414,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 }
 
 /*
- * The case statement itseof does not introduce scope, but contains
+ * The case statement itself does not introduce scope, but contains
  * other statements that may be named blocks. So scan the case items
  * with the elaborate_scope method.
  */
@@ -512,6 +512,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.19  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.18  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

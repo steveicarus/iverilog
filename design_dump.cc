@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.136 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.137 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -815,7 +815,7 @@ void NetProc::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "// " << typeid(*this).name() << endl;
 }
 
-/* Dump an expression that noone wrote a dump method for. */
+/* Dump an expression that no one wrote a dump method for. */
 void NetExpr::dump(ostream&o) const
 {
       o << "(?" << typeid(*this).name() << "?)";
@@ -1021,6 +1021,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.137  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.136  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

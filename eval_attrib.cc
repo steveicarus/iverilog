@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_attrib.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.6 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,7 +29,7 @@
 
 /*
  * The evaluate_attributes function evaluates the attribute
- * expressions from the map, and resturns a table in a form suitable
+ * expressions from the map, and returns a table in a form suitable
  * for passing to netlist devices.
  */
 
@@ -52,7 +52,7 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 	    PExpr*exp = (*cur).second;
 
 	      /* If the attribute value is given in the source, then
-		 evalulate it as a constant. If the value is not
+		 evaluate it as a constant. If the value is not
 		 given, then assume the value is 1. */
 	    verinum*tmp;
 	    if (exp)
@@ -74,6 +74,9 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.6  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.5  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

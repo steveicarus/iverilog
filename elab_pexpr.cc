@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.18 2002/12/05 02:14:33 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.19 2003/01/27 05:09:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -61,7 +61,7 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
  * expressions can include concatenation expressions. This requires
  * that the subexpressions all have well-defined size (in spite of
  * being in a parameter expression) in order to get a defined
- * value. The sub-expressions themsilves must also be value parameter
+ * value. The sub-expressions themselves must also be value parameter
  * expressions.
  */
 NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
@@ -228,6 +228,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.19  2003/01/27 05:09:17  steve
+ *  Spelling fixes.
+ *
  * Revision 1.18  2002/12/05 02:14:33  steve
  *  Support bit select in constant expressions.
  *
