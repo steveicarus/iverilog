@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.7 2003/01/28 04:41:55 steve Exp $"
+#ident "$Id: sys_time.c,v 1.8 2003/02/07 02:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,6 +55,7 @@ static int sys_time_calltf(char*name)
       vpiHandle mod;
       int units, prec;
       long scale;
+      long frac;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -83,7 +84,11 @@ static int sys_time_calltf(char*name)
       val.value.integer = now.low;
       assert(now.high == 0);
 
+      frac = val.value.integer % scale;
       val.value.integer /= scale;
+	/* Round to the nearest integer, which may be up. */
+      if ((scale > 1) && (frac >= scale/2))
+	    val.value.integer += 1;
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
@@ -157,6 +162,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.8  2003/02/07 02:44:25  steve
+ *  Properly round inter time values from $time.
+ *
  * Revision 1.7  2003/01/28 04:41:55  steve
  *  Use more precise pow function to scale time by units.
  *
