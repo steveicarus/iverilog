@@ -19,11 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.6 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: t-dll.h,v 1.7 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
+
+struct ivl_design_s {
+      ivl_scope_t root_;
+      const Design*self;
+};
 
 /*
  * The DLL target type loads a named object file to handle the process
@@ -50,7 +55,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void*dll_;
       string dll_path_;
 
-      ivl_design_t des_;
+      ivl_design_s des_;
 
       start_design_f start_design_;
       end_design_f   end_design_;
@@ -78,6 +83,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_while(const NetWhile*);
 
       struct ivl_expr_s*expr_;
+      void expr_binary(const NetEBinary*);
       void expr_const(const NetEConst*);
       void expr_signal(const NetESignal*);
 };
@@ -99,6 +105,12 @@ struct ivl_expr_s {
       unsigned signed_ : 1;
 
       union {
+	    struct {
+		  char op_;
+		  ivl_expr_t lef_;
+		  ivl_expr_t rig_;
+	    } binary_;
+
 	    struct {
 		  char*bits_;
 	    } number_;
@@ -128,6 +140,12 @@ struct ivl_process_s {
       ivl_statement_t stmt_;
 };
 
+struct ivl_scope_s {
+      ivl_scope_t child_, sibling_;
+
+      const NetScope*self;
+};
+
 /*
  * The ivl_statement_t represents any statement. The type of statement
  * is defined by the ivl_statement_type_t enumeration. Given the type,
@@ -142,6 +160,9 @@ struct ivl_statement_s {
 	    } block_;
 
 	    struct { /* IVL_ST_CONDIT */
+		    /* This is the condition expression */
+		  ivl_expr_t cond_;
+		    /* This is two statements, the true and false. */
 		  struct ivl_statement_s*stmt_;
 	    } condit_;
 
@@ -179,6 +200,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.7  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.6  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *

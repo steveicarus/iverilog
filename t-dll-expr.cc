@@ -17,13 +17,43 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.3 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.4 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 # include  "t-dll.h"
 # include  "netlist.h"
 # include  <assert.h>
 # include  <malloc.h>
+
+/*
+ * These methods implement the expression scan that generates the
+ * ivl_expr_t representing the expression. Each method leaves the
+ * expr_ member filled with the ivl_expr_t that represents it. Each
+ * method expects that the expr_ member empty (0) when it starts.
+ */
+
+
+void dll_target::expr_binary(const NetEBinary*net)
+{
+      assert(expr_ == 0);
+
+      net->left()->expr_scan(this);
+      ivl_expr_t left = expr_;
+
+      expr_ = 0;
+      net->right()->expr_scan(this);
+      ivl_expr_t rght = expr_;
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_BINARY;
+      expr_->width_= net->expr_width();
+
+      expr_->u_.binary_.op_ = net->op();
+      expr_->u_.binary_.lef_ = left;
+      expr_->u_.binary_.rig_ = rght;
+}
 
 void dll_target::expr_const(const NetEConst*net)
 {
@@ -80,6 +110,10 @@ void dll_target::expr_signal(const NetESignal*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.4  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.3  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.7 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.8 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -33,12 +33,12 @@ extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
 
 extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 {
-      return ((const Design*)des)->get_flag(key).c_str();
+      return des->self->get_flag(key).c_str();
 }
 
 extern "C" const char*ivl_get_root_name(ivl_design_t des)
 {
-      return ((const Design*)des)->find_root_scope()->name().c_str();
+      return des->root_->self->basename();
 }
 
 extern "C" const char* ivl_expr_bits(ivl_expr_t net)
@@ -51,6 +51,47 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_SIGNAL);
       return net->u_.subsig_.name_;
+}
+
+extern "C" char ivl_expr_opcode(ivl_expr_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_BINARY:
+	    return net->u_.binary_.op_;
+
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
+extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_BINARY:
+	    return net->u_.binary_.lef_;
+
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
+extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_BINARY:
+	    return net->u_.binary_.rig_;
+
+	  default:
+	    assert(0);
+      }
+
+      return 0;
 }
 
 extern "C" int ivl_expr_signed(ivl_expr_t net)
@@ -197,6 +238,12 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
       return net->u_.block_.stmt_ + i;
 }
 
+extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
+{
+      assert(net && (net->type_ == IVL_ST_CONDIT));
+      return net->u_.condit_.cond_;
+}
+
 extern "C" ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_CONDIT);
@@ -275,6 +322,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.8  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.7  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.8 2000/09/24 15:46:00 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.9 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -37,7 +37,10 @@ bool dll_target::start_design(const Design*des)
 
       stmt_cur_ = 0;
 
-      des_ = (ivl_design_t)des;
+	// Initialize the design object.
+      des_.self = des;
+      des_.root_ = (ivl_scope_t)calloc(1, sizeof(struct ivl_scope_s));
+      des_.root_->self = des->find_root_scope();
 
       start_design_ = (start_design_f)dlsym(dll_, "target_start_design");
       end_design_   = (end_design_f)  dlsym(dll_, "target_end_design");
@@ -51,13 +54,13 @@ bool dll_target::start_design(const Design*des)
       process_    = (process_f)   dlsym(dll_, LU "target_process" TU);
       scope_      = (scope_f)     dlsym(dll_, LU "target_scope" TU);
 
-      (start_design_)(des_);
+      (start_design_)(&des_);
       return true;
 }
 
 void dll_target::end_design(const Design*)
 {
-      (end_design_)(des_);
+      (end_design_)(&des_);
       dlclose(dll_);
 }
 
@@ -139,10 +142,46 @@ void dll_target::net_probe(const NetEvProbe*net)
       return;
 }
 
+static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
+{
+      ivl_scope_t parent, tmp;
+
+      if (const NetScope*par = cur->parent()) {
+	    parent = find_scope(root, par);
+
+      } else {
+	    assert(root->self == cur);
+	    return root;
+      }
+
+      for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
+	    if (tmp->self == cur)
+		  return tmp;
+
+      return 0;
+}
+      
 void dll_target::scope(const NetScope*net)
 {
+      ivl_scope_t scope;
+
+      if (net->parent() == 0) {
+	    assert(des_.root_->self == net);
+	    scope = des_.root_;
+
+      } else {
+	    scope = (ivl_scope_t)calloc(1, sizeof(struct ivl_scope_s));
+	    scope->self = net;
+
+	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
+	    assert(parent != 0);
+
+	    scope->sibling_= parent->child_;
+	    parent->child_ = scope;
+      }
+
       if (scope_)
-	    (scope_)( (ivl_scope_t)net );
+	    (scope_)(scope);
 }
 
 void dll_target::signal(const NetNet*net)
@@ -163,6 +202,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.9  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.8  2000/09/24 15:46:00  steve
  *  API access to signal type and port type.
  *

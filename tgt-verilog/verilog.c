@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.4 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: verilog.c,v 1.5 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 /*
@@ -109,7 +109,19 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
 
 int target_net_signal(const char*name, ivl_signal_t net)
 {
-      fprintf(out, "STUB: %s: signal [%u]\n", name, ivl_signal_pins(net));
+      unsigned cnt = ivl_signal_pins(net);
+
+      switch (ivl_signal_type(net)) {
+
+	  case IVL_SIT_WIRE:
+	    fprintf(out, "      wire [%u:0] %s;\n", cnt-1, name);
+	    break;
+
+	  default:
+	    fprintf(out, "      <huh!?> [%u:0] %s;\n", cnt-1, name);
+	    break;
+      }
+
       return 0;
 }
 
@@ -119,6 +131,13 @@ static void show_expression(ivl_expr_t net)
 	    return;
 
       switch (ivl_expr_type(net)) {
+
+	  case IVL_EX_BINARY: {
+		show_expression(ivl_expr_oper1(net));
+		fprintf(out, "%c", ivl_expr_opcode(net));
+		show_expression(ivl_expr_oper2(net));
+		break;
+	  }
 
 	  case IVL_EX_NUMBER: {
 		int sigflag     = ivl_expr_signed(net);
@@ -169,7 +188,10 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		ivl_statement_t t = ivl_stmt_cond_true(net);
 		ivl_statement_t f = ivl_stmt_cond_false(net);
 
-		fprintf(out, "%*sif (...)\n", ind, "");
+		fprintf(out, "%*sif (", ind, "");
+		show_expression(ivl_stmt_cond_expr(net));
+		fprintf(out, ")\n");
+
 		if (t)
 		      show_statement(t, ind+4);
 		else
@@ -241,6 +263,10 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.5  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.4  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.13 2000/09/26 00:30:07 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.14 2000/09/30 02:18:15 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -79,6 +79,7 @@ typedef struct ivl_statement_s*ivl_statement_t;
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
+      IVL_EX_BINARY,
       IVL_EX_NUMBER,
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
@@ -177,6 +178,10 @@ extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
 extern const char* ivl_expr_bits(ivl_expr_t net);
 extern const char* ivl_expr_name(ivl_expr_t net);
+extern char        ivl_expr_opcode(ivl_expr_t net);
+extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
+extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
+extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
 extern int         ivl_expr_signed(ivl_expr_t net);
 extern const char* ivl_expr_string(ivl_expr_t net);
 extern unsigned    ivl_expr_width(ivl_expr_t net);
@@ -253,6 +258,7 @@ extern unsigned ivl_stmt_block_count(ivl_statement_t net);
   /* IVL_ST_BLOCK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT */
+extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_DELAY */
@@ -372,6 +378,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.14  2000/09/30 02:18:15  steve
+ *  ivl_expr_t support for binary operators,
+ *  Create a proper ivl_scope_t object.
+ *
  * Revision 1.13  2000/09/26 00:30:07  steve
  *  Add EX_NUMBER and ST_TRIGGER to dll-api.
  *
