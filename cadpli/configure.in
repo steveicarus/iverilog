@@ -64,17 +64,10 @@ AC_MSG_RESULT($PICFLAG)
 AC_MSG_CHECKING("for -rdynamic compiler flag")
 
 rdynamic=-rdynamic
-whole_archive=-Wl,-whole-archive
-no_whole_archive=-Wl,-no-whole-archive
 case "${host}" in
 
     *-*-netbsd*)
 	rdynamic="-Wl,--export-dynamic"
-	;;
-
-    *-*-openbsd*)
-	whole_archive=""
-	no_whole_archive=""
 	;;
 
     *-*-solaris*)
@@ -91,18 +84,11 @@ case "${host}" in
 
     *-*-darwin*)
 	rdynamic="-Wl,-all_load"
-	whole_archive=""
-	no_whole_archive=""
 	;;
 
 esac
 AC_SUBST(rdynamic)
-AC_SUBST(whole_archive)
-AC_SUBST(no_whole_archive)
 AC_MSG_RESULT($rdynamic)
-
-AC_MSG_CHECKING("for -whole-archive compiler flags")
-AC_MSG_RESULT($whole_archive $no_whole_archive)
 
 AC_MSG_CHECKING("for shared library link flag")
 shared=-shared

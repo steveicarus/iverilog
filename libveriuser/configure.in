@@ -22,7 +22,7 @@ case "${host}" in
 	;;
 esac
 
-AC_MSG_CHECKING("for flag to make position independent code")
+AC_MSG_CHECKING(for flag to make position independent code)
 PICFLAG=-fPIC
 case "${host}" in
 
