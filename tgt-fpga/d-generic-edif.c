@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic-edif.c,v 1.3 2001/09/06 04:28:40 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.4 2001/09/09 22:23:28 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -347,30 +347,33 @@ void edif_show_generic_dff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       char jbuf[1024];
+      unsigned idx;
 
-      assert(ivl_lpm_width(net) == 1);
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 
-      edif_uref += 1;
+	    edif_uref += 1;
 
-      fprintf(xnf, "(instance (rename U%u \"%s\")", edif_uref, ivl_lpm_name(net));
-      fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, "(instance (rename U%u \"%s[%u]\")",
+		    edif_uref, ivl_lpm_name(net), idx);
+	    fprintf(xnf, " (viewRef Netlist_representation"
 		    " (cellRef FDCE (libraryRef VIRTEX))))\n");
 
-      nex = ivl_lpm_q(net, 0);
-      sprintf(jbuf, "(portRef Q (instanceRef U%u))", edif_uref);
-      edif_set_nexus_joint(nex, jbuf);
-
-      nex = ivl_lpm_data(net, 0);
-      sprintf(jbuf, "(portRef D (instanceRef U%u))", edif_uref);
-      edif_set_nexus_joint(nex, jbuf);
-
-      nex = ivl_lpm_clk(net);
-      sprintf(jbuf, "(portRef C (instanceRef U%u))", edif_uref);
-      edif_set_nexus_joint(nex, jbuf);
-
-      if ((nex = ivl_lpm_enable(net))) {
-	    sprintf(jbuf, "(portRef CE (instanceRef U%u))", edif_uref);
+	    nex = ivl_lpm_q(net, idx);
+	    sprintf(jbuf, "(portRef Q (instanceRef U%u))", edif_uref);
 	    edif_set_nexus_joint(nex, jbuf);
+
+	    nex = ivl_lpm_data(net, idx);
+	    sprintf(jbuf, "(portRef D (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(nex, jbuf);
+
+	    nex = ivl_lpm_clk(net);
+	    sprintf(jbuf, "(portRef C (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(nex, jbuf);
+
+	    if ((nex = ivl_lpm_enable(net))) {
+		  sprintf(jbuf, "(portRef CE (instanceRef U%u))", edif_uref);
+		  edif_set_nexus_joint(nex, jbuf);
+	    }
       }
 }
 
@@ -389,6 +392,11 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.4  2001/09/09 22:23:28  steve
+ *  Virtex support for mux devices and adders
+ *  with carry chains. Also, make Virtex specific
+ *  implementations of primitive logic.
+ *
  * Revision 1.3  2001/09/06 04:28:40  steve
  *  Separate the virtex and generic-edif code generators.
  *

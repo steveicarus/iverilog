@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.6 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: gates.c,v 1.7 2001/09/09 22:23:28 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -32,22 +32,47 @@ static void show_gate_lpm(ivl_lpm_t net)
       switch (ivl_lpm_type(net)) {
 
 	  case IVL_LPM_ADD:
+	    if (device->show_add == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_ADD not supported"
+			  " by this target.\n");
+		  return;
+	    }
 	    device->show_add(net);
 	    break;
 
 	  case IVL_LPM_CMP_EQ:
+	    if (device->show_cmp_eq == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_CMP_EQ not supported"
+			  " by this target.\n");
+		  return;
+	    }
 	    device->show_cmp_eq(net);
 	    break;
 
 	  case IVL_LPM_CMP_NE:
+	    if (device->show_cmp_ne == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_CMP_NE not supported"
+			  " by this target.\n");
+		  return;
+	    }
 	    device->show_cmp_ne(net);
 	    break;
 
 	  case IVL_LPM_FF:
+	    if (device->show_dff == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_FF not supported"
+			  " by this target.\n");
+		  return;
+	    }
 	    device->show_dff(net);
 	    break;
 
 	  case IVL_LPM_MUX:
+	    if (device->show_mux == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_MUX not supported"
+			  " by this target.\n");
+		  return;
+	    }
 	    device->show_mux(net);
 	    break;
 
@@ -73,6 +98,11 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.7  2001/09/09 22:23:28  steve
+ *  Virtex support for mux devices and adders
+ *  with carry chains. Also, make Virtex specific
+ *  implementations of primitive logic.
+ *
  * Revision 1.6  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.
