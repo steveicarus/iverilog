@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.80 2000/01/01 23:47:58 steve Exp $"
+#ident "$Id: parse.y,v 1.81 2000/01/02 01:59:52 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -126,7 +126,7 @@ extern void lex_end_table();
 
 %type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
-%type <expr>  delay_value
+%type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt parameter_value_opt
 %type <exprs> expression_list
 %type <exprs> assign assign_list
@@ -276,7 +276,7 @@ defparam_assign_list
 	;
 
 delay1
-	: '#' delay_value
+	: '#' delay_value_simple
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
 		  (*tmp)[0] = $2;
 		  $$ = tmp;
@@ -289,7 +289,7 @@ delay1
 	;
 
 delay3
-	: '#' delay_value
+	: '#' delay_value_simple
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
 		  (*tmp)[0] = $2;
 		  $$ = tmp;
@@ -320,6 +320,22 @@ delay3_opt
 	;
 
 delay_value
+	: expression
+		{ PExpr*tmp = $1;
+		  if (! pform_expression_is_constant(tmp))
+			yyerror(@1, "error: delay expression must "
+				"be constant.");
+		  $$ = tmp;
+		}
+	| expression ':' expression ':' expression
+		{ yyerror(@1, "sorry: (min:typ:max) not supported.");
+		  $$ = $3;
+		  delete $1;
+		  delete $5;
+		}
+	;
+
+delay_value_simple
 	: NUMBER
 		{ verinum*tmp = $1;
 		  if (tmp == 0) {
@@ -337,12 +353,6 @@ delay_value
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $1;
-		}
-	| '(' expression ':' expression ':' expression ')'
-		{ yyerror(@2, "sorry: (min:typ:max) not supported.");
-		  $$ = $4;
-		  delete $2;
-		  delete $6;
 		}
 	;
 
@@ -1227,6 +1237,11 @@ parameter_assign_list
 parameter_value_opt
 	: '#' '(' expression_list ')'
 		{ $$ = $3; }
+	| '#' error
+		{ yyerror(@1, "error: syntax error in parameter value "
+			  "assignment list.");
+		  $$ = 0;
+		}
 	|
 		{ $$ = 0; }
 	;
