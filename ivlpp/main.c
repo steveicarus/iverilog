@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.16 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: main.c,v 1.17 2003/09/26 02:08:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -288,6 +288,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.17  2003/09/26 02:08:31  steve
+ *  Detect missing endif markers.
+ *
  * Revision 1.16  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
@@ -312,30 +315,5 @@ int main(int argc, char*argv[])
  *
  * Revision 1.9  2001/05/20 18:08:07  steve
  *  local declares if the header is missing.
- *
- * Revision 1.8  2000/12/06 05:15:21  steve
- *  fix portfaults pass values.
- *
- * Revision 1.7  2000/09/13 22:33:13  steve
- *  undefined macros are null (with warnings.)
- *
- * Revision 1.6  2000/08/20 17:49:05  steve
- *  Clean up warnings and portability issues.
- *
- * Revision 1.5  2000/06/30 15:49:44  steve
- *  Handle errors from parser slightly differently.
- *
- * Revision 1.4  1999/11/29 17:02:21  steve
- *  include getopt if present.
- *
- * Revision 1.3  1999/09/05 22:33:18  steve
- *  Take multiple source files on the command line.
- *
- * Revision 1.2  1999/07/03 20:03:47  steve
- *  Add include path and line directives.
- *
- * Revision 1.1  1999/07/03 17:24:11  steve
- *  Add a preprocessor.
- *
  */
 

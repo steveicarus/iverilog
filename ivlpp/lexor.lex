@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.41 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: lexor.lex,v 1.42 2003/09/26 02:08:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,6 +73,54 @@ static struct include_stack_t*file_queue = 0;
 static struct include_stack_t*istack  = 0;
 static struct include_stack_t*standby = 0;
 
+/*
+ * Keep a stack of active ifdef, so that I can report errors
+ * when there are missing endifs.
+ */
+struct ifdef_stack_t {
+      char*path;
+      unsigned lineno;
+
+      struct ifdef_stack_t*next;
+};
+
+static struct ifdef_stack_t *ifdef_stack = 0;
+
+static void ifdef_enter(void)
+{
+      struct ifdef_stack_t*cur;
+
+      cur = calloc(1, sizeof(struct ifdef_stack_t));
+      cur->path   = strdup(istack->path);
+      cur->lineno = istack->lineno;
+      cur->next = ifdef_stack;
+      ifdef_stack = cur;
+}
+
+static void ifdef_leave(void)
+{
+      struct ifdef_stack_t*cur;
+
+      assert(ifdef_stack);
+
+      cur = ifdef_stack;
+      ifdef_stack = cur->next;
+
+      if (strcmp(istack->path,cur->path) != 0) {
+	    fprintf(stderr, "%s:%u: warning: "
+		    "This `endif matches an ifdef in another file.\n",
+		    istack->path, istack->lineno);
+
+	    fprintf(stderr, "%s:%u:        : "
+		    "This is the odd matched `ifdef.\n",
+		    cur->path, cur->lineno);
+      }
+
+      free(cur->path);
+      free(cur);
+
+}
+
 #define YY_INPUT(buf,result,max_size) do { \
     if (istack->file) { \
         size_t rc = fread(buf, 1, max_size, istack->file); \
@@ -123,6 +171,7 @@ W [ \t\b\f]+
      directives contained within are ignored. Contains macros are
      expanded, however. */
 
+"(*"{W}?")" { ECHO; }
 "(*" { comment_enter = YY_START; BEGIN(PCOMENT); ECHO; }
 <PCOMENT>[^\r\n]    { ECHO; }
 <PCOMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
@@ -225,6 +274,8 @@ W [ \t\b\f]+
       name += 6;
       name += strspn(name, " \t\b\f");
 
+      ifdef_enter();
+
       if (is_defined(name)) {
 	    yy_push_state(IFDEF_TRUE);
       } else {
@@ -238,6 +289,8 @@ W [ \t\b\f]+
       name += 7;
       name += strspn(name, " \t\b\f");
 
+      ifdef_enter();
+
       if (!is_defined(name)) {
 	    yy_push_state(IFDEF_TRUE);
       } else {
@@ -245,8 +298,14 @@ W [ \t\b\f]+
       }
   }
 
-<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W} { yy_push_state(IFDEF_SUPR); }
-<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} { yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W} {
+      ifdef_enter();
+      yy_push_state(IFDEF_SUPR);
+  }
+<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} {
+      ifdef_enter();
+      yy_push_state(IFDEF_SUPR);
+  }
 
 <IFDEF_TRUE>`else  { BEGIN(IFDEF_FALSE); }
 <IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
@@ -259,9 +318,7 @@ W [ \t\b\f]+
 <IFDEF_FALSE,IFDEF_SUPR>\n   { istack->lineno += 1; fputc('\n', yyout); }
 <IFDEF_FALSE,IFDEF_SUPR>\r   { istack->lineno += 1; fputc('\n', yyout); }
 
-<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif {
-      yy_pop_state();
-  }
+<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
   /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
@@ -692,6 +749,21 @@ static void emit_pathline(struct include_stack_t*isp)
 		isp->path, isp->lineno+1);
 }
 
+static void lexor_done()
+{
+      while (ifdef_stack) {
+	    struct ifdef_stack_t*cur = ifdef_stack;
+	    ifdef_stack = cur->next;
+
+	    fprintf(stderr, "%s:%u: error: This `ifdef lacks an `endif.\n",
+		    cur->path, cur->lineno);
+
+	    free(cur->path);
+	    free(cur);
+	    error_count += 1;
+      }
+}
+
 /*
  * The lexical analyzer calls this function when the current file
  * ends. Here I pop the include stack and resume the previous file. If
@@ -721,13 +793,15 @@ static int yywrap()
       }
       free(isp);
 
-	/* If I am out if include stack, the main input is
+	/* If I am out of include stack, the main input is
 	   done. Look for another file to process in the input
 	   queue. If none are there, give up. Otherwise, open the file
 	   and continue parsing. */
       if (istack == 0) {
-	    if (file_queue == 0)
+	    if (file_queue == 0) {
+		  lexor_done();
 		  return 1;
+	    }
 
 	    istack = file_queue;
 	    file_queue = file_queue->next;
@@ -737,7 +811,8 @@ static int yywrap()
 	    istack->file = fopen(istack->path, "r");
 	    if (istack->file == 0) {
 		  perror(istack->path);
-		  exit(1);
+		  error_count += 1;
+		  return 1;
 	    }
 
 	    if (line_direct_flag)
