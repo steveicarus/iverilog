@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.37 2001/04/21 02:04:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.38 2001/04/23 00:37:58 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -735,6 +735,12 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
 
+	      /* Skip unconnected nets. */
+	    if (argv[idx].text == 0) {
+		  obj->oval = 3;
+		  continue;
+	    }
+
 	    val = sym_get_value(sym_functors, argv[idx].text);
 	    if (val.num) {
 
@@ -846,6 +852,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.38  2001/04/23 00:37:58  steve
+ *  Support unconnected .net objects.
+ *
  * Revision 1.37  2001/04/21 02:04:01  steve
  *  Add NAND and XNOR functors.
  *

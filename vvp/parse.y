@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.20 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: parse.y,v 1.21 2001/04/23 00:37:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -62,8 +62,8 @@ extern FILE*yyin;
 %token <text> T_SYMBOL
 %token <vect> T_VECTOR
 
-%type <symb>  symbol
-%type <symbv> symbols
+%type <symb>  symbol symbol_opt
+%type <symbv> symbols symbols_net
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 
@@ -186,10 +186,10 @@ statement
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
-	| T_LABEL K_NET T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+	| T_LABEL K_NET T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, false, $9.cnt, $9.vect); }
 
-	| T_LABEL K_NET_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+	| T_LABEL K_NET_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
 
   /* Oh and by the way, empty statements are OK as well. */
@@ -305,6 +305,20 @@ symbols
 	;
 
 
+symbols_net
+	: symbol_opt
+		{ struct symbv_s obj;
+		  symbv_init(&obj);
+		  symbv_add(&obj, $1);
+		  $$ = obj;
+		}
+	| symbols_net ',' symbol_opt
+		{ struct symbv_s obj = $1;
+		  symbv_add(&obj, $3);
+		  $$ = obj;
+		}
+	;
+
   /* In some cases, simple pointer arithmetic is allowed. In
      particular, functor vectors can be indexed with the [] syntax,
      with values from 0 up. */
@@ -318,7 +332,14 @@ symbol
 		{ $$.text = $1;
 		  $$.idx = $3;
 		}
-	;
+
+symbol_opt
+	: symbol
+		{ $$ = $1; }
+	|
+		{ $$.text = 0;
+		  $$.idx = 0;
+		}
 
 %%
 
@@ -339,6 +360,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.21  2001/04/23 00:37:58  steve
+ *  Support unconnected .net objects.
+ *
  * Revision 1.20  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
