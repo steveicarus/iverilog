@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.6 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.7 2000/05/03 05:03:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -77,6 +77,16 @@ static const struct __vpirt vpip_named_begin_rt = {
       module_iter
 };
 
+static const struct __vpirt vpip_named_fork_rt = {
+      vpiNamedFork,
+      0,
+      0,
+      0,
+      0,
+      0,
+      module_iter
+};
+
 vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
 {
       ref->intern = 0;
@@ -88,6 +98,9 @@ vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
 	    break;
 	  case vpiNamedBegin:
 	    ref->base.vpi_type = &vpip_named_begin_rt;
+	    break;
+	  case vpiNamedFork:
+	    ref->base.vpi_type = &vpip_named_fork_rt;
 	    break;
 	  case vpiTask:
 	    ref->base.vpi_type = &vpip_task_rt;
@@ -116,6 +129,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.7  2000/05/03 05:03:26  steve
+ *  Support named for in VPI.
+ *
  * Revision 1.6  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters
