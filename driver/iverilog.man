@@ -1,11 +1,11 @@
-.TH iverilog 1 "$Date: 2001/11/12 01:26:36 $" Version "$Date: 2001/11/12 01:26:36 $"
+.TH iverilog 1 "$Date: 2001/11/14 03:28:15 $" Version "$Date: 2001/11/14 03:28:15 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
 [-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule]
+[-Iincludedir] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule]
 [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
 .SH DESCRIPTION
@@ -57,7 +57,7 @@ expanded and removed. This is useful, for example, to preprocess
 verilog source for use by other compilers.
 .TP 8
 .B -I\fIincludedir\fP 
-Append directory \fIincludepdir\fP to list of directories searched
+Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
@@ -115,11 +115,11 @@ information from the various components.
 .TP 8
 .B -W\fIclass\fP
 Turn on different classes of warnings. See the \fBWARNING TYPES\fP
-section below for desctriptions of the different warning groups. If
+section below for descriptions of the different warning groups. If
 multiple \fB-W\fP switches are used, the warning set is the union of
 all the requested classes.
 .TP 8
-.B -y\fIlibdir\fp
+.B -y\fIlibdir\fP
 Append the directory to the library module search path. When the
 compiler finds an undefined module, it looks in these directories for
 files with the right name.
@@ -157,7 +157,7 @@ links that code to make the output executable.
 .B vvp
 This is the default. The vvp target generates code for the vvp
 runtime. The output is a complete program that simulates the design
-(like with vvm) but must be run by the \fivvp\fP command. This target
+(like with vvm) but must be run by the \fBvvp\fP command. This target
 is much faster then the \fBvvm\fP target, but not quite as complete.
 .TP 8
 .B xnf
@@ -168,7 +168,7 @@ imported into larger designs by other tools.
 .TP 8
 .B fpga
 This is a variant of the XNF code generator that supports a wider
-variety of target devices. It is intented as a future replacement for
+variety of target devices. It is intended as a future replacement for
 the existing \fBxnf\fP target, but for now is still experimental.
 
 .SH "WARNING TYPES"
@@ -182,21 +182,38 @@ This enables all supported warning categories.
 .TP 8
 .B implicit
 This enables warnings for creation of implicit declarations. For
-example, if a scaler wire X is used but not declared in the Verilog
+example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
 
-.SH "Command Files"
+.SH "COMMAND FILES"
 The command file allows the user to place source file names and
 certain command line switches into a text file instead of on a long
 command line. Command files can include C or C++ style comments, as
 well as # comments, if the # starts the line.
 
+.TP 8
+.I "file name"
 A simple file name or file path is taken to be the name of a Verilog
-source file. The path starts with the a non-white-space character.
+source file. The path starts with the first non-white-space character.
 
+.TP 8
+.B -y\ \fIlibdir\fP
 A \fB-y\fP token prefixes a library directory in the command file,
 exactly like it does on the command line. The paramter to the \fB-y\fP
 flag may be on the same line or the next non-comment line.
+
+.TP 8
+.B +incdir+\fIincludedir\fP
+The \fB+incdir+\fP token in command files gives directories to search
+for include files in much the same way that \fB-I\fP flags work on the
+command line. The difference is that multiple \fI+includedir\fP
+directories are valid parameters to a single \fB+incdir+\fP token,
+although you may also have multiple \fB+incdir+\fP lines.
+
+.TP 8
+.B +define+\fINAME\fP=\fIvalue\fP
+The \fB+define+\fP token is the same as the \fB-D\fP option on the
+command line. The value part of the token is optional.
 
 .SH EXAMPLES 
 These examples assume that you have a Verilog source file called hello.v in
