@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.33 2004/02/19 21:32:46 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.34 2004/03/09 04:29:26 steve Exp $"
 #endif
 
 
@@ -203,10 +203,13 @@ typedef struct t_vpi_value {
 #   define vpiIntFunc     1
 #   define vpiRealFunc    2
 #   define vpiTimeFunc    3
-#define vpiSysFuncType    vpiFuncType
-#   define vpiSysFuncInt  vpiIntFunc
-#   define vpiSysFuncReal vpiRealFunc
-#   define vpiSysFuncTime vpiTimeFunc
+#   define vpiSizedFunc   4
+#   define vpiSizedSignedFunc 5
+#define vpiSysFuncType     vpiFuncType
+#   define vpiSysFuncInt   vpiIntFunc
+#   define vpiSysFuncReal  vpiRealFunc
+#   define vpiSysFuncTime  vpiTimeFunc
+#   define vpiSysFuncSized vpiSizedFunc
 #define vpiSigned    65
 /* IVL private properties */
 #define _vpiNexusId 0x1000000
@@ -416,6 +419,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.34  2004/03/09 04:29:26  steve
+ *  Define function types.
+ *
  * Revision 1.33  2004/02/19 21:32:46  steve
  *  Add sysfunctype to calltf structure.
  *
