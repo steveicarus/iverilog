@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.25 2001/07/06 04:46:44 steve Exp $"
+#ident "$Id: lexor.lex,v 1.26 2001/07/07 02:57:33 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -79,6 +79,7 @@
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
+".shift/r"  { return K_SHIFTR; }
 ".thread"   { return K_THREAD; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
@@ -147,6 +148,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.26  2001/07/07 02:57:33  steve
+ *  Add the .shift/r functor.
+ *
  * Revision 1.25  2001/07/06 04:46:44  steve
  *  Add structural left shift (.shift/l)
  *

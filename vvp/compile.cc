@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.85 2001/07/06 05:02:43 steve Exp $"
+#ident "$Id: compile.cc,v 1.86 2001/07/07 02:57:33 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -564,34 +564,9 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
 
 }
 
-/*
- * A .shift/l statement creates an array of functors for the
- * width. The 0 input is the data vector to be shifted and the 1 input
- * is the amount of the shift. An unconnected shift amount is set to 0.
- */
-void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
+static void compile_shift_inputs(vvp_arith_*dev, vvp_ipoint_t fdx,
+				 long wid, unsigned argc, struct symb_s*argv)
 {
-      assert( wid > 0 );
-
-      if (argc < (wid+1)) {
-	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
-	    compile_errors += 1;
-	    free(label);
-	    return;
-      }
-
-      if (argc > (wid*2)) {
-	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
-	    compile_errors += 1;
-	    free(label);
-	    return;
-      }
-
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
-
-      vvp_shiftl*dev = new vvp_shiftl(fdx, wid);
-
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
 	    functor_t obj = functor_index(ptr);
@@ -620,6 +595,65 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
 
 	    inputs_connect(ptr, tmp_argc, tmp_argv);
       }
+}
+
+/*
+ * A .shift/l statement creates an array of functors for the
+ * width. The 0 input is the data vector to be shifted and the 1 input
+ * is the amount of the shift. An unconnected shift amount is set to 0.
+ */
+void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc < (wid+1)) {
+	    fprintf(stderr, "%s; .shift/l has too few symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      if (argc > (wid*2)) {
+	    fprintf(stderr, "%s; .shift/l has too many symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_shiftl*dev = new vvp_shiftl(fdx, wid);
+
+      compile_shift_inputs(dev, fdx, wid, argc, argv);
+
+      free(argv);
+}
+
+void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc < (wid+1)) {
+	    fprintf(stderr, "%s; .shift/r has too few symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      if (argc > (wid*2)) {
+	    fprintf(stderr, "%s; .shift/r has too many symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_shiftr*dev = new vvp_shiftr(fdx, wid);
+
+      compile_shift_inputs(dev, fdx, wid, argc, argv);
 
       free(argv);
 }
@@ -1515,6 +1549,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.86  2001/07/07 02:57:33  steve
+ *  Add the .shift/r functor.
+ *
  * Revision 1.85  2001/07/06 05:02:43  steve
  *  Properly initialize unconnected shift inputs.
  *

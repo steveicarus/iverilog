@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.8 2001/07/06 04:46:44 steve Exp $"
+#ident "$Id: arith.cc,v 1.9 2001/07/07 02:57:33 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -392,8 +392,85 @@ void vvp_shiftl::set(vvp_ipoint_t i, functor_t f, bool push)
       }
 }
 
+vvp_shiftr::vvp_shiftr(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+      amount_ = 0;
+}
+
+
+void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      amount_ = 0;
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_, idx);
+	    functor_t fp = functor_index(ptr);
+
+	    unsigned val = (fp->ival >> 2) & 0x03;
+	    switch (val) {
+		case 0:
+		  break;
+		case 1:
+		  amount_ |= 1 << idx;
+		  break;
+		default:
+		  output_x_(push);
+		  return;
+	    }
+      }
+
+      if (amount_ >= wid_) {
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+		  vvp_ipoint_t optr = ipoint_index(base_, idx);
+		  functor_t ofp = functor_index(optr);
+		  if (ofp->oval != 0) {
+			ofp->oval = 0;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+
+      } else {
+	    vvp_ipoint_t optr, iptr;
+	    functor_t ofp, ifp;
+
+	    for (unsigned idx = 0 ;  idx < (wid_-amount_) ;  idx += 1) {
+		  optr = ipoint_index(base_, idx);
+		  ofp = functor_index(optr);
+		  iptr = ipoint_index(base_, idx + amount_);
+		  ifp = functor_index(iptr);
+
+		  if (ofp->oval != (ifp->ival&3)) {
+			ofp->oval = ifp->ival&3;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+
+	    for (unsigned idx = wid_-amount_; idx < wid_ ;  idx += 1) {
+		  optr = ipoint_index(base_, idx);
+		  ofp = functor_index(optr);
+		  if (ofp->oval != 0) {
+			ofp->oval = 0;
+			if (push)
+			      functor_propagate(optr);
+			else
+			      schedule_functor(optr, 0);
+		  }
+	    }
+      }
+}
+
+
 /*
  * $Log: arith.cc,v $
+ * Revision 1.9  2001/07/07 02:57:33  steve
+ *  Add the .shift/r functor.
+ *
  * Revision 1.8  2001/07/06 04:46:44  steve
  *  Add structural left shift (.shift/l)
  *
@@ -407,18 +484,5 @@ void vvp_shiftl::set(vvp_ipoint_t i, functor_t f, bool push)
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
  *  structural and behavioral multiply.
- *
- * Revision 1.4  2001/06/16 03:36:03  steve
- *  Relax width restriction for structural comparators.
- *
- * Revision 1.3  2001/06/15 04:07:58  steve
- *  Add .cmp statements for structural comparison.
- *
- * Revision 1.2  2001/06/07 03:09:03  steve
- *  Implement .arith/sub subtraction.
- *
- * Revision 1.1  2001/06/05 03:05:41  steve
- *  Add structural addition.
- *
  */
 

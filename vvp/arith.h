@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.6 2001/07/06 04:46:44 steve Exp $"
+#ident "$Id: arith.h,v 1.7 2001/07/07 02:57:33 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -126,8 +126,26 @@ class vvp_shiftl  : public vvp_arith_ {
       vvp_shiftl& operator= (const vvp_shiftl&);
 };
 
+class vvp_shiftr  : public vvp_arith_ {
+
+    public:
+      explicit vvp_shiftr(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private:
+      unsigned amount_;
+
+    private: // not implemented
+      vvp_shiftr(const vvp_shiftr&);
+      vvp_shiftr& operator= (const vvp_shiftr&);
+};
+
 /*
  * $Log: arith.h,v $
+ * Revision 1.7  2001/07/07 02:57:33  steve
+ *  Add the .shift/r functor.
+ *
  * Revision 1.6  2001/07/06 04:46:44  steve
  *  Add structural left shift (.shift/l)
  *
