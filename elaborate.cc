@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.78 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.79 1999/09/08 02:24:39 steve Exp $"
 #endif
 
 /*
@@ -1639,7 +1639,7 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 
 	// Well, I actually need to generate code to handle the
 	// conditional, so elaborate.
-      NetProc*i = if_->elaborate(des, path);
+      NetProc*i = if_? if_->elaborate(des, path) : 0;
       NetProc*e = else_? else_->elaborate(des, path) : 0;
 
       NetCondit*res = new NetCondit(expr, i, e);
@@ -2186,6 +2186,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.79  1999/09/08 02:24:39  steve
+ *  Empty conditionals (pmonta@imedia.com)
+ *
  * Revision 1.78  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

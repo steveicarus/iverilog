@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.37 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.38 1999/09/08 02:24:39 steve Exp $"
 #endif
 
 /*
@@ -393,7 +393,10 @@ void PCase::dump(ostream&out, unsigned ind) const
 void PCondit::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "if (" << *expr_ << ")" << endl;
-      if_->dump(out, ind+3);
+      if (if_)
+	    if_->dump(out, ind+3);
+      else
+	    out << setw(ind) << ";" << endl;
       if (else_) {
 	    out << setw(ind) << "" << "else" << endl;
 	    else_->dump(out, ind+3);
@@ -636,6 +639,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.38  1999/09/08 02:24:39  steve
+ *  Empty conditionals (pmonta@imedia.com)
+ *
  * Revision 1.37  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

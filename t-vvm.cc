@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.39 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.40 1999/09/08 02:24:39 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1107,7 +1107,8 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 	    sc << "      bool step_" << thread_step_ << "_()" << endl;
 	    sc << "      {" << endl;
-	    net->stat(idx)->emit_proc(sc, this);
+	    if (net->stat(idx))
+		  net->stat(idx)->emit_proc(sc, this);
 	    sc << "        step_ = &step_" << exit_step << "_;" << endl;
 	    sc << "        return true;" << endl;
 	    sc << "      }" << endl;
@@ -1121,7 +1122,8 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 	    sc << "      bool step_" << thread_step_ << "_()" << endl;
 	    sc << "      {" << endl;
-	    net->stat(default_idx)->emit_proc(sc, this);
+	    if (net->stat(default_idx))
+		  net->stat(default_idx)->emit_proc(sc, this);
 	    sc << "        step_ = &step_" << exit_step << "_;" << endl;
 	    sc << "        return true;" << endl;
 	    sc << "      }" << endl;
@@ -1416,6 +1418,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.40  1999/09/08 02:24:39  steve
+ *  Empty conditionals (pmonta@imedia.com)
+ *
  * Revision 1.39  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *
