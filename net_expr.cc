@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.18 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.19 2003/06/15 18:53:20 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -199,6 +199,13 @@ NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
 {
       expr_width(l->expr_width() + r->expr_width());
       cast_signed(l->has_sign() && r->has_sign());
+
+	/* If it turns out that this is not a signed expression, then
+	   cast the signedness out of the operands as well. */
+      if (! has_sign()) {
+	    l->cast_signed(false);
+	    r->cast_signed(false);
+      }
 }
 
 NetEBMult::~NetEBMult()
@@ -484,6 +491,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.19  2003/06/15 18:53:20  steve
+ *  Operands of unsigned multiply are unsigned.
+ *
  * Revision 1.18  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and
