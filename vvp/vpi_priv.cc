@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.39 2003/05/15 16:51:09 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.40 2003/05/30 04:08:28 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -128,11 +128,23 @@ struct __vpiSysTaskCall*vpip_cur_task = 0;
 
 int vpi_free_object(vpiHandle ref)
 {
+      int rtn;
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_free_object(%p)", ref);
+	    fflush(vpi_trace);
+      }
+
       assert(ref);
       if (ref->vpi_type->vpi_free_object_ == 0)
-	    return 1;
+	    rtn = 1;
+      else
+	    rtn = ref->vpi_type->vpi_free_object_(ref);
 
-      return ref->vpi_type->vpi_free_object_(ref);
+      if (vpi_trace)
+	    fprintf(vpi_trace, " --> %d\n", rtn);
+
+      return rtn;
 }
 
 static int vpip_get_global(int property)
@@ -646,6 +658,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.40  2003/05/30 04:08:28  steve
+ *  vpi_trace of vpi_free_object.
+ *
  * Revision 1.39  2003/05/15 16:51:09  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log
