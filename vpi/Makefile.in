@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.36 2003/02/27 22:13:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.37 2003/03/04 03:13:07 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -69,7 +69,7 @@ ifeq (@WIN32@,yes)
 endif
 
 system.vpi: $O ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $O $(SYSTEM_VPI_LDFLAGS)
+	$(CC) @shared@ -o $@ $O $(LDFLAGS) $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
