@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.96 2004/12/17 04:46:40 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.97 2004/12/18 18:53:26 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1180,11 +1180,15 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+/*
+ * The trigger statement is straight forward. All we have to do is
+ * write a single bit of fake data to the event object.
+ */
 static int show_stmt_trigger(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_events(net, 0);
       assert(ev);
-      fprintf(vvp_out, "    %%set E_%p, 0;\n", ev);
+      fprintf(vvp_out, "    %%set/v E_%p, 0,1;\n", ev);
       return 0;
 }
 
@@ -1533,6 +1537,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.97  2004/12/18 18:53:26  steve
+ *  Use %set/v to trigger events.
+ *
  * Revision 1.96  2004/12/17 04:46:40  steve
  *  Implement release functionality.
  *
