@@ -1,9 +1,9 @@
-.TH verilog 1 "August 25th, 1999" Version 19990825
+.TH verilog 1 "Septemeber 13th, 1999" Version 19990913
 .SH NAME
 verilog - Icarus Verilog Driver
 .SH SYNOPSIS
 .B verilog
-[-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] sourcefile
+[-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] [-s topmodule] sourcefile[s]
 .SH DESCRIPTION
 .PP
 \fIverilog\fP is the compiler driver script for compiling Verilog code
@@ -34,26 +34,31 @@ Append path \fIincludepath\fP to list of paths searched for include files.
 .B -X
 Generate XNF files as output. Default is VVM-format.
 .TP 8
-.B -o \fIfile\fP
-Place output in the file \fIfile\fP. If not given, \fIverilog\fP tries to
-make a guess; if the input filename is "hello.vl", the output filename
-will be "hello" (for VVM target) or "hello.xnf" (for XNF target).
+.B -o \fIfilename\fP
+Place output in the file \fIfilename\fP. If not given, \fIverilog\fP tries to
+make a guess; if the input filename is "hello.v", the output 
+filename will be "hello" (for VVM target) or "hello.xnf" (for XNF target).
+If several files are given on the command line, the \fIlast\fP filename will
+be used.
+.TP 8
+.B -s \fItopmodule name\fP
+To explicitly set the module \fIivl\fP will use as a top-level module.
 
 .SH EXAMPLES 
-These examples assume that you have a Verilog source file called hello.vl in
+These examples assume that you have a Verilog source file called hello.v in
 the current directory
 
-To compile hello.vl to an executable file called hello:
+To compile hello.v to an executable file called hello:
 
-	verilog hello.vl
+	verilog hello.v
 
-To compile hello.vl to an executable file called runnable:
+To compile hello.v to an executable file called runnable:
 
-	verilog -o runnable hello.vl
+	verilog -o runnable hello.v
 
-To compile hello.vl to a file in XNF-format called hello.xnf
+To compile hello.v to a file in XNF-format called hello.xnf
 
-	verilog -X hello.vl
+	verilog -X hello.v
 
 
 .SH "ENVIRONMENT"

@@ -33,9 +33,8 @@ tmpCCFile=${tmpDir}/ivl$$.cc
 
 VPIModulePath=@libdir@/ivl:.
 
-outputRequested=0
 target=${vvmTarget}
-xnfForm=0
+targetSuffix=""
 
 # If VPI module path aren't set up, warn at least
 if test -z "${VPI_MODULE_PATH}" ; then
@@ -45,35 +44,35 @@ fi
 
 if test -z "$*" ; then
     echo "Missing infile";
-    echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] sourcefile" ;
+    echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] [-s topmodule] sourcefile[s]" ;
     exit -1;
 fi
 
 # Try to extract given parameters
-for parameter in $*; do 
+parameter=`getopt -o D:I:Xo:s: -- "$@"` 
+eval set -- "${parameter}" 
+while true ; do 
 
-    if test ${outputRequested} -eq 1 ; then
-	outputFile=${parameter};
-	outputRequested=0;
-    else
-	case "${parameter}" in
-	    -D*) extDefines="${extDefines} ${parameter}" ;;
-	    -I*) extIncPath="${extIncPath} -I ${parameter:2}" ;;
-	    -X)  xnfForm=1; target=${xnfTarget} ;;
-	    -o)  outputRequested=1 ;;
-	    *)   verilogFile=${parameter};;
-	esac
-    fi
+    case "$1" in
+      -D) extDefines="${extDefines} -D$2" ; shift 2 ;;
+      -I) extIncPath="${extIncPath} -I $2" ; shift 2 ;;
+      -X) targetSuffix=".xnf" ; target=${xnfTarget} ; shift ;;
+      -o) outputFile=$2 ; shift 2 ;;
+      -s) topModule="-s $2 " ; shift 2 ;;
+      --) shift ; break ;;
+       *) echo "Internal error! Arg is $1 " ; exit 1 ;;
+    esac
 
 done
 
+# The rest is filenames
+verilogFile=$@;
 
 # If no output file is given should we guess one or...?
+# Assumes a few silly things if several files are given
 if test -z "${outputFile}" ; then 
-    outputFile=`echo ${verilogFile} | sed -e 's/\(.*\)\..*/\1/'`;
-    if test ${xnfForm} -eq 1 ; then
-	outputFile="${outputFile}.xnf" ;
-    fi
+    outputFile=`echo ${verilogFile} | sed -e 's;.* \(.*\)\..*;\1;'`;
+    outputFile="${outputFile}${targetSuffix}" ;
 fi
 
 
@@ -87,7 +86,7 @@ fi
 
 
 # Compile preprocessed verilog file
-${execIVL} ${target} -o ${tmpCCFile} ${tmpPPFile}
+${execIVL} ${target} -o ${tmpCCFile} ${topModule} ${tmpPPFile}
 if test $? -ne  0 ; then
     echo "Verilog compilation failed. Terminating compilation."
     rm -f ${tmpCCFile}
@@ -95,16 +94,19 @@ if test $? -ne  0 ; then
 fi
 rm -f ${tmpPPFile}
 
-# If XNF just move the created file in place else ...
-if test ${xnfForm} -eq 1 ; then
-    mv ${tmpCCFile} ${outputFile} ;
-else
-    # ...compile generated C++ code
-    ${execCpp} -rdynamic ${tmpCCFile} -o ${outputFile} -lvvm -ldl
-    if test $? -ne 0 ; then
-	echo "C++ compilation failed. Terminating compilation."
-	rm -f ${tmpCCFile}
-	exit -1
-    fi
-    rm -f ${tmpCCFile}
-fi
+
+case "${targetSuffix}" in
+
+    .xnf) mv ${tmpCCFile} ${outputFile} ;;
+
+    "")  ${execCpp} -rdynamic ${tmpCCFile} -o ${outputFile} -lvvm -ldl ;
+         if test $? -ne 0 ; then
+	     echo "C++ compilation failed. Terminating compilation."
+	     rm -f ${tmpCCFile}
+	     exit -1
+          fi
+          rm -f ${tmpCCFile} ;;
+
+    *) echo "Internal error in target compilation." ; exit 1
+
+esac
