@@ -1,0 +1,70 @@
+
+FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
+
+  Copyright 2001 Stephen Williams
+  $Id: fpga.txt,v 1.1 2001/09/02 23:58:49 steve Exp $
+
+INVOKING THE FPGA TARGET
+
+This code generator is invoked with the -tfpga flag to iverilog. The
+code generator understands the part= and the arch= parameters, which
+can be set with the -p flag of iverilog:
+
+	iverilog -parch=virtex -fpart=v50-pq240-6 -tfpga foo.vl
+
+* arch=generic-xnf
+
+If this is selected, then the output is formatted as an XNF file,
+suitable for most any type of device. The devices that it emits
+are generic devices from the unified library. Some devices are macros,
+you will may need to further resolve the generated XNF to get working
+code for your part.
+
+* arch=virtex
+
+If this is selected, then the output is formatted as an EDIF 200 file,
+suitable for Virtex class devices. This is supposed to know that you
+are targeting a Virtex part, so can generate primitives instead of
+using external macros.
+
+
+XNF ROOT PORTS
+
+When the output format is XNF, the code generator will generate "SIG"
+records for the signals that are ports of the root module. The name is
+declared as an external pin that this macro makes available.
+
+The name given to the macro pin is generated from the base name of the
+signal. If the signal is one bit wide, then the pin name is exactly
+the module port name. If the port is a vector, then the pin number is
+given as a vector. For example, the module:
+
+	module main(out, in);
+	    output out;
+	    input [2:0] in;
+	    [...]
+	endmodule
+
+leads to these SIG, records:
+
+	SIG, main/out, PIN=out
+	SIG, main/in<2>, PIN=in2
+	SIG, main/in<1>, PIN=in1
+	SIG, main/in<0>, PIN=in0
+
+
+EDIF ROOT PORTS
+
+The EDIF format is more explicit about the interface into an EDIF
+file. The code generator uses that control to generate an explicit
+interface definition into the design. (This is *not* the same as the
+PADS of a part.) The generated EDIF interface section contains port
+definitions, including the proper direction marks.
+
+
+
+---
+$Log: fpga.txt,v $
+Revision 1.1  2001/09/02 23:58:49  steve
+ Add documentation for the code generator.
+
