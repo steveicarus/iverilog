@@ -17,13 +17,34 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: display.cc,v 1.3 1999/01/01 01:44:40 steve Exp $"
+#ident "$Id: display.cc,v 1.4 1999/05/12 04:02:17 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_calltf.h"
 # include  <iostream>
 
+static void format_hex(ostream&os, class vvm_calltf_parm*parm)
+{
+      switch (parm->type()) {
+	  case vvm_calltf_parm::NONE:
+	    os << "z";
+	    break;
+	  case vvm_calltf_parm::ULONG:
+	    os << ((parm->as_ulong()&1) ? "0" : "1");
+	    break;
+	  case vvm_calltf_parm::STRING:
+	    os << parm->as_string();
+	    break;
+	  case vvm_calltf_parm::BITS:
+            unsigned c = 0; 
+	    for (unsigned idx = parm->as_bits()->get_width()
+		       ;  idx > 0  ;  idx -= 1)
+		  c = (c << 1) | parm->as_bits()->get_bit(idx-1);
+            cout.form("%x",c);
+	    break;
+      }
+}
 static void format_bit(ostream&os, class vvm_calltf_parm*parm)
 {
       switch (parm->type()) {
@@ -107,6 +128,13 @@ static unsigned format(vvm_simulation*sim, const string&str,
 		      case 'b':
 		      case 'B':
 			format_bit(cout, parms+next_parm);
+			next_parm += 1;
+			break;
+		      case 'x':
+		      case 'X':
+		      case 'h':
+		      case 'H':
+			format_hex(cout, parms+next_parm);
 			next_parm += 1;
 			break;
 		      case 'd':
@@ -208,6 +236,9 @@ void Smonitor(vvm_simulation*sim, const string&name,
 
 /*
  * $Log: display.cc,v $
+ * Revision 1.4  1999/05/12 04:02:17  steve
+ *  Add %x support contributed by Steve Wilson.
+ *
  * Revision 1.3  1999/01/01 01:44:40  steve
  *  Proberly print vectors in binary.
  *
@@ -220,4 +251,3 @@ void Smonitor(vvm_simulation*sim, const string&name,
  *  Add vvm library.
  *
  */
-
