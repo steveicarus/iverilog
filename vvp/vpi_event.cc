@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_event.cc,v 1.3 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.4 2002/07/12 18:23:30 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -36,10 +36,20 @@ static char* named_event_str(int code, vpiHandle ref)
 
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
 
+      char *bn = vpi_get_str(vpiFullName, &obj->scope->base);
+      const char *nm = obj->name;
+
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
+
       switch (code) {
 
+	  case vpiFullName:
+	    sprintf(rbuf, "%s.%s", bn, nm);
+	    return rbuf;
+
 	  case vpiName:
-	    return const_cast<char*>(obj->name);
+	    strcpy(rbuf, nm);
+	    return rbuf;
 
       }
 
@@ -114,6 +124,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.4  2002/07/12 18:23:30  steve
+ *  Use result buf for event and scope names.
+ *
  * Revision 1.3  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *

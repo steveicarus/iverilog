@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.16 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.17 2002/07/12 18:23:30 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -28,6 +28,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>
 
@@ -45,8 +46,8 @@ vpiHandle vpip_make_root_iterator(void)
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
-
-      char *n, *nn;
+      const char *n, *nn, *name = ref->name;
+      char *rbuf = need_result_buf(strlen(name) + 1, RBUF_STR);
 
       assert((obj->vpi_type->type_code == vpiModule)
 	     || (obj->vpi_type->type_code == vpiFunction)
@@ -56,10 +57,11 @@ static char* scope_get_str(int code, vpiHandle obj)
 
       switch (code) {
 	  case vpiFullName:
-	    return const_cast<char*>(ref->name);
+	    strcpy(rbuf, name);
+	    return rbuf;
 
 	  case vpiName:
-	    nn = n = const_cast<char*>(ref->name);
+	    nn = n = name;
 	    while (*n)
 		  if (*n=='\\' && *++n)
 			++n;
@@ -67,7 +69,8 @@ static char* scope_get_str(int code, vpiHandle obj)
 			nn = ++n;
 		  else 
 			++n;
-	    return nn;
+	    strcpy(rbuf, nn);
+	    return rbuf;
 		  
 	  default:
 	    assert(0);
@@ -389,6 +392,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.17  2002/07/12 18:23:30  steve
+ *  Use result buf for event and scope names.
+ *
  * Revision 1.16  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *
