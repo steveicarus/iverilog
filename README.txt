@@ -310,6 +310,10 @@ constructs.
   - Module instance arrays are not supported, although gate instance
     arrays do work.
 
+  - Net delays, of the form "wire #N foo;" do not work. Delays in
+    every other context do work properly, including the V2001 form
+    "wire #5 foo = bar;"
+
 5.1 Nonstandard Constructs or Behaviors
 
 Icarus Verilog includes some features that are not part of the
