@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.17 2000/11/29 05:24:00 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.18 2000/11/29 23:16:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -308,7 +308,7 @@ NetNet* NetEConcat::synthesize(Design*des)
 		  obit += 1;
 	    }
 
-	    if (tmp->local_flag())
+	    if (tmp->local_flag() && tmp->get_eref() == 0)
 		  delete tmp;
       }
 
@@ -444,6 +444,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.18  2000/11/29 23:16:18  steve
+ *  Do not delete synthesized signals used in expressions.
+ *
  * Revision 1.17  2000/11/29 05:24:00  steve
  *  synthesis for unary reduction ! and N operators.
  *

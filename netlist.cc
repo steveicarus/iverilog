@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.147 2000/11/29 05:24:00 steve Exp $"
+#ident "$Id: netlist.cc,v 1.148 2000/11/29 23:16:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -369,6 +369,12 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 
 NetNet::~NetNet()
 {
+      if (eref_count_ > 0) {
+	    cerr << get_line() << ": internal error: attempt to delete "
+		 << "signal ``" << name() << "'' which has "
+		 << "expression references." << endl;
+	    dump_net(cerr, 4);
+      }
       assert(eref_count_ == 0);
       if (scope())
 	    scope()->rem_signal(this);
@@ -2465,6 +2471,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.148  2000/11/29 23:16:19  steve
+ *  Do not delete synthesized signals used in expressions.
+ *
  * Revision 1.147  2000/11/29 05:24:00  steve
  *  synthesis for unary reduction ! and N operators.
  *
