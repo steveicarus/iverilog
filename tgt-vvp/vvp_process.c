@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.85 2003/05/14 05:26:41 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.86 2003/05/17 04:38:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1083,23 +1083,26 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       unsigned idx;
       int rc = 0;
       unsigned cnt = ivl_stmt_block_count(net);
+      ivl_scope_t scope = ivl_stmt_block_scope(net);
 
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
       transient_id += cnt-1;
 
+	/* If no subscope use provided */
+      if (!scope) scope = sscope;
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
-		    id_base+idx, sscope);
+		    id_base+idx, scope);
       }
 
 	/* Draw code to execute the remaining thread in the current
 	   thread, then generate enough joins to merge back together. */
-      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1), sscope);
+      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1), scope);
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "    %%join;\n");
@@ -1109,7 +1112,7 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
 	    clear_expression_lookaside();
-	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
+	    rc += show_statement(ivl_stmt_block_stmt(net, idx), scope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
 
@@ -1508,6 +1511,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.86  2003/05/17 04:38:19  steve
+ *  Account for nested fork scopes in disable.
+ *
  * Revision 1.85  2003/05/14 05:26:41  steve
  *  Support real expressions in case statements.
  *
