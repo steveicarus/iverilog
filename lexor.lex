@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.42 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: lexor.lex,v 1.43 2000/03/05 06:14:10 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -114,16 +114,16 @@ W [ \t\b\f\r]+
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
-<UDPTABLE>\(\?0\)  { return '_'; }
-<UDPTABLE>\(\?1\)  { return '+'; }
-<UDPTABLE>\(\?x\)  { return '%'; }
-<UDPTABLE>\(\?\?\) { return '*'; }
-<UDPTABLE>\(01\)   { return 'r'; }
-<UDPTABLE>\(0x\)   { return 'P'; }
-<UDPTABLE>\(10\)   { return 'f'; }
-<UDPTABLE>\(1x\)   { return 'N'; }
-<UDPTABLE>\(x0\)   { return 'F'; }
-<UDPTABLE>\(x1\)   { return 'R'; }
+<UDPTABLE>\(\?0\)    { return '_'; }
+<UDPTABLE>\(\?1\)    { return '+'; }
+<UDPTABLE>\(\?[xX]\) { return '%'; }
+<UDPTABLE>\(\?\?\)  { return '*'; }
+<UDPTABLE>\(01\)    { return 'r'; }
+<UDPTABLE>\(0[xX]\) { return 'P'; }
+<UDPTABLE>\(10\)    { return 'f'; }
+<UDPTABLE>\(1[xX]\) { return 'N'; }
+<UDPTABLE>\([xX]0\) { return 'F'; }
+<UDPTABLE>\([xX]1\) { return 'R'; }
 <UDPTABLE>[bB]     { return 'b'; }
 <UDPTABLE>[fF]     { return 'f'; }
 <UDPTABLE>[rR]     { return 'r'; }
