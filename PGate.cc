@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.12 2001/10/21 00:42:47 steve Exp $"
+#ident "$Id: PGate.cc,v 1.13 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,12 +90,12 @@ void PGate::elaborate_scope(Design*, NetScope*) const
  * parameters. This method understands how to handle the different
  * numbers of expressions.
  */
-void PGate::eval_delays(Design*des, const string&path,
+void PGate::eval_delays(Design*des, NetScope*scope,
 			unsigned long&rise_time,
 			unsigned long&fall_time,
 			unsigned long&decay_time) const
 {
-      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
+      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
 }
 
 PGAssign::PGAssign(svector<PExpr*>*pins)
@@ -192,6 +192,9 @@ const char* PGModule::get_type()
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.13  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.12  2001/10/21 00:42:47  steve
  *  Module types in pform are char* instead of string.
  *

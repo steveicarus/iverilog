@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.23 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: Statement.cc,v 1.24 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,6 +107,10 @@ PBlock::~PBlock()
 
 PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
 : name_(n), parms_(p)
+{
+}
+
+PCallTask::~PCallTask()
 {
 }
 
@@ -219,6 +223,17 @@ PForever::~PForever()
       delete statement_;
 }
 
+PForStatement::PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
+			     PExpr*n2, PExpr*e2, Statement*st)
+: name1_(n1), expr1_(e1), cond_(cond), name2_(n2), expr2_(e2),
+  statement_(st)
+{
+}
+
+PForStatement::~PForStatement()
+{
+}
+
 PProcess::~PProcess()
 {
       delete statement_;
@@ -254,6 +269,11 @@ PTrigger::~PTrigger()
 {
 }
 
+PWhile::PWhile(PExpr*e1, Statement*st)
+: cond_(e1), statement_(st)
+{
+}
+
 PWhile::~PWhile()
 {
       delete cond_;
@@ -262,109 +282,11 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.24  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.23  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.22  2000/07/26 05:08:07  steve
- *  Parse disable statements to pform.
- *
- * Revision 1.21  2000/05/11 23:37:26  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.20  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.19  2000/04/12 04:23:57  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.18  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.17  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.16  1999/09/29 18:36:02  steve
- *  Full case support
- *
- * Revision 1.15  1999/09/22 02:00:48  steve
- *  assignment with blocking event delay.
- *
- * Revision 1.14  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.13  1999/09/02 01:59:27  steve
- *  Parse non-blocking assignment delays.
- *
- * Revision 1.12  1999/07/12 00:59:36  steve
- *  procedural blocking assignment delays.
- *
- * Revision 1.11  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.10  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.9  1999/06/15 05:38:39  steve
- *  Support case expression lists.
- *
- * Revision 1.8  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.7  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.6  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.5  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.4  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
- * Revision 1.3  1998/11/11 03:13:04  steve
- *  Handle while loops.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:55  steve
- *  Introduce verilog to CVS.
- *
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.232 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.233 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -59,7 +59,7 @@ static Link::strength_t drive_type(PGate::strength_t drv)
 }
 
 
-void PGate::elaborate(Design*des, const string&path) const
+void PGate::elaborate(Design*des, NetScope*scope) const
 {
       cerr << "internal error: what kind of gate? " <<
 	    typeid(*this).name() << endl;
@@ -69,13 +69,12 @@ void PGate::elaborate(Design*des, const string&path) const
  * Elaborate the continuous assign. (This is *not* the procedural
  * assign.) Elaborate the lvalue and rvalue, and do the assignment.
  */
-void PGAssign::elaborate(Design*des, const string&path) const
+void PGAssign::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       unsigned long rise_time, fall_time, decay_time;
-      eval_delays(des, path, rise_time, fall_time, decay_time);
+      eval_delays(des, scope, rise_time, fall_time, decay_time);
 
       Link::strength_t drive0 = drive_type(strength0());
       Link::strength_t drive1 = drive_type(strength1());
@@ -129,7 +128,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 		  if (cnt < lval->pin_count()) {
 			verinum tmpv (0UL, lval->pin_count()-cnt);
 			NetConst*tmp = new NetConst(scope,
-						    des->local_symbol(path),
+						    scope->local_hsymbol(),
 						    tmpv);
 			des->add_node(tmp);
 			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
@@ -140,7 +139,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 		  unsigned idx;
 		  for (idx = 0 ; idx < cnt ;  idx += 1) {
 			NetBUFZ*dev = new NetBUFZ(scope,
-						  des->local_symbol(path));
+						  scope->local_hsymbol());
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
 			dev->rise_time(rise_time);
@@ -153,7 +152,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
 		  if (cnt < lval->pin_count()) {
 			NetConst*dev = new NetConst(scope,
-						    des->local_symbol(path),
+						    scope->local_hsymbol(),
 						    verinum::V0);
 			
 			des->add_node(dev);
@@ -203,18 +202,16 @@ void PGAssign::elaborate(Design*des, const string&path) const
  * Elaborate a Builtin gate. These normally get translated into
  * NetLogic nodes that reflect the particular logic function.
  */
-void PGBuiltin::elaborate(Design*des, const string&path) const
+void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 {
       unsigned count = 1;
       unsigned low = 0, high = 0;
       string name = get_name();
 
-      NetScope*scope = des->find_scope(path);
-
       if (name == "")
-	    name = des->local_symbol(path);
+	    name = scope->local_hsymbol();
       else
-	    name = path+"."+name;
+	    name = scope->name()+"."+name;
 
 	/* If the verilog source has a range specification for the
 	   gates, then I am expected to make more then one
@@ -265,7 +262,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	   values are given, they are taken as specified. */
 
       unsigned long rise_time, fall_time, decay_time;
-      eval_delays(des, path, rise_time, fall_time, decay_time);
+      eval_delays(des, scope, rise_time, fall_time, decay_time);
 
 	/* Now make as many gates as the bit count dictates. Give each
 	   a unique name, and set the delay times. */
@@ -411,7 +408,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
  * the parameters. This is done with BUFZ gates so that they look just
  * like continuous assignment connections.
  */
-void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
+void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 {
 	// Missing module instance names have already been rejected.
       assert(get_name() != "");
@@ -423,7 +420,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    return;
       }
 
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	// I know a priori that the elaborate_scope created the scope
@@ -658,15 +654,14 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
  * those networks to the pins.
  */
 
-void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
+void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
 
       string my_name = get_name();
       if (my_name == "")
-	    my_name = des->local_symbol(path);
+	    my_name = scope->local_hsymbol();
       else
-	    my_name = path+"."+my_name;
+	    my_name = scope->name()+"."+my_name;
 
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
       net->set_attributes(udp->attributes);
@@ -708,19 +703,19 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 }
 
 
-void PGModule::elaborate(Design*des, const string&path) const
+void PGModule::elaborate(Design*des, NetScope*scope) const
 {
 	// Look for the module type
       map<string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
-	    elaborate_mod_(des, (*mod).second, path);
+	    elaborate_mod_(des, (*mod).second, scope);
 	    return;
       }
 
 	// Try a primitive type
       map<string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end()) {
-	    elaborate_udp_(des, (*udp).second, path);
+	    elaborate_udp_(des, (*udp).second, scope);
 	    return;
       }
 
@@ -823,19 +818,18 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
       return osig;
 }
 
-NetProc* Statement::elaborate(Design*des, const string&path) const
+NetProc* Statement::elaborate(Design*des, NetScope*) const
 {
-      cerr << get_line() << ": internal error: elaborate: What kind of statement? " <<
-	    typeid(*this).name() << endl;
+      cerr << get_line() << ": internal error: elaborate: "
+	    "What kind of statement? " << typeid(*this).name() << endl;
       NetProc*cur = new NetProc;
       des->errors += 1;
       return cur;
 }
 
 NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
-				    Design*des, const string&path) const
+				    Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
       NetExpr*rv = rval()->elaborate_expr(des, scope);
       if (rv == 0)
@@ -867,9 +861,8 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
       return lval_->elaborate_lval(des, scope);
 }
 
-NetProc* PAssign::elaborate(Design*des, const string&path) const
+NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	/* Catch the case where the lvalue is a reference to a memory
@@ -883,7 +876,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		  break;
 
 	    if (NetMemory*mem = des->find_memory(scope, id->name()))
-		  return assign_to_memory_(mem, id->msb_, des, path);
+		  return assign_to_memory_(mem, id->msb_, des, scope);
 
       } while(0);
 
@@ -895,7 +888,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	/* If there is a delay expression, elaborate it. */
       unsigned long rise_time, fall_time, decay_time;
-      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
+      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
 
 
 	/* Elaborate the r-value expression. */
@@ -941,7 +934,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	   netlist. The compound statement is exactly equivalent. */
 
       if (rise_time || event_) {
-	    string n = des->local_symbol(path);
+	    string n = scope->local_hsymbol();
 	    unsigned wid = lv->lwidth();
 
 	    rv->set_width(wid);
@@ -961,7 +954,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    NetESignal*sig = new NetESignal(tmp);
 
 	      /* Generate an assignment of the l-value to the temporary... */
-	    n = des->local_symbol(path);
+	    n = scope->local_hsymbol();
 	    NetAssign_*lvt = new NetAssign_(tmp);
 
 	    NetAssign*a1 = new NetAssign(lvt, rv);
@@ -977,7 +970,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		 right NetPDelay object. */
 	    NetProc*st;
 	    if (event_) {
-		  st = event_->elaborate_st(des, path, a2);
+		  st = event_->elaborate_st(des, scope, a2);
 		  if (st == 0) {
 			cerr << event_->get_line() << ": error: "
 			      "unable to elaborate event expression."
@@ -1019,9 +1012,8 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
  * executed by anyone.
  */
 NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
-				      Design*des, const string&path) const
+				      Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	/* Elaborate the r-value expression, ... */
@@ -1051,9 +1043,8 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
  *
  * (For now, this does not yet support concatenation in the l-value.)
  */
-NetProc* PAssignNB::elaborate(Design*des, const string&path) const
+NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	/* Catch the case where the lvalue is a reference to a memory
@@ -1063,7 +1054,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    if (id == 0) break;
 
 	    if (NetMemory*mem = des->find_memory(scope, id->name()))
-		  return assign_to_memory_(mem, id->msb_, des, path);
+		  return assign_to_memory_(mem, id->msb_, des, scope);
 
       } while(0);
 
@@ -1088,7 +1079,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
 
       unsigned long rise_time, fall_time, decay_time;
-      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
+      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
 
 	/* All done with this node. mark its line number and check it in. */
       NetAssignNB*cur = new NetAssignNB(lv, rv);
@@ -1106,9 +1097,8 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
  * get all the error messages out of it. Then, if I detected a failure
  * then pass the failure up.
  */
-NetProc* PBlock::elaborate(Design*des, const string&path) const
+NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
@@ -1117,7 +1107,6 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(type);
       bool fail_flag = false;
 
-      string npath;
       NetScope*nscope;
       if (name_.length()) {
 	    nscope = scope->child(name_);
@@ -1131,24 +1120,22 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 	    }
 
 	    assert(nscope);
-	    npath = nscope->name();
 
       } else {
 	    nscope = scope;
-	    npath = path;
       }
 
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
       if (list_.count() == 1) {
 	    assert(list_[0]);
-	    NetProc*tmp = list_[0]->elaborate(des, npath);
+	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
       }
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
 	    assert(list_[idx]);
-	    NetProc*tmp = list_[idx]->elaborate(des, npath);
+	    NetProc*tmp = list_[idx]->elaborate(des, nscope);
 	    if (tmp == 0) {
 		  fail_flag = true;
 		  continue;
@@ -1175,9 +1162,8 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 /*
  * Elaborate a case statement.
  */
-NetProc* PCase::elaborate(Design*des, const string&path) const
+NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetExpr*expr = expr_->elaborate_expr(des, scope);
@@ -1211,7 +1197,7 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 		       default case. */
 		  NetProc*st = 0;
 		  if (cur->stat)
-			st = cur->stat->elaborate(des, path);
+			st = cur->stat->elaborate(des, scope);
 
 		  res->set_case(inum, 0, st);
 		  inum += 1;
@@ -1228,7 +1214,7 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 		  gu = cur->expr[e]->elaborate_expr(des, scope);
 
 		  if (cur->stat)
-			st = cur->stat->elaborate(des, path);
+			st = cur->stat->elaborate(des, scope);
 
 		  res->set_case(inum, gu, st);
 		  inum += 1;
@@ -1238,9 +1224,8 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
       return res;
 }
 
-NetProc* PCondit::elaborate(Design*des, const string&path) const
+NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	// Elaborate and try to evaluate the conditional expression.
@@ -1265,9 +1250,9 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 	    verinum val = ce->value();
 	    delete expr;
 	    if (val[0] == verinum::V1)
-		  return if_->elaborate(des, path);
+		  return if_->elaborate(des, scope);
 	    else if (else_)
-		  return else_->elaborate(des, path);
+		  return else_->elaborate(des, scope);
 	    else
 		  return new NetBlock(NetBlock::SEQU);
       }
@@ -1293,20 +1278,20 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 
 	// Well, I actually need to generate code to handle the
 	// conditional, so elaborate.
-      NetProc*i = if_? if_->elaborate(des, path) : 0;
-      NetProc*e = else_? else_->elaborate(des, path) : 0;
+      NetProc*i = if_? if_->elaborate(des, scope) : 0;
+      NetProc*e = else_? else_->elaborate(des, scope) : 0;
 
       NetCondit*res = new NetCondit(expr, i, e);
       res->set_line(*this);
       return res;
 }
 
-NetProc* PCallTask::elaborate(Design*des, const string&path) const
+NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
       if (name_[0] == '$')
-	    return elaborate_sys(des, path);
+	    return elaborate_sys(des, scope);
       else
-	    return elaborate_usr(des, path);
+	    return elaborate_usr(des, scope);
 }
 
 /*
@@ -1318,9 +1303,8 @@ NetProc* PCallTask::elaborate(Design*des, const string&path) const
  * possible to take a system task parameter a memory if the expression
  * is trivial.
  */
-NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
+NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       svector<NetExpr*>eparms (nparms());
@@ -1363,9 +1347,8 @@ NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
  *    y = b;
  *  end
  */
-NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
+NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetScope*task = des->find_task(scope, name_);
@@ -1493,9 +1476,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       return block;
 }
 
-NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
+NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetNet*lval = lval_->elaborate_anet(des, scope);
@@ -1510,7 +1492,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetCAssign* dev = new NetCAssign(scope, des->local_symbol(path), lval);
+      NetCAssign* dev = new NetCAssign(scope, scope->local_hsymbol(), lval);
       dev->set_line(*this);
       des->add_node(dev);
 
@@ -1520,9 +1502,8 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
       return dev;
 }
 
-NetDeassign* PDeassign::elaborate(Design*des, const string&path) const
+NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
@@ -1541,9 +1522,8 @@ NetDeassign* PDeassign::elaborate(Design*des, const string&path) const
  * expression to the constructor of NetPDelay so that the code
  * generator knows to evaluate the expression at run time.
  */
-NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
+NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 	/* Catch the special case that the delay is given as a
@@ -1560,7 +1540,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 	    delete fn;
 
 	    if (statement_)
-		return new NetPDelay(delay, statement_->elaborate(des, path));
+		return new NetPDelay(delay, statement_->elaborate(des, scope));
 	    else
 		return new NetPDelay(delay, 0);
 
@@ -1573,7 +1553,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 		 expression and let the run-time handle it. */
 	    NetExpr*dex = delay_->elaborate_expr(des, scope);
 	    if (statement_)
-		  return new NetPDelay(dex, statement_->elaborate(des, path));
+		  return new NetPDelay(dex, statement_->elaborate(des, scope));
 	    else
 		  return new NetPDelay(dex, 0);
       }
@@ -1590,7 +1570,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 	   in fact have a well defined meaning in Verilog. */
 
       if (statement_) {
-	    NetProc*stmt = statement_->elaborate(des, path);
+	    NetProc*stmt = statement_->elaborate(des, scope);
 	    return new NetPDelay(val, stmt);
 
       }  else {
@@ -1601,9 +1581,8 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 /*
  * The disable statement is not yet supported.
  */
-NetProc* PDisable::elaborate(Design*des, const string&path) const
+NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetScope*target = des->find_scope(scope, scope_);
@@ -1714,10 +1693,9 @@ NetProc* PDisable::elaborate(Design*des, const string&path) const
  * NetEvWait object can refer to.
  */
 
-NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
+NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 				       NetProc*enet) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
 
@@ -1762,7 +1740,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    we->add_event(ev);
 
 	    NetEvProbe*po = new NetEvProbe(scope,
-					   path+"."+scope->local_symbol(),
+					   scope->local_hsymbol(),
 					   ev, NetEvProbe::POSEDGE, 1);
 	    connect(po->pin(0), ex->pin(0));
 
@@ -1856,17 +1834,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetEvProbe*pr;
 	    switch (expr_[idx]->type()) {
 		case PEEvent::POSEDGE:
-		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
 				      NetEvProbe::POSEDGE, pins);
 		  break;
 
 		case PEEvent::NEGEDGE:
-		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
 				      NetEvProbe::NEGEDGE, pins);
 		  break;
 
 		case PEEvent::ANYEDGE:
-		  pr = new NetEvProbe(scope, des->local_symbol(path), ev,
+		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
 				      NetEvProbe::ANYEDGE, pins);
 		  break;
 
@@ -1901,16 +1879,16 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
       return wa;
 }
 
-NetProc* PEventStatement::elaborate(Design*des, const string&path) const
+NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 {
       NetProc*enet = 0;
       if (statement_) {
-	    enet = statement_->elaborate(des, path);
+	    enet = statement_->elaborate(des, scope);
 	    if (enet == 0)
 		  return 0;
       }
 
-      return elaborate_st(des, path, enet);
+      return elaborate_st(des, scope, enet);
 }
 
 /*
@@ -1919,18 +1897,17 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
  * expression to represent the loop, but why complicate the code
  * generators so?
  */
-NetProc* PForever::elaborate(Design*des, const string&path) const
+NetProc* PForever::elaborate(Design*des, NetScope*scope) const
 {
-      NetProc*stat = statement_->elaborate(des, path);
+      NetProc*stat = statement_->elaborate(des, scope);
       if (stat == 0) return 0;
 
       NetForever*proc = new NetForever(stat);
       return proc;
 }
 
-NetProc* PForce::elaborate(Design*des, const string&path) const
+NetProc* PForce::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
@@ -1945,7 +1922,7 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetForce* dev = new NetForce(scope, des->local_symbol(path), lval);
+      NetForce* dev = new NetForce(scope, scope->local_hsymbol(), lval);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
@@ -1966,10 +1943,9 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
  *       end
  *     end
  */
-NetProc* PForStatement::elaborate(Design*des, const string&path) const
+NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 {
       NetExpr*etmp;
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
@@ -2007,7 +1983,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	   loop. If there is an error, this will return 0 and I should
 	   skip the append. No need to worry, the error has been
 	   reported so it's OK that the netlist is bogus. */
-      NetProc*tmp = statement_->elaborate(des, path);
+      NetProc*tmp = statement_->elaborate(des, scope);
       if (tmp)
 	    body->append(tmp);
 
@@ -2079,7 +2055,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       NetFuncDef*def = des->find_function(scope->name());
       assert(def);
 
-      NetProc*st = statement_->elaborate(des, scope->name());
+      NetProc*st = statement_->elaborate(des, scope);
       if (st == 0) {
 	    cerr << statement_->get_line() << ": error: Unable to elaborate "
 		  "statement in function " << def->name() << "." << endl;
@@ -2090,9 +2066,8 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       def->set_proc(st);
 }
 
-NetProc* PRelease::elaborate(Design*des, const string&path) const
+NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
@@ -2104,9 +2079,8 @@ NetProc* PRelease::elaborate(Design*des, const string&path) const
       return dev;
 }
 
-NetProc* PRepeat::elaborate(Design*des, const string&path) const
+NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetExpr*expr = expr_->elaborate_expr(des, scope);
@@ -2122,7 +2096,7 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
 	    expr = tmp;
       }
 
-      NetProc*stat = statement_->elaborate(des, path);
+      NetProc*stat = statement_->elaborate(des, scope);
       if (stat == 0) return 0;
 
 	// If the expression is a constant, handle certain special
@@ -2176,9 +2150,8 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  * that is what I did in pform_make_task_ports, so there it is.
  */
 
-void PTask::elaborate(Design*des, const string&path) const
+void PTask::elaborate(Design*des, NetScope*task) const
 {
-      NetScope*task = des->find_task(path);
       NetTaskDef*def = task->task_def();
       assert(def);
 
@@ -2189,11 +2162,11 @@ void PTask::elaborate(Design*des, const string&path) const
 
       } else {
 
-	    st = statement_->elaborate(des, path);
+	    st = statement_->elaborate(des, task);
 	    if (st == 0) {
 		  cerr << statement_->get_line() << ": Unable to elaborate "
-			"statement in task " << path << " at " << get_line()
-		       << "." << endl;
+			"statement in task " << task->name()
+		       << " at " << get_line() << "." << endl;
 		  return;
 	    }
       }
@@ -2201,9 +2174,8 @@ void PTask::elaborate(Design*des, const string&path) const
       def->set_proc(st);
 }
 
-NetProc* PTrigger::elaborate(Design*des, const string&path) const
+NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       NetEvent*ev = scope->find_event(event_);
@@ -2222,13 +2194,10 @@ NetProc* PTrigger::elaborate(Design*des, const string&path) const
 /*
  * The while loop is fairly directly represented in the netlist.
  */
-NetProc* PWhile::elaborate(Design*des, const string&path) const
+NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
-      assert(scope);
-
       NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, scope),
-				   statement_->elaborate(des, path));
+				   statement_->elaborate(des, scope));
       return loop;
 }
 
@@ -2238,7 +2207,6 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
  */
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
-      const string path = scope->name();
       bool result_flag = true;
 
 
@@ -2258,8 +2226,10 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       typedef map<string,PTask*>::const_iterator mtask_it_t;
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate(des, pname);
+
+	    NetScope*tscope = scope->child((*cur).first);
+	    assert(tscope);
+	    (*cur).second->elaborate(des, tscope);
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -2271,7 +2241,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		 ; gt != gl.end()
 		 ; gt ++ ) {
 
-	    (*gt)->elaborate(des, path);
+	    (*gt)->elaborate(des, scope);
       }
 
 	// Elaborate the behaviors, making processes out of them.
@@ -2281,7 +2251,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		 ; st != sl.end()
 		 ; st ++ ) {
 
-	    NetProc*cur = (*st)->statement()->elaborate(des, path);
+	    NetProc*cur = (*st)->statement()->elaborate(des, scope);
 	    if (cur == 0) {
 		  result_flag = false;
 		  continue;
@@ -2408,6 +2378,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.233  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.232  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

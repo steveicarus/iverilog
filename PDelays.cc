@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.6 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.7 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,12 +86,11 @@ static unsigned long calculate_val(Design*des, const NetScope*scope,
       return val;
 }
 
-void PDelays::eval_delays(Design*des, const string&path,
+void PDelays::eval_delays(Design*des, NetScope*scope,
 			  unsigned long&rise_time,
 			  unsigned long&fall_time,
 			  unsigned long&decay_time) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       int shift = scope->time_unit() - des->get_precision();
@@ -126,6 +125,9 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.7  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.6  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.21 2001/10/21 00:42:47 steve Exp $"
+#ident "$Id: PGate.h,v 1.22 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -65,7 +65,7 @@ class PGate : public LineInfo {
 
       const string& get_name() const { return name_; }
 
-      void eval_delays(Design*des, const string&path,
+      void eval_delays(Design*des, NetScope*scope,
 		       unsigned long&rise_time,
 		       unsigned long&fall_time,
 		       unsigned long&decay_time) const;
@@ -82,7 +82,7 @@ class PGate : public LineInfo {
       map<string,string> attributes;
 
       virtual void dump(ostream&out) const;
-      virtual void elaborate(Design*des, const string&path) const;
+      virtual void elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -116,7 +116,7 @@ class PGAssign  : public PGate {
       ~PGAssign();
 
       void dump(ostream&out) const;
-      virtual void elaborate(Design*des, const string&path) const;
+      virtual void elaborate(Design*des, NetScope*scope) const;
 
     private:
 };
@@ -153,7 +153,7 @@ class PGBuiltin  : public PGate {
       void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(ostream&out) const;
-      virtual void elaborate(Design*, const string&path) const;
+      virtual void elaborate(Design*, NetScope*scope) const;
 
     private:
       Type type_;
@@ -194,7 +194,7 @@ class PGModule  : public PGate {
       void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(ostream&out) const;
-      virtual void elaborate(Design*, const string&path) const;
+      virtual void elaborate(Design*, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -214,14 +214,17 @@ class PGModule  : public PGate {
       PExpr*msb_;
       PExpr*lsb_;
 
-      void elaborate_mod_(Design*, Module*mod, const string&path) const;
-      void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
+      void elaborate_mod_(Design*, Module*mod, NetScope*scope) const;
+      void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.22  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.21  2001/10/21 00:42:47  steve
  *  Module types in pform are char* instead of string.
  *

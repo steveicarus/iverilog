@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.h,v 1.3 2001/01/16 02:44:17 steve Exp $"
+#ident "$Id: PDelays.h,v 1.4 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -32,6 +32,7 @@ class ostream;
 #endif
 
 class Design;
+class NetScope;
 class PExpr;
 
 /*
@@ -47,7 +48,7 @@ class PDelays {
       void set_delay(PExpr*);
       void set_delays(const svector<PExpr*>*del);
 
-      void eval_delays(Design*des, const string&path,
+      void eval_delays(Design*des, NetScope*scope,
 		       unsigned long&rise_time,
 		       unsigned long&fall_time,
 		       unsigned long&decay_time) const;
@@ -66,6 +67,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.4  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.3  2001/01/16 02:44:17  steve
  *  Use the iosfwd header if available.
  *

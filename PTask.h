@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.h,v 1.10 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: PTask.h,v 1.11 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -52,7 +52,7 @@ class PTask  : public LineInfo {
       void elaborate_sig(Design*des, NetScope*scope) const;
 
 	// Elaborate the statement to finish off the task definition.
-      void elaborate(Design*des, const string&path) const;
+      void elaborate(Design*des, NetScope*scope) const;
 
       void dump(ostream&, unsigned) const;
 
@@ -98,6 +98,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.11  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.10  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.29 2000/09/09 15:21:26 steve Exp $"
+#ident "$Id: Statement.h,v 1.30 2001/11/22 06:20:59 steve Exp $"
 #endif
 
 # include  <string>
@@ -74,7 +74,7 @@ class Statement : public LineInfo {
       virtual ~Statement() =0;
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
 };
 
@@ -113,11 +113,11 @@ class PAssign  : public PAssign_ {
       ~PAssign();
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
       NetProc*assign_to_memory_(class NetMemory*, PExpr*,
-				Design*des, const string&path) const;
+				Design*des, NetScope*scope) const;
 };
 
 class PAssignNB  : public PAssign_ {
@@ -128,11 +128,11 @@ class PAssignNB  : public PAssign_ {
       ~PAssignNB();
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
       NetProc*assign_to_memory_(class NetMemory*, PExpr*,
-				Design*des, const string&path) const;
+				Design*des, NetScope*scope) const;
 };
 
 /*
@@ -154,11 +154,9 @@ class PBlock  : public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
-	//unsigned size() const { return list_.count(); }
-	//const Statement*stat(unsigned idx) const { return list_[idx]; }
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
@@ -171,6 +169,7 @@ class PCallTask  : public Statement {
 
     public:
       explicit PCallTask(const string&n, const svector<PExpr*>&parms);
+      ~PCallTask();
 
       string name() const { return name_; }
 
@@ -187,11 +186,11 @@ class PCallTask  : public Statement {
 	    }
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
-      NetProc* elaborate_sys(Design*des, const string&path) const;
-      NetProc* elaborate_usr(Design*des, const string&path) const;
+      NetProc* elaborate_sys(Design*des, NetScope*scope) const;
+      NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
       const string name_;
       svector<PExpr*> parms_;
@@ -208,7 +207,7 @@ class PCase  : public Statement {
       PCase(NetCase::TYPE, PExpr*ex, svector<Item*>*);
       ~PCase();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -229,7 +228,7 @@ class PCAssign  : public Statement {
       explicit PCAssign(PExpr*l, PExpr*r);
       ~PCAssign();
 
-      virtual NetCAssign* elaborate(Design*des, const string&path) const;
+      virtual NetCAssign* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -243,7 +242,7 @@ class PCondit  : public Statement {
       PCondit(PExpr*ex, Statement*i, Statement*e);
       ~PCondit();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -263,7 +262,7 @@ class PDeassign  : public Statement {
       explicit PDeassign(PExpr*l);
       ~PDeassign();
 
-      virtual NetDeassign* elaborate(Design*des, const string&path) const;
+      virtual NetDeassign* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -277,7 +276,7 @@ class PDelayStatement  : public Statement {
       ~PDelayStatement();
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
@@ -296,7 +295,7 @@ class PDisable  : public Statement {
       ~PDisable();
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
       string scope_;
@@ -321,12 +320,12 @@ class PEventStatement  : public Statement {
       void set_statement(Statement*st);
 
       virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
 	// This method is used to elaborate, but attach a previously
 	// elaborated statement to the event.
-      NetProc* elaborate_st(Design*des, const string&path, NetProc*st) const;
+      NetProc* elaborate_st(Design*des, NetScope*scope, NetProc*st) const;
 
     private:
       svector<PEEvent*>expr_;
@@ -339,7 +338,7 @@ class PForce  : public Statement {
       explicit PForce(PExpr*l, PExpr*r);
       ~PForce();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -352,7 +351,7 @@ class PForever : public Statement {
       explicit PForever(Statement*s);
       ~PForever();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -364,12 +363,10 @@ class PForStatement  : public Statement {
 
     public:
       PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
-		    PExpr*n2, PExpr*e2, Statement*st)
-      : name1_(n1), expr1_(e1), cond_(cond), name2_(n2), expr2_(e2),
-	statement_(st)
-      { }
+		    PExpr*n2, PExpr*e2, Statement*st);
+      ~PForStatement();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -396,7 +393,7 @@ class PRepeat : public Statement {
       explicit PRepeat(PExpr*expr, Statement*s);
       ~PRepeat();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -411,7 +408,7 @@ class PRelease  : public Statement {
       explicit PRelease(PExpr*l);
       ~PRelease();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -428,7 +425,7 @@ class PTrigger  : public Statement {
       explicit PTrigger(const string&ev);
       ~PTrigger();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -438,11 +435,10 @@ class PTrigger  : public Statement {
 class PWhile  : public Statement {
 
     public:
-      PWhile(PExpr*e1, Statement*st)
-      : cond_(e1), statement_(st) { }
+      PWhile(PExpr*e1, Statement*st);
       ~PWhile();
 
-      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -453,6 +449,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.30  2001/11/22 06:20:59  steve
+ *  Use NetScope instead of string for scope path.
+ *
  * Revision 1.29  2000/09/09 15:21:26  steve
  *  move lval elaboration to PExpr virtual methods.
  *
@@ -480,104 +479,5 @@ class PWhile  : public Statement {
  *  Do not generate NetPEvent or NetNEvent objects in
  *  elaboration. NetEvent, NetEvWait and NetEvProbe
  *  take over those functions in the netlist.
- *
- * Revision 1.23  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.22  2000/03/11 03:25:51  steve
- *  Locate scopes in statements.
- *
- * Revision 1.21  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.20  1999/09/29 18:36:02  steve
- *  Full case support
- *
- * Revision 1.19  1999/09/22 02:00:48  steve
- *  assignment with blocking event delay.
- *
- * Revision 1.18  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.17  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.16  1999/09/02 01:59:27  steve
- *  Parse non-blocking assignment delays.
- *
- * Revision 1.15  1999/07/12 00:59:36  steve
- *  procedural blocking assignment delays.
- *
- * Revision 1.14  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.13  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.12  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.11  1999/06/15 05:38:39  steve
- *  Support case expression lists.
- *
- * Revision 1.10  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.9  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.8  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.7  1999/04/29 02:16:26  steve
- *  Parse OR of event expressions.
- *
- * Revision 1.6  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.5  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
- * Revision 1.4  1998/11/11 03:13:04  steve
- *  Handle while loops.
- *
- * Revision 1.3  1998/11/09 18:55:33  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:56  steve
- *  Introduce verilog to CVS.
- *
  */
 #endif
