@@ -17,13 +17,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.12 2003/03/15 04:46:28 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.13 2003/03/15 18:08:43 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  <cassert>
+
+NetEBComp* NetEBComp::dup_expr() const
+{
+      NetEBComp*result = new NetEBComp(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
+}
 
 NetEConst* NetEConst::dup_expr() const
 {
@@ -109,6 +116,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.13  2003/03/15 18:08:43  steve
+ *  Comparison operators do have defined width.
+ *
  * Revision 1.12  2003/03/15 04:46:28  steve
  *  Better organize the NetESFunc return type guesses.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.15 2003/03/15 04:46:29 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.16 2003/03/15 18:08:43 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -105,6 +105,54 @@ NetExpr::TYPE NetEBAdd::expr_type() const
 	    return ET_REAL;
 
       return ET_VECTOR;
+}
+
+/*
+ * Create a comparison operator with two sub-expressions.
+ *
+ * Handle the special case of an unsized constant on the left or right
+ * side by resizing the number to match the other
+ * expression. Otherwise, the netlist will have to allow the
+ * expressions to have different widths.
+ */
+NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
+
+	    if (tmp->has_width())
+		  break;
+
+	    if (tmp->expr_width() == l->expr_width())
+		  break;
+
+	    tmp->set_width(l->expr_width());
+
+      } while (0);
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(l)) do {
+
+	    if (tmp->has_width())
+		  break;
+
+	    if (tmp->expr_width() == r->expr_width())
+		  break;
+
+	    tmp->set_width(r->expr_width());
+
+      } while (0);
+
+
+      expr_width(1);
+}
+
+NetEBComp::~NetEBComp()
+{
+}
+
+bool NetEBComp::has_width() const
+{
+      return true;
 }
 
 NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
@@ -408,6 +456,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.16  2003/03/15 18:08:43  steve
+ *  Comparison operators do have defined width.
+ *
  * Revision 1.15  2003/03/15 04:46:29  steve
  *  Better organize the NetESFunc return type guesses.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.208 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.209 2003/03/15 18:08:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1760,56 +1760,6 @@ NetEBBits* NetEBBits::dup_expr() const
       return result;
 }
 
-/*
- * Create a comparison operator with two sub-expressions.
- *
- * Handle the special case of an unsized constant on the left or right
- * side by resizing the number to match the other
- * expression. Otherwise, the netlist will have to allow the
- * expressions to have different widths.
- */
-NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
-{
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
-
-	    if (tmp->has_width())
-		  break;
-
-	    if (tmp->expr_width() == l->expr_width())
-		  break;
-
-	    tmp->set_width(l->expr_width());
-
-      } while (0);
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(l)) do {
-
-	    if (tmp->has_width())
-		  break;
-
-	    if (tmp->expr_width() == r->expr_width())
-		  break;
-
-	    tmp->set_width(r->expr_width());
-
-      } while (0);
-
-
-      expr_width(1);
-}
-
-NetEBComp::~NetEBComp()
-{
-}
-
-NetEBComp* NetEBComp::dup_expr() const
-{
-      NetEBComp*result = new NetEBComp(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      return result;
-}
-
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
@@ -2191,6 +2141,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.209  2003/03/15 18:08:43  steve
+ *  Comparison operators do have defined width.
+ *
  * Revision 1.208  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

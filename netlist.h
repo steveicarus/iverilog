@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.281 2003/03/15 04:46:29 steve Exp $"
+#ident "$Id: netlist.h,v 1.282 2003/03/15 18:08:43 steve Exp $"
 #endif
 
 /*
@@ -2428,6 +2428,9 @@ class NetEBComp : public NetEBinary {
       ~NetEBComp();
 
       virtual bool set_width(unsigned w);
+
+	/* A compare expression has a definite width. */
+      virtual bool has_width() const;
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
 
@@ -3237,6 +3240,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.282  2003/03/15 18:08:43  steve
+ *  Comparison operators do have defined width.
+ *
  * Revision 1.281  2003/03/15 04:46:29  steve
  *  Better organize the NetESFunc return type guesses.
  *
