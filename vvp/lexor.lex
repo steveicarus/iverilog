@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.31 2002/03/01 05:42:50 steve Exp $"
+#ident "$Id: lexor.lex,v 1.29.2.1 2002/03/02 00:27:10 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -158,11 +158,8 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
- * Revision 1.31  2002/03/01 05:42:50  steve
- *  out-of-memory asserts.
- *
- * Revision 1.30  2002/02/27 05:46:33  steve
- *  carriage return is white space.
+ * Revision 1.29.2.1  2002/03/02 00:27:10  steve
+ *  cariage return fixes from main trunk.
  *
  * Revision 1.29  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
