@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.25 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: PExpr.h,v 1.26 1999/12/16 03:46:39 steve Exp $"
 #endif
 
 # include  <string>
@@ -259,6 +259,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_log_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
       NetNet* elaborate_net_shift_(Design*des, const string&path,
 				   unsigned lwidth,
 				   unsigned long rise,
@@ -313,6 +318,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.26  1999/12/16 03:46:39  steve
+ *  Structural logical or.
+ *
  * Revision 1.25  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *

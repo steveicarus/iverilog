@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.12 1999/12/16 02:42:14 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.13 1999/12/16 03:46:39 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -46,6 +46,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  case 'L': // <=
 	  case 'G': // >=
 	    return elaborate_net_cmp_(des, path, width, rise, fall, decay);
+	  case 'a': // && (logical and)
+	  case 'o': // || (logical or)
+	    return elaborate_net_log_(des, path, width, rise, fall, decay);
 	  case 'l': // <<
 	  case 'r': // >>
 	    return elaborate_net_shift_(des, path, width, rise, fall, decay);
@@ -126,44 +129,6 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		  des->add_node(gate);
 	    }
 	    des->add_signal(osig);
-	    break;
-
-	  case 'a': // && (logical AND)
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
-
-	      // The first OR gate returns 1 if the left value is true...
-	    if (lsig->pin_count() > 1) {
-		  gate_t = new NetLogic(des->local_symbol(path),
-					1+lsig->pin_count(), NetLogic::OR);
-		  for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-			connect(gate_t->pin(idx+1), lsig->pin(idx));
-		  connect(gate->pin(1), gate_t->pin(0));
-		  des->add_node(gate_t);
-	    } else {
-		  connect(gate->pin(1), lsig->pin(0));
-	    }
-
-	      // The second OR gate returns 1 if the right value is true...
-	    if (rsig->pin_count() > 1) {
-		  gate_t = new NetLogic(des->local_symbol(path),
-					1+rsig->pin_count(), NetLogic::OR);
-		  for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-			connect(gate_t->pin(idx+1), rsig->pin(idx));
-		  connect(gate->pin(2), gate_t->pin(0));
-		  des->add_node(gate_t);
-	    } else {
-		  connect(gate->pin(2), rsig->pin(0));
-	    }
-
-	      // The output is the AND of the two logic values.
-	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
-	    osig->local_flag(true);
-	    connect(gate->pin(0), osig->pin(0));
-	    des->add_signal(osig);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    des->add_node(gate);
 	    break;
 
 	  case 'E': // === (Case equals)
@@ -413,6 +378,76 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
       gate->decay_time(decay);
       des->add_node(gate);
 
+      return osig;
+}
+
+NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
+				     unsigned lwidth,
+				     unsigned long rise,
+				     unsigned long fall,
+				     unsigned long decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0),
+	    *rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    left_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+      if (rsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    right_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+
+      NetLogic*gate;
+      NetLogic*gate_t;
+      switch (op_) {
+	  case 'a':
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+	    break;
+	  case 'o':
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::OR);
+	    break;
+	  default:
+	    assert(0);
+      }
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
+
+	// The first OR gate returns 1 if the left value is true...
+      if (lsig->pin_count() > 1) {
+	    gate_t = new NetLogic(des->local_symbol(path),
+				  1+lsig->pin_count(), NetLogic::OR);
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+		  connect(gate_t->pin(idx+1), lsig->pin(idx));
+	    connect(gate->pin(1), gate_t->pin(0));
+	    des->add_node(gate_t);
+      } else {
+	    connect(gate->pin(1), lsig->pin(0));
+      }
+
+	// The second OR gate returns 1 if the right value is true...
+      if (rsig->pin_count() > 1) {
+	    gate_t = new NetLogic(des->local_symbol(path),
+				  1+rsig->pin_count(), NetLogic::OR);
+	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+		  connect(gate_t->pin(idx+1), rsig->pin(idx));
+	    connect(gate->pin(2), gate_t->pin(0));
+	    des->add_node(gate_t);
+      } else {
+	    connect(gate->pin(2), rsig->pin(0));
+      }
+
+	// The output is the AND/OR of the two logic values.
+      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+      osig->local_flag(true);
+      connect(gate->pin(0), osig->pin(0));
+      des->add_signal(osig);
+      des->add_node(gate);
       return osig;
 }
 
@@ -906,6 +941,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.13  1999/12/16 03:46:39  steve
+ *  Structural logical or.
+ *
  * Revision 1.12  1999/12/16 02:42:14  steve
  *  Simulate carry output on adders.
  *
