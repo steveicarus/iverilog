@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.60 2004/02/20 01:52:25 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.61 2004/03/09 03:11:02 steve Exp $"
 #endif
 
 /*
@@ -157,6 +157,15 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 
 	  case vpiScope:
 	    return &rfp->scope->base;
+
+	  case vpiModule:
+	      { struct __vpiScope*scope = rfp->scope;
+	        while (scope && scope->base.vpi_type->type_code != vpiModule)
+		      scope = scope->scope;
+
+		assert(scope);
+		return &scope->base;
+	      }
       }
 
       return 0;
@@ -850,6 +859,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.61  2004/03/09 03:11:02  steve
+ *  Get vpiModule of signals.
+ *
  * Revision 1.60  2004/02/20 01:52:25  steve
  *  vpiStringVal does not include leading nulls.
  *
