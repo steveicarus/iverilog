@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.28 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.29 2000/11/12 17:47:29 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -385,6 +385,9 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
  * the requested type, checking for errors along the way.
  */
 extern ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net);
+extern ivl_nexus_t  ivl_lpm_ff_clk(ivl_lpm_ff_t net);
+extern ivl_nexus_t  ivl_lpm_ff_data(ivl_lpm_ff_t net, unsigned idx);
+extern ivl_nexus_t  ivl_lpm_ff_q(ivl_lpm_ff_t net, unsigned idx);
 
 
 /* LVAL
@@ -598,6 +601,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.29  2000/11/12 17:47:29  steve
+ *  flip-flop pins for ivl_target API.
+ *
  * Revision 1.28  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.17 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.18 2000/11/12 17:47:29 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -238,6 +238,32 @@ extern "C" ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net)
 {
       assert(net->type == IVL_LPM_FF);
       return (ivl_lpm_ff_t)net;
+}
+
+extern "C" ivl_nexus_t ivl_lpm_ff_clk(ivl_lpm_ff_t net)
+{
+      assert(net);
+      return net->clk;
+}
+
+extern "C" ivl_nexus_t ivl_lpm_ff_data(ivl_lpm_ff_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->base.width);
+      if (net->base.width == 1)
+	    return net->d.pin;
+      else
+	    return net->d.pins[idx];
+}
+
+extern "C" ivl_nexus_t ivl_lpm_ff_q(ivl_lpm_ff_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->base.width);
+      if (net->base.width == 1)
+	    return net->q.pin;
+      else
+	    return net->q.pins[idx];
 }
 
 extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
@@ -570,6 +596,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.18  2000/11/12 17:47:29  steve
+ *  flip-flop pins for ivl_target API.
+ *
  * Revision 1.17  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

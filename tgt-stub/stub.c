@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.24 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: stub.c,v 1.25 2000/11/12 17:47:29 steve Exp $"
 #endif
 
 /*
@@ -90,13 +90,26 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 
 static void show_lpm(ivl_lpm_t net)
 {
+      unsigned idx;
+      unsigned width = ivl_lpm_width(net);
+
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_FF: {
 		ivl_lpm_ff_t ff = ivl_lpm_ff(net);
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
-			ivl_lpm_name(net),
-			ivl_lpm_width(net));
+			ivl_lpm_name(net), width);
+		fprintf(out, "    clk: %s\n",
+			ivl_nexus_name(ivl_lpm_ff_clk(ff)));
+
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Data %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_ff_data(ff, idx)));
+
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Q %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_ff_q(ff, idx)));
+
 		break;
 	  }
 
@@ -361,6 +374,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.25  2000/11/12 17:47:29  steve
+ *  flip-flop pins for ivl_target API.
+ *
  * Revision 1.24  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *
