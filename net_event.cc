@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.4 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: net_event.cc,v 1.5 2000/04/16 23:32:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -28,10 +28,13 @@ NetEvent::NetEvent(const string&n)
       scope_ = 0;
       snext_ = 0;
       probes_ = 0;
+      trig_ = 0;
+      waitref_ = 0;
 }
 
 NetEvent::~NetEvent()
 {
+      assert(waitref_ == 0);
 }
 
 string NetEvent::name() const
@@ -67,13 +70,32 @@ NetEvProbe* NetEvent::probe(unsigned idx)
       return cur;
 }
 
+unsigned NetEvent::nwait() const
+{
+      return waitref_;
+}
+
 NetEvTrig::NetEvTrig(NetEvent*ev)
 : event_(ev)
 {
+      enext_ = event_->trig_;
+      event_->trig_ = this;
 }
 
 NetEvTrig::~NetEvTrig()
 {
+      if (event_->trig_ == this) {
+	    event_->trig_ = enext_;
+
+      } else {
+	    NetEvTrig*cur = event_->trig_;
+	    while (cur->enext_ != this) {
+		  assert(cur->enext_);
+		  cur = cur->enext_;
+	    }
+
+	    cur->enext_ = this->enext_;
+      }
 }
 
 const NetEvent* NetEvTrig::event() const
@@ -96,6 +118,18 @@ NetEvProbe::NetEvProbe(const string&n, NetEvent*tgt,
 
 NetEvProbe::~NetEvProbe()
 {
+      if (event_->probes_ == this) {
+	    event_->probes_ = enext_;
+
+      } else {
+	    NetEvProbe*cur = event_->probes_;
+	    while (cur->enext_ != this) {
+		  assert(cur->enext_);
+		  cur = cur->enext_;
+	    }
+
+	    cur->enext_ = this->enext_;
+      }
 }
 
 NetEvProbe::edge_t NetEvProbe::edge() const
@@ -115,7 +149,13 @@ NetEvWait::NetEvWait(NetProc*pr)
 
 NetEvWait::~NetEvWait()
 {
-      if (events_) delete[]events_;
+      if (events_) {
+	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
+		  NetEvent*tgt = events_[idx];
+		  tgt->waitref_ -= 1;
+	    }
+	    delete[]events_;
+      }
       delete statement_;
 }
 
@@ -137,6 +177,10 @@ void NetEvWait::add_event(NetEvent*tgt)
 
       events_[nevents_] = tgt;
       nevents_ += 1;
+
+	// Remember to tell the NetEvent that there is someone
+	// pointing to it.
+      tgt->waitref_ += 1;
 }
 
 unsigned NetEvWait::nevents() const
@@ -163,6 +207,12 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.5  2000/04/16 23:32:18  steve
+ *  Synthesis of comparator in expressions.
+ *
+ *  Connect the NetEvent and related classes
+ *  together better.
+ *
  * Revision 1.4  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

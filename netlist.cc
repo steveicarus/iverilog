@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.114 2000/04/15 19:51:30 steve Exp $"
+#ident "$Id: netlist.cc,v 1.115 2000/04/16 23:32:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1688,6 +1688,12 @@ NetExpr* NetCondit::expr()
       return expr_;
 }
 
+void NetCondit::set_expr(NetExpr*ex)
+{
+      delete expr_;
+      expr_ = ex;
+}
+
 NetProc* NetCondit::if_clause()
 {
       return if_;
@@ -2462,6 +2468,12 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.115  2000/04/16 23:32:19  steve
+ *  Synthesis of comparator in expressions.
+ *
+ *  Connect the NetEvent and related classes
+ *  together better.
+ *
  * Revision 1.114  2000/04/15 19:51:30  steve
  *  fork-join support in vvm.
  *

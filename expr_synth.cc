@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.10 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.11 2000/04/16 23:32:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -117,6 +117,61 @@ NetNet* NetEBBits::synthesize(Design*des)
       }
 
       des->add_signal(osig);
+      return osig;
+}
+
+NetNet* NetEBComp::synthesize(Design*des)
+{
+      string path = des->local_symbol("SYNTH");
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig = right_->synthesize(des);
+
+      unsigned width = lsig->pin_count();
+      if (rsig->pin_count() > lsig->pin_count())
+	    width = rsig->pin_count();
+
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, 1);
+      osig->local_flag(true);
+
+      NetCompare*dev = new NetCompare(des->local_symbol(path), width);
+      des->add_node(dev);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+	    connect(dev->pin_DataA(idx), lsig->pin(idx));
+
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+	    connect(dev->pin_DataB(idx), rsig->pin(idx));
+
+
+      switch (op_) {
+	  case '<':
+	    connect(dev->pin_ALB(), osig->pin(0));
+	    break;
+	  case '>':
+	    connect(dev->pin_AGB(), osig->pin(0));
+	    break;
+	  case 'e': // ==
+	  case 'E': // === ?
+	    connect(dev->pin_AEB(), osig->pin(0));
+	    break;
+	  case 'G': // >=
+	    connect(dev->pin_AGEB(), osig->pin(0));
+	    break;
+	  case 'L': // <=
+	    connect(dev->pin_ALEB(), osig->pin(0));
+	    break;
+	  case 'n': // !=
+	  case 'N': // !==
+	    connect(dev->pin_ANEB(), osig->pin(0));
+	    break;
+
+	  default:
+	    cerr << get_line() << ": internal error: cannot synthesize "
+		  "comparison: " << *this << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       return osig;
 }
 
@@ -228,6 +283,12 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.11  2000/04/16 23:32:18  steve
+ *  Synthesis of comparator in expressions.
+ *
+ *  Connect the NetEvent and related classes
+ *  together better.
+ *
  * Revision 1.10  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

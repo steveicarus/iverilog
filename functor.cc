@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.14 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: functor.cc,v 1.15 2000/04/16 23:32:18 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -173,7 +173,6 @@ int proc_match_t::condit(NetCondit*)
 
 int NetCondit::match_proc(proc_match_t*that)
 {
-      cerr << "NetCondit::match_proc" << endl;
       return that->condit(this);
 }
 
@@ -189,6 +188,12 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.15  2000/04/16 23:32:18  steve
+ *  Synthesis of comparator in expressions.
+ *
+ *  Connect the NetEvent and related classes
+ *  together better.
+ *
  * Revision 1.14  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,

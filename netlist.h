@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.122 2000/04/15 19:51:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.123 2000/04/16 23:32:19 steve Exp $"
 #endif
 
 /*
@@ -1240,6 +1240,9 @@ class NetCondit  : public NetProc {
       NetProc* if_clause();
       NetProc* else_clause();
 
+	// Replace the condition expression.
+      void set_expr(NetExpr*ex);
+
       void emit_recurse_if(ostream&, struct target_t*) const;
       void emit_recurse_else(ostream&, struct target_t*) const;
 
@@ -1271,17 +1274,22 @@ class NetCondit  : public NetProc {
  *
  * The NetEvTrig class represents trigger statements. Executing this
  * statement causes the referenced event to be triggered, which it
- * turn awakens the waiting threads.
+ * turn awakens the waiting threads. Each NetEvTrig object references
+ * exactly one event object.
  *
  * The NetEvProbe class is the structural equivilent of the NetEvTrig,
  * in that it is a node and watches bit values that it receives. It
  * checks for edges then if appropriate triggers the associated
- * NetEvent.
+ * NetEvent. Each NetEvProbe references exactly one event object, and
+ * the NetEvent objects have a list of NetEvProbe objects that
+ * reference it.
  */
 class NetEvent : public LineInfo {
 
       friend class NetScope;
       friend class NetEvProbe;
+      friend class NetEvTrig;
+      friend class NetEvWait;
 
     public:
       explicit NetEvent (const string&n);
@@ -1293,6 +1301,9 @@ class NetEvent : public LineInfo {
 	// Get information about probes connected to me.
       unsigned nprobe() const;
       NetEvProbe* probe(unsigned);
+
+	// Return the number of NetEvWait nodes that reference me.
+      unsigned nwait() const;
 
       NetScope* scope();
       const NetScope* scope() const;
@@ -1306,6 +1317,12 @@ class NetEvent : public LineInfo {
 
 	// Use these methods to list the probes attached to me.
       NetEvProbe*probes_;
+
+	// Use these methods to list the triggers attached to me.
+      NetEvTrig* trig_;
+
+	// Use This member to count references by NetEvWait objects.
+      unsigned waitref_;
 
     private: // not implemented
       NetEvent(const NetEvent&);
@@ -1325,6 +1342,8 @@ class NetEvTrig  : public NetProc {
 
     private:
       NetEvent*event_;
+	// This is used to place me in the NetEvents lists of triggers.
+      NetEvTrig*enext_;
 };
 
 class NetEvWait  : public NetProc {
@@ -1753,6 +1772,8 @@ class NetEBComp : public NetEBinary {
       virtual bool set_width(unsigned w);
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
+
+      virtual NetNet* synthesize(Design*);
 
     private:
       NetEConst*eval_eqeq_();
@@ -2353,6 +2374,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.123  2000/04/16 23:32:19  steve
+ *  Synthesis of comparator in expressions.
+ *
+ *  Connect the NetEvent and related classes
+ *  together better.
+ *
  * Revision 1.122  2000/04/15 19:51:30  steve
  *  fork-join support in vvm.
  *
