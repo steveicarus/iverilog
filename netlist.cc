@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.55 1999/09/01 20:46:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.56 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -294,6 +294,60 @@ NetProc* NetProcTop::statement()
 const NetProc* NetProcTop::statement() const
 {
       return statement_;
+}
+
+/*
+ * The NetAddSub class represents an LPM ADD_SUB device. The pinout is
+ * assigned like so:
+ *    0  -- Add_Sub
+ *    1  -- Aclr
+ *    2  -- Clock
+ *    3  -- Cin
+ *    4  -- Cout
+ *    5  -- Overflow
+ *    6  -- DataA[0]
+ *    7  -- DataB[0]
+ *    8  -- Result[0]
+ */
+NetAddSub::NetAddSub(const string&n, unsigned w)
+: NetNode(n, w*3+6)
+{
+      pin(0).set_dir(NetObj::Link::INPUT);
+      pin(1).set_dir(NetObj::Link::INPUT);
+      pin(2).set_dir(NetObj::Link::INPUT);
+      pin(3).set_dir(NetObj::Link::INPUT);
+      pin(4).set_dir(NetObj::Link::OUTPUT);
+      pin(5).set_dir(NetObj::Link::OUTPUT);
+      for (unsigned idx = 0 ;  idx < w ;  idx += 1) {
+	    pin_DataA(idx).set_dir(NetObj::Link::INPUT);
+	    pin_DataB(idx).set_dir(NetObj::Link::INPUT);
+	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
+      }
+}
+
+NetAddSub::~NetAddSub()
+{
+}
+
+NetObj::Link& NetAddSub::pin_DataA(unsigned idx)
+{
+      idx = 6 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
+}
+
+NetObj::Link& NetAddSub::pin_DataB(unsigned idx)
+{
+      idx = 7 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
+}
+
+NetObj::Link& NetAddSub::pin_Result(unsigned idx)
+{
+      idx = 8 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
 }
 
 NetAssign_::NetAssign_(const string&n, unsigned w)
@@ -1695,6 +1749,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.56  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.55  1999/09/01 20:46:19  steve
  *  Handle recursive functions and arbitrary function
  *  references to other functions, properly pass

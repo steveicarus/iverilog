@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.37 1999/09/01 20:46:19 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.38 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 /*
@@ -119,6 +119,12 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << (*idx).first << " = \"" <<
 		  (*idx).second << "\"" << endl;
       }
+}
+
+void NetAddSub::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
+      dump_node_pins(o, ind+4);
 }
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
@@ -722,6 +728,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.38  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.37  1999/09/01 20:46:19  steve
  *  Handle recursive functions and arbitrary function
  *  references to other functions, properly pass

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.17 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: target.cc,v 1.18 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -67,6 +67,12 @@ void target_t::udp(ostream&os, const NetUDP*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled UDP." << endl;
+}
+
+void target_t::lpm_add_sub(ostream&, const NetAddSub*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetAddSub." << endl;
 }
 
 void target_t::net_assign(ostream&os, const NetAssign*)
@@ -256,6 +262,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.18  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.17  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.76 1999/09/02 01:59:27 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.77 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 /*
@@ -639,7 +639,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
       }
 
       NetNet*osig;
-      NetLogic*gate;
+      NetNode*gate;
 
       switch (op_) {
 	  case '^': // XOR
@@ -715,6 +715,27 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    des->add_signal(osig);
 	    des->add_node(gate);
 	    break;
+
+	      // Elaborate the structural + as an AddSub
+	      // object. Connect DataA and DataB to the parameters,
+	      // and connect the output signal to the Result.
+	  case '+': {
+		assert(lsig->pin_count() == rsig->pin_count());
+		string name = des->local_symbol(path);
+		unsigned width = lsig->pin_count();
+		osig = new NetNet(des->local_symbol(path),
+				  NetNet::WIRE, width);
+		NetAddSub*adder = new NetAddSub(name, width);
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      connect(lsig->pin(idx), adder->pin_DataA(idx));
+		      connect(rsig->pin(idx), adder->pin_DataB(idx));
+		      connect(osig->pin(idx), adder->pin_Result(idx));
+		}
+		gate = adder;
+		des->add_signal(osig);
+		des->add_node(gate);
+		break;
+	  }
 
 	  default:
 	    cerr << "Unhandled BINARY '" << op_ << "'" << endl;
@@ -2171,6 +2192,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.77  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.76  1999/09/02 01:59:27  steve
  *  Parse non-blocking assignment delays.
  *

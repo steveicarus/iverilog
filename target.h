@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.16 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: target.h,v 1.17 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -64,6 +64,9 @@ struct target_t {
 	/* Output a defined task. */
       virtual void task_def(ostream&, const NetTaskDef*);
       virtual void func_def(ostream&, const NetFuncDef*);
+
+	/* LPM style components are handled here. */
+      virtual void lpm_add_sub(ostream&os, const NetAddSub*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
@@ -132,6 +135,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.17  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.16  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

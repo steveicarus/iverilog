@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.59 1999/09/01 20:46:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.60 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 /*
@@ -278,6 +278,36 @@ class NetNet  : public NetObj, public LineInfo {
       bool local_flag_;
 
       verinum::V*ivalue_;
+};
+
+/*
+ * This class implements the LPM_ADD_SUB component as described in the
+ * EDIF LPM Version 2 1 0 standard. It is used as a structural
+ * implementation of the + and - operators.
+ */
+class NetAddSub  : public NetNode {
+
+    public:
+      NetAddSub(const string&n, unsigned width);
+      ~NetAddSub();
+
+	// Get the width of the device (that is, the width of the
+	// operands and results.)
+      unsigned width() const;
+
+      NetObj::Link& pin_Aclr();
+      NetObj::Link& pin_Add_Sub();
+      NetObj::Link& pin_Clock();
+      NetObj::Link& pin_Cin();
+      NetObj::Link& pin_Cout();
+      NetObj::Link& pin_Overflow();
+
+      NetObj::Link& pin_DataA(unsigned idx);
+      NetObj::Link& pin_DataB(unsigned idx);
+      NetObj::Link& pin_Result(unsigned idx);
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
 };
 
 /*
@@ -1518,6 +1548,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.60  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.59  1999/09/01 20:46:19  steve
  *  Handle recursive functions and arbitrary function
  *  references to other functions, properly pass

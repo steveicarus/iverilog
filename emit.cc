@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.19 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: emit.cc,v 1.20 1999/09/03 04:28:38 steve Exp $"
 #endif
 
 /*
@@ -43,6 +43,11 @@ void NetLogic::emit_node(ostream&o, struct target_t*tgt) const
 void NetUDP::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->udp(o, this);
+}
+
+void NetAddSub::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_add_sub(o, this);
 }
 
 void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
@@ -321,6 +326,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.20  1999/09/03 04:28:38  steve
+ *  elaborate the binary plus operator.
+ *
  * Revision 1.19  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *
