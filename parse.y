@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.186 2003/12/19 05:15:04 steve Exp $"
+#ident "$Id: parse.y,v 1.187 2004/01/13 02:55:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,12 +53,12 @@ static struct {
    YYLLOC_DEFAULT macro that makes up a yylloc value from existing
    values. I need to supply an explicit version to account for the
    text field, that otherwise won't be copied. */
-# define YYLLOC_DEFAULT(Current, Rhs, N)         \
-  Current.first_line   = Rhs[1].first_line;      \
-  Current.first_column = Rhs[1].first_column;    \
-  Current.last_line    = Rhs[N].last_line;       \
-  Current.last_column  = Rhs[N].last_column;     \
-  Current.text         = Rhs[1].text;
+# define YYLLOC_DEFAULT(Current, Rhs, N)  do {       \
+  (Current).first_line   = (Rhs)[1].first_line;      \
+  (Current).first_column = (Rhs)[1].first_column;    \
+  (Current).last_line    = (Rhs)[N].last_line;       \
+  (Current).last_column  = (Rhs)[N].last_column;     \
+  (Current).text         = (Rhs)[1].text;   } while (0)
 
 /*
  * These are some common strength pairs that are used as defaults when

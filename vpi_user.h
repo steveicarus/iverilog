@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.31 2003/12/07 20:06:24 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.32 2004/01/13 02:55:50 steve Exp $"
 #endif
 
 
@@ -192,7 +192,7 @@ typedef struct t_vpi_value {
 #define vpiTimePrecision 12
 #define vpiNetType    22
 #   define vpiWire        1
-#define vpiConstType 43
+#define vpiConstType 40
 #   define vpiDecConst    1
 #   define vpiRealConst   2
 #   define vpiBinaryConst 3
@@ -412,6 +412,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.32  2004/01/13 02:55:50  steve
+ *  Get value for vpoiConstType correct.
+ *
  * Revision 1.31  2003/12/07 20:06:24  steve
  *  tfname can be constant.
  *
