@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.178 2004/12/17 04:47:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.179 2004/12/31 05:54:46 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1084,6 +1084,7 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       if (obj) {
 	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = obj;
 	    define_functor_symbol(label, net);
 	    inputs_connect(net, argc, argv);
       }
@@ -1563,6 +1564,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.179  2004/12/31 05:54:46  steve
+ *  Fix uninitialized fun pointer for resolver nodes.
+ *
  * Revision 1.178  2004/12/17 04:47:47  steve
  *  Replace single release with release/net and release/reg.
  *
