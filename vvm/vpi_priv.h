@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.26 2000/10/03 16:15:35 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.27 2000/10/04 02:37:44 steve Exp $"
 #endif
 
 /*
@@ -107,13 +107,13 @@ typedef unsigned char vpip_bit_t;
 
       /* Take as input an array of bits, and return the resolved
 	 value. The result accounts for the strengths involved. */
-VPIP_EXTERN vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b);
-VPIP_EXTERN vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
+extern vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b);
+extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
 
 
-VPIP_EXTERN void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
+extern void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
-VPIP_EXTERN void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits,
+extern void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
 
 /*
@@ -203,7 +203,7 @@ struct __vpiNull {
       struct __vpiHandle base;
 };
 
-VPIP_EXTERN struct __vpiNull vpip_null;
+extern struct __vpiNull vpip_null;
 
 /*
  * This type represents the handle to a Verilog scope. These include
@@ -219,7 +219,7 @@ struct __vpiScope {
       struct __vpiHandle**intern;
       unsigned nintern;
 };
-VPIP_EXTERN void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
+extern void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
 
 
 /*
@@ -241,8 +241,8 @@ struct __vpiSignal {
 };
 
 
-VPIP_EXTERN const struct __vpirt vpip_systask_rt;
-VPIP_EXTERN const struct __vpirt vpip_sysfunc_rt;
+extern const struct __vpirt vpip_systask_rt;
+extern const struct __vpirt vpip_sysfunc_rt;
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
 
@@ -293,35 +293,35 @@ struct __vpiNumberConst {
  * to allocate the memory for the handle. The result is the vpiHandle
  * of the constructed object.
  */
-VPIP_EXTERN vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
-VPIP_EXTERN vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
+extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
+extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
 			       vpip_bit_t*bits, unsigned nbits);
-VPIP_EXTERN vpiHandle vpip_make_scope(struct __vpiScope*ref,
+extern vpiHandle vpip_make_scope(struct __vpiScope*ref,
 				 int type_code,
 				 const char*name);
-VPIP_EXTERN vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
+extern vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
 					const char*val);
-VPIP_EXTERN vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
+extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 					const vpip_bit_t*bits,
 					unsigned nbits);
-VPIP_EXTERN vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
+extern vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 				  unsigned width, unsigned size);
-VPIP_EXTERN vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
+extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 			       vpip_bit_t*bits, unsigned nbits);
-VPIP_EXTERN vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
+extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 				    const char*val);
 
 /* Use this function to call a registered task. */
-VPIP_EXTERN void vpip_calltask(const char*name, unsigned nparms, vpiHandle*parms);
+extern void vpip_calltask(const char*name, unsigned nparms, vpiHandle*parms);
 
 /*
  * This calls a system function with a given name. The return value is
  * taken by the res[] array.
  */
-VPIP_EXTERN void vpip_callfunc(const char*name, unsigned nres, vpip_bit_t*res,
+extern void vpip_callfunc(const char*name, unsigned nres, vpip_bit_t*res,
 			  unsigned nparms, vpiHandle*parms);
 
-VPIP_EXTERN void vpip_run_value_changes(struct __vpiSignal*sig);
+extern void vpip_run_value_changes(struct __vpiSignal*sig);
 
 /*
  * The simulation object holds the current state of the
@@ -347,13 +347,13 @@ struct vpip_simulation {
       short time_precision;
 };
 
-VPIP_EXTERN struct vpip_simulation vpip_simulation_obj;
+extern struct vpip_simulation vpip_simulation_obj;
 
-VPIP_EXTERN void vpip_set_vlog_info(int argc, char**argv);
-VPIP_EXTERN void vpip_init_simulation();
-VPIP_EXTERN void vpip_time_scale(int precision);
-VPIP_EXTERN void vpip_simulation_run();
-VPIP_EXTERN void vpi_mcd_init(void);
+extern void vpip_set_vlog_info(int argc, char**argv);
+extern void vpip_init_simulation();
+extern void vpip_time_scale(int precision);
+extern void vpip_simulation_run();
+extern void vpi_mcd_init(void);
 
 /*
  * Schedule an event to be run sometime in the future. The d parmater
@@ -364,22 +364,22 @@ VPIP_EXTERN void vpi_mcd_init(void);
  * The return value from the insert method is a cookie that can be
  * used to manipulate the event before it is executed.
  */
-VPIP_EXTERN struct vpip_event* vpip_sim_insert_event(unsigned long d,
+extern struct vpip_event* vpip_sim_insert_event(unsigned long d,
 						void*user_data,
 						void (*sim_fun)(void*),
 						int nonblock_flag);
-VPIP_EXTERN void vpip_sim_cancel_event(struct vpip_event*cookie);
+extern void vpip_sim_cancel_event(struct vpip_event*cookie);
 
 /*
  * This function returns a handle to the vpiTimeVar that is th main
  * simulation time clock.
  */
-VPIP_EXTERN vpiHandle vpip_sim_time();
+extern vpiHandle vpip_sim_time();
 
 /*
  * Return true if the going_flag is false.
  */
-VPIP_EXTERN int vpip_finished();
+extern int vpip_finished();
 
 
 #ifdef __cplusplus
@@ -388,6 +388,9 @@ VPIP_EXTERN int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.27  2000/10/04 02:37:44  steve
+ *  Use .def file instead of _dllexport.
+ *
  * Revision 1.26  2000/10/03 16:15:35  steve
  *  Cleanup build of VPI modules under Cygwin. (Venkat)
  *

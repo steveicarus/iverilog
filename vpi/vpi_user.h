@@ -19,26 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.22 2000/10/03 16:15:35 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.23 2000/10/04 02:37:44 steve Exp $"
 #endif
 
 
 #if defined(__CYGWIN32__)
-#   define DLLIMPORT __declspec(dllimport)
-#   define DLLEXPORT __declspec(dllexport)
+#  define DLLEXPORT __declspec(dllexport)
 #else
-#  define DLLIMPORT
 #  define DLLEXPORT
 #endif
-
-#undef VPIP_STORAGE_CLASS
-#if defined(__build_vpip)
-# define VPIP_STORAGE_CLASS DLLEXPORT
-#else
-#  define VPIP_STORAGE_CLASS DLLIMPORT
-#endif
-
-#define VPIP_EXTERN extern VPIP_STORAGE_CLASS
 
 #ifdef __cplusplus
 extern "C" {
@@ -180,13 +169,13 @@ typedef struct t_vpi_value {
 
 
 /* VPI FUNCTIONS */
-VPIP_EXTERN void vpi_register_systf(const struct t_vpi_systf_data*ss);
-VPIP_EXTERN void vpi_printf(const char*fmt, ...);
+extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
+extern void vpi_printf(const char*fmt, ...);
 
-VPIP_EXTERN unsigned int vpi_mcd_close(unsigned int mcd);
-VPIP_EXTERN char *vpi_mcd_name(unsigned int mcd);
-VPIP_EXTERN unsigned int vpi_mcd_open(char *name);
-VPIP_EXTERN int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
+extern unsigned int vpi_mcd_close(unsigned int mcd);
+extern char *vpi_mcd_name(unsigned int mcd);
+extern unsigned int vpi_mcd_open(char *name);
+extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
 
 /*
  * support for VPI callback functions.
@@ -226,8 +215,8 @@ typedef struct t_cb_data {
 #define cbInteractiveScopeChange 23
 #define cbUnresolvedSystf   24
 
-VPIP_EXTERN vpiHandle vpi_register_cb(p_cb_data data);
-VPIP_EXTERN int vpi_remove_cb(vpiHandle ref);
+extern vpiHandle vpi_register_cb(p_cb_data data);
+extern int vpi_remove_cb(vpiHandle ref);
 
 /*
  * This function allows a vpi application to control the simulation
@@ -244,26 +233,26 @@ VPIP_EXTERN int vpi_remove_cb(vpiHandle ref);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-VPIP_EXTERN void vpi_sim_control(int operation, ...);
+extern void vpi_sim_control(int operation, ...);
 #define vpiStop 1
 #define vpiFinish 2
 #define vpiReset  3
 #define vpiSetInteractiveScope 4
 
-VPIP_EXTERN vpiHandle  vpi_handle(int type, vpiHandle ref);
-VPIP_EXTERN vpiHandle  vpi_iterate(int type, vpiHandle ref);
-VPIP_EXTERN vpiHandle  vpi_scan(vpiHandle iter);
-VPIP_EXTERN vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
+extern vpiHandle  vpi_handle(int type, vpiHandle ref);
+extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
+extern vpiHandle  vpi_scan(vpiHandle iter);
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
 
-VPIP_EXTERN void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
-VPIP_EXTERN int   vpi_get(int property, vpiHandle ref);
-VPIP_EXTERN char* vpi_get_str(int property, vpiHandle ref);
-VPIP_EXTERN void  vpi_get_value(vpiHandle expr, p_vpi_value value);
-VPIP_EXTERN vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
+extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
+extern int   vpi_get(int property, vpiHandle ref);
+extern char* vpi_get_str(int property, vpiHandle ref);
+extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
+extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 			       p_vpi_time when, int flags);
 
-VPIP_EXTERN int vpi_free_object(vpiHandle ref);
-VPIP_EXTERN int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
+extern int vpi_free_object(vpiHandle ref);
+extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 
 /* This is the table of startup routines included in each module. */
@@ -275,6 +264,9 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.23  2000/10/04 02:37:44  steve
+ *  Use .def file instead of _dllexport.
+ *
  * Revision 1.22  2000/10/03 16:15:35  steve
  *  Cleanup build of VPI modules under Cygwin. (Venkat)
  *
