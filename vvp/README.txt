@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.32 2001/06/30 23:03:16 steve Exp $
+ *  $Id: README.txt,v 1.33 2001/07/01 23:43:58 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -37,8 +37,7 @@ HEADER SYNTAX
 Before any other non-commentary code starts, the source may contain
 some header statements. These are used for passing parameters or
 global details from the compiler to the vvp run-time. In all cases,
-the header statement starts with a left-justified keyword, and ends
-with a string.
+the header statement starts with a left-justified keyword.
 
 * :module "name" ;
 
