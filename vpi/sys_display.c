@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.33 2002/01/15 03:23:34 steve Exp $"
+#ident "$Id: sys_display.c,v 1.34 2002/01/22 00:18:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,13 +36,43 @@ struct strobe_cb_info {
       unsigned nitems;
 };
 
-static int calc_dec_size(int nr_bits)
+// The number of decimal digits needed to represent a
+// nr_bits binary number is floor(nr_bits*log_10(2))+1,
+// where log_10(2) = 0.30102999566398....  and I approximate
+// this transcendental number as 146/485, to avoid the vagaries
+// of floating-point.  The smallest nr_bits for which this
+// approximation fails is 2621,
+// 2621*log_10(2)=789.9996, but (2621*146+484)/485=790 (exactly).
+// In cases like this, all that happens is we allocate one
+// unneeded char for the output.  I add a "L" suffix to 146
+// to make sure the computation is done as long ints, otherwise
+// on a 16-bit int machine (allowed by ISO C) we would mangle
+// this computation for bit-length of 224.  I'd like to put
+// in a test for nr_bits < LONG_MAX/146, but don't know how
+// to fail, other than crashing.
+//
+// In an April 2000 thread in comp.unix.programmer, with subject
+// "integer -> string", I <LRDoolittle@lbl.gov> give the 28/93
+// approximation, but overstate its accuracy: that version first
+// fails when the number of bits is 289, not 671.
+//
+// This result does not include space for a trailing '\0', if any.
+//
+inline static int calc_dec_size(int nr_bits, int is_signed)
 {
-    // over-the-top accuracy... :-)
-    //
-    // nr of bits = floor(log10(2^nr_bits) + 1.0)
-    //            = floor(nr_bits * ln(2)/ln(10) + 1.0)
-    return (int)( ((double)nr_bits) * 0.301029996 + 1.0);
+	int r;
+	if (is_signed) --nr_bits;
+	r = (nr_bits * 146L + 484) / 485;
+	if (is_signed) ++r;
+	return r;
+}
+
+static int vpi_get_dec_size(vpiHandle item)
+{
+	return calc_dec_size(
+		vpi_get(vpiSize, item),
+		vpi_get(vpiSigned, item)==1
+	);
 }
 
 static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
@@ -271,14 +301,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 				      // simple %d parameter. 
 				      // Size is now determined by the width
 				      // of the vector or integer
-				      fsize = vpi_get(vpiSize, argv[idx]);
-				      fsize = calc_dec_size(fsize);
-
-				      if ( vpi_get(vpiSigned, argv[idx]) ==1){
-					  // Pure integers need one more position
-					  // for an optional '-' bit
-					  fsize++;
-				      }
+				      fsize = vpi_get_dec_size(argv[idx]);
 				  }
 
 				  vpi_mcd_printf(mcd, "%*s", fsize,
@@ -423,11 +446,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 
 		  switch(info->default_format){
 		  case vpiDecStrVal:
-		      size = vpi_get(vpiSize, item);
-		      size = calc_dec_size(size);
-		      if ( vpi_get(vpiSigned, item) ==1){
-			  size++;
-		      }
+		      size = vpi_get_dec_size(item);
 		      vpi_mcd_printf(mcd, "%*s", size, value.value.str);
 		      break;
 
@@ -1102,6 +1121,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.34  2002/01/22 00:18:10  steve
+ *  Better calcuation of dec string width (Larry Doolittle)
+ *
  * Revision 1.33  2002/01/15 03:23:34  steve
  *  Default widths pad out as per the standard,
  *  add $displayb/o/h et al., and some better
