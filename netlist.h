@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.61 1999/09/08 04:05:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.62 1999/09/11 04:43:17 steve Exp $"
 #endif
 
 /*
@@ -1260,6 +1260,10 @@ class NetETernary  : public NetExpr {
 
       virtual bool set_width(unsigned w);
 
+      const NetExpr*cond_expr() const;
+      const NetExpr*true_expr() const;
+      const NetExpr*false_expr() const;
+
       virtual NetETernary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1552,6 +1556,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.62  1999/09/11 04:43:17  steve
+ *  Support ternary and <= operators in vvm.
+ *
  * Revision 1.61  1999/09/08 04:05:30  steve
  *  Allow assign to not match rvalue width.
  *

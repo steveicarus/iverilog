@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.40 1999/09/08 02:24:39 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.41 1999/09/11 04:43:17 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -121,6 +121,7 @@ class vvm_proc_rval  : public expr_scan_t {
 	    }
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*sig);
+      virtual void expr_ternary(const NetETernary*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
       virtual void expr_ufunc(const NetEUFunc*);
@@ -209,6 +210,24 @@ void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
       result = val;
 }
 
+void vvm_proc_rval::expr_ternary(const NetETernary*expr)
+{
+      expr->cond_expr()->expr_scan(this);
+      string cond_val = result;
+      expr->true_expr()->expr_scan(this);
+      string true_val = result;
+      expr->false_expr()->expr_scan(this);
+      string false_val = result;
+
+      result = make_temp();
+
+      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
+	    expr->expr_width() << ">" << result << ";" << endl;
+      os_ << setw(indent_) << "" << result << " = vvm_ternary(" <<
+	    cond_val << "[0], " << true_val << ", " << false_val << ");"
+	  << endl;
+}
+
 /*
  * A function call is handled by assigning the parameters from the
  * input expressions, then calling the function. After the function
@@ -295,6 +314,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case 'e': // ==
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case 'L': // <=
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_le("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'N': // !==
@@ -1418,6 +1441,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.41  1999/09/11 04:43:17  steve
+ *  Support ternary and <= operators in vvm.
+ *
  * Revision 1.40  1999/09/08 02:24:39  steve
  *  Empty conditionals (pmonta@imedia.com)
  *

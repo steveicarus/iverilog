@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.7 1999/06/24 04:20:47 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.8 1999/09/11 04:43:17 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -309,6 +309,19 @@ vvm_bitset_t<1> vvm_binop_lt(const vvm_bitset_t<LW>&l,
 }
 
 template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_le(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      assert(LW == RW);
+      vvm_bitset_t<1> result;
+      result[0] = V1;
+      for (unsigned idx = 0 ;  idx < LW ;  idx += 1)
+	    result[0] = less_with_cascade(l[idx], r[idx], result[0]);
+
+      return result;
+}
+
+template <unsigned LW, unsigned RW>
 vvm_bitset_t<1> vvm_binop_land(const vvm_bitset_t<LW>&l,
 			       const vvm_bitset_t<RW>&r)
 {
@@ -328,8 +341,25 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
       return res1;
 }
 
+template <unsigned W>
+vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
+			    const vvm_bitset_t<W>&f)
+{
+      switch (c) {
+	  case V0:
+	    return f;
+	  case V1:
+	    return t;
+	  default:
+	    return f;
+      }
+}
+
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.8  1999/09/11 04:43:17  steve
+ *  Support ternary and <= operators in vvm.
+ *
  * Revision 1.7  1999/06/24 04:20:47  steve
  *  Add !== and === operators.
  *
