@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.4 2001/07/03 04:09:25 steve Exp $"
+#ident "$Id: globals.h,v 1.5 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -56,12 +56,18 @@ extern int verbose_flag;
 
 extern char warning_flags[];
 
+  /* -y flags from the command line. */
+extern char* library_flags;
+
 extern const char*lookup_pattern(const char*key);
 
 extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.5  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.4  2001/07/03 04:09:25  steve
  *  Generate verbuse status messages (Stephan Boettcher)
  *

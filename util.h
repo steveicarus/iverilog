@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.h,v 1.2 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: util.h,v 1.3 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include  <string>
@@ -34,7 +34,18 @@ extern string parse_first_name(string&path);
 extern string parse_last_name(string&path);
 
 /*
+ * This file attempts to locate a module in a file. It operates by
+ * looking for a plausible Verilog file to hold the module, and
+ * invoking the parser to bring in that file's contents.
+ */
+extern bool load_module(const char*type);
+
+
+/*
  * $Log: util.h,v $
+ * Revision 1.3  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.2  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

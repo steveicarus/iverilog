@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: build_string.c,v 1.5 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -129,6 +129,13 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(warning_flags);
 			break;
 
+		      case 'y':
+			if (library_flags) {
+			      strcpy(output, library_flags);
+			      output += strlen(library_flags);
+			      olen -= strlen(library_flags);
+			}
+			break;
 		  }
 		  pattern += 1;
 
@@ -144,6 +151,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.5  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.4  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

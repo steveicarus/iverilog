@@ -1,10 +1,12 @@
-.TH iverilog 1 "$Date: 2001/08/31 17:28:10 $" Version "$Date: 2001/08/31 17:28:10 $"
+.TH iverilog 1 "$Date: 2001/10/20 23:02:40 $" Version "$Date: 2001/10/20 23:02:40 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
+[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
+[-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule]
+[-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -117,6 +119,25 @@ Turn on different classes of warnings. See the \fBWARNING TYPES\fP
 section below for desctriptions of the different warning groups. If
 multiple \fB-W\fP switches are used, the warning set is the union of
 all the requested classes.
+.TP 8
+.B -y\fIlibdir\fp
+Append the directory to the library module search path. When the
+compiler finds an undefined module, it looks in these directories for
+files with the right name.
+
+.SH MODULE LIBRARIES
+
+The Icarus Verilog compiler supports module libraries as directories
+that contain Verilog source files.  During elaboration, the compiler
+notices the instantiation of undefined module types. If the user
+specifies library search directories, the compiler will search the
+directory for files with the name of the missing module type. If it
+finds such a file, it loads it as a Verilog source file, they tries
+again to elaborate the module.
+
+Library module files should contain only a single module, but this is
+not a requirement. Library modules may reference other modules in the
+library or in the main design.
 
 .SH TARGETS
 

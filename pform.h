@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.46 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: pform.h,v 1.47 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -196,12 +196,13 @@ extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */
-extern int  pform_parse(const char*path, map<string,Module*>&mod,
-			map<string,PUdp*>&prim);
 extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.47  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.46  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.79 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: pform.cc,v 1.80 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,7 @@
 # include  "compiler.h"
 # include  "pform.h"
 # include  "parse_misc.h"
+# include  "parse_api.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  <list>
@@ -32,6 +33,9 @@
 # include  <assert.h>
 # include  <typeinfo>
 # include  <strstream>
+
+map<string,Module*> pform_modules;
+map<string,PUdp*> pform_primitives;
 
 /*
  * The lexor accesses the vl_* variables.
@@ -90,9 +94,6 @@ static string scoped_name(string name)
       return name;
 }
 
-static map<string,Module*> vl_modules;
-static map<string,PUdp*>   vl_primitives;
-
 /*
  * This function evaluates delay expressions. The result should be a
  * simple constant that I can interpret as an unsigned number.
@@ -130,7 +131,7 @@ void pform_endmodule(const char*name)
 {
       assert(pform_cur_module);
       assert(strcmp(name, pform_cur_module->mod_name()) == 0);
-      vl_modules[name] = pform_cur_module;
+      pform_modules[name] = pform_cur_module;
       pform_cur_module = 0;
 }
 
@@ -296,7 +297,7 @@ void pform_make_udp(const char*name, list<string>*parms,
       }
 
 	// Put the primitive into the primitives table
-      if (vl_primitives[name]) {
+      if (pform_primitives[name]) {
 	    VLerror("UDP primitive already exists.");
 
       } else {
@@ -315,7 +316,7 @@ void pform_make_udp(const char*name, list<string>*parms,
 	    udp->toutput  = output;
 	    udp->initial  = init;
 
-	    vl_primitives[name] = udp;
+	    pform_primitives[name] = udp;
       }
 
 	/* Delete the excess tables and lists from the parser. */
@@ -839,8 +840,8 @@ void pform_set_attrib(const string&name, const string&key, const string&value)
 void pform_set_type_attrib(const string&name, const string&key,
 			   const string&value)
 {
-      map<string,PUdp*>::const_iterator udp = vl_primitives.find(name);
-      if (udp == vl_primitives.end()) {
+      map<string,PUdp*>::const_iterator udp = pform_primitives.find(name);
+      if (udp == pform_primitives.end()) {
 	    VLerror("type name is not (yet) defined.");
 	    return;
       }
@@ -990,35 +991,48 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
 
 
 FILE*vl_input = 0;
-int pform_parse(const char*path, map<string,Module*>&modules,
-		map<string,PUdp*>&prim)
+extern void reset_lexor();
+
+int pform_parse(const char*path, FILE*file)
 {
       vl_file = path;
-      if (strcmp(path, "-") == 0)
-	    vl_input = stdin;
-      else
-	    vl_input = fopen(path, "r");
-      if (vl_input == 0) {
-	    cerr << "Unable to open " <<vl_file << "." << endl;
-	    return 11;
+      if (file == 0) {
+
+	    if (strcmp(path, "-") == 0)
+		  vl_input = stdin;
+	    else
+		  vl_input = fopen(path, "r");
+	    if (vl_input == 0) {
+		  cerr << "Unable to open " <<vl_file << "." << endl;
+		  return 11;
+	    }
+
+      } else {
+	    vl_input = file;
       }
 
+      reset_lexor();
       error_count = 0;
       warn_count = 0;
       int rc = VLparse();
+
+      if (file == 0)
+	    fclose(vl_input);
+
       if (rc) {
 	    cerr << "I give up." << endl;
 	    error_count += 1;
       }
 
-      modules = vl_modules;
-      prim = vl_primitives;
       return error_count;
 }
 
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.80  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.79  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *
@@ -1062,103 +1076,5 @@ int pform_parse(const char*path, map<string,Module*>&modules,
  *
  * Revision 1.67  2000/11/30 17:31:42  steve
  *  Change LineInfo to store const C strings.
- *
- * Revision 1.66  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.65  2000/10/31 17:00:04  steve
- *  Remove C++ string from variable lists.
- *
- * Revision 1.64  2000/09/13 16:32:26  steve
- *  Error message for invalid variable list.
- *
- * Revision 1.63  2000/07/29 17:58:21  steve
- *  Introduce min:typ:max support.
- *
- * Revision 1.62  2000/07/22 22:09:04  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.61  2000/05/23 16:03:13  steve
- *  Better parsing of expressions lists will empty expressoins.
- *
- * Revision 1.60  2000/05/16 04:05:16  steve
- *  Module ports are really special PEIdent
- *  expressions, because a name can be used
- *  many places in the port list.
- *
- * Revision 1.59  2000/05/08 05:30:20  steve
- *  Deliver gate output strengths to the netlist.
- *
- * Revision 1.58  2000/05/06 15:41:57  steve
- *  Carry assignment strength to pform.
- *
- * Revision 1.57  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.56  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- * Revision 1.55  2000/03/08 04:36:54  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.54  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.53  2000/02/18 05:15:03  steve
- *  Catch module instantiation arrays.
- *
- * Revision 1.52  2000/01/09 05:50:49  steve
- *  Support named parameter override lists.
- *
- * Revision 1.51  2000/01/02 01:59:28  steve
- *  Forgot to handle no overrides at all.
- *
- * Revision 1.50  2000/01/01 23:47:58  steve
- *  Fix module parameter override syntax.
- *
- * Revision 1.49  1999/12/30 19:06:14  steve
- *  Support reg initial assignment syntax.
- *
- * Revision 1.48  1999/12/11 05:45:41  steve
- *  Fix support for attaching attributes to primitive gates.
- *
- * Revision 1.47  1999/11/23 01:04:57  steve
- *  A file name of - means standard input.
- *
- * Revision 1.46  1999/09/30 01:22:37  steve
- *  Handle declaration of integers (including scope) in functions.
- *
- * Revision 1.45  1999/09/21 00:58:33  steve
- *  Get scope right when setting the net range.
- *
- * Revision 1.44  1999/09/17 02:06:26  steve
- *  Handle unconnected module ports.
- *
- * Revision 1.43  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.42  1999/09/10 05:02:09  steve
- *  Handle integers at task parameters.
- *
- * Revision 1.41  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.40  1999/08/27 15:08:37  steve
- *  continuous assignment lists.
- *
- * Revision 1.39  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.38  1999/08/23 16:48:39  steve
- *  Parameter overrides support from Peter Monta
- *  AND and XOR support wide expressions.
- *
- * Revision 1.37  1999/08/03 04:14:49  steve
- *  Parse into pform arbitrarily complex module
- *  port declarations.
  */
 

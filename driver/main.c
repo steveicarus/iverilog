@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.23 2001/10/19 23:10:08 steve Exp $"
+#ident "$Id: main.c,v 1.24 2001/10/20 23:02:40 steve Exp $"
 
 # include "config.h"
 
@@ -25,7 +25,7 @@ const char HELP[] =
 "                [-D macro[=defn]] [-I includedir] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
-"                [-W class] source_file(s)\n"
+"                [-W class] [-y dur] source_file(s)\n"
 "See man page for details.";
 
 #define MAXSIZE 4096
@@ -87,6 +87,7 @@ const char*targ  = "vvp";
 const char*start = 0;
 
 char warning_flags[16] = "";
+char *library_flags = 0;
 
 char*inc_list = 0;
 char*def_list = 0;
@@ -340,6 +341,19 @@ static void process_warning_switch(const char*name)
       }
 }
 
+static void process_library_switch(const char *name)
+{
+      if (library_flags) {
+	    library_flags = realloc(library_flags, 
+				    strlen(library_flags) + strlen(name) + 5);
+	    strcat(library_flags, " -y ");
+      } else {
+	    library_flags = malloc(strlen(name) + 4);
+	    strcpy(library_flags, "-y ");
+      }
+      strcat(library_flags, name);
+}
+
 int main(int argc, char **argv)
 {
       const char*config_path = 0;
@@ -386,7 +400,7 @@ int main(int argc, char **argv)
       base = ivl_root;
 #endif
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -497,6 +511,9 @@ int main(int argc, char **argv)
 		  break;
 		case 'W':
 		  process_warning_switch(optarg);
+		  break;
+		case 'y':
+		  process_library_switch(optarg);
 		  break;
 		case '?':
 		default:
@@ -644,6 +661,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.24  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.23  2001/10/19 23:10:08  steve
  *  Fix memory fault with -c flag.
  *

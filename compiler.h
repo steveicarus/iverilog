@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.5 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: compiler.h,v 1.6 2001/10/20 23:02:40 steve Exp $"
 #endif
+
+# include  <list>
 
 /*
  * This defines constants and defaults for the compiler in general.
@@ -66,8 +68,17 @@
 /* Implicit definitions of wires. */
 extern bool warn_implicit;
 
+/* This is true if verbose output is requested. */
+extern bool verbose_flag;
+
+/* This is an ordered list of libraries to search. */
+extern list<const char*>library_dirs;
+
 /*
  * $Log: compiler.h,v $
+ * Revision 1.6  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.5  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

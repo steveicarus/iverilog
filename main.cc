@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.49 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: main.cc,v 1.50 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,6 +55,7 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 # include  "pform.h"
+# include  "parse_api.h"
 # include  "netlist.h"
 # include  "target.h"
 # include  "compiler.h"
@@ -77,10 +78,17 @@ const char*target = "null";
 
 map<string,string> flags;
 
+list<const char*> library_dirs;
+
 /*
  * These are the warning enable flags.
  */
 bool warn_implicit = false;
+
+/*
+ * Verbose messages enabled.
+ */
+bool verbose_flag = false;
 
 
 static void parm_to_flagmap(const string&flag)
@@ -100,9 +108,7 @@ static void parm_to_flagmap(const string&flag)
 }
 
 
-extern Design* elaborate(const map<string,Module*>&modules,
-			 const map<string,PUdp*>&primitives,
-			 list <const char*>root);
+extern Design* elaborate(list <const char*>root);
 
 extern void cprop(Design*des);
 extern void synth(Design*des);
@@ -166,7 +172,6 @@ inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
 int main(int argc, char*argv[])
 {
       bool help_flag = false;
-      bool verbose_flag = false;
       bool times_flag = false;
 
       const char* net_path = 0;
@@ -184,7 +189,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:y:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -253,6 +258,9 @@ int main(int argc, char*argv[])
 	  case 'W':
 	    warn_en = optarg;
 	    break;
+	  case 'y':
+	    library_dirs.push_back(optarg);
+	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -281,6 +289,7 @@ int main(int argc, char*argv[])
 #endif
                                            ".\n"
 "\t-V               Print version and copyright information, and exit.\n"
+"\t-y <dir>         Add directory to library search path.\n"
 
 		  ;
 	    cout << "Netlist functions:" << endl;
@@ -313,21 +322,19 @@ int main(int argc, char*argv[])
       }
 
 	/* Parse the input. Make the pform. */
-      map<string,Module*> modules;
-      map<string,PUdp*>   primitives;
-      int rc = pform_parse(argv[optind], modules, primitives);
+      int rc = pform_parse(argv[optind]);
 
       if (pf_path) {
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP MODULES:" << endl;
-	    for (map<string,Module*>::iterator mod = modules.begin()
-		       ; mod != modules.end()
+	    for (map<string,Module*>::iterator mod = pform_modules.begin()
+		       ; mod != pform_modules.end()
 		       ; mod ++ ) {
 		  pform_dump(out, (*mod).second);
 	    }
 	    out << "PFORM DUMP PRIMITIVES:" << endl;
-	    for (map<string,PUdp*>::iterator idx = primitives.begin()
-		       ; idx != primitives.end()
+	    for (map<string,PUdp*>::iterator idx = pform_primitives.begin()
+		       ; idx != pform_primitives.end()
 		       ; idx ++ ) {
 		  (*idx).second->dump(out);
 	    }
@@ -346,7 +353,9 @@ int main(int argc, char*argv[])
 	    map<string,Module*>::iterator mod;
 	    if (verbose_flag)
 		  cout << "LOCATING TOP-LEVEL MODULES..." << endl << "  ";
-	    for (mod = modules.begin(); mod != modules.end(); mod++) {
+	    for (mod = pform_modules.begin()
+		       ; mod != pform_modules.end()
+		       ; mod++) {
 		  list<PGate*> gates = (*mod).second->get_gates();
 		  list<PGate*>::const_iterator gate;
 		  for (gate = gates.begin(); gate != gates.end(); gate++) {
@@ -358,7 +367,9 @@ int main(int argc, char*argv[])
 		  }
 	    }
 
-	    for (mod = modules.begin(); mod != modules.end(); mod++) {
+	    for (mod = pform_modules.begin()
+		       ; mod != pform_modules.end()
+		       ; mod++) {
 		  if (mentioned_p[(*mod).second->mod_name()] == false) {
 			if (verbose_flag)
 			      cout << " " << (*mod).second->mod_name();
@@ -388,7 +399,7 @@ int main(int argc, char*argv[])
       }
 
 	/* On with the process of elaborating the module. */
-      Design*des = elaborate(modules, primitives, roots);
+      Design*des = elaborate(roots);
       if (des == 0) {
 	    cerr << "Elaboration failed" << endl;
 	    return 1;
@@ -455,6 +466,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.50  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.49  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

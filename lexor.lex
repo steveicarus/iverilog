@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.63 2001/09/08 01:22:55 steve Exp $"
+#ident "$Id: lexor.lex,v 1.64 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,13 +29,12 @@
 # include  <iostream.h>
 # include  "compiler.h"
 # include  "parse_misc.h"
+# include  "parse_api.h"
 # include  "parse.h"
 # include  <ctype.h>
 # include  <string.h>
 # include  "lexor_keyword.h"
 
-extern FILE*vl_input;
-extern string vl_file;
 
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
@@ -77,7 +76,7 @@ static const char* set_file_name(char*text)
 
 extern void pform_set_timescale(int, int);
 
-static void reset_lexor();
+void reset_lexor();
 static void line_directive();
 static void line_directive2();
 
@@ -1066,7 +1065,8 @@ static void line_directive2()
       yylloc.text = set_file_name(buf);
 }
 
-static void reset_lexor()
+extern FILE*vl_input;
+void reset_lexor()
 {
       yyrestart(vl_input);
       yylloc.first_line = 1;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.222 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.223 2001/10/20 23:02:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -37,12 +37,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
-
-  // Urff, I don't like this global variable. I *will* figure out a
-  // way to get rid of it. But, for now the PGModule::elaborate method
-  // needs it to find the module definition.
-static const map<string,Module*>* modlist = 0;
-static const map<string,PUdp*>*   udplist = 0;
+# include  "parse_api.h"
 
 static Link::strength_t drive_type(PGate::strength_t drv)
 {
@@ -705,8 +700,8 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = modlist->find(type_);
-      if (mod != modlist->end())
+      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      if (mod != pform_modules.end())
 	    return elaborate_sig_mod_(des, scope, (*mod).second);
 
       return true;
@@ -716,15 +711,15 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 void PGModule::elaborate(Design*des, const string&path) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = modlist->find(type_);
-      if (mod != modlist->end()) {
+      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      if (mod != pform_modules.end()) {
 	    elaborate_mod_(des, (*mod).second, path);
 	    return;
       }
 
 	// Try a primitive type
-      map<string,PUdp*>::const_iterator udp = udplist->find(type_);
-      if (udp != udplist->end()) {
+      map<string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
+      if (udp != pform_primitives.end()) {
 	    elaborate_udp_(des, (*udp).second, path);
 	    return;
       }
@@ -736,18 +731,38 @@ void PGModule::elaborate(Design*des, const string&path) const
 void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 {
 	// Look for the module type
-      map<string,Module*>::const_iterator mod = modlist->find(type_);
-      if (mod != modlist->end()) {
+      map<string,Module*>::const_iterator mod = pform_modules.find(type_);
+      if (mod != pform_modules.end()) {
 	    elaborate_scope_mod_(des, (*mod).second, sc);
 	    return;
       }
 
 	// Try a primitive type
-      map<string,PUdp*>::const_iterator udp = udplist->find(type_);
-      if (udp != udplist->end())
+      map<string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
+      if (udp != pform_primitives.end())
 	    return;
 
+	// Not a module or primitive that I know about yet, so try to
+	// load a library module file (which parses some new Verilog
+	// code) and try again.
+      if (load_module(type_.c_str())) {
 
+	      // Try again to find the module type
+	    mod = pform_modules.find(type_);
+	    if (mod != pform_modules.end()) {
+		  elaborate_scope_mod_(des, (*mod).second, sc);
+		  return;
+	    }
+
+	      // Try again to find a primitive type
+	    udp = pform_primitives.find(type_);
+	    if (udp != pform_primitives.end())
+		  return;
+      }
+
+
+	// Not a module or primitive that I know about or can find by
+	// any means, so give up.
       cerr << get_line() << ": error: Unknown module type: " << type_ << endl;
       des->errors += 1;
 }
@@ -2283,9 +2298,7 @@ struct root_elem {
       NetScope *scope;
 };
 
-Design* elaborate(const map<string,Module*>&modules,
-		  const map<string,PUdp*>&primitives,
-		  list<const char*>roots)
+Design* elaborate(list<const char*>roots)
 {
       svector<root_elem*> root_elems(roots.size());
       bool rc = true;
@@ -2295,15 +2308,15 @@ Design* elaborate(const map<string,Module*>&modules,
 	// module and elaborate what I find.
       Design*des = new Design;
 
-      modlist = &modules;
-      udplist = &primitives;
+      for (list<const char*>::const_iterator root = roots.begin()
+		 ; root != roots.end()
+		 ; root++) {
 
-      for (list<const char*>::const_iterator root = roots.begin();
-	   root != roots.end(); root++) {
-	    // Look for the root module in the list.
-	    map<string,Module*>::const_iterator mod = modules.find(*root);
-	    if (mod == modules.end()) {
-		  cerr << "Unable to find root module \"" << (*root) << "\"." << endl; 
+	      // Look for the root module in the list.
+	    map<string,Module*>::const_iterator mod = pform_modules.find(*root);
+	    if (mod == pform_modules.end()) {
+		  cerr << "Unable to find root module \""
+		       << (*root) << "\"." << endl; 
 		  des->errors++;
 		  continue;
 	    }
@@ -2358,9 +2371,6 @@ Design* elaborate(const map<string,Module*>&modules,
       }
 
 
-      modlist = 0;
-      udplist = 0;
-
       if (rc == false) {
 	    delete des;
 	    des = 0;
@@ -2372,248 +2382,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.223  2001/10/20 23:02:40  steve
+ *  Add automatic module libraries.
+ *
  * Revision 1.222  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *
  * Revision 1.221  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.220  2001/08/25 23:50:02  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.219  2001/08/01 05:17:31  steve
- *  Accept empty port lists to module instantiation.
- *
- * Revision 1.218  2001/07/28 22:13:11  steve
- *  Detect a missing task definition before it crashes me.
- *
- * Revision 1.217  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.216  2001/07/19 03:43:15  steve
- *  Do not connect reg to module outputs.
- *
- * Revision 1.215  2001/06/27 18:34:43  steve
- *  Report line of unsupported cassign.
- *
- * Revision 1.214  2001/05/17 03:35:22  steve
- *  do not assert if memory reference is invalid.
- *
- * Revision 1.213  2001/04/29 20:19:10  steve
- *  Add pullup and pulldown devices.
- *
- * Revision 1.212  2001/04/28 23:18:08  steve
- *  UDP instances need not have user supplied names.
- *
- * Revision 1.211  2001/04/24 02:23:58  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.210  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.209  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.208  2001/02/15 06:59:36  steve
- *  FreeBSD port has a maintainer now.
- *
- * Revision 1.207  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.206  2001/02/07 21:47:13  steve
- *  Fix expression widths for rvalues and parameters (PR#131,132)
- *
- * Revision 1.205  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.204  2001/01/10 03:13:23  steve
- *  Build task outputs as lval instead of nets. (PR#98)
- *
- * Revision 1.203  2001/01/09 05:58:47  steve
- *  Cope with width mismatches to module ports (PR#89)
- *
- * Revision 1.202  2000/12/15 01:24:17  steve
- *  Accept x in outputs of primitive. (PR#84)
- *
- * Revision 1.201  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.200  2000/12/10 06:41:59  steve
- *  Support delays on continuous assignment from idents. (PR#40)
- *
- * Revision 1.199  2000/12/06 06:31:09  steve
- *  Check lvalue of procedural continuous assign (PR#29)
- *
- * Revision 1.198  2000/12/01 23:52:49  steve
- *  Handle null statements inside a wait. (PR#60)
- *
- * Revision 1.197  2000/11/11 01:52:09  steve
- *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
- *  change set to correct behavior of bufif0 and bufif1
- *  (Tim Leight)
- *
- *  Also includes fix for PR#27
- *
- * Revision 1.196  2000/11/05 06:05:59  steve
- *  Handle connectsion to internally unconnected modules (PR#38)
- *
- * Revision 1.195  2000/10/28 00:51:42  steve
- *  Add scope to threads in vvm, pass that scope
- *  to vpi sysTaskFunc objects, and add vpi calls
- *  to access that information.
- *
- *  $display displays scope in %m (PR#1)
- *
- * Revision 1.194  2000/10/26 17:09:46  steve
- *  Fix handling of errors in behavioral lvalues. (PR#28)
- *
- * Revision 1.193  2000/10/07 19:45:42  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.192  2000/09/29 22:58:57  steve
- *  Do not put noop statements into blocks.
- *
- * Revision 1.191  2000/09/24 17:41:13  steve
- *  fix null pointer when elaborating undefined task.
- *
- * Revision 1.190  2000/09/20 02:53:14  steve
- *  Correctly measure comples l-values of assignments.
- *
- * Revision 1.189  2000/09/09 15:21:26  steve
- *  move lval elaboration to PExpr virtual methods.
- *
- * Revision 1.188  2000/09/07 01:29:44  steve
- *  Fix bit padding of assign signal-to-signal
- *
- * Revision 1.187  2000/09/07 00:06:53  steve
- *  encapsulate access to the l-value expected width.
- *
- * Revision 1.186  2000/09/03 17:58:35  steve
- *  Change elaborate_lval to return NetAssign_ objects.
- *
- * Revision 1.185  2000/09/02 23:40:12  steve
- *  Pull NetAssign_ creation out of constructors.
- *
- * Revision 1.184  2000/09/02 20:54:20  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
- * Revision 1.183  2000/08/18 04:38:57  steve
- *  Proper error messages when port direction is missing.
- *
- * Revision 1.182  2000/07/30 18:25:43  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- *
- * Revision 1.181  2000/07/27 05:13:44  steve
- *  Support elaboration of disable statements.
- *
- * Revision 1.180  2000/07/26 05:08:07  steve
- *  Parse disable statements to pform.
- *
- * Revision 1.179  2000/07/22 22:09:03  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.178  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.177  2000/07/07 04:53:54  steve
- *  Add support for non-constant delays in delay statements,
- *  Support evaluating ! in constant expressions, and
- *  move some code from netlist.cc to net_proc.cc.
- *
- * Revision 1.176  2000/06/13 03:24:48  steve
- *  Index in memory assign should be a NetExpr.
- *
- * Revision 1.175  2000/05/31 02:26:49  steve
- *  Globally merge redundant event objects.
- *
- * Revision 1.174  2000/05/27 19:33:23  steve
- *  Merge similar probes within a module.
- *
- * Revision 1.173  2000/05/16 04:05:16  steve
- *  Module ports are really special PEIdent
- *  expressions, because a name can be used
- *  many places in the port list.
- *
- * Revision 1.172  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.171  2000/05/08 05:28:29  steve
- *  Use bufz to make assignments directional.
- *
- * Revision 1.170  2000/05/07 21:17:21  steve
- *  non-blocking assignment to a bit select.
- *
- * Revision 1.169  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.168  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a seperate pass.
- *
- * Revision 1.167  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.166  2000/05/02 00:58:11  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.165  2000/04/28 23:12:12  steve
- *  Overly aggressive eliding of task calls.
- *
- * Revision 1.164  2000/04/28 22:17:47  steve
- *  Skip empty tasks.
- *
- * Revision 1.163  2000/04/28 16:50:53  steve
- *  Catch memory word parameters to tasks.
- *
- * Revision 1.162  2000/04/23 03:45:24  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.161  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.160  2000/04/21 04:38:15  steve
- *  Bit padding in assignment to memory.
- *
- * Revision 1.159  2000/04/18 01:02:53  steve
- *  Minor cleanup of NetTaskDef.
- *
- * Revision 1.158  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.157  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
  */
 
