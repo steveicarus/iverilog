@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.56 2001/04/26 16:12:48 steve Exp $"
+#ident "$Id: lexor.lex,v 1.57 2001/04/28 18:43:18 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -256,7 +256,7 @@ W [ \t\b\f\r]+
 
   /* Notice and handle the timescale directive. */
 
-`timescale { BEGIN(PPTIMESCALE); }
+^{W}?`timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>.* { process_timescale(yytext); }
 <PPTIMESCALE>\n {
       yylloc.first_line += 1;
@@ -266,28 +266,28 @@ W [ \t\b\f\r]+
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
 
-^`celldefine{W}?.*           {  }
-^`default_nettype{W}?.*      {  }
-^`delay_mode_distributed{W}?.*  {  }
-^`delay_mode_unit{W}?.*      {  }
-^`delay_mode_path{W}?.*      {  }
-^`disable_portfaults{W}?.*   {  }
-^`enable_portfaults{W}?.*    {  }
-^`endcelldefine{W}?.*        {  }
-^`endprotect{W}?.*           {  }
-^`nosuppress_faults{W}?.*    {  }
-^`nounconnected_drive{W}?.*  {  }
-^`protect{W}?.*              {  }
-^`resetall{W}?.*             {  }
-^`suppress_faults{W}?.*      {  }
-^`unconnected_drive{W}?.*    {  }
-^`uselib{W}?.*               {  }
+^{W}?`celldefine{W}?.*           {  }
+^{W}?`default_nettype{W}?.*      {  }
+^{W}?`delay_mode_distributed{W}?.*  {  }
+^{W}?`delay_mode_unit{W}?.*      {  }
+^{W}?`delay_mode_path{W}?.*      {  }
+^{W}?`disable_portfaults{W}?.*   {  }
+^{W}?`enable_portfaults{W}?.*    {  }
+^{W}?`endcelldefine{W}?.*        {  }
+^{W}?`endprotect{W}?.*           {  }
+^{W}?`nosuppress_faults{W}?.*    {  }
+^{W}?`nounconnected_drive{W}?.*  {  }
+^{W}?`protect{W}?.*              {  }
+^{W}?`resetall{W}?.*             {  }
+^{W}?`suppress_faults{W}?.*      {  }
+^{W}?`unconnected_drive{W}?.*    {  }
+^{W}?`uselib{W}?.*               {  }
 
 
   /* These are directives that are not supported by me and should have
      been handled by an external preprocessor such as ivlpp. */
 
-^`define{W}?.* {
+^{W}?`define{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
 	    ": `define not supported. Use an external preprocessor."
 	   << endl;
