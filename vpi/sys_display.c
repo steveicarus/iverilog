@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.69 2004/01/23 23:40:44 steve Exp $"
+#ident "$Id: sys_display.c,v 1.70 2004/02/20 01:53:02 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -630,30 +630,11 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    }
 
 	    if (fsize==-1){
-		  my_mcd_printf(mcd, "%s", value.value.str);
+		  fsize = (vpi_get(vpiSize, argv[idx]) + 7) / 8;
+		  my_mcd_printf(mcd, "%*s", fsize, value.value.str);
 
 	    } else {
 		  char* value_str = value.value.str;
-
-		  if (leading_zero==1){
-			  // Remove leading spaces from the value 
-			  // string *except* if the argument is a 
-			  // constant string... (hey, that's how 
-			  // the commerical guys behave...)
-
-			if (!(is_constant(argv[idx])
-			      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
-			      unsigned int i=0;
-				// Strip away all leading zeros from string
-			      while((i < (strlen(value_str)-1))
-				    && (value_str[i]==' '))
-				    i += 1;
-			      
-			      value_str += i;
-			}
-
-		  }
-
 		  my_mcd_printf(mcd, "%*s", fsize, value_str);
 	    }
 
@@ -1585,6 +1566,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.70  2004/02/20 01:53:02  steve
+ *  Do not strip leading spaces, or expect them either.
+ *
  * Revision 1.69  2004/01/23 23:40:44  steve
  *  Honor default format of numbers.
  *
