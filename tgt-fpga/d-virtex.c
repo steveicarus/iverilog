@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.28 2003/06/30 19:21:21 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.29 2003/07/02 02:58:18 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -246,6 +246,8 @@ static void virtex_or_wide(ivl_net_logic_t net)
 	  case 2:
 	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
 
+	    edif_cellref_pstring(lut, "INIT", "1");
+
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
 	    edif_add_to_joint(jnt, lut, LUT_I0);
 
@@ -255,6 +257,8 @@ static void virtex_or_wide(ivl_net_logic_t net)
 
 	  case 3:
 	    lut = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
+
+	    edif_cellref_pstring(lut, "INIT", "01");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
 	    edif_add_to_joint(jnt, lut, LUT_I0);
@@ -268,6 +272,8 @@ static void virtex_or_wide(ivl_net_logic_t net)
 
 	  case 4:
 	    lut = edif_cellref_create(edf, cell_lut4);
+
+	    edif_cellref_pstring(lut, "INIT", "0001");
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
 	    edif_add_to_joint(jnt, lut, LUT_I0);
@@ -844,6 +850,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.29  2003/07/02 02:58:18  steve
+ *  Remember to set INIT on wide-or trailing luts.
+ *
  * Revision 1.28  2003/06/30 19:21:21  steve
  *  lut3 for 3input wide or.
  *
