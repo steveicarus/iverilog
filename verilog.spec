@@ -1,7 +1,7 @@
 Summary: Icarus Verilog
 Name: verilog
 Version: 0.4
-Release: x
+Release: 1
 Copyright: GPL
 Group: Applications/Engineering
 Source: ftp://icarus.com/pub/eda/verilog/v0.4/verilog-0.4.tar.gz
@@ -16,8 +16,8 @@ Provides: iverilog
 
 %description
 Icarus Verilog is a Verilog compiler that generates a variety of
-engineering formats, including a C++ simulation. It strives to be
-true to the IEEE-1364 standard.
+engineering formats, including simulation. It strives to be true
+to the IEEE-1364 standard.
 
 %prep
 %setup -n verilog-0.4
