@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.15 2001/01/22 20:58:31 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.16 2001/01/23 18:50:26 steve Exp $"
 #endif
 
 /*
@@ -218,6 +218,8 @@ static int sys_dumpall_calltf(char*name)
 
 static void open_dumpfile(const char*path)
 {
+      dump_file = fopen(path, "w");
+
       if (dump_file == 0) {
 	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
 	    return;
@@ -442,6 +444,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.16  2001/01/23 18:50:26  steve
+ *  Forgot to actually *open* the VCD output.
+ *
  * Revision 1.15  2001/01/22 20:58:31  steve
  *  Support default dumpfiles.
  *
