@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.14 2002/05/10 16:00:57 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.15 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -35,6 +35,8 @@ static unsigned   vpip_root_table_cnt = 0;
 
 vpiHandle vpip_make_root_iterator(void)
 {
+      assert(vpip_root_table_ptr);
+      assert(vpip_root_table_cnt);
       return vpip_make_iterator(vpip_root_table_cnt,
 				vpip_root_table_ptr, false);
 }
@@ -136,6 +138,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 		 in this scope. */
 	  case vpiMemory:
 	  case vpiModule:
+	  case vpiNamedEvent:
 	  case vpiNet:
 	  case vpiReg:
 	    return module_iter_subset(code, ref);
@@ -381,6 +384,12 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.15  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.14  2002/05/10 16:00:57  steve
  *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
  *

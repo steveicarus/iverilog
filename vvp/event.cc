@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.5 2002/03/17 03:24:34 steve Exp $"
+#ident "$Id: event.cc,v 1.6 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -91,7 +91,8 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 **  Create an event functor
 **  edge:  compile_event(label, type, argc, argv)
 **  or:    compile_event(label, NULL, argc, argv)
-**  name:  compile_event(label, name, NULL, NULL)
+**
+**  Named events are handled elsewhere.
 */
 
 void compile_event(char*label, char*type,
@@ -108,10 +109,6 @@ void compile_event(char*label, char*type,
 		  edge = vvp_edge_anyedge;
 
 	    assert(argc <= 4 || edge == vvp_edge_none);
-      }
-      
-      if (!argc && type) {
-	    // "type" is the name of the named event
       }
 
       free(type);
@@ -145,7 +142,32 @@ void compile_event(char*label, char*type,
 }
 
 /*
+ * This handles the compile of named events. This functor has no
+ * inputs, it is only accessed by behavioral trigger statements, which
+ * in vvp are %set instructions.
+ */
+void compile_named_event(char*label, char*name)
+{
+      functor_t obj = new event_functor_s(vvp_edge_none);
+
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_define(fdx, obj);
+      define_functor_symbol(label, fdx);
+
+      vpiHandle vpi = vpip_make_named_event(name);
+      vpip_attach_to_current_scope(vpi);
+
+      free(label);
+}
+
+/*
  * $Log: event.cc,v $
+ * Revision 1.6  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.5  2002/03/17 03:24:34  steve
  *  Clean up edge detection code.
  *

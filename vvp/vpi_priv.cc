@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.14 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.15 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -29,6 +29,8 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+
+vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 
 /*
  * When a task is called, this value is set so that vpi_handle can
@@ -157,6 +159,13 @@ static vpiHandle vpi_iterate_global(int type)
 
 vpiHandle vpi_iterate(int type, vpiHandle ref)
 {
+      assert(vpi_mode_flag != VPI_MODE_NONE);
+      if (vpi_mode_flag == VPI_MODE_REGISTER) {
+	    fprintf(stderr, "vpi error: vpi_iterate called during "
+		    "vpi_register_systf. You can't do that!\n");
+	    return 0;
+      }
+	    
       if (ref == 0)
 	    return vpi_iterate_global(type);
 
@@ -190,6 +199,12 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.15  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.14  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *
@@ -219,24 +234,5 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
  *
  * Revision 1.6  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
- *
- * Revision 1.5  2001/06/12 03:53:11  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.4  2001/06/10 16:47:49  steve
- *  support scan of scope from VPI.
- *
- * Revision 1.3  2001/04/03 03:46:14  steve
- *  VPI access time as a decimal string, and
- *  stub vpi access to the scopes.
- *
- * Revision 1.2  2001/03/19 01:55:38  steve
- *  Add support for the vpiReset sim control.
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.10 2002/03/05 05:31:52 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.11 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -130,14 +130,21 @@ void vpip_load_module(const char*name)
 	    return;
       }
 
+      vpi_mode_flag = VPI_MODE_REGISTER;
       vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
       for (unsigned tmp = 0 ;  routines[tmp] ;  tmp += 1)
 	    (routines[tmp])();
-
+      vpi_mode_flag = VPI_MODE_NONE;
 }
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.11  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.10  2002/03/05 05:31:52  steve
  *  Better linker error messages.
  *

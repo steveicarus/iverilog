@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.15 2002/05/09 03:34:31 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.16 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 /*
@@ -237,7 +237,11 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       struct __vpiCallback*cur = cb->handle;
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
       (cur->cb_data.cb_rtn)(&cur->cb_data);
+      vpi_mode_flag = VPI_MODE_NONE;
 
       vpi_free_object(&cur->base);
 }
@@ -297,6 +301,9 @@ void vpiPresim() {
        * Walk the list of register callbacks, executing them and
        * freeing them when done.
        */
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
+
       while (EndOfCompile) {
 	    cur = EndOfCompile;
 	    EndOfCompile = cur->next;
@@ -310,6 +317,8 @@ void vpiPresim() {
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    vpi_free_object(&cur->base);
       }
+
+      vpi_mode_flag = VPI_MODE_NONE;
 }
 
 void vpiPostsim() {
@@ -318,12 +327,17 @@ void vpiPostsim() {
       /*
        * Walk the list of register callbacks
        */
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_ROSYNC;
+
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    vpi_free_object(&cur->base);
       }
+
+      vpi_mode_flag = VPI_MODE_NONE;
 }
 
 static struct __vpiCallback* make_prepost(p_cb_data data)
@@ -420,10 +434,15 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 			fprintf(stderr, "vpi_callback: value format %d not supported\n", cur->cb_data.value->format);
 		  }
 	    }
+
+	    assert(vpi_mode_flag == VPI_MODE_NONE);
+	    vpi_mode_flag = VPI_MODE_RWSYNC;
+
 	    cur->cb_data.time->type = vpiSimTime;
 	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 
+	    vpi_mode_flag = VPI_MODE_NONE;
       }
 }
 
@@ -431,6 +450,12 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.16  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.15  2002/05/09 03:34:31  steve
  *  Handle null time and calltf pointers.
  *

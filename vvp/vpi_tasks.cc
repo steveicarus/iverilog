@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.13 2002/05/09 03:34:31 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.14 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 /*
@@ -279,9 +279,13 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf) {
+
+	    assert(vpi_mode_flag == VPI_MODE_NONE);
+	    vpi_mode_flag = VPI_MODE_COMPILETF;
 	    vpip_cur_task = obj;
 	    obj->defn->info.compiletf (obj->defn->info.user_data);
 	    vpip_cur_task = 0;
+	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
       return &obj->base;
@@ -305,8 +309,12 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 
       vpip_cur_task = (struct __vpiSysTaskCall*)ref;
 
-      if (vpip_cur_task->defn->info.calltf)
+      if (vpip_cur_task->defn->info.calltf) {
+	    assert(vpi_mode_flag == VPI_MODE_NONE);
+	    vpi_mode_flag = VPI_MODE_CALLTF;
 	    vpip_cur_task->defn->info.calltf(vpip_cur_task->defn->info.user_data);
+	    vpi_mode_flag = VPI_MODE_NONE;
+      }
 }
 
 /*
@@ -335,6 +343,12 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.14  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.13  2002/05/09 03:34:31  steve
  *  Handle null time and calltf pointers.
  *

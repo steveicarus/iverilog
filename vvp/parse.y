@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.45 2002/03/31 04:06:49 steve Exp $"
+#ident "$Id: parse.y,v 1.46 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -244,7 +244,7 @@ statement
 		{ compile_event($1, $3, $5.cnt, $5.vect); }
 
 	| T_LABEL K_EVENT T_STRING ';'
-		{ compile_event($1, $3, 0, 0); }
+		{ compile_named_event($1, $3); }
 
 	| T_LABEL K_EVENT_OR symbols ';'
 		{ compile_event($1, 0, $3.cnt, $3.vect); }
@@ -550,6 +550,12 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.46  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.45  2002/03/31 04:06:49  steve
  *  Update for newer bison.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.8 2002/05/17 16:13:08 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.9 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 
@@ -150,6 +150,7 @@ typedef struct t_vpi_value {
 #define vpiMemoryWord  30
 #define vpiModule      32
 #define vpiNamedBegin  33
+#define vpiNamedEvent  34
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiReg         48
@@ -312,6 +313,12 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.9  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.8  2002/05/17 16:13:08  steve
  *  Add vpiIndex update.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.41 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: compile.h,v 1.42 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -183,6 +183,7 @@ extern void compile_ufunc(char*label, char*code, unsigned wid,
  */
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
+extern void compile_named_event(char*label, char*type);
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -248,6 +249,12 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.42  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.41  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.34 2002/05/17 04:12:19 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.35 2002/05/18 02:34:11 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -33,6 +33,25 @@
  */
 
 
+/*
+ * The vpi_mode_flag contains the major mode for VPI use. This is used
+ * to generate error messages whe vpi functions are called
+ * incorrectly.
+ */
+enum vpi_mode_t {
+      VPI_MODE_NONE =0,
+	/* The compiler is calling a register function. */
+      VPI_MODE_REGISTER,
+	/* The compiler is calling a compiletf function. */
+      VPI_MODE_COMPILETF,
+	/* The compiler is calling a calltf function. */
+      VPI_MODE_CALLTF,
+	/* We are in the midst of a RWSync callback. */
+      VPI_MODE_RWSYNC,
+	/* We are in a ROSync callback. */
+      VPI_MODE_ROSYNC
+};
+extern vpi_mode_t vpi_mode_flag;
 
 /*
  * This structure is the very base of a vpiHandle. Every handle
@@ -130,6 +149,13 @@ extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_fvector_t vec);
 extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_fvector_t vec);
+
+/*
+ * These methods support the vpi creation of events. The name string
+ * passed in will be saved, so the caller must allocate it (or not
+ * free it) after it is handed to this function.
+ */
+extern vpiHandle vpip_make_named_event(char*name);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -300,6 +326,12 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.35  2002/05/18 02:34:11  steve
+ *  Add vpi support for named events.
+ *
+ *  Add vpi_mode_flag to track the mode of the
+ *  vpi engine. This is for error checking.
+ *
  * Revision 1.34  2002/05/17 04:12:19  steve
  *  Rewire vpiMemory and vpiMemoryWord handles to
  *  support proper iteration of words, and the
