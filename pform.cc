@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.11 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: pform.cc,v 1.12 1999/05/02 23:25:32 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -274,6 +274,13 @@ void pform_make_modgate(const string&type,
 			const vector<PExpr*>&wires,
 			const string&fn, unsigned ln)
 {
+      if (name == "") {
+	    cerr << fn << ":" << ln << ": Instantiation of " << type
+		 << " module requires an instance name." << endl;
+	    error_count += 1;
+	    return;
+      }
+
       PGate*cur = new PGModule(type, name, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
@@ -528,6 +535,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.12  1999/05/02 23:25:32  steve
+ *  Enforce module instance names.
+ *
  * Revision 1.11  1999/04/19 01:59:37  steve
  *  Add memories to the parse and elaboration phases.
  *
