@@ -17,11 +17,105 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.1 2001/05/09 02:53:53 steve Exp $"
+#ident "$Id: resolv.cc,v 1.2 2001/05/12 20:38:06 steve Exp $"
 #endif
 
 # include  "resolv.h"
 # include  "schedule.h"
+
+static void blend(unsigned&val, unsigned&drv0, unsigned drv1,
+		  unsigned inp, unsigned inp0, unsigned inp1)
+{
+      switch (val) {
+	  case 3:
+	    val = inp;
+	    drv0 = inp0;
+	    drv1 = inp1;
+	    break;
+
+	  case 0:
+	    switch (inp) {
+		case 0:
+		  if (drv0 < inp0)
+			drv0 = inp0;
+		  break;
+
+		case 1:
+		  if (drv0 < inp1) {
+			val = 1;
+			drv1 = inp1;
+		  }
+		  break;
+
+		case 2:
+		  if (drv0 < inp1) {
+			val = 2;
+			if (drv0 < inp0)
+			      drv0 = inp0;
+			if (drv1 < inp1)
+			      drv0 = inp1;
+		  }
+		  break;
+	    }
+	    break;
+
+	  case 1:
+	    switch (inp) {
+		case 0:
+		  if (drv1 < inp0) {
+			val = 0;
+			drv1 = inp1;
+		  }
+		  break;
+
+		case 1:
+		  if (drv1 < inp1) {
+			drv1 = inp1;
+		  }
+		  break;
+
+		case 2:
+		  if (drv1 < inp0) {
+			val = 2;
+			if (drv0 < inp0)
+			      drv0 = inp0;
+			if (drv1 < inp1)
+			      drv0 = inp1;
+		  }
+		  break;
+	    }
+	    break;
+
+
+	  case 2:
+	    switch (inp) {
+		case 0:
+		  if (drv1 < inp0) {
+			val = 0;
+			drv0 = inp0;
+			drv1 = inp1;
+		  }
+		  break;
+
+		case 1:
+		  if (drv0 < inp1) {
+			val = 1;
+			drv0 = inp0;
+			drv1 = inp1;
+		  }
+		  break;
+
+		case 2:
+		  if (drv0 < inp0)
+			drv0 = inp0;
+		  if (drv1 < inp1)
+			drv0 = inp1;
+		  break;
+	    }
+	    break;
+
+      }
+}
 
 /*
  * For now, cheat and resolve the values without using the actual
@@ -30,38 +124,27 @@
  */
 void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
-      unsigned in1 = (fp->ival >> 0) & 3;
-      unsigned in2 = (fp->ival >> 2) & 3;
-      unsigned in3 = (fp->ival >> 4) & 3;
-      unsigned in4 = (fp->ival >> 5) & 3;
+      unsigned val = (fp->ival >> 0) & 3;
+      unsigned drv0 = (fp->idrive >> 0) & 7;
+      unsigned drv1 = (fp->idrive >> 3) & 7;
 
-      unsigned val = in1;
-      if (in2 != 3) {
-	    if (val == 3) {
-		  val = in2;
-	    } else if (val != in2) {
-		  val = 2;
-	    } else {
-	    }
-      }
+      blend(val, drv0, drv1,
+	    (fp->ival >> 2) & 3,
+	    (fp->idrive >> 6) & 7,
+	    (fp->idrive >> 9) & 7);
 
-      if (in3 != 3) {
-	    if (val == 3) {
-		  val = in3;
-	    } else if (val != in3) {
-		  val = 2;
-	    } else {
-	    }
-      }
+      blend(val, drv0, drv1,
+	    (fp->ival >> 4) & 3,
+	    (fp->idrive >>12) & 7,
+	    (fp->idrive >>15) & 7);
 
-      if (in4 != 3) {
-	    if (val == 3) {
-		  val = in4;
-	    } else if (val != in4) {
-		  val = 2;
-	    } else {
-	    }
-      }
+      blend(val, drv0, drv1,
+	    (fp->ival >> 6) & 3,
+	    (fp->idrive >>18) & 7,
+	    (fp->idrive >>21) & 7);
+
+      fp->odrive0 = drv0;
+      fp->odrive1 = drv1;
 
 	/* If the output changes, then create a propagation event. */
       if (val != fp->oval) {
@@ -75,6 +158,9 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.2  2001/05/12 20:38:06  steve
+ *  A resolver that understands some simple strengths.
+ *
  * Revision 1.1  2001/05/09 02:53:53  steve
  *  Implement the .resolv syntax.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.21 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: functor.h,v 1.22 2001/05/12 20:38:06 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -116,7 +116,9 @@ struct functor_s {
 	/* These are the input ports. */
       vvp_ipoint_t port[4];
 	/* These are the input values. */
-      unsigned char ival;
+      unsigned ival       : 8;
+	/* Input strengths, for strength aware functors. */
+      unsigned idrive     : 4*6;
 	/* Output value (low bits, and drive1 and drive0 strength. */
       unsigned oval       : 2;
       unsigned odrive0    : 3;
@@ -195,6 +197,14 @@ extern void functor_init(void);
 extern vvp_ipoint_t functor_allocate(unsigned wid);
 
 /*
+ * This function is used by the compile time to initialize the value
+ * of an input, and by the run time to manipulate the bits of the
+ * input in a uniform manner.
+ */
+extern void functor_put_input(functor_t fp, unsigned pp, unsigned val,
+			      unsigned drive0, unsigned drive1);
+
+/*
  * functor_set sets the addressed input to the specified value, and
  * calculates a new output value. If there is any propagation to do,
  * propagation events are created. Propagation calls further
@@ -254,6 +264,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.22  2001/05/12 20:38:06  steve
+ *  A resolver that understands some simple strengths.
+ *
  * Revision 1.21  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

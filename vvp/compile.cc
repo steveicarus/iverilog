@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.62 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.63 2001/05/12 20:38:06 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -257,28 +257,37 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 
 	    if (strcmp(argv[idx].text, "C<0>") == 0) {
 		  free(argv[idx].text);
-		  iobj->ival &= ~(3 << idx*2);
+		  functor_put_input(iobj, idx, 0, 6, 6);
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<pu0>") == 0) {
+		  free(argv[idx].text);
+		  functor_put_input(iobj, idx, 0, 5, 5);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
 		  free(argv[idx].text);
-		  iobj->ival &= ~(3 << idx*2);
-		  iobj->ival |= 1 << idx*2;
+		  functor_put_input(iobj, idx, 1, 6, 6);
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<pu1>") == 0) {
+		  free(argv[idx].text);
+		  functor_put_input(iobj, idx, 1, 5, 5);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<x>") == 0) {
 		  free(argv[idx].text);
-		  iobj->ival &= ~(3 << idx*2);
-		  iobj->ival |= 2 << idx*2;
+		  functor_put_input(iobj, idx, 2, 6, 6);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<z>") == 0) {
 		  free(argv[idx].text);
-		  iobj->ival &= ~(3 << idx*2);
-		  iobj->ival |= 3 << idx*2;
+		  functor_put_input(iobj, idx, 3, 6, 6);
 		  continue;
 	    }
 
@@ -393,7 +402,13 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       obj->breakpoint = 0;
 #endif
 
-      obj->obj = new vvp_resolv_s;
+      if (strcmp(type,"tri") == 0) {
+	    obj->obj = new vvp_resolv_s;
+
+      } else {
+	    fprintf(stderr, "invalid resolver type: %s\n", type);
+	    compile_errors += 1;
+      }
 
 	/* Connect the inputs of this functor to the given symbols. If
 	   there are C<X> inputs, set the ival appropriately. */
@@ -1095,6 +1110,7 @@ void compile_cleanup(void)
 			  res->source);
 		  res->next = resolv_list;
 		  resolv_list = res;
+		  compile_errors += 1;
 	    }
       }
 
@@ -1118,6 +1134,7 @@ void compile_cleanup(void)
 		  free(res->lab);
 		  
 	    } else {
+		  compile_errors += 1;
 		  fprintf(stderr, "unresolved code label: %s\n", res->lab);
 		  res->next = cresolv_list;
 		  cresolv_list = res;
@@ -1141,6 +1158,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.63  2001/05/12 20:38:06  steve
+ *  A resolver that understands some simple strengths.
+ *
  * Revision 1.62  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit

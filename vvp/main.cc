@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.12 2001/05/11 03:26:31 steve Exp $"
+#ident "$Id: main.cc,v 1.13 2001/05/12 20:38:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -90,7 +90,7 @@ int main(int argc, char*argv[])
 	    return compile_errors;
       }
 
-#if defined(HAVE_DEBUG)
+#if defined(WITH_DEBUG)
       if (debug_flag)
 	    breakpoint();
 #endif
@@ -102,6 +102,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.13  2001/05/12 20:38:06  steve
+ *  A resolver that understands some simple strengths.
+ *
  * Revision 1.12  2001/05/11 03:26:31  steve
  *  No entry breakpoint if debug is compiled out.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.19 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: functor.cc,v 1.20 2001/05/12 20:38:06 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -134,6 +134,23 @@ functor_t functor_index(vvp_ipoint_t point)
       return functor_table[point]->table[index1]->table + index0;
 }
 
+void functor_put_input(functor_t fp, unsigned pp, unsigned val,
+		       unsigned drive0, unsigned drive1)
+{
+	/* Change the bits of the input. */
+      static const unsigned char ival_mask[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
+      unsigned char imask = ival_mask[pp];
+      fp->ival = (fp->ival & imask) | ((val & 3) << (2*pp));
+
+	/* change the bits of the drive. */
+      static const unsigned drive_mask[4] = { 0xffffc0, 0xfff03f,
+					      0xfc0fff, 0x03ffff };
+      unsigned dmask = drive_mask[pp];
+      fp->idrive = (fp->idrive & dmask)
+	    | (drive1 << (3+6*pp))
+	    | (drive0 << 6*pp);
+}
+
 static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
 	/* Locate the new output value in the table. */
@@ -245,10 +262,8 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit,
       assert(drive0 <= 8);
       assert(drive1 <= 8);
 
-	/* Change the bits of the input. */
-      static const unsigned char mask_table[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
-      unsigned char mask = mask_table[pp];
-      fp->ival = (fp->ival & mask) | ((bit & 3) << (2*pp));
+	/* Store the value and strengths in the input bits. */
+      functor_put_input(fp, pp, bit, drive0, drive1);
 
       switch (fp->mode) {
 	  case 0:
@@ -339,6 +354,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.20  2001/05/12 20:38:06  steve
+ *  A resolver that understands some simple strengths.
+ *
  * Revision 1.19  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.
