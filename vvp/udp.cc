@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.22 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: udp.cc,v 1.23 2003/09/13 00:59:02 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -31,9 +31,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/*
+ * This method is called when the input of a slice of the UDP
+ * changes. All the slices of the UDP point to this common functor,
+ * that manages the output of the UDP device. The input functors are
+ * all edge_inputs_functors_s objects.
+ */
 void udp_functor_s::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-	// old_ival is set on the way out
+	// Save the input in the ival member of this functor. It will
+	// be read by the propagate method. The old_ival method of the
+	// edge_input_functor (I am that) will be set by propagate.
       put(i, val);
       unsigned char out = udp->propagate(this, i);
 
@@ -93,6 +101,10 @@ enum edge_type_e
   EDGE_any = 0x0f,
 };
 
+/*
+ * This method of the common table object for the UDP calculates the
+ * output based on the new input of the functor calling me.
+ */
 unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
 {
   vvp_ipoint_t base = ipoint_make(uix, 0);
@@ -360,6 +372,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.23  2003/09/13 00:59:02  steve
+ *  Comments.
+ *
  * Revision 1.22  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *
