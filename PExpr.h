@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.45 2000/12/06 06:31:09 steve Exp $"
+#ident "$Id: PExpr.h,v 1.46 2000/12/10 22:01:35 steve Exp $"
 #endif
 
 # include  <string>
@@ -161,6 +161,28 @@ class PEEvent : public PExpr {
     private:
       edge_t type_;
       PExpr *expr_;
+};
+
+/*
+ * This holds a floating point constant in the source.
+ */
+class PEFNumber : public PExpr {
+
+    public:
+      explicit PEFNumber(verireal*vp);
+      ~PEFNumber();
+
+      const verireal& value() const;
+
+	/* The eval_const method as applied to a floating point number
+	   gets the *integer* value of the number. This accounts for
+	   any rounding that is needed to get the value. */
+      virtual verinum* eval_const(const Design*des, const string&path) const;
+
+      virtual void dump(ostream&) const;
+
+    private:
+      verireal*value_;
 };
 
 class PEIdent : public PExpr {
@@ -409,6 +431,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.46  2000/12/10 22:01:35  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.45  2000/12/06 06:31:09  steve
  *  Check lvalue of procedural continuous assign (PR#29)
  *

@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.2 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: verireal.cc,v 1.3 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 # include  "verireal.h"
 # include  <ctype.h>
+# include  <iostream>
 # include  <assert.h>
 
 verireal::verireal()
@@ -90,8 +91,41 @@ verireal::~verireal()
 {
 }
 
+long verireal::as_long(int shift) const
+{
+      long val = mant_;
+      int ex = exp10_ + shift;
+
+      while (ex < 0) {
+	    long mod = val % 10;
+	    val /= 10;
+	    if (mod >= 5)
+		  val += 1;
+
+	    ex += 1;
+      }
+
+      while (ex > 0) {
+	    val *= 10;
+	    ex -= 1;
+      }
+
+      if (sign_)
+	    return -val;
+      else
+	    return val;
+}
+
+ostream& operator<< (ostream&out, const verireal&v)
+{
+      out << (v.sign_? "-" : "+") << v.mant_ << "e" << v.exp10_;
+}
+
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.3  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.2  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

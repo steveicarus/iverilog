@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.20 2000/09/28 03:55:55 steve Exp $"
+#ident "$Id: verinum.cc,v 1.21 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -101,6 +101,25 @@ verinum::verinum(const verinum&that, unsigned nbits)
       has_sign_ = false;
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
+}
+
+verinum::verinum(long that)
+: has_len_(false), has_sign_(true), string_flag_(false)
+{
+      long tmp;
+
+      tmp = that/2;
+      nbits_ = 1;
+      while ((tmp != 0) && (tmp != -1)) {
+	    nbits_ += 1;
+	    tmp /= 2;
+      }
+
+      bits_ = new V[nbits_];
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
+	    bits_[idx] = (that & 1)? V1 : V0;
+	    that /= 2;
+      }
 }
 
 verinum::~verinum()
@@ -531,6 +550,9 @@ verinum operator * (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.21  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.20  2000/09/28 03:55:55  steve
  *  handel, by truncation, verinums that are to long for long integers.
  *

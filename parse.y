@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.111 2000/12/06 06:31:09 steve Exp $"
+#ident "$Id: parse.y,v 1.112 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -368,6 +368,17 @@ delay_value_simple
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
+			$$->set_file(@1.text);
+			$$->set_lineno(@1.first_line);
+		  }
+		}
+	| REALTIME
+		{ verireal*tmp = $1;
+		  if (tmp == 0) {
+			yyerror(@1, "internal error: delay.");
+			$$ = 0;
+		  } else {
+			$$ = new PEFNumber(tmp);
 			$$->set_file(@1.text);
 			$$->set_lineno(@1.first_line);
 		  }

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.12 2000/09/27 18:28:37 steve Exp $"
+#ident "$Id: verinum.h,v 1.13 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 # include  <string>
@@ -41,6 +41,9 @@ class verinum {
       verinum(V, unsigned nbits =1);
       verinum(unsigned long val, unsigned bits);
       verinum(const verinum&);
+
+	// Create a signed number, with an unspecified number of bits.
+      explicit verinum(long val);
 
 	// Copy only the specified number of bits from the
 	// source. Also mark this number as has_len.
@@ -108,6 +111,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.13  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.12  2000/09/27 18:28:37  steve
  *  multiply in parameter expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.63 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.64 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 /*
@@ -126,6 +126,11 @@ void PEEvent::dump(ostream&out) const
       }
       out << *expr_;
 
+}
+
+void PEFNumber::dump(ostream &out) const
+{
+      out << value();
 }
 
 void PENumber::dump(ostream&out) const
@@ -801,6 +806,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.64  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.63  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.30 2000/11/29 05:24:00 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.31 2000/12/10 22:01:35 steve Exp $"
 #endif
 
 
@@ -26,8 +26,11 @@
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
 {
-      cerr << get_line() << ": I do not know how to elaborate expression: "
-	   << *this << endl;
+      cerr << get_line() << ": internal error: I do not know how to elaborate"
+	   << " expression. " << endl;
+      cerr << get_line() << ":               : Expression is: " << *this
+	   << endl;
+      des->errors += 1;
       return 0;
 }
 
@@ -526,6 +529,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.31  2000/12/10 22:01:35  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.30  2000/11/29 05:24:00  steve
  *  synthesis for unary reduction ! and N operators.
  *

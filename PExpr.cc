@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.19 2000/06/30 15:50:20 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.20 2000/12/10 22:01:35 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -116,6 +116,21 @@ PEEvent::edge_t PEEvent::type() const
 PExpr* PEEvent::expr() const
 {
       return expr_;
+}
+
+PEFNumber::PEFNumber(verireal*v)
+: value_(v)
+{
+}
+
+PEFNumber::~PEFNumber()
+{
+      delete value_;
+}
+
+const verireal& PEFNumber::value() const
+{
+      return *value_;
 }
 
 PEIdent::PEIdent(const string&s)
@@ -228,6 +243,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.20  2000/12/10 22:01:35  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.19  2000/06/30 15:50:20  steve
  *  Allow unary operators in constant expressions.
  *

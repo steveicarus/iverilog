@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.15 2000/09/07 22:38:13 steve Exp $"
+#ident "$Id: eval.cc,v 1.16 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -116,6 +116,12 @@ verinum* PEIdent::eval_const(const Design*des, const string&path) const
       return new verinum(eval->value());
 }
 
+verinum* PEFNumber::eval_const(const Design*, const string&) const
+{
+      long val = value_->as_long();
+      return new verinum(val);
+}
+
 verinum* PENumber::eval_const(const Design*, const string&) const
 {
       return new verinum(value());
@@ -163,6 +169,9 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.16  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.15  2000/09/07 22:38:13  steve
  *  Support unary + and - in constants.
  *

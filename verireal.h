@@ -19,15 +19,34 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.h,v 1.2 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: verireal.h,v 1.3 2000/12/10 22:01:36 steve Exp $"
 #endif
 
+class ostream;
+
+/*
+ * This class holds a floating point decimal number. The number is
+ * stored as an integer mantissa and a power of 10. The mantissa is an
+ * integer so that decimal numbers in the source (which are decimal)
+ * can be stored exactly.
+ */
+
 class verireal {
+
+      friend ostream& operator<< (ostream&, const verireal&);
 
     public:
       explicit verireal();
       explicit verireal(const char*text);
       ~verireal();
+
+	/* Return the value of the floating point number as an
+	   integer, rounded as needed. The shift is the power of 10 to
+	   multiply the value before calculating the result. So for
+	   example if the value is 2.5 and shift == 1, the result
+	   is 25. */
+      long as_long(int shift =0) const;
+
 
     private:
       bool sign_;
@@ -35,8 +54,13 @@ class verireal {
       signed int exp10_;
 };
 
+extern ostream& operator<< (ostream&, const verireal&);
+
 /*
  * $Log: verireal.h,v $
+ * Revision 1.3  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.2  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.200 2000/12/10 06:41:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.201 2000/12/10 22:01:36 steve Exp $"
 #endif
 
 /*
@@ -1537,6 +1537,24 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
+	/* Catch the special case that the delay is given as a
+	   floating point number. In this case, we need to scale the
+	   delay to the units of the design. */
+
+      if (const PEFNumber*fn = dynamic_cast<const PEFNumber*>(delay_)) {
+	    int shift = scope->time_unit() - des->get_precision();
+
+	    long delay = fn->value().as_long(shift);
+	    if (delay < 0)
+		  delay = 0;
+
+	    if (statement_)
+		  return new NetPDelay(delay, statement_->elaborate(des, path));
+	    else
+		  return new NetPDelay(delay, 0);
+
+      }
+
       verinum*num = delay_->eval_const(des, path);
       if (num == 0) {
 	      /* Ah, the delay is not constant. OK, elaborate the
@@ -2336,6 +2354,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.201  2000/12/10 22:01:36  steve
+ *  Support decimal constants in behavioral delays.
+ *
  * Revision 1.200  2000/12/10 06:41:59  steve
  *  Support delays on continuous assignment from idents. (PR#40)
  *
