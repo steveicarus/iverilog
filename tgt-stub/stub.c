@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.101 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: stub.c,v 1.102 2005/01/28 05:36:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -331,6 +331,32 @@ static void show_lpm_concat(ivl_lpm_t net)
       }
 }
 
+/*
+ * The LPM_MULT node has a Q output and two data inputs. The width of
+ * the Q output must be the width of the node itself.
+ */
+static void show_lpm_mult(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_MULT %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s <width=%u>\n",
+	      ivl_nexus_name(ivl_lpm_data(net,0)),
+	      width_of_nexus(ivl_lpm_data(net,0)));
+      fprintf(out, "    B: %s <width=%u>\n",
+	      ivl_nexus_name(ivl_lpm_data(net,1)),
+	      width_of_nexus(ivl_lpm_data(net,1)));
+
+      if (width != width_of_nexus(ivl_lpm_q(net,0))) {
+	    fprintf(out, "    ERROR: Width of Q is %u, not %u\n",
+		    width_of_nexus(ivl_lpm_q(net,0)), width);
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm(ivl_lpm_t net)
 {
       unsigned idx;
@@ -468,24 +494,9 @@ static void show_lpm(ivl_lpm_t net)
 		break;
 	  }
 
-	  case IVL_LPM_MULT: {
-		fprintf(out, "  LPM_MULT %s: <width=%u>\n",
-			ivl_lpm_basename(net), width);
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
-		      fprintf(out, "    Data B %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		break;
-	  }
+	  case IVL_LPM_MULT:
+	    show_lpm_mult(net);
+	    break;
 
 	  case IVL_LPM_MUX: {
 		unsigned sdx;
@@ -937,6 +948,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.102  2005/01/28 05:36:18  steve
+ *  Show the lpm_mult device.
+ *
  * Revision 1.101  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT
