@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.8 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: d-generic.c,v 1.9 2001/09/16 01:48:16 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -496,6 +496,7 @@ static void generic_show_add(ivl_lpm_t net)
 const struct device_s d_generic = {
       generic_show_header,
       generic_show_footer,
+      0, /* show_pad not implemented */
       generic_show_logic,
       generic_show_dff,
       generic_show_cmp_eq,
@@ -507,6 +508,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.9  2001/09/16 01:48:16  steve
+ *  Suppor the PAD attribute on signals.
+ *
  * Revision 1.8  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: device.h,v 1.6 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: device.h,v 1.7 2001/09/16 01:48:16 steve Exp $"
 
 # include  <ivl_target.h>
 
@@ -39,6 +39,8 @@ struct device_s {
 	/* These methods draw leading and trailing format text. */
       void (*show_header)(ivl_design_t des);
       void (*show_footer)(ivl_design_t des);
+	/* Draw pads connected to the specified signal. */
+      void (*show_pad)(ivl_signal_t sig, const char*str);
 	/* Draw basic logic devices. */
       void (*show_logic)(ivl_net_logic_t net);
 	/* This method emits a D type Flip-Flop */
@@ -64,6 +66,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.7  2001/09/16 01:48:16  steve
+ *  Suppor the PAD attribute on signals.
+ *
  * Revision 1.6  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.

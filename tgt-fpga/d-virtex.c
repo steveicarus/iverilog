@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.8 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.9 2001/09/16 01:48:16 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -81,6 +81,17 @@ static const char*virtex_library_text =
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
+"      (cell IBUF (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port I (direction INPUT)))))\n"
+"      (cell IPAD (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port IPAD (direction OUTPUT)))))\n"
 "      (cell LUT2 (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -121,6 +132,17 @@ static const char*virtex_library_text =
 "                 (port S (direction INPUT))\n"
 "                 (port DI (direction INPUT))\n"
 "                 (port CI (direction INPUT)))))\n"
+"      (cell OBUF (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port I (direction INPUT)))))\n"
+"      (cell OPAD (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port OPAD (direction INPUT)))))\n"
 "      (cell VCC (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -139,6 +161,87 @@ static const char*virtex_library_text =
 static void edif_show_header(ivl_design_t des)
 {
       edif_show_header_generic(des, virtex_library_text);
+}
+
+static void edif_show_virtex_pad(ivl_signal_t sig, const char*str)
+{
+      unsigned idx;
+      unsigned*pins;
+      char jbuf[1024];
+
+      pins = calloc(ivl_signal_pins(sig), sizeof(unsigned));
+
+      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
+	    char*tmp;
+	    pins[idx] = strtoul(str, &tmp, 10);
+	    switch (*tmp) {
+		case ',':
+		  tmp += 1;
+		  break;
+		case 0:
+		  break;
+		default:
+		  assert(0);
+	    }
+
+	    str = tmp;
+      }
+
+      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
+
+	    edif_uref += 1;
+
+	    switch (ivl_signal_port(sig)) {
+		case IVL_SIP_INPUT:
+		  fprintf(xnf, "(instance U%uPAD"
+			  " (viewRef net (cellRef IPAD (libraryRef VIRTEX)))",
+			  edif_uref);
+		  if (pins[idx] != 0)
+			fprintf(xnf, " (property LOC (string \"P%u\"))",
+				pins[idx]); 
+		  fprintf(xnf, ")\n");
+
+		  fprintf(xnf, "(instance U%u"
+			  " (viewRef net "
+			  " (cellRef IBUF (libraryRef VIRTEX))))\n",
+			  edif_uref);
+		  fprintf(xnf, "(net U%uN (joined"
+			  " (portRef IPAD (instanceRef U%uPAD))"
+			  " (portRef I (instanceRef U%u))))\n",
+			  edif_uref, edif_uref, edif_uref);
+
+		  sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+		  edif_set_nexus_joint(ivl_signal_pin(sig, idx), jbuf);
+		  break;
+
+		case IVL_SIP_OUTPUT:
+		  fprintf(xnf, "(instance U%uPAD"
+			  " (viewRef net (cellRef OPAD (libraryRef VIRTEX)))",
+			  edif_uref);
+		  if (pins[idx] != 0)
+			fprintf(xnf, " (property LOC (string \"P%u\"))",
+				pins[idx]); 
+		  fprintf(xnf, ")\n");
+
+		  fprintf(xnf, "(instance U%u"
+			  " (viewRef net "
+			  " (cellRef OBUF (libraryRef VIRTEX))))\n",
+			  edif_uref);
+		  fprintf(xnf, "(net U%uN (joined"
+			  " (portRef OPAD (instanceRef U%uPAD))"
+			  " (portRef O (instanceRef U%u))))\n",
+			  edif_uref, edif_uref, edif_uref);
+
+		  sprintf(jbuf, "(portRef I (instanceRef U%u))", edif_uref);
+		  edif_set_nexus_joint(ivl_signal_pin(sig, idx), jbuf);
+		  break;
+
+		default:
+		  assert(0);
+	    }
+      }
+
+      free(pins);
 }
 
 static void edif_show_lut2(const char*name, unsigned uref,
@@ -889,6 +992,7 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 const struct device_s d_virtex_edif = {
       edif_show_header,
       edif_show_footer,
+      edif_show_virtex_pad,
       edif_show_virtex_logic,
       edif_show_generic_dff,
       edif_show_virtex_eq,
@@ -900,6 +1004,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.9  2001/09/16 01:48:16  steve
+ *  Suppor the PAD attribute on signals.
+ *
  * Revision 1.8  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

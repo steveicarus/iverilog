@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic-edif.c,v 1.6 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.7 2001/09/16 01:48:16 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -68,8 +68,11 @@ static void show_root_ports_edif(ivl_scope_t root)
       for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    ivl_signal_t sig = ivl_scope_sig(root, idx);
 	    const char*use_name;
-
 	    const char*dir = 0;
+
+	    if (ivl_signal_attr(sig, "PAD") != 0)
+		  continue;
+
 	    switch (ivl_signal_port(sig)) {
 		case IVL_SIP_NONE:
 		  continue;
@@ -383,6 +386,7 @@ void edif_show_generic_dff(ivl_lpm_t net)
 const struct device_s d_generic_edif = {
       edif_show_header,
       edif_show_footer,
+      0, /* draw_pad not implemented */
       edif_show_logic,
       edif_show_generic_dff,
       0,
@@ -394,6 +398,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.7  2001/09/16 01:48:16  steve
+ *  Suppor the PAD attribute on signals.
+ *
  * Revision 1.6  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: fpga.c,v 1.4 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: fpga.c,v 1.5 2001/09/16 01:48:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,12 +44,32 @@ static int show_process(ivl_process_t net, void*x)
       return 0;
 }
 
+static void show_pads(ivl_scope_t scope)
+{
+      unsigned idx;
+
+      if (device->show_pad == 0)
+	    return;
+
+      for (idx = 0 ;  idx < ivl_scope_sigs(scope) ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(scope, idx);
+	    const char*pad;
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    pad = ivl_signal_attr(sig, "PAD");
+	    if (pad == 0)
+		  continue;
+
+	    device->show_pad(sig, pad);
+      }
+}
+
 /*
  * This is the main entry point that ivl uses to invoke me, the code
  * generator.
  */
-
-
 int target_design(ivl_design_t des)
 {
       ivl_scope_t root = ivl_design_root(des);
@@ -85,6 +105,10 @@ int target_design(ivl_design_t des)
 	   that it is not supported. */
       ivl_design_process(des, show_process, 0);
 
+	/* Get the pads from the design, and draw them to connect to
+	   the associated signals. */
+      show_pads(root);
+
 	/* Scan the scopes, looking for gates to draw into the output
 	   netlist. */
       show_scope_gates(root, 0);
@@ -99,6 +123,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.5  2001/09/16 01:48:16  steve
+ *  Suppor the PAD attribute on signals.
+ *
  * Revision 1.4  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.
