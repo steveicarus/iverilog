@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: device.h,v 1.5 2001/09/01 04:30:44 steve Exp $"
+#ident "$Id: device.h,v 1.6 2001/09/02 21:33:07 steve Exp $"
 
 # include  <ivl_target.h>
 
@@ -36,6 +36,9 @@
 typedef const struct device_s* device_t;
 
 struct device_s {
+	/* These methods draw leading and trailing format text. */
+      void (*show_header)(ivl_design_t des);
+      void (*show_footer)(ivl_design_t des);
 	/* Draw basic logic devices. */
       void (*show_logic)(ivl_net_logic_t net);
 	/* This method emits a D type Flip-Flop */
@@ -49,9 +52,24 @@ struct device_s {
       void (*show_add)(ivl_lpm_t net);
 };
 
+/*
+ * Return the device_t cookie given the name of the architecture. If
+ * the device is not found, return 0.
+ *
+ * This function is used if the user specifies the archetecture
+ * explicitly, with the -parch=name flag.
+ */
+extern device_t device_from_arch(const char*arch);
+
 
 /*
  * $Log: device.h,v $
+ * Revision 1.6  2001/09/02 21:33:07  steve
+ *  Rearrange the XNF code generator to be generic-xnf
+ *  so that non-XNF code generation is also possible.
+ *
+ *  Start into the virtex EDIF output driver.
+ *
  * Revision 1.5  2001/09/01 04:30:44  steve
  *  Generic ADD code.
  *

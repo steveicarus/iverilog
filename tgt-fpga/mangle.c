@@ -16,20 +16,20 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: mangle.c,v 1.2 2001/08/30 04:31:05 steve Exp $"
+#ident "$Id: mangle.c,v 1.3 2001/09/02 21:33:07 steve Exp $"
 
 
 # include  "fpga_priv.h"
 # include  <string.h>
 # include  <malloc.h>
 
-static size_t mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
+static size_t xnf_mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
 {
       unsigned cnt = 0;
       ivl_scope_t parent = ivl_scope_parent(net);
 
       if (parent) {
-	    cnt = mangle_scope_name(parent, buf, nbuf);
+	    cnt = xnf_mangle_scope_name(parent, buf, nbuf);
 	    buf += cnt;
 	    nbuf -= cnt;
 	    *buf++ = '/';
@@ -43,16 +43,16 @@ static size_t mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
       return cnt;
 }
 
-void mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf)
+void xnf_mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf)
 {
-      size_t cnt = mangle_scope_name(ivl_logic_scope(net), buf, nbuf);
+      size_t cnt = xnf_mangle_scope_name(ivl_logic_scope(net), buf, nbuf);
       buf[cnt++] = '/';
       strcpy(buf+cnt, ivl_logic_basename(net));
 }
 
-void mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf)
+void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf)
 {
-      size_t cnt = mangle_scope_name(ivl_lpm_scope(net), buf, nbuf);
+      size_t cnt = xnf_mangle_scope_name(ivl_lpm_scope(net), buf, nbuf);
       buf[cnt++] = '/';
       strcpy(buf+cnt, ivl_lpm_basename(net));
 }
@@ -67,7 +67,7 @@ void mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf)
  * nexus by using the private pointer. Every nexus is used at least
  * twice, so this cuts the mangling time in half at least.
  */
-const char* mangle_nexus_name(ivl_nexus_t net)
+const char* xnf_mangle_nexus_name(ivl_nexus_t net)
 {
       char*name = ivl_nexus_get_private(net);
       char*cp;
@@ -94,6 +94,12 @@ const char* mangle_nexus_name(ivl_nexus_t net)
 
 /*
  * $Log: mangle.c,v $
+ * Revision 1.3  2001/09/02 21:33:07  steve
+ *  Rearrange the XNF code generator to be generic-xnf
+ *  so that non-XNF code generation is also possible.
+ *
+ *  Start into the virtex EDIF output driver.
+ *
  * Revision 1.2  2001/08/30 04:31:05  steve
  *  Mangle nexus names.
  *

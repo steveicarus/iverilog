@@ -16,30 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.5 2001/09/01 04:30:44 steve Exp $"
+#ident "$Id: gates.c,v 1.6 2001/09/02 21:33:07 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
 # include  <assert.h>
-
-void draw_pin(ivl_nexus_t nex, const char*nam, char dir)
-{
-      const char*use_name = nam;
-      const char*nex_name = mangle_nexus_name(nex);
-      int invert = 0;
-
-      if (use_name[0] == '~') {
-	    invert = 1;
-	    use_name += 1;
-      }
-
-      fprintf(xnf, "    PIN, %s, %c, %s", use_name, dir, nex_name);
-
-      if (invert)
-	    fprintf(xnf, ",,INV");
-
-      fprintf(xnf, "\n");
-}
 
 static void show_gate_logic(ivl_net_logic_t net)
 {
@@ -92,6 +73,12 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.6  2001/09/02 21:33:07  steve
+ *  Rearrange the XNF code generator to be generic-xnf
+ *  so that non-XNF code generation is also possible.
+ *
+ *  Start into the virtex EDIF output driver.
+ *
  * Revision 1.5  2001/09/01 04:30:44  steve
  *  Generic ADD code.
  *

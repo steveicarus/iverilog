@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.7 2001/09/01 04:30:44 steve Exp $"
+#ident "$Id: d-generic.c,v 1.8 2001/09/02 21:33:07 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -28,25 +28,113 @@
  * logic.
  */
 
+static void xnf_draw_pin(ivl_nexus_t nex, const char*nam, char dir)
+{
+      const char*use_name = nam;
+      const char*nex_name = xnf_mangle_nexus_name(nex);
+      int invert = 0;
+
+      if (use_name[0] == '~') {
+	    invert = 1;
+	    use_name += 1;
+      }
+
+      fprintf(xnf, "    PIN, %s, %c, %s", use_name, dir, nex_name);
+
+      if (invert)
+	    fprintf(xnf, ",,INV");
+
+      fprintf(xnf, "\n");
+}
+
+static void show_root_ports_xnf(ivl_scope_t root)
+{
+      unsigned cnt = ivl_scope_sigs(root);
+      unsigned idx;
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(root, idx);
+	    const char*use_name;
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    use_name = ivl_signal_basename(sig);
+	    if (ivl_signal_pins(sig) == 1) {
+		  ivl_nexus_t nex = ivl_signal_pin(sig, 0);
+		  fprintf(xnf, "SIG, %s, PIN=%s\n",
+			  xnf_mangle_nexus_name(nex), use_name);
+
+	    } else {
+		  unsigned pin;
+
+		  for (pin = 0 ; pin < ivl_signal_pins(sig); pin += 1) {
+			ivl_nexus_t nex = ivl_signal_pin(sig, pin);
+			fprintf(xnf, "SIG, %s, PIN=%s%u\n",
+				xnf_mangle_nexus_name(nex), use_name,
+				pin);
+		  }
+	    }
+      }
+}
+
+static void show_design_consts_xnf(ivl_design_t des)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_design_consts(des) ;  idx += 1) {
+	    unsigned pin;
+	    ivl_net_const_t net = ivl_design_const(des, idx);
+	    const char*val = ivl_const_bits(net);
+
+	    for (pin = 0 ;  pin < ivl_const_pins(net) ;  pin += 1) {
+		  ivl_nexus_t nex = ivl_const_pin(net, pin);
+		  fprintf(xnf, "PWR,%c,%s\n", val[pin],
+			  xnf_mangle_nexus_name(nex));
+	    }
+      }
+}
+
+static void generic_show_header(ivl_design_t des)
+{
+      ivl_scope_t root = ivl_design_root(des);
+
+      fprintf(xnf, "LCANET,6\n");
+      fprintf(xnf, "PROG,iverilog,$Name:  $,\"Icarus Verilog/fpga.tgt\"\n");
+
+      if (part && (part[0]!=0)) {
+	    fprintf(xnf, "PART,%s\n", part);
+      }
+
+      show_root_ports_xnf(root);
+}
+
+static void generic_show_footer(ivl_design_t des)
+{
+      show_design_consts_xnf(des);
+      fprintf(xnf, "EOF\n");
+}
+
+
 static void generic_show_logic(ivl_net_logic_t net)
 {
       char name[1024];
       ivl_nexus_t nex;
       unsigned idx;
 
-      mangle_logic_name(net, name, sizeof name);
+      xnf_mangle_logic_name(net, name, sizeof name);
 
       switch (ivl_logic_type(net)) {
 
 	  case IVL_LO_AND:
 	    fprintf(xnf, "SYM, %s, AND, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -55,21 +143,21 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "SYM, %s, BUF, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
-	    draw_pin(nex, "I", 'I');
+	    xnf_draw_pin(nex, "I", 'I');
 	    fprintf(xnf, "END\n");
 	    break;
 
 	  case IVL_LO_NAND:
 	    fprintf(xnf, "SYM, %s, NAND, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -77,12 +165,12 @@ static void generic_show_logic(ivl_net_logic_t net)
 	  case IVL_LO_NOR:
 	    fprintf(xnf, "SYM, %s, NOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -91,21 +179,21 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "SYM, %s, INV, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
-	    draw_pin(nex, "I", 'I');
+	    xnf_draw_pin(nex, "I", 'I');
 	    fprintf(xnf, "END\n");
 	    break;
 
 	  case IVL_LO_OR:
 	    fprintf(xnf, "SYM, %s, OR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -113,12 +201,12 @@ static void generic_show_logic(ivl_net_logic_t net)
 	  case IVL_LO_XOR:
 	    fprintf(xnf, "SYM, %s, XOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -126,12 +214,12 @@ static void generic_show_logic(ivl_net_logic_t net)
 	  case IVL_LO_XNOR:
 	    fprintf(xnf, "SYM, %s, XNOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
 		  char ipin[32];
 		  nex = ivl_logic_pin(net, idx);
 		  sprintf(ipin, "I%u", idx-1);
-		  draw_pin(nex, ipin, 'I');
+		  xnf_draw_pin(nex, ipin, 'I');
 	    }
 	    fprintf(xnf, "END\n");
 	    break;
@@ -139,22 +227,22 @@ static void generic_show_logic(ivl_net_logic_t net)
 	  case IVL_LO_BUFIF0:
 	    fprintf(xnf, "SYM, %s, TBUF, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
-	    draw_pin(nex, "I", 'I');
+	    xnf_draw_pin(nex, "I", 'I');
 	    nex = ivl_logic_pin(net, 2);
-	    draw_pin(nex, "~T", 'I');
+	    xnf_draw_pin(nex, "~T", 'I');
 	    fprintf(xnf, "END\n");
 	    break;
 
 	  case IVL_LO_BUFIF1:
 	    fprintf(xnf, "SYM, %s, TBUF, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
-	    draw_pin(nex, "I", 'I');
+	    xnf_draw_pin(nex, "I", 'I');
 	    nex = ivl_logic_pin(net, 2);
-	    draw_pin(nex, "T", 'I');
+	    xnf_draw_pin(nex, "T", 'I');
 	    fprintf(xnf, "END\n");
 	    break;
 
@@ -171,21 +259,21 @@ static void generic_show_dff(ivl_lpm_t net)
       char name[1024];
       ivl_nexus_t nex;
 
-      mangle_lpm_name(net, name, sizeof name);
+      xnf_mangle_lpm_name(net, name, sizeof name);
 
       fprintf(xnf, "SYM, %s, DFF, LIBVER=2.0.0\n", name);
 
       nex = ivl_lpm_q(net, 0);
-      draw_pin(nex, "Q", 'O');
+      xnf_draw_pin(nex, "Q", 'O');
 
       nex = ivl_lpm_data(net, 0);
-      draw_pin(nex, "D", 'I');
+      xnf_draw_pin(nex, "D", 'I');
 
       nex = ivl_lpm_clk(net);
-      draw_pin(nex, "C", 'I');
+      xnf_draw_pin(nex, "C", 'I');
 
       if ((nex = ivl_lpm_enable(net)))
-	    draw_pin(nex, "CE", 'I');
+	    xnf_draw_pin(nex, "CE", 'I');
 
       fprintf(xnf, "END\n");
 }
@@ -204,7 +292,7 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
 	/* Make this many single pair comparators. */
       unsigned seqn = ivl_lpm_width(net) % 2;
 
-      mangle_lpm_name(net, name, sizeof name);
+      xnf_mangle_lpm_name(net, name, sizeof name);
 
       for (idx = 0 ;  idx < deqn ;  idx += 1) {
 	    fprintf(xnf, "SYM, %s/CD%u, EQN, "
@@ -214,14 +302,14 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
 	    fprintf(xnf, "    PIN, O, O, %s/CDO%u\n", name, idx);
 
 	    nex = ivl_lpm_data(net, 2*idx);
-	    draw_pin(nex, "I0", 'I');
+	    xnf_draw_pin(nex, "I0", 'I');
 	    nex = ivl_lpm_datab(net, 2*idx);
-	    draw_pin(nex, "I1", 'I');
+	    xnf_draw_pin(nex, "I1", 'I');
 
 	    nex = ivl_lpm_data(net, 2*idx+1);
-	    draw_pin(nex, "I2", 'I');
+	    xnf_draw_pin(nex, "I2", 'I');
 	    nex = ivl_lpm_datab(net, 2*idx+1);
-	    draw_pin(nex, "I3", 'I');
+	    xnf_draw_pin(nex, "I3", 'I');
 
 	    fprintf(xnf, "END\n");
       }
@@ -232,10 +320,10 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
 	    fprintf(xnf, "    PIN, O, O, %s/CTO\n", name);
 
 	    nex = ivl_lpm_data(net, 2*deqn);
-	    draw_pin(nex, "I0", 'I');
+	    xnf_draw_pin(nex, "I0", 'I');
 
 	    nex = ivl_lpm_datab(net, 2*deqn);
-	    draw_pin(nex, "I1", 'I');
+	    xnf_draw_pin(nex, "I1", 'I');
 
 	    fprintf(xnf, "END\n");
       }
@@ -246,7 +334,7 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
 	    fprintf(xnf, "SYM, %s/OUT, NAND, LIBVER=2.0.0\n", name);
 
       nex = ivl_lpm_q(net, 0);
-      draw_pin(nex, "O", 'O');
+      xnf_draw_pin(nex, "O", 'O');
 
       for (idx = 0 ;  idx < deqn ;  idx += 1)
 	    fprintf(xnf, "    PIN, I%u, I, %s/CDO%u\n", idx, name, idx);
@@ -274,7 +362,7 @@ static void generic_show_mux(ivl_lpm_t net)
       ivl_nexus_t nex, sel;
       unsigned idx;
 
-      mangle_lpm_name(net, name, sizeof name);
+      xnf_mangle_lpm_name(net, name, sizeof name);
 
 	/* Access the single select bit. This is common to the whole
 	   width of the mux. */
@@ -287,15 +375,15 @@ static void generic_show_mux(ivl_lpm_t net)
 		    name, idx);
 
 	    nex = ivl_lpm_q(net, idx);
-	    draw_pin(nex, "O", 'O');
+	    xnf_draw_pin(nex, "O", 'O');
 
 	    nex = ivl_lpm_data2(net, 0, idx);
-	    draw_pin(nex, "I0", 'I');
+	    xnf_draw_pin(nex, "I0", 'I');
 
 	    nex = ivl_lpm_data2(net, 1, idx);
-	    draw_pin(nex, "I1", 'I');
+	    xnf_draw_pin(nex, "I1", 'I');
 
-	    draw_pin(sel, "I2", 'I');
+	    xnf_draw_pin(sel, "I2", 'I');
 
 	    fprintf(xnf, "END\n");
       }
@@ -312,7 +400,7 @@ static void generic_show_add(ivl_lpm_t net)
       ivl_nexus_t nex;
       unsigned idx, nadd4, tail;
 
-      mangle_lpm_name(net, name, sizeof name);
+      xnf_mangle_lpm_name(net, name, sizeof name);
 
 	/* Make this many ADD4 devices. */
       nadd4 = ivl_lpm_width(net) / 4;
@@ -325,40 +413,40 @@ static void generic_show_add(ivl_lpm_t net)
 		  fprintf(xnf, "    PIN, CI, I, %s/CO%u\n", name, idx-1);
 
 	    nex = ivl_lpm_q(net, idx*4+0);
-	    draw_pin(nex, "S0", 'O');
+	    xnf_draw_pin(nex, "S0", 'O');
 
 	    nex = ivl_lpm_q(net, idx*4+1);
-	    draw_pin(nex, "S1", 'O');
+	    xnf_draw_pin(nex, "S1", 'O');
 
 	    nex = ivl_lpm_q(net, idx*4+2);
-	    draw_pin(nex, "S2", 'O');
+	    xnf_draw_pin(nex, "S2", 'O');
 
 	    nex = ivl_lpm_q(net, idx*4+3);
-	    draw_pin(nex, "S3", 'O');
+	    xnf_draw_pin(nex, "S3", 'O');
 
 	    nex = ivl_lpm_data(net, idx*4+0);
-	    draw_pin(nex, "A0", 'I');
+	    xnf_draw_pin(nex, "A0", 'I');
 
 	    nex = ivl_lpm_data(net, idx*4+1);
-	    draw_pin(nex, "A1", 'I');
+	    xnf_draw_pin(nex, "A1", 'I');
 
 	    nex = ivl_lpm_data(net, idx*4+2);
-	    draw_pin(nex, "A2", 'I');
+	    xnf_draw_pin(nex, "A2", 'I');
 
 	    nex = ivl_lpm_data(net, idx*4+3);
-	    draw_pin(nex, "A3", 'I');
+	    xnf_draw_pin(nex, "A3", 'I');
 
 	    nex = ivl_lpm_datab(net, idx*4+0);
-	    draw_pin(nex, "B0", 'I');
+	    xnf_draw_pin(nex, "B0", 'I');
 
 	    nex = ivl_lpm_datab(net, idx*4+1);
-	    draw_pin(nex, "B1", 'I');
+	    xnf_draw_pin(nex, "B1", 'I');
 
 	    nex = ivl_lpm_datab(net, idx*4+2);
-	    draw_pin(nex, "B2", 'I');
+	    xnf_draw_pin(nex, "B2", 'I');
 
 	    nex = ivl_lpm_datab(net, idx*4+3);
-	    draw_pin(nex, "B3", 'I');
+	    xnf_draw_pin(nex, "B3", 'I');
 
 	    if ((idx*4+4) < ivl_lpm_width(net))
 		  fprintf(xnf, "    PIN, CO, O, %s/CO%u\n", name, idx);
@@ -374,31 +462,31 @@ static void generic_show_add(ivl_lpm_t net)
 	    switch (tail) {
 		case 3:
 		  nex = ivl_lpm_data(net, nadd4*4+2);
-		  draw_pin(nex, "A2", 'I');
+		  xnf_draw_pin(nex, "A2", 'I');
 
 		  nex = ivl_lpm_datab(net, nadd4*4+2);
-		  draw_pin(nex, "B2", 'I');
+		  xnf_draw_pin(nex, "B2", 'I');
 
 		  nex = ivl_lpm_q(net, nadd4*4+2);
-		  draw_pin(nex, "S2", 'O');
+		  xnf_draw_pin(nex, "S2", 'O');
 		case 2:
 		  nex = ivl_lpm_data(net, nadd4*4+1);
-		  draw_pin(nex, "A1", 'I');
+		  xnf_draw_pin(nex, "A1", 'I');
 
 		  nex = ivl_lpm_datab(net, nadd4*4+1);
-		  draw_pin(nex, "B1", 'I');
+		  xnf_draw_pin(nex, "B1", 'I');
 
 		  nex = ivl_lpm_q(net, nadd4*4+1);
-		  draw_pin(nex, "S1", 'O');
+		  xnf_draw_pin(nex, "S1", 'O');
 		case 1:
 		  nex = ivl_lpm_data(net, nadd4*4+0);
-		  draw_pin(nex, "A0", 'I');
+		  xnf_draw_pin(nex, "A0", 'I');
 
 		  nex = ivl_lpm_datab(net, nadd4*4+0);
-		  draw_pin(nex, "B0", 'I');
+		  xnf_draw_pin(nex, "B0", 'I');
 
 		  nex = ivl_lpm_q(net, nadd4*4+0);
-		  draw_pin(nex, "S0", 'O');
+		  xnf_draw_pin(nex, "S0", 'O');
 	    }
 
 	    fprintf(xnf, "END\n");
@@ -406,6 +494,8 @@ static void generic_show_add(ivl_lpm_t net)
 }
 
 const struct device_s d_generic = {
+      generic_show_header,
+      generic_show_footer,
       generic_show_logic,
       generic_show_dff,
       generic_show_cmp_eq,
@@ -417,6 +507,12 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.8  2001/09/02 21:33:07  steve
+ *  Rearrange the XNF code generator to be generic-xnf
+ *  so that non-XNF code generation is also possible.
+ *
+ *  Start into the virtex EDIF output driver.
+ *
  * Revision 1.7  2001/09/01 04:30:44  steve
  *  Generic ADD code.
  *

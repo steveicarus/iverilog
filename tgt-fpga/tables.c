@@ -1,5 +1,3 @@
-#ifndef __fpga_priv_H
-#define __fpga_priv_H
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
@@ -18,44 +16,48 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: fpga_priv.h,v 1.3 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: tables.c,v 1.1 2001/09/02 21:33:07 steve Exp $"
 
-# include  <stdio.h>
-# include  "device.h"
+# include  "fpga_priv.h"
+# include  <string.h>
+# include  <assert.h>
 
-/* This is the opened xnf file descriptor. It is the output that this
-   code generator writes to, whether the format is XNF or EDIF. */
-extern FILE*xnf;
-
-extern int show_scope_gates(ivl_scope_t net, void*x);
+extern const struct device_s d_generic;
+extern const struct device_s d_generic_edif;
 
 
-extern device_t device;
+const struct device_table_s {
+      const char*name;
+      device_t driver;
+} device_table[] = {
+      { "generic-edif", &d_generic_edif },
+      { "generic-xnf",  &d_generic },
+      { "virtex",       &d_generic_edif },
+      { 0, 0 }
+};
 
-extern const char*part;
-extern const char*arch;
+device_t device_from_arch(const char*arch)
+{
+      unsigned idx;
+
+      assert(arch);
+
+      for (idx = 0 ;  device_table[idx].name ;  idx += 1) {
+	    if (strcmp(arch, device_table[idx].name) == 0)
+		  return device_table[idx].driver;
+
+      }
+
+      return 0;
+}
 
 /*
- * These are mangle functions.
- */
-extern void xnf_mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf);
-extern void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
-
-extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
-
-/*
- * $Log: fpga_priv.h,v $
- * Revision 1.3  2001/09/02 21:33:07  steve
+ * $Log: tables.c,v $
+ * Revision 1.1  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.
  *
  *  Start into the virtex EDIF output driver.
  *
- * Revision 1.2  2001/08/30 04:31:04  steve
- *  Mangle nexus names.
- *
- * Revision 1.1  2001/08/28 04:14:20  steve
- *  Add the fpga target.
- *
  */
-#endif
+
