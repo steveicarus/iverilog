@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.28 2002/05/10 16:00:16 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.29 2002/05/23 01:07:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -537,6 +537,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	      /* don't know how to watch memories. */
 	    break;
 
+	  case vpiNamedEvent:
+	      /* There is nothing in named events to dump. */
+	    break;
+
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiReg:  type = "reg";    }
 
@@ -780,6 +784,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.29  2002/05/23 01:07:26  steve
+ *  Ignore Named events in vcd signal scan.
+ *
  * Revision 1.28  2002/05/10 16:00:16  steve
  *  ignore vpiMemory objects in vcd dumper.
  *
