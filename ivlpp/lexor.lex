@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.12 1999/09/05 22:33:18 steve Exp $"
+#ident "$Id: lexor.lex,v 1.13 1999/09/16 00:49:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -115,7 +115,7 @@ W [ \t\b\f]+
      that follows it. when the directive ends, the do_include function
      performs the include operation. */
 
-^`include { BEGIN(PPINCLUDE); }
+^{W}?`include { BEGIN(PPINCLUDE); }
 
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
@@ -129,7 +129,7 @@ W [ \t\b\f]+
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-^`define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
+`define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
 
 <PPDEFINE>.*\n {
       do_define();
@@ -138,7 +138,7 @@ W [ \t\b\f]+
       BEGIN(0);
   }
 
-^`undef{W}[a-zA-Z][a-zA-Z0-9_]*{W}?.* { def_undefine(); }
+`undef{W}[a-zA-Z][a-zA-Z0-9_]*{W}?.* { def_undefine(); }
 
 
   /* Detect conditional compilation directives, and parse them. If I
