@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.16 2000/01/02 21:45:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.17 2000/01/02 22:07:09 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -532,7 +532,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 
       if (lsig->pin_count() < lwidth) {
 	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
+	    NetTmp*tmp = new NetTmp(des->local_symbol(path));
 	    des->add_node(zero);
+	    des->add_signal(tmp);
+	    connect(zero->pin(0), tmp->pin(0));
 	    for (unsigned idx = lsig->pin_count() ; idx < lwidth ;  idx += 1)
 		  connect(zero->pin(0), gate->pin_Data(idx));
       }
@@ -1105,6 +1108,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.17  2000/01/02 22:07:09  steve
+ *  Add a signal to nexus of padding constant.
+ *
  * Revision 1.16  2000/01/02 21:45:31  steve
  *  Add structural reduction NAND,
  *  Fix size coercion of structural shifts.
