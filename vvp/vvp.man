@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2001/07/21 21:15:51 $" Version "$Date: 2001/07/21 21:15:51 $"
+.TH vvp 1 "$Date: 2001/07/26 03:13:51 $" Version "$Date: 2001/07/26 03:13:51 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -23,10 +23,10 @@ Specify logfile as '-' to send log output to <stderr>.  $display and
 friends send their output both to <stdout> and <stdlog>.
 .TP 8
 .B -M\fIpath\fP
-This flag specifies the directory to use to locate VPI modules. This
-is normally not used as the installer places the modules in the
-default directory, but it can be used if you choose to use alternate
-versions of VPI modules.
+This flag adds a directory to the path list used to locate VPI
+modules. The default path includes only the install directory for the
+system.vpi module, but this flag can add other directories. Multiple
+paths are allowed, and modules will be searched in order.
 .TP 8
 .B -m\fImodule\fP
 Tell the vvp run time to load the named module before executing the

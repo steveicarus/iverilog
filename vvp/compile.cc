@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.89 2001/07/22 00:04:50 steve Exp $"
+#ident "$Id: compile.cc,v 1.90 2001/07/26 03:13:51 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -234,16 +234,7 @@ void compile_init(void)
 
 void compile_load_vpi_module(char*name)
 {
-#ifdef __MINGW32__
-    char module_path[4096], *s;
-    GetModuleFileName(NULL,module_path,1024);
-    /* Get to the end.  Search back twice for backslashes */
-    s = module_path + strlen(module_path);
-    while (*s != '\\') s--; s--;
-    while (*s != '\\') s--; 
-    strcpy(s,"\\lib\\ivl");
-#endif      
-      vpip_load_module(name, module_path);
+      vpip_load_module(name);
       free(name);
 }
 
@@ -1546,6 +1537,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.90  2001/07/26 03:13:51  steve
+ *  Make the -M flag add module search paths.
+ *
  * Revision 1.89  2001/07/22 00:04:50  steve
  *  Add the load/x instruction for bit selects.
  *

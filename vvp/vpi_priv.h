@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.19 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.20 2001/07/26 03:13:51 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -215,9 +215,13 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid);
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their
  * contained functions before compilation commences. It is called only
- * once. 
+ * once per module.
  */
-extern void vpip_load_module(const char*name, const char*path);
+extern void vpip_load_module(const char*name);
+
+# define VPIP_MODULE_PATH_MAX 64
+extern char* vpip_module_path[64];
+extern unsigned vpip_module_path_cnt;
 
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object
@@ -259,6 +263,9 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.20  2001/07/26 03:13:51  steve
+ *  Make the -M flag add module search paths.
+ *
  * Revision 1.19  2001/07/11 02:27:21  steve
  *  Add support for REadOnlySync and monitors.
  *

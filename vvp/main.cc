@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.18 2001/07/21 21:18:55 steve Exp $"
+#ident "$Id: main.cc,v 1.19 2001/07/26 03:13:51 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -66,7 +66,6 @@ inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
 #endif // ! defined(HAVE_TIMES)
 
 
-const char*module_path = MODULE_DIR;
 unsigned module_cnt = 0;
 const char*module_tab[64];
 
@@ -84,6 +83,20 @@ int main(int argc, char*argv[])
       char *logfile_name = 0x0;
       FILE *logfile = 0x0;
 
+#ifdef __MINGW32__
+	/* In the Windows world, we get the first module path
+	   component relative the location where the binary lives. */
+      { char path[4096], *s;
+        GetModuleFileName(NULL,path,1024);
+	  /* Get to the end.  Search back twice for backslashes */
+	s = path + strlen(path);
+	while (*s != '\\') s--; s--;
+	while (*s != '\\') s--; 
+	strcpy(s,"\\lib\\ivl");
+	vpip_module_path[0] = strdup(path);
+      }
+#endif
+
       while ((opt = getopt(argc, argv, "dhl:M:m:v")) != EOF) switch (opt) {
 	  case 'd':
 	    debug_flag = true;
@@ -93,19 +106,19 @@ int main(int argc, char*argv[])
                    "Usage: vvp [options] input-file\n"
                    "Options:\n"
 #if defined(WITH_DEBUG)
-                   " -d\t\t"       "Enter the debugger.\n"
+                   " -d             Enter the debugger.\n"
 #endif
-                   " -h\t\t"       "Print this help message.\n"
-                   " -l file\t"    "Logfile, '-' for <stderr>.\n"
-                   " -M path\t"    "VPI module directory path.\n"
-                   " -m module\t"  "Load vpi module.\n"
-                   " -v\t\t"       "Verbose progress messages.\n" );
+                   " -h             Print this help message.\n"
+                   " -l file        Logfile, '-' for <stderr>\n"
+                   " -M path        VPI module directory\n"
+                   " -m module      Load vpi module.\n"
+                   " -v             Verbose progress messages.\n" );
            exit(0);
 	  case 'l':
 	    logfile_name = optarg;
 	    break;
 	  case 'M':
-	    module_path = optarg;
+	    vpip_module_path[vpip_module_path_cnt++] = optarg;
 	    break;
 	  case 'm':
 	    module_tab[module_cnt++] = optarg;
@@ -154,10 +167,10 @@ int main(int argc, char*argv[])
       vvp_vpi_init();
 
       compile_init();
-#if 0
+
       for (unsigned idx = 0 ;  idx < module_cnt ;  idx += 1)
-	    vpip_load_module(module_tab[idx], module_path);
-#endif
+	    vpip_load_module(module_tab[idx]);
+
       if (int rc = compile_design(design_path))
 	    return rc;
       compile_cleanup();
@@ -205,6 +218,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.19  2001/07/26 03:13:51  steve
+ *  Make the -M flag add module search paths.
+ *
  * Revision 1.18  2001/07/21 21:18:55  steve
  *  Add the -h flag for help. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.5 2001/06/12 03:53:11 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.6 2001/07/26 03:13:51 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,29 +29,45 @@
 typedef void (*vlog_startup_routines_t)(void);
 typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
 
-void vpip_load_module(const char*name, const char*path)
-{
-      char buf[4096];
-#ifdef __MINGW32__
-      char sep = '\\';
-#else
-      char sep = '/';
-#endif
-      sprintf(buf, "%s%c%s.vpi", path, sep, name);
-	//printf("Load %s...\n", buf);
 
-      ivl_dll_t dll = ivl_dlopen(buf);
+char* vpip_module_path[64] = {
+      MODULE_DIR,
+      0
+};
+
+unsigned vpip_module_path_cnt = 1;
+
+
+void vpip_load_module(const char*name)
+{
+#ifdef __MINGW32__
+      const char sep = '\\';
+#else
+      const char sep = '/';
+#endif
+
+      ivl_dll_t dll = 0;
+      for (unsigned idx = 0
+		 ; (dll == 0) && (idx < vpip_module_path_cnt)
+		 ;  idx += 1) {
+	    char buf[4096];
+	    sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
+	      //printf("Load %s...\n", buf);
+
+	    dll = ivl_dlopen(buf);
+      }
+
       if (dll == 0) {
-	    fprintf(stderr, "%s: %s\n", name, dlerror());
+	    fprintf(stderr, "%s: Unable to find %s.vpi module\n", name, name);
 	    return;
       }
 
       void *regsub = ivl_dlsym(dll, LU "vpi_register_sim" TU);
       vpi_register_sim_t simreg = (vpi_register_sim_t)regsub;
       if (regsub == 0) {
-	fprintf(stderr, "%s: Unable to locate vpi_register_sim", name);
-	ivl_dlclose(dll);
-	return;
+	    fprintf(stderr, "%s: Unable to locate vpi_register_sim", name);
+	    ivl_dlclose(dll);
+	    return;
       }
 
       extern vpi_thunk vvpt;
@@ -77,6 +93,9 @@ void vpip_load_module(const char*name, const char*path)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.6  2001/07/26 03:13:51  steve
+ *  Make the -M flag add module search paths.
+ *
  * Revision 1.5  2001/06/12 03:53:11  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.
