@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.10 2000/03/18 01:27:00 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.11 2000/03/18 02:26:02 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -169,6 +169,23 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
       else output(input_[0]);
 }
 
+vvm_bufz::vvm_bufz()
+{
+}
+
+vvm_bufz::~vvm_bufz()
+{
+}
+
+void vvm_bufz::init(unsigned, vpip_bit_t)
+{
+}
+
+void vvm_bufz::take_value(unsigned, vpip_bit_t val)
+{
+      set_value(val);
+}
+
 vvm_eeq::vvm_eeq(unsigned long d)
 : vvm_1bit_out(d)
 {
@@ -258,6 +275,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.11  2000/03/18 02:26:02  steve
+ *  Update bufz to nexus style.
+ *
  * Revision 1.10  2000/03/18 01:27:00  steve
  *  Generate references into a table of nexus objects instead of
  *  generating lots of isolated nexus objects. Easier on linkers

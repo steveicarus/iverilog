@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.46 2000/03/18 01:27:00 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.47 2000/03/18 02:26:02 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -723,19 +723,22 @@ template <unsigned WIDTH> class vvm_udp_ssequ {
       vpip_bit_t state_[WIDTH+1];
 };
 
-class vvm_bufz {
+/*
+ * The bufz is a trivial device that simply passes its input to its
+ * output. Unlike a buf devince, this does not change Vz values to Vx,
+ * it instead passes the Vz unaltered.
+ *
+ * This device is useful for isolating nets.
+ */
+class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_nexus::drive_t {
     public:
-      explicit vvm_bufz(vvm_out_event::action_t o)
-      : output_(o)
-      { }
+      explicit vvm_bufz();
+      ~vvm_bufz();
 
-      void init(unsigned idx, vpip_bit_t val) { }
-
-      void set(unsigned idx, vpip_bit_t val)
-	    { output_(val); }
+      void init(unsigned idx, vpip_bit_t val);
 
     private:
-      vvm_out_event::action_t output_;
+      void take_value(unsigned, vpip_bit_t val);
 };
 
 /*
@@ -814,6 +817,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.47  2000/03/18 02:26:02  steve
+ *  Update bufz to nexus style.
+ *
  * Revision 1.46  2000/03/18 01:27:00  steve
  *  Generate references into a table of nexus objects instead of
  *  generating lots of isolated nexus objects. Easier on linkers

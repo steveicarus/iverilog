@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.116 2000/03/18 01:26:59 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.117 2000/03/18 02:26:02 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1366,12 +1366,24 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 {
-      string outfun = defn_gate_outputfun_(os, gate, 0);
+      string mname = mangle(gate->name());
+      string nexus;
+      unsigned ncode;
 
-      os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
-	    outfun << ");" << endl;
+      os << "static vvm_bufz " << mname << ";" << endl;
 
-      emit_gate_outputfun_(gate, 0);
+      nexus = nexus_from_link(&gate->pin(0));
+      ncode = nexus_wire_map[nexus];
+
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
+	    mname << ");" << endl;
+
+      nexus = nexus_from_link(&gate->pin(1));
+      ncode = nexus_wire_map[nexus];
+
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
+	    mname << ",0);" << endl;
+
 }
 
 static string state_to_string(unsigned state, unsigned npins)
@@ -2280,6 +2292,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.117  2000/03/18 02:26:02  steve
+ *  Update bufz to nexus style.
+ *
  * Revision 1.116  2000/03/18 01:26:59  steve
  *  Generate references into a table of nexus objects instead of
  *  generating lots of isolated nexus objects. Easier on linkers
