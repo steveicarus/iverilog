@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.7 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.8 2000/04/08 05:28:39 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,7 @@
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+# include  <time.h>
 
 static FILE*dump_file = 0;
 
@@ -40,6 +41,24 @@ struct vcd_info {
       char*ident;
       struct vcd_info*next;
 };
+
+
+static char vcdid[8]={'!',0,0,0,0,0,0,0};
+static void gen_new_vcd_id(void)
+{
+      int i;
+      for(i=0;i<8;i++)        /* increment vcd id for next fac */
+	    {
+		  vcdid[i]++;
+		  if(vcdid[i]!=127) break;
+		  vcdid[i]='!';
+		  if(vcdid[i+1]==0x00)
+			{
+			      vcdid[i+1]='!';
+			      break;
+			}
+	    }
+}
 
 static struct vcd_info*vcd_list = 0;
 unsigned long vcd_cur_time = 0;
@@ -139,6 +158,20 @@ static int sys_dumpfile_calltf(char*name)
       if (dump_file == 0) {
 	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
 	    return 0;
+      } else {
+	    time_t walltime;
+
+	    time(&walltime);
+
+	    fprintf(dump_file, "$date\n");
+	    fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
+	    fprintf(dump_file, "$end\n");
+	    fprintf(dump_file, "$version\n");
+	    fprintf(dump_file, "\tIcarus Verilog\n");
+	    fprintf(dump_file, "$end\n");
+	    fprintf(dump_file, "$timescale\n");
+	    fprintf(dump_file, "\t1ps\n");
+	    fprintf(dump_file, "$end\n");
       }
 
       free(path);
@@ -146,11 +179,10 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static unsigned scan_scope(unsigned depth, vpiHandle argv, unsigned nident)
+static void scan_scope(unsigned depth, vpiHandle argv)
 {
       struct t_cb_data cb;
       struct vcd_info*info;
-      char ident[64];
 
       vpiHandle item;
       vpiHandle sublist;
@@ -168,26 +200,26 @@ static unsigned scan_scope(unsigned depth, vpiHandle argv, unsigned nident)
 		  if (vpi_get(vpiType, item) == vpiReg)
 			type = "reg";
 
-		  sprintf(ident, "<%u", nident++);
 		  info = malloc(sizeof(*info));
 		  info->time.type = vpiSimTime;
 		  cb.time = &info->time;
 		  cb.user_data = (char*)info;
 		  cb.obj = item;
 		  info->item  = item;
-		  info->ident = strdup(ident);
+		  info->ident = strdup(vcdid);
 		  info->cb    = vpi_register_cb(&cb);
 		  info->next = vcd_list;
 		  vcd_list   = info;
 		  fprintf(dump_file, "$var %s %u %s %s $end\n",
-			  type, vpi_get(vpiSize, item), ident,
+			  type, vpi_get(vpiSize, item), info->ident,
 			  vpi_get_str(vpiFullName, item));
+		  gen_new_vcd_id();
 		  break;
 
 		case vpiModule:
 		  sublist = vpi_iterate(vpiInternalScope, item);
 		  if (sublist && (depth > 0))
-			nident = scan_scope(depth-1, sublist, nident);
+			scan_scope(depth-1, sublist);
 		  break;
 
 		default:
@@ -195,8 +227,6 @@ static unsigned scan_scope(unsigned depth, vpiHandle argv, unsigned nident)
 	    }
 
       }
-
-      return nident;
 }
 
 static int sys_dumpvars_calltf(char*name)
@@ -215,7 +245,7 @@ static int sys_dumpvars_calltf(char*name)
 
       assert(dump_file);
 
-      scan_scope(99, argv, 0);
+      scan_scope(99, argv);
 
       fprintf(dump_file, "$enddefinitions $end\n");
 
@@ -258,6 +288,12 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.8  2000/04/08 05:28:39  steve
+ *  Revamped VCD id generation and duplicates removal. (ajb)
+ *
+ * Revision 1.8  2000/04/06 21:00:00  ajb
+ *  Revamped VCD id generation and duplicates removal.
+ *
  * Revision 1.7  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *
