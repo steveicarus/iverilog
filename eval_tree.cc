@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.14 2000/12/16 19:03:30 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.15 2000/12/16 20:00:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -118,6 +118,7 @@ NetEConst* NetEBComp::eval_leeq_()
 
 	/* Now go on to the normal test of the values. */
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      if (l == 0) return 0;
       lv = l->value();
       if (! lv.is_defined()) {
 	    verinum result(verinum::Vx, 1);
@@ -523,6 +524,9 @@ NetEConst* NetEUnary::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.15  2000/12/16 20:00:17  steve
+ *  Handle non-constant l-values.
+ *
  * Revision 1.14  2000/12/16 19:03:30  steve
  *  Evaluate <= and ?: in parameter expressions (PR#81)
  *
