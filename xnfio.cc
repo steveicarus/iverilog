@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.3 1999/10/09 17:52:27 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.4 1999/11/02 01:43:55 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -68,9 +68,10 @@ static void make_obuf(Design*des, NetNet*net)
 
 	      // Try to use an existing BUF as an OBUF. This moves the
 	      // BUF into the IOB.
-	    if ((tmp->type() == NetLogic::BUF) &&
-		(count_inputs(tmp->pin(0)) == 0) &&
-		(count_outputs(tmp->pin(0)) == 1)) {
+	    if ((tmp->type() == NetLogic::BUF)
+		&& (count_inputs(tmp->pin(0)) == 0)
+		&& (count_outputs(tmp->pin(0)) == 1)
+		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUF:O,I");
 		  return;
 	    }
@@ -80,9 +81,10 @@ static void make_obuf(Design*des, NetNet*net)
 	      // which looks just like an inverter. This uses the
 	      // available resources of an IOB to optimize away an
 	      // otherwise expensive inverter.
-	    if ((tmp->type() == NetLogic::NOT) &&
-		(count_inputs(tmp->pin(0)) == 0) &&
-		(count_outputs(tmp->pin(0)) == 1)) {
+	    if ((tmp->type() == NetLogic::NOT)
+		&& (count_inputs(tmp->pin(0)) == 0)
+		&& (count_outputs(tmp->pin(0)) == 1)
+		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUF:O,~I");
 		  return;
 	    }
@@ -93,14 +95,16 @@ static void make_obuf(Design*des, NetNet*net)
 	      // way, but the T input is inverted.
 	    if ((tmp->type() == NetLogic::BUFIF1)
 		&& (count_inputs(tmp->pin(0)) == 0)
-		&& (count_outputs(tmp->pin(0)) == 1)) {
+		&& (count_outputs(tmp->pin(0)) == 1)
+		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
 		  return;
 	    }
 
-	    if ((tmp->type() == NetLogic::BUFIF1)
+	    if ((tmp->type() == NetLogic::BUFIF0)
 		&& (count_inputs(tmp->pin(0)) == 0)
-		&& (count_outputs(tmp->pin(0)) == 1)) {
+		&& (count_outputs(tmp->pin(0)) == 1)
+		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
 		  return;
 	    }
@@ -213,6 +217,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.4  1999/11/02 01:43:55  steve
+ *  Fix iobuf and iobufif handling.
+ *
  * Revision 1.3  1999/10/09 17:52:27  steve
  *  support XNF OBUFT devices.
  *

@@ -48,10 +48,21 @@ device. Also:
 
 	bufif1 bt (bar, value, en);
 
-connects to pad bar so will automaticall be converted into an OBUFT
+connects to pad bar so will automatically be converted into an OBUFT
 device. Icarus Verilog understands OBUF, IBUF and OBUFT (with optionally
 inverted enable) devices and will convert Verilog devices from the
 source, or generate missing devices.
+
+In addition, the Verilog programmer may explicitly declare a device as
+an I/OBUF by attaching an attribute to the device, like so:
+
+	buf b1 (sig, foo);
+	$attribute(b1, "XNF-LCA", "OBUF:O,I");
+
+This latter feature is not entirely recomended as it expects that the
+programmer really knows how the pins of the XNF device are to be
+connected. It also bypasses the efforts of the compiler, so is not
+checked for correctness.
 
 XNF SPECIAL DEVICES
 
@@ -73,7 +84,7 @@ buffer:
 
 The above statements cause the buffer BUFG to be emitted in the XNF
 output as a BUFG device with the first signal called "O" and the
-second called "O". The rest of this example connects the input of the
+second called "I". The rest of this example connects the input of the
 BUFG to a signal from the input pin #1 and connects the output to the
 internal wire "clk". Incidentally, this example will cause an IBUF to
 be generated to connect the iclk signal to input pin #1.
@@ -151,6 +162,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.6  1999/11/02 01:43:55  steve
+  Fix iobuf and iobufif handling.
+
  Revision 1.5  1999/10/09 17:52:27  steve
   support XNF OBUFT devices.
 
