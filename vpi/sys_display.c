@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.37 2002/05/24 19:05:30 steve Exp $"
+#ident "$Id: sys_display.c,v 1.38 2002/05/31 04:26:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,15 @@
 # include  <string.h>
 # include  <ctype.h>
 # include  <stdlib.h>
+
+struct timeformat_info_s {
+      int units;
+      unsigned prec;
+      char*suff;
+      unsigned width;
+};
+
+struct timeformat_info_s timeformat_info = { 0, 0, 0, 20 };
 
 struct strobe_cb_info {
       char*name;
@@ -97,6 +106,81 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
       }
 }
 
+static void format_time(unsigned mcd, int fsize, const char*value)
+{
+      char buf[256];
+      const char*cp;
+      char*bp;
+      unsigned len;
+      int cnt;
+
+	/* This is the time precision for the simulation. */
+      int prec = vpi_get(vpiTimePrecision, 0);
+
+      if (fsize < 0)
+	    fsize = timeformat_info.width;
+
+      bp = buf + sizeof buf;
+      cp = value + strlen(value);
+
+      *--bp = 0;
+
+	/* Draw the suffix into the buffer. */
+      bp -= strlen(timeformat_info.suff);
+      strcpy(bp, timeformat_info.suff);
+
+	/* Draw 0s to pad out the precision to the requested count. */
+      cnt = timeformat_info.units - prec;
+      while (cnt < timeformat_info.prec) {
+	    *--bp = '0';
+	    cnt += 1;
+      }
+
+	/* Chop excess precision. */
+      while (cnt > timeformat_info.prec) {
+	    if (cp > value)
+		  cp -= 1;
+	    cnt -= 1;
+	    prec += 1;
+      }
+
+	/* Draw the digits of the time that are to the right of the
+	   decimal point. Pad to the right with zeros if needed, to
+	   get to the decimal point. */
+      if (prec < timeformat_info.units) {
+	    while (prec < timeformat_info.units) {
+		  char val;
+		  if (cp == value)
+			val = '0';
+		  else
+			val = *--cp;
+
+		  *--bp = val;
+		  prec += 1;
+	    }
+
+	    *--bp = '.';
+      }
+
+	/* Put the remaining characters to the left of the decimal
+	   point. */
+      while (cp > value) {
+	    *--bp = *--cp;
+      }
+
+      if (*bp == '.')
+	    *--bp = '0';
+
+	/* Pad the string on the left to the requested minimum
+	   width. Pad with spaces. */
+      len = strlen(bp);
+      while (len < fsize) {
+	    *--bp = ' ';
+	    len += 1;
+      }
+
+      vpi_mcd_printf(mcd, "%s", bp);
+}
 
 /*
  * If $display discovers a string as a parameter, this function is
@@ -300,6 +384,9 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 				  break;
 
 			      case 't':
+				format_time(mcd, fsize, value.value.str);
+				break;
+
 			      case 'd':
 				  if (fsize==-1){
 				      // simple %d parameter. 
@@ -893,8 +980,70 @@ static int sys_fgetc_sizetf(char*x)
       return 32;
 }
 
+static int sys_timeformat_compiletf(char *xx)
+{
+      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+      vpiHandle tmp;
+
+      assert(argv);
+      tmp = vpi_scan(argv);
+      assert(tmp);
+      assert(vpi_get(vpiType, tmp) == vpiConstant);
+
+      tmp = vpi_scan(argv);
+      assert(tmp);
+      assert(vpi_get(vpiType, tmp) == vpiConstant);
+
+      tmp = vpi_scan(argv);
+      assert(tmp);
+      assert(vpi_get(vpiType, tmp) == vpiConstant);
+
+      return 0;
+}
+
+static int sys_timeformat_calltf(char *xx)
+{
+      s_vpi_value value;
+      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+      vpiHandle units = vpi_scan(argv);
+      vpiHandle prec  = vpi_scan(argv);
+      vpiHandle suff  = vpi_scan(argv);
+      vpiHandle wid   = vpi_scan(argv);
+
+      vpi_free_object(argv);
+
+      value.format = vpiIntVal;
+      vpi_get_value(units, &value);
+      timeformat_info.units = value.value.integer;
+
+      value.format = vpiIntVal;
+      vpi_get_value(prec, &value);
+      timeformat_info.prec = value.value.integer;
+
+      value.format = vpiStringVal;
+      vpi_get_value(suff, &value);
+      timeformat_info.suff = strdup(value.value.str);
+
+      value.format = vpiIntVal;
+      vpi_get_value(wid, &value);
+      timeformat_info.width = value.value.integer;
+
+      return 0;
+}
+
+static int sys_end_of_compile(p_cb_data cb_data)
+{
+      timeformat_info.suff  = strdup("");
+      timeformat_info.units = vpi_get(vpiTimePrecision, 0);
+      timeformat_info.width = 20;
+      return 0;
+}
+
 void sys_display_register()
 {
+      s_cb_data cb_data;
       s_vpi_systf_data tf_data;
 
       //============================== display
@@ -1106,11 +1255,27 @@ void sys_display_register()
       tf_data.sizetf    = sys_fgetc_sizetf;
       tf_data.user_data = "$fgetc";
       vpi_register_systf(&tf_data);
+
+	//============================ timeformat
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$timeformat";
+      tf_data.calltf    = sys_timeformat_calltf;
+      tf_data.compiletf = sys_timeformat_compiletf;
+      tf_data.sizetf    = 0;
+      vpi_register_systf(&tf_data);
+
+      cb_data.reason = cbEndOfCompile;
+      cb_data.cb_rtn = sys_end_of_compile;
+      cb_data.user_data = "system";
+      vpi_register_cb(&cb_data);
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.38  2002/05/31 04:26:54  steve
+ *  Add support for $timeformat.
+ *
  * Revision 1.37  2002/05/24 19:05:30  steve
  *  support GCC __attributes__ for printf formats.
  *

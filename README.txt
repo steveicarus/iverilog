@@ -359,6 +359,22 @@ language that are defined.
 	It is said that some commercial compilers do allow macro
 	definitions to span library modules. That's just plain weird.
 
+    Width in %t Time Formats
+
+	Standard Verilog does not allow width fields in the %t formats
+	of display strings. For example, this is illegal:
+
+		$display("Time is %0t", %time);
+
+	Standard Verilog instead relies on the $timeformat to
+	completely specify the format.
+
+	Icarus Verilog allows the programmer to specify the field
+	with. The "%t" format in Icarus Verilog works exactly as it
+	does in standard Verilog. However, if the programmer chooses
+	to specify a minimum width, i.e. "%5t" Then for that display
+	Icarus Verilog will override the $timeformat minimum width and
+	use the explicit minimum width.
 
 6.0 CREDITS
 
