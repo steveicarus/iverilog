@@ -7,28 +7,33 @@ static p_vpi_thunk vpi_thunk_p = 0;
 
 #define VPITV_CALL(fn,args) {						\
   if (vpi_thunk_p == 0) {						\
-    fprintf(stderr, "No Simulator registered, cannot handle vpi "	\
-	    "call to " #fn "\n");					\
-    return;								\
+    no_sim(#fn); return;						\
   }									\
   if (vpi_thunk_p->fn == 0) {						\
-    fprintf(stderr, "Simulator doesn't have a " #fn " function\n");	\
-    return;								\
+    no_func(#fn); return;						\
   }									\
   vpi_thunk_p->fn args;							\
 }
 
 #define VPIT_CALL(fn,def,args) {					\
   if (vpi_thunk_p == 0) {						\
-    fprintf(stderr, "No Simulator registered, cannot handle vpi "	\
-	    "call to " #fn "\n");					\
-    return def;								\
+    no_sim(#fn); return def;						\
   }									\
   if (vpi_thunk_p->fn == 0) {						\
-    fprintf(stderr, "Simulator doesn't have a " #fn " function\n");	\
-    return;								\
+    no_func(#fn); return def;						\
   }									\
   return vpi_thunk_p->fn args;						\
+}
+
+static void no_sim(const char *fn)
+{
+	fprintf(stderr, "No Simulator registered, cannot handle vpi "
+            "call to %s\n", fn);
+}
+
+static void no_func(const char *fn)
+{
+	fprintf(stderr, "Simulator doesn't have a %s function\n",fn);
 }
 
 DLLEXPORT int vpi_register_sim(p_vpi_thunk tp)
