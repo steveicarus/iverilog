@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.88 1999/12/05 02:24:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.89 1999/12/12 06:03:14 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -242,6 +242,7 @@ void vvm_proc_rval::expr_ident(const NetEIdent*expr)
 void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 {
       const string mname = mangle(mem->name());
+      assert(mem->index());
       mem->index()->expr_scan(this);
       result = mname + ".get_word(" + result + ".as_unsigned())";
 }
@@ -1958,6 +1959,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.89  1999/12/12 06:03:14  steve
+ *  Allow memories without indices in expressions.
+ *
  * Revision 1.88  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

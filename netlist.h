@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.100 1999/12/09 06:00:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.101 1999/12/12 06:03:14 steve Exp $"
 #endif
 
 /*
@@ -1803,12 +1803,14 @@ class NetEIdent  : public NetExpr {
 };
 
 /*
- * A reference to a memory is represented by this expression.
+ * A reference to a memory is represented by this expression. If the
+ * index is not supplied, then the node is only valid in certain
+ * specific contexts.
  */
 class NetEMemory  : public NetExpr {
 
     public:
-      NetEMemory(NetMemory*mem, NetExpr*idx);
+      NetEMemory(NetMemory*mem, NetExpr*idx =0);
       virtual ~NetEMemory();
 
       const string& name () const { return mem_->name(); }
@@ -2067,6 +2069,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.101  1999/12/12 06:03:14  steve
+ *  Allow memories without indices in expressions.
+ *
  * Revision 1.100  1999/12/09 06:00:00  steve
  *  Fix const/non-const errors.
  *

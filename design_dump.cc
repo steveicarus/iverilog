@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.62 1999/12/05 02:24:08 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.63 1999/12/12 06:03:14 steve Exp $"
 #endif
 
 /*
@@ -741,7 +741,7 @@ void NetESubSignal::dump(ostream&o) const
 void NetEMemory::dump(ostream&o) const
 {
       o << mem_->name() << "[";
-      idx_->dump(o);
+      if (idx_) idx_->dump(o);
       o << "]";
 }
 
@@ -862,6 +862,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.63  1999/12/12 06:03:14  steve
+ *  Allow memories without indices in expressions.
+ *
  * Revision 1.62  1999/12/05 02:24:08  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.12 1999/11/30 04:54:01 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.13 1999/12/12 06:03:14 steve Exp $"
 #endif
 
 
@@ -263,10 +263,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	// object to handle it.
       if (NetMemory*mem = des->find_memory(path, text_)) {
 	    if (msb_ == 0) {
+		  NetEMemory*node = new NetEMemory(mem);
+		  node->set_line(*this);
+		  return node;
+#if 0
 		  cerr << get_line() << ": error: Memory ``" << name <<
 			"'' referenced without an index expression." << endl;
 		  des->errors += 1;
 		  return 0;
+#endif
 	    }
 	    assert(msb_ != 0);
 	    assert(lsb_ == 0);
@@ -332,6 +337,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.13  1999/12/12 06:03:14  steve
+ *  Allow memories without indices in expressions.
+ *
  * Revision 1.12  1999/11/30 04:54:01  steve
  *  Match scope names as last resort.
  *
