@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_reg.c,v 1.2 2000/12/09 05:40:42 steve Exp $"
+#ident "$Id: fit_reg.c,v 1.3 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -34,14 +34,14 @@
 
 static int scan_ff_q(ivl_lpm_ff_t ff, unsigned q);
 
-int fit_registers(ivl_scope_t scope)
+int fit_registers(ivl_scope_t scope, void*x)
 {
       int rc;
       unsigned idx;
       unsigned lpms;
 
 	/* Scan child scopes first... */
-      rc = ivl_scope_children(scope, fit_registers);
+      rc = ivl_scope_children(scope, fit_registers, 0);
       if (rc != 0)
 	    return rc;
 
@@ -136,6 +136,9 @@ int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 
 /*
  * $Log: fit_reg.c,v $
+ * Revision 1.3  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.2  2000/12/09 05:40:42  steve
  *  documentation...
  *

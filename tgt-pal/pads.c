@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pads.c,v 1.1 2000/12/09 01:17:38 steve Exp $"
+#ident "$Id: pads.c,v 1.2 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 # include  "priv.h"
@@ -30,11 +30,11 @@
  * are fixed by a PAD attribute. Search the scopes recursively,
  * looking for signals that may have PAD attributes.
  */
-int get_pad_bindings(ivl_scope_t net)
+int get_pad_bindings(ivl_scope_t net, void*x)
 {
       unsigned idx;
 
-      int rc = ivl_scope_children(net, get_pad_bindings);
+      int rc = ivl_scope_children(net, get_pad_bindings, 0);
       if (rc)
 	    return rc;
 
@@ -79,6 +79,9 @@ int get_pad_bindings(ivl_scope_t net)
 
 /*
  * $Log: pads.c,v $
+ * Revision 1.2  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.1  2000/12/09 01:17:38  steve
  *  Add the pal loadable target.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.5 2001/01/09 03:10:48 steve Exp $"
+#ident "$Id: imain.c,v 1.6 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 /*
@@ -107,7 +107,7 @@ int target_design(ivl_design_t des)
 	   most constrained step. Everything else must work around the
 	   results of these bindings. */
       root = ivl_design_root(des);
-      get_pad_bindings(root);
+      get_pad_bindings(root, 0);
 
       if (pal_errors) {
 	    fprintf(stderr, "PAD assignment failed.\n");
@@ -122,7 +122,7 @@ int target_design(ivl_design_t des)
 	/* Scan all the registers, and assign them to
 	   macro-cells. */
       root = ivl_design_root(des);
-      fit_registers(root);
+      fit_registers(root, 0);
       if (pal_errors) {
 	    fprintf(stderr, "Register fitting failed.\n");
 	    pal_free(pal);
@@ -150,6 +150,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.6  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.5  2001/01/09 03:10:48  steve
  *  Generate the jedec to configure the macrocells.
  *

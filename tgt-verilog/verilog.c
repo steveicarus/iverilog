@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.18 2000/11/09 05:14:07 steve Exp $"
+#ident "$Id: verilog.c,v 1.19 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 /*
@@ -142,7 +142,7 @@ static int draw_logic(ivl_net_logic_t net)
  * Scan the scope and its children for logic gates. Ise the draw_logic
  * function to draw the actual gate.
  */
-static int draw_scope_logic(ivl_scope_t scope)
+static int draw_scope_logic(ivl_scope_t scope, void*x)
 {
       unsigned cnt = ivl_scope_logs(scope);
       unsigned idx;
@@ -151,7 +151,7 @@ static int draw_scope_logic(ivl_scope_t scope)
 	    draw_logic(ivl_scope_log(scope, idx));
       }
 
-      ivl_scope_children(scope, draw_scope_logic);
+      ivl_scope_children(scope, draw_scope_logic, 0);
       return 0;
 }
 
@@ -386,7 +386,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
  * scope. This way, I don't need to do anything about scope
  * references.
  */
-static int show_process(ivl_process_t net)
+static int show_process(ivl_process_t net, void*x)
 {
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
@@ -421,10 +421,10 @@ int target_design(ivl_design_t des)
       draw_scoped_objects(des);
 
 	/* Declare logic gates. */
-      draw_scope_logic(ivl_design_root(des));
+      draw_scope_logic(ivl_design_root(des), 0);
 
 	/* Write out processes. */
-      ivl_design_process(des, show_process);
+      ivl_design_process(des, show_process, 0);
 
       fprintf(out, "endmodule\n");
       fclose(out);
@@ -440,6 +440,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.19  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.18  2000/11/09 05:14:07  steve
  *  show concatenation operators.
  *

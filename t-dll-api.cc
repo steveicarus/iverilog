@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.19 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.20 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -29,10 +29,12 @@ extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
       return des->self->get_flag(key).c_str();
 }
 
-extern "C" int ivl_design_process(ivl_design_t des, ivl_process_f func)
+extern "C" int ivl_design_process(ivl_design_t des,
+				  ivl_process_f func,
+				  void*cd)
 {
       for (ivl_process_t idx = des->threads_;  idx;  idx = idx->next_) {
-	    int rc = (func)(idx);
+	    int rc = (func)(idx, cd);
 	    if (rc != 0)
 		  return rc;
       }
@@ -365,10 +367,12 @@ extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
       return net->stmt_;
 }
 
-extern "C" int ivl_scope_children(ivl_scope_t net, ivl_scope_f func)
+extern "C" int ivl_scope_children(ivl_scope_t net,
+				  ivl_scope_f func,
+				  void*cd)
 {
       for (ivl_scope_t cur = net->child_; cur;  cur = cur->sibling_) {
-	    int rc = func(cur);
+	    int rc = func(cur, cd);
 	    if (rc != 0)
 		  return rc;
       }
@@ -630,6 +634,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.20  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.19  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *

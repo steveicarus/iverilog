@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: priv.h,v 1.4 2001/01/09 03:10:48 steve Exp $"
+#ident "$Id: priv.h,v 1.5 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -90,11 +90,11 @@ extern struct pal_bind_s* bind_pin;
 /*
  * These are various stepps in the fitting process.
  */
-extern int get_pad_bindings(ivl_scope_t net);
+extern int get_pad_bindings(ivl_scope_t net, void*x);
 
 extern void absorb_pad_enables(void);
 
-extern int fit_registers(ivl_scope_t scope);
+extern int fit_registers(ivl_scope_t scope, void*x);
 
 extern int fit_logic(void);
 
@@ -102,6 +102,9 @@ extern int emit_jedec(const char*path);
 
 /*
  * $Log: priv.h,v $
+ * Revision 1.5  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.4  2001/01/09 03:10:48  steve
  *  Generate the jedec to configure the macrocells.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.26 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: stub.c,v 1.27 2001/01/15 00:05:39 steve Exp $"
 #endif
 
 /*
@@ -213,7 +213,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
       }
 }
 
-static int show_process(ivl_process_t net)
+static int show_process(ivl_process_t net, void*x)
 {
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
@@ -342,7 +342,7 @@ static void show_logic(ivl_net_logic_t net)
       fprintf(out, ");\n");
 }
 
-static int show_scope(ivl_scope_t net)
+static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
 
@@ -359,7 +359,7 @@ static int show_scope(ivl_scope_t net)
 	    show_lpm(ivl_scope_lpm(net, idx));
 
       fprintf(out, "end scope %s\n", ivl_scope_name(net));
-      return ivl_scope_children(net, show_scope);
+      return ivl_scope_children(net, show_scope, 0);
 }
 
 int target_design(ivl_design_t des)
@@ -378,8 +378,8 @@ int target_design(ivl_design_t des)
       fprintf(out, "root module = %s;\n",
 	      ivl_scope_name(ivl_design_root(des)));
 
-      show_scope(ivl_design_root(des));
-      ivl_design_process(des, show_process);
+      show_scope(ivl_design_root(des), 0);
+      ivl_design_process(des, show_process, 0);
       fclose(out);
 
       return 0;
@@ -392,6 +392,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.27  2001/01/15 00:05:39  steve
+ *  Add client data pointer for scope and process scanners.
+ *
  * Revision 1.26  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *
