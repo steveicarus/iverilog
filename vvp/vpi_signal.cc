@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.18 2001/06/29 00:44:56 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.19 2001/07/13 03:02:34 steve Exp $"
 #endif
 
 /*
@@ -374,64 +374,10 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
       return ref;
 }
 
-
-/*
- * Signals that are created for the design are kept in a table sorted
- * by the functor address so that I cal look up that functor given the
- * functor address. This is used by callbacks, for example.
- *
- * XXXX NOTE: I need to balance this tree someday.
- */
-static struct __vpiSignal*by_bits_root = 0;
-static void by_bits_insert(struct __vpiSignal*sig)
-{
-      if (by_bits_root == 0) {
-	    by_bits_root = sig;
-	    return;
-      }
-
-      struct __vpiSignal*cur = by_bits_root;
-      for (;;) {
-	    if (cur->bits > sig->bits) {
-		  if (cur->by_bits[0] == 0) {
-			cur->by_bits[0] = sig;
-			break;
-		  }
-		  cur = cur->by_bits[0];
-
-	    } else {
-		  if (cur->by_bits[1] == 0) {
-			cur->by_bits[1] = sig;
-			break;
-		  }
-		  cur = cur->by_bits[1];
-	    }
-      }
-}
-
 struct __vpiSignal* vpip_sig_from_ptr(vvp_ipoint_t ptr)
 {
-      struct __vpiSignal*cur = by_bits_root;
-
-      while (cur) {
-	    if (ptr < cur->bits) {
-		  cur = cur->by_bits[0];
-		  continue;
-	    }
-
-	    unsigned wid = (cur->msb > cur->lsb)
-		  ? cur->msb - cur->lsb
-		  : cur->lsb - cur->msb;
-
-	    if (ptr > ipoint_index(cur->bits, wid)) {
-		  cur = cur->by_bits[1];
-		  continue;
-	    }
-
-	    return cur;
-      }
-
-      return cur;
+      functor_t fu = functor_index(ptr);
+      return fu->sig;
 }
 
 static const struct __vpirt vpip_reg_rt = {
@@ -455,34 +401,18 @@ static const struct __vpirt vpip_net_rt = {
 };
 
 /*
- * Construct a vpiReg object. Give the object specified dimensions,
- * and point to the specified functor for the lsb.
+ * Construct a vpiReg object. It's like a net, except for the type.
  */
 vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			vvp_ipoint_t base)
 {
-      struct __vpiSignal*obj = (struct __vpiSignal*)
-	    malloc(sizeof(struct __vpiSignal));
-      obj->base.vpi_type = &vpip_reg_rt;
-      obj->name = name;
-      obj->msb = msb;
-      obj->lsb = lsb;
-      obj->signed_flag = signed_flag? 1 : 0;
-      obj->bits = base;
-      obj->callbacks = 0;
-      obj->by_bits[0] = 0;
-      obj->by_bits[1] = 0;
-
-      obj->scope = vpip_peek_current_scope();
-
-      by_bits_insert(obj);
-
-      return &obj->base;
+      vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, base);
+      obj->vpi_type = &vpip_reg_rt;
+      return obj;
 }
 
-
 /*
- * Construct a vpiReg object. Give the object specified dimensions,
+ * Construct a vpiNet object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  */
 vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
@@ -497,19 +427,27 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
       obj->signed_flag = signed_flag? 1 : 0;
       obj->bits = base;
       obj->callbacks = 0;
-      obj->by_bits[0] = 0;
-      obj->by_bits[1] = 0;
 
       obj->scope = vpip_peek_current_scope();
 
-      by_bits_insert(obj);
-
+      unsigned wid = (obj->msb > obj->lsb)
+	    ? obj->msb - obj->lsb + 1
+	    : obj->lsb - obj->msb + 1;
+      for (unsigned i=0; i<wid; i++) {
+	    vvp_ipoint_t ii = ipoint_index(obj->bits, i);
+	    functor_t fu = functor_index(ii);
+	    fu->sig = obj;
+      }
+	    
       return &obj->base;
 }
 
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.19  2001/07/13 03:02:34  steve
+ *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
+ *
  * Revision 1.18  2001/06/29 00:44:56  steve
  *  Properly support signal full names.
  *

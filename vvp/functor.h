@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.26 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: functor.h,v 1.27 2001/07/13 03:02:34 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -152,6 +152,8 @@ struct functor_s {
       union {
  	    unsigned char old_ival; // mode 3
       };
+        /* Which signal are we representing */
+      struct __vpiSignal *sig;
 };
 
 typedef struct functor_s *functor_t;
@@ -295,6 +297,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.27  2001/07/13 03:02:34  steve
+ *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
+ *
  * Revision 1.26  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.3 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.4 2001/07/13 03:02:34 steve Exp $"
 #endif
 
 /*
@@ -47,6 +47,39 @@ const struct __vpirt callback_rt = {
       0
 };
 
+static struct __vpiCallback* free_callback_root = 0x0;
+
+inline static struct __vpiCallback* new_vpi_callback()
+{
+      struct __vpiCallback* obj;
+      if (!free_callback_root) {
+	    obj = new __vpiCallback;
+	    obj->base.vpi_type = &callback_rt;
+      } else {
+	    obj = free_callback_root;
+	    free_callback_root = obj->next;
+      }
+      obj->next = 0x0;
+      return obj;
+}
+
+#if 1
+
+inline static void free_vpi_callback(struct __vpiCallback* obj)
+{
+      obj->next = free_callback_root;
+      free_callback_root = obj;
+}
+
+#else
+
+inline static void free_vpi_callback(struct __vpiCallback* obj)
+{
+      delete obj;
+}
+
+#endif
+
 /*
  * A value change callback is tripped when a bit of a signal
  * changes. This function creates that value change callback and
@@ -55,8 +88,7 @@ const struct __vpirt callback_rt = {
  */
 static struct __vpiCallback* make_value_change(p_cb_data data)
 {
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->base.vpi_type = &callback_rt;
+      struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
       obj->cb_time = *(data->time);
       obj->cb_data.time = &obj->cb_time;
@@ -101,13 +133,12 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       cur->cb_data.time->high = 0;
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
-      delete cur;
+      free_vpi_callback(cur);
 }
 
 static struct __vpiCallback* make_sync(p_cb_data data)
 {
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->base.vpi_type = &callback_rt;
+      struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
       obj->cb_time = *(data->time);
       obj->cb_data.time = &obj->cb_time;
@@ -188,7 +219,7 @@ void vpip_trip_functor_callbacks(vvp_ipoint_t ptr)
 	    cur->cb_data.time->low = schedule_simtime();
 	    cur->cb_data.time->high = 0;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete cur;
+	    free_vpi_callback(cur);
       }
 }
 
@@ -199,6 +230,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.4  2001/07/13 03:02:34  steve
+ *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/07/11 02:27:21  steve
  *  Add support for REadOnlySync and monitors.
  *
