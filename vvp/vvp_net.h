@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.7 2005/01/16 04:19:08 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.8 2005/01/22 17:36:15 steve Exp $"
 
 # include  <assert.h>
 
@@ -50,6 +50,8 @@ enum vvp_bit4_t {
 };
 
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
+  /* Return TRUE if the bit is BIT4_X or BIT4_Z */
+extern bool bit4_is_xz(vvp_bit4_t a);
 
 /*
  * This class represents scaler values collected into vectors. The
@@ -82,9 +84,12 @@ class vvp_vector4_t {
       };
 };
 
-vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
-			const vvp_vector4_t&b,
-			vvp_bit4_t val_if_equal);
+extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
+			       const vvp_vector4_t&b,
+			       vvp_bit4_t val_if_equal);
+extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
+				      const vvp_vector4_t&b,
+				      vvp_bit4_t val_if_equal);
 
 /*
  * This class represents a scaler value with strength. These are
@@ -489,6 +494,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.8  2005/01/22 17:36:15  steve
+ *  .cmp/x supports signed magnitude compare.
+ *
  * Revision 1.7  2005/01/16 04:19:08  steve
  *  Reimplement comparators as vvp_vector4_t nodes.
  *

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.7 2005/01/22 00:58:22 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.8 2005/01/22 17:36:15 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -48,6 +48,15 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 	  default:
 	    assert(0);
       }
+}
+
+bool bit4_is_xz(vvp_bit4_t a)
+{
+      if (a == BIT4_X)
+	    return true;
+      if (a == BIT4_Z)
+	    return true;
+      return false;
 }
 
 void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
@@ -704,7 +713,7 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
 	    if (bit == BIT4_X)
 		  return BIT4_X;
 	    if (bit == BIT4_Z)
-		  return BIT4_Z;
+		  return BIT4_X;
       }
 
       for (unsigned idx = lef.size() ; idx > rig.size() ;  idx -= 1) {
@@ -733,8 +742,53 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
       return out_if_equal;
 }
 
+vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
+			       const vvp_vector4_t&b,
+			       vvp_bit4_t out_if_equal)
+{
+      assert(a.size() == b.size());
+
+      unsigned sign_idx = a.size()-1;
+      vvp_bit4_t a_sign = a.value(sign_idx);
+      vvp_bit4_t b_sign = b.value(sign_idx);
+
+      if (a_sign == BIT4_X)
+	    return BIT4_X;
+      if (a_sign == BIT4_Z)
+	    return BIT4_X;
+      if (b_sign == BIT4_X)
+	    return BIT4_X;
+      if (b_sign == BIT4_Z)
+	    return BIT4_Z;
+
+      if (a_sign == b_sign)
+	    return compare_gtge(a, b, out_if_equal);
+
+      for (unsigned idx = 0 ;  idx < sign_idx ;  idx += 1) {
+	    vvp_bit4_t a_bit = a.value(idx);
+	    vvp_bit4_t b_bit = a.value(idx);
+
+	    if (a_bit == BIT4_X)
+		  return BIT4_X;
+	    if (a_bit == BIT4_Z)
+		  return BIT4_X;
+	    if (b_bit == BIT4_X)
+		  return BIT4_X;
+	    if (b_bit == BIT4_Z)
+		  return BIT4_Z;
+      }
+
+      if(a_sign == BIT4_0)
+	    return BIT4_1;
+      else
+	    return BIT4_0;
+}
+
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.8  2005/01/22 17:36:15  steve
+ *  .cmp/x supports signed magnitude compare.
+ *
  * Revision 1.7  2005/01/22 00:58:22  steve
  *  Implement the %load/x instruction.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.34 2005/01/22 16:21:11 steve Exp $"
+#ident "$Id: arith.cc,v 1.35 2005/01/22 17:36:15 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -485,29 +485,16 @@ void vvp_cmp_gtge_base_::recv_vec4_base_(vvp_net_ptr_t ptr,
 					 vvp_vector4_t bit,
 					 vvp_bit4_t out_if_equal)
 {
-	// XXXX For now, do not support signed compare.
-      assert(! signed_flag_);
+      dispatch_operand_(ptr, bit);
 
-      switch (ptr.port()) {
-	  case 0:
-	    op_a_ = bit;
-	    break;
-	  case 1:
-	    op_b_ = bit;
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
+      vvp_bit4_t out = signed_flag_
+	    ? compare_gtge_signed(op_a_, op_b_, out_if_equal)
+	    : compare_gtge(op_a_, op_b_, out_if_equal);
+      vvp_vector4_t val (1);
+      val.set_bit(0, out);
+      vvp_send_vec4(ptr.ptr()->out, val);
 
-      vvp_bit4_t out = compare_gtge(op_a_, op_b_, out_if_equal);
-      if (out == BIT4_X) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
-      } else {
-	    vvp_vector4_t val (1);
-	    val.set_bit(0, out);
-	    vvp_send_vec4(ptr.ptr()->out, val);
-      }
+      return;
 }
 
 
@@ -636,6 +623,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.35  2005/01/22 17:36:15  steve
+ *  .cmp/x supports signed magnitude compare.
+ *
  * Revision 1.34  2005/01/22 16:21:11  steve
  *  Implement vectored CMP_EQ and NE
  *
