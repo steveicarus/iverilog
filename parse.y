@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.74 1999/10/15 05:03:33 steve Exp $"
+#ident "$Id: parse.y,v 1.75 1999/11/05 19:36:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -335,6 +335,23 @@ description
 		  delete $7;
 		}
 	;
+
+drive_strength
+	: '(' dr_strength0 ',' dr_strength1 ')'
+	| '(' dr_strength1 ',' dr_strength0 ')'
+	| '(' dr_strength0 ',' K_highz1 ')'
+	| '(' dr_strength1 ',' K_highz0 ')'
+	| '(' K_highz1 ',' dr_strength0 ')'
+	| '(' K_highz0 ',' dr_strength1 ')'
+	;
+
+drive_strength_opt
+	: drive_strength
+	|
+	;
+
+dr_strength0 : K_supply0 | K_strong0 | K_pull0 | K_weak0 ;
+dr_strength1 : K_supply1 | K_strong1 | K_pull1 | K_weak1 ;
 
 event_control
 	: '@' IDENTIFIER
@@ -1061,8 +1078,8 @@ module_item
 		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
 		}
-	| K_assign delay_opt assign_list ';'
-		{ pform_make_pgassign_list($3, $2, @1.text, @1.first_line); }
+	| K_assign drive_strength_opt delay_opt assign_list ';'
+		{ pform_make_pgassign_list($4, $3, @1.text, @1.first_line); }
 	| K_assign error '=' expression ';'
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);

@@ -327,6 +327,8 @@ current state of support for Verilog.
             reg [7:0] del;
 	    always #(reg) $display($time,,"del = %d", del); // sorry
 
+  - drive strengths are parsed, bug ignored.
+
 Specify blocks are parsed but ignored in general.
 
 
