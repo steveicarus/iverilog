@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.12 2003/08/09 03:23:03 steve Exp $"
+#ident "$Id: device.h,v 1.13 2003/10/27 02:18:27 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -63,6 +63,8 @@ struct device_s {
       void (*show_shiftr)(ivl_lpm_t net);
 	/* Multipliers */
       void (*show_mult)(ivl_lpm_t net);
+	/* Constants */
+      void (*show_constant)(ivl_net_const_t net);
 };
 
 /*
@@ -77,6 +79,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.13  2003/10/27 02:18:27  steve
+ *  Emit constants for LPM device.
+ *
  * Revision 1.12  2003/08/09 03:23:03  steve
  *  Add support for IVL_LPM_MULT device.
  *

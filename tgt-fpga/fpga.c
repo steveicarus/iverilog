@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga.c,v 1.9 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: fpga.c,v 1.10 2003/10/27 02:18:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,6 +88,19 @@ static void show_pads(ivl_scope_t scope)
       }
 }
 
+static void show_constants(ivl_design_t des)
+{
+      unsigned idx;
+
+      if (device->show_constant == 0)
+	    return;
+
+      for (idx = 0 ;  idx < ivl_design_consts(des) ;  idx += 1) {
+	    ivl_net_const_t con = ivl_design_const(des, idx);
+	    device->show_constant(con);
+      }
+}
+
 /*
  * This is the main entry point that ivl uses to invoke me, the code
  * generator.
@@ -135,6 +148,8 @@ int target_design(ivl_design_t des)
 	   netlist. */
       show_scope_gates(root, 0);
 
+      show_constants(des);
+
 	/* Call the device driver to close out the file. */
       device->show_footer(des);
 
@@ -145,6 +160,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.10  2003/10/27 02:18:28  steve
+ *  Emit constants for LPM device.
+ *
  * Revision 1.9  2003/08/07 04:04:01  steve
  *  Add an LPM device type.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.8 2003/09/03 23:34:09 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.9 2003/10/27 02:18:27 steve Exp $"
 #endif
 
 /*
@@ -785,6 +785,58 @@ static void lpm_show_mult(ivl_lpm_t net)
 
 }
 
+static void lpm_show_constant(ivl_net_const_t net)
+{
+      edif_cell_t cell0 = edif_xlibrary_findcell(xlib, "cell0");
+      edif_cell_t cell1 = edif_xlibrary_findcell(xlib, "cell1");
+      edif_cellref_t ref0 = 0, ref1 = 0;
+
+      const char*bits;
+      unsigned idx;
+
+      if (cell0 == 0) {
+	    cell0 = edif_xcell_create(xlib, "cell0", 1);
+	    edif_cell_portconfig(cell0, 0, "Result0", IVL_SIP_OUTPUT);
+
+	    edif_cell_pstring(cell0,  "LPM_Type",   "LPM_CONSTANT");
+	    edif_cell_pinteger(cell0, "LPM_Width",  1);
+	    edif_cell_pinteger(cell0, "LPM_CValue", 0);
+      }
+
+      if (cell1 == 0) {
+	    cell1 = edif_xcell_create(xlib, "cell1", 1);
+	    edif_cell_portconfig(cell1, 0, "Result0", IVL_SIP_OUTPUT);
+
+	    edif_cell_pstring(cell1,  "LPM_Type",   "LPM_CONSTANT");
+	    edif_cell_pinteger(cell1, "LPM_Width",  1);
+	    edif_cell_pinteger(cell1, "LPM_CValue", 1);
+      }
+
+      bits = ivl_const_bits(net);
+      for (idx = 0 ;  idx < ivl_const_pins(net) ;  idx += 1) {
+	    if (bits[idx] == '1') {
+		  if (ref1 == 0)
+			ref1 = edif_cellref_create(edf, cell1);
+
+	    } else {
+		  if (ref0 == 0)
+			ref0 = edif_cellref_create(edf, cell0);
+	    }
+      }
+
+      for (idx = 0 ;  idx < ivl_const_pins(net) ;  idx += 1) {
+	    edif_joint_t jnt;
+
+	    jnt = edif_joint_of_nexus(edf, ivl_const_pin(net,idx));
+	    if (bits[idx] == '1')
+		  edif_add_to_joint(jnt, ref1, 0);
+	    else
+		  edif_add_to_joint(jnt, ref0, 0);
+      }
+
+}
+
+
 const struct device_s d_lpm_edif = {
       lpm_show_header,
       lpm_show_footer,
@@ -800,11 +852,15 @@ const struct device_s d_lpm_edif = {
       lpm_show_add, /* show_sub */
       0, /* show_shiftl */
       0, /* show_shiftr */
-      lpm_show_mult /* show_mult */
+      lpm_show_mult, /* show_mult */
+      lpm_show_constant /* show_constant */
 };
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.9  2003/10/27 02:18:27  steve
+ *  Emit constants for LPM device.
+ *
  * Revision 1.8  2003/09/03 23:34:09  steve
  *  Support synchronous set of LPM_FF devices.
  *
