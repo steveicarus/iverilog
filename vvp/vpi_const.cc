@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.19 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.20 2002/11/03 02:07:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -335,6 +335,49 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		break;
 	  }
 
+	  case vpiVectorVal: {
+	      unsigned int obit = 0;
+	      unsigned hwid = (rfp->nbits - 1)/32 + 1;
+	      char*rbuf = need_result_buf(hwid*sizeof(s_vpi_vecval), RBUF_VAL);
+
+	      s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+	      vp->value.vector = op;
+
+	      op->aval = op->bval = 0;
+	      for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
+		unsigned nibble = idx/4;
+		unsigned shift  = 2 * (idx%4);
+		unsigned bit_val = (rfp->bits[nibble] >> shift) & 3;
+
+		switch (bit_val) {
+		case 0:
+		  op->aval &= ~(1 << obit);
+		  op->bval &= ~(1 << obit);
+		  break;
+		case 1:
+		  op->aval |= (1 << obit);
+		  op->bval &= ~(1 << obit);
+		  break;
+		case 2:
+		  op->aval |= (1 << obit);
+		  op->bval |= (1 << obit);
+		  break;
+		case 3:
+		  op->aval &= ~(1 << obit);
+		  op->bval |= (1 << obit);
+		  break;
+		}
+		obit++;
+		if (!(obit % 32)) {
+		      op += 1;
+		      if ((op - vp->value.vector) < (ptrdiff_t)hwid)
+			    op->aval = op->bval = 0;
+		      obit = 0;
+		}
+	      }
+	      break;
+	  }
+
 	  case vpiStringVal:
 	    binary_vpiStringVal(rfp, vp);
 	    break;
@@ -514,6 +557,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.20  2002/11/03 02:07:24  steve
+ *  Get VectorVals from constant values.
+ *
  * Revision 1.19  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
