@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_finish.c,v 1.2 1999/08/19 02:51:03 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.3 1999/08/28 02:10:44 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
 
 static int sys_finish_calltf(char *xx)
 {
-      vpi_sim_control(vpiReset, 0);
+      vpi_sim_control(vpiFinish, 0);
       return 0;
 }
 
@@ -42,6 +42,9 @@ void sys_finish_register()
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.3  1999/08/28 02:10:44  steve
+ *  Call the right vpiFinish code.
+ *
  * Revision 1.2  1999/08/19 02:51:03  steve
  *  Add vpi_sim_control
  *
