@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.13 1998/12/17 23:54:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.14 1998/12/18 05:16:25 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -499,16 +499,25 @@ bool NetUDP::set_sequ_(const string&input, char output)
 
       switch (to[edge]) {
 	  case '0':
-	    assert(sfrm->pins[edge].zer == 0);
-	    sfrm->pins[edge].zer = sto;
+	      // Notice that I might have caught this edge already
+	    if (sfrm->pins[edge].zer != sto) {
+		  assert(sfrm->pins[edge].zer == 0);
+		  sfrm->pins[edge].zer = sto;
+	    }
 	    break;
 	  case '1':
-	    assert(sfrm->pins[edge].one == 0);
-	    sfrm->pins[edge].one = sto;
+	      // Notice that I might have caught this edge already
+	    if (sfrm->pins[edge].one != sto) {
+		    assert(sfrm->pins[edge].one == 0);
+		    sfrm->pins[edge].one = sto;
+	    }
 	    break;
 	  case 'x':
-	    assert(sfrm->pins[edge].xxx == 0);
-	    sfrm->pins[edge].xxx = sto;
+	      // Notice that I might have caught this edge already
+	    if (sfrm->pins[edge].xxx != sto) {
+		    assert(sfrm->pins[edge].xxx == 0);
+		    sfrm->pins[edge].xxx = sto;
+	    }
 	    break;
       }
 
@@ -536,6 +545,31 @@ bool NetUDP::sequ_glob_(string input, char output)
 		  input[idx] = '1';
 		  sequ_glob_(input, output);
 		  input[idx] = 'x';
+		  sequ_glob_(input, output);
+		  return true;
+
+		case 'n': // Iterate over (n) edges
+		  input[idx] = 'f';
+		  sequ_glob_(input, output);
+		  input[idx] = 'F';
+		  sequ_glob_(input, output);
+		  input[idx] = 'N';
+		  sequ_glob_(input, output);
+		  return true;
+
+		case 'p': // Iterate over (p) edges
+		  input[idx] = 'r';
+		  sequ_glob_(input, output);
+		  input[idx] = 'R';
+		  sequ_glob_(input, output);
+		  input[idx] = 'P';
+		  sequ_glob_(input, output);
+		  return true;
+
+		case '_': // Iterate over (?0) edges
+		  input[idx] = 'f';
+		  sequ_glob_(input, output);
+		  input[idx] = 'F';
 		  sequ_glob_(input, output);
 		  return true;
 
@@ -811,6 +845,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.14  1998/12/18 05:16:25  steve
+ *  Parse more UDP input edge descriptions.
+ *
  * Revision 1.13  1998/12/17 23:54:58  steve
  *  VVM support for small sequential UDP objects.
  *

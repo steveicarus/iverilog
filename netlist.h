@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.13 1998/12/17 23:54:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.14 1998/12/18 05:16:25 steve Exp $"
 #endif
 
 /*
@@ -352,6 +352,7 @@ class NetLogic  : public NetNode {
  * edge.
  *
  * Set_table takes as input a string with one letter per pin. The
+ * parser translates the written sequences to one of these. The
  * valid characters are:
  *
  *      0, 1, x  -- The levels
@@ -361,6 +362,17 @@ class NetLogic  : public NetNode {
  *      F   -- (x0)
  *      P   -- (0x)
  *      N   -- (1x)
+ *
+ * It also takes one of the following glob letters to represent more
+ * then one item.
+ *
+ *      p   -- 01, 0x or x1
+ *      n   -- 10, 1x or x0
+ *      ?   -- 0, 1, or x
+ *      *   -- any edge
+ *      +   -- 01 or x1
+ *      _   -- 10 or x0  (Note that this is not the output '-'.)
+ *      %   -- 0x or 1x
  *
  * COMBINATIONAL
  * The logic table is a map between the input levels and the
@@ -894,6 +906,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.14  1998/12/18 05:16:25  steve
+ *  Parse more UDP input edge descriptions.
+ *
  * Revision 1.13  1998/12/17 23:54:58  steve
  *  VVM support for small sequential UDP objects.
  *
