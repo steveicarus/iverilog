@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.47 2003/09/30 01:33:39 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.48 2003/10/02 21:30:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,10 @@
 # include  <malloc.h>
 #endif
 # include  "vcd_priv.h"
+
+#ifdef HAVE_INTTYPES_H
+# define TIME_FMT PRIu64
+#endif
 
 static FILE*dump_file = 0;
 
@@ -289,7 +293,7 @@ static int sys_dumpoff_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "u\n", now64);
+	    fprintf(dump_file, "#" TIME_FMT "\n", now64);
       vcd_cur_time = now64;
 
       fprintf(dump_file, "$dumpoff\n");
@@ -320,7 +324,7 @@ static int sys_dumpon_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "u\n", now64);
+	    fprintf(dump_file, "#" TIME_FMT "\n", now64);
       vcd_cur_time = now64;
 
       fprintf(dump_file, "$dumpon\n");
@@ -346,7 +350,7 @@ static int sys_dumpall_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#%" TIME_FMT "u\n", now64);
+	    fprintf(dump_file, "#" TIME_FMT "\n", now64);
       vcd_cur_time = now.low;
 
       fprintf(dump_file, "$dumpall\n");
@@ -811,6 +815,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.48  2003/10/02 21:30:06  steve
+ *  Use configured TIME_FMT in vcd dump printf.
+ *
  * Revision 1.47  2003/09/30 01:33:39  steve
  *  dumpers must be aware of 64bit time.
  *

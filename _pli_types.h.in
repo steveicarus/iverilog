@@ -19,19 +19,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h.in,v 1.2 2003/10/02 19:33:44 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.3 2003/10/02 21:30:06 steve Exp $"
 #endif
 
-# undef HAVE_STDINT_H
+# undef HAVE_INTTYPES_H
 
-#ifdef HAVE_STDINT_H
+#ifdef HAVE_INTTYPES_H
 
 /*
  * If the host enhironment has the stdint.h header file,
  * then use that to size our PLI types.
  */
+#ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS
+#endif
 
-# include  <stdint.h>
+# include  <inttypes.h>
 typedef uint64_t PLI_UINT64;
 typedef int64_t  PLI_INT64;
 typedef uint32_t PLI_UINT32;
@@ -56,21 +59,21 @@ typedef unsigned char  PLI_UBYTE8;
 #if SIZEOF_UNSIGNED >= 8
 typedef unsigned PLI_UINT64;
 typedef int      PLI_INT64;
-# define TIME_FMT ""
+# define TIME_FMT "%u"
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long PLI_UINT64;
 typedef          long PLI_INT64;
-#  define TIME_FMT "l"
+#  define TIME_FMT "%lu"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
 typedef unsigned long long PLI_UINT64;
 typedef          long long PLI_INT64;
-#   define TIME_FMT "ll"
+#   define TIME_FMT "%llu"
 #  else
 typedef unsigned long PLI_UINT64;
 typedef          long PLI_INT64;
-#   define TIME_FMT "l"
+#   define TIME_FMT "%lu"
 #  endif
 # endif
 #endif
@@ -85,6 +88,9 @@ typedef unsigned char  PLI_UBYTE8;
 
 /*
  * $Log: _pli_types.h.in,v $
+ * Revision 1.3  2003/10/02 21:30:06  steve
+ *  Use configured TIME_FMT in vcd dump printf.
+ *
  * Revision 1.2  2003/10/02 19:33:44  steve
  *  Put libraries in libdir64.
  *
