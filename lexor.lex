@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.61 2001/08/30 22:40:12 steve Exp $"
+#ident "$Id: lexor.lex,v 1.62 2001/08/31 17:38:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -200,6 +200,8 @@ W [ \t\b\f\r]+
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
+      if (strcmp(yytext,"$setuphold") == 0)
+	    return K_Ssetuphold;
       if (strcmp(yytext,"$attribute") == 0)
 	    return KK_attribute;
       if (strcmp(yytext,"$hold") == 0)

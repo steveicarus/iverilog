@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.126 2001/07/28 22:00:27 steve Exp $"
+#ident "$Id: parse.y,v 1.127 2001/08/31 17:38:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,7 +107,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
 %token K_wor K_xnor K_xor
-%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth
+%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth K_Ssetuphold
 
 %token KK_attribute
 
@@ -1883,6 +1883,19 @@ specify_item
 	  ',' expression ')' ';'
 		{ delete $5;
 		  delete $7;
+		}
+	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' expression ')' ';'
+		{ 
+		    delete $7;
+		    delete $9;
+		}
+	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' expression ',' identifier ')' ';'
+		{ 
+		    delete $7;
+		    delete $9;
+		    delete $11;
 		}
 	;
 
