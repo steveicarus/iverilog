@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.12 1999/05/02 23:25:32 steve Exp $"
+#ident "$Id: pform.cc,v 1.13 1999/05/06 04:09:28 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -426,8 +426,14 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
 	    PExpr*msb = *idx;
 	    idx ++;
 	    PExpr*lsb = *idx;
-	    if (! (cur->msb->is_the_same(msb) && cur->lsb->is_the_same(lsb)))
+	    if (msb == 0) {
+		  VLerror(yylloc, "failed to parse msb of range.");
+	    } else if (lsb == 0) {
+		  VLerror(yylloc, "failed to parse lsb of range.");
+	    } else if (! (cur->msb->is_the_same(msb) &&
+			  cur->lsb->is_the_same(lsb))) {
 		  VLerror(yylloc, "net ranges are not identical.");
+	    }
 	    delete msb;
 	    delete lsb;
       }
@@ -436,6 +442,13 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
 void pform_set_parameter(const string&name, PExpr*expr)
 {
       cur_module->parameters[name] = expr;
+}
+
+bool pform_is_parameter(const string&name)
+{
+      map<string,PExpr*>::const_iterator cur =
+	    cur_module->parameters.find(name);
+      return cur != cur_module->parameters.end();
 }
 
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
@@ -535,6 +548,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.13  1999/05/06 04:09:28  steve
+ *  Parse more constant expressions.
+ *
  * Revision 1.12  1999/05/02 23:25:32  steve
  *  Enforce module instance names.
  *

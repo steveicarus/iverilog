@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.9 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: pform.h,v 1.10 1999/05/06 04:09:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -107,6 +107,7 @@ extern void pform_set_attrib(const string&name, const string&key,
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
 extern void pform_set_parameter(const string&name, PExpr*expr);
+extern bool pform_is_parameter(const string&name);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
@@ -140,6 +141,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.10  1999/05/06 04:09:28  steve
+ *  Parse more constant expressions.
+ *
  * Revision 1.9  1999/04/19 01:59:37  steve
  *  Add memories to the parse and elaboration phases.
  *

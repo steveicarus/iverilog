@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.20 1999/05/05 03:27:15 steve Exp $"
+#ident "$Id: parse.y,v 1.21 1999/05/06 04:09:28 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -170,6 +170,10 @@ case_items
 		}
 	;
 
+  /* const_expressions are restricted expressions that have guaranteed
+     known values at compile time. I treat them differently at parse
+     time so that I can tack correctness checking onto the parse
+     process. */
 const_expression
 	: NUMBER
 		{ verinum*tmp = $1;
@@ -183,6 +187,23 @@ const_expression
 	| STRING
 		{ $$ = new PEString(*$1);
 		  delete $1;
+		}
+	| IDENTIFIER
+		{ if (!pform_is_parameter(*$1)) {
+		        yyerror(@1, "Identifier in constant expression"
+			        " must be a parameter name.");
+			delete $1;
+			$$ = 0;
+		  } else {
+			PEIdent*tmp = new PEIdent(*$1);
+			tmp->set_file(@1.text);
+			tmp->set_lineno(@1.first_line);
+			$$ = tmp;
+			delete $1;
+		  }
+		}
+	| const_expression '-' const_expression
+		{ $$ = new PEBinary('-', $1, $3);
 		}
 	;
 
@@ -277,6 +298,10 @@ expression
 		{ $$ = $1; }
 	| '(' expression ')'
 		{ $$ = $2; }
+	| '{' expression_list '}'
+		{ yyerror(@1, "Sorry, concatenation operator not supported.");
+		  $$ = 0;
+		}
 	| '~' expression %prec UNARY_PREC
 		{ $$ = new PEUnary('~', $2);
 		}
@@ -507,8 +532,16 @@ list_of_variables
 		}
 	;
 
+  /* An lvalue is the expression that can go on the left side of an
+     assignment. This rule handles only procedural assignments. */
 lvalue
 	: identifier { $$ = $1; }
+	| identifier '[' expression ']'
+		{ yyerror(@2, "Sorry, bit/memory selects "
+		          "not supported in lvalue.");
+		  $$ = $1;
+		  delete $3;
+		}
 	;
 
 module
