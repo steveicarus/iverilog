@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.97 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: t-dll.h,v 1.98 2003/02/06 16:43:20 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
 # include  "StringHeap.h"
+# include  "netlist.h"
 
 #if defined(__MINGW32__)
 #include <windows.h>
@@ -650,6 +651,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.98  2003/02/06 16:43:20  steve
+ *  Satisfy declaration requirements of some picky compilers.
+ *
  * Revision 1.97  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
