@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.119 2003/06/23 01:25:44 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.120 2003/07/30 01:13:28 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -276,9 +276,7 @@ typedef enum ivl_signal_type_e {
       IVL_SIT_TRI0,
       IVL_SIT_TRI1,
       IVL_SIT_TRIAND,
-      IVL_SIT_TRIOR,
-      IVL_SIT_WAND,
-      IVL_SIT_WOR
+      IVL_SIT_TRIOR
 } ivl_signal_type_t;
 
 /* This is the type code for ivl_statement_t objects. */
@@ -1222,6 +1220,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.120  2003/07/30 01:13:28  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.119  2003/06/23 01:25:44  steve
  *  Module attributes make it al the way to ivl_target.
  *

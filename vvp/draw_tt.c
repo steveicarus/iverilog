@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.14 2002/08/29 03:04:01 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.15 2003/07/30 01:13:29 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -559,6 +559,80 @@ static void draw_XOR(void)
       printf("};\n");
 }
 
+static void draw_TRIAND(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_TRIAND[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if ((i0 == 0) || (i1 == 0) || 
+				  (i2 == 0) || (i3 == 0))
+				    val = 0;
+			      else if ((i0 == 2) || (i1 == 2) || 
+				       (i2 == 2) || (i3 == 2))
+				    val = 2;
+			      else if ((i0 == 3) && (i1 == 3) && 
+				       (i2 == 3) && (i3 == 3))
+				    val = 3;
+			      else
+				    val = 1;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_TRIOR(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_TRIOR[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if ((i0 == 1) || (i1 == 1) || 
+				  (i2 == 1) || (i3 == 1))
+				    val = 1;
+			      else if ((i0 == 2) || (i1 == 2) || 
+				       (i2 == 2) || (i3 == 2))
+				    val = 2;
+			      else if ((i0 == 3) && (i1 == 3) && 
+				       (i2 == 3) && (i3 == 3))
+				    val = 3;
+			      else
+				    val = 0;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
 /*
  * The hex_digits table is not a functor truth table per say, but a
  * map of a 4-vbit value to a hex digit. The table handles the display
@@ -673,6 +747,8 @@ main()
       draw_NOR();
       draw_NOT();
       draw_OR();
+      draw_TRIAND();
+      draw_TRIOR();
       draw_XNOR();
       draw_XOR();
       draw_hex_table();
@@ -682,6 +758,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.15  2003/07/30 01:13:29  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.14  2002/08/29 03:04:01  steve
  *  Generate x out for x select on wide muxes.
  *

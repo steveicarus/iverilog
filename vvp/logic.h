@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.6 2002/08/29 03:04:01 steve Exp $"
+#ident "$Id: logic.h,v 1.7 2003/07/30 01:13:29 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -58,12 +58,17 @@ extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
 extern const unsigned char ft_OR[];
+extern const unsigned char ft_TRIAND[];
+extern const unsigned char ft_TRIOR[];
 extern const unsigned char ft_XNOR[];
 extern const unsigned char ft_XOR[];
 extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.7  2003/07/30 01:13:29  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.6  2002/08/29 03:04:01  steve
  *  Generate x out for x select on wide muxes.
  *

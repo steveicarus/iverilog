@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.117 2003/07/26 04:06:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.118 2003/07/30 01:13:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2053,6 +2053,8 @@ void dll_target::signal(const NetNet*net)
 	    break;
 
 	  case NetNet::TRI:
+	  case NetNet::WIRE:
+	  case NetNet::IMPLICIT:
 	    obj->type_ = IVL_SIT_TRI;
 	    break;
 
@@ -2065,24 +2067,13 @@ void dll_target::signal(const NetNet*net)
 	    break;
 
 	  case NetNet::TRIAND:
+	  case NetNet::WAND:
 	    obj->type_ = IVL_SIT_TRIAND;
 	    break;
 
 	  case NetNet::TRIOR:
-	    obj->type_ = IVL_SIT_TRIOR;
-	    break;
-
-	  case NetNet::WAND:
-	    obj->type_ = IVL_SIT_WAND;
-	    break;
-
-	  case NetNet::WIRE:
-	  case NetNet::IMPLICIT:
-	    obj->type_ = IVL_SIT_TRI;
-	    break;
-
 	  case NetNet::WOR:
-	    obj->type_ = IVL_SIT_WOR;
+	    obj->type_ = IVL_SIT_TRIOR;
 	    break;
 
 	  default:
@@ -2143,6 +2134,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.118  2003/07/30 01:13:28  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.117  2003/07/26 04:06:58  steve
  *  Watch out for moving nexus_ptr while adding pins to nexus.
  *

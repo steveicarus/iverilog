@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.168 2003/07/22 20:30:24 steve Exp $"
+#ident "$Id: compile.cc,v 1.169 2003/07/30 01:13:28 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "compile.h"
 # include  "functor.h"
+# include  "logic.h"
 # include  "resolv.h"
 # include  "udp.h" 
 # include  "memory.h"
@@ -1048,6 +1049,12 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       } else if (strcmp(type,"tri1") == 0) {
 	    obj = new resolv_functor_s(Pu1);
 
+      } else if (strcmp(type,"triand") == 0) {
+	    obj = new table_functor_s(ft_TRIAND, 6, 6);
+
+      } else if (strcmp(type,"trior") == 0) {
+	    obj = new table_functor_s(ft_TRIOR, 6, 6);
+
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
 	    compile_errors += 1;
@@ -1532,6 +1539,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.169  2003/07/30 01:13:28  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.168  2003/07/22 20:30:24  steve
  *  Forgot to read the /x parameter for %load/x
  *

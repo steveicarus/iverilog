@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.94 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.95 2003/07/30 01:13:28 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -424,6 +424,12 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    break;
 	  case IVL_SIT_TRI1:
 	    resolv_type = "tri1";
+	    break;
+	  case IVL_SIT_TRIAND:
+	    resolv_type = "triand";
+	    break;
+	  case IVL_SIT_TRIOR:
+	    resolv_type = "trior";
 	    break;
 
 	      /* Catch the special cases that the nets are supply
@@ -1648,6 +1654,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.95  2003/07/30 01:13:28  steve
+ *  Add support for triand and trior.
+ *
  * Revision 1.94  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *
