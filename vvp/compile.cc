@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.27 2001/04/01 21:31:46 steve Exp $"
+#ident "$Id: compile.cc,v 1.28 2001/04/01 22:25:33 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -83,6 +83,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
@@ -711,6 +712,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.28  2001/04/01 22:25:33  steve
+ *  Add the reduction nor instruction.
+ *
  * Revision 1.27  2001/04/01 21:31:46  steve
  *  Add the buf functor type.
  *

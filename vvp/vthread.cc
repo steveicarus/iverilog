@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.19 2001/04/01 07:22:08 steve Exp $"
+#ident "$Id: vthread.cc,v 1.20 2001/04/01 22:25:33 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -418,6 +418,30 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_NORR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned lb = 0;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2);
+	    if (rb == 1) {
+		  lb = 1;
+		  break;
+	    }
+
+	    if (rb != 0)
+		  lb = 2;
+      }
+
+      thr_put_bit(thr, cp->bit_idx1, lb);
+
+      return true;
+}
+
 bool of_OR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -480,6 +504,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.20  2001/04/01 22:25:33  steve
+ *  Add the reduction nor instruction.
+ *
  * Revision 1.19  2001/04/01 07:22:08  steve
  *  Implement the less-then and %or instructions.
  *

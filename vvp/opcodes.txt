@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.10 2001/04/01 07:22:08 steve Exp $
+ *  $Id: opcodes.txt,v 1.11 2001/04/01 22:25:33 steve Exp $
  */
 
 
@@ -153,6 +153,12 @@ another. The destination and source vectors are assumed to be the same
 width and non-overlapping. The <dst> may not be 0-3, but if the <src>
 is one of the 4 constant bits, the effect is to replicate the value
 into the destination vector. Useful for filling a vector.
+
+* %nor/r <dst>, <src>, <wid>
+
+The %nor/r instruction is a reduction nor. That is, the <src> is a
+vector with width, but the result is a single bit. The <src> vector is
+not affected by the operation unless the <dst> bit is within the vector.
 
 * %or <dst>, <src>, <wid>
 

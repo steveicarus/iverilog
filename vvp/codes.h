@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.14 2001/04/01 07:22:08 steve Exp $"
+#ident "$Id: codes.h,v 1.15 2001/04/01 22:25:33 steve Exp $"
 #endif
 
 
@@ -53,6 +53,7 @@ extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
+extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
@@ -104,6 +105,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.15  2001/04/01 22:25:33  steve
+ *  Add the reduction nor instruction.
+ *
  * Revision 1.14  2001/04/01 07:22:08  steve
  *  Implement the less-then and %or instructions.
  *
