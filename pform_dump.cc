@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.79 2003/02/27 06:45:11 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.80 2003/06/13 19:10:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -761,7 +761,7 @@ void Module::dump(ostream&out) const
 		<< ev->get_line() << endl;
       }
 
-      for (map<string,PData*>::const_iterator cur = datum.begin()
+      for (map<hname_t,PData*>::const_iterator cur = datum.begin()
 		 ; cur != datum.end() ;  cur ++ ) {
 	    PData*tmp = (*cur).second;
 	    out << "    real " << tmp->name() << "; // "
@@ -863,6 +863,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.80  2003/06/13 19:10:46  steve
+ *  Properly manage real variables in subscopes.
+ *
  * Revision 1.79  2003/02/27 06:45:11  steve
  *  specparams as far as pform.
  *

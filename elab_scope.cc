@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.21 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.22 2003/06/13 19:10:46 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -221,7 +221,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    (*et).second->elaborate_scope(des, scope);
       }
 
-      for (map<string,PData*>::const_iterator cur = datum.begin()
+      for (map<hname_t,PData*>::const_iterator cur = datum.begin()
 		 ; cur != datum.end() ;  cur ++ ) {
 
 	    (*cur).second->elaborate_scope(des, scope);
@@ -351,13 +351,32 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       }
 }
 
+/*
+ * Elaborate the datum within the module. This variable make be
+ * within a subscope (i.e. a function or task) so use the components
+ * of the name to find the precise scope where this item goes.
+ */
 void PData::elaborate_scope(Design*des, NetScope*scope) const
 {
-      assert(hname_.component_count() == 1);
+      NetScope*sub_scope = scope;
+      for (unsigned idx = 0 ;  idx < (hname_.component_count()-1); idx += 1) {
+	    sub_scope = sub_scope->child(hname_.peek_name(idx));
+
+	    if (sub_scope == 0) {
+		  cerr << get_line() << ": internal error: "
+		       << "Could not find sub-scope "
+		       << hname_.peek_name(idx) << " of "
+		       << hname_ << " in module " << scope->name()
+		       << endl;
+		  des->errors += 1;
+		  return;
+	    }
+      }
+
       const char*basename = hname_.peek_tail_name();
       NetVariable*tmp = new NetVariable(lex_strings.add(basename));
       tmp->set_line(*this);
-      scope->add_variable(tmp);
+      sub_scope->add_variable(tmp);
 }
 
 /*
@@ -515,6 +534,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.22  2003/06/13 19:10:46  steve
+ *  Properly manage real variables in subscopes.
+ *
  * Revision 1.21  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.114 2003/06/13 00:27:09 steve Exp $"
+#ident "$Id: pform.cc,v 1.115 2003/06/13 19:10:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -610,10 +610,11 @@ void pform_make_events(list<char*>*names, const char*fn, unsigned ln)
 
 static void pform_make_datum(const char*name, const char*fn, unsigned ln)
 {
-      PData*datum = new PData(hname_t(name));
+      hname_t hname = hier_name(name);
+      PData*datum = new PData(hname);
       datum->set_file(fn);
       datum->set_lineno(ln);
-      pform_cur_module->datum[name] = datum;
+      pform_cur_module->datum[hname] = datum;
 }
 
 void pform_make_reals(list<char*>*names, const char*fn, unsigned ln)
@@ -1469,6 +1470,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.115  2003/06/13 19:10:46  steve
+ *  Properly manage real variables in subscopes.
+ *
  * Revision 1.114  2003/06/13 00:27:09  steve
  *  Task/functions can have signed ports.
  *

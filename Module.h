@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.30 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: Module.h,v 1.31 2003/06/13 19:10:45 steve Exp $"
 #endif
 
 # include  <list>
@@ -107,7 +107,7 @@ class Module : public LineInfo {
       map<string,PEvent*>events;
 
 	/* Keep a table of datum variables declared in the module. */
-      map<string,PData*>datum;
+      map<hname_t,PData*>datum;
 
 	/* These are the timescale for this module. The default is
 	   set by the `timescale directive. */
@@ -163,6 +163,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.31  2003/06/13 19:10:45  steve
+ *  Properly manage real variables in subscopes.
+ *
  * Revision 1.30  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *
