@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.5 2002/01/10 01:54:04 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.6 2002/04/14 02:56:19 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,7 @@ struct __vpiVThrVec {
       struct __vpiHandle base;
       unsigned short bas;
       unsigned short wid;
+      unsigned signed_flag : 1;
       char *name;
 };
 
@@ -85,7 +86,7 @@ static int vthr_vec_get(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiSigned:
-	    return 0;
+	    return rfp->signed_flag;
 
 	  case vpiSize:
 	    return rfp->wid;
@@ -115,51 +116,11 @@ static char buf[4096];
 
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
-      unsigned long val = 0;
-      unsigned count_x = 0, count_z = 0;
+      unsigned char*bits = new unsigned char[rfp->wid];
+      for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
+	    bits[idx] = get_bit(rfp, idx);
 
-      for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1) {
-	    val *= 2;
-	    switch (get_bit(rfp, rfp->wid-idx-1)) {
-		case 0:
-		  break;
-		case 1:
-		  val += 1;
-		  break;
-		case 2:
-		  count_x += 1;
-		  break;
-		case 3:
-		  count_z += 1;
-		  break;
-	    }
-      }
-
-      if (count_x == rfp->wid) {
-	    buf[0] = 'x';
-	    buf[1] = 0;
-	    return;
-      }
-
-      if (count_x > 0) {
-	    buf[0] = 'X';
-	    buf[1] = 0;
-	    return;
-      }
-
-      if (count_z == rfp->wid) {
-	    buf[0] = 'z';
-	    buf[1] = 0;
-	    return;
-      }
-
-      if (count_z > 0) {
-	    buf[0] = 'Z';
-	    buf[1] = 0;
-	    return;
-      }
-
-      sprintf(buf, "%lu", val);
+      vpip_bits_to_dec_str(bits, rfp->wid, buf, sizeof buf, rfp->signed_flag);
 }
 
 static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
@@ -370,13 +331,14 @@ static const struct __vpirt vpip_vthr_const_rt = {
  * Construct a vpiReg object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  */
-vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
+vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 {
       struct __vpiVThrVec*obj = (struct __vpiVThrVec*)
 	    malloc(sizeof(struct __vpiVThrVec));
       obj->base.vpi_type = &vpip_vthr_const_rt;
       obj->bas = base;
       obj->wid = wid;
+      obj->signed_flag = signed_flag? 1 : 0;
       obj->name = "T<>";
 
       return &obj->base;
@@ -385,6 +347,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.6  2002/04/14 02:56:19  steve
+ *  Support signed expressions through to VPI.
+ *
  * Revision 1.5  2002/01/10 01:54:04  steve
  *  odd width thread vectors as strings.
  *

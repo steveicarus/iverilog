@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.52 2002/01/11 05:23:05 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.53 2002/04/14 02:56:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -895,7 +895,8 @@ static int show_system_task_call(ivl_statement_t net)
 		  break;
 	    }
 	    assert(veci < vecs);
-	    fprintf(vvp_out, ", T<%u,%u>", vec[veci].base, vec[veci].wid);
+	    fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
+		    vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
 	    veci++;
       }
       
@@ -1102,6 +1103,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.53  2002/04/14 02:56:19  steve
+ *  Support signed expressions through to VPI.
+ *
  * Revision 1.52  2002/01/11 05:23:05  steve
  *  Handle certain special cases of stime.
  *

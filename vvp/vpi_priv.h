@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.28 2002/02/03 01:01:51 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.29 2002/04/14 02:56:19 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -195,7 +195,7 @@ vpiHandle vpip_make_dec_const(int value);
  *  thread. 
  */
 
-vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid);
+vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 /*
  * This function is called before any compilation to load VPI
@@ -268,6 +268,9 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.29  2002/04/14 02:56:19  steve
+ *  Support signed expressions through to VPI.
+ *
  * Revision 1.28  2002/02/03 01:01:51  steve
  *  Use Larrys bits-to-decimal-string code.
  *

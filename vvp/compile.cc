@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.122 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.123 2002/04/14 02:56:19 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -354,10 +354,31 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    // check for thread vector  T<base,wid>
 	    unsigned base, wid;
 	    unsigned n;
+	    char ss[32];
 	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
 		&& n == strlen(label)) {
-		  val.ptr = vpip_make_vthr_vector(base, wid);
+		  val.ptr = vpip_make_vthr_vector(base, wid, false);
 		  sym_set_value(sym_vpi, label, val);
+
+	    } else if (3 <= sscanf(label, "T<%u,%u,%[su]>%n", &base,
+				   &wid, ss, &n) 
+		       && n == strlen(label)) {
+
+		  bool signed_flag = false;
+		  for (char*fp = ss ;  *fp ;  fp += 1) switch (*fp) {
+		      case 's':
+			signed_flag = true;
+			break;
+		      case 'u':
+			signed_flag = false;
+			break;
+		      default:
+			break;
+		  }
+
+		  val.ptr = vpip_make_vthr_vector(base, wid, signed_flag);
+		  sym_set_value(sym_vpi, label, val);
+
 	    }
       }
 
@@ -1387,6 +1408,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.123  2002/04/14 02:56:19  steve
+ *  Support signed expressions through to VPI.
+ *
  * Revision 1.122  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.22 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.23 2002/04/14 02:56:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -362,13 +362,17 @@ void dll_target::expr_unary(const NetEUnary*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_ = IVL_EX_UNARY;
-      expr_->width_= net->expr_width();
+      expr_->width_ = net->expr_width();
+      expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.unary_.op_ = net->op();
       expr_->u_.unary_.sub_ = sub;
 }
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.23  2002/04/14 02:56:19  steve
+ *  Support signed expressions through to VPI.
+ *
  * Revision 1.22  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the
