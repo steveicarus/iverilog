@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.266 2002/12/05 04:15:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.267 2002/12/21 19:42:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1606,6 +1606,30 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 	      /* Ah, the delay is not constant. OK, elaborate the
 		 expression and let the run-time handle it. */
 	    NetExpr*dex = delay_->elaborate_expr(des, scope);
+
+	      /* If the local scope units are different from the
+		 simulation precision, then extend the expression to
+		 convert the delay to simulation time. */
+	    if (scope->time_unit() != des->get_precision()) {
+		  long scale = 1;
+		  int unit = scope->time_unit();
+		  int prec = des->get_precision();
+		  while (unit > prec) {
+			scale *= 10;
+			unit -= 1;
+		  }
+
+		  verinum scale_v (scale);
+		  NetEConst*scale_e = new NetEConst(scale_v);
+		  NetEBMult*scale_m = new NetEBMult('*', scale_e, dex);
+		  if (NetExpr*tmp = scale_m->eval_tree()) {
+			dex = tmp;
+			delete scale_m;
+		  } else {
+			dex = scale_m;
+		  }
+	    }
+
 	    if (statement_)
 		  return new NetPDelay(dex, statement_->elaborate(des, scope));
 	    else
@@ -2489,6 +2513,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.267  2002/12/21 19:42:17  steve
+ *  Account for local units in calculated delays.
+ *
  * Revision 1.266  2002/12/05 04:15:14  steve
  *  precalculate r-values of nb assignments and task arguments.
  *
