@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.4 2003/07/03 17:44:10 steve Exp $"
+#ident "$Id: vector.c,v 1.5 2005/01/24 05:08:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -147,9 +147,6 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
 	    if (ivl_expr_signal(l) != ivl_expr_signal(r))
 		  return 0;
 
-	    if (ivl_expr_lsi(l) != ivl_expr_lsi(r))
-		  return 0;
-
 	    if (ivl_expr_width(l) != ivl_expr_width(r))
 		  return 0;
 
@@ -211,6 +208,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.5  2005/01/24 05:08:02  steve
+ *  Part selects are done in the compiler, not here.
+ *
  * Revision 1.4  2003/07/03 17:44:10  steve
  *  Wider thread vector limit.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.111 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.112 2005/01/24 05:08:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1457,15 +1457,11 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 {
       unsigned idx;
-      unsigned lsi = ivl_expr_lsi(exp);
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
 
       if (swid > res.wid)
 	    swid = res.wid;
-
-	/* XXXX I forget how to do part selects here. */
-      assert(lsi == 0);
 
 	/* If this is a REG (a variable) then I can do a vector read. */
       fprintf(vvp_out, "    %%load/v %u, V_%s, %u;\n",
@@ -2129,6 +2125,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.112  2005/01/24 05:08:02  steve
+ *  Part selects are done in the compiler, not here.
+ *
  * Revision 1.111  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
