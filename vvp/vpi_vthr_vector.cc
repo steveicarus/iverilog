@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.9 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.10 2003/02/04 04:03:40 steve Exp $"
 #endif
 
 /*
@@ -373,7 +373,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiVThrWord*obj = (struct __vpiVThrWord*)ref;
 
-      static char buf[64];
+      static char buf[66];
       double val = vthread_get_real(vpip_current_vthread, obj->index);
 
       switch (vp->format) {
@@ -388,6 +388,37 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    sprintf(buf, "%0.0f", val);
 	    vp->value.str = buf;
 	    break;
+
+	  case vpiHexStrVal:
+	    sprintf(buf, "%lx", (long)val);
+	    vp->value.str = buf;
+	    break;
+
+	  case vpiBinStrVal: {
+		unsigned long vali = (unsigned long)val;
+		unsigned len = 0;
+
+		assert(8*sizeof(vali) < sizeof buf);
+
+		while (vali > 0) {
+		      len += 1;
+		      vali /= 2;
+		}
+
+		vali = (unsigned long)val;
+		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+		      buf[len-idx-1] = (vali & 1)? '1' : '0';
+		      vali /= 2;
+		}
+
+		buf[len] = 0;
+		if (len == 0) {
+		      buf[0] = '0';
+		      buf[1] = 0;
+		}
+		vp->value.str = buf;
+		break;
+	  }
 
 	  default:
 	    vp->format = vpiSuppressVal;
@@ -422,6 +453,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.10  2003/02/04 04:03:40  steve
+ *  Add hex and binary formatting of real values.
+ *
  * Revision 1.9  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

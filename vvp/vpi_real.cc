@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.3 2003/02/02 01:40:24 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.4 2003/02/04 04:03:40 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -39,7 +39,7 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      static char buf[64];
+      static char buf[66];
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
 
       switch (vp->format) {
@@ -48,10 +48,42 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiRealVal:
 	    vp->value.real = rfp->value;
 	    break;
+
 	  case vpiDecStrVal:
 	    sprintf(buf, "%0.0f", rfp->value);
 	    vp->value.str = buf;
 	    break;
+
+	  case vpiHexStrVal:
+	    sprintf(buf, "%lx", (long)rfp->value);
+	    vp->value.str = buf;
+	    break;
+
+	  case vpiBinStrVal: {
+		unsigned long val = (unsigned long)rfp->value;
+		unsigned len = 0;
+
+		assert(8*sizeof(val) < sizeof buf);
+
+		while (val > 0) {
+		      len += 1;
+		      val /= 2;
+		}
+
+		val = (unsigned long)rfp->value;
+		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+		      buf[len-idx-1] = (val & 1)? '1' : '0';
+		      val /= 2;
+		}
+
+		buf[len] = 0;
+		if (len == 0) {
+		      buf[0] = '0';
+		      buf[1] = 0;
+		}
+		vp->value.str = buf;
+		break;
+	  }
 
 	  default:
 	    fprintf(stderr, "ERROR: Unsupported format code: %d\n",
@@ -101,6 +133,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.4  2003/02/04 04:03:40  steve
+ *  Add hex and binary formatting of real values.
+ *
  * Revision 1.3  2003/02/02 01:40:24  steve
  *  Five vpi_free_object a default behavior.
  *
