@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.67 2001/10/30 02:52:07 steve Exp $"
+#ident "$Id: t-dll.h,v 1.68 2001/10/31 05:24:52 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -522,6 +522,11 @@ struct ivl_statement_s {
 		  struct ivl_statement_s*case_st;
 	    } case_;
 
+	    struct { /* IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
+		  unsigned lvals;
+		  struct ivl_lval_s*lval;
+	    } cassign_;
+
 	    struct { /* IVL_ST_CONDIT */
 		    /* This is the condition expression */
 		  ivl_expr_t cond_;
@@ -575,6 +580,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.68  2001/10/31 05:24:52  steve
+ *  ivl_target support for assign/deassign.
+ *
  * Revision 1.67  2001/10/30 02:52:07  steve
  *  Stubs for assign/deassign for t-dll.
  *

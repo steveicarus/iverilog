@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.69 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.70 2001/10/31 05:24:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1282,6 +1282,12 @@ extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 	  case IVL_ST_ASSIGN_NB:
 	    assert(idx < net->u_.assign_.lvals_);
 	    return net->u_.assign_.lval_ + idx;
+
+	  case IVL_ST_CASSIGN:
+	  case IVL_ST_DEASSIGN:
+	    assert(idx < net->u_.cassign_.lvals);
+	    return net->u_.cassign_.lval + idx;
+
 	  default:
 	    assert(0);
       }
@@ -1294,6 +1300,11 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.lvals_;
+
+	  case IVL_ST_CASSIGN:
+	  case IVL_ST_DEASSIGN:
+	    return net->u_.cassign_.lvals;
+
 	  default:
 	    assert(0);
       }
@@ -1398,6 +1409,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.70  2001/10/31 05:24:52  steve
+ *  ivl_target support for assign/deassign.
+ *
  * Revision 1.69  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

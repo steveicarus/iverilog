@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.4 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: net_force.cc,v 1.5 2001/10/31 05:24:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,6 +57,11 @@ NetCAssign::NetCAssign(NetScope*s, const string&n, NetNet*l)
 NetCAssign::~NetCAssign()
 {
       lval_->decr_eref();
+}
+
+const NetNet* NetCAssign::lval() const
+{
+      return lval_;
 }
 
 const Link& NetCAssign::lval_pin(unsigned idx) const
@@ -117,6 +122,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.5  2001/10/31 05:24:52  steve
+ *  ivl_target support for assign/deassign.
+ *
  * Revision 1.4  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *

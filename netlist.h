@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.219 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.220 2001/10/31 05:24:52 steve Exp $"
 #endif
 
 /*
@@ -1424,6 +1424,8 @@ class NetCAssign  : public NetProc, public NetNode {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
+
+      const NetNet*lval() const;
 
     private:
       NetNet*lval_;
@@ -2849,6 +2851,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.220  2001/10/31 05:24:52  steve
+ *  ivl_target support for assign/deassign.
+ *
  * Revision 1.219  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *
