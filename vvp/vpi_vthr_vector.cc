@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.12 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.13 2003/03/01 00:46:13 steve Exp $"
 #endif
 
 /*
@@ -390,7 +390,16 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
       struct __vpiVThrWord*obj = (struct __vpiVThrWord*)ref;
 
       static char buf[66];
-      double val = vthread_get_real(vpip_current_vthread, obj->index);
+
+      double val = 0.0;
+
+	/* Get the actual value from the index. It is possible, by the
+	   way, that the vpi_get_value is called from compiletf. If
+	   that's the case, there will be no current thread, and this
+	   will not have access to the proper value. Punt and return a
+	   0.0 value instead. */
+      if (vpip_current_vthread)
+	    val = vthread_get_real(vpip_current_vthread, obj->index);
 
       switch (vp->format) {
 
@@ -469,6 +478,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.13  2003/03/01 00:46:13  steve
+ *  Careful about compiletf calls.
+ *
  * Revision 1.12  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
