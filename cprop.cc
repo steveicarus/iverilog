@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.43 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: cprop.cc,v 1.44 2003/04/25 05:06:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -155,6 +155,9 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 {
       NetScope*scope = obj->scope();
 
+      unsigned const_count = 0;
+      bool unknown_flag = false;
+
 	/* First, look for the case where constant bits on matching A
 	   and B inputs are different. This this is so, the device can
 	   be completely eliminated and replaced with a constant 0. */
@@ -164,14 +167,42 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 		  continue;
 	    if (! obj->pin_DataB(idx).nexus()->drivers_constant())
 		  continue;
-	    if (obj->pin_DataA(idx).nexus()->driven_value() ==
-		obj->pin_DataB(idx).nexus()->driven_value())
+
+	    const_count += 1;
+
+	    verinum::V abit = obj->pin_DataA(idx).nexus()->driven_value();
+	    verinum::V bbit = obj->pin_DataB(idx).nexus()->driven_value();
+
+	    if ((abit == verinum::V0) && (bbit == verinum::V0))
+		  continue;
+	    if ((abit == verinum::V1) && (bbit == verinum::V1))
+		  continue;
+
+	    unknown_flag = true;
+	    if ((abit == verinum::Vz) || (abit == verinum::Vx))
+		  continue;
+	    if ((bbit == verinum::Vz) || (bbit == verinum::Vx))
 		  continue;
 
 	    NetConst*zero = new NetConst(scope, obj->name(), verinum::V0);
 	    connect(zero->pin(0), obj->pin_AEB());
 	    delete obj;
 	    des->add_node(zero);
+	    count += 1;
+	    return;
+      }
+
+	/* If all the inputs are constant, then at this point the
+	   result is either V1 or Vx. */
+      if (const_count == obj->width()) {
+
+	    NetConst*val = new NetConst(scope, obj->name(),
+					unknown_flag
+					  ? verinum::Vx
+					  : verinum::V1);
+	    connect(val->pin(0), obj->pin_AEB());
+	    delete obj;
+	    des->add_node(val);
 	    count += 1;
 	    return;
       }
@@ -996,6 +1027,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.44  2003/04/25 05:06:32  steve
+ *  Handle X values in constant == nets.
+ *
  * Revision 1.43  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *
