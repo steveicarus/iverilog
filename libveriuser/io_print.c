@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: io_print.c,v 1.1 2002/05/23 03:35:42 steve Exp $"
+#ident "$Id: io_print.c,v 1.2 2002/05/30 02:10:08 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -34,8 +34,33 @@ void io_printf(const char *fmt, ...)
       va_end(ap);
 }
 
+void tf_warning(const char *fmt, ...)
+{
+      va_list ap;
+
+      vpi_printf("warning! ");
+
+      va_start(ap, fmt);
+      vpi_vprintf(fmt, ap);
+      va_end(ap);
+}
+
+void tf_error(const char *fmt, ...)
+{
+      va_list ap;
+
+      vpi_printf("error! ");
+
+      va_start(ap, fmt);
+      vpi_vprintf(fmt, ap);
+      va_end(ap);
+}
+
 /*
  * $Log: io_print.c,v $
+ * Revision 1.2  2002/05/30 02:10:08  steve
+ *  Add tf_error and tf_warning from mruff
+ *
  * Revision 1.1  2002/05/23 03:35:42  steve
  *  Add the io_printf function to libveriuser.
  *
