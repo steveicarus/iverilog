@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.39 2000/06/03 02:13:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.40 2000/07/06 18:13:24 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -471,7 +471,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    gate = new NetLogic(des->local_symbol(path),
 				1+dwidth, NetLogic::OR);
 	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 		  NetLogic*cmp = new NetLogic(des->local_symbol(path), 3,
 					      NetLogic::XOR);
 		  if (idx < lsig->pin_count())
@@ -1578,6 +1578,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.40  2000/07/06 18:13:24  steve
+ *  Connect all the l and r bits of a NE expression.
+ *
  * Revision 1.39  2000/06/03 02:13:15  steve
  *  Output signal of + is a temporary.
  *
