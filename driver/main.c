@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.15 2001/06/15 05:14:21 steve Exp $"
+#ident "$Id: main.c,v 1.16 2001/06/20 02:25:40 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -454,13 +454,12 @@ int main(int argc, char **argv)
       ** This could be passed directly from the Makefile.
       ** Is it just the $prefix option to configure?
       **/
+#ifdef __MINGW32__
       {
         char * s;
-        #ifdef __MINGW32__
-            static char basepath[1024];
-            GetModuleFileName(NULL,basepath,1024);
-            base = basepath;
-        #endif
+	static char basepath[1024];
+	GetModuleFileName(NULL,basepath,1024);
+	base = basepath;
         /* truncate last 2 directories */
         strncpy(ivl_install_dir,base,MAXSIZE);
         s = ivl_install_dir + strlen(ivl_install_dir);
@@ -469,6 +468,9 @@ int main(int argc, char **argv)
         while (*s != sep) s--; 
         *s = NULL;
       }
+#else
+      strcpy(ivl_install_dir, IVL_ROOT);
+#endif
 
 	/* Load the iverilog.conf file to get our substitution
 	   strings. */
@@ -604,6 +606,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.16  2001/06/20 02:25:40  steve
+ *  Edit ivl_install_dir only on mingw
+ *
  * Revision 1.15  2001/06/15 05:14:21  steve
  *  Fix library path calculation on non Windows systems
  *  to include the install directories. (Brendan Simon)
