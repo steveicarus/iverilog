@@ -13,10 +13,10 @@ home page at <http://www.icarus.com/eda/verilog>.
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
 tools. These back-end tools currently include a simulator written in
-C++ called VVM and an XNF (Xilinx Netlist Format) generator. See
-"vvm.txt" and "xnf.txt" for further details on these back-end
-processors. In the future, backends are expected for EDIF/LPM,
-structural Verilog, VHDL, etc.
+C++ called VVM, another faster simulator called VVP and an XNF (Xilinx
+Netlist Format) generator. See "vvm.txt" and "xnf.txt" for further
+details on these back-end processors. In the future, backends are
+expected for EDIF/LPM, structural Verilog, VHDL, etc.
 
     For instructions on how to run Icarus Verilog, see the ``iverilog''
     man page.
@@ -36,7 +36,7 @@ You need the following software to compile Icarus Verilog from source
 on a UNIX-like system:
 
 	- GNU Make
-	  The Makefiles use some GNU extensions to, so a basic POSIX
+	  The Makefiles use some GNU extensions, so a basic POSIX
 	  make will not work. Linux systems typically come with a
 	  satisfactory make. BSD based systems (i.e. NetBSD, FreeBSD)
 	  typically have GNU make as the gmake program.
@@ -403,6 +403,7 @@ Verilog guidance, and especially testing from many people, including
 	Larry Doolittle <LRDoolittle@lbl.gov>
 	Guy Hutchison <ghutchis@pacbell.net>
 	Ales Hvezda <ahvezda@seul.org>
+	Venkat Iyer <venkat@comit.com>
 	Yasuhisa Kato <ykato@mac.com>
         James Lee <jml@jmlzone.com>
 	Peter Monta <pmonta@halibut.imedia.com>

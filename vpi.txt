@@ -38,12 +38,12 @@ small "C" source file that defines only the startup table like so:
 Compile this table source down to its object file, as well. Finally,
 link the application with the command:
 
-    cc -o foo.vpi -shared <all the .o files>
+    cc -o foo.vpi -shared <all the .o files> -lvpi
 
-No VPI libraries need to be included because the product that loads
-the module will supply all the standard vpi functions. If you use any
-non-vpi library functions, you may need to include libraries to
-support them.
+The -lvpi flag brings in the interface library that handles the
+interface between the module you are making and the simulator run-time
+that is loading this module. This contains the supported vpi functions
+as stubs that bind to the appropriate implementations.
 
 The resulting foo.vpi file is the vpi module. Place it in a location
 where the product to use it can locate it.
@@ -51,6 +51,8 @@ where the product to use it can locate it.
 
 CAVEAT EMPTOR
 
-Only the calltf function is supported. The compiletf and sizetf
-functions are invoked at compile time, and the ivl compiler does not
-yet support VPI.
+Only the calltf function is supported in general. The sizetf function
+is used by the vvp runtime if the object is a function, but only to
+check that the function width really is what the compiler already
+guessed.  The compiletf function may be supported by the vvp runtime
+sometime in the future but not yet.
