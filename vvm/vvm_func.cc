@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.9 2000/05/18 20:23:40 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.10 2000/05/18 20:35:08 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -471,23 +471,22 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 		 const vvm_bitset_t&t,
 		 const vvm_bitset_t&f)
 {
-      assert(v.nbits == t.nbits);
-      assert(v.nbits == f.nbits);
-
       if (B_IS0(c)) {
 	    for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
-		  v[idx] = f[idx];
+		  v[idx] = (idx < f.nbits)? f[idx] : St0;
 	    return;
       }
       if (B_IS1(c)) {
 	    for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
-		  v[idx] = t[idx];
+		  v[idx] = (idx < t.nbits)? t[idx] : St0;
 	    return;
       }
 
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1) {
-	    if (B_EQ(t[idx], f[idx]))
-		  v[idx] = t[idx];
+	    vpip_bit_t tb = (idx < t.nbits)? t[idx] : St0;
+	    vpip_bit_t fb = (idx < f.nbits)? f[idx] : St0;
+	    if (B_EQ(tb, fb))
+		  v[idx] = tb;
 	    else
 		  v[idx] = StX;
       }
@@ -496,6 +495,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.10  2000/05/18 20:35:08  steve
+ *  Ternary operator handles bit sizes.
+ *
  * Revision 1.9  2000/05/18 20:23:40  steve
  *  Overcautious assert in shift is removed.
  *
