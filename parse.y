@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.29 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: parse.y,v 1.30 1999/05/30 03:12:56 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -108,7 +108,8 @@ extern void lex_end_table();
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <expr>  delay delay_opt expression expr_primary
+%type <expr>  delay delay_opt delay_value delay_value_list
+%type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
 %type <exprs> expression_list
 
@@ -177,30 +178,10 @@ case_items
 	;
 
 delay
-	: '#' NUMBER
-		{ verinum*tmp = $2;
-		  if (tmp == 0) {
-			yyerror(@2, "XXXX internal error: delay.");
-			$$ = 0;
-		  } else {
-			$$ = new PENumber(tmp);
-		  }
+	: '#' delay_value
+		{ $$ = $2;
 		}
-	| '#' IDENTIFIER
-		{ PEIdent*tmp = new PEIdent(*$2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  $$ = tmp;
-		  delete $2;
-		}
-	| '#' '(' IDENTIFIER ')'
-		{ PEIdent*tmp = new PEIdent(*$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		  delete $3;
-		}
-	| '#' '(' expression ')'
+	| '#' '(' delay_value_list ')'
 		{ $$ = $3;
 		}
 	;
@@ -208,6 +189,35 @@ delay
 delay_opt
 	: delay { $$ = $1; }
 	|       { $$ = 0; }
+	;
+
+delay_value
+	: NUMBER
+		{ verinum*tmp = $1;
+		  if (tmp == 0) {
+			yyerror(@1, "XXXX internal error: delay.");
+			$$ = 0;
+		  } else {
+			$$ = new PENumber(tmp);
+		  }
+		}
+	| IDENTIFIER
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		  delete $1;
+		}
+	;
+
+delay_value_list
+	: delay_value
+		{ $$ = $1; }
+	| delay_value_list ',' delay_value
+		{ yyerror(@1, "Sorry, delay value lists not supported.");
+		  $$ = $1;
+		  delete $3;
+		}
 	;
 
 description
@@ -448,7 +458,18 @@ expression
 		{ yyerror(@2, "Sorry, ?: operator not supported.");
 		  $$ = 0;
 		}
+	| '(' expression ':' expression ':' expression ')'
+		{ yyerror(@2, "Sorry, (min:typ:max) not supported.");
+		  $$ = $4;
+		  delete $2;
+		  delete $6;
+		}
+	| IDENTIFIER '(' expression_list ')'
+		{ yyerror(@2, "Sorry, function calls not supported.");
+		  $$ = 0;
+		}
 	;
+
 
 
 expression_list
@@ -522,6 +543,21 @@ expr_primary
 		}
 	;
 
+
+func_body
+	: function_item_list statement
+	;
+
+function_item
+	: K_input range_opt list_of_variables ';'
+	| K_reg range_opt list_of_variables ';'
+	;
+
+function_item_list
+	: function_item
+	| function_item_list function_item
+	;
+
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
 gate_instance
@@ -529,6 +565,15 @@ gate_instance
 		{ lgate*tmp = new lgate;
 		  tmp->name = *$1;
 		  tmp->parms = $3;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  delete $1;
+		  $$ = tmp;
+		}
+	| IDENTIFIER '(' ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = *$1;
+		  tmp->parms = 0;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete $1;
@@ -775,9 +820,13 @@ module_item
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
 		}
-	| IDENTIFIER gate_instance_list ';'
-		{ pform_make_modgates(*$1, $2);
+	| IDENTIFIER delay_opt gate_instance_list ';'
+		{ pform_make_modgates(*$1, $3);
 		  delete $1;
+		  if ($2) {
+			yyerror(@2, "Sorry, parameter override not supported.");
+			delete $2;
+		  }
 		}
 	| K_assign lavalue '=' expression ';'
 		{ PGAssign*tmp = pform_make_pgassign($2, $4);
@@ -795,10 +844,10 @@ module_item
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		}
-	| K_task IDENTIFIER ';' statement K_endtask
+	| K_task IDENTIFIER ';' task_body K_endtask
 		{ yyerror(@1, "Sorry, task declarations not supported.");
 		}
-	| K_function range_or_type_opt  IDENTIFIER ';' statement K_endfunction
+	| K_function range_or_type_opt  IDENTIFIER ';' func_body K_endfunction
 		{ yyerror(@1, "Sorry, function declarations not supported.");
 		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
@@ -1000,7 +1049,11 @@ register_variable_list
 	;
 
 statement
-	: K_begin statement_list K_end
+	: K_assign lavalue '=' expression ';'
+		{ yyerror(@1, "Sorry, proceedural continuous assign not supported.");
+		  $$ = 0;
+		}
+	| K_begin statement_list K_end
 		{ $$ = pform_make_block(PBlock::BL_SEQ, $2); }
 	| K_fork statement_list K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
@@ -1135,6 +1188,22 @@ statement_list
 statement_opt
 	: statement
 	| ';' { $$ = 0; }
+	;
+
+task_body
+	: task_item_list statement
+	;
+
+task_item
+	: K_input range_opt list_of_variables ';'
+	| K_output range_opt list_of_variables ';'
+	| K_inout range_opt list_of_variables ';'
+	| K_reg range_opt list_of_variables ';'
+	;
+
+task_item_list
+	: task_item_list task_item
+	| task_item
 	;
 
 udp_body
