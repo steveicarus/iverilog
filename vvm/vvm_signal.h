@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.8 2000/03/26 16:55:41 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.9 2000/04/26 18:35:12 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -42,11 +42,11 @@ class vvm_bitset_t  {
 
       ~vvm_bitset_t();
 
-      vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
-      vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
+      vpip_bit_t operator[] (unsigned idx) const { return get_bit(idx); }
+      vpip_bit_t&operator[] (unsigned idx);
 
       unsigned get_width() const { return nbits; }
-      vpip_bit_t get_bit(unsigned idx) const { return bits[idx]; }
+      vpip_bit_t get_bit(unsigned idx) const;
 
       unsigned as_unsigned() const;
 
@@ -154,6 +154,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.9  2000/04/26 18:35:12  steve
+ *  Handle assigning small values to big registers.
+ *
  * Revision 1.8  2000/03/26 16:55:41  steve
  *  Remove the vvm_bits_t abstract class.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.139 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.140 2000/04/26 18:35:11 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1885,11 +1885,22 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    defn << "      }" << endl;
 
       } else {
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    unsigned min_count = net->pin_count();
+	    if (net->rval()->expr_width() < min_count)
+		  min_count = net->rval()->expr_width();
+
+	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
 		  string nexus = nexus_from_link(&net->pin(idx));
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
 		       << rval << "[" << idx << "]);" << endl;
+	    }
+
+	    for (unsigned idx = min_count; idx < net->pin_count(); idx += 1) {
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      nexus_wire_table["<<ncode<<"]"
+		       << ".reg_assign(St0);" << endl;
 	    }
       }
 }
@@ -2676,6 +2687,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.140  2000/04/26 18:35:11  steve
+ *  Handle assigning small values to big registers.
+ *
  * Revision 1.139  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

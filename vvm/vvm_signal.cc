@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.4 2000/03/26 16:55:41 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.5 2000/04/26 18:35:12 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
@@ -25,6 +25,18 @@
 
 vvm_bitset_t::~vvm_bitset_t()
 {
+}
+
+vpip_bit_t&vvm_bitset_t::operator[] (unsigned idx)
+{
+      assert(idx < nbits);
+      return bits[idx];
+}
+
+vpip_bit_t vvm_bitset_t::get_bit(unsigned idx) const
+{
+      assert(idx < nbits);
+      return bits[idx];
 }
 
 unsigned vvm_bitset_t::as_unsigned() const
@@ -82,6 +94,9 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.5  2000/04/26 18:35:12  steve
+ *  Handle assigning small values to big registers.
+ *
  * Revision 1.4  2000/03/26 16:55:41  steve
  *  Remove the vvm_bits_t abstract class.
  *
