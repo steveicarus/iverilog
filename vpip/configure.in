@@ -4,10 +4,11 @@ AC_PROG_CC
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_PROG_INSTALL
 
-
-AC_CYGWIN
 AC_EXEEXT
+AC_SUBST(EXEEXT)
 
+# Combined check for Microsoft-related bogosities; sets WIN32 if found
+AX_WIN32
 
 # Darwin requires -no-cpp-precomp
 case "${host}" in
@@ -17,14 +18,12 @@ case "${host}" in
 	;;
 esac
 
-WIN32=no
 AC_MSG_CHECKING("for shared library link flag")
 shared=-shared
 EXTRALIBS=
 case "${host}" in
      *-*-cygwin*)
         shared="-shared -Wl,--enable-auto-image-base"
-	WIN32=yes
 	;;
      *-*-hpux*)
 	shared="-b"
@@ -38,12 +37,7 @@ case "${host}" in
 esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
-AC_MSG_CHECKING("for win 32")
-AC_SUBST(WIN32)
-AC_MSG_RESULT($WIN32)
 
-AC_SUBST(WIN32)
-AC_SUBST(EXEEXT)
 AC_SUBST(shared)
 AC_SUBST(EXTRALIBS)
 

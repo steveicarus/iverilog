@@ -35,21 +35,11 @@ then
         exit 1
 fi
 
-AC_CYGWIN
 AC_EXEEXT
-AC_MINGW32
-
-WIN32=no
-AC_MSG_CHECKING("Checking for windows")
-if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
-then
-    WIN32=yes
-fi
-
-AC_SUBST(MINGW32)
-AC_SUBST(WIN32)
-AC_MSG_RESULT($WIN32)
 AC_SUBST(EXEEXT)
+
+# Combined check for Microsoft-related bogosities; sets WIN32 if found
+AX_WIN32
 
 # vvp32 is by default disabled
 #enable_vvp32=no

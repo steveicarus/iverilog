@@ -10,8 +10,9 @@ AC_PROG_INSTALL
 AC_CANONICAL_HOST
 # $host
 
-AC_CYGWIN
-AC_SUBST(CYGWIN)
+# Combined check for Microsoft-related bogosities; sets WIN32 if found
+AX_WIN32
+
 AC_CHECK_HEADERS(malloc.h)
 
 # Do some operating system specific setup.
@@ -71,17 +72,6 @@ case "${host}" in
 esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
-
-AC_MSG_CHECKING("for Win32")
-WIN32=no
-case "${host}" in
-
-     *-*-cygwin*)
-	WIN32=yes
-	;;
-esac
-AC_SUBST(WIN32)
-AC_MSG_RESULT($WIN32)
 
 AX_CPP_IDENT
 

@@ -6,10 +6,11 @@ AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(STRIP, strip, true)
 
-AC_CYGWIN
 AC_EXEEXT
-AC_MINGW32
 AC_SUBST(EXEEXT)
+
+# Combined check for Microsoft-related bogosities; sets WIN32 if found
+AX_WIN32
 
 # vvp32 is by default disabled
 #enable_vvp32=no

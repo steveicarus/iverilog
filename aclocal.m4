@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.2 2004/01/15 06:05:20 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.3 2004/02/15 03:17:36 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -67,3 +67,20 @@ if test $ax_cv_c_underscores_trailing = yes; then
 fi
 ])# AX_C_UNDERSCORES_TRAILING
 
+# AX_WIN32
+# --------
+# Combined check for several flavors of Microsoft Windows so
+# their "issues" can be dealt with
+AC_DEFUN([AX_WIN32],
+[AC_CYGWIN
+AC_MINGW32
+WIN32=no
+AC_MSG_CHECKING([for Microsoft Windows])
+if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
+then
+    WIN32=yes
+fi
+AC_SUBST(MINGW32)
+AC_SUBST(WIN32)
+AC_MSG_RESULT($WIN32)
+])# AX_WIN32
