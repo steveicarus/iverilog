@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *  $Id: opcodes.txt,v 1.5 2001/03/22 05:08:00 steve Exp $
+ */
+
+
 
 EXECUTABLE INSTRUCTION OPCODES
 
@@ -13,6 +20,46 @@ the assignment takes place. The delay may be 0. For blocking
 assignments, see %set. The <bit> is the address of the thread register
 that contains the bit value to assign.
 
+* %cmp/u <bit-l>, <bit-r>, <wid>
+* %cmp/s <bit-l>, <bit-r>, <wid>
+
+These instructions perform a generic comparison of two vectors of equal
+size. The <bit-l> and <bit-r> numbers address the least-significant
+bit of each vector, and <wid> is the width. If either operator is 0,
+1, 2 or 3 then it is taken to be a constant replicated to the selected
+width.
+
+The results of the comparison go into bits 4, 5, 6 and 7:
+
+	4: eq  (equal)
+	5: lt  (less than)
+	6: eeq (case equal)
+
+The eeq bit is set to 1 if all the bits in the vectors are exactly the
+same, or 0 otherwise. The eq bit is true if the values are logically
+the same. That is, x and z are considered equal. In other words the eq
+bit is the same as ``=='' and the eeq bit ``===''.
+
+The lt bit is 1 if the left vector is less then the right vector, or 0
+if greater then or equal to the right vector. It is the equivilent of
+the Verilog < operator. Combinations of these three bits can be used
+to implement all the Verilog comparison operators.
+
+The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
+%cmp/u does an unsigned compare, whereas the %cmp/s does a signed
+compare.
+
+* %cmp/z <bit-l>, <bit-r>, <wid>
+* %cmp/x <bit-l>, <bit-r>, <wid>
+
+These instructions are for implementing the casez and casex
+comparisons. These work similar to the %cmp/u instructions, except
+only an eq bit is calculated. These comparisons both treat z values in
+the left or right operand as don't care positions. The %cmp/x
+instruction will also treat x values in either operand as don't care.
+
+Only bit 4 is set by these instructions.
+
 * %delay <delay>
 
 This opcode pauses the thread, and causes it to be rescheduled for a
@@ -21,15 +68,37 @@ future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
 
+* %inv <bit>, <wid>
+
+Perform a bitwise invert of the vector starting at <bit>.
+
 * %jmp <code-label>
 
 The %jmp instruction performs an unconditional branch to a given
 location. The parameter is the label of the destination instruction.
 
+* %jmp/[01xz] <code-label>, <bit>
+
+This is a conditional version of the %jmp instruction. In this case,
+a single bit (addressed by <bit>) is tested. If it is one of the
+values in the part after the /, the jump is taken. For example:
+
+	%jmp/xz T_label, 8;
+
+will jump to T_label if bit 8 is x or z.
+
 * %load <bit>, <functor-label>
 
 This instruction loads a value from the given functor output into the
 specified thread register bit.
+
+* %mov <dst>, <src>, <wid>
+
+This instruction copies a vector from one place in register space to
+another. The destination and source vectors are assumed to be the same
+width and non-overlapping. The <dst> may not be 0-3, but if the <src>
+is one of the 4 constant bits, the effect is to replicate the value
+into the destination vector. Useful for filling a vector.
 
 * %set <var-label>, <bit>
 
@@ -53,3 +122,22 @@ sensitive list for the addressed functor. The functor holds all the
 threads that await the functor. When the defined sort of event occurs
 on the functor, a thread schedule event is created for all the threads
 in its list and the list is cleared.
+
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.3 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: functor.cc,v 1.4 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -160,6 +160,13 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit)
       }
 }
 
+unsigned functor_get(vvp_ipoint_t ptr)
+{
+      functor_t fp = functor_index(ptr);
+      assert(fp);
+      return fp->oval & 3;
+}
+
 /*
  * This function is used by the scheduler to implement the propagation
  * event. The input is the pointer to the functor who's output is to
@@ -219,6 +226,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.4  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.3  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

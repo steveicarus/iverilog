@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.6 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: vthread.cc,v 1.7 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -25,12 +25,34 @@
 # include  "schedule.h"
 # include  "functor.h"
 # include  "vpi_priv.h"
+# include  <malloc.h>
 # include  <assert.h>
 
 struct vthread_s {
 	/* This is the program counter. */
       unsigned long pc;
+      unsigned char *bits;
+      unsigned short nbits;
 };
+
+static inline unsigned thr_get_bit(struct vthread_s*thr, unsigned addr)
+{
+      assert(addr < thr->nbits);
+      unsigned idx = addr % 4;
+      addr /= 4;
+      return (thr->bits[addr] >> (idx*2)) & 3;
+}
+
+static inline void thr_put_bit(struct vthread_s*thr,
+			       unsigned addr, unsigned val)
+{
+      assert(addr < thr->nbits);
+      unsigned idx = addr % 4;
+      addr /= 4;
+      unsigned mask = 3 << (idx*2);
+
+      thr->bits[addr] = (thr->bits[addr] & ~mask) | (val << (idx*2));
+}
 
 /*
  * Create a new thread with the given start address.
@@ -39,7 +61,13 @@ vthread_t v_newthread(unsigned long pc)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc = pc;
+      thr->bits = (unsigned char*)malloc(16);
+      thr->nbits = 16*4;
 
+      thr_put_bit(thr, 0, 0);
+      thr_put_bit(thr, 1, 1);
+      thr_put_bit(thr, 2, 2);
+      thr_put_bit(thr, 3, 3);
       return thr;
 }
 
@@ -81,6 +109,31 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CMPU(vthread_t thr, vvp_code_t cp)
+{
+      unsigned eq = 1;
+      unsigned eeq = 1;
+      unsigned lt = 2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lv = thr_get_bit(thr, cp->bit_idx1+idx);
+	    unsigned rv = thr_get_bit(thr, cp->bit_idx2+idx);
+
+	    if (lv != rv)
+		  eeq = 0;
+	    if ((lv == 0) && (rv != 0))
+		  eq = 0;
+	    if ((lv == 1) && (rv != 1))
+		  eq = 0;
+      }
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+      thr_put_bit(thr, 6, eeq);
+
+      return true;
+}
+
 bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
 	//printf("thread %p: %%delay %lu\n", thr, cp->number);
@@ -94,9 +147,64 @@ bool of_END(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+bool of_INV(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      for (unsigned idx = 0 ;  idx < cp->bit_idx2 ;  idx += 1) {
+	    unsigned val = thr_get_bit(thr, cp->bit_idx1+idx);
+	    switch (val) {
+		case 0:
+		  val = 1;
+		  break;
+		case 1:
+		  val = 0;
+		  break;
+		default:
+		  val = 2;
+		  break;
+	    }
+	    thr_put_bit(thr, cp->bit_idx1+idx, val);
+      }
+      return true;
+}
+
 bool of_JMP(vthread_t thr, vvp_code_t cp)
 {
       thr->pc = cp->cptr;
+      return true;
+}
+
+bool of_JMP0(vthread_t thr, vvp_code_t cp)
+{
+      if (thr_get_bit(thr, cp->bit_idx1) == 0)
+	    thr->pc = cp->cptr;
+      return true;
+}
+
+bool of_LOAD(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      thr_put_bit(thr, cp->bit_idx1, functor_get(cp->iptr));
+      return true;
+}
+
+bool of_MOV(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      if (cp->bit_idx2 >= 4) {
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+		  thr_put_bit(thr,
+			      cp->bit_idx1+idx,
+			      thr_get_bit(thr, cp->bit_idx2+idx));
+
+      } else {
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+		  thr_put_bit(thr,
+			      cp->bit_idx1+idx,
+			      thr_get_bit(thr, cp->bit_idx2));
+      }
+
       return true;
 }
 
@@ -131,6 +239,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.7  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.6  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

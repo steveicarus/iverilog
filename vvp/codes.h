@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.4 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: codes.h,v 1.5 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 
@@ -36,9 +36,14 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * access to the thread context.
  */
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
+extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_JMP(vthread_t thr, vvp_code_t code);
+extern bool of_JMP0(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD(vthread_t thr, vvp_code_t code);
+extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
@@ -86,6 +91,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.5  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.4  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.3 2001/03/20 06:16:23 steve Exp $"
+#ident "$Id: codes.cc,v 1.4 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -94,11 +94,11 @@ void codespace_dump(FILE*fd)
 	    vvp_code_t cop = codespace_index(idx);
 
 	    if (cop->opcode == &of_ASSIGN) {
-		  fprintf(fd, "%%assign 0x%u, %lu, %u\n",
+		  fprintf(fd, "%%assign 0x%u, %u, %u\n",
 			  cop->iptr, cop->bit_idx1, cop->bit_idx2);
 
 	    } else if (cop->opcode == &of_DELAY) {
-		  fprintf(fd, "%%delay %lu\n", cop->number);
+		  fprintf(fd, "%%delay %lu\n", (unsigned long)cop->number);
 
 	    } else if (cop->opcode == &of_END) {
 		  fprintf(fd, "%%end\n");
@@ -107,8 +107,7 @@ void codespace_dump(FILE*fd)
 		  fprintf(fd, "%%jmp 0x%u\n", cop->cptr);
 
 	    } else if (cop->opcode == &of_SET) {
-		  fprintf(fd, "%%set 0x%lu, %u\n",
-			  cop->iptr, cop->bit_idx1);
+		  fprintf(fd, "%%set 0x%u, %u\n", cop->iptr, cop->bit_idx1);
 
 	    } else {
 		  fprintf(fd, "opcode %p\n", cop->opcode);
@@ -119,6 +118,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.4  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.3  2001/03/20 06:16:23  steve
  *  Add support for variable vectors.
  *

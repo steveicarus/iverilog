@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.8 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: compile.cc,v 1.9 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -63,11 +63,16 @@ struct opcode_table_s {
 };
 
 const static struct opcode_table_s opcode_table[] = {
-      { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,  OA_BIT2} },
-      { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,  OA_NONE} },
-      { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,  OA_NONE} },
-      { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,  OA_NONE} },
-      { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,  OA_NONE} },
+      { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
+      { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
+      { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
+      { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
@@ -471,6 +476,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.9  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.8  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *

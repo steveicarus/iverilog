@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.3 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: functor.h,v 1.4 2001/03/22 05:08:00 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -85,6 +85,8 @@ extern vvp_ipoint_t functor_allocate(unsigned wid);
  */
 extern void functor_set(vvp_ipoint_t point, unsigned val);
 
+extern unsigned functor_get(vvp_ipoint_t ptr);
+
 /*
  * When a propagation event happens, this function is called with the
  * address of the affected functor. It propagates the output to all
@@ -111,6 +113,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.4  2001/03/22 05:08:00  steve
+ *  implement %load, %inv, %jum/0 and %cmp/u
+ *
  * Revision 1.3  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *
