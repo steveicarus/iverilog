@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-xnf.cc,v 1.48 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.49 2003/07/05 20:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -425,6 +425,9 @@ void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
 	  case LOWER_W_CO:
 	    draw_pin(os, "COUT0", gate->pin_Cout());
 	    break;
+
+	  default:
+	    assert(0);
       }
 
       // Connect the Cout, this will connect to the next Cin
@@ -706,6 +709,9 @@ void target_xnf::lpm_ff(const NetFF*net)
 		case verinum::V1:
 		  out_ << "INIT=S, ";
 		  break;
+
+		default:
+		  break;
 	    }
 
 	    out_ << "LIBVER=2.0.0" << endl;
@@ -926,6 +932,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.49  2003/07/05 20:42:08  steve
+ *  Fix some enumeration warnings.
+ *
  * Revision 1.48  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.216 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: netlist.cc,v 1.217 2003/07/05 20:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,6 +39,9 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	    break;
 	  case NetNet::IMPLICIT_REG:
 	    o << "reg /*implicit*/";
+	    break;
+	  case NetNet::INTEGER:
+	    o << "integer";
 	    break;
 	  case NetNet::REG:
 	    o << "reg";
@@ -2176,6 +2179,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.217  2003/07/05 20:42:08  steve
+ *  Fix some enumeration warnings.
+ *
  * Revision 1.216  2003/06/18 03:55:18  steve
  *  Add arithmetic shift operators.
  *

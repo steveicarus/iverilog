@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.142 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.143 2003/07/05 20:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -775,6 +775,8 @@ void NetScope::dump(ostream&o) const
 	  case TASK:
 	    task_def()->dump(o, 4);
 	    break;
+	  default:
+	    break;
       }
 
 	/* Dump any sub-scopes. */
@@ -1047,6 +1049,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.143  2003/07/05 20:42:08  steve
+ *  Fix some enumeration warnings.
+ *
  * Revision 1.142  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.115 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.116 2003/07/05 20:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -292,6 +292,8 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 	  case IVL_SIT_SUPPLY1:
 	    drive = IVL_DR_SUPPLY;
 	    break;
+	  default:
+	    break;
       }
       tmp->ptrs_[0].drive0 = drive;
       tmp->ptrs_[0].drive1 = drive;
@@ -314,6 +316,8 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 	  case IVL_SIT_SUPPLY0:
 	  case IVL_SIT_SUPPLY1:
 	    drive = IVL_DR_SUPPLY;
+	    break;
+	  default:
 	    break;
       }
 
@@ -2132,6 +2136,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.116  2003/07/05 20:42:08  steve
+ *  Fix some enumeration warnings.
+ *
  * Revision 1.115  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.81 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.82 2003/07/05 20:42:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -641,6 +641,9 @@ void PTask::dump(ostream&out, unsigned ind) const
 		      case NetNet::PINOUT:
 			out << "inout ";
 			break;
+		      default:
+			assert(0);
+			break;
 		  }
 		  out << (*ports_)[idx]->path() << ";" << endl;
 	    }
@@ -878,6 +881,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.82  2003/07/05 20:42:08  steve
+ *  Fix some enumeration warnings.
+ *
  * Revision 1.81  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.
