@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.11 2000/07/26 04:07:59 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.12 2000/07/31 03:34:31 steve Exp $"
 #endif
 
 /*
@@ -204,6 +204,10 @@ static int variable_cb(p_cb_data cause)
 static int sys_dumpall_calltf(char*name)
 {
       s_vpi_time now;
+
+      if (dump_file == 0)
+	    return 0;
+
       vpi_get_time(0, &now);
       fprintf(dump_file, "#%u\n", now.low);
       vcd_cur_time = now.low;
@@ -358,6 +362,11 @@ static int sys_dumpvars_calltf(char*name)
 	    return 0;
       }
 
+      if (dump_file == 0) {
+	    vpi_printf("ERROR: %s called but no dumpfile is opened.\n", name);
+	    return 0;
+      }
+
       item = vpi_scan(argv);
       switch (vpi_get(vpiType, item)) {
 	  case vpiConstant:
@@ -419,6 +428,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.12  2000/07/31 03:34:31  steve
+ *  Report error when dumpfile is missing.
+ *
  * Revision 1.11  2000/07/26 04:07:59  steve
  *  Get VCD timescale from design precision.
  *
