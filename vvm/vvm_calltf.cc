@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.4 1999/08/19 02:51:11 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.5 1999/09/13 03:08:10 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -245,17 +245,45 @@ static void get_value_bits(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiHexStrVal:
-	    bytes = width%4;
-	    if (bytes) {
-		  *cp++ = '?';
+	    if (width%4) {
+		  unsigned x = 0;
+		  unsigned z = 0;
+		  unsigned v = 0;
+		  for (unsigned i = 0 ;  i < width%4 ;  i += 1) {
+			v *= 2;
+			switch (ref->val.bits->get_bit(width-i-1)) {
+			    case V0:
+			      break;
+			    case V1:
+			      v += 1;
+			      break;
+			    case Vx:
+			      x += 1;
+			      break;
+			    case Vz:
+			      z += 1;
+			      break;
+			}
+		  }
+		  if (x == width%4)
+			*cp++ = 'x';
+		  else if (x > 0)
+			*cp++ = 'X';
+		  else if (z == width%4)
+			*cp++ = 'z';
+		  else if (z > 0)
+			*cp++ = 'Z';
+		  else
+			*cp++ = "0123456789abcdef"[v];
 	    }
-	    for (unsigned idx = bytes ;  idx < width ;  idx += 4) {
+
+	    for (unsigned idx = width%4 ;  idx < width ;  idx += 4) {
 		  unsigned x = 0;
 		  unsigned z = 0;
 		  unsigned v = 0;
 		  for (unsigned i = idx ;  i < idx+4 ;  i += 1) {
 			v *= 2;
-			switch (ref->val.bits->get_bit(width-idx-i-1)) {
+			switch (ref->val.bits->get_bit(width-i-1)) {
 			    case V0:
 			      break;
 			    case V1:
@@ -278,7 +306,7 @@ static void get_value_bits(vpiHandle ref, s_vpi_value*vp)
 		  else if (z > 0)
 			*cp++ = 'Z';
 		  else
-			*cp++ = "01234567abcdef"[v];
+			*cp++ = "0123456789abcdef"[v];
 	    }
 	    break;
 
@@ -473,6 +501,9 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.5  1999/09/13 03:08:10  steve
+ *  fix vpiHexStrVal dumping of digits to strings.
+ *
  * Revision 1.4  1999/08/19 02:51:11  steve
  *  Add vpi_sim_control
  *
