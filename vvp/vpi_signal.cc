@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.30 2001/12/06 03:31:25 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.31 2001/12/18 05:31:54 steve Exp $"
 #endif
 
 /*
@@ -49,6 +49,23 @@
 extern const char hex_digits[256];
 
 extern const char oct_digits[256];
+
+/*
+ * The string values need a result buf to hold the results. This
+ * buffer can be reused for that purpose. Whenever I have a need, the
+ * need_result_buf function makes sure that need can be met.
+ */
+static char*result_buf = 0;
+static size_t result_buf_size = 0;
+static void need_result_buf(size_t cnt)
+{
+      if (result_buf_size == 0) {
+	    result_buf = (char*)malloc(cnt);
+      } else if (result_buf_size < cnt) {
+	    result_buf = (char*)realloc(result_buf, cnt);
+      }
+      result_buf_size = cnt;
+}
 
 /*
  * implement vpi_get for vpiReg objects.
@@ -122,7 +139,6 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-static char buf[4096];
 
 static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
@@ -152,28 +168,34 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       }
 
       if (count_x == wid) {
-	    buf[0] = 'x';
-	    buf[1] = 0;
+	    need_result_buf(2);
+	    result_buf[0] = 'x';
+	    result_buf[1] = 0;
 	    return;
       }
 
       if (count_x > 0) {
-	    buf[0] = 'X';
-	    buf[1] = 0;
+	    need_result_buf(2);
+	    result_buf[0] = 'X';
+	    result_buf[1] = 0;
 	    return;
       }
 
       if (count_z == wid) {
-	    buf[0] = 'z';
-	    buf[1] = 0;
+	    need_result_buf(2);
+	    result_buf[0] = 'z';
+	    result_buf[1] = 0;
 	    return;
       }
 
       if (count_z > 0) {
-	    buf[0] = 'Z';
-	    buf[1] = 0;
+	    need_result_buf(2);
+	    result_buf[0] = 'Z';
+	    result_buf[1] = 0;
 	    return;
       }
+
+      need_result_buf((wid+2) / 3 + 1);
 
       if (rfp->signed_flag) {
 	    long tmp;
@@ -185,10 +207,12 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    } else {
 		  tmp = val;
 	    }
-            sprintf(buf, "%ld", tmp);
+            sprintf(result_buf, "%ld", tmp);
+	    assert(strlen(result_buf) < result_buf_size);
 
       } else {
-	    sprintf(buf, "%lu", val);
+	    sprintf(result_buf, "%lu", val);
+	    assert(strlen(result_buf) < result_buf_size);
       }
 }
 
@@ -202,7 +226,11 @@ static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 
       assert(wid % 8 == 0);
 
-      cp = buf;
+	/* The result will use a character for each 8 bits of the
+	   vector. */
+      need_result_buf(wid/8 + 1);
+
+      cp = result_buf;
       for (idx = wid ;  idx >= 8 ;  idx -= 8) {
 	    char tmp = 0;
 	    unsigned bdx;
@@ -263,18 +291,22 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiBinStrVal:
+	    need_result_buf(wid+1);
+
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		  buf[wid-idx-1] = "01xz"[functor_get(fptr)];
+		  result_buf[wid-idx-1] = "01xz"[functor_get(fptr)];
 	    }
-	    buf[wid] = 0;
-	    vp->value.str = buf;
+	    result_buf[wid] = 0;
+	    vp->value.str = result_buf;
 	    break;
 
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
-		buf[hwid] = 0;
+
+		need_result_buf(hwid+1);
+		result_buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
@@ -282,16 +314,16 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
-			    buf[hwid] = hex_digits[hval];
+			    result_buf[hwid] = hex_digits[hval];
 			    hval = 0;
 		      }
 		}
 
 		if (hwid > 0) {
 		      hwid -= 1;
-		      buf[hwid] = hex_digits[hval];
+		      result_buf[hwid] = hex_digits[hval];
 		      unsigned padd = 0;
-		      switch(buf[hwid]) {
+		      switch(result_buf[hwid]) {
 			  case 'X': padd = 2; break;
 			  case 'Z': padd = 3; break;
 		      }
@@ -299,17 +331,19 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 			    for (unsigned idx = wid % 4; idx < 4; idx += 1) {
 				  hval = hval | padd << 2*idx;
 			    }
-			    buf[hwid] = hex_digits[hval];
+			    result_buf[hwid] = hex_digits[hval];
 		      }
 		}
-		vp->value.str = buf;
+		vp->value.str = result_buf;
 		break;
 	  }
 
 	  case vpiOctStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
-		buf[hwid] = 0;
+
+		need_result_buf(hwid+1);
+		result_buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
@@ -317,16 +351,16 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
-			    buf[hwid] = oct_digits[hval];
+			    result_buf[hwid] = oct_digits[hval];
 			    hval = 0;
 		      }
 		}
 
 		if (hwid > 0) {
 		      hwid -= 1;
-		      buf[hwid] = oct_digits[hval];
+		      result_buf[hwid] = oct_digits[hval];
 		      unsigned padd = 0;
-		      switch(buf[hwid]) {
+		      switch(result_buf[hwid]) {
 			  case 'X': padd = 2; break;
 			  case 'Z': padd = 3; break;
 		      }
@@ -334,21 +368,21 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 			    for (unsigned idx = wid % 3; idx < 3; idx += 1) {
 				  hval = hval | padd << 2*idx;
 			    }
-			    buf[hwid] = oct_digits[hval];
+			    result_buf[hwid] = oct_digits[hval];
 		      }
 		}
-		vp->value.str = buf;
+		vp->value.str = result_buf;
 		break;
 	  }
 
 	  case vpiDecStrVal:
 	    signal_vpiDecStrVal(rfp, vp);
-	    vp->value.str = buf;
+	    vp->value.str = result_buf;
 	    break;
 
 	  case vpiStringVal:
 	    signal_vpiStringVal(rfp, vp);
-	    vp->value.str = buf;
+	    vp->value.str = result_buf;
 	    break;
 
           case vpiVectorVal:
@@ -552,6 +586,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.31  2001/12/18 05:31:54  steve
+ *  Remove result length restrictions for vpi_get_value.
+ *
  * Revision 1.30  2001/12/06 03:31:25  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)
@@ -580,51 +617,5 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.
  *  (Stephan Boettcher)
- *
- * Revision 1.22  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.21  2001/07/24 01:34:56  steve
- *  Implement string value for signals.
- *
- * Revision 1.20  2001/07/16 18:48:07  steve
- *  Properly pad unknow values. (Stephan Boettcher)
- *
- * Revision 1.19  2001/07/13 03:02:34  steve
- *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
- *
- * Revision 1.18  2001/06/29 00:44:56  steve
- *  Properly support signal full names.
- *
- * Revision 1.17  2001/06/21 23:05:08  steve
- *  Some documentation of callback behavior.
- *
- * Revision 1.16  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
- *
- * Revision 1.15  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.14  2001/05/22 04:08:49  steve
- *  correctly interpret signed decimal values.
- *
- * Revision 1.13  2001/05/15 15:09:08  steve
- *  Add the glossary file.
- *
- * Revision 1.12  2001/05/14 00:42:32  steve
- *  test width of target with bit size of long.
- *
- * Revision 1.11  2001/05/09 04:23:19  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.10  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
  */
 
