@@ -15,6 +15,7 @@ f none include/vvm_signal.h 0644 bin bin
 f none include/vvm_thread.h 0644 bin bin
 d none lib 0755 bin bin
 d none lib/ivl 0755 bin bin
+f none lib/ivl/fpga.tgt 0644 bin bin
 f none lib/ivl/iverilog.conf 0644 bin bin
 f none lib/ivl/ivl 0755 bin bin
 f none lib/ivl/ivlpp 0755 bin bin
