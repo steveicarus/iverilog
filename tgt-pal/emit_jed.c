@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit_jed.c,v 1.1 2001/01/09 03:10:48 steve Exp $"
+#ident "$Id: emit_jed.c,v 1.2 2001/01/09 04:41:32 steve Exp $"
 #endif
 
 # include  "priv.h"
@@ -114,8 +114,8 @@ int emit_jedec(const char*path)
 	    return -1;
       }
 
-      fprintf(jfd, "This file created by Icarus Verilog/PAL target\n");
-      fprintf(jfd, "\n\002*\n");
+      fprintf(jfd, "\002This file created by Icarus Verilog/PAL\n");
+      fprintf(jfd, "*\n");
 
       fprintf(jfd, "QF%u*  Number of fuses*\n", pal_fuses(pal));
       fprintf(jfd, "F0*  Note: Default fuse set to 0*\n");
@@ -129,6 +129,9 @@ int emit_jedec(const char*path)
 
 /*
  * $Log: emit_jed.c,v $
+ * Revision 1.2  2001/01/09 04:41:32  steve
+ *  Clean up the jedec header that is written.
+ *
  * Revision 1.1  2001/01/09 03:10:48  steve
  *  Generate the jedec to configure the macrocells.
  *
