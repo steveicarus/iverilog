@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.47 2002/12/21 19:41:49 steve Exp $"
+#ident "$Id: sys_display.c,v 1.48 2003/01/09 04:10:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -790,19 +790,24 @@ static int get_default_format(char *name)
 
 static int sys_display_calltf(char *name)
 {
-      struct strobe_cb_info info;
+      struct strobe_cb_info*info;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle scope = vpi_handle(vpiScope, sys);
 
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      info = vpi_get_userdata(sys);
+      if (info == 0) {
+	    vpiHandle scope = vpi_handle(vpiScope, sys);
+	    vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
-      assert(scope);
-      info.default_format = get_default_format(name);
-      info.scope = scope;
-      array_from_iterator(&info, argv);
+	    assert(scope);
+	    info = malloc(sizeof (struct strobe_cb_info));
+	    info->default_format = get_default_format(name);
+	    info->scope = scope;
+	    array_from_iterator(info, argv);
 
-      do_display(5, &info);
-      free(info.items);
+	    vpi_put_userdata(sys, info);
+      }
+
+      do_display(5, info);
 
       if (strncmp(name,"$display",8) == 0)
 	    vpi_mcd_printf(5, "\n");
@@ -1551,6 +1556,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.48  2003/01/09 04:10:58  steve
+ *  use userdata to save $display argument handles.
+ *
  * Revision 1.47  2002/12/21 19:41:49  steve
  *  Rewrite time formatting to account for local scope.
  *
