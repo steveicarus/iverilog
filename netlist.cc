@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.149 2000/12/04 17:37:04 steve Exp $"
+#ident "$Id: netlist.cc,v 1.150 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -225,6 +225,21 @@ void NetObj::attribute(const string&key, const string&value)
 bool NetObj::has_compat_attributes(const NetObj&that) const
 {
       return attributes_.has_compat_attributes(that.attributes_);
+}
+
+unsigned NetObj::nattr() const
+{
+      return attributes_.size();
+}
+
+const char* NetObj::attr_key(unsigned idx) const
+{
+      return attributes_.key(idx).c_str();
+}
+
+const char* NetObj::attr_value(unsigned idx) const
+{
+      return attributes_.value(idx).c_str();
 }
 
 
@@ -2450,6 +2465,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.150  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.149  2000/12/04 17:37:04  steve
  *  Add Attrib class for holding NetObj attributes.
  *

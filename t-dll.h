@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.18 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: t-dll.h,v 1.19 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -223,11 +223,13 @@ struct ivl_nexus_ptr_s {
 	    ivl_signal_t    sig; /* type 0 */
 	    ivl_net_logic_t log; /* type 1 */
 	    ivl_net_const_t con; /* type 2 */
+	    ivl_lpm_t       lpm; /* type 3 */
       } l;
 };
 # define __NEXUS_PTR_SIG 0
 # define __NEXUS_PTR_LOG 1
 # define __NEXUS_PTR_CON 2
+# define __NEXUS_PTR_LPM 3
 
 struct ivl_nexus_s {
       unsigned nptr_;
@@ -287,6 +289,10 @@ struct ivl_signal_s {
 	    ivl_nexus_t pin_;
 	    ivl_nexus_t*pins_;
       } n;
+
+      char**akey_;
+      char**aval_;
+      unsigned nattr_;
 };
 
 /*
@@ -349,6 +355,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.19  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.18  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.184 2000/12/04 17:37:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.185 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 /*
@@ -100,6 +100,10 @@ class NetObj {
 	// Return true if this has all the attributes in that and they
 	// all have the same values.
       bool has_compat_attributes(const NetObj&that) const;
+
+      unsigned nattr() const;
+      const char* attr_key(unsigned) const;
+      const char* attr_value(unsigned) const;
 
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
@@ -2821,6 +2825,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.185  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.184  2000/12/04 17:37:04  steve
  *  Add Attrib class for holding NetObj attributes.
  *

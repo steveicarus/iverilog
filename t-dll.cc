@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.19 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.20 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -97,6 +97,18 @@ static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
       nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.con= net;
+}
+
+static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin)
+{
+      unsigned top = nex->nptr_ + 1;
+      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
+      nex->nptr_ = top;
+
+      nex->ptrs_[top-1].type_= __NEXUS_PTR_LPM;
+      nex->ptrs_[top-1].pin_ = pin;
+      nex->ptrs_[top-1].l.lpm= net;
 }
 
 
@@ -239,6 +251,12 @@ void dll_target::logic(const NetLogic*net)
 	  case NetLogic::BUF:
 	    obj->type_ = IVL_LO_BUF;
 	    break;
+	  case NetLogic::BUFIF0:
+	    obj->type_ = IVL_LO_BUFIF0;
+	    break;
+	  case NetLogic::BUFIF1:
+	    obj->type_ = IVL_LO_BUFIF1;
+	    break;
 	  case NetLogic::OR:
 	    obj->type_ = IVL_LO_OR;
 	    break;
@@ -286,19 +304,24 @@ void dll_target::lpm_ff(const NetFF*net)
 
       const Nexus*nex;
 
+	/* Set the clk signal to point to the nexus, and the nexus to
+	   point back to this device. */
       nex = net->pin_Clock().nexus();
       assert(nex->t_cookie());
       obj->clk = (ivl_nexus_t) nex->t_cookie();
-	/* XXXX set nexus back pointer? XXXX */
+      assert(obj->clk);
+      nexus_lpm_add(obj->clk, &obj->base, 0);
 
       if (obj->base.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->q.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->q.pin, &obj->base, 0);
 
 	    nex = net->pin_Data(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->d.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->d.pin, &obj->base, 0);
 
       } else {
 	    obj->q.pins = new ivl_nexus_t [obj->base.width * 2];
@@ -308,10 +331,12 @@ void dll_target::lpm_ff(const NetFF*net)
 		  nex = net->pin_Q(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->q.pins[idx], &obj->base, 0);
 
 		  nex = net->pin_Data(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->d.pins[idx], &obj->base, 0);
 	    }
       }
 }
@@ -526,6 +551,14 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
+      obj->nattr_ = net->nattr();
+      obj->akey_  = new char*[obj->nattr_];
+      obj->aval_  = new char*[obj->nattr_];
+      for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
+	    obj->akey_[idx] = strdup(net->attr_key(idx));
+	    obj->aval_[idx] = strdup(net->attr_value(idx));
+      }
+
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
 	   ivl_nexus_t object into n.pin_. Otherwise, make an array of
@@ -575,6 +608,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.20  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.19  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

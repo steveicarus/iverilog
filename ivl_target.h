@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.29 2000/11/12 17:47:29 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.30 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -443,6 +443,19 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  *    points. It is the bit within the signal or logic device that is
  *    connected to the nexus.
  *
+ *    If the target is an LPM device, then this value is zero, and it
+ *    is up to the application to find the pin that referse to this
+ *    nexus. The problem is that LPM devices do not have a pinout per
+ *    se, the pins all have specific names.
+ *
+ * ivl_nexus_ptr_log
+ *    If the target object is an ivl_net_logic_t, this method returns
+ *    the object. Otherwise, this method returns 0.
+ *
+ * ivl_nexus_ptr_lpm
+ *    If the target object is an ivl_lpm_t, this method returns the
+ *    object. Otherwise, this method returns 0.
+ *
  * ivl_nexus_ptr_sig
  *    If the target object is an ivl_signal_t, this method returns the
  *    object. If the target is not a signal, this method returns 0.
@@ -453,6 +466,8 @@ extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
 extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
 
 extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
+extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
+extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
 
@@ -509,13 +524,42 @@ extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
  *
  * Signals have a name (obviously) and types. A signal may also be
  * signed or unsigned.
+ *
+ * ivl_signal_pins
+ * ivl_signal_pin
+ *    The ivl_signal_pin function returns the nexus connected to the
+ *    signal. If the signal is a vectory, the idx can be a non-zero
+ *    value, and the result is the nexus for the specified bit.
+ *
+ * ivl_signal_port
+ *    If the signal is a port to a module, this function returns the
+ *    port direction. If the signal is not a port, it returns
+ *    IVL_SIP_NONE.
+ *
+ * ivl_signal_type
+ *
+ * ivl_signal_name
+ *    This function returns the fully scoped hierarchical name for the
+ *    signal. The name refers to the entire vector that is the signal.
+ *
+ * ivl_signal_basename
+ *    This function returns the name of the signal, without the scope
+ *    information. This is the tail of the signal name.
+ *
+ * ivl_signal_attr
+ *    Icarus Verilog supports attaching attributes to signals, with
+ *    the attribute value (a string) associated with a key. This
+ *    function returns the attribute value for the given key. If the
+ *    key does not exist, the function returns 0.
  */
+
 extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
 extern unsigned    ivl_signal_pins(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
+extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
 
 
 /*
@@ -601,6 +645,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.30  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.29  2000/11/12 17:47:29  steve
  *  flip-flop pins for ivl_target API.
  *

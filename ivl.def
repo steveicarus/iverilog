@@ -47,6 +47,8 @@ ivl_nexus_ptrs
 ivl_nexus_ptr
 
 ivl_nexus_ptr_pin
+ivl_nexus_ptr_lpm
+ivl_nexus_ptr_log
 ivl_nexus_ptr_sig
 
 ivl_scope_children
@@ -58,6 +60,7 @@ ivl_scope_name
 ivl_scope_sigs
 ivl_scope_sig
 
+ivl_signal_attr
 ivl_signal_pin
 ivl_signal_pins
 ivl_signal_port

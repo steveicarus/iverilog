@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.18 2000/11/12 17:47:29 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.19 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -328,6 +328,24 @@ extern "C" unsigned ivl_nexus_ptr_pin(ivl_nexus_ptr_t net)
       return net->pin_;
 }
 
+extern "C" ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_LOG)
+	    return 0;
+      return net->l.log;
+}
+
+extern "C" ivl_lpm_t ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_LPM)
+	    return 0;
+      return net->l.lpm;
+}
+
 extern "C" ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net)
 {
       if (net == 0)
@@ -400,6 +418,22 @@ extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
       assert(net);
       assert(idx < net->nsigs_);
       return net->sigs_[idx];
+}
+
+extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
+{
+      if (net->nattr_ == 0)
+	    return 0;
+
+      assert(net->akey_);
+      assert(net->aval_);
+
+      for (unsigned idx = 0 ;  idx < net->nattr_ ;  idx += 1)
+
+	    if (strcmp(key, net->akey_[idx]) == 0)
+		  return net->aval_[idx];
+
+      return 0;
 }
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
@@ -596,6 +630,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.19  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.18  2000/11/12 17:47:29  steve
  *  flip-flop pins for ivl_target API.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.25 2000/11/12 17:47:29 steve Exp $"
+#ident "$Id: stub.c,v 1.26 2000/12/05 06:29:33 steve Exp $"
 #endif
 
 /*
@@ -270,6 +270,8 @@ static void show_signal(ivl_signal_t net)
 	    fprintf(out, "    [%u]: nexus=%s\n", pin, ivl_nexus_name(nex));
 
 	    for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+		  ivl_net_logic_t log;
+		  ivl_lpm_t lpm;
 		  ivl_signal_t sig;
 		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
@@ -277,6 +279,14 @@ static void show_signal(ivl_signal_t net)
 			fprintf(out, "      %s[%u]\n",
 				ivl_signal_name(sig),
 				ivl_nexus_ptr_pin(ptr));
+
+		  } else if ((log = ivl_nexus_ptr_log(ptr))) {
+			fprintf(out, "      %s[%u]\n",
+				ivl_logic_name(log),
+				ivl_nexus_ptr_pin(ptr));
+
+		  } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
+			fprintf(out, "      LPM %s\n", ivl_lpm_name(lpm));
 
 		  } else {
 			fprintf(out, "      ?[%u]\n", ivl_nexus_ptr_pin(ptr));
@@ -297,6 +307,14 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
 	  case IVL_LO_BUF:
 	    fprintf(out, "  buf %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUFIF0:
+	    fprintf(out, "  bufif0 %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUFIF1:
+	    fprintf(out, "  bufif1 %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_BUFZ:
@@ -374,6 +392,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.26  2000/12/05 06:29:33  steve
+ *  Make signal attributes available to ivl_target API.
+ *
  * Revision 1.25  2000/11/12 17:47:29  steve
  *  flip-flop pins for ivl_target API.
  *
