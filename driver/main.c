@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.26 2001/11/11 00:10:05 steve Exp $"
+#ident "$Id: main.c,v 1.27 2001/11/12 01:26:36 steve Exp $"
 
 # include "config.h"
 
@@ -91,6 +91,7 @@ char *library_flags = 0;
 char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
+char*src_list = 0;
 char*command_filename = 0;
 char*start = 0;
 
@@ -268,7 +269,7 @@ static void process_warning_switch(const char*name)
       }
 }
 
-static void process_library_switch(const char *name)
+void process_library_switch(const char *name)
 {
       if (library_flags) {
 	    library_flags = realloc(library_flags, 
@@ -279,6 +280,19 @@ static void process_library_switch(const char *name)
 	    strcpy(library_flags, "-y ");
       }
       strcat(library_flags, name);
+}
+
+void process_file_name(const char*name)
+{
+      if (src_list) {
+	    src_list = realloc(src_list,
+			       strlen(src_list) + strlen(name) + 2);
+	    strcat(src_list, " ");
+	    strcat(src_list, name);
+      } else {
+	    src_list = malloc(strlen(name) + 1);
+	    strcpy(src_list, name);
+      }
 }
 
 int main(int argc, char **argv)
@@ -459,7 +473,26 @@ int main(int argc, char **argv)
 	    }
       }
 
-      if ((optind == argc) && !command_filename) {
+      if (command_filename) {
+	    int rc;
+
+	    if (( fp = fopen(command_filename, "r")) == NULL ) {
+		  fprintf(stderr, "%s: Can't open %s\n",
+			  argv[0], command_filename);
+		  return 1;
+	    }
+
+	    cfreset(fp);
+	    rc = cfparse();
+      }
+
+	/* Finally, process all the remaining words on the command
+	   line as file names. */
+      for (idx = optind ;  idx < argc ;  idx += 1)
+	    process_file_name(argv[idx]);
+
+
+      if (src_list == 0) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
  	    fprintf(stderr, "%s\n", HELP);
 	    return 1;
@@ -506,56 +539,13 @@ int main(int argc, char **argv)
 	    ncmd += strlen(def_list);
       }
 
-	/* If user supplied a command file, retain its contents -- this
-           process supersedes command line source files. */
 
-      if (command_filename != 0) {
-	    if (( fp = fopen(command_filename, "r")) == NULL ) {
-		  fprintf(stderr, "%s: Can't open %s\n",
-			  argv[0], command_filename);
-		  return 1;
-
-	    } else {
-		    /* Process file and skip over commented-out lines.
-		       Skips over c-like comment as well as '//' or
-		       '#' lines. */
-
-		  sprintf(tmp, "");
-		  while (fgets(line, MAXSIZE, fp) != NULL) {
-			if ( strstr(line, "*/") != NULL ) {
-			      inside_c_comment = 0;
-			      continue;
-			}
-
-			if (inside_c_comment || (strstr(line, "/*") != NULL)) {
-			      inside_c_comment = 1;
-			      continue;
-			}
-
-			if ( (line[0] != '/' || line[1] != '/')
-			     && line[0] != '#' ) {
-			      strcat  (tmp, " ");
-			      strncat (tmp, line, (strlen(line)-1));
-			}
-		  }
-		  fclose(fp);
-	    }
-	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += strlen(tmp);
-
-      } else {
-
-	      /* Add all verilog source files to the preprocess
-		 command line. */
-
-	    for (idx = optind ;  idx < argc ;  idx += 1) {
-		  sprintf(tmp, " %s", argv[idx]);
-		  cmd = realloc(cmd, ncmd+strlen(tmp)+1);
-		  strcpy(cmd+ncmd, tmp);
-		  ncmd += strlen(tmp);
-	    }
-      }
+	/* Add the file names to the preprocessor command line. */
+      cmd = realloc(cmd, ncmd+strlen(src_list)+2);
+      strcpy(cmd+ncmd, " ");
+      ncmd += 1;
+      strcpy(cmd+ncmd, src_list);
+      ncmd += strlen(src_list);
 
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
@@ -597,6 +587,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.27  2001/11/12 01:26:36  steve
+ *  More sophisticated command file parser.
+ *
  * Revision 1.26  2001/11/11 00:10:05  steve
  *  Remov XNF dead wood.
  *

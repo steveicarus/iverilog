@@ -3,4 +3,8 @@ parse.c
 parse.h
 parse.output
 lexor.c
+cfparse.c
+cfparse.h
+cfparse.output
+cflexor.c
 iverilog

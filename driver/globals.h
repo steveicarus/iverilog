@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.6 2001/10/23 00:37:30 steve Exp $"
+#ident "$Id: globals.h,v 1.7 2001/11/12 01:26:36 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -51,6 +51,12 @@ extern int synth_flag;
   /* This is the name of the selected target. */
 extern const char*targ;
 
+  /* Add the name to the list of source files. */
+extern void process_file_name(const char*name);
+
+  /* Add the name to the list of library directories. */
+extern void process_library_switch(const char*name);
+
   /* -v */
 extern int verbose_flag;
 
@@ -65,6 +71,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.7  2001/11/12 01:26:36  steve
+ *  More sophisticated command file parser.
+ *
  * Revision 1.6  2001/10/23 00:37:30  steve
  *  The -s flag can now be repeated on the iverilog command.
  *
