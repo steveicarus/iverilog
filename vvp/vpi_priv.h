@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.29 2002/04/14 02:56:19 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.30 2002/04/14 03:53:20 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -179,6 +179,7 @@ struct __vpiBinaryConst {
       struct __vpiHandle base;
       unsigned nbits;
       unsigned char*bits;
+      unsigned signed_flag :1;
 };
 
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
@@ -268,6 +269,9 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.30  2002/04/14 03:53:20  steve
+ *  Allow signed constant vectors for call_vpi parameters.
+ *
  * Revision 1.29  2002/04/14 02:56:19  steve
  *  Support signed expressions through to VPI.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.32 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: lexor.lex,v 1.33 2002/04/14 03:53:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -50,22 +50,35 @@
       assert(yylval.text);
       return T_STRING; }
 
-[1-9][0-9]*"'b"[01xz]+ {
+  /* Binary vector tokens are pared here. The result of this is a
+     string of binary 4-values in the yylval.vect.text string. This is
+     preceeded by an 's' if the vector is signed. */
+[1-9][0-9]*("'b"|"'sb")[01xz]+ {
       yylval.vect.idx = strtoul(yytext, 0, 10);
-      yylval.vect.text = (char*)malloc(yylval.vect.idx + 1);
+      yylval.vect.text = (char*)malloc(yylval.vect.idx + 2);
       assert(yylval.vect.text);
+      char*dest = yylval.vect.text;
 
-      const char*bits = strchr(yytext, 'b');
+      const char*bits = strchr(yytext, '\'');
+      assert(bits);
+      bits += 1;
+
+      if (*bits == 's') {
+	    *dest++ = 's';
+	    bits += 1;
+      }
+
+      assert(*bits == 'b');
       bits += 1;
       unsigned pad = 0;
       if (strlen(bits) < yylval.vect.idx)
 	    pad = yylval.vect.idx - strlen(bits);
 
-      memset(yylval.vect.text, '0', pad);
+      memset(dest, '0', pad);
       for (unsigned idx = pad ;  idx < yylval.vect.idx ;  idx += 1)
-	    yylval.vect.text[idx] = bits[idx-pad];
+	    dest[idx] = bits[idx-pad];
 
-      yylval.vect.text[yylval.vect.idx] = 0;
+      dest[yylval.vect.idx] = 0;
       return T_VECTOR; }
 
 
@@ -159,6 +172,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.33  2002/04/14 03:53:20  steve
+ *  Allow signed constant vectors for call_vpi parameters.
+ *
  * Revision 1.32  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.12 2002/03/18 05:33:24 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.13 2002/04/14 03:53:20 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -182,8 +182,8 @@ static int binary_get(int code, vpiHandle ref)
 	  case vpiConstType:
 	    return vpiBinaryConst;
 
-	  case vpiSigned: // FIXME: Need to get signed flag right.
-	    return 0;
+	  case vpiSigned:
+	    return rfp->signed_flag? 1 : 0;
 
 	  case vpiSize:
 	    return rfp->nbits;
@@ -225,7 +225,8 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      tmp[idx] = (rfp->bits[idx/4] >> 2*(idx%4)) & 3;
 
-		vpip_bits_to_dec_str(tmp, wid, buf, sizeof buf, 0);
+		vpip_bits_to_dec_str(tmp, wid, buf, sizeof buf,
+				     rfp->signed_flag);
 
 		delete[]tmp;
 		vp->value.str = buf;
@@ -269,6 +270,11 @@ static const struct __vpirt vpip_binary_rt = {
       0
 };
 
+/*
+ * Make a VPI constant from a vector string. The string is normally a
+ * ASCII string, with each letter a 4-value bit. The first character
+ * may be an 's' if the vector is signed.
+ */
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 {
       struct __vpiBinaryConst*obj;
@@ -277,14 +283,21 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 	    malloc(sizeof (struct __vpiBinaryConst));
       obj->base.vpi_type = &vpip_binary_rt;
 
+      obj->signed_flag = 0;
       obj->nbits = wid;
       obj->bits = (unsigned char*)malloc((obj->nbits + 3) / 4);
       memset(obj->bits, 0, (obj->nbits + 3) / 4);
 
+      const char*bp = bits;
+      if (*bp == 's') {
+	    bp += 1;
+	    obj->signed_flag = 1;
+      }
+
       for (unsigned idx = 0 ;  idx < obj->nbits ;  idx += 1) {
 	    unsigned nibble = idx / 4;
 	    unsigned val = 0;
-	    switch (bits[wid-idx-1]) {
+	    switch (bp[wid-idx-1]) {
 		case '0':
 		  val = 0;
 		  break;
@@ -409,6 +422,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.13  2002/04/14 03:53:20  steve
+ *  Allow signed constant vectors for call_vpi parameters.
+ *
  * Revision 1.12  2002/03/18 05:33:24  steve
  *  vpip_bits_to_dec_str takes a bit array in a specific format.
  *
