@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.12 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: schedule.cc,v 1.13 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -51,6 +51,7 @@ struct event_s {
       union {
 	    vthread_t thr;
 	    vvp_ipoint_t fun;
+	    functor_t    funp;
             vvp_gen_event_t obj;
       };
       unsigned val  :2;
@@ -237,12 +238,12 @@ void schedule_vthread(vthread_t thr, unsigned delay)
       schedule_event_(cur);
 }
 
-void schedule_functor(vvp_ipoint_t fun, unsigned delay)
+void schedule_functor(functor_t funp, unsigned delay)
 {
       struct event_s*cur = e_alloc();
 
       cur->delay = delay;
-      cur->fun = fun;
+      cur->funp = funp;
       cur->type = TYPE_PROP;
 
       schedule_event_(cur);
@@ -319,7 +320,7 @@ void schedule_simulate(void)
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
-		  functor_propagate(cur->fun);
+		  functor_propagate(cur->funp);
 		  e_free(cur);
 		  break;
 
@@ -360,6 +361,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.13  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.12  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.6 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: pointers.h,v 1.7 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 /*
@@ -45,6 +45,11 @@ typedef unsigned long vvp_ipoint_t;
 #else
 #error "I need an unsigned type that is 32 bits!"
 #endif
+
+/*
+ * This is a native-pointer version of the vvp_ipoint_t
+ */
+typedef struct functor_s *functor_t;
 
 /*
  * Given a functor generic address and a desired port, this function
@@ -101,6 +106,9 @@ typedef struct vvp_fvector_s *vvp_fvector_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.7  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.6  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.12 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: udp.cc,v 1.13 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -36,7 +36,7 @@ void udp_functor_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
   // old_ival is set on the way out
   put(i, val);
   unsigned char out = udp->propagate(this, i);
-  put_oval(i, false, out);
+  put_oval(false, out);
 }
 
 
@@ -350,6 +350,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.13  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.12  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

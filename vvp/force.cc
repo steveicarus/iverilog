@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: force.cc,v 1.2 2001/11/01 04:42:40 steve Exp $"
+#ident "$Id: force.cc,v 1.3 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -158,7 +158,7 @@ void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
       unsigned pp = ipoint_port(ptr);
       
       if (assigned() && pp==1  ||  !assigned() && pp==0) {
-	    put_oval(ptr, push, val);
+	    put_oval(push, val);
       }
 }
 
@@ -249,6 +249,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.3  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.2  2001/11/01 04:42:40  steve
  *  Handle procedural constant functor pointers.
  *

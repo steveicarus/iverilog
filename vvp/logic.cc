@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.1 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: logic.cc,v 1.2 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -52,7 +52,7 @@ void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       val >>= 2 * (ival&0x03);
       val &= 0x03;
 
-      put_oval(ptr, push, val);
+      put_oval(push, val);
 }
 
 /*
@@ -136,6 +136,9 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.2  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.1  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.113 2001/11/06 03:07:21 steve Exp $"
+#ident "$Id: compile.cc,v 1.114 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -579,7 +579,7 @@ static vvp_ipoint_t make_const_functor(unsigned val,
       functor_t obj = new const_functor_s(str0, str1);
       functor_define(fdx, obj);
 
-      obj->put_oval(fdx, false, val);
+      obj->put_oval(false, val);
 
       return fdx;
 }
@@ -955,7 +955,7 @@ void compile_udp_functor(char*label, char*type,
       free(argv);
       
       if (u->sequ)
-	    udp->put_oval(fdx, false, u->init);
+	    udp->put_oval(false, u->init);
 }
 
 
@@ -1341,6 +1341,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.114  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.113  2001/11/06 03:07:21  steve
  *  Code rearrange. (Stephan Boettcher)
  *

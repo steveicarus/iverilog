@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.28 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.29 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 /*
@@ -404,7 +404,7 @@ static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
 {
       vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
       functor_t fu = functor_index(ptr);
-      fu->put_ostr(ptr, true, val, str);
+      fu->put_ostr(true, val, str);
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
@@ -552,6 +552,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.29  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.28  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.19 2001/11/04 05:03:21 steve Exp $"
+#ident "$Id: arith.cc,v 1.20 2001/11/07 03:34:41 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -36,7 +36,7 @@ void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
 	    
-	    obj->put_oval(ptr, push, val);
+	    obj->put_oval(push, val);
       }
 }
 
@@ -49,7 +49,7 @@ void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
 	    unsigned val = sum & 1;
 	    sum >>= 1;
 	    
-	    obj->put_oval(ptr, push, val);
+	    obj->put_oval(push, val);
       }
 }
 
@@ -79,7 +79,7 @@ void vvp_wide_arith_::output_val_(vvp_ipoint_t base, bool push)
 		  page += 1;
 	    }
 
-	    obj->put_oval(ptr, push, val);
+	    obj->put_oval(push, val);
       }
 }
 
@@ -213,7 +213,7 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
 
 	    unsigned val = sum[idx];
 
-	    obj->put_oval(ptr, push, val);
+	    obj->put_oval(push, val);
       }
 
       delete[]sum;
@@ -369,7 +369,7 @@ void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 
-      put_oval(base, push, out_val);
+      put_oval(push, out_val);
 }
 
 void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
@@ -403,7 +403,7 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 
-      put_oval(base, push, out_val);
+      put_oval(push, out_val);
 }
 
 
@@ -442,7 +442,7 @@ void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    for (unsigned idx = 0 ;  idx < amount ;  idx += 1) {
 		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  ofp->put_oval(optr, push, 0);
+		  ofp->put_oval(push, 0);
 	    }
 
 	    for (unsigned idx = amount ;  idx < wid_ ;  idx += 1) {
@@ -451,7 +451,7 @@ void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  iptr = ipoint_index(base, idx - amount);
 		  ifp = functor_index(iptr);
 
-		  ofp->put_oval(optr, push, ifp->ival & 3);
+		  ofp->put_oval(push, ifp->ival & 3);
 	    }
       }
 }
@@ -494,13 +494,13 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  iptr = ipoint_index(base, idx + amount);
 		  ifp = functor_index(iptr);
 
-		  ofp->put_oval(optr, push, ifp->ival & 3);
+		  ofp->put_oval(push, ifp->ival & 3);
 	    }
 
 	    for (unsigned idx = wid_-amount; idx < wid_ ;  idx += 1) {
 		  optr = ipoint_index(base, idx);
 		  ofp = functor_index(optr);
-		  ofp->put_oval(optr, push, 0);
+		  ofp->put_oval(push, 0);
 	    }
       }
 }
@@ -508,6 +508,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.20  2001/11/07 03:34:41  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.19  2001/11/04 05:03:21  steve
  *  MacOSX 10.1 updates.
  *

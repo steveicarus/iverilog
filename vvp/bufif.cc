@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.2 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: bufif.cc,v 1.3 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -80,11 +80,14 @@ void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 	    break;
       }
 
-      put_ostr(ptr, push, val, str);
+      put_ostr(push, val, str);
 }
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.3  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.2  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

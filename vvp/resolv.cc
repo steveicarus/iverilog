@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.7 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: resolv.cc,v 1.8 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -164,11 +164,14 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
       }
 
 	/* If the output changes, then create a propagation event. */
-      put_ostr(i, push, val, sval);
+      put_ostr(push, val, sval);
 }
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.8  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.7  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

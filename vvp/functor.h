@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.37 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: functor.h,v 1.38 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -29,7 +29,7 @@
  * to have its output propagated, and the delay is the delay to
  * schedule the propagation.
  */
-extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
+extern void schedule_functor(functor_t fun, unsigned delay);
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -84,8 +84,6 @@ extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
  * functors use the odrive0 and odrive1 fields to form the strength
  * value.
  */
-
-typedef struct functor_s *functor_t;
 
 /*
  * signal strengths
@@ -182,8 +180,8 @@ struct functor_s {
       inline unsigned char get() { return oval; }
       inline unsigned char get_ostr() { return ostr; }
       void put(vvp_ipoint_t ipt, unsigned val);
-      void put_oval(vvp_ipoint_t ptr, bool push, unsigned val);
-      void put_ostr(vvp_ipoint_t ptr, bool push, unsigned val, unsigned str);
+      void put_oval(bool push, unsigned val);
+      void put_ostr(bool push, unsigned val, unsigned str);
       bool disable(vvp_ipoint_t ptr);
       bool enable(vvp_ipoint_t ptr);
       void propagate(bool push);
@@ -217,7 +215,7 @@ inline void functor_s::propagate(bool push)
       }
 }
 
-inline void functor_s::put_oval(vvp_ipoint_t ptr, bool push, unsigned val)
+inline void functor_s::put_oval(bool push, unsigned val)
 {
       switch (val) {
 	  case 0:
@@ -240,12 +238,11 @@ inline void functor_s::put_oval(vvp_ipoint_t ptr, bool push, unsigned val)
 	    if (push)
 		  propagate(true);
 	    else
-		  schedule_functor(ptr, 0);
+		  schedule_functor(this, 0);
       }
 }
 
-inline void functor_s::put_ostr(vvp_ipoint_t ptr, bool push, 
-				unsigned val, unsigned str)
+inline void functor_s::put_ostr(bool push, unsigned val, unsigned str)
 {
       if (val != oval || str != ostr) {      
 	    ostr = str;
@@ -255,7 +252,7 @@ inline void functor_s::put_ostr(vvp_ipoint_t ptr, bool push,
 	    if (push)
 		  propagate(true);
 	    else
-		  schedule_functor(ptr, 0);
+		  schedule_functor(this, 0);
       }
 }
 
@@ -306,9 +303,8 @@ unsigned functor_get(vvp_ipoint_t ptr)
  * the way.
  */
 inline static
-void functor_propagate(vvp_ipoint_t ptr, bool push=true)
+void functor_propagate(functor_t fp, bool push=true)
 {
-      functor_t fp = functor_index(ptr);
       fp->propagate(push);
 }
 
@@ -373,6 +369,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.38  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.37  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

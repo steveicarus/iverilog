@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: codes.h,v 1.37 2001/11/07 03:34:42 steve Exp $"
 #endif
 
 
@@ -106,6 +106,7 @@ struct vvp_code_s {
 	    vvp_memory_t mem;
 	    struct __vpiHandle*handle;
 	    struct __vpiScope*scope;
+	    functor_t fun_ptr;
       };
 
       union {
@@ -147,6 +148,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.37  2001/11/07 03:34:42  steve
+ *  Use functor pointers where vvp_ipoint_t is unneeded.
+ *
  * Revision 1.36  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *
