@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.44 2004/02/18 02:51:59 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.45 2004/02/18 17:52:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -234,7 +234,7 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
       return res;
 }
 
-char* vpi_get_str(int property, vpiHandle ref)
+char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 {
       if (ref == 0) {
 	    fprintf(stderr, "vpi error: vpi_get_str(%s, 0) called "
@@ -392,7 +392,7 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
-			s_vpi_time*tp, int flags)
+			s_vpi_time*tp, PLI_INT32 flags)
 {
       assert(obj);
       if (obj->vpi_type->vpi_put_value_)
@@ -401,7 +401,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    return 0;
 }
 
-vpiHandle vpi_handle(int type, vpiHandle ref)
+vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 {
       if (type == vpiSysTfCall) {
 	    assert(ref == 0);
@@ -458,7 +458,7 @@ static vpiHandle vpi_iterate_global(int type)
       return 0;
 }
 
-vpiHandle vpi_iterate(int type, vpiHandle ref)
+vpiHandle vpi_iterate(PLI_INT32 type, vpiHandle ref)
 {
       vpiHandle rtn = 0;
 
@@ -482,7 +482,7 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
       return rtn;
 }
 
-vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
+vpiHandle vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx)
 {
       assert(ref);
 
@@ -646,6 +646,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.45  2004/02/18 17:52:00  steve
+ *  PRototypes match the standard.
+ *
  * Revision 1.44  2004/02/18 02:51:59  steve
  *  Fix type mismatches of various VPI functions.
  *
