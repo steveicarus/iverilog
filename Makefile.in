@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.22 1999/10/16 20:48:15 steve Exp $"
+#ident "$Id: Makefile.in,v 1.23 1999/10/22 23:58:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,19 +43,19 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@
-CXXFLAGS = @CXXFLAGS@
+CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
 LDFLAGS = @LDFLAGS@
 
 all: ivl verilog
-	cd vpi ; make all
-	cd vvm ; make all
-	cd ivlpp ; make all
+	cd vpi ; $(MAKE) all
+	cd vvm ; $(MAKE) all
+	cd ivlpp ; $(MAKE) all
 
 clean:
 	rm *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc
-	cd vpi ; make clean
-	cd vvm ; make clean
-	cd ivlpp ; make clean
+	cd vpi ; $(MAKE) clean
+	cd vvm ; $(MAKE) clean
+	cd ivlpp ; $(MAKE) clean
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
 FF = nobufz.o propinit.o sigfold.o xnfio.o xnfsyn.o
@@ -98,17 +98,17 @@ lexor.o dep/lexor.d: lexor.cc parse.h
 
 parse.o dep/parse.d: parse.cc
 
-parse.h parse.cc: parse.y
-	bison --verbose -t -p VL -d parse.y -o parse.cc
+parse.h parse.cc: $(srcdir)/parse.y
+	bison --verbose -t -p VL -d $(srcdir)/parse.y -o parse.cc
 	mv parse.cc.h parse.h
 
-lexor.cc: lexor.lex
-	flex -PVL -s -olexor.cc lexor.lex
+lexor.cc: $(srcdir)/lexor.lex
+	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex
 
 install: all installdirs $(bindir)/verilog $(bindir)/ivl $(mandir)/man1/verilog.1
-	cd vpi ; make install
-	cd vvm ; make install
-	cd ivlpp ; make install
+	cd vpi ; $(MAKE) install
+	cd vvm ; $(MAKE) install
+	cd ivlpp ; $(MAKE) install
 
 $(bindir)/verilog: ./verilog
 	$(INSTALL_PROGRAM) ./verilog $(bindir)/verilog
@@ -126,9 +126,9 @@ uninstall:
 	rm -f $(bindir)/ivl
 	rm -f $(bindir)/verilog
 	rm -f $(mandir)/man1/verilog.1
-	cd vpi ; make uninstall
-	cd vvm ; make uninstall
-	cd ivlpp ; make uninstall
+	cd vpi ; $(MAKE) uninstall
+	cd vvm ; $(MAKE) uninstall
+	cd ivlpp ; $(MAKE) uninstall
 
 
 -include $(patsubst %.o, dep/%.d, $O)

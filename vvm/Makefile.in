@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.7 1999/10/17 20:14:23 steve Exp $"
+#ident "$Id: Makefile.in,v 1.8 1999/10/22 23:58:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -36,7 +36,7 @@ libdir = $(exec_prefix)/lib
 includedir = $(prefix)/include
 
 CC = @CC@
-CXX = @CXX@ -I../vpi
+CXX = @CXX@ -I$(srcdir) -I$(srcdir)/../vpi
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
