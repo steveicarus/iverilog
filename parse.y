@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.137 2001/11/29 17:37:51 steve Exp $"
+#ident "$Id: parse.y,v 1.138 2001/12/01 02:42:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1917,16 +1917,26 @@ polarity_operator
 specify_simple_path_decl
 	: specify_simple_path '=' '(' specify_delay_value_list ')'
 	| specify_simple_path '=' delay_value_simple
+	| specify_simple_path '=' '(' error ')'
+		{ yyerror(@2, "Syntax error in delay value list.");
+		  yyerrok;
+		}
 	;
 
 specify_simple_path
 	: '(' specify_path_identifiers spec_polarity K_EG expression ')'
 	| '(' specify_path_identifiers spec_polarity K_SG expression ')'
+	| '(' error ')'
+		{ yyerror(@2, "Invalid simple path");
+		  yyerrok;
+		}
 	;
 
 specify_path_identifiers
 	: IDENTIFIER { }
+	| IDENTIFIER '[' expr_primary ']' { }
 	| specify_path_identifiers ',' IDENTIFIER { }
+	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']' { }
 	;
 
 specparam
