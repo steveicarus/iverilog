@@ -146,7 +146,7 @@ CC_LEADING_UNDERSCORE=no
 CC_TRAILING_UNDERSCORE=no
 
 output=`nm underscore.o|grep _underscore 2>&1`
-if test ! -z "$output" -a -z "$CYGWIN" -a -z "$MINGW32"; then
+if test ! -z "$output" -a "$CYGWIN" != "yes" -a "$MINGW32" != "yes"; then
   CC_LEADING_UNDERSCORE=yes
   AC_DEFINE(NEED_LU)
 fi
