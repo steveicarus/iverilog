@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.40 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: target.cc,v 1.41 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -241,10 +241,11 @@ bool target_t::proc_deassign(ostream&os, const NetDeassign*dev)
       return false;
 }
 
-void target_t::proc_delay(ostream&os, const NetPDelay*)
+bool target_t::proc_delay(ostream&os, const NetPDelay*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_delay." << endl;
+      return false;
 }
 
 bool target_t::proc_disable(ostream&os, const NetDisable*obj)
@@ -397,6 +398,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.41  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.40  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *

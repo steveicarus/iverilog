@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.10 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.11 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 /*
@@ -44,7 +44,7 @@ class target_verilog : public target_t {
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual bool proc_block(ostream&os, const NetBlock*);
-      virtual void proc_delay(ostream&os, const NetPDelay*);
+      virtual bool proc_delay(ostream&os, const NetPDelay*);
       virtual void proc_stask(ostream&os, const NetSTask*);
       virtual void end_design(ostream&os, const Design*);
     private:
@@ -182,13 +182,14 @@ bool target_verilog::proc_block(ostream&os, const NetBlock*net)
       return true;
 }
 
-void target_verilog::proc_delay(ostream&os, const NetPDelay*net)
+bool target_verilog::proc_delay(ostream&os, const NetPDelay*net)
 {
       os << setw(indent_) << "" << "#" << net->delay() << endl;
 
       indent_ += 4;
-      net->emit_proc_recurse(os, this);
+      bool flag = net->emit_proc_recurse(os, this);
       indent_ -= 4;
+      return flag;
 }
 
 
@@ -242,6 +243,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.11  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.10  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

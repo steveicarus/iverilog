@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.163 2000/07/26 03:53:11 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.164 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -193,7 +193,7 @@ class target_vvm : public target_t {
       virtual void proc_utask(ostream&os, const NetUTask*);
       virtual bool proc_wait(ostream&os, const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
-      virtual void proc_delay(ostream&os, const NetPDelay*);
+      virtual bool proc_delay(ostream&os, const NetPDelay*);
       virtual void end_design(ostream&os, const Design*);
 
       void start_process(ostream&os, const NetProcTop*);
@@ -3034,7 +3034,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
  * is an expression expresion, evaluate it at run time and use the
  * unsigned interpretation of it as the actual delay.
  */
-void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
+bool target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 {
       thread_step_ += 1;
 
@@ -3062,7 +3062,7 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
       defn << "static bool " << thread_class_ << "_step_" << thread_step_
 	   << "_(vvm_thread*thr) {" << endl;
 
-      proc->emit_proc_recurse(os, this);
+      return proc->emit_proc_recurse(os, this);
 }
 
 void target_vvm::end_process(ostream&os, const NetProcTop*proc)
@@ -3088,6 +3088,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.164  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.163  2000/07/26 03:53:11  steve
  *  Make simulation precision available to VPI.
  *

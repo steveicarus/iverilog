@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.46 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: emit.cc,v 1.47 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 /*
@@ -205,13 +205,13 @@ bool NetForever::emit_proc(ostream&o, struct target_t*tgt) const
 
 bool NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 {
-      tgt->proc_delay(o, this);
-      return true;
+      return tgt->proc_delay(o, this);
 }
 
-void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
+bool NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
-      if (statement_) statement_->emit_proc(o, tgt);
+      if (statement_) return statement_->emit_proc(o, tgt);
+      return true;
 }
 
 bool NetRelease::emit_proc(ostream&o, struct target_t*tgt) const
@@ -454,6 +454,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.47  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.46  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *

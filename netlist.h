@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.149 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.150 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 /*
@@ -1696,7 +1696,7 @@ class NetPDelay  : public NetProc {
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
-      void emit_proc_recurse(ostream&, struct target_t*) const;
+      bool emit_proc_recurse(ostream&, struct target_t*) const;
 
     private:
       unsigned long delay_;
@@ -2719,6 +2719,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.150  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.149  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *

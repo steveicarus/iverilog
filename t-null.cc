@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.12 2000/06/14 20:29:39 steve Exp $"
+#ident "$Id: t-null.cc,v 1.13 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -42,7 +42,7 @@ static class target_null_t  : public target_t {
       void net_probe(ostream&, const NetEvProbe*) { }
       bool proc_block(ostream&, const NetBlock*) { return true; }
       void proc_condit(ostream&, const NetCondit*) { }
-      void proc_delay(ostream&, const NetPDelay*) { }
+      bool proc_delay(ostream&, const NetPDelay*) { return true; }
       void proc_forever(ostream&, const NetForever*) { }
       void proc_repeat(ostream&, const NetRepeat*) { }
       void proc_stask(ostream&, const NetSTask*) { }
@@ -54,6 +54,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.13  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.12  2000/06/14 20:29:39  steve
  *  Ignore more things in null target.
  *

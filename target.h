@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.39 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: target.h,v 1.40 2000/07/29 16:21:08 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -119,7 +119,7 @@ struct target_t {
       virtual void proc_utask(ostream&os, const NetUTask*);
       virtual bool proc_wait(ostream&os,  const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
-      virtual void proc_delay(ostream&os, const NetPDelay*);
+      virtual bool proc_delay(ostream&os, const NetPDelay*);
 
 	/* Done with the design. */
       virtual void end_design(ostream&os, const Design*);
@@ -160,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.40  2000/07/29 16:21:08  steve
+ *  Report code generation errors through proc_delay.
+ *
  * Revision 1.39  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *
