@@ -10,6 +10,7 @@ Makefile
 lexor.cc
 parse.cc
 parse.cc.output
+parse.output
 parse.h
 tables.cc
 vvp
