@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.66 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: compile.h,v 1.67 2005/04/01 06:02:45 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -48,6 +48,16 @@ extern bool verbose_flag;
  */
 extern void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv);
 extern void input_connect(vvp_net_t*fdx, unsigned port, char*label);
+
+/*
+ * This function is an expansion of the inputs_connect function. It
+ * uses the inputs_connect function, but it creates vvp_wide_fun_t
+ * nodes to handle arbitrary width nodes, and connects those nodes to
+ * the vvp_wide_fun_core object passed in.
+ */
+extern void wide_inputs_connect(vvp_wide_fun_core*core,
+				unsigned argc, struct symb_s*argv);
+
 
 /*
  *  Add a functor to the symbol table
@@ -300,6 +310,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.67  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.66  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.195 2005/03/22 05:18:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.196 2005/04/01 06:02:45 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -773,6 +773,26 @@ void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv)
       }
 }
 
+void wide_inputs_connect(vvp_wide_fun_core*core,
+			 unsigned argc, struct symb_s*argv)
+{
+	/* Create input functors to receive values from the
+	   network. These functors pass the data to the core. */
+      unsigned input_functors = (argc+3) / 4;
+      for (unsigned idx = 0 ;  idx < input_functors ;  idx += 1) {
+	    unsigned base = idx*4;
+	    unsigned trans = 4;
+	    if (base+trans > argc)
+		  trans = argc - base;
+
+	    vvp_wide_fun_t*cur = new vvp_wide_fun_t(core, base);
+	    vvp_net_t*ptr = new vvp_net_t;
+	    ptr->fun = cur;
+
+	    inputs_connect(ptr, trans, argv+base);
+      }
+}
+
 
 struct const_functor_s: public functor_s {
       const_functor_s(unsigned str0, unsigned str1)
@@ -1118,13 +1138,9 @@ void compile_force(char*label, struct symb_s signal,
 void compile_udp_def(int sequ, char *label, char *name,
 		     unsigned nin, unsigned init, char **table)
 {
-  struct vvp_udp_s *u = udp_create(label);
-  u->name = name;
-  u->sequ = sequ;
-  u->nin = nin;
-  u->init = init;
-  u->compile_table(table);
-  free(label);
+      vvp_udp_s *u = new vvp_udp_s(label, name, nin, sequ? true : false);
+      u->compile_table(table);
+      free(label);
 }
 
 char **compile_udp_table(char **table, char *row)
@@ -1141,42 +1157,6 @@ char **compile_udp_table(char **table, char *row)
   table[n-1] = 0x0;
 
   return table;
-}
-
-void compile_udp_functor(char*label, char*type,
-			 vvp_delay_t delay,
-			 unsigned argc, struct symb_s*argv)
-{
-      struct vvp_udp_s *u = udp_find(type);
-      assert (argc == u->nin);
-#if 0
-      functor_t udp = new udp_functor_s(u);
-
-      unsigned nfun = (argc+3)/4;
-      vvp_ipoint_t fdx = functor_allocate(nfun);
-      functor_define(fdx, udp);
-      define_functor_symbol(label, fdx);
-      free(label);
-
-      if (nfun > 1) {
-	    for (unsigned i=0;  i < nfun-1;  i++) {
-		  functor_t fu = new edge_inputs_functor_s;
-		  vvp_ipoint_t ipt = ipoint_index(fdx, i+1);
-		  functor_define(ipt, fu);
-		  fu->out = fdx;
-	    }
-      }
-
-      udp->delay = delay;
-
-      inputs_connect(fdx, argc, argv);
-      free(argv);
-
-      if (u->sequ)
-	    udp->put_oval(u->init, false);
-#else
-      fprintf(stderr, "XXXX compile_udp_functor not implemented\n");
-#endif
 }
 
 /*
@@ -1587,6 +1567,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.196  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.195  2005/03/22 05:18:34  steve
  *  The indexed set can write a vector, not just a bit.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.h,v 1.4 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: ufunc.h,v 1.5 2005/04/01 06:02:45 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -46,9 +46,11 @@
  * ufunc_core is also a functor whose output is connected to the rest
  * of the netlist. This is where the result is delivered back to the
  * netlist.
+ *
+ * This class relies to the vvp_wide_fun_* classes in vvp_net.h.
  */
 
-class ufunc_core : public vvp_net_fun_t {
+class ufunc_core : public vvp_wide_fun_core {
 
     public:
       ufunc_core(unsigned ow, vvp_net_t*ptr,
@@ -64,18 +66,15 @@ class ufunc_core : public vvp_net_fun_t {
       void finish_thread(vthread_t thr);
 
     private:
-      friend class ufunc_input_functor;
-      void recv_vec4_from_inputs(unsigned port, vvp_vector4_t bit);
+      void recv_vec4_from_inputs(unsigned port);
 
     private:
 	// output width of the function node.
       unsigned owid_;
-	// Pointer to the "self" vvp_net_t that points to this functor.
-      vvp_net_t*onet_;
-	// Structure to track the input values from the input functors.
-      unsigned nports_;
+	// The vvp_net_t* objects for the function input ports. We use
+	// these to write the input values to the reg input variable
+	// functors for the thread.
       vvp_net_t**ports_;
-      vvp_vector4_t*port_values_;
 
 	// This is a thread to execute the behavioral portion of the
 	// function.
@@ -87,6 +86,7 @@ class ufunc_core : public vvp_net_fun_t {
       vvp_net_t*result_;
 };
 
+#if 0
 /*
  * The job of the input functor is only to monitor inputs to the
  * function and pass them to the ufunc_core object. Each functor takes
@@ -105,9 +105,13 @@ class ufunc_input_functor : public vvp_net_fun_t {
       ufunc_core*core_;
       unsigned port_base_;
 };
+#endif
 
 /*
  * $Log: ufunc.h,v $
+ * Revision 1.5  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.4  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

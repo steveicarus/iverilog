@@ -1,8 +1,10 @@
 #ifndef __udp_H
 #define __udp_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
- * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
+ * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ *
+ * (This is a rewrite of code that was ...
+ * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,106 +22,97 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.14 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: udp.h,v 1.15 2005/04/01 06:02:45 steve Exp $"
 #endif
 
-#include "functor.h"
+# include  <vvp_net.h>
 
-// UDP implementation:
+/*
+ * The vvp_udp_s instance represents a *definition* of a
+ * primitive. netlist instances refer to these definitions.
+ *
+ * The ports argument of the constructor is the number of input ports
+ * to the device. The single output port is not counted. The port
+ * count must be greater then 0.
+ *
+ * A level sensitive UDP has a table that includes all the rows that
+ * generate a 0 output and another table that includes all the rows
+ * that generate a 1 output. A set of inputs is tested against the
+ * entries in both sets, and if there are no matches, the output is
+ * set to x.
+ *
+ * The levels0 and levels1 tables are each an array of levels
+ * tables. Each levels table is a mask of positions that are supposed
+ * to be 0, 1 and x. The LSB of each mask represents first port, and
+ * so on. If the bit is set in mask0, a bit4_0 is expected at that
+ * position, and similarly for mask1 and maskx. Only exactly 1 bit
+ * will be set in the three masks for each bit position.
+ *
+ * This table structure implies that the number of inputs to the level
+ * sensitive device is limited to the number of bits in an unsigned long.
+ */
 
-typedef struct udp_table_entry_s *udp_table_entry_t;
+struct udp_levels_table {
+      unsigned long mask0;
+      unsigned long mask1;
+      unsigned long maskx;
+};
 
-struct vvp_udp_s
-{
-      char *name;
-      udp_table_entry_t table;
-      unsigned ntable;
-      unsigned sequ;
-      unsigned nin;
-      unsigned char init;
+class vvp_udp_s {
 
-      void compile_table(char **tab);
-      unsigned char propagate(functor_t fu, vvp_ipoint_t i);
+    public:
+      vvp_udp_s(char*label, char*name, unsigned ports, bool sequ);
+      ~vvp_udp_s();
+      void compile_table(char**tab);
+
+	// Return the number of input ports for the defined UDP.
+      unsigned port_count() const;
+
+	// Test the cur table with the compiled rows, and return the
+	// bit value that matches.
+      vvp_bit4_t test_levels(const udp_levels_table&cur);
 
     private:
-      void compile_row_(udp_table_entry_t, char *);
+      char*name_;
+      unsigned ports_;
+
+	// Level sensitive rows of the device.
+      struct udp_levels_table*levels0_;
+      struct udp_levels_table*levels1_;
+      unsigned nlevels0_, nlevels1_;
 };
 
-struct vvp_udp_s *udp_create(char *label);
-struct vvp_udp_s *udp_find(char *label);
-
-
-// UDP instances:
 /*
- * A complete UDP instance includes one udp_functor_s functor that
- * holds the output of the UDP, as well as the first 4 inputs. This
- * also points to the vvp_udp_s table that is the behavior for the
- * device.
- *
- * If there are more then 4 inputs to the device, then enough
- * edge_inputs_functor_s functors is created to receive all the
- * inputs. All the edge_inputs_functors_s ::out members point to the
- * leading udp_functor_s object, so the ::set methods all invoke the
- * ::set method of this functor.
- *
- *        +---+     First object is a udp_functor_s object
- *   <----+   +--
- *        |   +--
- *        |   +--
- *        |   +--
- *        +---+
- *          ^
- *          | +---+    Subsequent objects are edge_inputs_functor_s
- *          \-+   +--     that point their outputs to the leading
- *          ^ |   +--     udp_functor_s object. There are as many
- *          | |   +--     edge_inputs_functor_s objects as needed
- *          | |   +--     to accommodate all the inputs of the user
- *          | +---+       defined primitive.
- *          |
- *          | +---+
- *          \-+   +--
- *            |   +--
- *            |   +--
- *            |   +--
- *            +---+
- *              .
- *              .
- *              .
- * (The propagate method of the vvp_udp_s object relies on the fact
- * that the initial udp_functor_s and the subsequend
- * edge_inputs_functor_s objects are consecutive in functor space.)
+ * Ths looks up a UDP definition from its LABEL.
  */
-class udp_functor_s : public edge_inputs_functor_s
-{
+struct vvp_udp_s *udp_find(const char *label);
+
+/*
+ * The udp_fun_core is the core of the udp instance in the
+ * netlist. This core is a vvp_wide_fun_core that takes care of
+ * dispatching the output. This class also receives the inputs from
+ * the vvp_wide_fun_t objects and processes them to generate the
+ * output to be sent.
+ */
+class vvp_udp_fun_core  : public vvp_wide_fun_core {
+
     public:
-      explicit udp_functor_s(vvp_udp_s *u) : udp(u) {}
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      vvp_udp_s *udp;
+      vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def);
+      ~vvp_udp_fun_core();
+
+      void recv_vec4_from_inputs(unsigned);
+
+    private:
+      vvp_udp_s*def_;
+      udp_levels_table current_;
 };
+
 
 
 /*
  * $Log: udp.h,v $
- * Revision 1.14  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
+ * Revision 1.15  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
  *
- * Revision 1.13  2003/09/17 03:39:55  steve
- *  Internal documentation of UDP devices.
- *
- * Revision 1.12  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.11  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.9  2001/08/09 19:38:23  steve
- *  Nets (wires) do not use their own functors.
- *  Modifications to propagation of values.
- *  (Stephan Boettcher)
  */
 #endif

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.19 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.20 2005/04/01 06:02:45 steve Exp $"
 
 # include  <stdio.h>
 # include  <assert.h>
@@ -603,7 +603,85 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 };
 
 /*
+ * Wide Functors:
+ * Wide functors represent special devices that may have more then 4
+ * input ports. These devices need a set of N/4 actual functors to
+ * catch the inputs, and use another to deliver the output.
+ *
+ *  vvp_wide_fun_t --+--> vvp_wide_fun_core --> ...
+ *                   |
+ *  vvp_wide_fun_t --+
+ *                   |
+ *  vvp_wide_fun_t --+
+ *
+ * There are enough input functors to take all the functor inputs, 4
+ * per functor. These inputs deliver the changed input value to the
+ * wide_fun_core, which carries the infastructure for the thread. The
+ * wide_fun_core is also a functor whose output is connected to the rest
+ * of the netlist. This is where the result is delivered back to the
+ * netlist.
+ *
+ * The vvp_wide_fun_core keeps a store of the inputs from all the
+ * input functors, and makes them available to the derived class that
+ * does the processing.
+ */
+
+class vvp_wide_fun_core : public vvp_net_fun_t {
+
+    public:
+      vvp_wide_fun_core(vvp_net_t*net, unsigned nports);
+      virtual ~vvp_wide_fun_core();
+
+      void set_output_delay(vvp_time64_t delay);
+
+    protected:
+      void propagate_vec4(const vvp_vector4_t&bit);
+      unsigned port_count() const;
+      vvp_vector4_t& value(unsigned);
+
+    private:
+	// the derived class implements this to receive an indication
+	// that one of the port input values changed.
+      virtual void recv_vec4_from_inputs(unsigned port) =0;
+
+      friend class vvp_wide_fun_t;
+      void dispatch_vec4_from_input_(unsigned port, vvp_vector4_t bit);
+
+    private:
+	// Propagation delay, if any, for the output from the device.
+      vvp_time64_t delay_;
+	// Back-point to the vvp_net_t that points to me.
+      vvp_net_t*ptr_;
+	// Structure to track the input values from the input functors.
+      unsigned nports_;
+      vvp_vector4_t*port_values_;
+
+};
+
+/*
+ * The job of the input functor is only to monitor inputs to the
+ * function and pass them to the ufunc_core object. Each functor takes
+ * up to 4 inputs, with the base the port number for the first
+ * function input that this functor represents.
+ */
+class vvp_wide_fun_t : public vvp_net_fun_t {
+
+    public:
+      vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base);
+      ~vvp_wide_fun_t();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      vvp_wide_fun_core*core_;
+      unsigned port_base_;
+};
+
+/*
  * $Log: vvp_net.h,v $
+ * Revision 1.20  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.19  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.19 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.20 2005/04/01 06:02:45 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -781,6 +781,70 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 	    return bits4_;
 }
 
+/* **** vvp_wide_fun_* methods **** */
+
+vvp_wide_fun_core::vvp_wide_fun_core(vvp_net_t*net, unsigned nports)
+{
+      delay_ = 0;
+      ptr_ = net;
+      nports_ = nports;
+      port_values_ = new vvp_vector4_t [nports_];
+}
+
+vvp_wide_fun_core::~vvp_wide_fun_core()
+{
+      delete[]port_values_;
+}
+
+void vvp_wide_fun_core::set_output_delay(vvp_time64_t delay)
+{
+      delay_ = delay;
+}
+
+void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit)
+{
+      if (delay_)
+	    schedule_assign_vector(ptr_->out, bit, delay_);
+      else
+	    vvp_send_vec4(ptr_->out, bit);
+}
+
+
+unsigned vvp_wide_fun_core::port_count() const
+{
+      return nports_;
+}
+
+vvp_vector4_t& vvp_wide_fun_core::value(unsigned idx)
+{
+      assert(idx < nports_);
+      return port_values_[idx];
+}
+
+void vvp_wide_fun_core::dispatch_vec4_from_input_(unsigned port,
+						   vvp_vector4_t bit)
+{
+      assert(port < nports_);
+      port_values_[port] = bit;
+      recv_vec4_from_inputs(port);
+}
+
+vvp_wide_fun_t::vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base)
+: core_(c), port_base_(base)
+{
+}
+
+vvp_wide_fun_t::~vvp_wide_fun_t()
+{
+}
+
+void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      unsigned pidx = port_base_ + port.port();
+      core_->dispatch_vec4_from_input_(pidx, bit);
+}
+
+
 /* **** vvp_scalar_t methods **** */
 
 /*
@@ -1178,6 +1242,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.20  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.19  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

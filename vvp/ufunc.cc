@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.6 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: ufunc.cc,v 1.7 2005/04/01 06:02:45 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -43,12 +43,10 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
 		       vvp_code_t sa, struct __vpiScope*run_scope,
 		       char*result_label)
+: vvp_wide_fun_core(ptr, nports)
 {
       owid_ = owid;
-      onet_ = ptr;
-      nports_ = nports;
       ports_ = ports;
-      port_values_ = new vvp_vector4_t[nports];
       code_ = sa;
       thread_ = 0;
       scope_ = run_scope;
@@ -58,7 +56,6 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 
 ufunc_core::~ufunc_core()
 {
-      delete[]port_values_;
 }
 
 /*
@@ -68,10 +65,10 @@ ufunc_core::~ufunc_core()
  */
 void ufunc_core::assign_bits_to_ports(void)
 {
-      for (unsigned idx = 0 ; idx < nports_ ;  idx += 1) {
+      for (unsigned idx = 0 ; idx < port_count() ;  idx += 1) {
 	    vvp_net_t*net = ports_[idx];
 	    vvp_net_ptr_t pp (net, 0);
-	    net->fun->recv_vec4(pp, port_values_[idx]);
+	    net->fun->recv_vec4(pp, value(idx));
       }
 }
 
@@ -83,10 +80,8 @@ void ufunc_core::assign_bits_to_ports(void)
 void ufunc_core::finish_thread(vthread_t thr)
 {
       thread_ = 0;
-
       vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(result_->fun);
-
-      vvp_send_vec4(onet_->out, sig->vec4_value());
+      propagate_vec4(sig->vec4_value());
 }
 
 /*
@@ -94,30 +89,12 @@ void ufunc_core::finish_thread(vthread_t thr)
  * input value to the port of the functor. I save the input value and
  * arrange for the function to be called.
  */
-void ufunc_core::recv_vec4_from_inputs(unsigned port, vvp_vector4_t bit)
+void ufunc_core::recv_vec4_from_inputs(unsigned port)
 {
-      assert(port < nports_);
-      port_values_[port] = bit;
-
       if (thread_ == 0) {
 	    thread_ = vthread_new(code_, scope_);
 	    schedule_vthread(thread_, 0);
       }
-}
-
-ufunc_input_functor::ufunc_input_functor(ufunc_core*c, unsigned base)
-: core_(c), port_base_(base)
-{
-}
-
-ufunc_input_functor::~ufunc_input_functor()
-{
-}
-
-void ufunc_input_functor::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
-{
-      unsigned pidx = port_base_ + port.port();
-      core_->recv_vec4_from_inputs(pidx, bit);
 }
 
 /*
@@ -198,21 +175,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       start_code->ufunc_core_ptr = fcore;
       ujoin_code->ufunc_core_ptr = fcore;
 
-	/* Create input functors to receive values from the
-	   network. These functors pass the data to the core. */
-      unsigned input_functors = (argc+3) / 4;
-      for (unsigned idx = 0 ;  idx < input_functors ;  idx += 1) {
-	    unsigned base = idx*4;
-	    unsigned trans = 4;
-	    if (base+trans > argc)
-		  trans = argc - base;
-
-	    ufunc_input_functor*cur = new ufunc_input_functor(fcore, base);
-	    ptr = new vvp_net_t;
-	    ptr->fun = cur;
-
-	    inputs_connect(ptr, trans, argv+base);
-      }
+      wide_inputs_connect(fcore, argc, argv);
 
       free(argv);
       free(portv);
@@ -221,6 +184,9 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
 /*
  * $Log: ufunc.cc,v $
+ * Revision 1.7  2005/04/01 06:02:45  steve
+ *  Reimplement combinational UDPs.
+ *
  * Revision 1.6  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *
