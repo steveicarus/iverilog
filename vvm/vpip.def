@@ -38,15 +38,15 @@ EXPORTS
     vpip_make_scope 
     vpip_make_string_const 
     vpip_make_time_var 
-    vpip_null DATA
+    vpip_get_null
     vpip_pair_resolve 
     vpip_run_value_changes 
     vpip_set_vlog_info 
     vpip_sim_cancel_event 
     vpip_sim_insert_event 
     vpip_sim_time 
-    vpip_simulation_obj DATA
+    vpip_get_simulation_obj
     vpip_simulation_run 
-    vpip_sysfunc_rt DATA
-    vpip_systask_rt DATA
+    vpip_get_sysfunc_rt
+    vpip_get_systask_rt
     vpip_time_scale 

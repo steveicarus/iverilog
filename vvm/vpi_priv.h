@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.27 2000/10/04 02:37:44 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.28 2000/10/06 23:11:39 steve Exp $"
 #endif
 
 /*
@@ -203,7 +203,7 @@ struct __vpiNull {
       struct __vpiHandle base;
 };
 
-extern struct __vpiNull vpip_null;
+extern struct __vpiNull *vpip_get_null(void);
 
 /*
  * This type represents the handle to a Verilog scope. These include
@@ -241,8 +241,9 @@ struct __vpiSignal {
 };
 
 
-extern const struct __vpirt vpip_systask_rt;
-extern const struct __vpirt vpip_sysfunc_rt;
+extern const struct __vpirt *vpip_get_systask_rt(void);
+extern const struct __vpirt *vpip_get_sysfunc_rt(void);
+
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
 
@@ -347,7 +348,7 @@ struct vpip_simulation {
       short time_precision;
 };
 
-extern struct vpip_simulation vpip_simulation_obj;
+extern struct vpip_simulation *vpip_get_simulation_obj(void);
 
 extern void vpip_set_vlog_info(int argc, char**argv);
 extern void vpip_init_simulation();
@@ -388,6 +389,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.28  2000/10/06 23:11:39  steve
+ *  Replace data references with function calls. (Venkat)
+ *
  * Revision 1.27  2000/10/04 02:37:44  steve
  *  Use .def file instead of _dllexport.
  *

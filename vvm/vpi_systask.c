@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.6 2000/09/30 03:20:48 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.7 2000/10/06 23:11:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -40,7 +40,7 @@ static vpiHandle systask_iter(int type, vpiHandle ref)
       return vpip_make_iterator(rfp->nargs, rfp->args);
 }
 
-const struct __vpirt vpip_systask_rt = {
+static const struct __vpirt vpip_systask_rt = {
       vpiSysTaskCall,
       0,
       0,
@@ -49,6 +49,11 @@ const struct __vpirt vpip_systask_rt = {
       0,
       systask_iter
 };
+
+const struct __vpirt *vpip_get_systask_rt(void)
+{
+    return &vpip_systask_rt;
+}
 
 /*
  * A value *can* be put to a vpiSysFuncCall object. This is how the
@@ -81,7 +86,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value val,
       return 0;
 }
 
-const struct __vpirt vpip_sysfunc_rt = {
+static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
       0,
       0,
@@ -91,6 +96,11 @@ const struct __vpirt vpip_sysfunc_rt = {
       systask_iter
 };
 
+const struct __vpirt *vpip_get_sysfunc_rt(void)
+{
+    return &vpip_sysfunc_rt;
+}
+
 #ifdef __CYGWIN32__
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
@@ -98,6 +108,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.7  2000/10/06 23:11:39  steve
+ *  Replace data references with function calls. (Venkat)
+ *
  * Revision 1.6  2000/09/30 03:20:48  steve
  *  Cygwin port changes from Venkat
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.9 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.10 2000/10/06 23:11:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -48,7 +48,7 @@ void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
 {
       struct systf_entry*idx;
       struct __vpiSysTaskCall cur_task;
-      cur_task.base.vpi_type = &vpip_systask_rt;
+      cur_task.base.vpi_type = vpip_get_systask_rt();
       cur_task.args  = parms;
       cur_task.nargs = nparms;
       cur_task.res   = 0;
@@ -80,7 +80,7 @@ void vpip_callfunc(const char*fname, unsigned nres, vpip_bit_t*res,
 {
       struct systf_entry*idx;
       struct __vpiSysTaskCall cur_task;
-      cur_task.base.vpi_type = &vpip_sysfunc_rt;
+      cur_task.base.vpi_type = vpip_get_sysfunc_rt();
       cur_task.args  = parms;
       cur_task.nargs = nparms;
       cur_task.res = res;
@@ -114,7 +114,7 @@ static int vpip_get_global(int property)
 {
       switch (property) {
 	  case vpiTimePrecision:
-	    return vpip_simulation_obj.time_precision;
+	    return vpip_get_simulation_obj()->time_precision;
 
 	  default:
 	    assert(0);
@@ -233,6 +233,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.10  2000/10/06 23:11:39  steve
+ *  Replace data references with function calls. (Venkat)
+ *
  * Revision 1.9  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *

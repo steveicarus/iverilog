@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_simulation.c,v 1.4 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vpi_simulation.c,v 1.5 2000/10/06 23:11:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,7 +30,14 @@ struct vpip_event {
       struct vpip_event*next;
 };
 
-struct vpip_simulation vpip_simulation_obj;
+static struct vpip_simulation vpip_simulation_obj;
+
+struct vpip_simulation *vpip_get_simulation_obj(void)
+{
+    return &vpip_simulation_obj;
+}
+
+
 
 void vpi_sim_control(int func, ...)
 {
@@ -203,6 +210,9 @@ void vpip_simulation_run()
 
 /*
  * $Log: vpi_simulation.c,v $
+ * Revision 1.5  2000/10/06 23:11:39  steve
+ *  Replace data references with function calls. (Venkat)
+ *
  * Revision 1.4  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *

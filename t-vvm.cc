@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.178 2000/10/06 02:21:35 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.179 2000/10/06 23:11:39 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -3170,7 +3170,7 @@ void target_vvm::proc_stask(const NetSTask*net)
 		  val = emit_parm_rval(this, net->parm(idx));
 
 	    } else {
-		  val = string("&vpip_null.base");
+		  val = string("&(vpip_get_null()->base)");
 	    }
 
 	    defn << "      " << ptmp << "[" << idx << "] = " << val << ";"
@@ -3385,6 +3385,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.179  2000/10/06 23:11:39  steve
+ *  Replace data references with function calls. (Venkat)
+ *
  * Revision 1.178  2000/10/06 02:21:35  steve
  *  sfuncs are char* and are compared with strcmp
  *
