@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.8 2003/02/16 05:42:06 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.9 2003/12/12 05:43:08 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -65,7 +65,13 @@ inline ivl_dll_t ivl_dlopen(const char*name, bool global_flag)
 { return dlopen(name,RTLD_LAZY|(global_flag?RTLD_GLOBAL:0)); }
 
 inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
-{ return dlsym(dll, nm); }
+{
+      void*sym = dlsym(dll, nm);
+	/* Not found? try without the leading _ */
+      if (sym == 0 && nm[0] == '_')
+	    sym = dlsym(dll, nm+1);
+      return sym;
+}
 
 inline void ivl_dlclose(ivl_dll_t dll)
 { dlclose(dll); }
@@ -90,6 +96,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.9  2003/12/12 05:43:08  steve
+ *  Some systems dlsym requires leading _ or not on whim.
+ *
  * Revision 1.8  2003/02/16 05:42:06  steve
  *  Take the global_flag to ivl_dlopen.
  *

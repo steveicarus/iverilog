@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.124 2003/11/26 01:37:38 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.125 2003/12/12 05:43:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,7 +73,13 @@ inline ivl_dll_t ivl_dlopen(const char*name)
 { return dlopen(name,RTLD_LAZY); }
 
 inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
-{ return dlsym(dll, nm); }
+{
+      void*sym = dlsym(dll, nm);
+	/* Not found? try without the leading _ */
+      if (sym == 0 && nm[0] == '_')
+	    sym = dlsym(dll, nm+1);
+      return sym;
+}
 
 inline void ivl_dlclose(ivl_dll_t dll)
 { dlclose(dll); }
@@ -2170,6 +2176,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.125  2003/12/12 05:43:08  steve
+ *  Some systems dlsym requires leading _ or not on whim.
+ *
  * Revision 1.124  2003/11/26 01:37:38  steve
  *  Warning about sprintf.
  *
