@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.37 2003/05/02 04:29:57 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.38 2003/05/15 01:24:46 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -288,19 +288,22 @@ int vpip_time_units_from_handle(vpiHandle obj)
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
       int units;
+      vvp_time64_t time;
 
       assert(vp);
 
+      time = schedule_simtime();
+
       switch (vp->type) {
           case vpiSimTime:
-	    vp->high = 0;
-	    vp->low = schedule_simtime();
+	    vp->high = (time >> 32) & 0xffffffff;
+	    vp->low = time & 0xffffffff;
 	    break;
 
           case vpiScaledRealTime:
 	    units = vpip_time_units_from_handle(obj);
             vp->real = pow(10, vpip_get_time_precision() - units);
-            vp->real *= schedule_simtime();
+            vp->real *= time;
 	    break;
 
           default:
@@ -637,6 +640,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.38  2003/05/15 01:24:46  steve
+ *  Return all 64bits of time in vpi_get_time.
+ *
  * Revision 1.37  2003/05/02 04:29:57  steve
  *  Add put_value with transport delay.
  *
