@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.137 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.138 2004/10/04 03:09:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -499,8 +499,10 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
 
 	    lsig = lexp->synthesize(des);
-	    cerr << get_line() << ": internal error: "
-		  "Cannot elaborate net for " << *lexp << endl;
+	    if (lsig == 0) {
+		  cerr << get_line() << ": internal error: "
+			"Cannot elaborate net for " << *lexp << endl;
+	    }
 	    assert(lsig);
 	    delete lexp;
 	    lexp = 0;
@@ -2511,6 +2513,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.138  2004/10/04 03:09:38  steve
+ *  Fix excessive error message.
+ *
  * Revision 1.137  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *
