@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.6 2000/09/30 03:20:47 steve Exp $"
+#ident "$Id: sys_table.c,v 1.7 2000/11/01 03:19:36 steve Exp $"
 #endif
 
 extern void sys_finish_register();
 extern void sys_display_register();
 extern void sys_random_register();
 extern void sys_readmem_register();
+extern void sys_time_register();
 extern void sys_vcd_register();
 
 void (*vlog_startup_routines[])() = {
@@ -31,6 +32,7 @@ void (*vlog_startup_routines[])() = {
       sys_display_register,
       sys_random_register,
       sys_readmem_register,
+      sys_time_register,
       sys_vcd_register,
       0
 };
@@ -42,6 +44,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.7  2000/11/01 03:19:36  steve
+ *  Add the general $time system function.
+ *
  * Revision 1.6  2000/09/30 03:20:47  steve
  *  Cygwin port changes from Venkat
  *

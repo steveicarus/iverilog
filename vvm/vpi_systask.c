@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.8 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.9 2000/11/01 03:19:36 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -90,8 +90,10 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value val,
 
 	/* XXXX For now, only support very specific formats. */
       assert(val->format == vpiIntVal);
-      assert(rfp->nres <= (8*sizeof val->value.integer));
 
+	/* This fills the result bits with the signed value of the
+	   integer. This automagically extends the sign bit by nature
+	   of how the >> works in C. */
       tmp = val->value.integer;
       for (idx = 0 ;  idx < rfp->nres ;  idx += 1) {
 	    rfp->res[idx] =  (tmp&1) ? St1 : St0;
@@ -123,6 +125,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.9  2000/11/01 03:19:36  steve
+ *  Add the general $time system function.
+ *
  * Revision 1.8  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls
