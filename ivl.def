@@ -178,11 +178,12 @@ ivl_stmt_cond_false
 ivl_stmt_cond_true
 ivl_stmt_delay_expr
 ivl_stmt_delay_val
-ivl_stmt_event
+ivl_stmt_events
 ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
+ivl_stmt_nevent
 ivl_stmt_nexus
 ivl_stmt_nexus_count
 ivl_stmt_parm

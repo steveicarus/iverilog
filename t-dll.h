@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.107 2003/11/10 20:59:04 steve Exp $"
+#ident "$Id: t-dll.h,v 1.108 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -652,16 +652,16 @@ struct ivl_statement_s {
 		  ivl_expr_t*parms_;
 	    } stask_;
 
-	    struct { /* IVL_ST_TRIGGER */
-		  ivl_event_t event_;
-	    } trig_;
-
 	    struct { /* IVL_ST_UTASK */
 		  ivl_scope_t def;
 	    } utask_;
 
-	    struct { /* IVL_ST_WAIT */
-		  ivl_event_t event_;
+	    struct { /* IVL_ST_TRIGGER IVL_ST_WAIT */
+		  unsigned nevent;
+		  union {
+			ivl_event_t event;
+			ivl_event_t*events;
+		  };
 		  ivl_statement_t stmt_;
 	    } wait_;
 
@@ -683,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.108  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.107  2003/11/10 20:59:04  steve
  *  Design::get_flag returns const char* instead of string.
  *

@@ -354,10 +354,6 @@ constructs.
   - Event controls inside non-blocking assignments are not supported.
     i.e.: a <= @(posedge clk) b;
 
-  - Lists of named events of the form @(event_1 or event_2) are not
-    supported. Named events are otherwise supported, and lists of
-    other kinds of events are also supported.
-
   - Macro arguments are not supported. `define macros are supported,
     but they cannot take arguments.
 

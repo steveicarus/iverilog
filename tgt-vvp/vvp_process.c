@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.90 2003/10/25 02:07:57 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.91 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1223,7 +1223,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_stmt_trigger(ivl_statement_t net)
 {
-      ivl_event_t ev = ivl_stmt_event(net);
+      ivl_event_t ev = ivl_stmt_events(net, 0);
       assert(ev);
       fprintf(vvp_out, "    %%set E_%p, 0;\n", ev);
       return 0;
@@ -1243,9 +1243,23 @@ static int show_stmt_utask(ivl_statement_t net)
 
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
-      ivl_event_t ev = ivl_stmt_event(net);
-      fprintf(vvp_out, "    %%wait E_%p;\n", ev);
+      if (ivl_stmt_nevent(net) == 1) {
+	    ivl_event_t ev = ivl_stmt_events(net, 0);
+	    fprintf(vvp_out, "    %%wait E_%p;\n", ev);
 
+      } else {
+	    unsigned idx;
+	    static unsigned int cascade_counter = 0;
+	    ivl_event_t ev = ivl_stmt_events(net, 0);
+	    fprintf(vvp_out, "Ewait_%u .event/or E_%p", cascade_counter, ev);
+
+	    for (idx = 1 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
+		  ev = ivl_stmt_events(net, idx);
+		  fprintf(vvp_out, ", E_%p", ev);
+	    }
+	    fprintf(vvp_out, ";\n    %%wait Ewait_%u;\n", cascade_counter);
+	    cascade_counter += 1;
+      }
 	/* Always clear the expression lookaside after a
 	   %wait. Anything can happen while the thread is waiting. */
       clear_expression_lookaside();
@@ -1560,6 +1574,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.91  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.90  2003/10/25 02:07:57  steve
  *  vvp_signal_label does not return a unique string.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.82 2003/12/03 01:54:07 steve Exp $"
+#ident "$Id: stub.c,v 1.83 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -484,14 +484,21 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_WAIT: {
-		ivl_event_t evnt = ivl_stmt_event(net);
+		fprintf(out, "%*s@(", ind, "");
+		const char*comma = "";
 
-		if (evnt == 0)
-		      fprintf(out, "%*s@(/*ERROR*/)\n", ind, "");
-		else
-		      fprintf(out, "%*s@(%s)\n", ind, "",
-			      ivl_event_name(evnt));
+		for (idx = 0 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
+		      ivl_event_t evnt = ivl_stmt_events(net, idx);
 
+		      if (evnt == 0)
+			    fprintf(out, "%s/*ERROR*/", comma);
+		      else
+			    fprintf(out, "%s%s", comma, ivl_event_name(evnt));
+
+		      comma = ", ";
+		}
+
+		fprintf(out, ")\n");
 		show_statement(ivl_stmt_sub_stmt(net), ind+4);
 		break;
 	  }
@@ -885,6 +892,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.83  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.82  2003/12/03 01:54:07  steve
  *  Handle erroneous event lists.
  *

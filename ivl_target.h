@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.123 2003/11/08 20:06:21 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.124 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -1168,8 +1168,9 @@ extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
-  /* IVL_ST_WAIT */
-extern ivl_event_t   ivl_stmt_event(ivl_statement_t net);
+  /* IVL_ST_WAIT IVL_ST_TRIGGER */
+extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
+extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
      IVL_ST_FORCE IVL_ST_RELEASE */
 extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
@@ -1232,6 +1233,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.124  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.123  2003/11/08 20:06:21  steve
  *  Spelling fixes in comments.
  *

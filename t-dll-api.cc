@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.105 2003/11/10 20:59:03 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.106 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1720,13 +1720,34 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.delay_;
 }
 
-extern "C" ivl_event_t ivl_stmt_event(ivl_statement_t net)
+extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 {
       switch (net->type_) {
 	  case IVL_ST_WAIT:
-	    return net->u_.wait_.event_;
+	    return net->u_.wait_.nevent;
+
 	  case IVL_ST_TRIGGER:
-	    return net->u_.trig_.event_;
+	    return 1;
+
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
+extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_WAIT:
+	    assert(idx < net->u_.wait_.nevent);
+	    if (net->u_.wait_.nevent == 1)
+		  return net->u_.wait_.event;
+	    else
+		  return net->u_.wait_.events[idx];
+
+	  case IVL_ST_TRIGGER:
+	    assert(idx == 0);
+	    return net->u_.wait_.event;
 	  default:
 	    assert(0);
       }
@@ -1913,6 +1934,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.106  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.105  2003/11/10 20:59:03  steve
  *  Design::get_flag returns const char* instead of string.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.60 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.61 2003/12/03 02:46:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -698,6 +698,7 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_TRIGGER;
+      stmt_cur_->u_.wait_.nevent = 1;
 
 	/* Locate the event by name. Save the ivl_event_t in the
 	   statement so that the generator can find it easily. */
@@ -707,7 +708,7 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
       for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
 	    const char*ename = ivl_event_basename(ev_scope->event_[idx]);
 	    if (strcmp(ev->name(), ename) == 0) {
-		  stmt_cur_->u_.wait_.event_ = ev_scope->event_[idx];
+		  stmt_cur_->u_.wait_.event = ev_scope->event_[idx];
 		  break;
 	    }
       }
@@ -734,63 +735,71 @@ bool dll_target::proc_wait(const NetEvWait*net)
       stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
-      if (net->nevents() != 1) {
-	    cerr << net->get_line() << ": internal error: "
-		 << "multiple events not supported." << endl;
-	    return false;
+      stmt_cur_->u_.wait_.nevent = net->nevents();
+      if (net->nevents() > 1) {
+	    stmt_cur_->u_.wait_.events = (ivl_event_t*)
+		  calloc(net->nevents(), sizeof(ivl_event_t*));
       }
 
-	/* Locate the event by name. Save the ivl_event_t in the
-	   statement so that the generator can find it easily. */
-      const NetEvent*ev = net->event(0);
-      ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+      for (unsigned edx = 0 ;  edx < net->nevents() ;  edx += 1) {
 
-      for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
-	    const char*ename = ivl_event_basename(ev_scope->event_[idx]);
-	    if (strcmp(ev->name(), ename) == 0) {
-		  stmt_cur_->u_.wait_.event_ = ev_scope->event_[idx];
-		  break;
-	    }
-      }
+	      /* Locate the event by name. Save the ivl_event_t in the
+		 statement so that the generator can find it easily. */
+	    const NetEvent*ev = net->event(edx);
+	    ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+	    ivl_event_t ev_tmp;
 
-	/* If this is an event with a probe, then connect up the
-	   pins. This wasn't done during the ::event method because
-	   the signals weren't scanned yet. */
-
-      if (ev->nprobe() >= 1) {
-	    ivl_event_t evnt = stmt_cur_->u_.wait_.event_;
-
-	    unsigned iany = 0;
-	    unsigned ineg = evnt->nany;
-	    unsigned ipos = ineg + evnt->nneg;
-
-	    for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
-		  const NetEvProbe*pr = ev->probe(idx);
-		  unsigned base = 0;
-
-		  switch (pr->edge()) {
-		      case NetEvProbe::ANYEDGE:
-			base = iany;
-			iany += pr->pin_count();
+	    for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
+		  const char*ename = ivl_event_basename(ev_scope->event_[idx]);
+		  if (strcmp(ev->name(), ename) == 0) {
+			ev_tmp = ev_scope->event_[idx];
 			break;
-		      case NetEvProbe::NEGEDGE:
-			base = ineg;
-			ineg += pr->pin_count();
-			break;
-		      case NetEvProbe::POSEDGE:
-			base = ipos;
-			ipos += pr->pin_count();
-			break;
-		  }
-
-		  for (unsigned bit = 0;  bit < pr->pin_count(); bit += 1) {
-			ivl_nexus_t nex = (ivl_nexus_t)
-			      pr->pin(bit).nexus()->t_cookie();
-			assert(nex);
-			evnt->pins[base+bit] = nex;
 		  }
 	    }
 
+	    if (net->nevents() == 1)
+		  stmt_cur_->u_.wait_.event = ev_tmp;
+	    else
+		  stmt_cur_->u_.wait_.events[edx] = ev_tmp;
+
+	      /* If this is an event with a probe, then connect up the
+		 pins. This wasn't done during the ::event method because
+		 the signals weren't scanned yet. */
+
+	    if (ev->nprobe() >= 1) {
+		  unsigned iany = 0;
+		  unsigned ineg = ev_tmp->nany;
+		  unsigned ipos = ineg + ev_tmp->nneg;
+
+		  for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
+			const NetEvProbe*pr = ev->probe(idx);
+			unsigned base = 0;
+
+			switch (pr->edge()) {
+			    case NetEvProbe::ANYEDGE:
+			      base = iany;
+			      iany += pr->pin_count();
+			      break;
+			    case NetEvProbe::NEGEDGE:
+			      base = ineg;
+			      ineg += pr->pin_count();
+			      break;
+			    case NetEvProbe::POSEDGE:
+			      base = ipos;
+			      ipos += pr->pin_count();
+			      break;
+			}
+
+			for (unsigned bit = 0
+				   ; bit < pr->pin_count()
+				   ; bit += 1) {
+			      ivl_nexus_t nex = (ivl_nexus_t)
+				    pr->pin(bit).nexus()->t_cookie();
+			      assert(nex);
+			      ev_tmp->pins[base+bit] = nex;
+			}
+		  }
+	    }
       }	    
 
 	/* The ivl_statement_t for the wait statement is not complete
@@ -833,6 +842,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.61  2003/12/03 02:46:24  steve
+ *  Add support for wait on list of named events.
+ *
  * Revision 1.60  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *
