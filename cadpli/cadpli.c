@@ -16,14 +16,14 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: cadpli.c,v 1.1 2003/02/16 02:23:54 steve Exp $"
+#ident "$Id: cadpli.c,v 1.2 2003/02/17 00:01:25 steve Exp $"
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
-# include  <dlfcn.h>
 # include  <malloc.h>
 # include  <string.h>
 # include  <assert.h>
+# include  "ivl_dlfcn.h"
 
 typedef void* (*funcvp)(void);
 
@@ -39,7 +39,7 @@ static void thunker_register(void)
 
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 	    char*module, *cp, *bp;
-	    if (strncmp("+cadpli=", vlog_info.argv[idx], 8) != 0)
+	    if (strncmp("-cadpli=", vlog_info.argv[idx], 8) != 0)
 		  continue;
 
 	    cp = vlog_info.argv[idx] + 8;
@@ -52,7 +52,7 @@ static void thunker_register(void)
 	    strncpy(module, cp, bp-cp);
 	    module[bp-cp] = 0;
 
-	    mod = dlopen(module, RTLD_LAZY);
+	    mod = ivl_dlopen(module);
 	    if (mod == 0) {
 		  vpi_printf("%s link: %s\n", vlog_info.argv[idx], dlerror());
 		  free(module);
@@ -60,7 +60,7 @@ static void thunker_register(void)
 	    }
 
 	    bp += 1;
-	    boot = dlsym(mod, bp);
+	    boot = ivl_dlsym(mod, bp);
 	    if (boot == 0) {
 		  vpi_printf("%s: Symbol %s not found.\n",
 			     vlog_info.argv[idx], bp);
@@ -89,6 +89,13 @@ s_tfcell veriusertfs[0];
 
 /*
  * $Log: cadpli.c,v $
+ * Revision 1.2  2003/02/17 00:01:25  steve
+ *  Use a variant of ivl_dlfcn to do dynamic loading
+ *  from within the cadpli module.
+ *
+ *  Change the +cadpli flag to -cadpli, to keep the
+ *  plusargs namespace clear.
+ *
  * Revision 1.1  2003/02/16 02:23:54  steve
  *  Add the cadpli interface module.
  *
