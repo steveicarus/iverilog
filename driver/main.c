@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.25 2001/10/23 00:37:30 steve Exp $"
+#ident "$Id: main.c,v 1.26 2001/11/11 00:10:05 steve Exp $"
 
 # include "config.h"
 
@@ -253,77 +253,6 @@ static int t_vvm(char*cmd, unsigned ncmd)
       return 0;
 }
 
-static int t_xnf(char*cmd, unsigned ncmd)
-{
-      int rc;
-
-      sprintf(tmp, " | %s%civl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
-	      "-Fnodangle -Fxnfio", base, sep,warning_flags, opath);
-
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
-#ifdef __MINGW32__
-      {
-	char *t;
-	for (t = tmp; *t; t++)
-	  {
-	    if (*t == '/') *t = '\\';
-	  }
-      }
-#endif
-      strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
-
-      if (f_list) {
-	    rc = strlen(f_list);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, f_list);
-	    ncmd += rc;
-      }
-
-      if (mtm) {
-	    sprintf(tmp, " -T%s", mtm);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (npath) {
-	    sprintf(tmp, " -N%s", npath);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (start) {
-	    cmd = realloc(cmd, ncmd+strlen(start)+1);
-	    strcpy(cmd+ncmd, start);
-	    ncmd += strlen(start);
-      }
-      sprintf(tmp, " -- -");
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
-      strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
-
-      if (verbose_flag)
-	    printf("translate: %s\n", cmd);
-
-      rc = system(cmd);
-      if (rc != 0) {
-	    if (WIFEXITED(rc)) {
-		  fprintf(stderr, "errors translating Verilog program.\n");
-		  return WEXITSTATUS(rc);
-	    }
-
-	    fprintf(stderr, "Command signaled: %s\n", cmd);
-	    return -1;
-      }
-
-      return 0;
-}
 
 static void process_warning_switch(const char*name)
 {
@@ -659,8 +588,6 @@ int main(int argc, char **argv)
 
       if (strcmp(targ,"vvm") == 0)
 	    return t_vvm(cmd, ncmd);
-      else if (strcmp(targ,"xnf") == 0)
-	    return t_xnf(cmd, ncmd);
       else {
 	    return t_default(cmd, ncmd);
       }
@@ -670,6 +597,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.26  2001/11/11 00:10:05  steve
+ *  Remov XNF dead wood.
+ *
  * Revision 1.25  2001/10/23 00:37:30  steve
  *  The -s flag can now be repeated on the iverilog command.
  *
