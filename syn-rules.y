@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.1 2000/05/13 20:55:47 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.2 2000/05/13 22:46:22 steve Exp $"
 #endif
 
 /*
@@ -77,16 +77,14 @@ start
      code generators generally implement that as an array of
      flip-flops. */
 
-	: S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN
+	: S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN ';'
 		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
 			      0, $6->assign);
-		  des_->delete_process($1->top);
 		}
 
-	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN ';'
+	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN ';' ';'
 		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
 			      $7->expr, $8->assign);
-		  des_->delete_process($1->top);
 		}
 
 
@@ -107,14 +105,13 @@ start
 	| S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN_MEM ';'
 		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
 			      0, $6->assign_mem);
-		  des_->delete_process($1->top);
 		}
 
 	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN_MEM ';' ';'
 		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
 			      $7->expr, $8->assign_mem);
-		  des_->delete_process($1->top);
 		}
+
 	;
 
 %%
@@ -143,6 +140,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 	    ff->attribute("Clock:LPM_Polarity", "INVERT");
 
       des->add_node(ff);
+      des->delete_process(top);
 }
 
 static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
@@ -173,6 +171,7 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       des_->add_node(ram);
 
       des->add_node(ram);
+      des->delete_process(top);
 }
 
 static syn_token_t*first_ = 0;
@@ -197,6 +196,10 @@ struct tokenize : public proc_match_t {
 	    cur->next_ = 0;
 	    last_->next_ = cur;
 	    last_ = cur;
+
+	    if (dynamic_cast<NetEConst*>(dev->rval()))
+		  fprintf(stderr, "XXXX constant assignment.\n");
+
 	    return 0;
       }
 
