@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.25 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: lexor.lex,v 1.26 2001/10/30 20:48:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -200,7 +200,22 @@ W [ \t\b\f]+
       }
   }
 
+^{W}?`ifndef{W}[a-zA-Z_][a-zA-Z0-9_]*.* {
+      char*name = strchr(yytext, '`');
+      assert(name);
+      name += 7;
+      name += strspn(name, " \t\b\f");
+      name[strcspn(name, " \t\b\f")] = 0;
+
+      if (!is_defined(name)) {
+	    yy_push_state(IFDEF_TRUE);
+      } else {
+	    yy_push_state(IFDEF_FALSE);
+      }
+  }
+
 <IFDEF_FALSE,IFDEF_SUPR>^{W}?`ifdef{W}.* { yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR>^{W}?`ifndef{W}.* { yy_push_state(IFDEF_SUPR); }
 
 <IFDEF_TRUE>{W}?`else.*  { BEGIN(IFDEF_FALSE); }
 <IFDEF_FALSE>{W}?`else.* { BEGIN(IFDEF_TRUE); }
