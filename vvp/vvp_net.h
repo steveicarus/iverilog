@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.6 2005/01/09 20:11:16 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.7 2005/01/16 04:19:08 steve Exp $"
 
 # include  <assert.h>
 
@@ -81,6 +81,10 @@ class vvp_vector4_t {
 	    unsigned long*bits_ptr_;
       };
 };
+
+vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
+			const vvp_vector4_t&b,
+			vvp_bit4_t val_if_equal);
 
 /*
  * This class represents a scaler value with strength. These are
@@ -485,6 +489,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.7  2005/01/16 04:19:08  steve
+ *  Reimplement comparators as vvp_vector4_t nodes.
+ *
  * Revision 1.6  2005/01/09 20:11:16  steve
  *  Add the .part/pv node and related functionality.
  *

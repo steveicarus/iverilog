@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.5 2005/01/09 20:11:16 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.6 2005/01/16 04:19:08 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -663,8 +663,71 @@ vvp_vector4_t reduce4(const vvp_vector8_t&that)
       return out;
 }
 
+vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
+			vvp_bit4_t out_if_equal)
+{
+      unsigned min_size = lef.size();
+      if (rig.size() < min_size)
+	    min_size = rig.size();
+
+	// If one of the inputs is nil, treat is as all X values, and
+	// that makes the result BIT4_X.
+      if (min_size == 0)
+	    return BIT4_X;
+
+	// As per the IEEE1364 definition of >, >=, < and <=, if there
+	// are any X or Z values in either of the operand vectors,
+	// then the result of the compare is BIT4_X.
+
+	// Check for X/Z in the left operand
+      for (unsigned idx = 0 ;  idx < lef.size() ;  idx += 1) {
+	    vvp_bit4_t bit = lef.value(idx);
+	    if (bit == BIT4_X)
+		  return BIT4_X;
+	    if (bit == BIT4_Z)
+		  return BIT4_X;
+      }
+
+	// Check for X/Z in the right operand
+      for (unsigned idx = 0 ;  idx < rig.size() ;  idx += 1) {
+	    vvp_bit4_t bit = rig.value(idx);
+	    if (bit == BIT4_X)
+		  return BIT4_X;
+	    if (bit == BIT4_Z)
+		  return BIT4_Z;
+      }
+
+      for (unsigned idx = lef.size() ; idx > rig.size() ;  idx -= 1) {
+	    if (lef.value(idx-1) == BIT4_1)
+		  return BIT4_1;
+      }
+
+      for (unsigned idx = rig.size() ; idx > lef.size() ;  idx -= 1) {
+	    if (rig.value(idx-1) == BIT4_1)
+		  return BIT4_0;
+      }
+
+      for (unsigned idx = min_size ; idx > 0 ;  idx -= 1) {
+	    vvp_bit4_t lv = lef.value(idx-1);
+	    vvp_bit4_t rv = rig.value(idx-1);
+
+	    if (lv == rv)
+		  continue;
+
+	    if (lv == BIT4_1)
+		  return BIT4_1;
+	    else
+		  return BIT4_0;
+      }
+
+      return out_if_equal;
+}
+
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.6  2005/01/16 04:19:08  steve
+ *  Reimplement comparators as vvp_vector4_t nodes.
+ *
  * Revision 1.5  2005/01/09 20:11:16  steve
  *  Add the .part/pv node and related functionality.
  *

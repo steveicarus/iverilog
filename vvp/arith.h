@@ -19,14 +19,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.20 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: arith.h,v 1.21 2005/01/16 04:19:08 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "vvp_net.h"
 
-// base class for arithmetic functors
-
+/*
+ * Base class for arithmetic functors.
+ * The wid constructor is used to size the output. This includes
+ * precalculating an X value. Most arithmetic nodes can handle
+ * whatever width comes in, given the knowledge of the output width.
+ */
 class vvp_arith_  : public vvp_net_fun_t {
 
     public:
@@ -115,14 +119,19 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
 };
 
+/*
+ * This base class implements both GT and GE comparisons. The derived
+ * GT and GE call the recv_vec4_base_ method with a different
+ * out_if_equal argument that reflects the different expectations.
+ */
 class vvp_cmp_gtge_base_ : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_gtge_base_(unsigned wid, bool signed_flag);
 
     protected:
-      void set_base(vvp_ipoint_t i, bool push, unsigned val, unsigned str,
-		    unsigned out_if_equal);
+      void recv_vec4_base_(vvp_net_ptr_t ptr, vvp_vector4_t bit,
+			   vvp_bit4_t out_if_equal);
     private:
       bool signed_flag_;
 };
@@ -131,18 +140,17 @@ class vvp_cmp_ge  : public vvp_cmp_gtge_base_ {
 
     public:
       explicit vvp_cmp_ge(unsigned wid, bool signed_flag);
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
-    private:
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+
 };
 
 class vvp_cmp_gt  : public vvp_cmp_gtge_base_ {
 
     public:
       explicit vvp_cmp_gt(unsigned wid, bool signed_flag);
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
-    private:
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 };
 
 class vvp_shiftl  : public vvp_arith_ {
@@ -163,6 +171,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.21  2005/01/16 04:19:08  steve
+ *  Reimplement comparators as vvp_vector4_t nodes.
+ *
  * Revision 1.20  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.179 2004/12/31 05:54:46 steve Exp $"
+#ident "$Id: compile.cc,v 1.180 2005/01/16 04:19:08 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -945,8 +945,8 @@ void compile_cmp_ge(char*label, long wid, bool signed_flag,
 {
       assert( wid > 0 );
 
-      if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/ge has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
@@ -1564,6 +1564,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.180  2005/01/16 04:19:08  steve
+ *  Reimplement comparators as vvp_vector4_t nodes.
+ *
  * Revision 1.179  2004/12/31 05:54:46  steve
  *  Fix uninitialized fun pointer for resolver nodes.
  *
