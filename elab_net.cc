@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.101 2002/09/18 04:29:55 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.102 2002/11/09 19:20:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1438,10 +1438,69 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 }
 
 /*
+ * The concatenation is also OK an an l-value. This method elaborates
+ * it as a structural l-value.
+ */
+NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
+				 bool implicit_net_ok) const
+{
+      assert(scope);
+
+      svector<NetNet*>nets (parms_.count());
+      unsigned pins = 0;
+      unsigned errors = 0;
+
+      if (repeat_) {
+	    cerr << get_line() << ": sorry: I do not know how to"
+		  " elaborate repeat concatenation nets." << endl;
+	    return 0;
+      }
+
+	/* Elaborate the operands of the concatenation. */
+      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+	    nets[idx] = parms_[idx]->elaborate_lnet(des, scope,
+						    implicit_net_ok);
+	    if (nets[idx] == 0)
+		  errors += 1;
+	    else
+		  pins += nets[idx]->pin_count();
+      }
+
+	/* If any of the sub expressions failed to elaborate, then
+	   delete all those that did and abort myself. */
+      if (errors) {
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  if (nets[idx]) delete nets[idx];
+	    }
+	    des->errors += 1;
+	    return 0;
+      }
+
+	/* Make the temporary signal that connects to all the
+	   operands, and connect it up. Scan the operands of the
+	   concat operator from least significant to most significant,
+	   which is opposite from how they are given in the list. */
+      NetNet*osig = new NetNet(scope, des->local_symbol(scope->name()),
+			       NetNet::IMPLICIT, pins);
+      pins = 0;
+      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
+	    NetNet*cur = nets[idx-1];
+	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
+		  connect(osig->pin(pins), cur->pin(pin));
+		  pins += 1;
+	    }
+      }
+
+      osig->local_flag(true);
+      return osig;
+}
+
+/*
  * Identifiers in continuous assignment l-values are limited to wires
  * and that ilk. Detect registers and memories here and report errors.
  */
-NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
+NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
+				bool implicit_net_ok) const
 {
       string path = scope->name();
 
@@ -1455,11 +1514,24 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    cerr << get_line() << ": error: Net " << path_
-		 << " is not defined in this context." << endl;
-	    cerr << get_line() << ":      : Do you mean this? wire "
-		 << path_ << " = <expr>;" << endl;
-	    return 0;
+	    if (implicit_net_ok && !error_implicit) {
+
+		  sig = new NetNet(scope, scope->name()+"."+path_.peek_name(0),
+				   NetNet::IMPLICIT, 1);
+
+		  if (warn_implicit) {
+			cerr << get_line() << ": warning: implicit "
+			      "definition of wire " << scope->name()
+			     << "." << path_.peek_name(0) << "." << endl;
+		  }
+
+	    } else {
+		  cerr << get_line() << ": error: Net " << path_
+		       << " is not defined in this context." << endl;
+		  cerr << get_line() << ":      : Do you mean this? wire "
+		       << path_ << " = <expr>;" << endl;
+		  return 0;
+	    }
       }
 
       assert(sig);
@@ -2207,6 +2279,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.102  2002/11/09 19:20:48  steve
+ *  Port expressions for output ports are lnets, not nets.
+ *
  * Revision 1.101  2002/09/18 04:29:55  steve
  *  Add support for binary NOR operator.
  *

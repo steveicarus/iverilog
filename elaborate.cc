@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.263 2002/08/28 18:54:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.264 2002/11/09 19:20:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -612,33 +612,38 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // port. sig is the thing outside the module that
 	      // connects to the port.
 
-	    NetNet*sig = (*pins)[idx]->elaborate_net(des, scope,
-						     prts_pin_count,
-						     0, 0, 0);
-	    if (sig == 0) {
-		  cerr << "internal error: Expression too complicated "
-			"for elaboration." << endl;
-		  continue;
+	    NetNet*sig;
+	    if ((prts.count() >= 1)
+		&& (prts[0]->port_type() != NetNet::PINPUT)) {
+
+		  sig = (*pins)[idx]->elaborate_lnet(des, scope, true);
+		  if (sig == 0) {
+			cerr << (*pins)[idx]->get_line() << ": error: "
+			     << "Output port expression must support "
+			     << "continuous assignment." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+	    } else {
+		  sig = (*pins)[idx]->elaborate_net(des, scope,
+						    prts_pin_count,
+						    0, 0, 0);
+		  if (sig == 0) {
+			cerr << "internal error: Expression too complicated "
+			      "for elaboration." << endl;
+			continue;
+		  }
 	    }
 
 	    assert(sig);
 
-	      // Check that a reg is not passed as an output or inout
-	      // port of the module. sig is the elaborated signal in
-	      // the outside that is to be passed, and prts is a
-	      // concatenation of signals on the input that receive a
-	      // reg value.
-	    if ((sig->type() == NetNet::REG)
-		&& (prts.count() >= 1)
+#ifndef NDEBUG
+	    if ((prts.count() >= 1)
 		&& (prts[0]->port_type() != NetNet::PINPUT)) {
-		  cerr << get_line() << ": error: reg/variable "
-		       << sig->name() << " cannot connect to "
-		       << "output port " << (idx+1) << " of "
-		       << my_scope->name() << "." << endl;
-		  des->errors += 1;
-		  continue;
+		  assert(sig->type() != NetNet::REG);
 	    }
-
+#endif
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths. Note that idx is 0
@@ -838,61 +843,6 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
       des->errors += 1;
 }
 
-/*
- * The concatenation is also OK an an l-value. This method elaborates
- * it as a structural l-value.
- */
-NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
-{
-      assert(scope);
-
-      svector<NetNet*>nets (parms_.count());
-      unsigned pins = 0;
-      unsigned errors = 0;
-
-      if (repeat_) {
-	    cerr << get_line() << ": sorry: I do not know how to"
-		  " elaborate repeat concatenation nets." << endl;
-	    return 0;
-      }
-
-	/* Elaborate the operands of the concatenation. */
-      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
-	    if (nets[idx] == 0)
-		  errors += 1;
-	    else
-		  pins += nets[idx]->pin_count();
-      }
-
-	/* If any of the sub expressions failed to elaborate, then
-	   delete all those that did and abort myself. */
-      if (errors) {
-	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-		  if (nets[idx]) delete nets[idx];
-	    }
-	    des->errors += 1;
-	    return 0;
-      }
-
-	/* Make the temporary signal that connects to all the
-	   operands, and connect it up. Scan the operands of the
-	   concat operator from least significant to most significant,
-	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(scope, des->local_symbol(scope->name()),
-			       NetNet::IMPLICIT, pins);
-      pins = 0;
-      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
-	    NetNet*cur = nets[idx-1];
-	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
-		  connect(osig->pin(pins), cur->pin(pin));
-		  pins += 1;
-	    }
-      }
-
-      osig->local_flag(true);
-      return osig;
-}
 
 NetProc* Statement::elaborate(Design*des, NetScope*) const
 {
@@ -2522,6 +2472,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.264  2002/11/09 19:20:48  steve
+ *  Port expressions for output ports are lnets, not nets.
+ *
  * Revision 1.263  2002/08/28 18:54:36  steve
  *  Evaluate nonblocking assign r-values.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.31 2002/08/19 02:39:16 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.32 2002/11/09 19:20:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,7 +46,7 @@ bool PExpr::is_constant(Module*) const
       return false;
 }
 
-NetNet* PExpr::elaborate_lnet(Design*des, NetScope*) const
+NetNet* PExpr::elaborate_lnet(Design*des, NetScope*, bool) const
 {
       cerr << get_line() << ": error: expression not valid in assign l-value: "
 	   << *this << endl;
@@ -256,6 +256,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.32  2002/11/09 19:20:48  steve
+ *  Port expressions for output ports are lnets, not nets.
+ *
  * Revision 1.31  2002/08/19 02:39:16  steve
  *  Support parameters with defined ranges.
  *
