@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.7 2001/01/20 19:02:05 steve Exp $"
+#ident "$Id: main.c,v 1.8 2001/02/01 17:12:22 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -520,6 +520,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.8  2001/02/01 17:12:22  steve
+ *  Forgot to actually allow the -p flag.
+ *
  * Revision 1.7  2001/01/20 19:02:05  steve
  *  Switch hte -f flag to the -p flag.
  *
