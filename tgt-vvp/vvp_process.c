@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.31 2001/05/03 04:55:28 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.32 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -82,6 +82,14 @@ static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
       }
 }
 
+static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
+{
+      if (idx)
+	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
+      fprintf(vvp_out, "    %%set/m M_%s, %u;\n",
+	      ivl_memory_name(mem), bit);
+}
+
 static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
 {
       unsigned idx;
@@ -99,10 +107,20 @@ static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
       }
 }
 
+static void assign_to_memory(ivl_memory_t mem, unsigned idx, 
+			     unsigned bit, unsigned delay)
+{
+      if (idx)
+	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
+      fprintf(vvp_out, "    %%assign/m M_%s, %u, %u;\n",
+	      ivl_memory_name(mem), delay, bit);
+}
+
 static int show_stmt_assign(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_memory_t mem;
 
 
 	/* Handle the special case that the r-value is a constant. We
@@ -119,10 +137,17 @@ static int show_stmt_assign(ivl_statement_t net)
 	    lval = ivl_stmt_lval(net, 0);
 	      /* XXXX No mux support yet. */
 	    assert(ivl_lval_mux(lval) == 0);
+	    mem = ivl_lval_mem(lval);
+
+	    if (mem) 
+		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
 	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		  set_to_nexus(ivl_lval_pin(lval, idx),
-			       bitchar_to_idx(bits[idx]));
+		  if (mem)
+			set_to_memory(mem, idx, bitchar_to_idx(bits[idx]));
+		  else
+			set_to_nexus(ivl_lval_pin(lval, idx),
+				     bitchar_to_idx(bits[idx]));
 
 	    return 0;
       }
@@ -137,18 +162,28 @@ static int show_stmt_assign(ivl_statement_t net)
 	lval = ivl_stmt_lval(net, 0);
 	  /* XXXX No mux support yet. */
 	assert(ivl_lval_mux(lval) == 0);
+	mem = ivl_lval_mem(lval);
 
 	if (ivl_lval_pins(lval) < wid)
 	      wid = ivl_lval_pins(lval);
 
+	if (mem) 
+	      draw_memory_index_expr(mem, ivl_lval_idx(lval));
+	
 	for (idx = 0 ;  idx < wid ;  idx += 1) {
-	      unsigned bidx = res.base < 4? res.base : (res.base+idx);
-	      set_to_nexus(ivl_lval_pin(lval, idx), bidx);
+	      unsigned bidx = res.base < 4 ? res.base : (res.base+idx);
+	      if (mem)
+		    set_to_memory(mem, idx, bidx);
+	      else
+		    set_to_nexus(ivl_lval_pin(lval, idx), bidx);
 	}
 
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
-
+	      if (mem)
+		    set_to_memory(mem, idx, 0);
+	      else
+		    set_to_nexus(ivl_lval_pin(lval, idx), 0);
+	
 	clr_vector(res);
       }
 
@@ -160,6 +195,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
+      ivl_memory_t mem;
 
       unsigned long delay = 0;
       if (del != 0) {
@@ -167,7 +203,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    assert(ivl_expr_type(del) == IVL_EX_ULONG);
 	    delay = ivl_expr_uvalue(del);
       }
-
 
 	/* Handle the special case that the r-value is a constant. We
 	   can generate the %set statement directly, without any worry
@@ -183,11 +218,19 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    lval = ivl_stmt_lval(net, 0);
 	      /* XXXX No mux support yet. */
 	    assert(ivl_lval_mux(lval) == 0);
+	    mem = ivl_lval_mem(lval);
+
+	    if (mem) 
+		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
 	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-		  assign_to_nexus(ivl_lval_pin(lval, idx),
-				  bitchar_to_idx(bits[idx]), delay);
-
+		  if (mem)
+			assign_to_memory(mem, idx, 
+					 bitchar_to_idx(bits[idx]), delay);
+		  else
+			assign_to_nexus(ivl_lval_pin(lval, idx),
+					bitchar_to_idx(bits[idx]), delay);
+	    
 	    return 0;
       }
 
@@ -201,15 +244,27 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	lval = ivl_stmt_lval(net, 0);
 	  /* XXXX No mux support yet. */
 	assert(ivl_lval_mux(lval) == 0);
+	mem = ivl_lval_mem(lval);
 
 	if (ivl_lval_pins(lval) < wid)
 	      wid = ivl_lval_pins(lval);
 
-	for (idx = 0 ;  idx < wid ;  idx += 1)
-	      assign_to_nexus(ivl_lval_pin(lval, idx), res.base+idx, delay);
-
+	if (mem) 
+	      draw_memory_index_expr(mem, ivl_lval_idx(lval));
+	
+	for (idx = 0 ;  idx < wid ;  idx += 1) {
+	      unsigned bidx = res.base < 4 ? res.base : (res.base+idx);
+	      if (mem)
+		    assign_to_memory(mem, idx, bidx, delay);
+	      else
+		    assign_to_nexus(ivl_lval_pin(lval, idx), bidx, delay);
+	}
+	
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-	      assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
+	      if (mem)
+		    assign_to_memory(mem, idx, 0, delay);
+	      else
+		    assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
 
 	clr_vector(res);
       }
@@ -556,6 +611,13 @@ static int show_system_task_call(ivl_statement_t net)
 		  fprintf(vvp_out, ", V_%s", ivl_expr_name(expr));
 		  break;
 
+		case IVL_EX_MEMORY:
+		  if (!ivl_expr_oper1(expr))
+			fprintf(vvp_out, ", M_%s", ivl_expr_name(expr));
+		  else
+			fprintf(vvp_out, ", M_%s[?]", ivl_expr_name(expr));
+		  break;
+
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
 		  break;
@@ -751,6 +813,10 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.32  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/05/03 04:55:28  steve
  *  Generate null statements for conditional labels.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.28 2001/04/15 03:19:44 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.29 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -132,6 +132,7 @@ void dll_target::proc_assign(const NetAssign*net)
 	    const NetAssign_*asn = net->l_val(idx);
 
 	    cur->width_ = asn->pin_count();
+	    cur->type_ = IVL_LVAL_REG;
 
 	    if (cur->width_ > 1) {
 		  cur->n.pins_ = new ivl_nexus_t[cur->width_];
@@ -147,11 +148,12 @@ void dll_target::proc_assign(const NetAssign*net)
 		  cur->n.pin_ = (ivl_nexus_t)nex->t_cookie();
 	    }
 
-	    cur->mux = 0;
+	    cur->idx = 0;
 	    if (asn->bmux()) {
 		  assert(expr_ == 0);
 		  asn->bmux()->expr_scan(this);
-		  cur->mux = expr_;
+		  cur->type_ = IVL_LVAL_MUX;
+		  cur->idx = expr_;
 		  expr_ = 0;
 	    }
       }
@@ -184,6 +186,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 
 	    assert(asn->rise_time() == delay_val);
 
+	    cur->type_ = IVL_LVAL_REG;
 	    cur->width_ = asn->pin_count();
 
 	    if (cur->width_ > 1) {
@@ -200,11 +203,12 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 		  cur->n.pin_ = (ivl_nexus_t)nex->t_cookie();
 	    }
 
-	    cur->mux = 0;
+	    cur->idx = 0;
 	    if (asn->bmux()) {
 		  assert(expr_ == 0);
 		  asn->bmux()->expr_scan(this);
-		  cur->mux = expr_;
+		  cur->type_ = IVL_LVAL_MUX;
+		  cur->idx = expr_;
 		  expr_ = 0;
 	    }
       }
@@ -224,6 +228,73 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       }
 }
 
+void dll_target::proc_assign_mem(const NetAssignMem*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_ASSIGN;
+
+      stmt_cur_->u_.assign_.lvals_ = 1;
+      stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[1];
+      stmt_cur_->u_.assign_.delay  = 0;
+      struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_;
+
+      cur->type_ = IVL_LVAL_MEM;
+      cur->n.mem_ = lookup_memory_(net->memory());
+      assert(cur->n.mem_);
+      cur->width_ = ivl_memory_width(cur->n.mem_);
+      
+      assert(expr_ == 0);
+
+      net->index()->expr_scan(this);
+      cur->type_ = IVL_LVAL_MEM;
+      cur->idx = expr_;
+      expr_ = 0;
+
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
+}
+
+void dll_target::proc_assign_mem_nb(const NetAssignMemNB*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_ASSIGN_NB;
+
+      stmt_cur_->u_.assign_.lvals_ = 1;
+      stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[1];
+      stmt_cur_->u_.assign_.delay  = 0;
+      struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_;
+
+      cur->type_ = IVL_LVAL_MEM;
+      cur->n.mem_ = lookup_memory_(net->memory());
+      cur->width_ = ivl_memory_width(cur->n.mem_);
+      
+      assert(expr_ == 0);
+
+      net->index()->expr_scan(this);
+      cur->type_ = IVL_LVAL_MEM;
+      cur->idx = expr_;
+      expr_ = 0;
+
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
+
+      unsigned long delay_val = 0;
+      
+      if (delay_val > 0) {
+	    ivl_expr_t de = new struct ivl_expr_s;
+	    de->type_ = IVL_EX_ULONG;
+	    de->width_  = 8 * sizeof(unsigned long);
+	    de->signed_ = 0;
+	    de->u_.ulong_.value = delay_val;
+	    stmt_cur_->u_.assign_.delay = de;
+      }
+}
 
 bool dll_target::proc_block(const NetBlock*net)
 {
@@ -607,6 +678,10 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.29  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.28  2001/04/15 03:19:44  steve
  *  Oops, excessive test assert neets to be removed.
  *

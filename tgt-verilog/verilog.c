@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.20 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: verilog.c,v 1.21 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 /*
@@ -240,6 +240,7 @@ static void show_assign_lval(ivl_lval_t lval)
       unsigned lsb;
 
       assert(ivl_lval_mux(lval) == 0);
+      assert(ivl_lval_mem(lval) == 0);
 
       nex = ivl_lval_pin(lval, 0);
 
@@ -440,6 +441,10 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.21  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.20  2001/02/07 22:22:00  steve
  *  ivl_target header search path fixes.
  *

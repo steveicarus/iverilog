@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.58 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.59 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -433,8 +433,12 @@ void compile_memory(char *label, char *name, int msb, int lsb,
 		    unsigned idxs, long *idx)
 {
   vvp_memory_t mem = memory_create(label);
-  free(label);
   memory_new(mem, name, lsb, msb, idxs, idx);
+
+  vpiHandle obj = vpip_make_memory(mem);
+  compile_vpi_symbol(label, obj);
+
+  free(label);
 }
 
 void compile_memory_port(char *label, char *memid, 
@@ -1096,6 +1100,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.59  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.58  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

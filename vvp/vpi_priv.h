@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.13 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.14 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
 # include  "pointers.h"
+# include  "memory.h"
 
 /*
  * This header file contains the internal definitions that the vvp
@@ -115,6 +116,15 @@ extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_ipoint_t base);
 
 /*
+ * Memory is an array of bits that is accessible in N-bit chunks, with
+ * N being the width of a word. The memory word handle just points
+ * back to the memory and uses an index to identify its position in
+ * the memory.
+ */
+
+extern vpiHandle vpip_make_memory(vvp_memory_t mem);
+
+/*
  * When a loaded VPI module announces a system task/function, one
  * __vpiUserSystf object is created to hold the definition of that
  * task/function.
@@ -196,6 +206,10 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.14  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.13  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *

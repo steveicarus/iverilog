@@ -127,7 +127,9 @@ initial ;
 	%set	a[3], 0;
 	%set	a[4], 0;
 
-	%delay	320;
+	%delay	220;
+	%vpi_call "$readmemh", "memory.hex", memory;
+	%delay	100;
 
 ;;; Memories are indexed by index register 3.  The index register
 ;;; points to the bit position in the memory.  Each memory word

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.37 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.38 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -666,7 +666,7 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 {
       unsigned long v = 0;
-      for (int i = 0; i<cp->number; i++) {
+      for (unsigned i = 0; i<cp->number; i++) {
 	    unsigned char vv = thr_get_bit(thr, cp->bit_idx2 + i);
 	    if (vv&2) {
 		  v = ~0UL;
@@ -993,6 +993,10 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.38  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.37  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.19 2001/05/06 17:42:22 steve Exp $
+ *  $Id: opcodes.txt,v 1.20 2001/05/08 23:59:33 steve Exp $
  */
 
 
@@ -149,7 +149,7 @@ thread bit space, and <wid> is the width of the vector.
 
 The function converts the 4-value bits into a binary number, without
 sign extension. If any of the bits of the vector is x or z, then the
-index register gets the value 0.
+index register gets the value (-1).
 
 
 * %ix/load <idx>, <value>

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.43 2001/05/06 17:48:20 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.44 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -55,14 +55,31 @@ extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
 }
 
 
-extern "C" char*ivl_memory_name(ivl_memory_t net)
+inline static const char *basename(ivl_scope_t scope, const char *inst)
+{
+      inst += strlen(ivl_scope_name(scope));
+      assert(*inst == '.');
+      return inst+1;
+}
+
+extern "C" const char*ivl_memory_name(ivl_memory_t net)
 {
       return net->name_;
 }
 
-extern "C" unsigned ivl_memory_root(ivl_memory_t net)
+extern "C" const char* ivl_memory_basename(ivl_memory_t net)
+{
+      return basename(net->scope_, net->name_);
+}
+
+extern "C" int ivl_memory_root(ivl_memory_t net)
 {
       return net->root_;
+}
+
+extern "C" unsigned ivl_memory_size(ivl_memory_t net)
+{
+      return net->size_;
 }
 
 extern "C" unsigned ivl_memory_width(ivl_memory_t net)
@@ -109,11 +126,7 @@ extern "C" const char* ivl_event_name(ivl_event_t net)
 
 extern "C" const char* ivl_event_basename(ivl_event_t net)
 {
-      const char*nam = net->name;
-      nam += strlen(ivl_scope_name(net->scope));
-      assert(*nam == '.');
-      nam += 1;
-      return nam;
+      return basename(net->scope, net->name);
 }
 
 
@@ -341,11 +354,7 @@ extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
 
 extern "C" const char* ivl_logic_basename(ivl_net_logic_t net)
 {
-      const char*nam = net->name_;
-      nam += strlen(ivl_scope_name(net->scope_));
-      assert(*nam == '.');
-      nam += 1;
-      return nam;
+      return basename(net->scope_, net->name_);
 }
 
 extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
@@ -541,7 +550,25 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
 {
       assert(net);
-      return net->mux;
+      if (net->type_ == IVL_LVAL_MUX)
+	    return net->idx;
+      return 0x0;
+}
+
+extern "C" ivl_expr_t ivl_lval_idx(ivl_lval_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_LVAL_MEM)
+	    return net->idx;
+      return 0x0;
+}
+
+extern "C" ivl_memory_t ivl_lval_mem(ivl_lval_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_LVAL_MEM)
+	    return net->n.mem_;
+      return 0x0;
 }
 
 extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
@@ -554,6 +581,7 @@ extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
 {
       assert(net);
       assert(idx < net->width_);
+      assert(net->type_ != IVL_LVAL_MEM);
       if (net->width_ == 1)
 	    return net->n.pin_;
       else
@@ -706,6 +734,19 @@ extern "C" ivl_lpm_t ivl_scope_lpm(ivl_scope_t net, unsigned idx)
       return net->lpm_[idx];
 }
 
+extern "C" unsigned ivl_scope_mems(ivl_scope_t net)
+{
+      assert(net);
+      return net->nmem_;
+}
+
+extern "C" ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nmem_);
+      return net->mem_[idx];
+}
+
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
       return net->name_;
@@ -769,11 +810,7 @@ extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
 {
-      const char*nam = net->name_;
-      nam += strlen(ivl_scope_name(net->scope_));
-      assert(*nam == '.');
-      nam += 1;
-      return nam;
+      return basename(net->scope_, net->name_);
 }
 
 extern "C" const char* ivl_signal_name(ivl_signal_t net)
@@ -1004,10 +1041,19 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
       unsigned sum = 0;
       for (unsigned idx = 0 ;  idx < net->u_.assign_.lvals_ ;  idx += 1) {
 	    ivl_lval_t cur = net->u_.assign_.lval_ + idx;
-	    if (cur->mux)
+	    switch(cur->type_) {
+		case IVL_LVAL_MUX:
 		  sum += 1;
-	    else
-		  sum += cur->width_;
+		  break;
+		case IVL_LVAL_REG:
+		  sum += ivl_lval_pins(cur);
+		  break;
+		case IVL_LVAL_MEM:
+		  sum += ivl_memory_width(ivl_lval_mem(cur));
+		  break;
+		default:
+		  assert(0);
+	    }
       }
 
       return sum;
@@ -1083,6 +1129,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.44  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.43  2001/05/06 17:48:20  steve
  *  Support memory objects. (Stephan Boettcher)
  *

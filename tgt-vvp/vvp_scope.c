@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.25 2001/05/06 00:01:02 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.26 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -607,6 +607,19 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
       }
 }
 
+
+static void draw_mem_in_scope(ivl_memory_t net)
+{
+      int root = ivl_memory_root(net);
+      int last = root + ivl_memory_size(net) - 1;
+      int msb = ivl_memory_width(net) - 1;
+      int lsb = 0;
+      fprintf(vvp_out, "M_%s .mem \"%s\", %u,%u, %u,%u;\n",
+	      ivl_memory_name(net), ivl_memory_basename(net),
+	      msb, lsb, root, last);
+}
+
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -656,6 +669,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_lpm_in_scope(lpm);
       }
 
+      for (idx = 0 ;  idx < ivl_scope_mems(net) ;  idx += 1) {
+	    ivl_memory_t mem = ivl_scope_mem(net, idx);
+	    draw_mem_in_scope(mem);
+      }
+
       if (ivl_scope_type(net) == IVL_SCT_TASK)
 	    draw_task_definition(net);
 
@@ -668,6 +686,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.26  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.25  2001/05/06 00:01:02  steve
  *  Generate code that causes the value of a net to be passed
  *  passed through all nets of a nexus.

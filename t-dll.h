@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.42 2001/05/06 17:48:20 steve Exp $"
+#ident "$Id: t-dll.h,v 1.43 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -67,6 +67,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool process(const NetProcTop*);
       void scope(const NetScope*);
       void signal(const NetNet*);
+      void memory(const NetMemory*);
 
       ivl_dll_t dll_;
       string dll_path_;
@@ -80,7 +81,9 @@ struct dll_target  : public target_t, public expr_scan_t {
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
       void proc_assign(const NetAssign*);
+      void proc_assign_mem(const NetAssignMem*);
       void proc_assign_nb(const NetAssignNB*);
+      void proc_assign_mem_nb(const NetAssignMemNB*net);
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
       void proc_condit(const NetCondit*);
@@ -100,6 +103,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       struct ivl_expr_s*expr_;
       void expr_binary(const NetEBinary*);
       void expr_concat(const NetEConcat*);
+      void expr_memory(const NetEMemory*);
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
@@ -108,6 +112,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_signal(const NetESignal*);
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
+      ivl_memory_t lookup_memory_(const NetMemory*mem);
 };
 
 /*
@@ -240,12 +245,21 @@ struct ivl_lpm_s {
  * are reg nets. This is used by the assignment to represent the
  * l-value expressions.
  */
+
+enum ivl_lval_type_t {
+      IVL_LVAL_REG = 0,
+      IVL_LVAL_MUX = 1,
+      IVL_LVAL_MEM = 2,
+};
+
 struct ivl_lval_s {
       unsigned width_  :24;
-      ivl_expr_t mux;
+      unsigned type_   : 8;
+      ivl_expr_t idx;
       union {
 	    ivl_nexus_t*pins_;
 	    ivl_nexus_t pin_;
+	    ivl_memory_t mem_;
       } n;
 };
 
@@ -383,6 +397,9 @@ struct ivl_scope_s {
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
 
+      unsigned nmem_;
+      ivl_memory_t* mem_;
+
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
 
@@ -496,6 +513,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.43  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.42  2001/05/06 17:48:20  steve
  *  Support memory objects. (Stephan Boettcher)
  *

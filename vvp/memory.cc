@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.2 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: memory.cc,v 1.3 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -83,6 +83,24 @@ struct vvp_memory_port_s : public vvp_fobj_s
       int nbits;
 };
 
+
+unsigned memory_size(vvp_memory_t mem)
+{
+  return mem->size;
+}
+
+unsigned memory_root(vvp_memory_t mem, unsigned ix)
+{
+      if (ix >= mem->a_idxs)
+	    return 0;
+      return mem->a_idx[ix].first;
+}
+
+char *memory_name(vvp_memory_t mem)
+{
+      return mem->name;
+}
+
 // Compilation
 
 static symbol_table_t memory_table;
@@ -130,8 +148,14 @@ void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
       vvp_memory_index_t x = mem->a_idx + i;
       int msw = *(idx++);
       int lsw = *(idx++);
-      x->size  = msw - lsw + 1;
-      x->first = lsw;
+      if (msw > lsw) {
+	    x->size  = msw - lsw + 1;
+	    x->first = lsw;
+      }
+      else {
+	    x->size  = lsw - msw + 1;
+	    x->first = msw;
+      }
       int m = lsw ^ msw;
       x->awidth = 0;
       if (m < 0)

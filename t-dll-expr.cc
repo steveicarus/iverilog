@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.11 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.12 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -80,9 +80,31 @@ void dll_target::expr_concat(const NetEConcat*net)
       expr_ = cur;
 }
 
+void dll_target::expr_memory(const NetEMemory*net)
+{
+      assert(expr_ == 0);
+      if (net->index()) {
+	    net->index()->expr_scan(this);
+	    assert(expr_);
+      }
+
+      ivl_expr_t cur = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(cur);
+
+      cur->type_ = IVL_EX_MEMORY;
+      cur->width_= net->expr_width();
+      cur->signed_ = net->has_sign()? 1 : 0;
+      cur->u_.memory_.mem_ = lookup_memory_(net->memory());
+      cur->u_.memory_.idx_ = expr_;
+
+      expr_ = cur;
+}
+
 void dll_target::expr_const(const NetEConst*net)
 {
       assert(expr_ == 0);
+
+      ivl_expr_t idx = 0;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
@@ -204,6 +226,10 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.12  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.11  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

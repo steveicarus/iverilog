@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2001/05/08 23:59:33 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -59,7 +59,7 @@ check: all
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 
 V = vpi_modules.o vpi_const.o vpi_iter.o vpi_mcd.o vpi_priv.o \
-vpi_scope.o vpi_signal.o vpi_tasks.o vpi_time.o
+vpi_scope.o vpi_signal.o vpi_tasks.o vpi_time.o vpi_memory.o
 
 O = main.o parse.o parse_misc.o lexor.o compile.o debug.o functor.o \
 symbols.o codes.o vthread.o schedule.o tables.o udp.o memory.o $V

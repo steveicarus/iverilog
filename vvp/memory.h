@@ -20,12 +20,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.h,v 1.1 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: memory.h,v 1.2 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 #include "pointers.h"
 #include "functor.h"
 
+/*
+**  vvp_memory_t         is a memory
+**  vvp_memory_bits_t    are bits in a memory
+**  vvp_memory_index_t   is a memory index range definition
+*/
 typedef struct vvp_memory_s *vvp_memory_t;
 typedef unsigned char *vvp_memory_bits_t;
 typedef struct vvp_memory_index_s *vvp_memory_index_t;
@@ -42,13 +47,23 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 		     unsigned char val, unsigned delay);
 
 unsigned memory_addr_width(vvp_memory_t mem);
+unsigned memory_size(vvp_memory_t mem);
+char *memory_name(vvp_memory_t mem);
 unsigned memory_data_width(vvp_memory_t mem);
+unsigned memory_root(vvp_memory_t mem, unsigned ix = 0);
 
+/*
+**  Access to the memory symbol table.
+*/
 vvp_memory_t memory_find(char *label);
 vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.2  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.1  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *

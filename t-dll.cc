@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.39 2001/05/03 01:52:45 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.40 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -81,6 +81,41 @@ static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
 ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
 {
       return find_scope(des_.root_, cur);
+}
+
+/*
+ * This function locates an ivl_memory_t object that matches the
+ * NetMemory object. The search works by looking for the parent scope,
+ * then scanning the parent scope for the NetMemory object.
+ */
+static ivl_memory_t find_memory(ivl_scope_t root, const NetMemory*cur)
+{
+      ivl_scope_t tmp;
+      ivl_memory_t mem ;
+
+      if (!root)
+	    return 0;
+
+      for (unsigned i = 0; i < ivl_scope_mems(root); i++) {
+	    mem = ivl_scope_mem(root, i);
+	    if (!strcmp(ivl_memory_name(mem), cur->name().c_str()))
+		  return mem;
+      }
+
+      mem = find_memory(root->child_, cur);
+      if (mem)
+	    return mem;
+      
+      mem = find_memory(root->sibling_, cur);
+      if (mem)
+	    return mem;
+ 
+      return 0;
+}
+
+ivl_memory_t dll_target::lookup_memory_(const NetMemory*cur)
+{
+      return find_memory(des_.root_, cur);
 }
 
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
@@ -202,6 +237,14 @@ static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
       }
 }
 
+static void scope_add_mem(ivl_scope_t scope, ivl_memory_t net)
+{
+      scope->nmem_ += 1;
+      scope->mem_   = (ivl_memory_t*)
+	    realloc(scope->mem_, scope->nmem_*sizeof(ivl_memory_t));
+      scope->mem_[scope->nmem_-1] = net;
+}
+
 bool dll_target::start_design(const Design*des)
 {
       dll_path_ = des->get_flag("DLL");
@@ -227,6 +270,8 @@ bool dll_target::start_design(const Design*des)
       des_.root_->event_ = 0;
       des_.root_->nlpm_ = 0;
       des_.root_->lpm_ = 0;
+      des_.root_->nmem_ = 0;
+      des_.root_->mem_ = 0;
       des_.root_->type_ = IVL_SCT_MODULE;
       des_.root_->tname_ = des_.root_->name_;
 
@@ -488,6 +533,19 @@ void dll_target::udp(const NetUDP*net)
       scope_add_logic(scope, obj);
 }
 
+void dll_target::memory(const NetMemory*net)
+{
+      ivl_memory_t obj = new struct ivl_memory_s;
+      obj->name_  = strdup(net->name().c_str());
+      obj->scope_ = find_scope(des_.root_, net->scope());
+      obj->width_ = net->width();
+      obj->signed_ = 0;
+      obj->size_ = net->count();
+      obj->root_ = -net->index_to_address(0);
+
+      scope_add_mem(obj->scope_, obj);
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -693,6 +751,8 @@ void dll_target::scope(const NetScope*net)
 	    scope->event_ = 0;
 	    scope->nlpm_ = 0;
 	    scope->lpm_ = 0;
+	    scope->nmem_ = 0;
+	    scope->mem_ = 0;
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
@@ -893,6 +953,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.40  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.39  2001/05/03 01:52:45  steve
  *  dll build of many probes forgot to index the probe.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.205 2001/04/29 20:19:10 steve Exp $"
+#ident "$Id: netlist.h,v 1.206 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 /*
@@ -636,8 +636,8 @@ class NetMemory  {
 	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
 
-      NetScope*scope();
-      const NetScope*scope() const;
+      // NetScope*scope();
+      const NetScope*scope() const { return scope_; };
 
 	// This is the number of memory positions.
       unsigned count() const;
@@ -2434,6 +2434,8 @@ class NetEMemory  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
+      const NetMemory*memory() const { return mem_; };
+
     private:
       NetMemory*mem_;
       NetExpr* idx_;
@@ -2807,6 +2809,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.206  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.205  2001/04/29 20:19:10  steve
  *  Add pullup and pulldown devices.
  *

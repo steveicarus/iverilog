@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_iter.cc,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_iter.cc,v 1.2 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 /*
@@ -59,6 +59,9 @@ vpiHandle vpi_scan(vpiHandle ref)
       struct __vpiIterator*hp = (struct __vpiIterator*)ref;
       assert(ref->vpi_type->type_code == vpiIterator);
 
+      if (ref->vpi_type->index_)
+	    return (ref->vpi_type->index_(ref, 0));
+
       if (hp->next == hp->nargs) {
 	    vpi_free_object(ref);
 	    return 0;
@@ -69,6 +72,10 @@ vpiHandle vpi_scan(vpiHandle ref)
 
 /*
  * $Log: vpi_iter.cc,v $
+ * Revision 1.2  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.1  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.

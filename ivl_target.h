@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.59 2001/05/08 04:13:12 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.60 2001/05/08 23:59:33 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -410,8 +410,10 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  *
  */
 
-extern char*ivl_memory_name(ivl_memory_t net);
-extern unsigned ivl_memory_root(ivl_memory_t net);
+extern const char*ivl_memory_name(ivl_memory_t net);
+extern const char*ivl_memory_basename(ivl_memory_t net);
+extern int ivl_memory_root(ivl_memory_t net);
+extern unsigned ivl_memory_size(ivl_memory_t net);
 extern unsigned ivl_memory_width(ivl_memory_t net);
 extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
 
@@ -514,16 +516,27 @@ extern unsigned ivl_lpm_size(ivl_lpm_t net);
  * ivl_lval_mux
  *    If the l-value includes a bit select expression, this method
  *    returns an ivl_expr_t that represents that
- *    expression. Otherwise, it returns 0.
+ *    expression.  Otherwise, it returns 0.
+ *
+ * ivl_lval_mem 
+ *    If the l-value is a memory, this method returns an
+ *    ivl_memory_t that represents that memory. Otherwise, it 
+ *    returns 0.
+ *
+ * ivl_lval_idx 
+ *    If the l-value is a memory, this method returns an
+ *    ivl_expr_t that represents the index expression.  Otherwise, it 
+ *    returns 0.
  *
  * ivl_lval_pin
  *    Return an ivl_nexus_t for the connection of the ivl_lval_t.
  *
  * ivl_lval_pins
- *    Return the number of pins for this object.
- */
+ *    Return the number of pins for this object.  */
 
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
+extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
+extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
 extern unsigned    ivl_lval_pins(ivl_lval_t net);
 extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
 
@@ -661,6 +674,8 @@ extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
+extern unsigned     ivl_scope_mems(ivl_scope_t net);
+extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern const char*  ivl_scope_port(ivl_scope_t net, unsigned idx);
@@ -824,6 +839,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.60  2001/05/08 23:59:33  steve
+ *  Add ivl and vvp.tgt support for memories in
+ *  expressions and l-values. (Stephan Boettcher)
+ *
  * Revision 1.59  2001/05/08 04:13:12  steve
  *  sort enumeration values.
  *
