@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.153 2005/01/22 18:16:00 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.154 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1011,14 +1011,6 @@ void NetESignal::dump(ostream&o) const
       o << name() << "[" << msi()<<":"<<lsi() << "]";
 }
 
-void NetEBitSel::dump(ostream&o) const
-{
-      sig_->dump(o);
-      o << "[";
-      idx_->dump(o);
-      o << "]";
-}
-
 void NetEMemory::dump(ostream&o) const
 {
       o << mem_->name() << "[";
@@ -1102,6 +1094,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.154  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.153  2005/01/22 18:16:00  steve
  *  Remove obsolete NetSubnet class.
  *

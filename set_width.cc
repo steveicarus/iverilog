@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.34 2003/08/28 04:11:19 steve Exp $"
+#ident "$Id: set_width.cc,v 1.35 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -354,12 +354,6 @@ bool NetESignal::set_width(unsigned w)
       return true;
 }
 
-bool NetEBitSel::set_width(unsigned w)
-{
-      if (w != 1) return false;
-      return true;
-}
-
 bool NetETernary::set_width(unsigned w)
 {
       bool flag = true;
@@ -411,6 +405,11 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.35  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.34  2003/08/28 04:11:19  steve
  *  Spelling patch.
  *

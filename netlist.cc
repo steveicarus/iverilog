@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.232 2005/01/22 18:16:01 steve Exp $"
+#ident "$Id: netlist.cc,v 1.233 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2171,35 +2171,6 @@ unsigned NetESignal::msi() const
       return net_->msb();
 }
 
-NetEBitSel::NetEBitSel(NetESignal*sig, NetExpr*ex)
-: sig_(sig), idx_(ex)
-{
-	// This supports mux type indexing of an expression, so the
-	// with is by definition 1 bit.
-      expr_width(1);
-}
-
-NetEBitSel::~NetEBitSel()
-{
-      delete idx_;
-}
-
-perm_string NetEBitSel::name() const
-{
-      return sig_->name();
-}
-
-const NetNet* NetEBitSel::sig() const
-{
-      return sig_->sig();
-}
-
-NetEBitSel* NetEBitSel::dup_expr() const
-{
-      assert(0);
-      return 0;
-}
-
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
@@ -2336,6 +2307,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.233  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.232  2005/01/22 18:16:01  steve
  *  Remove obsolete NetSubnet class.
  *

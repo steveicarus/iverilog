@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.133 2005/01/22 17:36:59 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.134 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -176,7 +176,7 @@ typedef enum ivl_drive_e {
    and incompatibilities to be introduced. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
-      IVL_EX_BITSEL = 1,
+	/* IVL_EX_BITSEL = 1, */
       IVL_EX_BINARY = 2,
       IVL_EX_CONCAT = 3,
       IVL_EX_EVENT  = 17,
@@ -512,6 +512,16 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *              &   -- AND
  *              A   -- NAND (~&)
  *              X   -- XNOR (~^)
+ *
+ * SEMANTIC NOTES
+ *
+ * - IVL_EX_SELECT
+ * This expression takes two operands, oper1 is the expression to
+ * select from, and oper2 is the selection base. The ivl_expr_width
+ * value is the width of the bit/part select. The ivl_expr_oper1 value
+ * is the base of a vector. The compiler has already figured out any
+ * conversion from signal units to vector units, so the result of
+ * ivl_expr_oper1 should range from 0 to ivl_expr_width().
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
@@ -523,13 +533,11 @@ extern const char* ivl_expr_bits(ivl_expr_t net);
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
   /* IVL_EX_REALNUM */
 extern double ivl_expr_dvalue(ivl_expr_t net);
-  /* IVL_EX_SIGNAL */
-extern unsigned    ivl_expr_lsi(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY IVL_EX_BITSEL IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
+  /* IVL_EX_BINARY  IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
@@ -547,7 +555,7 @@ extern unsigned    ivl_expr_repeat(ivl_expr_t net);
 extern ivl_event_t ivl_expr_event(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
-  /* IVL_EX_BITSEL */
+  /* IVL_EX_SIGNAL */
 extern ivl_signal_t ivl_expr_signal(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
@@ -1436,6 +1444,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.134  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.133  2005/01/22 17:36:59  steve
  *  stub dump signed flags of magnitude compare.
  *

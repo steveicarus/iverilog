@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.9 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.10 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,6 +76,47 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 #endif
 }
 
+/*
+ * Add a signed constant to an existing expression. Generate a new
+ * NetEBAdd node that has the input expression and an expression made
+ * from the constant value.
+ */
+NetExpr* make_add_expr(NetExpr*expr, long val)
+{
+      if (val == 0)
+	    return expr;
+
+	// If the value to be added is <0, then instead generate a
+	// SUBTRACT node and turn the value positive.
+      char add_op = '+';
+      if (val < 0) {
+	    add_op = '-';
+	    val = -val;
+      }
+
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(true);
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBAdd*res = new NetEBAdd(add_op, expr, val_c);
+      res->set_line(*expr);
+
+      return res;
+}
+
+NetExpr* make_sub_expr(long val, NetExpr*expr)
+{
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(true);
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBAdd*res = new NetEBAdd('-', val_c, expr);
+      res->set_line(*expr);
+
+      return res;
+}
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 {
@@ -94,6 +135,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.10  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.9  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

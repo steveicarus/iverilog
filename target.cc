@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.71 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: target.cc,v 1.72 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -381,12 +381,6 @@ void expr_scan_t::expr_signal(const NetESignal*)
 	    "unhandled expr_signal." << endl;
 }
 
-void expr_scan_t::expr_subsignal(const NetEBitSel*)
-{
-      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
-	    "unhandled bit select expression." << endl;
-}
-
 void expr_scan_t::expr_ternary(const NetETernary*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -419,6 +413,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.72  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.71  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

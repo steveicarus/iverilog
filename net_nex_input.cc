@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.12 2004/09/04 04:24:15 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.13 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -49,15 +49,6 @@ NexusSet* NetEBinary::nex_input()
 {
       NexusSet*result = left_->nex_input();
       NexusSet*tmp = right_->nex_input();
-      result->add(*tmp);
-      delete tmp;
-      return result;
-}
-
-NexusSet* NetEBitSel::nex_input()
-{
-      NexusSet*result = sig_->nex_input();
-      NexusSet*tmp = idx_->nex_input();
       result->add(*tmp);
       delete tmp;
       return result;
@@ -398,6 +389,11 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.13  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.12  2004/09/04 04:24:15  steve
  *  PR1026: assignment statements can have sensitivities in the l-values.
  *

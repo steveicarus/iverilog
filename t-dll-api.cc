@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.114 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.115 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -248,20 +248,6 @@ extern "C" double ivl_expr_dvalue(ivl_expr_t net)
       return net->u_.real_.value;
 }
 
-extern "C" unsigned ivl_expr_lsi(ivl_expr_t net)
-{
-      switch (net->type_) {
-
-	  case IVL_EX_SIGNAL:
-	    return net->u_.signal_.lsi;
-
-	  default:
-	    assert(0);
-
-      }
-      return 0;
-}
-
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       switch (net->type_) {
@@ -304,9 +290,6 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_BINARY:
 	  case IVL_EX_SELECT:
 	    return net->u_.binary_.lef_;
-
-	  case IVL_EX_BITSEL:
-	    return net->u_.bitsel_.bit;
 
 	  case IVL_EX_UNARY:
 	    return net->u_.unary_.sub_;
@@ -438,8 +421,6 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
 {
       assert(net);
       switch (net->type_) {
-	  case IVL_EX_BITSEL:
-	    return net->u_.bitsel_.sig;
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig;
@@ -1972,6 +1953,11 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.115  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.114  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.112 2005/01/24 05:08:02 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.113 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1125,39 +1125,6 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
       return rv;
 }
 
-static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
-{
-      struct vector_info res;
-      ivl_signal_t sig = ivl_expr_signal(exp);
-      ivl_expr_t sel = ivl_expr_oper1(exp);
-
-	/* Evaluate the bit select expression and save the result into
-	   index register 0. */
-      res = draw_eval_expr(sel, 0);
-      fprintf(vvp_out, "    %%ix/get 0, %u,%u;\n", res.base, res.wid);
-      clr_vector(res);
-
-      res.base = allocate_vector(wid);
-      res.wid = wid;
-
-      switch (ivl_signal_type(sig)) {
-	  case IVL_SIT_TRI:
-	  case IVL_SIT_TRI0:
-	  case IVL_SIT_TRI1:
-	    fprintf(vvp_out, "    %%load/nx %u, V_%s, 0;\n", res.base,
-		    vvp_signal_label(sig));
-	    break;
-	  default:
-	    fprintf(vvp_out, "    %%load/x %u, V_%s, 0;\n", res.base,
-		    vvp_signal_label(sig));
-	    break;
-      }
-
-      if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
-      return res;
-}
-
 /*
  * The concatenation operator is evaluated by evaluating each sub-
  * expression, then copying it into the continguous vector of the
@@ -2063,10 +2030,6 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    res = draw_binary_expr(exp, wid, stuff_ok_flag);
 	    break;
 
-	  case IVL_EX_BITSEL:
-	    res = draw_bitsel_expr(exp, wid);
-	    break;
-
 	  case IVL_EX_CONCAT:
 	    res = draw_concat_expr(exp, wid);
 	    break;
@@ -2125,6 +2088,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.113  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.112  2005/01/24 05:08:02  steve
  *  Part selects are done in the compiler, not here.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.92 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.93 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -668,7 +668,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  long lsv = lsn->as_long();
 		  long msv = msn->as_long();
 		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
-		  if (wid > net->pin_count()) {
+		  if (wid > net->vector_width()) {
 			cerr << get_line() << ": error: part select ["
 			     << msv << ":" << lsv << "] out of range."
 			     << endl;
@@ -677,7 +677,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			delete msn;
 			return 0;
 		  }
-		  assert(wid <= net->pin_count());
+		  assert(wid <= net->vector_width());
 
 		  if (net->sb_to_idx(msv) < net->sb_to_idx(lsv)) {
 			cerr << get_line() << ": error: part select ["
@@ -690,7 +690,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 
 
-		  if (net->sb_to_idx(msv) >= net->pin_count()) {
+		  if (net->sb_to_idx(msv) >= net->vector_width()) {
 			cerr << get_line() << ": error: part select ["
 			     << msv << ":" << lsv << "] out of range."
 			     << endl;
@@ -699,18 +699,21 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			delete msn;
 			return 0;
 		  }
-#if 0
-		  NetESignal*tmp = new NetESignal(net,
-						  net->sb_to_idx(msv),
-						  net->sb_to_idx(lsv));
-#else
+
 		  NetESignal*tmp = new NetESignal(net);
-		  cerr << get_line() << ": internal error: I forgot "
-			"how to elaborate part selects." << endl;
-#endif
 		  tmp->set_line(*this);
 
-		  return tmp;
+		    // If the part select convers exactly the entire
+		    // vector, then do not bother with it. Return the
+		    // signal itself.
+		  if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+			return tmp;
+
+		  NetExpr*ex = new NetEConst(verinum(net->sb_to_idx(lsv)));
+		  NetESelect*ss = new NetESelect(tmp, ex, wid);
+		  ss->set_line(*this);
+
+		  return ss;
 	    }
 
 	      // If the bit select is constant, then treat it similar
@@ -722,7 +725,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  long msv = msn->as_long();
 		  unsigned idx = net->sb_to_idx(msv);
 
-		  if (idx >= net->pin_count()) {
+		  if (idx >= net->vector_width()) {
 			  /* The bit select is out of range of the
 			     vector. This is legal, but returns a
 			     constant 1'bx value. */
@@ -740,26 +743,42 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			return tmp;
 		  }
 
-#if 0
-		  NetESignal*tmp = new NetESignal(net, idx, idx);
-#else
 		  NetESignal*tmp = new NetESignal(net);
-		  cerr << get_line() << ": internal error: I forgot "
-			"how to elaborate constant bit selects." << endl;
-#endif
 		  tmp->set_line(*this);
+		    // If the vector is only one bit, we are done. The
+		    // bit select will return the scaler itself.
+		  if (net->vector_width() == 1)
+			return tmp;
 
-		  return tmp;
+		    // Make an expression out of the index
+		  NetEConst*idx_c = new NetEConst(verinum(idx));
+		  idx_c->set_line(*net);
+
+		    // Make a bit select with the canonical index
+		  NetESelect*res = new NetESelect(tmp, idx_c, 1);
+		  res->set_line(*net);
+
+		  return res;
 	    }
 
 	    NetESignal*node = new NetESignal(net);
 	    assert(idx_ == 0);
 
 	      // Non-constant bit select? punt and make a subsignal
-	      // device to mux the bit in the net.
+	      // device to mux the bit in the net. This is a fairly
+	      // compilcated task because we need to generate
+	      // expressions to convert calculated bit select
+	      // values to canonical values that are used internally.
 	    if (msb_) {
 		  NetExpr*ex = msb_->elaborate_expr(des, scope);
-		  NetEBitSel*ss = new NetEBitSel(node, ex);
+
+		  if (net->msb() < net->lsb()) {
+			ex = make_sub_expr(net->lsb(), ex);
+		  } else {
+			ex = make_add_expr(ex, - net->lsb());
+		  }
+
+		  NetESelect*ss = new NetESelect(node, ex, 1);
 		  ss->set_line(*this);
 		  return ss;
 	    }
@@ -1016,6 +1035,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.93  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.92  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.117 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: t-dll.h,v 1.118 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -137,7 +137,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_scope(const NetEScope*);
       void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
-      void expr_subsignal(const NetEBitSel*);
       void expr_ternary(const NetETernary*);
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
@@ -203,11 +202,6 @@ struct ivl_expr_s {
 	    } binary_;
 
 	    struct {
-		  ivl_signal_t sig;
-		  ivl_expr_t bit;
-	    } bitsel_;
-
-	    struct {
 		  unsigned   rept;
 		  unsigned   parms;
 		  ivl_expr_t*parm;
@@ -228,7 +222,6 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_signal_t sig;
-		  unsigned lsi, msi;
 	    } signal_;
 
 	    struct {
@@ -687,6 +680,11 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.118  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.117  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

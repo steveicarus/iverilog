@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.100 2005/01/24 05:05:25 steve Exp $"
+#ident "$Id: stub.c,v 1.101 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -102,12 +102,6 @@ void show_expression(ivl_expr_t net, unsigned ind)
       }
 
       switch (code) {
-
-	  case IVL_EX_BITSEL:
-	    fprintf(out, "%*s<%s[] width=%u, %s>\n", ind, "",
-		    ivl_signal_name(ivl_expr_signal(net)), width, sign);
-	    show_expression(ivl_expr_oper1(net), ind+3);
-	    break;
 
 	  case IVL_EX_BINARY:
 	    fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
@@ -943,6 +937,11 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.101  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.100  2005/01/24 05:05:25  steve
  *  Check widths of ternary expressions.
  *

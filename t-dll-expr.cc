@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.39 2004/06/17 16:06:19 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.40 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -442,105 +442,8 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.signal_.sig = find_signal(des_, net->sig());
-      expr_->u_.signal_.lsi = net->lsi();
-      expr_->u_.signal_.msi = net->msi();
 }
 
-void dll_target::expr_subsignal(const NetEBitSel*net)
-{
-      assert(expr_ == 0);
-
-      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr);
-
-      expr->type_ = IVL_EX_BITSEL;
-      expr->value_= IVL_VT_VECTOR;
-      expr->width_= net->expr_width();
-      expr->signed_ = net->has_sign()? 1 : 0;
-      expr->u_.bitsel_.sig = find_signal(des_, net->sig());
-
-      assert(expr->u_.bitsel_.sig->lsb_index == net->sig()->lsb());
-
-      net->index()->expr_scan(this);
-      assert(expr_);
-      expr->u_.bitsel_.bit = expr_;
-
-	/* If the lsb of the signal is not 0, then we are about to
-	   lose the proper offset to the normalized vector. Modify the
-	   expression to subtract the offset:
-
-	      reg [7:4] a;
-	      ... = a[x];
-
-	      becomes
-
-	      reg [3:0] a;
-	      ... = a[x-4];
-
-	    to reflect the normalizing of vectors that is done by the
-	    compiler. */
-
-      if (expr->u_.bitsel_.sig->lsb_index != 0) {
-
-	      /* Create in tmpc the constant offset (4 in the above
-		 example) to be subtracted from the index. */
-	    char*bits;
-	    long lsb = expr->u_.bitsel_.sig->lsb_index;
-	    ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-	    tmpc->type_  = IVL_EX_NUMBER;
-	    tmpc->width_ = expr->u_.bitsel_.bit->width_;
-	    tmpc->signed_ = net->index()->has_sign()? 1 : 0;
-	    tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
-	    for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
-		  bits[idx] = (lsb & 1)? '1' : '0';
-		  lsb >>= 1;
-	    }
-
-	      /* Now make the subtractor (x-4 in the above example)
-		 that has as input A the index expression and input B
-		 the constant to subtract. */
-	    ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-	    tmps->type_  = IVL_EX_BINARY;
-	    tmps->width_ = tmpc->width_;
-	    tmps->signed_ = net->index()->has_sign()? 1 : 0;
-	    tmps->u_.binary_.op_  = '-';
-	    tmps->u_.binary_.lef_ = expr->u_.bitsel_.bit;
-	    tmps->u_.binary_.rig_ = tmpc;
-
-	      /* Replace (x) with (x-4) */
-	    expr->u_.bitsel_.bit = tmps;
-
-	      /* If the index item distance (the distance to the next
-		 most significant bit) is not 1, then multiply the
-		 previous result to convert the index. */
-	    if (expr->u_.bitsel_.sig->lsb_dist != 1) {
-		  long dist = expr->u_.bitsel_.sig->lsb_dist;
-
-		  tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-		  tmpc->type_  = IVL_EX_NUMBER;
-		  tmpc->width_ = expr->u_.bitsel_.bit->width_;
-		  tmpc->signed_ = 1;
-		  tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
-		  for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
-			bits[idx] = (dist & 1)? '1' : '0';
-			dist >>= 1;
-		  }
-
-		  tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-		  tmps->type_  = IVL_EX_BINARY;
-		  tmps->width_ = tmpc->width_;
-		  tmps->signed_ = 1;
-		  tmps->u_.binary_.op_  = '*';
-		  tmps->u_.binary_.lef_ = expr->u_.bitsel_.bit;
-		  tmps->u_.binary_.rig_ = tmpc;
-
-		  expr->u_.bitsel_.bit = tmps;
-	    }
-
-      }
-
-      expr_ = expr;
-}
 
 void dll_target::expr_ufunc(const NetEUFunc*net)
 {
@@ -604,6 +507,11 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.40  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.39  2004/06/17 16:06:19  steve
  *  Help system function signedness survive elaboration.
  *

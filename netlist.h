@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.328 2005/01/22 18:16:01 steve Exp $"
+#ident "$Id: netlist.h,v 1.329 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 /*
@@ -2755,7 +2755,10 @@ class NetEParam  : public NetExpr {
  * expressions. The sub-expression is self-sized, and has bits
  * selected from it. The base is the expression that identifies the
  * lsb of the expression, and the wid is the width of the part select,
- * or 1 for a bit select.
+ * or 1 for a bit select. No matter what the subexpression is, the
+ * base is translated in cannonical bits. It is up to the elaborator
+ * to figure this out and adjust the expression if the subexpression
+ * has a non-cannonical base or direction.
  *
  * If the base expression is null, then this expression node can be
  * used to express width expansion, signed or unsigned depending on
@@ -3029,39 +3032,6 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
-};
-
-/*
- * An expression that takes a bit of a signal is represented as
- * one of these. For example, ``foo[x+5]'' is a signal and x+5 is an
- * expression to select a single bit from that signal. I can't just
- * make a new NetESignal node connected to the single net because the
- * expression may vary during execution, so the structure is not known
- * at compile (elaboration) time.
- */
-class NetEBitSel  : public NetExpr {
-
-    public:
-      NetEBitSel(NetESignal*sig, NetExpr*ex);
-      ~NetEBitSel();
-
-      perm_string name() const;
-      const NetExpr*index() const { return idx_; }
-
-      virtual bool set_width(unsigned);
-
-      const NetNet* sig() const;
-
-      NetEBitSel* dup_expr() const;
-
-      virtual NexusSet* nex_input();
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(ostream&) const;
-
-    private:
-	// For now, only support single-bit selects of a signal.
-      NetESignal*sig_;
-      NetExpr* idx_;
 };
 
 
@@ -3406,6 +3376,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.329  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.328  2005/01/22 18:16:01  steve
  *  Remove obsolete NetSubnet class.
  *

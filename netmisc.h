@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.19 2004/03/07 20:04:11 steve Exp $"
+#ident "$Id: netmisc.h,v 1.20 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,6 +58,23 @@ extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
 
 /*
+ * These functions make various sorts of expressions, given operands
+ * of certain type. The order of the operands is preserved in cases
+ * where order matters.
+ *
+ * make_add_expr
+ *   Make a NetEBAdd expresion with <expr> the first argument and
+ *   <val> the second. This may get turned into a subtract if <val> is
+ *   less then zero. If val is exactly zero, then return <expr> as is.
+ *
+ * make_sub_expr
+ *   Make a NetEBAdd(subtract) node that subtracts the given
+ *   expression from the integer value.
+ */
+extern NetExpr*make_add_expr(NetExpr*expr, long val);
+extern NetExpr*make_sub_expr(long val, NetExpr*expr);
+
+/*
  * In some cases the lval is accessible as a pointer to the head of
  * a list of NetAssign_ objects. This function returns the width of
  * the l-value represented by this list.
@@ -75,6 +92,11 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.20  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.19  2004/03/07 20:04:11  steve
  *  MOre thorough use of elab_and_eval function.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.68 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: target.h,v 1.69 2005/01/24 05:28:31 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -142,7 +142,6 @@ struct expr_scan_t {
       virtual void expr_select(const NetESelect*);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
-      virtual void expr_subsignal(const NetEBitSel*);
       virtual void expr_ternary(const NetETernary*);
       virtual void expr_ufunc(const NetEUFunc*);
       virtual void expr_unary(const NetEUnary*);
@@ -171,6 +170,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.69  2005/01/24 05:28:31  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.68  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

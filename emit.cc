@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.80 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: emit.cc,v 1.81 2005/01/24 05:28:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -480,11 +480,6 @@ void NetESignal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_signal(this);
 }
 
-void NetEBitSel::expr_scan(struct expr_scan_t*tgt) const
-{
-      tgt->expr_subsignal(this);
-}
-
 void NetETernary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ternary(this);
@@ -517,6 +512,11 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.81  2005/01/24 05:28:30  steve
+ *  Remove the NetEBitSel and combine all bit/part select
+ *  behavior into the NetESelect node and IVL_EX_SELECT
+ *  ivl_target expression type.
+ *
  * Revision 1.80  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *
