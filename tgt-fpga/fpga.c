@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: fpga.c,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#ident "$Id: fpga.c,v 1.2 2001/08/31 02:59:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,6 +42,37 @@ static int show_process(ivl_process_t net, void*x)
 {
       fprintf(stderr, "fpga target: unsynthesized behavioral code\n");
       return 0;
+}
+
+static void show_root_ports(ivl_scope_t root)
+{
+      unsigned cnt = ivl_scope_sigs(root);
+      unsigned idx;
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(root, idx);
+	    const char*use_name;
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    use_name = ivl_signal_basename(sig);
+	    if (ivl_signal_pins(sig) == 1) {
+		  ivl_nexus_t nex = ivl_signal_pin(sig, 0);
+		  fprintf(xnf, "SIG, %s, PIN=%s\n",
+			  mangle_nexus_name(nex), use_name);
+
+	    } else {
+		  unsigned pin;
+
+		  for (pin = 0 ; pin < ivl_signal_pins(sig); pin += 1) {
+			ivl_nexus_t nex = ivl_signal_pin(sig, pin);
+			fprintf(xnf, "SIG, %s, PIN=%s%u\n",
+				mangle_nexus_name(nex), use_name,
+				pin);
+		  }
+	    }
+      }
 }
 
 /*
@@ -73,6 +104,8 @@ int target_design(ivl_design_t des)
 	   that it is not supported. */
       ivl_design_process(des, show_process, 0);
 
+      show_root_ports(root);
+
 	/* Scan the scopes, looking for gates to draw into the output
 	   netlist. */
       show_scope_gates(root, 0);
@@ -83,6 +116,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.2  2001/08/31 02:59:06  steve
+ *  Add root port SIG records.
+ *
  * Revision 1.1  2001/08/28 04:14:20  steve
  *  Add the fpga target.
  *

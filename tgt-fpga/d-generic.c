@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#ident "$Id: d-generic.c,v 1.2 2001/08/31 02:59:06 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -46,6 +46,7 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    draw_pin(nex, "I0", 'I');
 	    nex = ivl_logic_pin(net, 2);
 	    draw_pin(nex, "I1", 'I');
+	    fprintf(xnf, "END\n");
 	    break;
 
 	  case IVL_LO_BUF:
@@ -55,6 +56,7 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
 	    draw_pin(nex, "I", 'I');
+	    fprintf(xnf, "END\n");
 	    break;
 
 	  default:
@@ -63,7 +65,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
       }
 
-      fprintf(xnf, "END\n");
 }
 
 static void generic_show_dff(ivl_lpm_t net)
@@ -84,7 +85,6 @@ static void generic_show_dff(ivl_lpm_t net)
 }
 
 const struct device_s d_generic = {
-      0,   /* no parent */
       generic_show_logic,
       generic_show_dff
 };
@@ -92,6 +92,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.2  2001/08/31 02:59:06  steve
+ *  Add root port SIG records.
+ *
  * Revision 1.1  2001/08/28 04:14:20  steve
  *  Add the fpga target.
  *
