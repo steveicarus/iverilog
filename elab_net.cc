@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.53 2000/10/30 21:35:40 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.54 2000/11/04 05:06:04 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1555,14 +1555,21 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	   create. It may be smaller then the desired output, but I'll
 	   handle padding below.
 
-	   Create a NetNet object wide enough to hold the result. */
+	   Create a NetNet object wide enough to hold the
+	   result. Also, pad the result values (if necessary) so that
+	   the mux inputs can be fully connected. */
 
       unsigned dwidth = (iwidth > width)? width : iwidth;
-	    
 
       NetNet*sig = new NetNet(scope, des->local_symbol(path),
 			      NetNet::WIRE, width);
       sig->local_flag(true);
+
+      if (fal_sig->pin_count() < dwidth)
+	    fal_sig = pad_to_width(des, path, fal_sig, dwidth);
+
+      if (tru_sig->pin_count() < dwidth)
+	    tru_sig = pad_to_width(des, path, tru_sig, dwidth);
 
 
 	/* Make the device and connect its outputs to the osig and
@@ -1570,30 +1577,15 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	   selector bit to the sel input.
 
 	   The inputs are the 0 (false) connected to fal_sig and 1
-	   (true) connected to tru_sig. Pad the inputs with driven 0
-	   if the tru_sig or fal_sig values are too narrow. */
+	   (true) connected to tru_sig.  */
 
-      NetConst*pad = 0;
       NetMux*mux = new NetMux(des->local_symbol(path), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
-      if ((fal_sig->pin_count() < dwidth) || (tru_sig->pin_count() < dwidth)) {
-	    pad = new NetConst(des->local_symbol(path), verinum::V0);
-	    des->add_node(pad);
-      }
-
       for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 	    connect(mux->pin_Result(idx), sig->pin(idx));
-
-	    if (idx < fal_sig->pin_count())
-		  connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
-	    else
-		  connect(mux->pin_Data(idx,0), pad->pin(0));
-
-	    if (idx < tru_sig->pin_count())
-		  connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
-	    else
-		  connect(mux->pin_Data(idx,1), pad->pin(0));
+	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
+	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
       }
 
 
@@ -1602,7 +1594,7 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
       if (dwidth < width) {
 	    verinum vpad (verinum::V0, width-dwidth);
-	    pad = new NetConst(des->local_symbol(path), vpad);
+	    NetConst*pad = new NetConst(des->local_symbol(path), vpad);
 	    des->add_node(pad);
 	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), pad->pin(idx-dwidth));
@@ -1757,6 +1749,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.54  2000/11/04 05:06:04  steve
+ *  pad different width inputs to muxes. (PR#14)
+ *
  * Revision 1.53  2000/10/30 21:35:40  steve
  *  Detect reverse bit order in part select. (PR#33)
  *
