@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.12 2003/04/23 03:09:25 steve Exp $"
+#ident "$Id: event.cc,v 1.13 2003/11/26 01:47:18 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -111,6 +111,9 @@ void named_event_functor_s::set(vvp_ipoint_t ptr, bool push,
       }
 
       vpip_run_named_event_callbacks(handle);
+
+	/* This event may nest, so progagate if I have an output. */
+      if (out) functor_set(out, 0, St0, true);
 }
 
 /*
@@ -194,6 +197,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.13  2003/11/26 01:47:18  steve
+ *  Propagate named event outputs, if any.
+ *
  * Revision 1.12  2003/04/23 03:09:25  steve
  *  VPI Access to named events.
  *
