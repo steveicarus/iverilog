@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: parse.y,v 1.4 1998/11/11 00:01:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -486,10 +486,10 @@ primitive
 	;
 
 range
-	: '[' NUMBER ':' NUMBER ']'
+	: '[' const_expression ':' const_expression ']'
 		{ list<PExpr*>*tmp = new list<PExpr*>;
-		  tmp->push_back(new PENumber($2));
-		  tmp->push_back(new PENumber($4));
+		  tmp->push_back($2);
+		  tmp->push_back($4);
 		  $$ = tmp;
 		}
 	;

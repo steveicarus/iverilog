@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.4 1998/11/09 19:03:26 steve Exp $"
+#ident "$Id: verinum.cc,v 1.5 1998/11/11 00:01:51 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -207,8 +207,23 @@ ostream& operator<< (ostream&o, const verinum&v)
       return o;
 }
 
+bool operator == (const verinum&left, const verinum&right)
+{
+      if (left.len() != right.len())
+	    return false;
+
+      for (unsigned idx = 0 ;  idx < left.len() ;  idx += 1)
+	    if (left[idx] != right[idx])
+		  return false;
+
+      return true;
+}
+
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.5  1998/11/11 00:01:51  steve
+ *  Check net ranges in declarations.
+ *
  * Revision 1.4  1998/11/09 19:03:26  steve
  *  Oops, forgot return from operator<<
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.2 1998/11/09 18:55:35 steve Exp $"
+#ident "$Id: verinum.h,v 1.3 1998/11/11 00:01:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -73,11 +73,16 @@ class verinum {
 
 
 class ostream;
-ostream& operator<< (ostream&, const verinum&);
-ostream& operator<< (ostream&, verinum::V);
+extern ostream& operator<< (ostream&, const verinum&);
+extern ostream& operator<< (ostream&, verinum::V);
+
+extern bool operator == (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.3  1998/11/11 00:01:51  steve
+ *  Check net ranges in declarations.
+ *
  * Revision 1.2  1998/11/09 18:55:35  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

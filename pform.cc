@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
+#ident "$Id: pform.cc,v 1.3 1998/11/11 00:01:51 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -211,7 +211,14 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
 	    idx ++;
 	    cur->lsb = *idx;
       } else {
-	    VLwarn(yylloc, "net ranges not checked.");
+	    list<PExpr*>::const_iterator idx = range->begin();
+	    PExpr*msb = *idx;
+	    idx ++;
+	    PExpr*lsb = *idx;
+	    if (! (cur->msb->is_the_same(msb) && cur->lsb->is_the_same(lsb)))
+		  VLerror(yylloc, "net ranges are not identical.");
+	    delete msb;
+	    delete lsb;
       }
 }
 
@@ -286,6 +293,9 @@ int pform_parse(FILE*input, list<Module*>&modules)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.3  1998/11/11 00:01:51  steve
+ *  Check net ranges in declarations.
+ *
  * Revision 1.2  1998/11/07 17:05:06  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.3 1998/11/09 18:55:33 steve Exp $"
+#ident "$Id: PExpr.h,v 1.4 1998/11/11 00:01:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -50,6 +50,11 @@ class PExpr {
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
       virtual verinum* eval_const() const;
+
+	// This method returns true if that expression is the same as
+	// this expression. This method is used for comparing
+	// expressions that must be structurally "identical".
+      virtual bool is_the_same(const PExpr*that) const;
 };
 
 ostream& operator << (ostream&, const PExpr&);
@@ -87,6 +92,8 @@ class PENumber : public PExpr {
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const() const;
+
+      virtual bool is_the_same(const PExpr*that) const;
 
     private:
       verinum*const value_;
@@ -139,6 +146,9 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.4  1998/11/11 00:01:51  steve
+ *  Check net ranges in declarations.
+ *
  * Revision 1.3  1998/11/09 18:55:33  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,
