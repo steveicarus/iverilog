@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.81 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.82 2003/10/09 16:52:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -599,7 +599,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
 		  if (ctmp != 0) {
 			const char*name
-			     = lex_strings.add(path_.peek_name(0));
+			     = lex_strings.add(path_.peek_tail_name());
 			NetEConstParam*ptmp
 			     = new NetEConstParam(found_in, name, ctmp->value());
 			delete tmp;
@@ -970,6 +970,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.82  2003/10/09 16:52:52  steve
+ *  Put parameter name in NetEConstParam, not scope.
+ *
  * Revision 1.81  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *
