@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.64 2001/09/16 22:19:42 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.65 2001/10/11 00:13:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -391,6 +391,25 @@ int dll_target::end_design(const Design*)
       return rc;
 }
 
+static void logic_attributes(struct ivl_net_logic_s *obj,
+			     const NetNode*net)
+{
+      obj->nattr_ = net->nattr();
+      if (obj->nattr_ > 0) {
+	    obj->akey_  = (char**)calloc(obj->nattr_, sizeof(char*));
+	    obj->aval_  = (char**)calloc(obj->nattr_, sizeof(char*));
+
+	    for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
+		  obj->akey_[idx] = strdup(net->attr_key(idx));
+		  obj->aval_[idx] = strdup(net->attr_value(idx));
+	    }
+
+      } else {
+	    obj->akey_  = 0;
+	    obj->aval_  = 0;
+      }
+}
+
 /*
  * Add a bufz object to the scope that contains it.
  *
@@ -431,7 +450,10 @@ bool dll_target::bufz(const NetBUFZ*net)
       assert(scope);
 
       obj->scope_ = scope;
+
       obj->name_ = strdup(net->name());
+      logic_attributes(obj, net);
+
       scope_add_logic(scope, obj);
 
       return true;
@@ -560,20 +582,7 @@ void dll_target::logic(const NetLogic*net)
       obj->scope_= scope;
       obj->name_ = strdup(net->name());
 
-      obj->nattr_ = net->nattr();
-      if (obj->nattr_ > 0) {
-	    obj->akey_  = (char**)calloc(obj->nattr_, sizeof(char*));
-	    obj->aval_  = (char**)calloc(obj->nattr_, sizeof(char*));
-
-	    for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
-		  obj->akey_[idx] = strdup(net->attr_key(idx));
-		  obj->aval_[idx] = strdup(net->attr_value(idx));
-	    }
-
-      } else {
-	    obj->akey_  = 0;
-	    obj->aval_  = 0;
-      }
+      logic_attributes(obj, net);
 
       scope_add_logic(scope, obj);
 }
@@ -1550,6 +1559,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.65  2001/10/11 00:13:19  steve
+ *  Initialize attributes for bufz devices.
+ *
  * Revision 1.64  2001/09/16 22:19:42  steve
  *  Support attributes to logic gates.
  *
