@@ -539,8 +539,12 @@ int i;
 if((lt)&&(lt->numfacs))
 	{
 	struct lxt2_wr_symbol *s = lt->symchain;
+	struct lxt2_wr_symbol **aliascache = calloc(lt->numalias, sizeof(struct lxt2_wr_symbol *));
+	int aliases_encountered = 0, facs_encountered = 0;
 
-	if((lt->sorted_facs = (struct lxt2_wr_symbol **)calloc(lt->numfacs, sizeof(struct lxt2_wr_symbol *))))
+	lt->sorted_facs = (struct lxt2_wr_symbol **)calloc(lt->numfacs, sizeof(struct lxt2_wr_symbol *));
+
+	if(lt->sorted_facs && aliascache)
 		{
 		if(lt->do_strip_brackets)
 		for(i=0;i<lt->numfacs;i++)
@@ -556,6 +560,27 @@ if((lt)&&(lt->numfacs))
 			s=s->symchain;
 			}	
 		qsort((void *)lt->sorted_facs, lt->numfacs, sizeof(struct lxt2_wr_symbol *), lxt2_wr_compare);
+
+		/* move facs up */
+		for(i=0;i<lt->numfacs;i++)
+			{
+			if((lt->sorted_facs[i]->flags&LXT2_WR_SYM_F_ALIAS)==0)
+				{
+				lt->sorted_facs[facs_encountered] = lt->sorted_facs[i];
+				facs_encountered++;
+				}
+				else
+				{
+				aliascache[aliases_encountered] = lt->sorted_facs[i];
+				aliases_encountered++;
+				}
+			}
+		/* then append the aliases */
+		for(i=0;i<aliases_encountered;i++)
+			{
+			lt->sorted_facs[facs_encountered+i] = aliascache[i];
+			}
+
 
 		for(i=0;i<lt->numfacs;i++)
 			{
@@ -622,7 +647,11 @@ if((lt)&&(lt->numfacs))
 		lxt2_wr_emit_u32(lt, lt->zfacname_size);		/* backpatch sizes... */
 		lxt2_wr_emit_u32(lt, lt->zfacname_predec_size);
 		lxt2_wr_emit_u32(lt, lt->zfacgeometry_size);
+
+		lt->numfacs = facs_encountered;				/* don't process alias value changes ever */
 		}
+
+	if(aliascache) free(aliascache);
 	}
 }
 
@@ -651,6 +680,26 @@ if(!(lt->handle=fopen(name, "wb")))
 	}
 
 return(lt);
+}
+
+
+/*
+ * enable/disable indexing (for faster reads)
+ */
+void lxt2_wr_set_indexing_off(struct lxt2_wr_trace *lt)
+{
+if(lt)
+	{
+	lt->indexing = 0;
+	}
+}
+
+void lxt2_wr_set_indexing_on(struct lxt2_wr_trace *lt)
+{
+if(lt)
+	{
+	lt->indexing = 1;
+	}
 }
 
 
@@ -788,6 +837,7 @@ if(!flagcnt)
 sa->symchain = lt->symchain;
 lt->symchain = sa;
 lt->numfacs++;
+lt->numalias++;
 if((len=strlen(alias)) > lt->longestname) lt->longestname = len;
 lt->numfacbytes += (len+1);
 
@@ -818,6 +868,7 @@ void lxt2_wr_flush_granule(struct lxt2_wr_trace *lt, int do_finalize)
 {
 unsigned int idx_nbytes, map_nbytes, i, j;
 struct lxt2_wr_symbol *s;
+unsigned int skip = 0;
 
 if(lt->flush_valid)
 	{
@@ -884,6 +935,54 @@ else if(lt->num_map_entries <= 256*256) { map_nbytes = 2; }
 else if(lt->num_map_entries <= 256*256*256) { map_nbytes = 3; }
 else { map_nbytes = 4; }
 
+if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256) { idx_nbytes = 1; }
+else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256) { idx_nbytes = 2; }
+else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256*256) { idx_nbytes = 3; }
+else { idx_nbytes = 4; }
+
+if(lt->indexing)
+	{
+	unsigned int total_chgs = 0;
+	unsigned int total_nbytes;
+
+	for(j=0;j<lt->numfacs;j++)
+		{
+		s=lt->sorted_facs[j];
+		total_chgs += s->chgpos;
+		}
+	total_chgs *= idx_nbytes;
+
+	if(total_chgs < 256) { total_nbytes = 1; }
+	else if(total_chgs < 256*256) { total_nbytes = 2; }
+	else if(total_chgs < 256*256*256) { total_nbytes = 3; }
+	else { total_nbytes = 4; }
+
+	lxt2_wr_emit_u8z(lt, 4+total_nbytes);	/* 5..8 value is an encoding which says we'll be sending out indexing skips */
+	for(j=0;j<lt->numfacs;j++)
+		{
+		switch(total_nbytes)
+			{
+			case 1:	lxt2_wr_emit_u8z(lt, skip); break;
+			case 2: lxt2_wr_emit_u16z(lt, skip); break;
+			case 3: lxt2_wr_emit_u24z(lt, skip); break;
+			case 4: lxt2_wr_emit_u32z(lt, skip); break;
+			}
+
+		s=lt->sorted_facs[j];
+		skip += (s->chgpos * idx_nbytes);
+		}
+
+	switch(total_nbytes)			/* to get past the skip data... */
+		{
+		case 1:	lxt2_wr_emit_u8z(lt, skip); break;
+		case 2: lxt2_wr_emit_u16z(lt, skip); break;
+		case 3: lxt2_wr_emit_u24z(lt, skip); break;
+		case 4: lxt2_wr_emit_u32z(lt, skip); break;
+		}
+
+	gzflush_buffered(lt, 0);
+	}
+
 lxt2_wr_emit_u8z(lt, map_nbytes);
 for(j=0;j<lt->numfacs;j++)
 	{
@@ -903,11 +1002,6 @@ for(j=0;j<lt->numfacs;j++)
 	s->msk = LXT2_WR_GRAN_0VAL;
 	}
 
-
-if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256) { idx_nbytes = 1; }
-else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256) { idx_nbytes = 2; }
-else if((lt->num_dict_entries+LXT2_WR_DICT_START) <= 256*256*256) { idx_nbytes = 3; }
-else { idx_nbytes = 4; }
 
 lxt2_wr_emit_u8z(lt, idx_nbytes);
 gzflush_buffered(lt, 0);

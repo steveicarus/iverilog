@@ -35,7 +35,7 @@
 #define LXT2_WR_VERSION (0x0001)
 
 #define LXT2_WR_GRANULE_SIZE (64)
-#define LXT2_WR_GRANULE_NUM (8)
+#define LXT2_WR_GRANULE_NUM (256)
 
 #define LXT2_WR_GRAN_SECT_TIME 0
 #define LXT2_WR_GRAN_SECT_DICT 1
@@ -142,7 +142,7 @@ unsigned int current_chunk, current_chunkz;
 struct lxt2_wr_symbol *sym[LXT2_WR_SYMPRIME];
 struct lxt2_wr_symbol **sorted_facs;
 struct lxt2_wr_symbol *symchain;
-int numfacs;
+int numfacs, numalias;
 int numfacbytes;
 int longestname;
 
@@ -169,6 +169,7 @@ unsigned timeset : 1;			/* time has been modified from 0..0 */
 unsigned bumptime : 1;			/* says that must go to next time position in granule as value change exists for current time */
 unsigned granule_dirty : 1;		/* for flushing out final block */
 unsigned blackout : 1;			/* blackout on/off */
+unsigned indexing : 1;			/* add relative indexing offsets for faster operation */
 
 char initial_value;
 
@@ -234,6 +235,10 @@ void 			lxt2_wr_close(struct lxt2_wr_trace *lt);
 
 			/* 0 = no compression, 9 = best compression, 4 = default */
 void			lxt2_wr_set_compression_depth(struct lxt2_wr_trace *lt, unsigned int depth);
+
+			/* default is indexing off, turning on makes for faster trace reads */
+void			lxt2_wr_set_indexing_off(struct lxt2_wr_trace *lt);
+void			lxt2_wr_set_indexing_on(struct lxt2_wr_trace *lt);
 
 			/* facility creation */
 void                    lxt2_wr_set_initial_value(struct lxt2_wr_trace *lt, char value);
