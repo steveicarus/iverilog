@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.44 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.45 2002/05/29 22:05:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -196,6 +196,10 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    if (asn->bmux()) {
 		  assert(expr_ == 0);
 		  asn->bmux()->expr_scan(this);
+
+		  if (asn->sig()->lsb() != 0)
+			sub_off_from_expr_(asn->sig()->lsb());
+
 		  cur->type_ = IVL_LVAL_MUX;
 		  cur->idx = expr_;
 		  expr_ = 0;
@@ -813,6 +817,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.45  2002/05/29 22:05:55  steve
+ *  Offset lvalue index expressions.
+ *
  * Revision 1.44  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

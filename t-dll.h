@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.80 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: t-dll.h,v 1.81 2002/05/29 22:05:55 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -150,6 +150,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       void add_root(ivl_design_s &des_, const NetScope *s);
 
+      void sub_off_from_expr_(long);
 };
 
 /*
@@ -604,6 +605,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.81  2002/05/29 22:05:55  steve
+ *  Offset lvalue index expressions.
+ *
  * Revision 1.80  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.23 2002/04/14 02:56:19 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.24 2002/05/29 22:05:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,40 @@
  * expr_ member filled with the ivl_expr_t that represents it. Each
  * method expects that the expr_ member empty (0) when it starts.
  */
+
+/*
+ * This function takes an expression in the expr_ member that is
+ * already built up, and adds a subtraction of the given constant.
+ */
+void dll_target::sub_off_from_expr_(long off)
+{
+      assert(expr_ != 0);
+
+      char*bits;
+      ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      tmpc->type_   = IVL_EX_NUMBER;
+      tmpc->width_  = expr_->width_;
+      tmpc->signed_ = expr_->signed_;
+      tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+      for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
+	    bits[idx] = (off & 1)? '1' : '0';
+	    off >>= 1;
+      }
+
+	/* Now make the subtractor (x-4 in the above example)
+	   that has as input A the index expression and input B
+	   the constant to subtract. */
+      ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      tmps->type_  = IVL_EX_BINARY;
+      tmps->width_ = tmpc->width_;
+      tmps->signed_ = tmpc->signed_;
+      tmps->u_.binary_.op_  = '-';
+      tmps->u_.binary_.lef_ = expr_;
+      tmps->u_.binary_.rig_ = tmpc;
+
+	/* Replace (x) with (x-off) */
+      expr_ = tmps;
+}
 
 
 void dll_target::expr_binary(const NetEBinary*net)
@@ -370,6 +404,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.24  2002/05/29 22:05:54  steve
+ *  Offset lvalue index expressions.
+ *
  * Revision 1.23  2002/04/14 02:56:19  steve
  *  Support signed expressions through to VPI.
  *

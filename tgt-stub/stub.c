@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.61 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: stub.c,v 1.62 2002/05/29 22:05:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,6 +42,12 @@ static void show_expression(ivl_expr_t net, unsigned ind)
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
 
       switch (code) {
+
+	  case IVL_EX_BITSEL:
+	    fprintf(out, "%*s<%s[] width=%u, %s>\n", ind, "",
+		    ivl_signal_name(ivl_expr_signal(net)), width, sign);
+	    show_expression(ivl_expr_oper1(net), ind+3);
+	    break;
 
 	  case IVL_EX_BINARY:
 	    fprintf(out, "%*s<\"%c\" width=%u, %s>\n", ind, "",
@@ -231,7 +237,9 @@ static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 	    unsigned pp;
 	    ivl_nexus_t nex = ivl_lval_pin(lval, 0);
 
-	    fprintf(out, "%*s{%s", ind, "", ivl_nexus_name(nex));
+	    fprintf(out, "%*spart_off=%u {%s", ind, "",
+		    ivl_lval_part_off(lval),
+		    ivl_nexus_name(nex));
 	    fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
 	    for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
 		  nex = ivl_lval_pin(lval, pp);
@@ -688,6 +696,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.62  2002/05/29 22:05:55  steve
+ *  Offset lvalue index expressions.
+ *
  * Revision 1.61  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have
