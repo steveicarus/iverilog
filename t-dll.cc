@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.46 2001/06/15 04:14:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.47 2001/06/15 05:01:09 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -673,6 +673,11 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+/*
+ * Make out of the NetCompare object an ivl_lpm_s object. The
+ * comparators in ivl_target do not support < or <=, but they can be
+ * trivially converted to > and >= by swapping the operands.
+ */
 void dll_target::lpm_compare(const NetCompare*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -680,6 +685,8 @@ void dll_target::lpm_compare(const NetCompare*net)
       assert(net->scope());
       obj->scope = find_scope(des_.root_, net->scope());
       assert(obj->scope);
+
+      bool swap_operands = false;
 
       obj->u_.arith.width = net->width();
 
@@ -705,6 +712,28 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
+      } else if (net->pin_ALEB().is_linked()) {
+	    const Nexus*nex = net->pin_ALEB().nexus();
+	    obj->type = IVL_LPM_CMP_GE;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    swap_operands = true;
+
+      } else if (net->pin_ALB().is_linked()) {
+	    const Nexus*nex = net->pin_ALB().nexus();
+	    obj->type = IVL_LPM_CMP_GT;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    swap_operands = true;
+
       } else {
 	    assert(0);
       }
@@ -712,14 +741,20 @@ void dll_target::lpm_compare(const NetCompare*net)
       for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
 	    const Nexus*nex;
 
-	    nex = net->pin_DataA(idx).nexus();
+	    nex = swap_operands
+		  ? net->pin_DataB(idx).nexus()
+		  : net->pin_DataA(idx).nexus();
+
 	    assert(nex->t_cookie());
 
 	    obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
 
-	    nex = net->pin_DataB(idx).nexus();
+	    nex = swap_operands
+		  ? net->pin_DataA(idx).nexus()
+		  : net->pin_DataB(idx).nexus();
+
 	    assert(nex->t_cookie());
 
 	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
@@ -1145,6 +1180,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.47  2001/06/15 05:01:09  steve
+ *  support LE and LT comparators.
+ *
  * Revision 1.46  2001/06/15 04:14:19  steve
  *  Generate vvp code for GT and GE comparisons.
  *
