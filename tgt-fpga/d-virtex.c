@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.13 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.14 2002/09/14 05:19:19 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -900,7 +900,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
  * of the mux are themselves LUT devices and generate MUXF5 devices in
  * those cases. This currently does *not* do that.
  */
-static void edif_show_virtex_mux(ivl_lpm_t net)
+static void edif_show_virtex_muxs1(ivl_lpm_t net)
 {
       unsigned idx;
       assert(ivl_lpm_width(net) >= 1);
@@ -918,6 +918,91 @@ static void edif_show_virtex_mux(ivl_lpm_t net)
 			   ivl_lpm_data2(net, 1, idx),
 			   ivl_lpm_select(net, 0),
 			   "CA");
+      }
+}
+
+/*
+ * This supports the general mux with two select inputs. This is a 4:1
+ * mux. Use two LUT3 devices and a MUXF5 to form each bit slice of the
+ * full mux. By using a MUXF5, we pretty much confine the bit slice to
+ * a Virtex CLB slice.
+ */
+static void edif_show_virtex_muxs2(ivl_lpm_t net)
+{
+      unsigned idx;
+
+      assert(ivl_lpm_width(net) >= 1);
+      assert(ivl_lpm_selects(net) == 2);
+
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    char tmp_name[1024];
+
+	    edif_uref += 1;
+	    sprintf(tmp_name, "%s<%u>", ivl_lpm_name(net), idx);
+
+	    fprintf(xnf, "(instance U%uA"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance U%uB"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance (rename U%uF \"%s\")"
+		    " (viewRef net"
+		    " (cellRef MUXF5 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n",
+		    edif_uref, tmp_name);
+
+	    fprintf(xnf, "(net U%uAF (joined"
+		    " (portRef O (instanceRef U%uA))"
+		    " (portRef I0 (instanceRef U%uF))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    fprintf(xnf, "(net U%uBF (joined"
+		    " (portRef O (instanceRef U%uB))"
+		    " (portRef I1 (instanceRef U%uF))))\n",
+		    edif_uref, edif_uref, edif_uref);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 0, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 1, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 2, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 3, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef S (instanceRef U%uF))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 1), tmp_name);
+
+	    sprintf(tmp_name, "(portRef O (instanceRef U%uF))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_q(net, idx), tmp_name);
+      }
+}
+
+static void edif_show_virtex_mux(ivl_lpm_t net)
+{
+      switch (ivl_lpm_selects(net)) {
+	  case 1:
+	    edif_show_virtex_muxs1(net);
+	    break;
+	  case 2:
+	    edif_show_virtex_muxs2(net);
+	    break;
+	  default:
+	    assert(0);
+	    break;
       }
 }
 
@@ -1064,6 +1149,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.14  2002/09/14 05:19:19  steve
+ *  Generate Virtex code for 4:1 mux slices.
+ *
  * Revision 1.13  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
