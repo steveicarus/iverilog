@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.89 2003/09/04 20:28:06 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.90 2003/10/25 02:07:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1052,6 +1052,7 @@ static int show_stmt_force(ivl_statement_t net)
       ivl_signal_t lsig;
       unsigned idx;
       static unsigned force_functor_label = 0;
+      char*tmp_label;
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
@@ -1062,12 +1063,14 @@ static int show_stmt_force(ivl_statement_t net)
       assert(ivl_lval_part_off(lval) == 0);
 
       force_functor_label += 1;
+      tmp_label = strdup(vvp_signal_label(lsig));
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "f_%u.%u .force V_%s[%u], %s;\n",
 		    force_functor_label, idx,
-		    vvp_signal_label(lsig), idx,
+		    tmp_label, idx,
 		    draw_net_input(ivl_stmt_nexus(net, idx)));
-      }
+      } 
+      free(tmp_label);
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
 	    fprintf(vvp_out, "    %%force f_%u.%u, 1;\n",
@@ -1557,6 +1560,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.90  2003/10/25 02:07:57  steve
+ *  vvp_signal_label does not return a unique string.
+ *
  * Revision 1.89  2003/09/04 20:28:06  steve
  *  Support time0 resolution of combinational threads.
  *
