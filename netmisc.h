@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.3 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: netmisc.h,v 1.4 2000/03/16 19:03:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -34,7 +34,22 @@ extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
 
 /*
+ * This function chooses a nexus name for the link. The algorithm is
+ * such that any signal in the link will have the same nexus name, and
+ * signals that are not connected together will have a different nexus
+ * name.
+ */
+extern string nexus_from_link(const NetObj::Link*lnk);
+
+
+/*
  * $Log: netmisc.h,v $
+ * Revision 1.4  2000/03/16 19:03:03  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.3  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

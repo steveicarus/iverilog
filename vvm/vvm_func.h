@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.21 2000/03/13 00:02:34 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.22 2000/03/16 19:03:04 steve Exp $"
 #endif
 
 # include  "vvm.h"
+# include  "vvm_signal.h"
 
 /*
  * Implement the unary NOT operator in the verilog way. This takes a
@@ -297,6 +298,12 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.22  2000/03/16 19:03:04  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.21  2000/03/13 00:02:34  steve
  *  Remove unneeded templates.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.107 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.108 2000/03/16 19:03:03 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -28,6 +28,7 @@
 # include  <typeinfo>
 # include  <unistd.h>
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "target.h"
 
   // Comparison for use in sorting algorithms.
@@ -134,6 +135,7 @@ class target_vvm : public target_t {
 	// of things that may be scanned multiple times.
       map<string,bool>esignal_printed_flag;
       map<string,bool>pevent_printed_flag;
+      map<string,bool>nexus_printed_flag;
 
 	// String constants that are made into vpiHandles have th
 	// handle name mapped by this.
@@ -656,7 +658,9 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       start_code.open(start_code_name, ios::in | ios::out | ios::trunc);
 
       os << "# include \"vvm.h\"" << endl;
+      os << "# include \"vvm_nexus.h\"" << endl;
       os << "# include \"vvm_gates.h\"" << endl;
+      os << "# include \"vvm_signal.h\"" << endl;
       os << "# include \"vvm_func.h\"" << endl;
       os << "# include \"vvm_calltf.h\"" << endl;
       os << "# include \"vvm_thread.h\"" << endl;
@@ -666,11 +670,6 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       process_counter = 0;
       string_counter = 1;
       number_counter = 1;
-
-#if 0
-      os << "static struct __vpiStringConst string_table[];" << endl;
-      os << "static struct __vpiNumberConst number_table[];" << endl;
-#endif
 
       init_code << "static void design_init()" << endl;
       init_code << "{" << endl;
@@ -802,6 +801,19 @@ bool target_vvm::process(ostream&os, const NetProcTop*top)
 void target_vvm::signal(ostream&os, const NetNet*sig)
 {
       string net_name = mangle(sig->name());
+
+      for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&sig->pin(idx)));
+
+	    if (! nexus_printed_flag[nexus]) {
+		  nexus_printed_flag[nexus] = true;
+		  os << "vvm_nexus_wire " << nexus << "_nex;" << endl;
+	    }
+
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  net_name << ", " << idx << ");" << endl;
+      }
+
       os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
 	    net_name<< "_bits; /* " << sig->name() <<
 	    " */" << endl;
@@ -1005,21 +1017,44 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
       os << "static vvm_add_sub<" << gate->width() << "> " <<
 	    mangle(gate->name()) << ";" << endl;
 
+	/* Connect the DataA inputs. */
+
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    unsigned pin = gate->pin_DataA(idx).get_pin();
+	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " <<
+		  mangle(gate->name()) << ".key_DataA(" << idx <<
+		  "));" << endl;
+      }
+
+	/* Connect the DataB inputs. */
+
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    unsigned pin = gate->pin_DataB(idx).get_pin();
+	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " <<
+		  mangle(gate->name()) << ".key_DataB(" << idx <<
+		  "));" << endl;
+      }
+
+	/* Connect the outputs of the adder. */
+
       for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
 	    unsigned pin = gate->pin_Result(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
+	    init_code << "      " << nexus << "_nex.connect(" <<
+		  mangle(gate->name()) << ".config_rout(" << idx <<
+		  "));" << endl;
       }
 
 	// Connect the carry output if necessary.
       if (gate->pin_Cout().is_linked()) {
 	    unsigned pin = gate->pin_Cout().get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_cout(&" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
+	    init_code << "      " << nexus << "_nex.connect(" <<
+		  mangle(gate->name()) << ".config_cout());" << endl;
       }
 
       if (gate->attribute("LPM_Direction") == "ADD") {
@@ -1153,55 +1188,70 @@ void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
 {
-      string outfun = defn_gate_outputfun_(os, gate, 0);
+
+	/* Draw the definition of the gate object. The exact type to
+	   use depends on the gate type. Whatever the type, the basic
+	   format is the same for all the boolean gates. */
 
       switch (gate->type()) {
 	  case NetLogic::AND:
-	    os << "static vvm_and" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::BUF:
-	    os << "static vvm_buf<" << gate->rise_time() << "> ";
+	    os << "static vvm_buf ";
 	    break;
 	  case NetLogic::BUFIF0:
-	    os << "static vvm_bufif0<" << gate->rise_time() << "> ";
+	    os << "static vvm_bufif0 ";
 	    break;
 	  case NetLogic::BUFIF1:
-	    os << "static vvm_bufif1<" << gate->rise_time() << "> ";
+	    os << "static vvm_bufif1 ";
 	    break;
 	  case NetLogic::NAND:
-	    os << "static vvm_nand" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOR:
-	    os << "static vvm_nor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOT:
-	    os << "static vvm_not" << "<" << gate->rise_time() << "> ";
+	    os << "static vvm_not ";
 	    break;
 	  case NetLogic::OR:
-	    os << "static vvm_or" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_or" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::XNOR:
-	    os << "static vvm_xnor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_xnor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::XOR:
-	    os << "static vvm_xor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->rise_time() << "> ";
+	    os << "static vvm_xor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  default:
 	    os << "#error \"internal ivl error:bad gate type for " <<
 		  gate->name() << "\"" << endl;
       }
 
-      os << mangle(gate->name()) << "(&" << outfun << ");" << endl;
+      os << mangle(gate->name()) << " (" << gate->rise_time() << ");" << endl;
 
-      emit_gate_outputfun_(gate, 0);
+	/* Write the code to invoke startup for this object. */
 
       start_code << "      " << mangle(gate->name()) << ".start();" << endl;
+
+
+	/* Connect the output and all the inputs of the gate to the
+	   nexus objects, one bit at a time. */
+
+      init_code << "      //  Connect inputs to gate " << gate->name()
+		<< "." << endl;
+
+      { string nexus = mangle(nexus_from_link(&gate->pin(0)));
+        init_code << "      " << nexus << "_nex.connect(&" <<
+	      mangle(gate->name()) << ");" << endl;
+      }
+
+      for (unsigned idx = 1 ;  idx < gate->pin_count() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " << (idx-1) << ");" << endl;
+      }
 }
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
@@ -1296,6 +1346,7 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
  */
 void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 {
+#ifdef REMOVE_ME_WHEN_NB_ASSIGN_IS_DONE
       const string name = mangle(net->name());
       unsigned iwid = net->pin_count();
       os << "class " << name << " : public vvm_event {" << endl;
@@ -1381,22 +1432,32 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 	    }
       }
       delayed << "}" << endl;
+#endif
 }
 
 void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 {
-      const NetObj::Link&lnk = gate->pin(0);
-
-      os << "static void " << mangle(gate->name()) <<
-	"_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
-	"(vpip_bit_t);" << endl;
+      string nexus;
 
       assert(gate->pin_count() == 3);
-      os << "static vvm_eeq" << "<" << gate->rise_time() << "> "
-	 << mangle(gate->name()) << "(&" << mangle(gate->name()) <<
-	"_output_" << lnk.get_name() << "_" << lnk.get_inst() << ");" << endl;
+      os << "static vvm_eeq " << mangle(gate->name()) << "(" <<
+	    gate->rise_time() << ");" << endl;
 
-      emit_gate_outputfun_(gate, 0);
+	/* Connect the output pin */
+      nexus = mangle(nexus_from_link(&gate->pin(0)));
+      init_code << "      " << nexus << "_nex.connect(&" <<
+	    mangle(gate->name()) << ");" << endl;
+
+	/* Connect the first input */
+      nexus = mangle(nexus_from_link(&gate->pin(1)));
+      init_code << "      " << nexus << "_nex.connect(&" <<
+	    mangle(gate->name()) << ", 0);" << endl;
+
+	/* Connect the second input */
+      nexus = mangle(nexus_from_link(&gate->pin(2)));
+      init_code << "      " << nexus << "_nex.connect(&" <<
+	    mangle(gate->name()) << ", 1);" << endl;
+
 
       start_code << "      " << mangle(gate->name()) << ".start();" << endl;
 }
@@ -1449,6 +1510,16 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 	    break;
       }
       os << ");" << endl;
+
+
+	/* Connect this device as a receiver to the nexus that is my
+	   source. Write the connect calls into the init code. */
+
+      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " << idx << ");" << endl;
+      }
 }
 
 void target_vvm::start_process(ostream&os, const NetProcTop*proc)
@@ -1531,6 +1602,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    defn << "      }" << endl;
 
       } else {
+#if 0
 	      /* Not only is the lvalue signal assigned to, send the
 		 bits to all the other pins that are connected to this
 		 signal. */
@@ -1562,6 +1634,13 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			      ", " << rval << "[" << idx << "]);" << endl;
 		  }
 	    }
+#else
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
+		  defn << "      " << nexus << "_nex.reg_assign(" <<
+			rval << "[" << idx << "]);" << endl;
+	    }
+#endif
       }
 }
 
@@ -1607,9 +1686,18 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 		 << "-> schedule(" << net->rise_time() << ");" << endl;
 
       } else {
+	    const unsigned long delay = net->rise_time();
+	    for (unsigned idx = 0 ; idx < net->pin_count() ;  idx += 1) {
+		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
+		  defn << "      vvm_delayed_assign(" << nexus <<
+			"_nex, " << rval << "[" << idx << "], " <<
+			delay << ");" << endl;
+	    }
+#ifdef REMOVE_ME_WHEN_NB_ASSIGN_IS_DONE
 	    defn << "      (new " << mangle(net->name()) << "("
 		 << rval << ")) -> schedule(" << net->rise_time() <<
 		  ");" << endl;
+#endif
       }
 }
 
@@ -2174,6 +2262,12 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.108  2000/03/16 19:03:03  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.107  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

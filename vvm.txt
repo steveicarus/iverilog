@@ -27,6 +27,47 @@ On any system, the compiled program requires that the VPI_MODULE_PATH
 be set to a ':' separated list of directories to search for vpi files,
 the system.vpi file in particular. This is a run time requirement.
 
+NEXUS, GATES AND DRIVERS
+
+The vvm library allows the user (the t-vvm code generator from its
+point of view) to build up a netlist of gates that operate like
+hardware components. The basic unit of connectivity in the vvm_nexus
+class.
+
+A vvm_nexus object represents a nexus of a netlist: that is, a point
+where drivers and receivers are connected together. The nexus class
+defines the sub-classes (not derived classes) driver_t and recvr_t
+that objects and code use to connect to the nexus. The nexus also has
+a reg_assign() method for simulating procedural assignment.
+
+The driver_t class is a means to drive (as opposed to assign) a value
+onto the nexus. Gates with outputs have drive_t objects that they can
+connect to exactly one nexus.
+
+The recvr_t class is where the nexus delivers the resolved
+value. Receiver objects are actually able to represent many pins of a
+device, although a nexus is connected to only one. This is managed by
+passing to the nexus a pointer to the object and a key that the
+receiver uses to identify the pin. This is done so that the gate class
+can derive from the recvr_t class and support multiple input pins.
+
+The vvm_nexus class connects to any number of drivers and any number
+of receivers. This is how fan-in and fan-out are achieved in a design
+under test. When a connected driver gets a new value, the vvm_nexus
+object scans all the drivers and collects the values that are being
+driven. It passes the set to a resolution function that calculates the
+actual value that the vvm_nexus will take, then passes that value to
+all the receivers.
+
+If there are no drivers, the vvm_nexus can also receive a value from
+procedural assignment, via the reg_assign() method. When assigned in
+this manner, the vvm_nexus simply takes the value given to it and
+passes it to all the receivers. The vvm_nexus holds the last value
+assigned, and does not perform any resolution.
+
+The vvm/vvm_nexus.h header file describes the vvm_nexus and related
+classes.
+
 ATTRIBUTES
 
 (none)
@@ -110,8 +151,14 @@ bits are at:
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
- $Id: vvm.txt,v 1.4 1999/12/30 17:37:14 steve Exp $
+ $Id: vvm.txt,v 1.5 2000/03/16 19:03:04 steve Exp $
  $Log: vvm.txt,v $
+ Revision 1.5  2000/03/16 19:03:04  steve
+  Revise the VVM backend to use nexus objects so that
+  drivers and resolution functions can be used, and
+  the t-vvm module doesn't need to write a zillion
+  output functions.
+
  Revision 1.4  1999/12/30 17:37:14  steve
   Remove the now useless sigfold functor.
 

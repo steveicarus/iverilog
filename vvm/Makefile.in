@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.20 2000/03/13 00:02:34 steve Exp $"
+#ident "$Id: Makefile.in,v 1.21 2000/03/16 19:03:04 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -59,7 +59,7 @@ all: libvvm.a
 	mv $*.d dep
 
 O = vvm_bit.o vvm_calltf.o vvm_event.o vvm_func.o vvm_gates.o vvm_mult.o \
-vvm_pevent.o vvm_thread.o vpip.o
+vvm_nexus.o vvm_pevent.o vvm_signal.o vvm_thread.o vpip.o
 
 P = vpi_callback.o \
 vpi_const.o vpi_iter.o vpi_memory.o vpi_null.o \
@@ -80,6 +80,8 @@ install: all installdirs $(libdir)/libvvm.a \
 	$(includedir)/vpi_priv.h \
 	$(includedir)/vvm_func.h \
 	$(includedir)/vvm_gates.h \
+	$(includedir)/vvm_nexus.h \
+	$(includedir)/vvm_signal.h \
 	$(includedir)/vvm_thread.h \
 	$(includedir)/vvm_calltf.h
 
@@ -98,6 +100,12 @@ $(includedir)/vvm_func.h: $(srcdir)/vvm_func.h
 $(includedir)/vvm_gates.h: $(srcdir)/vvm_gates.h
 	$(INSTALL_DATA) $(srcdir)/vvm_gates.h $(includedir)/vvm_gates.h
 
+$(includedir)/vvm_nexus.h: $(srcdir)/vvm_nexus.h
+	$(INSTALL_DATA) $(srcdir)/vvm_nexus.h $(includedir)/vvm_nexus.h
+
+$(includedir)/vvm_signal.h: $(srcdir)/vvm_signal.h
+	$(INSTALL_DATA) $(srcdir)/vvm_signal.h $(includedir)/vvm_signal.h
+
 $(includedir)/vvm_thread.h: $(srcdir)/vvm_thread.h
 	$(INSTALL_DATA) $(srcdir)/vvm_thread.h $(includedir)/vvm_thread.h
 
@@ -113,6 +121,8 @@ uninstall:
 	rm -f $(includedir)/vvm_calltf.h
 	rm -f $(includedir)/vvm_func.h
 	rm -f $(includedir)/vvm_gates.h
+	rm -f $(includedir)/vvm_nexus.h
+	rm -f $(includedir)/vvm_signal.h
 	rm -f $(includedir)/vvm_thread.h
 	rm -f $(includedir)/vpi_priv.h
 

@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.37 2000/02/23 04:43:43 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.38 2000/03/16 19:03:04 steve Exp $"
 #endif
 
 # include  "vvm.h"
+# include  "vvm_signal.h"
 # include  <assert.h>
 
 extern vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count);
@@ -36,6 +37,8 @@ extern void compute_mux(vpip_bit_t*out, unsigned wid,
 			const vpip_bit_t*sel, unsigned swid,
 			const vpip_bit_t*dat, unsigned size);
 
+
+
 /*
  * A vvm gate is constructed with an input width and an output
  * function. The input width represents all the input signals that go
@@ -47,27 +50,26 @@ extern void compute_mux(vpip_bit_t*out, unsigned wid,
 class vvm_out_event  : public vvm_event {
 
     public:
-      typedef void (*action_t)(vpip_bit_t);
+      typedef void (*action_t)(vpip_bit_t); // XXXX Remove me!
 
-      vvm_out_event(vpip_bit_t v, action_t o);
+      vvm_out_event(vpip_bit_t v, vvm_nexus::drive_t*o);
       ~vvm_out_event();
 
       void event_function();
 
     private:
-      const action_t output_;
+      vvm_nexus::drive_t*output_;
       const vpip_bit_t val_;
 };
 
-class vvm_1bit_out {
+class vvm_1bit_out  : public vvm_nexus::drive_t  {
 
     public:
-      vvm_1bit_out(vvm_out_event::action_t, unsigned delay);
+      vvm_1bit_out(unsigned delay);
       ~vvm_1bit_out();
       void output(vpip_bit_t);
 
     private:
-      vvm_out_event::action_t output_;
       unsigned delay_;
 };
 
@@ -78,20 +80,24 @@ class vvm_1bit_out {
  * subtractor, the device works by adding the 2s complement of
  * DataB.
  */
-template <unsigned WIDTH> class vvm_add_sub {
+template <unsigned WIDTH> class vvm_add_sub : public vvm_nexus::recvr_t {
 
     public:
-      vvm_add_sub() : ndir_(V0), co_(0) { }
+      vvm_add_sub() : ndir_(V0) { }
 
-      void config_rout(unsigned idx, vvm_out_event::action_t a)
-	    { o_[idx] = a;
-	      r_[idx] = Vx;
+      vvm_nexus::drive_t* config_rout(unsigned idx)
+	    { r_[idx] = Vx;
+	      assert(idx < WIDTH);
+	      return ro_+idx;
 	    }
 
-      void config_cout(vvm_out_event::action_t a)
-	    { co_ = a;
-	      c_ = Vx;
+      vvm_nexus::drive_t* config_cout()
+	    { c_ = Vx;
+	      return &co_;
 	    }
+
+      unsigned key_DataA(unsigned idx) const { return idx; }
+      unsigned key_DataB(unsigned idx) const { return idx|0x10000; }
 
       void init_DataA(unsigned idx, vpip_bit_t val)
 	    { a_[idx] = val;
@@ -117,6 +123,12 @@ template <unsigned WIDTH> class vvm_add_sub {
 	    }
 
     private:
+      void take_value(unsigned key, vpip_bit_t val)
+      { if (key&0x10000) set_DataB(key&0xffff, val);
+        else set_DataA(key&0xffff, val);
+      }
+
+    private:
       vpip_bit_t a_[WIDTH];
       vpip_bit_t b_[WIDTH];
       vpip_bit_t r_[WIDTH];
@@ -126,8 +138,8 @@ template <unsigned WIDTH> class vvm_add_sub {
 	// and 1 for subtract.
       vpip_bit_t ndir_;
 
-      vvm_out_event::action_t o_[WIDTH];
-      vvm_out_event::action_t co_;
+      vvm_nexus::drive_t ro_[WIDTH];
+      vvm_nexus::drive_t co_;
 
       void compute_()
 	    { vpip_bit_t carry = ndir_;
@@ -136,27 +148,29 @@ template <unsigned WIDTH> class vvm_add_sub {
 		    val = add_with_carry(a_[idx], b_[idx] ^ ndir_, carry);
 		    if (val == r_[idx]) continue;
 		    r_[idx] = val;
-		    if (o_[idx] == 0) continue;
-		    vvm_event*ev = new vvm_out_event(val, o_[idx]);
+		    vvm_event*ev = new vvm_out_event(val, ro_+idx);
 		    ev->schedule();
 	      }
-	      if (co_ && (carry != c_))
-		    (new vvm_out_event(carry, co_)) -> schedule();
+	      if (carry != c_)
+		    (new vvm_out_event(carry, &co_)) -> schedule();
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY>
-class vvm_and  : private vvm_1bit_out {
+template <unsigned WIDTH>
+class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_and(vvm_out_event::action_t o)
-      : vvm_1bit_out(o, DELAY) { }
+      explicit vvm_and(unsigned d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start()
 	    { output(compute_and(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val) return;
@@ -495,18 +509,21 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY> 
-class vvm_or : private vvm_1bit_out {
+template <unsigned WIDTH> 
+class vvm_or : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_or(vvm_out_event::action_t o)
-      : vvm_1bit_out(o,DELAY) { }
+      explicit vvm_or(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start()
 	    { output(compute_or(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
@@ -519,18 +536,21 @@ class vvm_or : private vvm_1bit_out {
       vpip_bit_t input_[WIDTH];
 };
 
-template <unsigned WIDTH, unsigned long DELAY>
-class vvm_nor  : private vvm_1bit_out {
+template <unsigned WIDTH>
+class vvm_nor  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_nor(vvm_out_event::action_t o)
-      : vvm_1bit_out(o, DELAY) { }
+      explicit vvm_nor(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start()
 	    { output(compute_nor(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
@@ -539,7 +559,6 @@ class vvm_nor  : private vvm_1bit_out {
 	      output(compute_nor(input_,WIDTH));
 	    }
 
-    private:
       vpip_bit_t input_[WIDTH];
 };
 
@@ -688,18 +707,21 @@ template <unsigned long DELAY> class vvm_bufif1 {
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY> 
-class vvm_nand : private vvm_1bit_out {
+template <unsigned WIDTH> 
+class vvm_nand : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_nand(vvm_out_event::action_t o)
-      : vvm_1bit_out(o, DELAY) { }
+      explicit vvm_nand(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start()
 	    { output(compute_nand(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val) return;
@@ -714,14 +736,17 @@ class vvm_nand : private vvm_1bit_out {
 /*
  * Simple inverter buffer.
  */
-template <unsigned long DELAY> class vvm_not  : private vvm_1bit_out {
+class vvm_not  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_not(vvm_out_event::action_t o)
-      : vvm_1bit_out(o, DELAY) { }
+      explicit vvm_not(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned, vpip_bit_t) { }
       void start() { }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned, vpip_bit_t val)
 	    { output(v_not(val)); }
@@ -729,17 +754,20 @@ template <unsigned long DELAY> class vvm_not  : private vvm_1bit_out {
     private:
 };
 
-template <unsigned WIDTH, unsigned long DELAY> 
-class vvm_xnor : private vvm_1bit_out {
+template <unsigned WIDTH> 
+class vvm_xnor : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_xnor(vvm_out_event::action_t o)
-      : vvm_1bit_out(o,DELAY) { }
+      explicit vvm_xnor(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
 
       void start()
 	    { output(compute_xnor(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
@@ -752,18 +780,21 @@ class vvm_xnor : private vvm_1bit_out {
       vpip_bit_t input_[WIDTH];
 };
 
-template <unsigned WIDTH, unsigned long DELAY> 
-class vvm_xor : private vvm_1bit_out {
+template <unsigned WIDTH> 
+class vvm_xor : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_xor(vvm_out_event::action_t o)
-      : vvm_1bit_out(o,DELAY) { }
+      explicit vvm_xor(unsigned long d)
+      : vvm_1bit_out(d) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start()
 	    { output(compute_xor(input_,WIDTH)); }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
 
       void set_I(unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
@@ -779,38 +810,22 @@ class vvm_xor : private vvm_1bit_out {
  * This gate has only 3 pins, the output at pin 0 and two inputs. The
  * output is 1 or 0 if the two inputs are exactly equal or not.
  */
-template <unsigned long DELAY> class vvm_eeq {
+class vvm_eeq  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_eeq(vvm_out_event::action_t o)
-      : output_(o) { }
+      explicit vvm_eeq(unsigned long d);
+      ~vvm_eeq();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { vvm_event*ev = new vvm_out_event(compute_(), output_);
-	      ev->schedule(DELAY);
-	    }
-
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		    return;
-	      input_[idx] = val;
-	      start();
-	    }
+      void start();
 
     private:
+      void take_value(unsigned key, vpip_bit_t val);
 
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = V0;
-	      if (input_[0] == input_[1])
-		    outval = V1;
-	      return outval;
-	    }
+      vpip_bit_t compute_() const;
 
       vpip_bit_t input_[2];
-      vvm_out_event::action_t output_;
 };
 
 /*
@@ -916,7 +931,7 @@ class vvm_sync {
       vvm_sync& operator= (const vvm_sync&);
 };
 
-template <unsigned WIDTH> class vvm_pevent {
+template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
     public:
       enum EDGE { ANYEDGE, POSEDGE, NEGEDGE };
 
@@ -927,6 +942,14 @@ template <unsigned WIDTH> class vvm_pevent {
 	    }
 
       vvm_bitset_t<WIDTH> get() const { return value_; }
+
+      void init_P(int idx, vpip_bit_t val)
+	    { assert(idx < WIDTH);
+	      value_[idx] = val;
+	    }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val) { set_P(key, val); }
 
       void set_P(unsigned idx, vpip_bit_t val)
 	    { if (value_[idx] == val) return;
@@ -946,11 +969,6 @@ template <unsigned WIDTH> class vvm_pevent {
 	      value_[idx] = val;
 	    }
 
-      void init_P(int idx, vpip_bit_t val)
-	    { assert(idx < WIDTH);
-	      value_[idx] = val;
-	    }
-
     private:
       vvm_sync*target_;
       vvm_bitset_t<WIDTH> value_;
@@ -963,6 +981,12 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.38  2000/03/16 19:03:04  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.37  2000/02/23 04:43:43  steve
  *  Some compilers do not accept the not symbol.
  *

@@ -23,12 +23,12 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.6 2000/02/24 01:56:28 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.7 2000/03/16 19:03:04 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
 
-vvm_out_event::vvm_out_event(vpip_bit_t v, action_t o)
+vvm_out_event::vvm_out_event(vpip_bit_t v, vvm_nexus::drive_t*o)
 : output_(o), val_(v)
 {
 }
@@ -39,11 +39,11 @@ vvm_out_event::~vvm_out_event()
 
 void vvm_out_event::event_function()
 {
-      output_(val_);
+      output_->set_value(val_);
 }
 
-vvm_1bit_out::vvm_1bit_out(vvm_out_event::action_t o, unsigned d)
-: output_(o), delay_(d)
+vvm_1bit_out::vvm_1bit_out(unsigned d)
+: delay_(d)
 {
 }
 
@@ -53,7 +53,7 @@ vvm_1bit_out::~vvm_1bit_out()
 
 void vvm_1bit_out::output(vpip_bit_t val)
 {
-      vvm_event*ev = new vvm_out_event(val, output_);
+      vvm_event*ev = new vvm_out_event(val, this);
       ev -> schedule(delay_);
 }
 
@@ -140,9 +140,50 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
       }
 }
 
+vvm_eeq::vvm_eeq(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_eeq::~vvm_eeq()
+{
+}
+
+void vvm_eeq::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_eeq::start()
+{
+      output(compute_());
+}
+
+void vvm_eeq::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val)
+	    return;
+      input_[key] = val;
+      output(compute_());
+}
+
+vpip_bit_t vvm_eeq::compute_() const
+{
+      vpip_bit_t outval = V0;
+      if (input_[0] == input_[1])
+	    outval = V1;
+      return outval;
+}
+
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.7  2000/03/16 19:03:04  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.6  2000/02/24 01:56:28  steve
  *  change not to v_not.
  *

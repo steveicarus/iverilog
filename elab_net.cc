@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.24 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.25 2000/03/16 19:03:03 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -546,8 +546,17 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
 				  1+lsig->pin_count(), NetLogic::OR);
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
 		  connect(gate_t->pin(idx+1), lsig->pin(idx));
+
 	    connect(gate->pin(1), gate_t->pin(0));
+
+	      /* The reduced logical value is a new nexus, create a
+		 temporary signal to represent it. */
+	    NetNet*tmp = new NetTmp(des->local_symbol(path));
+	    connect(gate->pin(1), tmp->pin(0));
+
 	    des->add_node(gate_t);
+	    des->add_signal(tmp);
+
       } else {
 	    connect(gate->pin(1), lsig->pin(0));
       }
@@ -559,7 +568,15 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 		  connect(gate_t->pin(idx+1), rsig->pin(idx));
 	    connect(gate->pin(2), gate_t->pin(0));
+
+	      /* The reduced logical value is a new nexus, create a
+		 temporary signal to represent it. */
+	    NetNet*tmp = new NetTmp(des->local_symbol(path));
+	    connect(gate->pin(2), tmp->pin(0));
+
 	    des->add_node(gate_t);
+	    des->add_signal(tmp);
+
       } else {
 	    connect(gate->pin(2), rsig->pin(0));
       }
@@ -1336,6 +1353,12 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.25  2000/03/16 19:03:03  steve
+ *  Revise the VVM backend to use nexus objects so that
+ *  drivers and resolution functions can be used, and
+ *  the t-vvm module doesn't need to write a zillion
+ *  output functions.
+ *
  * Revision 1.24  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters
