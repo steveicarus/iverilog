@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.cc,v 1.2 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: util.cc,v 1.3 2001/07/16 18:20:27 steve Exp $"
 #endif
 
 # include  "util.h"
@@ -25,7 +25,7 @@
 string parse_first_name(string&path)
 {
       unsigned pos = path.find('.');
-      if (pos > path.length()) {
+      if (path[0]=='\\' || pos > path.length()) {
 	    string res = path;
 	    path = "";
 	    return res;
@@ -39,7 +39,7 @@ string parse_first_name(string&path)
 string parse_last_name(string&path)
 {
       unsigned pos = path.rfind('.');
-      if (pos > path.length()) {
+      if (path[0]=='\\' || pos > path.length()) {
 	    string res = path;
 	    path = "";
 	    return res;
@@ -52,6 +52,9 @@ string parse_last_name(string&path)
 
 /*
  * $Log: util.cc,v $
+ * Revision 1.3  2001/07/16 18:20:27  steve
+ *  dot in escaped identifiers are not scope. (Stephan Boettcher)
+ *
  * Revision 1.2  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.
