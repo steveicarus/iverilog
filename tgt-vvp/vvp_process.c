@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.93.2.1 2004/12/12 04:25:10 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.93.2.2 2005/01/28 18:29:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -161,18 +161,39 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
  * This function, in addition to setting the value into index 0, sets
  * bit 4 to 1 if the value is unknown.
  */
+void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
+{
+      struct vector_info vec;
+      int word;
+
+      switch (ivl_expr_value(expr)) {
+
+	  case IVL_VT_VECTOR:
+	    vec = draw_eval_expr(expr, 0);
+	    fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
+		    ix, vec.base, vec.wid);
+	    clr_vector(vec);
+	    break;
+
+	  case IVL_VT_REAL:
+	    word = draw_eval_real(expr);
+	    clr_word(word);
+	    fprintf(vvp_out, "    %%cvt/ir %u, %u;\n", ix, word);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+}
+
 static void calculate_into_x0(ivl_expr_t expr)
 {
-      struct vector_info vec = draw_eval_expr(expr, 0);
-      fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", vec.base, vec.wid);
-      clr_vector(vec);
+      draw_eval_expr_into_integer(expr, 0);
 }
 
 static void calculate_into_x1(ivl_expr_t expr)
 {
-      struct vector_info vec = draw_eval_expr(expr, 0);
-      fprintf(vvp_out, "    %%ix/get 1, %u, %u;\n", vec.base, vec.wid);
-      clr_vector(vec);
+      draw_eval_expr_into_integer(expr, 1);
 }
 
 /*
@@ -1628,6 +1649,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.93.2.2  2005/01/28 18:29:29  steve
+ *  Add ability to compile real values into index registers.
+ *
  * Revision 1.93.2.1  2004/12/12 04:25:10  steve
  *  Fix leak of word registers in code generator.
  *
