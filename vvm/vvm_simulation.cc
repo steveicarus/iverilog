@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_simulation.cc,v 1.5 1999/09/29 02:53:33 steve Exp $"
+#ident "$Id: vvm_simulation.cc,v 1.6 1999/10/06 01:28:18 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -132,7 +132,7 @@ void vvm_simulation::run()
 	    time_ += sim_->delay;
 	    sim_->delay = 0;
 
-	    for (;;) {
+	    while (going_) {
 		    /* Look for some events to make active. If the
 		       main event list is empty, then activate the
 		       nonblock list. */
@@ -150,13 +150,19 @@ void vvm_simulation::run()
 		  if (active == 0)
 			break;
 
-		  while (active) {
+		  while (active && going_) {
 			vvm_event*cur = active;
 			active = cur->next_;
 			cur->event_function();
 			delete cur;
 		  }
 	    }
+
+	      /* If the simulation was stopped by one of the events,
+		 then break out of the loop before doing any monitor
+		 events, and before clearing the current time. */
+	    if (!going_)
+		  break;
 
 	      /* XXXX Execute monitor events here. */
 	    if (mon_) {
@@ -193,6 +199,11 @@ void vvm_simulation::s_finish()
       going_ = false;
 }
 
+bool vvm_simulation::finished() const
+{
+      return !going_;
+}
+
 void vvm_simulation::thread_delay(unsigned long delay, vvm_thread*thr)
 {
       delay_event*ev = new delay_event(thr);
@@ -208,6 +219,9 @@ void vvm_simulation::thread_active(vvm_thread*thr)
 
 /*
  * $Log: vvm_simulation.cc,v $
+ * Revision 1.6  1999/10/06 01:28:18  steve
+ *  The $finish task should work immediately.
+ *
  * Revision 1.5  1999/09/29 02:53:33  steve
  *  Useless assertion.
  *

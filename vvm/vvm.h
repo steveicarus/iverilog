@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.13 1999/10/05 04:02:10 steve Exp $"
+#ident "$Id: vvm.h,v 1.14 1999/10/06 01:28:18 steve Exp $"
 #endif
 
 # include  <vector>
@@ -227,7 +227,11 @@ class vvm_simulation {
 
       unsigned long get_sim_time() const { return time_; }
 
+	// The s_finish() method marks the simulation as finished and
+	// prevents more events being executed. The finished() method
+	// returns true if the s_finish() method has been called.
       void s_finish();
+      bool finished() const;
 
     private:
       bool going_;
@@ -300,6 +304,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.14  1999/10/06 01:28:18  steve
+ *  The $finish task should work immediately.
+ *
  * Revision 1.13  1999/10/05 04:02:10  steve
  *  Relaxed width handling for <= assignment.
  *

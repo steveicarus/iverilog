@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.58 1999/10/05 06:19:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.59 1999/10/06 01:28:18 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1498,7 +1498,7 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 
       defn << "      vvm_calltask(sim_, \"" << net->name() << "\", " <<
 	    net->nparms() << ", " << ptmp << ");" << endl;
-
+      defn << "      if (sim_->finished()) return false;" << endl;
 }
 
 void target_vvm::proc_utask(ostream&os, const NetUTask*net)
@@ -1678,6 +1678,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.59  1999/10/06 01:28:18  steve
+ *  The $finish task should work immediately.
+ *
  * Revision 1.58  1999/10/05 06:19:46  steve
  *  Add support for reduction NOR.
  *
