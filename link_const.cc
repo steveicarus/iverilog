@@ -17,11 +17,40 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.2 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: link_const.cc,v 1.3 2000/05/14 17:55:04 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "netmisc.h"
+
+bool link_drivers_constant(const Link&lnk)
+{
+      for (const Link*cur = lnk.next_link()
+		 ; *cur != lnk ; cur = cur->next_link()) {
+
+	    if (cur->get_dir() == Link::INPUT)
+		  continue;
+	    if (cur->get_dir() == Link::PASSIVE)
+		  continue;
+	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
+		  return false;
+      }
+
+      return true;
+}
+
+verinum::V driven_value(const Link&lnk)
+{
+      for (const Link*cur = lnk.next_link()
+		 ; *cur != lnk ; cur = cur->next_link()) {
+
+	    const NetConst*obj;
+	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj()))
+		  return obj->value(cur->get_pin());
+      }
+
+      return verinum::Vz;
+}
 
 NetConst* link_const_value(Link&pin, unsigned&idx)
 {
@@ -49,6 +78,9 @@ NetConst* link_const_value(Link&pin, unsigned&idx)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.3  2000/05/14 17:55:04  steve
+ *  Support initialization of FF Q value.
+ *
  * Revision 1.2  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

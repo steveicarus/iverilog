@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.2 2000/05/13 22:46:22 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.3 2000/05/14 17:55:04 steve Exp $"
 #endif
 
 /*
@@ -31,7 +31,9 @@
  */
 
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "functor.h"
+# include  <assert.h>
 
 struct syn_token_t {
       int token;
@@ -55,9 +57,12 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssign*asn);
 static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn);
+static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn);
+
 %}
 
-%token S_ALWAYS S_ASSIGN S_ASSIGN_MEM S_ELSE S_EVENT S_EXPR S_IF S_INITIAL
+%token S_ALWAYS S_ASSIGN S_ASSIGN_MEM S_ASSIGN_MUX S_ELSE S_EVENT
+%token S_EXPR S_IF S_INITIAL
 
 %%
 
@@ -85,6 +90,13 @@ start
 	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN ';' ';'
 		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
 			      $7->expr, $8->assign);
+		}
+
+  /* Unconditional assignments in initial blocks should be made into
+     initializers wherever possible. */
+
+	| S_INITIAL S_ASSIGN
+		{ make_initializer(des_, $1->top, $2->assign);
 		}
 
 
@@ -122,8 +134,10 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssign*asn)
 {
       NetEvProbe*pclk = eclk->probe(0);
-      NetNet*d = asn->rval()->synthesize(des);
+      NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
       NetNet*ce = cexp? cexp->synthesize(des) : 0;
+
+      assert(d);
 
       NetFF*ff = new NetFF(asn->name(), asn->pin_count());
 
@@ -150,8 +164,10 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       NetNet*adr = asn->index();
 
       NetEvProbe*pclk = eclk->probe(0);
-      NetNet*d = asn->rval()->synthesize(des);
+      NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
       NetNet*ce = cexp? cexp->synthesize(des) : 0;
+
+      assert(d);
 
       NetRamDq*ram = new NetRamDq(des_->local_symbol(mem->name()), mem,
 				  adr->pin_count());
@@ -174,6 +190,28 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       des->delete_process(top);
 }
 
+static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn)
+{
+      NetESignal*rsig = dynamic_cast<NetESignal*> (asn->rval());
+      assert(rsig);
+
+      for (unsigned idx = 0 ;  idx < asn->pin_count() ;  idx += 1) {
+
+	    verinum::V bit = driven_value(rsig->pin(idx));
+
+	    Link*cur = asn->pin(idx).next_link();
+	    while (cur != &asn->pin(idx)) {
+
+		  if (NetNet*net = dynamic_cast<NetNet*> (cur->get_obj()))
+			net->set_ival(cur->get_pin(), bit);
+
+		  cur = cur->next_link();
+	    }
+      }
+
+      des->delete_process(top);
+}
+
 static syn_token_t*first_ = 0;
 static syn_token_t*last_ = 0;
 static syn_token_t*ptr_ = 0;
@@ -191,15 +229,11 @@ struct tokenize : public proc_match_t {
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;
-	    cur->token = S_ASSIGN;
+	    cur->token = dev->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
 	    cur->assign = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
 	    last_ = cur;
-
-	    if (dynamic_cast<NetEConst*>(dev->rval()))
-		  fprintf(stderr, "XXXX constant assignment.\n");
-
 	    return 0;
       }
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.28 2000/05/08 05:29:43 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.29 2000/05/14 17:55:04 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -74,6 +74,19 @@
 # include  "target.h"
 # include  <fstream>
 # include  <strstream>
+
+verinum::V link_get_ival(const Link&lnk)
+{
+      const Link*cur = lnk.next_link();
+      while (cur != &lnk) {
+	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
+		  return sig->get_ival(cur->get_pin());
+
+	    cur = cur->next_link();
+      }
+
+      return verinum::Vx;
+}
 
 class target_xnf  : public target_t {
 
@@ -682,10 +695,28 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 
       assert(net->attribute("XNF-LCA") == "");
 
+	/* Create a DFF object for each bit of width. The symbol name
+	   has the index number appended so that read XNF may be able
+	   to buss them. If the NetNet objects connected to the Q
+	   output of the DFF have an initial value, the write an INIT=
+	   parameter to set the power-up value. */
+
       for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
 
-	    os << "SYM, " << mangle(net->name()) << "<" << idx
-	       << ">, DFF, LIBVER=2.0.0" << endl;
+	    verinum::V ival = link_get_ival(net->pin_Q(idx));
+
+	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">, DFF, ";
+
+	    switch (ival) {
+		case verinum::V0:
+		  os << "INIT=R, ";
+		  break;
+		case verinum::V1:
+		  os << "INIT=S, ";
+		  break;
+	    }
+
+	    os << "LIBVER=2.0.0" << endl;
 	    draw_pin(os, "Q", net->pin_Q(idx));
 	    draw_pin(os, "D", net->pin_Data(idx));
 
@@ -887,6 +918,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.29  2000/05/14 17:55:04  steve
+ *  Support initialization of FF Q value.
+ *
  * Revision 1.28  2000/05/08 05:29:43  steve
  *  no need for nobufz functor.
  *

@@ -17,51 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.9 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: cprop.cc,v 1.10 2000/05/14 17:55:04 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "functor.h"
 # include  <assert.h>
 
-/*
- * This local function returns true if all the the possible drivers of
- * this link are constant. It will also return true if there are no
- * drivers at all.
- */
-static bool all_drivers_constant(const Link&lnk)
-{
-      for (const Link*cur = lnk.next_link()
-		 ; *cur != lnk ; cur = cur->next_link()) {
 
-	    if (cur->get_dir() == Link::INPUT)
-		  continue;
-	    if (cur->get_dir() == Link::PASSIVE)
-		  continue;
-	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
-		  return false;
-      }
-
-      return true;
-}
-
-/*
- * This function returns the value of the constant driving this link,
- * or Vz if there is no constant. The results of this function are
- * only meaningful if all_drivers_constant(lnk) == true.
- */
-static verinum::V driven_value(const Link&lnk)
-{
-      for (const Link*cur = lnk.next_link()
-		 ; *cur != lnk ; cur = cur->next_link()) {
-
-	    const NetConst*obj;
-	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj()))
-		  return obj->value(cur->get_pin());
-      }
-
-      return verinum::Vz;
-}
 
 /*
  * The cprop function below invokes constant propogation where
@@ -90,7 +54,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	// result. Don't reduce the adder smaller then a 1-bit
 	// adder. These will be eliminated later.
       while ((obj->width() > 1)
-	  && all_drivers_constant(obj->pin_DataA(0))
+	  && link_drivers_constant(obj->pin_DataA(0))
 	  && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
@@ -115,7 +79,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 
 	// Now do the same thing on the B side.
       while ((obj->width() > 1)
-	  && all_drivers_constant(obj->pin_DataB(0))
+	  && link_drivers_constant(obj->pin_DataB(0))
 	  && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
@@ -222,7 +186,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 	      // the resulting output is going to be zero and can
 	      // elininate the gate.
 	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
-		  if (! all_drivers_constant(obj->pin(idx)))
+		  if (! link_drivers_constant(obj->pin(idx)))
 			continue;
 		  if (driven_value(obj->pin(idx)) == verinum::V0) {
 			connect(obj->pin(0), obj->pin(idx));
@@ -235,7 +199,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 	      // There are no zero constant drivers. If there are any
 	      // non-constant drivers, give up.
 	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
-		  if (! all_drivers_constant(obj->pin(idx)))
+		  if (! link_drivers_constant(obj->pin(idx)))
 			return;
 	    }
 
@@ -319,6 +283,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.10  2000/05/14 17:55:04  steve
+ *  Support initialization of FF Q value.
+ *
  * Revision 1.9  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

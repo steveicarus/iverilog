@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.6 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: netmisc.h,v 1.7 2000/05/14 17:55:04 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -50,7 +50,24 @@ extern string nexus_from_link(const Link*lnk);
 extern NetConst* link_const_value(Link&pin, unsigned&idx);
 
 /*
+ * This local function returns true if all the the possible drivers of
+ * this link are constant. It will also return true if there are no
+ * drivers at all.
+ */
+extern bool link_drivers_constant(const Link&lnk);
+
+/*
+ * This function returns the value of the constant driving this link,
+ * or Vz if there is no constant. The results of this function are
+ * only meaningful if link_drivers_constant(lnk) == true.
+ */
+extern verinum::V driven_value(const Link&lnk);
+
+/*
  * $Log: netmisc.h,v $
+ * Revision 1.7  2000/05/14 17:55:04  steve
+ *  Support initialization of FF Q value.
+ *
  * Revision 1.6  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.
