@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.6 1999/09/30 02:43:02 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.7 1999/10/18 00:02:21 steve Exp $"
 #endif
 
 
@@ -261,6 +261,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
       if (NetMemory*mem = des->find_memory(name)) {
+	    if (msb_ == 0) {
+		  cerr << get_line() << ": error: Memory ``" << name <<
+			"'' referenced without an index expression." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    assert(msb_ != 0);
 	    assert(lsb_ == 0);
 	    assert(idx_ == 0);
@@ -318,6 +324,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.7  1999/10/18 00:02:21  steve
+ *  Catch unindexed memory reference.
+ *
  * Revision 1.6  1999/09/30 02:43:02  steve
  *  Elaborate ~^ and ~| operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.117 1999/10/13 03:16:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.118 1999/10/18 00:02:21 steve Exp $"
 #endif
 
 /*
@@ -2286,6 +2286,11 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
       NetExpr*ce = cond_->elaborate_expr(des, path);
+      if (ce == 0) {
+	    delete top;
+	    return 0;
+      }
+
       if (NetExpr*tmp = ce->eval_tree()) {
 	    if (dynamic_cast<NetEConst*>(tmp))
 		  cerr << get_line() << ": warning: condition expression "
@@ -2638,6 +2643,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.118  1999/10/18 00:02:21  steve
+ *  Catch unindexed memory reference.
+ *
  * Revision 1.117  1999/10/13 03:16:36  steve
  *  Remove commented out do_assign.
  *
