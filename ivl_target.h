@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.41 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.42 2001/04/01 04:38:17 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -148,15 +148,6 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * explicit values so that the binary API is a bit more resilient to
  * changes and additions to the enumerations.
  */
-
-#if 0
-typedef enum ivl_edge_type_e {
-      IVL_EDGE_NONE = 0,
-      IVL_EDGE_ANY  = 1,
-      IVL_EDGE_POS  = 2,
-      IVL_EDGE_NEG  = 3
-} ivl_edge_type_t;
-#endif
 
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
@@ -731,6 +722,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.42  2001/04/01 04:38:17  steve
+ *  dead cruft.
+ *
  * Revision 1.41  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *
