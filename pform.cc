@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.23 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: pform.cc,v 1.24 1999/06/12 03:42:17 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -440,6 +440,7 @@ void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 
 static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 {
+      assert(range);
       assert(range->count() == 2);
 
       PWire*cur = cur_module->get_wire(name);
@@ -452,18 +453,24 @@ static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 	    cur->msb = (*range)[0];
 	    cur->lsb = (*range)[1];
       } else {
+	    assert(cur->msb);
+	    assert(cur->lsb);
 	    PExpr*msb = (*range)[0];
 	    PExpr*lsb = (*range)[1];
+	    assert(msb);
+	    assert(lsb);
 	    if (msb == 0) {
 		  VLerror(yylloc, "failed to parse msb of range.");
 	    } else if (lsb == 0) {
 		  VLerror(yylloc, "failed to parse lsb of range.");
 	    } else if (! (cur->msb->is_the_same(msb) &&
 			  cur->lsb->is_the_same(lsb))) {
-		  VLerror(yylloc, "net ranges are not identical.");
+		  cerr << msb->get_line() << ": bit range mismatch"
+			" for " << name << ": [" << *msb << ":" <<
+			*lsb << "] != [" << *cur->msb << ":" <<
+			*cur->lsb << "]" << endl;
+		  error_count += 1;
 	    }
-	      //delete msb;
-	      //delete lsb;
       }
 }
 
@@ -582,6 +589,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.24  1999/06/12 03:42:17  steve
+ *  Assert state of bit range expressions.
+ *
  * Revision 1.23  1999/06/06 20:45:39  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,
