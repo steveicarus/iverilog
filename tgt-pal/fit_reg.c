@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_reg.c,v 1.4 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: fit_reg.c,v 1.5 2001/05/16 03:55:30 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -32,7 +32,7 @@
  * not, then just pick a free macrocell and drop it there.
  */
 
-static int scan_ff_q(ivl_lpm_ff_t ff, unsigned q);
+static int scan_ff_q(ivl_lpm_t ff, unsigned q);
 
 int fit_registers(ivl_scope_t scope, void*x)
 {
@@ -53,17 +53,15 @@ int fit_registers(ivl_scope_t scope, void*x)
       lpms = ivl_scope_lpms(scope);
       for (idx = 0 ;  idx < lpms ;  idx += 1) {
 	    ivl_lpm_t lpm = ivl_scope_lpm(scope, idx);
-	    ivl_lpm_ff_t ff;
 	    unsigned wid, q;
 
 	    if (ivl_lpm_type(lpm) != IVL_LPM_FF)
 		  continue;
 
 	    wid = ivl_lpm_width(lpm);
-	    ff = ivl_lpm_ff(lpm);
 
 	    for (q = 0 ;  q < wid ;  q += 1) {
-		  rc = scan_ff_q(ff, q);
+		  rc = scan_ff_q(lpm, q);
 		  if (rc != 0)
 			return rc;
 	    }
@@ -76,12 +74,12 @@ int fit_registers(ivl_scope_t scope, void*x)
  * This is the part that actually assigns the single bit of a single
  * flip-flop to a single macrocell.
  */
-int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
+int scan_ff_q(ivl_lpm_t ff, unsigned q)
 {
       unsigned idx;
       ivl_nexus_t nex;
 
-      nex = ivl_lpm_ff_q(ff, q);
+      nex = ivl_lpm_q(ff, q);
 
 	/* First, look to see if the Q is already connected to a pin
 	   or an enable. If I find such a connection, then immediately
@@ -136,6 +134,9 @@ int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 
 /*
  * $Log: fit_reg.c,v $
+ * Revision 1.5  2001/05/16 03:55:30  steve
+ *  Update to new LPM API for flip-flops.
+ *
  * Revision 1.4  2001/02/07 22:22:00  steve
  *  ivl_target header search path fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_log.c,v 1.2 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: fit_log.c,v 1.3 2001/05/16 03:55:30 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -109,8 +109,8 @@ int fit_logic(void)
 	      /* If there is a reg, then the input to the cell is
 		 really the D input to the ff. */
 	    if (pin->reg) {
-		  assert(cell == ivl_lpm_ff_q(pin->reg, pin->reg_q));
-		  cell = ivl_lpm_ff_data(pin->reg, pin->reg_q);
+		  assert(cell == ivl_lpm_q(pin->reg, pin->reg_q));
+		  cell = ivl_lpm_data(pin->reg, pin->reg_q);
 	    }
 
 	    assert(cell);
@@ -126,6 +126,9 @@ int fit_logic(void)
 
 /*
  * $Log: fit_log.c,v $
+ * Revision 1.3  2001/05/16 03:55:30  steve
+ *  Update to new LPM API for flip-flops.
+ *
  * Revision 1.2  2001/02/07 22:22:00  steve
  *  ivl_target header search path fixes.
  *

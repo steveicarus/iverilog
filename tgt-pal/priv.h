@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: priv.h,v 1.5 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: priv.h,v 1.6 2001/05/16 03:55:30 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -74,7 +74,7 @@ struct pal_bind_s {
       term_t **enable_ex;
 
 	/* If there is a register here, this is it. */
-      ivl_lpm_ff_t reg;
+      ivl_lpm_t reg;
       unsigned reg_q;
 
 	/* The input to the cell is this expression. */
@@ -102,6 +102,9 @@ extern int emit_jedec(const char*path);
 
 /*
  * $Log: priv.h,v $
+ * Revision 1.6  2001/05/16 03:55:30  steve
+ *  Update to new LPM API for flip-flops.
+ *
  * Revision 1.5  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *
