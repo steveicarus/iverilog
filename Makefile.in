@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.84 2000/12/02 05:30:08 steve Exp $"
+#ident "$Id: Makefile.in,v 1.85 2000/12/02 05:57:46 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -65,7 +65,7 @@ check: all
 	./check | grep 'Hello, World'
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog ivl@EXEEXT@ libivl.a
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a
 	cd vvm ; $(MAKE) clean
 	cd vpi ; $(MAKE) clean
 	cd driver ; $(MAKE) clean
@@ -103,19 +103,6 @@ $(FF) $(TT)
 Makefile: Makefile.in config.status
 	./config.status
 
-# Make the actual verilog program from the script template. This
-# simply invloves editing the substitution strings in the script into
-# the configured copy.
-tmp1 = bindir
-tmp2 = libdir
-tmp3 = includedir
-tmp4 = CXX
-verilog: $(srcdir)/verilog.sh
-	sed -e 's;@$(tmp1)@;@bindir@;' \
-	    -e 's;@$(tmp2)@;@libdir@;' \
-	    -e 's;@$(tmp3)@;@includedir@;' \
-	    -e 's;@dllib@;@DLLIB@;' \
-	    -e 's;@$(tmp4)@;@CXX@;' < $< > $@
 
 ifeq (@CYGWIN@,yes)
 ivl@EXEEXT@: $O ivl.def
@@ -179,7 +166,7 @@ installdirs: mkinstalldirs
 
 uninstall:
 	rm -f $(libdir)/ivl/ivl@EXEEXT@
-	rm -f $(bindir)/verilog@EXEEXT@
+	rm -f $(bindir)/verilog
 	rm -f $(bindir)/gverilog@EXEEXT@
 	rm -f $(includedir)/ivl_target.h
 	cd driver ; $(MAKE) uninstall
