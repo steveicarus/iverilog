@@ -8,15 +8,59 @@ Icarus Verilog is intended to compile ALL of the Verilog HDL as described
 in the IEEE-1364 standard. Of course, it's not quite there yet. It does
 currently handle a mix of structural and behavioral constructs. For a
 view of the current state of Icarus Verilog, see its home page at
-<http://www.icarus.com/pub/verilog>.
+<http://www.icarus.com/eda/verilog>.
  
 IVL is not aimed at being a simulator in the traditional sense, but a
 compiler that generates code employed by back-end tools. These back-
 end tools currently include a simulator written in C++ called VVM 
 and an XNF (Xilinx Netlist Format) generator. See "vvm.txt" and
-"xnf.txt" for further details on these back-end processors.
+"xnf.txt" for further details on these back-end processors. In the
+future, backends are expected for EDIF/LPM, structural Verilog, etc.
 
-2.0 How IVL Works
+2.0 Building/Installing IVL From Source
+
+If you are starting from source, the build process is designed to be
+as simple as practical. Someone basically familiar with the target
+system and C/C++ compilation should be able to build the source
+distribution with little effort. Some actual programming skills are
+not required, but helpful in case of problems.
+
+2.1 Compile Time Prerequisites
+
+You need the following software to compile Icarus Verilog from source
+on a UNIX-like system:
+
+	- GNU Make
+	  The Makefiles use some GNU extensions to, so a basic POSIX
+	  make will not work. Linux systems typically come with a
+	  satisfactory make.
+
+	- ISO C++ Compiler
+	  The ivl program is written in C++ and makes use of templates
+	  and some of the standard C++ library. egcs compilers with
+	  the associated libstdc++ are known to work.
+
+	- bison
+
+2.2 Compilation
+
+Unpack the tar-ball and cd into the verilog-######### directory
+(presumably that is how you got to this README) and compile the source
+with the commands:
+
+  ./configure
+  make
+
+2.3 Installation
+
+Now install the files in an appropriate place. (The makefiles by
+default install in /usr/local unless you specify a different prefix
+with the --prefix=<path> flag to the configure command.) Do this as
+root.
+
+  make install
+
+3.0 How IVL Works
 
 This tool includes a parser which reads in Verilog (plus extensions)
 and generates an internal netlist. The netlist is passed to various
@@ -25,7 +69,7 @@ forms, then is passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
 switches.
 
-2.1 Preprocessing
+3.1 Preprocessing
 
 There is a separate program, ivlpp, that does the preprocessing. This
 program implements the `include and `define directives producing
@@ -33,7 +77,7 @@ output that is equivalent but without the directives. The output is a
 single file with line number directives, so that the actual compiler
 only sees a single input file. See ivlpp/ivlpp.txt for details.
 
-2.2 Parse
+3.2 Parse
 
 The verilog compiler starts by parsing the verilog source file. The
 output of the parse in a list of Module objects in PFORM. The pform
@@ -45,7 +89,7 @@ One can see a human readable version of the final PFORM by using the
 ``-P <path>'' flag to the compiler. This will cause ivl to dump the
 PFORM into the file named <path>.
 
-2.3 Elaboration
+3.3 Elaboration
 
 This phase takes the pform and generates a netlist. The driver selects
 (by user request or lucky guess) the root module to elaborate,
@@ -60,7 +104,7 @@ optimized netlist by using the ``-N <path>'' flag to the compiler. If
 elaboration succeeds, the final netlist (i.e. after optimizations but
 before code generation) will be dumped into the file named <path>.
 
-2.4 Optimization
+3.4 Optimization
 
 This is actually a collection of processing steps that perform
 optimizations that do not depend on the target technology. Examples of
@@ -73,7 +117,7 @@ some useful transformations would be,
 The actual functions performed are specified on the command line by
 the -F flags (See below).
 
-2.5 Code Generation
+3.5 Code Generation
 
 This step takes the design netlist and uses it to drive the code
 generator. (See target.h.) This may require transforming the
@@ -85,21 +129,6 @@ to generate actual output.
 
 The target code generator to used is given by the -t flag on the
 command line.
-
-3.0 Building/Installing IVL
-
-Unpack the tar-ball and cd into the verilog-######### directory, and
-compile the source with the commands:
-
-  ./configure
-  make
-
-Now install the files in an appropriate place. (The makefiles by
-default install in /usr/local unless you specify a different prefix
-with the --prefix=<path> flag to the configure command.) Do this as
-root.
-
-  make install
 
 4.0 Running Verilog
 
