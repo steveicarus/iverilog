@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.16 2001/06/20 02:25:40 steve Exp $"
+#ident "$Id: main.c,v 1.17 2001/06/27 02:22:26 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -206,9 +206,9 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    }
       }
 
-      sprintf(tmp, "%s " RDYNAMIC " -s -fno-exceptions -o %s -I%s%c%s "
-	      "-L%s%c%s %s.cc -lvvm -lvpip %s", CXX, opath, ivl_install_dir, 
-	      sep, "include", ivl_install_dir, sep, "lib", opath, DLLIB);
+      sprintf(tmp, "%s " RDYNAMIC " -s -fno-exceptions -o %s -I%s "
+	      "-L%s %s.cc -lvvm -lvpip %s", CXX, opath, IVL_INC, 
+	      IVL_LIB, opath, DLLIB);
       if (verbose_flag)
 	    printf("compile: %s\n", tmp);
 
@@ -606,6 +606,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.17  2001/06/27 02:22:26  steve
+ *  Get include and lib paths from Makefile.
+ *
  * Revision 1.16  2001/06/20 02:25:40  steve
  *  Edit ivl_install_dir only on mingw
  *
