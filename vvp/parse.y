@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.17 2001/04/04 04:33:08 steve Exp $"
+#ident "$Id: parse.y,v 1.18 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -51,7 +51,8 @@ extern FILE*yyin;
 };
 
 
-%token K_EVENT K_FUNCTOR K_NET K_SCOPE K_THREAD K_VAR K_vpi_call
+%token K_EVENT K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
+%token K_VAR K_VAR_S K_vpi_call
 %token K_vpi_module
 
 %token <text> T_INSTR
@@ -161,13 +162,19 @@ statement
      the variable in the netlist. */
 
 	| T_LABEL K_VAR T_STRING ',' T_NUMBER ',' T_NUMBER ';'
-		{ compile_variable($1, $3, $5, $7); }
+		{ compile_variable($1, $3, $5, $7, false); }
+
+	| T_LABEL K_VAR_S T_STRING ',' T_NUMBER ',' T_NUMBER ';'
+		{ compile_variable($1, $3, $5, $7, true); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
 	| T_LABEL K_NET T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
-		{ compile_net($1, $3, $5, $7, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $7, false, $9.cnt, $9.vect); }
+
+	| T_LABEL K_NET_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
 
   /* Oh and by the way, empty statements are OK as well. */
 
@@ -316,6 +323,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.18  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.17  2001/04/04 04:33:08  steve
  *  Take vector form as parameters to vpi_call.
  *

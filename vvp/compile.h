@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.13 2001/04/01 06:40:45 steve Exp $"
+#ident "$Id: compile.h,v 1.14 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -122,9 +122,11 @@ extern void compile_thread(char*start_sym);
 /*
  * This function is called to create a var vector with the given name.
  */
-extern void compile_variable(char*label, char*name, int msb, int lsb);
+extern void compile_variable(char*label, char*name,
+			     int msb, int lsb, bool signed_flag);
 
-extern void compile_net(char*label, char*name, int msb, int lsb,
+extern void compile_net(char*label, char*name,
+			int msb, int lsb, bool signed_flag,
 			unsigned argc, struct symb_s*argv);
 
 /*
@@ -135,6 +137,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.14  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.13  2001/04/01 06:40:45  steve
  *  Support empty statements for hanging labels.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.12 2001/04/02 02:28:13 steve Exp $
+ *  $Id: README.txt,v 1.13 2001/04/05 01:34:26 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -105,7 +105,8 @@ A variable is a bit vector that can be written by behavioral code (so
 has no structural input) and propagates its output to a functor. The
 general syntax of a variable is:
 
-	<label> .var "name", <msb>, <lsb>;
+	<label> .var   "name", <msb>, <lsb>;
+	<label> .var/s "name", <msb>, <lsb>;
 
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the
@@ -134,7 +135,9 @@ third input selects the source to use. The default is to select the
 assignment input.
 
 The variable statement also creates a VPI object of the appropriate
-type. See the vpi.txt file for details about that object.
+type. See the vpi.txt file for details about that object. The msb and
+lsb values are set from the parameters of the .var or .var/s, and the
+vpiReg is marked unsigned for .var, or signed for .var/s
 
 Note that nets in a design do not necessarily have a specific functor
 or object allocated to them. Nets are just something that behavioral
@@ -149,7 +152,8 @@ it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
 exactly the same as the .var statement:
 
-	<label> .net "name", <msb>, <lsb>, <symbols_list>;
+	<label> .net   "name", <msb>, <lsb>, <symbols_list>;
+	<label> .net/s "name", <msb>, <lsb>, <symbols_list>;
 
 A .net statement creates a functor for each bit of the vector in
 exactly the same way that a .var creates functors. The truth table for

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.29 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: compile.cc,v 1.30 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -558,7 +558,8 @@ vpiHandle compile_vpi_lookup(const char*label)
  * A variable is a special functor, so we allocate that functor and
  * write the label into the symbol table.
  */
-void compile_variable(char*label, char*name, int msb, int lsb)
+void compile_variable(char*label, char*name, int msb, int lsb,
+		      bool signed_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       vvp_ipoint_t fdx = functor_allocate(wid);
@@ -575,13 +576,13 @@ void compile_variable(char*label, char*name, int msb, int lsb)
       }
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_reg(name, msb, lsb, fdx);
+      vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, fdx);
       compile_vpi_symbol(label, obj);
 
       free(label);
 }
 
-void compile_net(char*label, char*name, int msb, int lsb,
+void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
@@ -623,7 +624,7 @@ void compile_net(char*label, char*name, int msb, int lsb,
       }
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, fdx);
+      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, fdx);
       compile_vpi_symbol(label, obj);
 
       free(label);
@@ -713,6 +714,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.30  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.29  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

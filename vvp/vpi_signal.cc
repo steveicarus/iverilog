@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.6 2001/04/04 17:43:19 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.7 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 /*
@@ -99,7 +99,7 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       unsigned count_x = 0, count_z = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+	    vvp_ipoint_t fptr = ipoint_index(rfp->bits, wid-idx-1);
 	    val *= 2;
 	    switch (functor_oval(fptr)) {
 		case 0:
@@ -230,6 +230,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiDecStrVal:
 	    signal_vpiDecStrVal(rfp, vp);
+	    vp->value.str = buf;
 	    break;
 
 	  default:
@@ -283,7 +284,8 @@ static const struct __vpirt vpip_net_rt = {
  * Construct a vpiReg object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  */
-vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
+vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
+			vvp_ipoint_t base)
 {
       struct __vpiSignal*obj = (struct __vpiSignal*)
 	    malloc(sizeof(struct __vpiSignal));
@@ -291,7 +293,7 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
       obj->name = name;
       obj->msb = msb;
       obj->lsb = lsb;
-      obj->signed_flag = 0;
+      obj->signed_flag = signed_flag? 1 : 0;
       obj->bits = base;
 
       obj->scope = vpip_peek_current_scope();
@@ -304,7 +306,8 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
  * Construct a vpiReg object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  */
-vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
+vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
+			vvp_ipoint_t base)
 {
       struct __vpiSignal*obj = (struct __vpiSignal*)
 	    malloc(sizeof(struct __vpiSignal));
@@ -312,7 +315,7 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
       obj->name = name;
       obj->msb = msb;
       obj->lsb = lsb;
-      obj->signed_flag = 0;
+      obj->signed_flag = signed_flag? 1 : 0;
       obj->bits = base;
 
       obj->scope = vpip_peek_current_scope();
@@ -323,6 +326,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.7  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.6  2001/04/04 17:43:19  steve
  *  support decimal strings from signals.
  *

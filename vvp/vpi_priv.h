@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.11 2001/04/04 17:43:19 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.12 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -106,9 +106,9 @@ struct __vpiSignal {
 	/* The represented value is here. */
       vvp_ipoint_t bits;
 };
-extern vpiHandle vpip_make_reg(char*name, int msb, int lsb,
+extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_ipoint_t base);
-extern vpiHandle vpip_make_net(char*name, int msb, int lsb,
+extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_ipoint_t base);
 
 /*
@@ -193,6 +193,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.12  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.11  2001/04/04 17:43:19  steve
  *  support decimal strings from signals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.10 2001/04/04 04:33:08 steve Exp $"
+#ident "$Id: lexor.lex,v 1.11 2001/04/05 01:34:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -68,9 +68,11 @@
 ".event"   { return K_EVENT; }
 ".functor" { return K_FUNCTOR; }
 ".net"     { return K_NET; }
+".net/s"   { return K_NET_S; }
 ".scope"   { return K_SCOPE; }
 ".thread"  { return K_THREAD; }
 ".var"     { return K_VAR; }
+".var/s"   { return K_VAR_S; }
 
 
   /* instructions start with a % character. The compiler decides what
@@ -123,6 +125,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.11  2001/04/05 01:34:26  steve
+ *  Add the .var/s and .net/s statements for VPI support.
+ *
  * Revision 1.10  2001/04/04 04:33:08  steve
  *  Take vector form as parameters to vpi_call.
  *
