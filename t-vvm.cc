@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.194 2000/12/15 21:54:43 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.195 2000/12/16 16:57:43 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2449,6 +2449,7 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 				     unsigned off)
 {
       const verinum value = rv->value();
+      const unsigned rise_time = lv->rise_time();
 
 	/* This condition catches the special case of assigning to a
 	   non-constant bit select. This cal be something like:
@@ -2484,7 +2485,9 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 		  defn << "      case " << idx << ":" << endl;
 
 		  defn << "        vvm_delayed_assign(nexus_wire_table["
-		       <<ncode<<"], " << rval << ", 0);" << endl;
+		       <<ncode<<"], " << rval << ", " <<rise_time<< ");"
+		       << endl;
+
 		  defn << "        break;" << endl;
 
 	    }
@@ -2509,7 +2512,7 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 	    const char*rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
 
 	    defn << "        vvm_delayed_assign(nexus_wire_table["
-		 <<ncode<< "], " << rval << ", 0);" << endl;
+		 <<ncode<< "], " << rval << ", " <<rise_time<< ");" << endl;
       }
 }
 
@@ -2523,6 +2526,7 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 				     unsigned wid, unsigned off)
 {
       assert(lv);
+      const unsigned rise_time = lv->rise_time();
 
 	/* Now, if there is a mux on the l-value, generate a code to
 	   assign a single bit to one of the bits of the
@@ -2545,7 +2549,8 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 		  defn << "      case " << idx << ":" << endl;
 
 		  defn << "        vvm_delayed_assign(nexus_wire_table["
-		       <<ncode<<"], " << rval << "["<<off<<"], 0);" << endl;
+		       <<ncode<<"], " << rval << "["<<off<<"], "
+		       <<rise_time<< ");" << endl;
 		  defn << "        break;" << endl;
 
 	    }
@@ -2562,14 +2567,15 @@ void target_vvm::proc_assign_nb_rval(const NetAssign_*lv,
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      vvm_delayed_assign(nexus_wire_table["
 		       <<ncode<<"], "
-		       << rval << "[" << (idx+off) << "], 0);" << endl;
+		       << rval << "[" << (idx+off) << "], "
+		       <<rise_time<< ");" << endl;
 	    }
 
 	    for (unsigned idx = min_count; idx < lv->pin_count(); idx += 1) {
 		  string nexus = lv->pin(idx).nexus()->name();
 		  unsigned ncode = nexus_wire_map[nexus];
 		  defn << "      vvm_delayed_assign(nexus_wire_table["
-		       <<ncode<<"], St0, 0);" << endl;
+		       <<ncode<<"], St0, " <<rise_time<< ");" << endl;
 	    }
       }
 }
@@ -3413,6 +3419,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.195  2000/12/16 16:57:43  steve
+ *  Observe delays in non-blocking assignments (PR#83)
+ *
  * Revision 1.194  2000/12/15 21:54:43  steve
  *  Allow non-blocking assign to pad memory word with zeros.
  *
