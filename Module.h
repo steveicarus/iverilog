@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.17 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: Module.h,v 1.18 2000/05/02 16:27:38 steve Exp $"
 #endif
 
 # include  <list>
@@ -117,6 +117,8 @@ class Module {
 
       bool elaborate_scope(Design*, NetScope*scope) const;
 
+      bool elaborate_sig(Design*, NetScope*scope) const;
+
     private:
       const string name_;
 
@@ -135,6 +137,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.18  2000/05/02 16:27:38  steve
+ *  Move signal elaboration to a seperate pass.
+ *
  * Revision 1.17  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.16 2000/03/29 04:37:10 steve Exp $"
+#ident "$Id: PGate.h,v 1.17 2000/05/02 16:27:38 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -71,6 +71,7 @@ class PGate : public LineInfo {
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     protected:
       const svector<PExpr*>* get_pins() const { return pins_; }
@@ -178,6 +179,7 @@ class PGModule  : public PGate {
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*, const string&path) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
       string type_;
@@ -197,10 +199,14 @@ class PGModule  : public PGate {
       void elaborate_sudp_(Design*, PUdp  *udp, const string&path) const;
       void elaborate_cudp_(Design*, PUdp  *udp, const string&path) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
+      bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.17  2000/05/02 16:27:38  steve
+ *  Move signal elaboration to a seperate pass.
+ *
  * Revision 1.16  2000/03/29 04:37:10  steve
  *  New and improved combinational primitives.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.7 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: net_design.cc,v 1.8 2000/05/02 16:27:38 steve Exp $"
 #endif
 
 /*
@@ -273,8 +273,16 @@ NetNet* Design::find_signal(NetScope*scope, const string&name)
 {
       assert(scope);
 
+	/* If the name has a path attached to it, parse it off and use
+	   that to locate the desired scope. */
+      string path = name;
+      string key = parse_last_name(path);
+      if (path != "")
+	    scope = find_scope(scope, path);
+
       while (scope) {
-	    if (NetNet*net = scope->find_signal(name))
+
+	    if (NetNet*net = scope->find_signal(key))
 		  return net;
 	    scope = scope->parent();
       }
@@ -285,31 +293,48 @@ NetNet* Design::find_signal(NetScope*scope, const string&name)
 NetMemory* Design::find_memory(NetScope*scope, const string&name)
 {
       assert(scope);
+
+	/* If the name has a path attached to it, parse it off and use
+	   that to locate the desired scope. */
+      string path = name;
+      string key = parse_last_name(path);
+      if (path != "")
+	    scope = find_scope(scope, path);
+
       while (scope) {
-	    if (NetMemory*mem = scope->find_memory(name))
+
+	    if (NetMemory*mem = scope->find_memory(key))
 		  return mem;
 	    scope = scope->parent();
       }
       return 0;
 }
 
-void Design::find_symbol(NetScope*scope, const string&key,
+void Design::find_symbol(NetScope*scope, const string&name,
 			 NetNet*&sig, NetMemory*&mem)
 {
       sig = 0;
       mem = 0;
 
+
+	/* If the name has a path attached to it, parse it off and use
+	   that to locate the desired scope. Then locate the key
+	   within that scope. */
+      string path = name;
+      string key = parse_last_name(path);
+      if (path != "")
+	    scope = find_scope(scope, path);
+
+
+	/* If there is no path, then just search upwards for the key. */
       while (scope) {
 
-	      /* Form the full heirarchical name for lookups. */
-	    string fulname = scope->name() + "." + key;
-
-	    if (NetNet*cur = scope->find_signal(fulname)) {
+	    if (NetNet*cur = scope->find_signal(key)) {
 		  sig = cur;
 		  return;
 	    }
 
-	    if (NetMemory*cur = scope->find_memory(fulname)) {
+	    if (NetMemory*cur = scope->find_memory(key)) {
 		  mem = cur;
 		  return;
 	    }
@@ -473,6 +498,9 @@ NetNode* Design::find_node(bool (*func)(const NetNode*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.8  2000/05/02 16:27:38  steve
+ *  Move signal elaboration to a seperate pass.
+ *
  * Revision 1.7  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *

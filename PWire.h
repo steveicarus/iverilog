@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.7 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: PWire.h,v 1.8 2000/05/02 16:27:38 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,7 +58,7 @@ class PWire : public LineInfo {
 	// Write myself to the specified stream.
       void dump(ostream&out) const;
 
-      void elaborate(Design*, NetScope*scope) const;
+      void elaborate_sig(Design*, NetScope*scope) const;
 
     private:
       string name_;
@@ -82,6 +82,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.8  2000/05/02 16:27:38  steve
+ *  Move signal elaboration to a seperate pass.
+ *
  * Revision 1.7  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

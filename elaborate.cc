@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.167 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.168 2000/05/02 16:27:38 steve Exp $"
 #endif
 
 /*
@@ -42,130 +42,6 @@ static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
 
 
-/*
- * Elaborate a source wire. The "wire" is the declaration of wires,
- * registers, ports and memories. The parser has already merged the
- * multiple properties of a wire (i.e. "input wire") so come the
- * elaboration this creates an object in the design that represent the
- * defined item.
- */
-void PWire::elaborate(Design*des, NetScope*scope) const
-{
-	/* The parser may produce hierarchical names for wires. I here
-	   follow the scopes down to the base where I actually want to
-	   elaborate the NetNet object. */
-      string basename = name_;
-      for (;;) {
-	    string p = parse_first_name(basename);
-	    if (basename == "") {
-		  basename = p;
-		  break;
-	    }
-
-	    scope = scope->child(p);
-	    assert(scope);
-      }
-
-      const string path = scope->name();
-      NetNet::Type wtype = type_;
-      if (wtype == NetNet::IMPLICIT)
-	    wtype = NetNet::WIRE;
-      if (wtype == NetNet::IMPLICIT_REG)
-	    wtype = NetNet::REG;
-
-      unsigned wid = 1;
-      long lsb = 0, msb = 0;
-
-      if (msb_.count()) {
-	    svector<long>mnum (msb_.count());
-	    svector<long>lnum (msb_.count());
-
-	      /* There may be multiple declarations of ranges, because
-		 the symbol may have its range declared in i.e. input
-		 and reg declarations. Calculate *all* the numbers
-		 here. I will resolve the values later. */
-
-	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-		  verinum*mval = msb_[idx]->eval_const(des,path);
-		  if (mval == 0) {
-			cerr << msb_[idx]->get_line() << ": error: "
-			      "Unable to evaluate constant expression ``" <<
-			      *msb_[idx] << "''." << endl;
-			des->errors += 1;
-			return;
-		  }
-		  verinum*lval = lsb_[idx]->eval_const(des, path);
-		  if (mval == 0) {
-			cerr << lsb_[idx]->get_line() << ": error: "
-			      "Unable to evaluate constant expression ``" <<
-			      *lsb_[idx] << "''." << endl;
-			des->errors += 1;
-			return;
-		  }
-
-		  mnum[idx] = mval->as_long();
-		  lnum[idx] = lval->as_long();
-		  delete mval;
-		  delete lval;
-	    }
-
-	      /* Make sure all the values for msb and lsb match by
-		 value. If not, report an error. */
-	    for (unsigned idx = 1 ;  idx < msb_.count() ;  idx += 1) {
-		  if ((mnum[idx] != mnum[0]) || (lnum[idx] != lnum[0])) {
-			cerr << get_line() << ": error: Inconsistent width, "
-			      "[" << mnum[idx] << ":" << lnum[idx] << "]"
-			      " vs. [" << mnum[0] << ":" << lnum[0] << "]"
-			      " for signal ``" << basename << "''" << endl;
-			des->errors += 1;
-			return;
-		  }
-	    }
-
-	    lsb = lnum[0];
-	    msb = mnum[0];
-	    if (mnum[0] > lnum[0])
-		  wid = mnum[0] - lnum[0] + 1;
-	    else
-		  wid = lnum[0] - mnum[0] + 1;
-
-
-      }
-
-      if (lidx_ || ridx_) {
-	    assert(lidx_ && ridx_);
-
-	      // If the register has indices, then this is a
-	      // memory. Create the memory object.
-	    verinum*lval = lidx_->eval_const(des, path);
-	    assert(lval);
-	    verinum*rval = ridx_->eval_const(des, path);
-	    assert(rval);
-
-	    long lnum = lval->as_long();
-	    long rnum = rval->as_long();
-	    delete lval;
-	    delete rval;
-	    NetMemory*sig = new NetMemory(scope, path+"."+basename,
-					  wid, lnum, rnum);
-	    sig->set_attributes(attributes);
-
-      } else {
-
-	    NetNet*sig = new NetNet(scope, path + "." +basename, wtype, msb, lsb);
-	    sig->set_line(*this);
-	    sig->port_type(port_type_);
-	    sig->set_attributes(attributes);
-
-	    verinum::V iv = verinum::Vz;
-	    if (wtype == NetNet::REG)
-		  iv = verinum::Vx;
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  sig->set_ival(idx, iv);
-
-      }
-}
 
 void PGate::elaborate(Design*des, const string&path) const
 {
@@ -641,6 +517,18 @@ void PGModule::elaborate_sudp_(Design*des, PUdp*udp, const string&path) const
 	// All done. Add the object to the design.
       des->add_node(net);
 }
+
+
+bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
+{
+	// Look for the module type
+      map<string,Module*>::const_iterator mod = modlist->find(type_);
+      if (mod != modlist->end())
+	    return elaborate_sig_mod_(des, scope, (*mod).second);
+
+      return true;
+}
+
 
 void PGModule::elaborate(Design*des, const string&path) const
 {
@@ -2273,7 +2161,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       const string path = scope->name();
       bool result_flag = true;
 
-
+#if 0
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
       const map<string,PWire*>&wl = get_wires();
@@ -2284,6 +2172,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 	    (*wt).second->elaborate(des, scope);
       }
+#endif
 
 	// Elaborate functions.
       typedef map<string,PFunction*>::const_iterator mfunc_it_t;
@@ -2411,6 +2300,15 @@ Design* elaborate(const map<string,Module*>&modules,
       des->evaluate_parameters();
 
 
+	// With the parameters evaluated down to constants, we have
+	// what we need to elaborate signals and memories. This pass
+	// creates all the NetNet and NetMemory objects for declared
+	// objects.
+      if (! rmod->elaborate_sig(des, scope)) {
+	    delete des;
+	    return 0;
+      }
+
 	// Now that the structure and parameters are taken care of,
 	// run through the pform again and generate the full netlist.
       bool rc = rmod->elaborate(des, scope);
@@ -2430,6 +2328,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.168  2000/05/02 16:27:38  steve
+ *  Move signal elaboration to a seperate pass.
+ *
  * Revision 1.167  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *
@@ -2472,57 +2373,5 @@ Design* elaborate(const map<string,Module*>&modules,
  *
  * Revision 1.157  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
- *
- * Revision 1.156  2000/04/09 17:44:30  steve
- *  Catch event declarations during scope elaborate.
- *
- * Revision 1.155  2000/04/09 16:43:50  steve
- *  Catch event names in parentheses.
- *
- * Revision 1.154  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.153  2000/04/01 22:14:19  steve
- *  detect unsupported block on named events.
- *
- * Revision 1.152  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.151  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- * Revision 1.150  2000/03/20 15:28:58  steve
- *  Fix lval part select of non-blocking assign.
- *
- * Revision 1.149  2000/03/12 21:41:47  steve
- *  Connect output of NB assign to indexed pin.
- *
- * Revision 1.148  2000/03/11 03:25:52  steve
- *  Locate scopes in statements.
- *
- * Revision 1.147  2000/03/10 06:20:48  steve
- *  Handle defparam to partial hierarchical names.
- *
- * Revision 1.146  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.145  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.144  2000/02/18 05:15:02  steve
- *  Catch module instantiation arrays.
- *
- * Revision 1.143  2000/02/14 00:11:11  steve
- *  Mark the line numbers of NetCondit nodes.
- *
- * Revision 1.142  2000/02/06 23:13:14  steve
- *  Include the scope in named gates.
- *
- * Revision 1.141  2000/01/10 01:35:23  steve
- *  Elaborate parameters afer binding of overrides.
  */
 
