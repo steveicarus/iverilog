@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.25 1999/12/05 02:24:09 steve Exp $"
+#ident "$Id: vvm.h,v 1.26 1999/12/09 06:00:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -138,7 +138,9 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	    
 
       vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
-	    { bits = that.bits; }
+	    { for (unsigned idx = 0; idx < WIDTH; idx += 1)
+		    bits[idx] = that.bits[idx];
+	    }
 
       vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
       vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
@@ -302,6 +304,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.26  1999/12/09 06:00:19  steve
+ *  Fix const/non-const errors.
+ *
  * Revision 1.25  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.99 1999/12/05 19:30:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.100 1999/12/09 06:00:00 steve Exp $"
 #endif
 
 /*
@@ -973,6 +973,7 @@ class NetAssignMem_ : public NetProc {
 
       NetMemory*memory() { return mem_; }
       NetNet*index()     { return index_; }
+      NetExpr*rval()     { return rval_; }
 
       const NetMemory*memory()const { return mem_; }
       const NetNet*index()const     { return index_; }
@@ -2066,6 +2067,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.100  1999/12/09 06:00:00  steve
+ *  Fix const/non-const errors.
+ *
  * Revision 1.99  1999/12/05 19:30:43  steve
  *  Generate XNF RAMS from synthesized memories.
  *
