@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -18,8 +18,8 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: main.cc,v 1.28 2000/01/13 05:11:25 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: main.cc,v 1.29 2000/02/23 02:56:54 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -287,6 +287,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.29  2000/02/23 02:56:54  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.28  2000/01/13 05:11:25  steve
  *  Support for multiple VPI modules.
  *

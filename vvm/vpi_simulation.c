@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_simulation.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_simulation.c,v 1.2 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -195,6 +195,9 @@ void vpip_simulation_run()
 
 /*
  * $Log: vpi_simulation.c,v $
+ * Revision 1.2  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

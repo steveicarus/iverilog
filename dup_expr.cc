@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: dup_expr.cc,v 1.1 1999/11/27 19:07:57 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: dup_expr.cc,v 1.2 2000/02/23 02:56:54 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,6 +31,9 @@ NetEScope* NetEScope::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.2  2000/02/23 02:56:54  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

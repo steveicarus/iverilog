@@ -1,7 +1,7 @@
 #ifndef __PTask_H
 #define __PTask_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: PTask.h,v 1.6 1999/09/30 21:28:34 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: PTask.h,v 1.7 2000/02/23 02:56:53 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -79,6 +79,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.7  2000/02/23 02:56:53  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.6  1999/09/30 21:28:34  steve
  *  Handle mutual reference of tasks by elaborating
  *  task definitions in two passes, like functions.

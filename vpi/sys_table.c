@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: sys_table.c,v 1.3 1999/12/15 04:01:14 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: sys_table.c,v 1.4 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 extern void sys_finish_register();
@@ -36,6 +36,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.4  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.3  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *

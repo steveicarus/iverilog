@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Picture Elements, Inc.
+ * Copyright (c) 1999-2000 Picture Elements, Inc.
  *    Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
@@ -25,8 +25,8 @@
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_memory.c,v 1.4 2000/02/13 19:18:28 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_memory.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -199,6 +199,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.5  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  2000/02/13 19:18:28  steve
  *  Accept memory words as parameter to $display.
  *

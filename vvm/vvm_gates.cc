@@ -22,8 +22,8 @@
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
-#if !defined(WINNT)
-#ident "$Id: vvm_gates.cc,v 1.4 1999/12/12 19:47:54 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_gates.cc,v 1.5 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -143,6 +143,9 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.5  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *

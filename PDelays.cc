@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: PDelays.cc,v 1.1 1999/09/04 19:11:46 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: PDelays.cc,v 1.2 2000/02/23 02:56:53 steve Exp $"
 #endif
 
 # include  "PDelays.h"
@@ -96,6 +96,9 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.2  2000/02/23 02:56:53  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

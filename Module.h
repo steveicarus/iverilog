@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: Module.h,v 1.13 2000/01/09 20:37:57 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: Module.h,v 1.14 2000/02/23 02:56:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -123,6 +123,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.14  2000/02/23 02:56:53  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.13  2000/01/09 20:37:57  steve
  *  Careful with wires connected to multiple ports.
  *

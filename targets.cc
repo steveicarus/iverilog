@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: targets.cc,v 1.4 1999/05/01 02:57:53 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: targets.cc,v 1.5 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include "target.h"
@@ -37,6 +37,9 @@ const struct target *target_table[] = {
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.5  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

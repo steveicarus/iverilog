@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.9 2000/02/14 06:04:52 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: t-null.cc,v 1.10 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -52,6 +52,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.10  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.9  2000/02/14 06:04:52  steve
  *  Unary reduction operators do not set their operand width
  *

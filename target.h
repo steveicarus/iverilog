@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: target.h,v 1.28 2000/01/13 03:35:35 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: target.h,v 1.29 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -147,6 +147,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.29  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.28  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

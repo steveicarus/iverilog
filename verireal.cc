@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: verireal.cc,v 1.1 1999/06/15 02:50:02 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: verireal.cc,v 1.2 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "verireal.h"
@@ -92,6 +92,9 @@ verireal::~verireal()
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.2  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1999/06/15 02:50:02  steve
  *  Add lexical support for real numbers.
  *

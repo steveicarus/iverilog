@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: machine.h,v 1.1 2000/01/24 00:18:20 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: machine.h,v 1.2 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 #ifdef NEED_LU
@@ -36,6 +36,9 @@
 
 /*
  * $Log: machine.h,v $
+ * Revision 1.2  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  2000/01/24 00:18:20  steve
  *  Handle systems that need underscores in symbols.
  *

@@ -1,7 +1,7 @@
 #ifndef __vvm_H
 #define __vvm_H
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.29 2000/01/08 03:09:14 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm.h,v 1.30 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -276,6 +276,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.30  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.29  2000/01/08 03:09:14  steve
  *  Non-blocking memory writes.
  *

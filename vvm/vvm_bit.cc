@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.7 1999/12/02 03:36:01 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_bit.cc,v 1.8 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -142,6 +142,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.8  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.7  1999/12/02 03:36:01  steve
  *  shiftl and shiftr take unsized second parameter.
  *

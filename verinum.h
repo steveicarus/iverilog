@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.9 2000/01/07 03:45:49 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: verinum.h,v 1.10 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  <string>
@@ -104,6 +104,9 @@ extern verinum operator - (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.10  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.9  2000/01/07 03:45:49  steve
  *  Initial support for signed constants.
  *

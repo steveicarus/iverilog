@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.10 2000/02/13 19:18:28 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_priv.h,v 1.11 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 /*
@@ -285,6 +285,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.11  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.10  2000/02/13 19:18:28  steve
  *  Accept memory words as parameter to $display.
  *

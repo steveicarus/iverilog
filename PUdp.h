@@ -1,7 +1,7 @@
 #ifndef __PUdp_H
 #define __PUdp_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: PUdp.h,v 1.3 1999/06/15 03:44:53 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: PUdp.h,v 1.4 2000/02/23 02:56:53 steve Exp $"
 #endif
 
 # include  <map>
@@ -82,6 +82,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.4  2000/02/23 02:56:53  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.3  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

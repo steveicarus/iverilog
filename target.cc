@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2000 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: target.cc,v 1.29 2000/01/13 03:35:35 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: target.cc,v 1.30 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -314,6 +314,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.30  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.29  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

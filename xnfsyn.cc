@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: xnfsyn.cc,v 1.3 1999/08/18 04:00:02 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: xnfsyn.cc,v 1.4 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 /*
@@ -236,6 +236,9 @@ void xnfsyn(Design*des)
 
 /*
  * $Log: xnfsyn.cc,v $
+ * Revision 1.4  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.3  1999/08/18 04:00:02  steve
  *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
  *

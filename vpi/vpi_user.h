@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.12 2000/02/13 19:18:28 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_user.h,v 1.13 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -228,6 +228,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.13  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.12  2000/02/13 19:18:28  steve
  *  Accept memory words as parameter to $display.
  *

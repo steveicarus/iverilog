@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.10 1999/12/11 05:45:41 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: xnfio.cc,v 1.11 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -285,6 +285,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.11  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.10  1999/12/11 05:45:41  steve
  *  Fix support for attaching attributes to primitive gates.
  *

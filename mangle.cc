@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: mangle.cc,v 1.2 1999/02/15 05:52:50 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: mangle.cc,v 1.3 2000/02/23 02:56:54 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -63,6 +63,9 @@ string mangle(const string&str)
 
 /*
  * $Log: mangle.cc,v $
+ * Revision 1.3  2000/02/23 02:56:54  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.2  1999/02/15 05:52:50  steve
  *  Mangle that handles device instance numbers.
  *

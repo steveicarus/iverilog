@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_scope.c,v 1.4 1999/12/15 18:21:20 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_scope.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -90,6 +90,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.5  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  1999/12/15 18:21:20  steve
  *  Support named begin scope at run time.
  *

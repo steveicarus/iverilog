@@ -20,8 +20,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: svector.h,v 1.4 1999/06/15 03:44:53 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: svector.h,v 1.5 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -97,6 +97,9 @@ template <class TYPE> class svector {
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.5  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

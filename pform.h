@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: pform.h,v 1.34 2000/01/10 22:16:24 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: pform.h,v 1.35 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -180,6 +180,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.35  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.34  2000/01/10 22:16:24  steve
  *  minor type syntax fix for stubborn C++ compilers.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: PWire.cc,v 1.2 1999/09/10 05:02:09 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: PWire.cc,v 1.3 2000/02/23 02:56:54 steve Exp $"
 #endif
 
 # include  "PWire.h"
@@ -100,6 +100,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.3  2000/02/23 02:56:54  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.2  1999/09/10 05:02:09  steve
  *  Handle integers at task parameters.
  *

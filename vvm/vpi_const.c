@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_const.c,v 1.5 1999/12/15 04:01:14 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vpi_const.c,v 1.6 2000/02/23 02:56:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -319,6 +319,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.6  2000/02/23 02:56:56  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.5  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *

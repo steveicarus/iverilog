@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: propinit.cc,v 1.1 1998/12/20 02:05:41 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: propinit.cc,v 1.2 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,9 @@ void propinit(Design*des)
 
 /*
  * $Log: propinit.cc,v $
+ * Revision 1.2  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *

@@ -1,7 +1,7 @@
 #ifndef __vvm_thread_H
 #define __vvm_thread_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvm_thread.h,v 1.4 2000/01/06 05:56:23 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_thread.h,v 1.5 2000/02/23 02:56:57 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -50,6 +50,9 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.5  2000/02/23 02:56:57  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  2000/01/06 05:56:23  steve
  *  Cleanup and some asserts.
  *

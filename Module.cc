@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.9 2000/01/09 20:37:57 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: Module.cc,v 1.10 2000/02/23 02:56:53 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -129,6 +129,9 @@ PGate* Module::get_gate(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.10  2000/02/23 02:56:53  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.9  2000/01/09 20:37:57  steve
  *  Careful with wires connected to multiple ports.
  *

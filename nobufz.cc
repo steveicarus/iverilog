@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: nobufz.cc,v 1.1 1998/12/02 04:37:13 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: nobufz.cc,v 1.2 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 /* NOBUFZ Function
@@ -61,6 +61,9 @@ void nobufz(Design*des)
 
 /*
  * $Log: nobufz.cc,v $
+ * Revision 1.2  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvm_mult.cc,v 1.1 2000/01/13 03:35:36 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_mult.cc,v 1.2 2000/02/23 02:56:57 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -107,6 +107,9 @@ void vvm_mult::set_DataB(unsigned idx, vpip_bit_t val)
 
 /*
  * $Log: vvm_mult.cc,v $
+ * Revision 1.2  2000/02/23 02:56:57  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.1  2000/01/13 03:35:36  steve
  *  Multiplication all the way to simulation.
  *

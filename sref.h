@@ -20,8 +20,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: sref.h,v 1.4 1999/08/05 04:58:17 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: sref.h,v 1.5 2000/02/23 02:56:55 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -146,6 +146,9 @@ template <class T1, class T2> void sref_back<T1,T2>::desert_(sref<T1,T2>*item)
 
 /*
  * $Log: sref.h,v $
+ * Revision 1.5  2000/02/23 02:56:55  steve
+ *  Macintosh compilers do not support ident.
+ *
  * Revision 1.4  1999/08/05 04:58:17  steve
  *  Fix compile error with gcc 2.95
  *
