@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.80 2002/09/27 16:33:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.81 2002/09/27 20:24:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -894,7 +894,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    assert(0);
       }
 
-      if (rv.base >= 8)
+      if ((rv.base >= 8) && (! stuff_ok_flag))
 	    save_expression_lookaside(rv.base, exp, wid);
       return rv;
 }
@@ -1369,6 +1369,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 	/* This is the true case. Just evaluate the true expression. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
+      clear_expression_lookaside();
 
       tmp = draw_eval_expr_wid(true_ex, wid, 0);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
@@ -1379,6 +1380,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 	/* This is the false case. Just evaluate the false expression. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+      clear_expression_lookaside();
 
       tmp = draw_eval_expr_wid(false_ex, wid, 0);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
@@ -1387,6 +1389,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+      clear_expression_lookaside();
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
@@ -1780,10 +1783,6 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 {
       struct vector_info res;
 
-	/* This is too conservative, but is certainly safe. Relaxing
-	   this will require extensive testing. */
-      clear_expression_lookaside();
-
       switch (ivl_expr_type(exp)) {
 	  default:
 	    fprintf(stderr, "vvp error: unhandled expr type: %u\n",
@@ -1853,6 +1852,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.81  2002/09/27 20:24:42  steve
+ *  Allow expression lookaside map to spam statements.
+ *
  * Revision 1.80  2002/09/27 16:33:34  steve
  *  Add thread expression lookaside map.
  *

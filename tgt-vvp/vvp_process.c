@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.70 2002/09/27 16:33:34 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.71 2002/09/27 20:24:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -210,8 +210,10 @@ static int show_stmt_assign(ivl_statement_t net)
 			      set_to_lvariable(lval, idx, 0);
 		  }
 
-		  if (skip_set_flag)
+		  if (skip_set_flag) {
 			fprintf(vvp_out, "t_%u ;\n", skip_set);
+			clear_expression_lookaside();
+		  }
 	    }
 
 	    return 0;
@@ -265,9 +267,10 @@ static int show_stmt_assign(ivl_statement_t net)
 		    else
 			  set_to_lvariable(lval, idx, 0);
 
-	      if (skip_set_flag)
+	      if (skip_set_flag) {
 		    fprintf(vvp_out, "t_%u ;\n", skip_set);
-
+		    clear_expression_lookaside();
+	      }
 	}
 
 	if (res.base > 3)
@@ -367,8 +370,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			}
 		  }
 
-		  if (skip_set_flag)
+		  if (skip_set_flag) {
 			fprintf(vvp_out, "t_%u ;\n", skip_set);
+			clear_expression_lookaside();
+		  }
 	    }
 	    return 0;
       }
@@ -432,9 +437,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			  assign_to_lvariable(lval, idx, 0, delay, 0);
 
 
-	      if (skip_set_flag)
+	      if (skip_set_flag) {
 		    fprintf(vvp_out, "t_%u ;\n", skip_set);
-
+		    clear_expression_lookaside();
+	      }
 	}
 
 	if (res.base > 3)
@@ -585,9 +591,8 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    if (idx == default_case)
 		  continue;
 
-	    clear_expression_lookaside();
-
 	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
+	    clear_expression_lookaside();
 	    show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
@@ -595,10 +600,10 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
       }
 
-      clear_expression_lookaside();
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
+      clear_expression_lookaside();
 
       return 0;
 }
@@ -673,19 +678,20 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       if (ivl_stmt_cond_true(net))
 	    rc += show_statement(ivl_stmt_cond_true(net), sscope);
 
-      clear_expression_lookaside();
 
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
 	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
+	    clear_expression_lookaside();
 
 	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
-	    clear_expression_lookaside();
 	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_out);
+	    clear_expression_lookaside();
 
       } else {
 	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
+	    clear_expression_lookaside();
       }
 
       return rc;
@@ -889,6 +895,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 	/* Test that 0 < expr */
       fprintf(vvp_out, "T_%u.%u %%cmp/u 0, %u, %u;\n", thread_count,
 	      lab_top, cnt.base, cnt.wid);
+      clear_expression_lookaside();
       fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, lab_out);
 	/* This adds -1 (all ones in 2's complement) to the count. */
       fprintf(vvp_out, "    %%add %u, 1, %u;\n", cnt.base, cnt.wid);
@@ -896,8 +903,8 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
-      clear_expression_lookaside();
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
+      clear_expression_lookaside();
 
       clr_vector(cnt);
 
@@ -932,6 +939,8 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "    %%wait E_%s;\n", 
 	      vvp_mangle_id(ivl_event_name(ev)));
 
+	/* Always clear the expression lookaside after a
+	   %wait. Anything can happen while the thread is waiting. */
       clear_expression_lookaside();
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
@@ -975,7 +984,11 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
 
+	/* Start the loop. The top of the loop starts a basic block
+	   because it can be entered from above or from the bottom of
+	   the loop. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, top_label);
+      clear_expression_lookaside();
 
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
@@ -995,8 +1008,8 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* This is the bottom of the loop. branch to the top where the
 	   test is repeased, and also draw the out label. */
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
-      clear_expression_lookaside();
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, out_label);
+      clear_expression_lookaside();
       return rc;
 }
 
@@ -1129,6 +1142,8 @@ static int show_system_task_call(ivl_statement_t net)
 
       fprintf(vvp_out, ";\n");
 
+	/* VPI calls can manipulate anything, so clear the expression
+	   lookahead table after the call. */
       clear_expression_lookaside();
 
       return 0;
@@ -1143,10 +1158,6 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
-
-	/* This is more conservitive then it needs to be, but
-	   relaxing this will require extensive testing. */
-      clear_expression_lookaside();
 
       switch (code) {
 
@@ -1334,6 +1345,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.71  2002/09/27 20:24:42  steve
+ *  Allow expression lookaside map to spam statements.
+ *
  * Revision 1.70  2002/09/27 16:33:34  steve
  *  Add thread expression lookaside map.
  *
