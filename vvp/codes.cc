@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.9 2002/03/01 05:43:59 steve Exp $"
+#ident "$Id: codes.cc,v 1.8.4.1 2002/03/02 00:25:31 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -105,8 +105,8 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
 
 /*
  * $Log: codes.cc,v $
- * Revision 1.9  2002/03/01 05:43:59  steve
- *  Initialize all the codes tables.
+ * Revision 1.8.4.1  2002/03/02 00:25:31  steve
+ *  Properly initialize code tables to 0.
  *
  * Revision 1.8  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
