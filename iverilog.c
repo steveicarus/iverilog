@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.10 2000/05/04 20:08:20 steve Exp $"
+#ident "$Id: iverilog.c,v 1.11 2000/05/05 01:07:42 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -35,6 +35,9 @@ const char*targ  = "vvm";
 const char*start = 0;
 
 char warning_flags[16] = "";
+
+char*inc_list = 0;
+char*def_list = 0;
 
 char*f_list = 0;
 
@@ -210,11 +213,24 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:Ef:o:Ss:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:D:Ef:I:o:Ss:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
 		  base = optarg;
+		  break;
+		case 'D':
+		  if (def_list == 0) {
+			def_list = malloc(strlen(" -D")+strlen(optarg)+1);
+			strcpy(def_list, " -D");
+			strcat(def_list, optarg);
+		  } else {
+			def_list = realloc(def_list, strlen(def_list)
+					   + strlen(" -D")
+					   + strlen(optarg) + 1);
+			strcat(def_list, " -D");
+			strcat(def_list, optarg);
+		  }
 		  break;
 		case 'E':
 		  e_flag = 1;
@@ -230,6 +246,19 @@ int main(int argc, char **argv)
 					 strlen(optarg) + 1);
 			strcat(f_list, " -f");
 			strcat(f_list, optarg);
+		  }
+		  break;
+		case 'I':
+		  if (inc_list == 0) {
+			inc_list = malloc(strlen(" -I")+strlen(optarg)+1);
+			strcpy(inc_list, " -I");
+			strcat(inc_list, optarg);
+		  } else {
+			inc_list = realloc(inc_list, strlen(inc_list)
+					   + strlen(" -I")
+					   + strlen(optarg) + 1);
+			strcat(inc_list, " -I");
+			strcat(inc_list, optarg);
 		  }
 		  break;
 		case 'o':
@@ -270,6 +299,18 @@ int main(int argc, char **argv)
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
       strcpy(cmd, tmp);
+
+      if (inc_list) {
+	    cmd = realloc(cmd, ncmd + strlen(inc_list) + 1);
+	    strcat(cmd, inc_list);
+	    ncmd += strlen(inc_list);
+      }
+
+      if (def_list) {
+	    cmd = realloc(cmd, ncmd + strlen(def_list) + 1);
+	    strcat(cmd, def_list);
+	    ncmd += strlen(def_list);
+      }
 
 	/* Add all the verilog source files to the preprocess command line. */
 
@@ -314,6 +355,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.11  2000/05/05 01:07:42  steve
+ *  Add the -I and -D switches to iverilog.
+ *
  * Revision 1.10  2000/05/04 20:08:20  steve
  *  Tell ivlpp to generate line number directives.
  *

@@ -1,4 +1,4 @@
-.TH iverilog 1 "April, 2000" Version 19990913
+.TH iverilog 1 "$Date: 2000/05/05 01:07:42 $" Version "$Date: 2000/05/05 01:07:42 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -26,10 +26,12 @@ switch allows the user to select a different set of programs. The path
 given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
 .TP 8
 .B -D\fImacro\fP
-Defines macro \fImacro\fP with the string `1' as its definition. (NOT IMPLEMENTED)
+Defines macro \fImacro\fP with the string `1' as its definition. This
+form is normally only used to trigger ifdef conditionals in the
+Verilog source.
 .TP 8
 .B -D\fImacro=defn\fP
-Defines macro \fImacro\fP as \fIdefn\fP. (NOT IMPLEMENTED)
+Defines macro \fImacro\fP as \fIdefn\fP.
 .TP 8
 .B -E
 Preprocess the Verilog source, but do not compile it. The output file
@@ -43,9 +45,11 @@ used as often as necessary to specify all the desired flags. The flags
 that are used depend on the target that is selected, and are described
 in target specific documentation. Flags that are not used are ignored.
 .TP 8
-.B -I\fIincludepath\fP 
-Append path \fIincludepath\fP to list of paths searched for Verilog
-include files. (NOT IMPLEMENTED)
+.B -I\fIincludedir\fP 
+Append directory \fIincludepdir\fP to list of directoriess searched
+for Verilog include files. The \fB-I\fP switch may be used many times
+to specify several directories to search, the directories are searched
+in the order they appear on the command line.
 .TP 8
 .B -m\fImodule\fP
 Add this module to the list of VPI modules to be loaded by the
@@ -57,7 +61,7 @@ specified, \fIiverilog\fP uses the default name \fBa.out\fP.
 .TP 8
 .B -S
 Synthesize. Normally, if the target can accept behavioral
-descriptions, the compiler will leave processes in behavioral
+descriptions the compiler will leave processes in behavioral
 form. The \fB-S\fP switch causes the compiler to perform synthesis
 even if it is not necessary for the target. If the target type is a
 netlist format, the \fB-S\fP switch is unnecessary and has no effect.
