@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.5 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.6 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 /*
@@ -32,6 +32,7 @@
 # include  "PExpr.h"
 # include  "PGate.h"
 # include  "PTask.h"
+# include  "PWire.h"
 # include  "Statement.h"
 # include  "netlist.h"
 # include  <typeinfo>
@@ -287,6 +288,7 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 
 void PTask::elaborate_scope(Design*des, NetScope*scope) const
 {
+      assert(scope->type() == NetScope::TASK);
 }
 
 
@@ -418,6 +420,13 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.6  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.5  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *

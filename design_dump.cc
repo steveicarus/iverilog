@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.93 2000/07/29 03:55:38 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.94 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 /*
@@ -738,6 +738,15 @@ void NetScope::dump(ostream&o) const
 	    } while (cur != memories_->snext_);
       }
 
+      switch (type_) {
+	  case FUNC:
+	    func_def()->dump(o, 4);
+	    break;
+	  case TASK:
+	    task_def()->dump(o, 4);
+	    break;
+      }
+
 	/* Dump any sub-scopes. */
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->dump(o);
@@ -948,24 +957,6 @@ void Design::dump(ostream&o) const
       o << "SCOPES:" << endl;
       root_scope_->dump(o);
 
-      o << "ELABORATED FUNCTION DEFINITIONS:" << endl;
-      {
-	    map<string,NetFuncDef*>::const_iterator pp;
-	    for (pp = funcs_.begin()
-		       ; pp != funcs_.end() ; pp ++) {
-		  (*pp).second->dump(o, 0);
-	    }
-      }
-
-      o << "ELABORATED TASK DEFINITIONS:" << endl;
-      {
-	    map<string,NetTaskDef*>::const_iterator pp;
-	    for (pp = tasks_.begin()
-		       ; pp != tasks_.end() ; pp ++) {
-		  (*pp).second->dump(o, 0);
-	    }
-      }
-
       o << "ELABORATED NODES:" << endl;
 
 	// dump the nodes,
@@ -987,6 +978,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.94  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.93  2000/07/29 03:55:38  steve
  *  fix problem coalescing events w/ probes.
  *

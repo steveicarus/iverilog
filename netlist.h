@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.150 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.151 2000/07/30 18:25:44 steve Exp $"
 #endif
 
 /*
@@ -2489,6 +2489,15 @@ class NetScope {
 
       TYPE type() const;
 
+      void set_task_def(NetTaskDef*);
+      void set_func_def(NetFuncDef*);
+
+      NetTaskDef* task_def();
+      NetFuncDef* func_def();
+
+      const NetTaskDef* task_def() const;
+      const NetFuncDef* func_def() const;
+
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e. -3 is
 	   units of milliseconds.
@@ -2518,6 +2527,7 @@ class NetScope {
 
       void dump(ostream&) const;
       void emit_scope(ostream&o, struct target_t*tgt) const;
+      void emit_defs(ostream&o, struct target_t*tgt) const;
 
 	/* This method runs the functor on me. Recurse through the
 	   children of this node as well. */
@@ -2542,6 +2552,11 @@ class NetScope {
       NetEvent *events_;
       NetNet   *signals_;
       NetMemory*memories_;
+
+      union {
+	    NetTaskDef*task_;
+	    NetFuncDef*func_;
+      };
 
       NetScope*up_;
       NetScope*sib_;
@@ -2621,12 +2636,10 @@ class Design {
 		       NetNet*&sig, NetMemory*&mem);
 
 	// Functions
-      void add_function(const string&n, NetFuncDef*);
       NetFuncDef* find_function(const string&path, const string&key);
       NetFuncDef* find_function(const string&path);
 
 	// Tasks
-      void add_task(const string&n, NetTaskDef*);
       NetTaskDef* find_task(const string&path, const string&name);
       NetTaskDef* find_task(const string&key);
 
@@ -2654,12 +2667,6 @@ class Design {
 	// Keep a tree of scopes. The NetScope class handles the wide
 	// tree and per-hop searches for me.
       NetScope*root_scope_;
-
-	// List the function definitions in the design.
-      map<string,NetFuncDef*> funcs_;
-
-	// List the task definitions in the design.
-      map<string,NetTaskDef*> tasks_;
 
 	// List the nodes in the design
       NetNode*nodes_;
@@ -2719,6 +2726,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.151  2000/07/30 18:25:44  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.150  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

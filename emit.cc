@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.47 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: emit.cc,v 1.48 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 /*
@@ -327,6 +327,25 @@ void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
       }
 }
 
+void NetScope::emit_defs(ostream&o, struct target_t*tgt) const
+{
+
+      switch (type_) {
+	  case MODULE:
+	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
+		  cur->emit_defs(o, tgt);
+	    break;
+
+	  case FUNC:
+	    tgt->func_def(o, this->func_def());
+	    break;
+	  case TASK:
+	    tgt->task_def(o, this->task_def());
+	    break;
+      }
+
+}
+
 void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
       proc_->emit_proc(o, tgt);
@@ -351,21 +370,9 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
       }
 
 
-	// emit function definitions
-      {
-	    map<string,NetFuncDef*>::const_iterator ta;
-	    for (ta = funcs_.begin() ; ta != funcs_.end() ;  ta ++) {
-		  tgt->func_def(o, (*ta).second);
-	    }
-      }
+	// emit task and function definitions
+      root_scope_->emit_defs(o, tgt);
 
-	// emit task definitions
-      {
-	    map<string,NetTaskDef*>::const_iterator ta;
-	    for (ta = tasks_.begin() ; ta != tasks_.end() ;  ta ++) {
-		  tgt->task_def(o, (*ta).second);
-	    }
-      }
 
 	// emit the processes
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
@@ -454,6 +461,13 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.48  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.47  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.181 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.182 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 /*
@@ -2087,59 +2087,8 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
  * output parameter that is the return value. The return value goes
  * into port 0, and the parameters are all the remaining ports.
  */
-void PFunction::elaborate_1(Design*des, NetScope*scope) const
-{
-      string fname = scope->basename();
 
-      svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
-
-	/* Get the reg for the return value. I know the name of the
-	   reg variable, and I know that it is in this scope, so look
-	   it up directly. */
-      ports[0] = scope->find_signal(scope->basename());
-      if (ports[0] == 0) {
-	    cerr << get_line() << ": internal error: function scope "
-		 << scope->name() << " is missing return reg "
-		 << fname << "." << endl;
-	    scope->dump(cerr);
-	    des->errors += 1;
-	    return;
-      }
-
-      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
-
-	      /* Parse the port name into the task name and the reg
-		 name. We know by design that the port name is given
-		 as two components: <func>.<port>. */
-
-	    string pname = (*ports_)[idx]->name();
-	    string ppath = parse_first_name(pname);
-
-	    if (ppath != scope->basename()) {
-		  cerr << get_line() << ": internal error: function "
-		       << "port " << (*ports_)[idx]->name()
-		       << " has wrong name for function "
-		       << scope->name() << "." << endl;
-		  des->errors += 1;
-	    }
-
-	    NetNet*tmp = scope->find_signal(pname);
-	    if (tmp == 0) {
-		  cerr << get_line() << ": internal error: function "
-		       << scope->name() << " is missing port "
-		       << pname << "." << endl;
-		  scope->dump(cerr);
-		  des->errors += 1;
-	    }
-
-	    ports[idx+1] = tmp;
-      }
-
-      NetFuncDef*def = new NetFuncDef(scope, ports);
-      des->add_function(scope->name(), def);
-}
-
-void PFunction::elaborate_2(Design*des, NetScope*scope) const
+void PFunction::elaborate(Design*des, NetScope*scope) const
 {
       NetFuncDef*def = des->find_function(scope->name());
       assert(def);
@@ -2228,7 +2177,9 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  *
  * So in the foo example, the PWire objects that represent the ports
  * of the task will include a foo.blah for the blah port. This port is
- * bound to a NetNet object by looking up the name.
+ * bound to a NetNet object by looking up the name. All of this is
+ * handled by the PTask::elaborate_sig method and the results stashed
+ * in the created NetDaskDef attached to the scope.
  *
  * Elaboration pass 2 for the task definition causes the statement of
  * the task to be elaborated and attached to the NetTaskDef object
@@ -2238,49 +2189,8 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  * port name when making the port list. It is not really useful, but
  * that is what I did in pform_make_task_ports, so there it is.
  */
-void PTask::elaborate_1(Design*des, const string&path) const
-{
-      NetScope*scope = des->find_scope(path);
-      assert(scope);
 
-      svector<NetNet*>ports (ports_? ports_->count() : 0);
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
-
-	      /* Parse the port name into the task name and the reg
-		 name. We know by design that the port name is given
-		 as two components: <task>.<port>. */
-
-	    string pname = (*ports_)[idx]->name();
-	    string ppath = parse_first_name(pname);
-	    assert(pname != "");
-
-	      /* check that the current scope really does have the
-		 name of the first component of the task port name. Do
-		 this by looking up the task scope in the parent of
-		 the current scope. */
-	    if (scope->parent()->child(ppath) != scope) {
-		  cerr << "internal error: task scope " << ppath
-		       << " not the same as scope " << scope->name()
-		       << "?!" << endl;
-		  return;
-	    }
-
-	    NetNet*tmp = scope->find_signal(pname);
-
-	    if (tmp == 0) {
-		  cerr << get_line() << ": internal error: "
-		       << "Could not find port " << pname
-		       << " in scope " << scope->name() << endl;
-		  scope->dump(cerr);
-	    }
-	    ports[idx] = tmp;
-      }
-
-      NetTaskDef*def = new NetTaskDef(path, ports);
-      des->add_task(path, def);
-}
-
-void PTask::elaborate_2(Design*des, const string&path) const
+void PTask::elaborate(Design*des, const string&path) const
 {
       NetTaskDef*def = des->find_task(path);
       assert(def);
@@ -2344,59 +2254,25 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       const string path = scope->name();
       bool result_flag = true;
 
-#if 0
-	// Get all the explicitly declared wires of the module and
-	// start the signals list with them.
-      const map<string,PWire*>&wl = get_wires();
-
-      for (map<string,PWire*>::const_iterator wt = wl.begin()
-		 ; wt != wl.end()
-		 ; wt ++ ) {
-
-	    (*wt).second->elaborate(des, scope);
-      }
-#endif
 
 	// Elaborate functions.
       typedef map<string,PFunction*>::const_iterator mfunc_it_t;
-
-      for (mfunc_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++) {
-	    NetScope*fscope = scope->child((*cur).first);
-	    if (scope == 0) {
-		  cerr << (*cur).second->get_line() << ": internal error: "
-		       << "Child scope for function " << (*cur).first
-		       << " missing in " << scope->name() << "." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	    (*cur).second->elaborate_1(des, fscope);
-      }
-
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
 
 	    NetScope*fscope = scope->child((*cur).first);
 	    assert(fscope);
-	    (*cur).second->elaborate_2(des, fscope);
+	    (*cur).second->elaborate(des, fscope);
       }
 
 	// Elaborate the task definitions. This is done before the
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
       typedef map<string,PTask*>::const_iterator mtask_it_t;
-
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
 	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate_1(des, pname);
-      }
-
-      for (mtask_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++) {
-	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate_2(des, pname);
+	    (*cur).second->elaborate(des, pname);
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -2514,6 +2390,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.182  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.181  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *

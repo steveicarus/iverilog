@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.7 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.8 2000/07/30 18:25:44 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -50,6 +50,15 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
       time_prec_ = up->time_precision();
       sib_ = up_->sub_;
       up_->sub_ = this;
+
+      switch (t) {
+	  case NetScope::TASK:
+	    task_ = 0;
+	    break;
+	  case NetScope::FUNC:
+	    func_ = 0;
+	    break;
+      }
 }
 
 NetScope::~NetScope()
@@ -93,6 +102,44 @@ const NetExpr* NetScope::get_parameter(const string&key) const
 NetScope::TYPE NetScope::type() const
 {
       return type_;
+}
+
+void NetScope::set_task_def(NetTaskDef*def)
+{
+      assert( type_ == TASK );
+      assert( task_ == 0 );
+      task_ = def;
+}
+
+NetTaskDef* NetScope::task_def()
+{
+      assert( type_ == TASK );
+      return task_;
+}
+
+const NetTaskDef* NetScope::task_def() const
+{
+      assert( type_ == TASK );
+      return task_;
+}
+
+void NetScope::set_func_def(NetFuncDef*def)
+{
+      assert( type_ == FUNC );
+      assert( func_ == 0 );
+      func_ = def;
+}
+
+NetFuncDef* NetScope::func_def()
+{
+      assert( type_ == FUNC );
+      return func_;
+}
+
+const NetFuncDef* NetScope::func_def() const
+{
+      assert( type_ == FUNC );
+      return func_;
 }
 
 void NetScope::time_unit(int val)
@@ -303,6 +350,13 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.8  2000/07/30 18:25:44  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.7  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *

@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.2 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.3 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 # include  "Module.h"
 # include "PExpr.h"
 # include  "PGate.h"
+# include  "PTask.h"
 # include  "PWire.h"
 # include  "netlist.h"
 # include  "util.h"
@@ -57,6 +58,37 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    flag &= (*gt)->elaborate_sig(des, scope);
       }
 
+
+      typedef map<string,PFunction*>::const_iterator mfunc_it_t;
+
+      for (mfunc_it_t cur = funcs_.begin()
+		 ; cur != funcs_.end() ;  cur ++) {
+	    NetScope*fscope = scope->child((*cur).first);
+	    if (scope == 0) {
+		  cerr << (*cur).second->get_line() << ": internal error: "
+		       << "Child scope for function " << (*cur).first
+		       << " missing in " << scope->name() << "." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    (*cur).second->elaborate_sig(des, fscope);
+      }
+
+
+	// After all the wires are elaborated, we are free to
+	// elaborate the ports of the tasks defined within this
+	// module. Run through them now.
+
+      typedef map<string,PTask*>::const_iterator mtask_it_t;
+
+      for (mtask_it_t cur = tasks_.begin()
+		 ; cur != tasks_.end() ;  cur ++) {
+	    NetScope*tscope = scope->child((*cur).first);
+	    assert(tscope);
+	    (*cur).second->elaborate_sig(des, tscope);
+      }
+
       return flag;
 }
 
@@ -82,6 +114,115 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
       return rmod->elaborate_sig(des, my_scope);
 }
 
+/*
+ * A function definition exists within an elaborated module.
+ */
+void PFunction::elaborate_sig(Design*des, NetScope*scope) const
+{
+      string fname = scope->basename();
+      assert(scope->type() == NetScope::FUNC);
+
+      svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
+
+	/* Get the reg for the return value. I know the name of the
+	   reg variable, and I know that it is in this scope, so look
+	   it up directly. */
+      ports[0] = scope->find_signal(scope->basename());
+      if (ports[0] == 0) {
+	    cerr << get_line() << ": internal error: function scope "
+		 << scope->name() << " is missing return reg "
+		 << fname << "." << endl;
+	    scope->dump(cerr);
+	    des->errors += 1;
+	    return;
+      }
+
+      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+
+	      /* Parse the port name into the task name and the reg
+		 name. We know by design that the port name is given
+		 as two components: <func>.<port>. */
+
+	    string pname = (*ports_)[idx]->name();
+	    string ppath = parse_first_name(pname);
+
+	    if (ppath != scope->basename()) {
+		  cerr << get_line() << ": internal error: function "
+		       << "port " << (*ports_)[idx]->name()
+		       << " has wrong name for function "
+		       << scope->name() << "." << endl;
+		  des->errors += 1;
+	    }
+
+	    NetNet*tmp = scope->find_signal(pname);
+	    if (tmp == 0) {
+		  cerr << get_line() << ": internal error: function "
+		       << scope->name() << " is missing port "
+		       << pname << "." << endl;
+		  scope->dump(cerr);
+		  des->errors += 1;
+	    }
+
+	    ports[idx+1] = tmp;
+      }
+
+      NetFuncDef*def = new NetFuncDef(scope, ports);
+      scope->set_func_def(def);
+}
+
+/*
+ * A task definition is a scope within an elaborated module. When we
+ * are elaborating signals, the scopes have already been created, as
+ * have the reg objects that are the parameters of this task. The
+ * elaborate_sig method of PTask is therefore left to connect the
+ * signals to the ports of the NetTaskDef definition. We know for
+ * certain that signals exist (They are in my scope!) so the port
+ * binding is sure to work.
+ */
+void PTask::elaborate_sig(Design*des, NetScope*scope) const
+{
+      assert(scope->type() == NetScope::TASK);
+
+      svector<NetNet*>ports (ports_? ports_->count() : 0);
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+
+	      /* Parse the port name into the task name and the reg
+		 name. We know by design that the port name is given
+		 as two components: <task>.<port>. */
+
+	    string pname = (*ports_)[idx]->name();
+	    string ppath = parse_first_name(pname);
+	    assert(pname != "");
+
+	      /* check that the current scope really does have the
+		 name of the first component of the task port name. Do
+		 this by looking up the task scope in the parent of
+		 the current scope. */
+	    if (scope->parent()->child(ppath) != scope) {
+		  cerr << "internal error: task scope " << ppath
+		       << " not the same as scope " << scope->name()
+		       << "?!" << endl;
+		  return;
+	    }
+
+	      /* Find the signal for the port. We know by definition
+		 that it is in the scope of the task, so look only in
+		 the scope. */
+	    NetNet*tmp = scope->find_signal(pname);
+
+	    if (tmp == 0) {
+		  cerr << get_line() << ": internal error: "
+		       << "Could not find port " << pname
+		       << " in scope " << scope->name() << endl;
+		  scope->dump(cerr);
+	    }
+
+	    ports[idx] = tmp;
+      }
+
+      NetTaskDef*def = new NetTaskDef(scope->name(), ports);
+      scope->set_task_def(def);
+}
 
 bool PGate::elaborate_sig(Design*des, NetScope*scope) const
 {
@@ -211,6 +352,13 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.3  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.2  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

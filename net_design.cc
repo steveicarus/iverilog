@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.12 2000/07/23 02:41:32 steve Exp $"
+#ident "$Id: net_design.cc,v 1.13 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 /*
@@ -370,69 +370,44 @@ void Design::find_symbol(NetScope*scope, const string&name,
       }
 }
 
-void Design::add_function(const string&key, NetFuncDef*def)
-{
-      funcs_[key] = def;
-}
-
 NetFuncDef* Design::find_function(const string&path, const string&name)
 {
-      string root = path;
-      for (;;) {
-	    string key = root + "." + name;
-	    map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
-	    if (cur != funcs_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
+      NetScope*scope = find_scope(path);
+      assert(scope);
+      NetScope*func = find_scope(scope, name);
+      if (func->type() == NetScope::FUNC)
+	    return func->func_def();
 
       return 0;
 }
 
 NetFuncDef* Design::find_function(const string&key)
 {
-      map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
-      if (cur != funcs_.end())
-	    return (*cur).second;
-      return 0;
-}
+      NetScope*func = find_scope(key);
+      if (func && (func->type() == NetScope::FUNC))
+	    return func->func_def();
 
-void Design::add_task(const string&key, NetTaskDef*def)
-{
-      tasks_[key] = def;
+      return 0;
 }
 
 NetTaskDef* Design::find_task(const string&path, const string&name)
 {
-      string root = path;
-      for (;;) {
-	    string key = root + "." + name;
-	    map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
-	    if (cur != tasks_.end())
-		  return (*cur).second;
-
-	    unsigned pos = root.rfind('.');
-	    if (pos > root.length())
-		  break;
-
-	    root = root.substr(0, pos);
-      }
+      NetScope*scope = find_scope(path);
+      assert(scope);
+      NetScope*task = find_scope(scope, name);
+      if (task->type() == NetScope::TASK)
+	    return task->task_def();
 
       return 0;
 }
 
 NetTaskDef* Design::find_task(const string&key)
 {
-      map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
-      if (cur == tasks_.end())
-	    return 0;
+      NetScope*task = find_scope(key);
+      if (task && (task->type() == NetScope::TASK))
+	    return task->task_def();
 
-      return (*cur).second;
+      return 0;
 }
 
 void Design::add_node(NetNode*net)
@@ -497,6 +472,13 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.13  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.12  2000/07/23 02:41:32  steve
  *  Excessive assert.
  *

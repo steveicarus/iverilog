@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.h,v 1.8 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: PTask.h,v 1.9 2000/07/30 18:25:43 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -45,8 +45,11 @@ class PTask  : public LineInfo {
 	// I need to.
       void elaborate_scope(Design*des, NetScope*scope) const;
 
-      void elaborate_1(Design*des, const string&path) const;
-      void elaborate_2(Design*des, const string&path) const;
+	// Bind the ports to the regs that are the ports.
+      void elaborate_sig(Design*des, NetScope*scope) const;
+
+	// Elaborate the statement to finish off the task definition.
+      void elaborate(Design*des, const string&path) const;
 
       void dump(ostream&, unsigned) const;
 
@@ -74,9 +77,11 @@ class PFunction : public LineInfo {
 
       void elaborate_scope(Design*des, NetScope*scope) const;
 
-	/* Functions are elaborated in 2 passes. */
-      void elaborate_1(Design *des, NetScope*) const;
-      void elaborate_2(Design *des, NetScope*) const;
+	/* elaborate the ports and return value. */
+      void elaborate_sig(Design *des, NetScope*) const;
+
+	/* Elaborate the behavioral statement. */
+      void elaborate(Design *des, NetScope*) const;
 
       void dump(ostream&, unsigned) const;
 
@@ -88,6 +93,13 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.9  2000/07/30 18:25:43  steve
+ *  Rearrange task and function elaboration so that the
+ *  NetTaskDef and NetFuncDef functions are created during
+ *  signal enaboration, and carry these objects in the
+ *  NetScope class instead of the extra, useless map in
+ *  the Design class.
+ *
  * Revision 1.8  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters
