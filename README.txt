@@ -208,6 +208,9 @@ command line.
 
 3.6 ATTRIBUTES
 
+    NOTE: The $attribute syntax is being deprecated in favor of the
+    Verilog-2001 attribute syntax, which cleaner and standardized.
+
 The parser accepts, as an extension to Verilog, the $attribute module
 item. The syntax of the $attribute item is:
 
