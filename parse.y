@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.143 2001/12/31 05:23:13 steve Exp $"
+#ident "$Id: parse.y,v 1.144 2002/01/12 04:03:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,12 +31,11 @@ extern void lex_start_table();
 extern void lex_end_table();
 
 /*
- * These are the strengths to use for net declaration
- * assignments. They are stored here so that scope that contains the
- * net_decl_assigns can change them during specific statements.
+ * These are some common strength pairs that are used as defaults when
+ * the user is not otherwise specific.
  */
-static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
-static struct str_pair_t pull_strength = { PGate::PULL,   PGate::PULL };
+const static struct str_pair_t pull_strength = { PGate::PULL,  PGate::PULL };
+const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %}
 
 %union {
@@ -1204,16 +1203,11 @@ module_item
 		  }
 		}
 	| net_type range_delay net_decl_assigns ';'
-		{ pform_makewire(@1, $2.range, $2.delay, $3, $1);
+		{ pform_makewire(@1, $2.range, $2.delay, str_strength,
+				 $3, $1);
 		}
-	| net_type drive_strength { decl_strength = $2;} net_decl_assigns ';'
-		{ pform_makewire(@1, 0, 0, $4, $1);
-		    /* The strengths are handled in the
-		       net_decl_assigns using the decl_strength that I
-		       set in the rule. Right here, just restore the
-		       defaults for other rules. */
-		  decl_strength.str0 = PGate::STRONG;
-		  decl_strength.str1 = PGate::STRONG;
+	| net_type drive_strength net_decl_assigns ';'
+		{ pform_makewire(@1, 0, 0, $2, $3, $1);
 		}
 	| K_trireg charge_strength_opt range_delay list_of_variables ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -1241,11 +1235,11 @@ module_item
      three-value delay. These rules handle the different cases. */
 
 	| gatetype gate_instance_list ';'
-		{ pform_makegates($1, decl_strength, 0, $2);
+		{ pform_makegates($1, str_strength, 0, $2);
 		}
 
 	| gatetype delay3 gate_instance_list ';'
-		{ pform_makegates($1, decl_strength, $2, $3);
+		{ pform_makegates($1, str_strength, $2, $3);
 		}
 
 	| gatetype drive_strength gate_instance_list ';'

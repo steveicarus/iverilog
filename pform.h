@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.54 2001/12/07 05:03:13 steve Exp $"
+#ident "$Id: pform.h,v 1.55 2002/01/12 04:03:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -147,6 +147,7 @@ extern void pform_makewire(const struct vlltype&li,
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   svector<PExpr*>*delay,
+			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
@@ -218,6 +219,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.55  2002/01/12 04:03:39  steve
+ *  Drive strengths for continuous assignments.
+ *
  * Revision 1.54  2001/12/07 05:03:13  steve
  *  Support integer for function return value.
  *

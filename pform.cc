@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.87 2001/12/07 05:03:13 steve Exp $"
+#ident "$Id: pform.cc,v 1.88 2002/01/12 04:03:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -769,15 +769,12 @@ void pform_makewire(const vlltype&li,
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
 		    svector<PExpr*>*delay,
+		    str_pair_t str,
 		    net_decl_assign_t*decls,
 		    NetNet::Type type)
 {
       net_decl_assign_t*first = decls->next;
       decls->next = 0;
-
-      struct str_pair_t str;
-      str.str0 = PGate::STRONG;
-      str.str1 = PGate::STRONG;
 
       while (first) {
 	    net_decl_assign_t*next = first->next;
@@ -1158,6 +1155,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.88  2002/01/12 04:03:39  steve
+ *  Drive strengths for continuous assignments.
+ *
  * Revision 1.87  2001/12/07 05:03:13  steve
  *  Support integer for function return value.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.62 2002/01/06 03:15:43 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.63 2002/01/12 04:03:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -151,6 +151,27 @@ ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
       return out;
 }
 
+ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
+{
+      ivl_nexus_t nex = ivl_logic_pin(net, pin);
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_net_logic_t tmp = ivl_nexus_ptr_log(ptr);
+	    if (tmp == 0)
+		  continue;
+	    if (tmp != net)
+		  continue;
+	    if (ivl_nexus_ptr_pin(ptr) != pin)
+		  continue;
+
+	    return ptr;
+      }
+      assert(0);
+      return 0;
+}
+
 const char*drive_string(ivl_drive_t drive)
 {
       switch (drive) {
@@ -221,10 +242,16 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       ivl_lpm_t lpm;
 
       lptr = ivl_nexus_ptr_log(nptr);
-      if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) &&
-	  (nptr_pin == 0)) {
-	    return draw_net_input(ivl_logic_pin(lptr, 1));
-      }
+      if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) && (nptr_pin == 0))
+	    do {
+		  if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
+			break;
+
+		  if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
+			break;
+
+		  return draw_net_input(ivl_logic_pin(lptr, 1));
+	    } while(0);
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
 	    return "C<pu0>";
@@ -645,10 +672,23 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    draw_udp_in_scope(lptr);
 	    return;
 
-          case IVL_LO_BUFZ:
-	/* Skip BUFZ objects. Things that have a bufz as input
-	   will use the input to bufz instead. */
-	    return;
+          case IVL_LO_BUFZ: {
+		  /* Draw bufz objects, but only if the output drive
+		     is different from the input. */
+		ivl_nexus_ptr_t nptr = ivl_logic_pin_ptr(lptr,0);
+		ivl_drive_t dr0 = ivl_nexus_ptr_drive0(nptr);
+		ivl_drive_t dr1 = ivl_nexus_ptr_drive1(nptr);
+
+		ltype = "BUFZ";
+
+		if (dr0 != IVL_DR_STRONG)
+			break;
+
+		if (dr1 != IVL_DR_STRONG)
+			break;
+
+		return;
+	  }
 
 	  case IVL_LO_PULLDOWN:
 	  case IVL_LO_PULLUP:
@@ -1364,6 +1404,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.63  2002/01/12 04:03:40  steve
+ *  Drive strengths for continuous assignments.
+ *
  * Revision 1.62  2002/01/06 03:15:43  steve
  *  Constant values have drive strengths.
  *
