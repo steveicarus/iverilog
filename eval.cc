@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.19 2001/01/27 05:41:48 steve Exp $"
+#ident "$Id: eval.cc,v 1.20 2001/02/09 02:49:59 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -123,7 +123,7 @@ verinum* PEIdent::eval_const(const Design*des, const string&path) const
 
       if (dynamic_cast<const NetEParam*>(expr)) {
 	    cerr << get_line() << ": sorry: I cannot evaluate ``" <<
-		  text_ << "'' in this context." << endl;
+		  text_ << "'' in this scope: " << scope->name() << endl;
 	    return 0;
       }
 
@@ -194,6 +194,9 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.20  2001/02/09 02:49:59  steve
+ *  Be more clear about scope of failure.
+ *
  * Revision 1.19  2001/01/27 05:41:48  steve
  *  Fix sign extension of evaluated constants. (PR#91)
  *
