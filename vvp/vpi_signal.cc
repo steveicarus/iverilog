@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.47 2002/09/06 04:56:29 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.48 2002/09/10 02:27:11 steve Exp $"
 #endif
 
 /*
@@ -62,10 +62,11 @@ char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 
       if (result_buf_size[type] == 0) {
 	    result_buf[type] = (char*)malloc(cnt);
+	    result_buf_size[type] = cnt;
       } else if (result_buf_size[type] < cnt) {
 	    result_buf[type] = (char*)realloc(result_buf[type], cnt);
+	    result_buf_size[type] = cnt;
       }
-      result_buf_size[type] = cnt;
 
       return result_buf[type];
 }
@@ -382,6 +383,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		s_vpi_strengthval*op = (s_vpi_strengthval*)
 		      need_result_buf(wid * sizeof(s_vpi_strengthval),
 				      RBUF_VAL);
+		vp->value.strength = op;
 
 		  /* Convert the internal strength values of each
 		     functor in the vector to a PLI2.0 version. */
@@ -414,6 +416,8 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 			    op[idx].s0 = vpiHiZ;
 			    op[idx].s1 = vpiHiZ;
 			    break;
+			  default:
+			    assert(0);
 		      }
 		}
 
@@ -715,6 +719,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.48  2002/09/10 02:27:11  steve
+ *  Actually set strength pointer when getting strength val.
+ *
  * Revision 1.47  2002/09/06 04:56:29  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from
