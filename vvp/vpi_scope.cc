@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.26 2003/02/27 21:54:44 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.27 2003/03/03 01:47:50 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -72,31 +72,37 @@ static int scope_get(int code, vpiHandle obj)
       return 0;
 }
 
+static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
+{
+      if (ref->scope) {
+	    construct_scope_fullname(ref->scope, buf);
+	    strcat(buf, ".");
+      }
+
+      strcat(buf, ref->name);
+}
+
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
-      const char *n, *nn, *name = ref->name;
-      char *rbuf = need_result_buf(strlen(name) + 1, RBUF_STR);
+      char *rbuf = need_result_buf(strlen(ref->name) + 1, RBUF_STR);
 
       assert(handle_is_scope(obj));
 
       switch (code) {
-	  case vpiFullName:
-	    strcpy(rbuf, name);
-	    return rbuf;
+	  case vpiFullName: {
+		char buf[4096];
+		buf[0] = 0;
+		construct_scope_fullname(ref, buf);
+		rbuf = need_result_buf(strlen(buf) + 1, RBUF_STR);
+		strcpy(rbuf, buf);
+		return rbuf;
+	  }
 
 	  case vpiName:
-	    nn = n = name;
-	    while (*n)
-		  if (*n=='\\' && *++n)
-			++n;
-		  else if (*n=='.')
-			nn = ++n;
-		  else 
-			++n;
-	    strcpy(rbuf, nn);
+	    strcpy(rbuf, ref->name);
 	    return rbuf;
-		  
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -454,6 +460,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.27  2003/03/03 01:47:50  steve
+ *  .scope directives store only the base names.
+ *
  * Revision 1.26  2003/02/27 21:54:44  steve
  *  Add scope type have a vpi_get function.
  *
@@ -499,32 +508,5 @@ void vpip_attach_to_current_scope(vpiHandle obj)
  *
  *  Add vpi_mode_flag to track the mode of the
  *  vpi engine. This is for error checking.
- *
- * Revision 1.14  2002/05/10 16:00:57  steve
- *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
- *
- * Revision 1.13  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.12  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.11  2002/01/06 00:48:39  steve
- *  VPI access to root module scopes.
- *
- * Revision 1.10  2001/11/02 05:43:11  steve
- *  Comment the scope type parser.
- *
- * Revision 1.9  2001/10/15 02:58:27  steve
- *  Carry the type of the scope (Stephan Boettcher)
- *
- * Revision 1.8  2001/10/15 01:49:50  steve
- *  Support getting scope of scope, and scope of signals.
- *
- * Revision 1.7  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.6  2001/07/11 04:43:57  steve
- *  support postpone of $systask parameters. (Stephan Boettcher)
  */
 
