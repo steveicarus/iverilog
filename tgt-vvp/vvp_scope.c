@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.53 2001/10/22 00:04:51 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.54 2001/10/22 02:04:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -385,7 +385,6 @@ static void draw_input_from_net(ivl_nexus_t nex)
  */
 static void draw_reg_in_scope(ivl_signal_t sig)
 {
-      unsigned idx;
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
 
@@ -1205,6 +1204,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.54  2001/10/22 02:04:37  steve
+ *  unused idx warning.
+ *
  * Revision 1.53  2001/10/22 00:04:51  steve
  *  Remove useless code for drawing .var inputs.
  *
