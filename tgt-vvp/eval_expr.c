@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.58 2002/04/22 02:41:30 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.59 2002/05/07 03:49:58 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1351,14 +1351,20 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 			  res.base, res.base, res.wid);
 		  clr_vector(tmp);
 		  res.wid = 1;
-	    } else {
-		  unsigned label_out = local_count++;
-		  fprintf(vvp_out, "    %%mov 4, %u, 1;\n", res.base);
-		  fprintf(vvp_out, "    %%mov %u, 1, 1;\n", res.base);
-		  fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n",
-			  thread_count, label_out);
-		  fprintf(vvp_out, "    %%mov %u, 0, 1;\n", res.base);
-		  fprintf(vvp_out, "T_%u.%u ;\n", thread_count, label_out);
+	    } else switch (res.base) {
+		case 0:
+		  res.base = 1;
+		  break;
+		case 1:
+		  res.base = 0;
+		  break;
+		case 2:
+		case 3:
+		  res.base = 2;
+		  break;
+		default:
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+		  break;
 	    }
 
 	      /* If the result needs to be bigger then the calculated
@@ -1506,6 +1512,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.59  2002/05/07 03:49:58  steve
+ *  Handle x case of unary ! properly.
+ *
  * Revision 1.58  2002/04/22 02:41:30  steve
  *  Reduce the while loop expression if needed.
  *
