@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.117 2005/02/12 06:25:15 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.118 2005/02/12 22:54:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -551,7 +551,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
-	  case IVL_LPM_MUX:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 		     sprintf(result, "L_%s.%s/%u",
@@ -580,6 +579,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_MUX:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_UFUNC:
@@ -2041,6 +2041,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.118  2005/02/12 22:54:29  steve
+ *  Implement a-b muxes as vector devices
+ *
  * Revision 1.117  2005/02/12 06:25:15  steve
  *  Draw C4 and C8 constants to account for strength.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.7 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.8 2005/02/12 22:54:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -28,6 +28,7 @@
 # include  <stdlib.h>
 # include  <string.h>
 
+#if 0
 /*
  * This draws a general mux, a slice at a time. Use MUXX so that
  * unknows lead to unknown output.
@@ -136,6 +137,7 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
       draw_input_from_net(s);
       fprintf(vvp_out, ", C<1>;\n");
 }
+#endif
 
 /*
  * This draws a simple A/B mux. The mux can have any width, enough
@@ -143,48 +145,38 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
  */
 static void draw_lpm_mux_ab(ivl_lpm_t net)
 {
-      ivl_nexus_t s;
-      unsigned idx, width;
-
-	/* Only support A-B muxes at this oint. */
+	/* Only support A-B muxes in this function. */
       assert(ivl_lpm_size(net) == 2);
       assert(ivl_lpm_selects(net) == 1);
 
-      width = ivl_lpm_width(net);
-      s = ivl_lpm_select(net, 0);
-
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
-	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
-	    fprintf(vvp_out, "L_%s.%s/%u .functor MUXZ, ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
-	    draw_input_from_net(a);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(b);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(s);
-	    fprintf(vvp_out, ", C<1>;\n");
-      }
-
+      fprintf(vvp_out, "L_%p .functor MUXZ", net);
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,0)));
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,1)));
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_select(net,0)));
+      fprintf(vvp_out, ", C4<>;\n");
 }
 
 void draw_lpm_mux(ivl_lpm_t net)
 {
-      unsigned idx;
 
       if ((ivl_lpm_size(net) == 2) && (ivl_lpm_selects(net) == 1)) {
 	    draw_lpm_mux_ab(net);
 	    return;
       }
-
+# if 0
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1)
 	    draw_lpm_mux_bitslice(net, idx);
+# else
+      fprintf(stderr, "XXXX Forgot how to implement wide muxes.\n");
+#endif
 
 }
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.8  2005/02/12 22:54:29  steve
+ *  Implement a-b muxes as vector devices
+ *
  * Revision 1.7  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *
