@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.22 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.23 2004/05/19 03:30:46 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -233,8 +233,7 @@ static int memory_word_get(int code, vpiHandle ref)
       }
 }
 
-static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
-				 p_vpi_time tim, int flags)
+static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(ref->vpi_type->type_code==vpiMemoryWord);
@@ -586,6 +585,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.23  2004/05/19 03:30:46  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.22  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.53 2003/06/18 03:55:19 steve Exp $
+ *  $Id: opcodes.txt,v 1.54 2004/05/19 03:26:24 steve Exp $
  */
 
 
@@ -81,6 +81,11 @@ from the specified thread register <bit>.  The memory bit is addressed
 by index register 3.  Bit address zero is the LSB of the first memory
 word.
 
+
+* %assign/wr <vpi-label>, <delay>, <index>
+
+This instruction causes a non-blocking assign of the indexed value to
+the real object addressed by the <vpi-label> label.
 
 * %assign/x0 <var-label>, <delay>, <bit>
 

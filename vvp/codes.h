@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.64 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: codes.h,v 1.65 2004/05/19 03:26:24 steve Exp $"
 #endif
 
 
@@ -43,6 +43,7 @@ extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
@@ -168,6 +169,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.65  2004/05/19 03:26:24  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.64  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *

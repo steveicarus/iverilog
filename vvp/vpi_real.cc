@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.8 2003/03/13 04:59:21 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.9 2004/05/19 03:26:25 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -119,8 +119,7 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
-static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp,
-				    p_vpi_time, int)
+static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
@@ -179,6 +178,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.9  2004/05/19 03:26:25  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.8  2003/03/13 04:59:21  steve
  *  Use rbufs instead of static buffers.
  *

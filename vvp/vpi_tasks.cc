@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.26 2004/02/18 02:51:59 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.27 2004/05/19 03:30:46 steve Exp $"
 #endif
 
 /*
@@ -141,15 +141,11 @@ static const struct __vpirt vpip_systask_rt = {
  * bits and set into the thread space bits that were selected at
  * compile time.
  */
-static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
-				   p_vpi_time t, int flags)
+static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-
-	/* delays are not allowed. */
-      assert(flags == vpiNoDelay);
 
       assert(rfp->vbit >= 4);
 
@@ -242,15 +238,12 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
       return 0;
 }
 
-static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp,
-				   p_vpi_time t, int flags)
+static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
 
-	/* delays are not allowed. */
-      assert(flags == vpiNoDelay);
 	/* Make sure this is a real valued function. */
       assert(rfp->vwid == -vpiRealConst);
 
@@ -487,6 +480,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.27  2004/05/19 03:30:46  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.26  2004/02/18 02:51:59  steve
  *  Fix type mismatches of various VPI functions.
  *

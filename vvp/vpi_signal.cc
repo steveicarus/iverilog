@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.61 2004/03/09 03:11:02 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.62 2004/05/19 03:26:25 steve Exp $"
 #endif
 
 /*
@@ -534,47 +534,15 @@ static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
       }
 }
 
-static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
-				  p_vpi_time when, int flags)
+static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 {
       unsigned wid;
       struct __vpiSignal*rfp;
-      unsigned long dly = 0;
 
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       rfp = (struct __vpiSignal*)ref;
-
-      switch (flags) {
-	  case vpiNoDelay:
-	    dly = 0;
-	    break;
-
-	  case vpiPureTransportDelay:
- 	    switch (when->type) {
- 		case vpiScaledRealTime:
- 		  dly = (unsigned)(when->real *
- 				   (pow(10,
-					vpip_time_units_from_handle(ref) -
-					vpip_get_time_precision())));
- 		  break;
- 		case vpiSimTime:
- 		  assert (when->high == 0); // Only 32 bit delays for now
- 		  dly = when->low;
- 		  break;
- 		default:
-		  dly = 0;
-		  break;
- 	    }
-	    break;
-
- 	  default:
- 	    fprintf(stderr, "signal_put_value: delay type %u not implemented.",
- 		    flags);
- 	    assert(0);
-      }
-
 
       wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
@@ -591,7 +559,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      functor_poke(rfp, idx, val&1, (val&1)? St1 : St0, dly);
+		      functor_poke(rfp, idx, val&1, (val&1)? St1 : St0, 0);
 		      val >>= 1;
 		}
 		break;
@@ -600,16 +568,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  functor_poke(rfp, 0, 0, St0, dly);
+		  functor_poke(rfp, 0, 0, St0, 0);
 		  break;
 		case vpi1:
-		  functor_poke(rfp, 0, 1, St1, dly);
+		  functor_poke(rfp, 0, 1, St1, 0);
 		  break;
 		case vpiX:
-		  functor_poke(rfp, 0, 2, StX, dly);
+		  functor_poke(rfp, 0, 2, StX, 0);
 		  break;
 		case vpiZ:
-		  functor_poke(rfp, 0, 3, HiZ, dly);
+		  functor_poke(rfp, 0, 3, HiZ, 0);
 		  break;
 		default:
 		  assert(0);
@@ -625,16 +593,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		  int bit = (aval&1) | ((bval<<1)&2);
 		  switch (bit) {
 		      case 0: /* zero */
-			functor_poke(rfp,idx, 0, St0, dly);
+			functor_poke(rfp,idx, 0, St0, 0);
 			break;
 		      case 1: /* one */
-			functor_poke(rfp,idx, 1, St1, dly);
+			functor_poke(rfp,idx, 1, St1, 0);
 			break;
 		      case 2: /* z */
-			functor_poke(rfp,idx, 3, HiZ, dly);
+			functor_poke(rfp,idx, 3, HiZ, 0);
 			break;
 		      case 3: /* x */
-			functor_poke(rfp,idx, 2, StX, dly);
+			functor_poke(rfp,idx, 2, StX, 0);
 			break;
 		  }
 	    }
@@ -651,16 +619,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		      switch (val) {
 			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, dly);
+			    functor_poke(rfp,idx, 0, St0, 0);
 			    break;
 			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, dly);
+			    functor_poke(rfp,idx, 1, St1, 0);
 			    break;
 			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, dly);
+			    functor_poke(rfp,idx, 2, StX, 0);
 			    break;
 			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, dly);
+			    functor_poke(rfp,idx, 3, HiZ, 0);
 			    break;
 		      }
 		}
@@ -680,16 +648,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		      switch (val) {
 			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, dly);
+			    functor_poke(rfp,idx, 0, St0, 0);
 			    break;
 			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, dly);
+			    functor_poke(rfp,idx, 1, St1, 0);
 			    break;
 			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, dly);
+			    functor_poke(rfp,idx, 2, StX, 0);
 			    break;
 			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, dly);
+			    functor_poke(rfp,idx, 3, HiZ, 0);
 			    break;
 		      }
 		}
@@ -709,16 +677,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		      switch (val) {
 			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, dly);
+			    functor_poke(rfp,idx, 0, St0, 0);
 			    break;
 			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, dly);
+			    functor_poke(rfp,idx, 1, St1, 0);
 			    break;
 			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, dly);
+			    functor_poke(rfp,idx, 2, StX, 0);
 			    break;
 			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, dly);
+			    functor_poke(rfp,idx, 3, HiZ, 0);
 			    break;
 		      }
 		}
@@ -735,16 +703,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		      switch (bits[idx]) {
 			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, dly);
+			    functor_poke(rfp,idx, 0, St0, 0);
 			    break;
 			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, dly);
+			    functor_poke(rfp,idx, 1, St1, 0);
 			    break;
 			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, dly);
+			    functor_poke(rfp,idx, 2, StX, 0);
 			    break;
 			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, dly);
+			    functor_poke(rfp,idx, 3, HiZ, 0);
 			    break;
 		      }
 		}
@@ -754,7 +722,6 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  }
 
 	  case vpiStringVal:
-	    assert(dly == 0);
 	    signal_put_stringval(rfp, wid, vp->value.str);
 	    break;
 
@@ -859,6 +826,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.62  2004/05/19 03:26:25  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.61  2004/03/09 03:11:02  steve
  *  Get vpiModule of signals.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.19 2004/02/20 01:52:25 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.20 2004/05/19 03:30:46 steve Exp $"
 #endif
 
 /*
@@ -302,16 +302,12 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 /*
  * The put_value method writes the value into the vector.
  */
-static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp,
-				  p_vpi_time when, int flags)
+static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
-
-	/* XXXX delays are not yet supported. */
-      assert(flags == vpiNoDelay);
 
       unsigned wid = rfp->wid;
 
@@ -524,6 +520,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.20  2004/05/19 03:30:46  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.19  2004/02/20 01:52:25  steve
  *  vpiStringVal does not include leading nulls.
  *

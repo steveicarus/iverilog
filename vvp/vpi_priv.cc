@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.45 2004/02/18 17:52:00 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.46 2004/05/19 03:26:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -391,14 +391,55 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
       vp->format = vpiSuppressVal;
 }
 
+struct vpip_put_value_event : vvp_gen_event_s {
+      vpiHandle handle;
+      s_vpi_value value;
+};
+
+static void vpip_put_value_callback(vvp_gen_event_t eobj, unsigned char)
+{
+      vpip_put_value_event*put = (vpip_put_value_event*)eobj;
+
+      put->handle->vpi_type->vpi_put_value_ (put->handle, &put->value);
+}
+
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
-			s_vpi_time*tp, PLI_INT32 flags)
+			s_vpi_time*when, PLI_INT32 flags)
 {
       assert(obj);
-      if (obj->vpi_type->vpi_put_value_)
-	    return (obj->vpi_type->vpi_put_value_)(obj, vp, tp, flags);
-      else
+
+      if (obj->vpi_type->vpi_put_value_ == 0)
 	    return 0;
+
+      if (flags != vpiNoDelay) {
+	    vvp_time64_t dly;
+
+ 	    switch (when->type) {
+ 		case vpiScaledRealTime:
+ 		  dly = (vvp_time64_t)(when->real *
+				       (pow(10,
+					    vpip_time_units_from_handle(obj) -
+					    vpip_get_time_precision())));
+ 		  break;
+ 		case vpiSimTime:
+		  dly = vpip_timestruct_to_time(when);
+ 		  break;
+ 		default:
+		  dly = 0;
+		  break;
+ 	    }
+
+	    vpip_put_value_event*put = new vpip_put_value_event;
+	    put->handle = obj;
+	    put->value = *vp;
+	    put->run = &vpip_put_value_callback;
+	    schedule_generic(put, 0, dly, false);
+	    return 0;
+      }
+
+      (obj->vpi_type->vpi_put_value_)(obj, vp);
+
+      return 0;
 }
 
 vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
@@ -646,6 +687,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.46  2004/05/19 03:26:24  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.45  2004/02/18 17:52:00  steve
  *  PRototypes match the standard.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.56 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.57 2004/05/19 03:26:24 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -74,7 +74,7 @@ struct __vpirt {
       int   (*vpi_get_)(int, vpiHandle);
       char* (*vpi_get_str_)(int, vpiHandle);
       void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
-      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, p_vpi_time, int);
+      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value);
 
 	/* These methods follow references. */
       vpiHandle (*handle_)(int, vpiHandle);
@@ -418,6 +418,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.57  2004/05/19 03:26:24  steve
+ *  Support delayed/non-blocking assignment to reals and others.
+ *
  * Revision 1.56  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *
