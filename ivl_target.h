@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.21 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.22 2000/10/21 16:49:45 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -489,66 +489,26 @@ extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
 
-/* TARGET MODULE ENTRY POINTS
- *
- * These are not functions in the API but functions that the target
- * module supplies. They are presented as typedefs of functions (which
- * are used internally) but the target module makes them work by
- * exporting them.
- *
- * The module entry points generally take a cookie and possibly a name
- * as parameters. They use the cookie to get the required detailed
- * information, and they do their job. The functions return an integer
- * value which usually should be 0 for success, or less then 0 for any
- * errors. How the error is interpreted depends on the function
- * returning the error.
- */
 
-/* target_start_design  (required)
+/* target_design
 
-   The "target_start_design" function is called once before
-   any other functions in order to start the processing of the
-   netlist. The function returns a value <0 if there is an error. */
-typedef int  (*start_design_f)(ivl_design_t des);
+   The "target_design" function is called once after the whole design
+   is processed and available to the target. The target doesn't return
+   from this function until it is finished with the design.
 
+   This function is implemented in the loaded target, and not in the
+   ivl core. This function is how the target module is invoked. */
 
-/* target_end_design  (required)
-
-   The target_end_design function in the loaded module is called once
-   to clean up (for example to close files) from handling of the
-   netlist. */
-typedef void (*end_design_f)(ivl_design_t des);
-
-
-/* target_net_const (optional)
-
-   The "target_net_const" function is called for structural constant
-   values that appear in the design. */
-typedef int (*net_const_f)(const char*name, ivl_net_const_t net);
-
-
-/* target_net_event
-
-   Verilog code such as @event and @(posedge foo) create event
-   objects. These named objects can be triggered by structural probes
-   or behavioral triggers. The target_net_event function is called
-   once for each event in the netlist. The event function is
-   guaranteed to be called before probe or trigger functions. */
-typedef int (*net_event_f)(const char*name, ivl_net_event_t net);
-
-
-/* target_net_probe
-
-   This is the probe, or structural trigger, of an event. The
-   net_event_f is guaranteed to be called for the associated event
-   before this probe is called. */
-typedef int (*net_probe_f)(const char*name, ivl_net_probe_t net);
+typedef int  (*target_design_f)(ivl_design_t des);
 
 
 _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.22  2000/10/21 16:49:45  steve
+ *  Reduce the target entry points to the target_design.
+ *
  * Revision 1.21  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

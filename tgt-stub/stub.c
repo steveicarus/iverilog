@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.19 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: stub.c,v 1.20 2000/10/21 16:49:45 steve Exp $"
 #endif
 
 /*
@@ -271,7 +271,7 @@ static int show_scope(ivl_scope_t net)
       return ivl_scope_children(net, show_scope);
 }
 
-int target_start_design(ivl_design_t des)
+int target_design(ivl_design_t des)
 {
       const char*path = ivl_design_flag(des, "-o");
       if (path == 0) {
@@ -286,46 +286,11 @@ int target_start_design(ivl_design_t des)
 
       fprintf(out, "root module = %s;\n",
 	      ivl_scope_name(ivl_design_root(des)));
-      return 0;
-}
 
-void target_end_design(ivl_design_t des)
-{
       show_scope(ivl_design_root(des));
       ivl_design_process(des, show_process);
       fclose(out);
-}
 
-int target_net_const(const char*name, ivl_net_const_t net)
-{
-      unsigned idx;
-      unsigned wid = ivl_const_pins(net);
-      const char*bits = ivl_const_bits(net);
-
-      fprintf(out, "LPM_CONSTANT %s: %s%u'b", name,
-	      ivl_const_signed(net)? "+- ":"",
-	      wid);
-
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    fprintf(out, "%c", bits[wid-1-idx]);
-
-      fprintf(out, " (%s", ivl_nexus_name(ivl_const_pin(net, 0)));
-      for (idx = 1 ;  idx < wid ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
-
-      fprintf(out, ")\n");
-      return 0;
-}
-
-int target_net_event(const char*name, ivl_net_event_t net)
-{
-      fprintf(out, "STUB: %s: event\n", name);
-      return 0;
-}
-
-int target_net_probe(const char*name, ivl_net_probe_t net)
-{
-      fprintf(out, "STUB: %s: probe\n", name);
       return 0;
 }
 
@@ -336,6 +301,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.20  2000/10/21 16:49:45  steve
+ *  Reduce the target entry points to the target_design.
+ *
  * Revision 1.19  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

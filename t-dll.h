@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.14 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.15 2000/10/21 16:49:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -49,6 +49,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
+      void net_assign(const NetAssign_*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
 
@@ -61,12 +62,8 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       ivl_design_s des_;
 
-      start_design_f start_design_;
-      end_design_f   end_design_;
+      target_design_f target_;
 
-      net_const_f  net_const_;
-      net_event_f  net_event_;
-      net_probe_f  net_probe_;
 
 	/* These methods and members are used for forming the
 	   statements of a thread. */
@@ -313,6 +310,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.15  2000/10/21 16:49:45  steve
+ *  Reduce the target entry points to the target_design.
+ *
  * Revision 1.14  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

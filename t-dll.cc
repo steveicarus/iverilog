@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.15 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.16 2000/10/21 16:49:45 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -132,14 +132,13 @@ bool dll_target::start_design(const Design*des)
       des_.root_ = new struct ivl_scope_s;
       des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
 
-      start_design_ = (start_design_f)dlsym(dll_, LU "target_start_design" TU);
-      end_design_   = (end_design_f)  dlsym(dll_, LU "target_end_design" TU);
+      target_ = (target_design_f)dlsym(dll_, LU "target_design" TU);
+      if (target_ == 0) {
+	    cerr << dll_path_ << ": error: target_design entry "
+		  "point is missing." << endl;
+	    return false;
+      }
 
-      net_const_  = (net_const_f) dlsym(dll_, LU "target_net_const" TU);
-      net_event_  = (net_event_f) dlsym(dll_, LU "target_net_event" TU);
-      net_probe_  = (net_probe_f) dlsym(dll_, LU "target_net_probe" TU);
-
-      (start_design_)(&des_);
       return true;
 }
 
@@ -149,7 +148,7 @@ bool dll_target::start_design(const Design*des)
  */
 void dll_target::end_design(const Design*)
 {
-      (end_design_)(&des_);
+      (target_)(&des_);
       dlclose(dll_);
 }
 
@@ -201,15 +200,6 @@ bool dll_target::bufz(const NetBUFZ*net)
 
 void dll_target::event(const NetEvent*net)
 {
-      if (net_event_) {
-	    (net_event_)(net->full_name().c_str(), 0);
-
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_event function." << endl;
-      }
-
-      return;
 }
 
 void dll_target::logic(const NetLogic*net)
@@ -255,6 +245,14 @@ void dll_target::logic(const NetLogic*net)
       obj->name_ = strdup(net->name());
 
       scope_add_logic(scope, obj);
+}
+
+/*
+ * The assignment l-values are captured by the assignment statements
+ * themselves in the process handling.
+ */
+void dll_target::net_assign(const NetAssign_*)
+{
 }
 
 bool dll_target::net_const(const NetConst*net)
@@ -308,28 +306,11 @@ bool dll_target::net_const(const NetConst*net)
 	    }
       }
 
-	/* All done, call the target_net_const function if it exists. */
-      if (net_const_) {
-	    int rc = (net_const_)(net->name(), obj);
-	    return rc == 0;
-      }
-
       return true;
 }
 
 void dll_target::net_probe(const NetEvProbe*net)
 {
-      if (net_probe_) {
-	    int rc = (net_probe_)(net->name(), 0);
-	    return;
-
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_probe function." << endl;
-	    return;
-      }
-
-      return;
 }
 
 void dll_target::scope(const NetScope*net)
@@ -513,6 +494,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.16  2000/10/21 16:49:45  steve
+ *  Reduce the target entry points to the target_design.
+ *
  * Revision 1.15  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible
@@ -548,34 +532,5 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
  * Revision 1.9  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.
- *
- * Revision 1.8  2000/09/24 15:46:00  steve
- *  API access to signal type and port type.
- *
- * Revision 1.7  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
- * Revision 1.6  2000/08/27 15:51:51  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.5  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.4  2000/08/20 04:13:57  steve
- *  Add ivl_target support for logic gates, and
- *  make the interface more accessible.
- *
- * Revision 1.3  2000/08/19 18:12:42  steve
- *  Add target calls for scope, events and logic.
- *
- * Revision 1.2  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.1  2000/08/12 16:34:37  steve
- *  Start stub for loadable targets.
- *
  */
 

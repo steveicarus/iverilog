@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.12 2000/10/15 21:02:09 steve Exp $"
+#ident "$Id: verilog.c,v 1.13 2000/10/21 16:49:45 steve Exp $"
 #endif
 
 /*
@@ -209,18 +209,6 @@ void target_end_design(ivl_design_t des)
       fclose(out);
 }
 
-int target_net_const(const char*name, ivl_net_const_t net)
-{
-      fprintf(out, "STUB: %s: constant\n", name);
-      return 0;
-}
-
-int target_net_event(const char*name, ivl_net_event_t net)
-{
-      fprintf(out, "STUB: %s: event\n", name);
-      return 0;
-}
-
 int target_net_logic(const char*name, ivl_net_logic_t net)
 {
       unsigned npins, idx;
@@ -262,30 +250,6 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
       return 0;
 }
 
-int target_net_signal(const char*name, ivl_signal_t net)
-{
-      unsigned cnt = ivl_signal_pins(net);
-
-      switch (ivl_signal_type(net)) {
-
-	  case IVL_SIT_REG:
-	    fprintf(out, "      reg [%u:0] %s; // %s\n", cnt-1,
-		    ivl_signal_basename(net), name);
-	    break;
-
-	  case IVL_SIT_WIRE:
-	    fprintf(out, "      wire [%u:0] %s; // %s\n", cnt-1,
-		    ivl_signal_basename(net), name);
-	    break;
-
-	  default:
-	    fprintf(out, "      <huh!?> [%u:0] %s;\n", cnt-1, name);
-	    break;
-      }
-
-      return 0;
-}
-
 #ifdef __CYGWIN32__
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
@@ -293,6 +257,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.13  2000/10/21 16:49:45  steve
+ *  Reduce the target entry points to the target_design.
+ *
  * Revision 1.12  2000/10/15 21:02:09  steve
  *  Makefile patches to support target loading under cygwin.
  *
