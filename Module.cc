@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.20 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: Module.cc,v 1.21 2003/04/02 03:00:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -91,9 +91,19 @@ const svector<PEIdent*>& Module::get_port(unsigned idx) const
 unsigned Module::find_port(const string&name) const
 {
       assert(name != "");
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+	    if (ports[idx] == 0) {
+		    /* It is possible to have undeclared ports. These
+		       are ports that are skipped in the declaration,
+		       for example like so: module foo(x ,, y); The
+		       port between x and y is unnamed and thus
+		       inaccessible to binding by name. */
+		  continue;
+	    }
+	    assert(ports[idx]);
 	    if (ports[idx]->name == name)
 		  return idx;
+      }
 
       return ports.count();
 }
@@ -139,6 +149,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.21  2003/04/02 03:00:14  steve
+ *  Cope with empty module ports while binding by name.
+ *
  * Revision 1.20  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *
