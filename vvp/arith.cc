@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.35 2005/01/22 17:36:15 steve Exp $"
+#ident "$Id: arith.cc,v 1.36 2005/01/28 05:34:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -171,9 +171,51 @@ void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 // Multiplication
 
+vvp_arith_mult::vvp_arith_mult(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+vvp_arith_mult::~vvp_arith_mult()
+{
+}
+
+void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      unsigned long a;
+      if (! vector4_to_value(op_a_, a)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      unsigned long b;
+      if (! vector4_to_value(op_b_, b)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      unsigned long val = a * b;
+      assert(wid_ <= 8*sizeof(val));
+
+      vvp_vector4_t vval (wid_);
+      for (int idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    if (val & 1)
+		  vval.set_bit(idx, BIT4_1);
+	    else
+		  vval.set_bit(idx, BIT4_0);
+
+	    val >>= 1;
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, vval);
+}
+
+
+#if 0
 void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-#if 0
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
@@ -201,10 +243,8 @@ void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       output_val_(base, push, a*b);
-#else
-      fprintf(stderr, "XXXX forgot how to implement vvp_arith_mult::set\n");
-#endif
 }
+#endif
 
 #if 0
 void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
@@ -284,18 +324,7 @@ vvp_arith_sum::~vvp_arith_sum()
 
 void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      unsigned port = ptr.port();
-
-      switch (port) {
-	  case 0:
-	    op_a_ = bit;
-	    break;
-	  case 1:
-	    op_b_ = bit;
-	    break;
-	  default:
-	    assert(0);
-      }
+      dispatch_operand_(ptr, bit);
 
       vvp_net_t*net = ptr.ptr();
 
@@ -623,6 +652,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.36  2005/01/28 05:34:25  steve
+ *  Add vector4 implementation of .arith/mult.
+ *
  * Revision 1.35  2005/01/22 17:36:15  steve
  *  .cmp/x supports signed magnitude compare.
  *

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.8 2005/01/22 17:36:15 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.9 2005/01/28 05:34:25 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -222,6 +222,29 @@ void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 	    bits_val_ &= ~mask;
 	    bits_val_ |= val << (2*off);
       }
+}
+
+bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
+{
+      unsigned long res = 0;
+      unsigned long msk = 1;
+
+      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    switch (vec.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  res |= msk;
+		  break;
+		default:
+		  return false;
+	    }
+
+	    msk <<= 1UL;
+      }
+
+      val = res;
+      return true;
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
@@ -786,6 +809,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.9  2005/01/28 05:34:25  steve
+ *  Add vector4 implementation of .arith/mult.
+ *
  * Revision 1.8  2005/01/22 17:36:15  steve
  *  .cmp/x supports signed magnitude compare.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.23 2005/01/22 16:21:11 steve Exp $"
+#ident "$Id: arith.h,v 1.24 2005/01/28 05:34:25 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -53,20 +53,6 @@ class vvp_arith_  : public vvp_net_fun_t {
       vvp_vector4_t x_val_;
 };
 
-/*
- * This class is functor for arithmetic sum. Inputs that come
- * in cause the 4-input summation to be calculated, and output
- * functors that are affected cause propagations.
- */
-class vvp_arith_mult  : public vvp_arith_ {
-
-    public:
-      explicit vvp_arith_mult(unsigned wid) : vvp_arith_(wid) {}
-
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      void wide(vvp_ipoint_t base, bool push);
-};
-
 class vvp_arith_div : public vvp_arith_ {
 
     public:
@@ -89,27 +75,11 @@ class vvp_arith_mod : public vvp_arith_ {
       void wide(vvp_ipoint_t base, bool push);
 };
 
-class vvp_arith_sum  : public vvp_arith_ {
-
-    public:
-      explicit vvp_arith_sum(unsigned wid);
-      ~vvp_arith_sum();
-
-    public:
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-
-};
-
-class vvp_arith_sub  : public vvp_arith_ {
-
-    public:
-      explicit vvp_arith_sub(unsigned wid);
-      ~vvp_arith_sub();
-
-    public:
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-
-};
+/* vvp_cmp_* objects...
+ * the vvp_cmp_* objects all are special vvp_arith_ objects in that
+ * their widths are only for their inputs. The output widths are all
+ * exactly 1 bit.
+ */
 
 class vvp_cmp_eeq  : public vvp_arith_ {
 
@@ -170,6 +140,37 @@ class vvp_cmp_gt  : public vvp_cmp_gtge_base_ {
       void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 };
 
+/*
+ * NOTE: The inputs to the vvp_arith_mult are not necessarily the same
+ * width as the output. This is different from the typical vvp_arith_
+ * object. Perhaps that means this isn't quite a vvp_arith_ object?
+ */
+class vvp_arith_mult  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_mult(unsigned wid);
+      ~vvp_arith_mult();
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+};
+
+class vvp_arith_sub  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_sub(unsigned wid);
+      ~vvp_arith_sub();
+      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+};
+
+class vvp_arith_sum  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_sum(unsigned wid);
+      ~vvp_arith_sum();
+      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+};
+
 class vvp_shiftl  : public vvp_arith_ {
 
     public:
@@ -188,6 +189,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.24  2005/01/28 05:34:25  steve
+ *  Add vector4 implementation of .arith/mult.
+ *
  * Revision 1.23  2005/01/22 16:21:11  steve
  *  Implement vectored CMP_EQ and NE
  *

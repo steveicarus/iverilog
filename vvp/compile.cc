@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.182 2005/01/22 16:21:11 steve Exp $"
+#ident "$Id: compile.cc,v 1.183 2005/01/28 05:34:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -832,7 +832,7 @@ void compile_arith_div(char*label, long wid, bool signed_flag,
       assert( wid > 0 );
 
       if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+	    fprintf(stderr, "%s; .arith/div has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
@@ -848,7 +848,7 @@ void compile_arith_mod(char*label, long wid,
       assert( wid > 0 );
 
       if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+	    fprintf(stderr, "%s; .arith/mod has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
@@ -863,14 +863,13 @@ void compile_arith_mult(char*label, long wid,
 {
       assert( wid > 0 );
 
-      if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/mult has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
       vvp_arith_ *arith = new vvp_arith_mult(wid);
-
       make_arith(arith, label, wid, argc, argv);
 }
 
@@ -1578,6 +1577,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.183  2005/01/28 05:34:25  steve
+ *  Add vector4 implementation of .arith/mult.
+ *
  * Revision 1.182  2005/01/22 16:21:11  steve
  *  Implement vectored CMP_EQ and NE
  *

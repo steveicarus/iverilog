@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.126 2005/01/22 00:58:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.127 2005/01/28 05:34:25 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1541,21 +1541,31 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
  */
 bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 {
+      unsigned index = cp->bit_idx[0];
+      unsigned base  = cp->bit_idx[1];
+      unsigned width = cp->number;
+
       unsigned long v = 0;
       bool unknown_flag = false;
 
-      for (unsigned i = 0; i<cp->number; i++) {
-	    unsigned char vv = thr_get_bit(thr, cp->bit_idx[1] + i);
+      for (unsigned i = 0 ;  i<width ;  i += 1) {
+	    unsigned char vv = thr_get_bit(thr, base);
 	    if (vv&2) {
 		  v = 0UL;
 		  unknown_flag = true;
 		  break;
 	    }
+
 	    v |= vv << i;
+
+	    if (base >= 4)
+		  base += 1;
       }
-      thr->words[cp->bit_idx[0]].w_int = v;
+      thr->words[index].w_int = v;
+
 	/* Set bit 4 as a flag if the input is unknown. */
       thr_put_bit(thr, 4, unknown_flag? 1 : 0);
+
       return true;
 }
 
@@ -2734,7 +2744,12 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * This is an unsigned right shift.
+ * This is an unsigned right shift:
+ *
+ *    %shiftr/i0 <bit>, <wid>
+ *
+ * The vector at address <bit> with width <wid> is shifted right a
+ * number of bits stored in index/word register 0.
  */
 bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
@@ -3052,6 +3067,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.127  2005/01/28 05:34:25  steve
+ *  Add vector4 implementation of .arith/mult.
+ *
  * Revision 1.126  2005/01/22 00:58:22  steve
  *  Implement the %load/x instruction.
  *

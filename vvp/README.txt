@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.54 2005/01/22 01:06:20 steve Exp $
+ *  $Id: README.txt,v 1.55 2005/01/28 05:34:25 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -541,7 +541,11 @@ input vectors will be padded if needed to get the desired output width.
 	<label> .arith/div  <wid>, <A>, <B>;
 	<label> .arith/mod  <wid>, <A>, <B>;
 
-In all cases, there are no width limits, so long as the width is fixed.
+In all cases, there are no width limits, so long as the width is
+fixed.
+
+NOTE: The .arith/mult inputs are not necessarily the width of the
+output. I have not decided how to handle this.
 
 STRUCTURAL COMPARE STATEMENTS:
 
