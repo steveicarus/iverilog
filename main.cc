@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.29 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: main.cc,v 1.30 2000/03/17 21:50:25 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -50,6 +50,7 @@ const char NOTICE[] =
 # include  "pform.h"
 # include  "netlist.h"
 # include  "target.h"
+# include  "compiler.h"
 
 const char VERSION[] = "$Name:  $ $State: Exp $";
 
@@ -57,6 +58,12 @@ const char*target = "null";
 string start_module = "";
 
 map<string,string> flags;
+
+/*
+ * These are the warning enable flags.
+ */
+bool warn_implicit = false;
+
 
 static void parm_to_flagmap(const string&flag)
 {
@@ -118,6 +125,7 @@ int main(int argc, char*argv[])
       const char* net_path = 0;
       const char* out_path = 0;
       const char* pf_path = 0;
+      const char* warn_en = "";
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
@@ -165,6 +173,9 @@ int main(int argc, char*argv[])
 	    cout << COPYRIGHT << endl;
 	    cout << endl << NOTICE << endl;
 	    return 0;
+	  case 'W':
+	    warn_en = optarg;
+	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -186,6 +197,15 @@ int main(int argc, char*argv[])
       if (optind == argc) {
 	    cerr << "No input files." << endl;
 	    return 1;
+      }
+
+	/* Scan the warnings enable string for warning flags. */
+      for (const char*cp = warn_en ;  *cp ;  cp += 1) switch (*cp) {
+	  case 'i':
+	    warn_implicit = true;
+	    break;
+	  default:
+	    break;
       }
 
 	/* Parse the input. Make the pform. */
@@ -287,6 +307,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.30  2000/03/17 21:50:25  steve
+ *  Switch to control warnings.
+ *
  * Revision 1.29  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

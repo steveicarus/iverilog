@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.25 2000/03/16 19:03:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.26 2000/03/17 21:50:25 steve Exp $"
 #endif
 
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "compiler.h"
 
 /*
  * Elaborating binary operations generally involves elaborating the
@@ -857,8 +858,11 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
 		  des->add_signal(sig);
-		  cerr << get_line() << ": warning: Implicitly defining "
-			"wire " << path << "." << text_ << "." << endl;
+
+		  if (warn_implicit)
+			cerr << get_line() << ": warning: implicit "
+			      " definition of wire " << path << "." <<
+			      text_ << "." << endl;
 	    }
       }
 
@@ -998,8 +1002,11 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	      /* Fine, create an implicit wire as an l-value. */
 	    sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT, 1);
 	    des->add_signal(sig);
-	    cerr << get_line() << ": warning: Implicitly defining "
-		  "wire " << path << "." << text_ << "." << endl;
+
+	    if (warn_implicit)
+		  cerr << get_line() << ": warning: implicit "
+			" definition of wire " << path << "." <<
+			text_ << "." << endl;
       }
 
       assert(sig);
@@ -1353,6 +1360,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.26  2000/03/17 21:50:25  steve
+ *  Switch to control warnings.
+ *
  * Revision 1.25  2000/03/16 19:03:03  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

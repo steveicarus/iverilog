@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.2 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: compiler.h,v 1.3 2000/03/17 21:50:25 steve Exp $"
 #endif
 
 /*
@@ -34,7 +34,19 @@
 #endif
 
 /*
+ * These are flags to enable various sorts of warnings. By default all
+ * the warnings are of, the -W<list> parameter arranges for each to be
+ * enabled. 
+ */
+
+/* Implicit definitions of wires. */
+extern bool warn_implicit;
+
+/*
  * $Log: compiler.h,v $
+ * Revision 1.3  2000/03/17 21:50:25  steve
+ *  Switch to control warnings.
+ *
  * Revision 1.2  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
