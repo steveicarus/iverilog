@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.22 2001/10/11 00:12:49 steve Exp $"
+#ident "$Id: main.c,v 1.23 2001/10/19 23:10:08 steve Exp $"
 
 # include "config.h"
 
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
 		  break;
  		case 'c':
 		  command_filename = malloc(strlen(optarg)+1);
- 		  strcat(command_filename, optarg);
+ 		  strcpy(command_filename, optarg);
  		  break;
 		case 'D':
 		  if (def_list == 0) {
@@ -644,6 +644,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.23  2001/10/19 23:10:08  steve
+ *  Fix memory fault with -c flag.
+ *
  * Revision 1.22  2001/10/11 00:12:49  steve
  *  Detect execv failures.
  *
