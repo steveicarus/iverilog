@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.14 2004/12/12 18:15:06 steve Exp $"
+#ident "$Id: Makefile.in,v 1.15 2005/03/03 04:34:42 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,7 +52,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = stub.o statement.o
+O = stub.o memory.o statement.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl

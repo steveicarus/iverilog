@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.66 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: parse.y,v 1.67 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -626,16 +626,17 @@ udp_table
 	;
 
 mem_init_stmt
-	: K_MEM_I symbol ',' T_NUMBER o_komma
-		{ compile_memory_init($2.text, $2.idx, $4); }
-        | mem_init_stmt T_NUMBER o_komma
-		{ compile_memory_init(0x0,     0,      $2); }
-	;
+        : K_MEM_I symbol T_NUMBER ','
+                { compile_memory_init($2.text, $3, 0); }
+          mem_init_list ';'
+        ;
 
-o_komma
-	: /* empty */
-	| ','
-	;
+mem_init_list
+        : mem_init_list ',' T_NUMBER
+                { compile_memory_init(0, 0, $3); }
+        | T_NUMBER
+                { compile_memory_init(0, 0, $1); }
+        ;
 
 signed_t_number
 	: T_NUMBER     { $$ = $1; }
@@ -672,6 +673,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.67  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.66  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.57 2005/02/07 22:42:42 steve Exp $
+ *  $Id: README.txt,v 1.58 2005/03/03 04:33:10 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -289,25 +289,28 @@ functor pointer, though.
 
 MEMORY STATEMENTS:
 
+Memories are arrays of words, each word a vvp_vector4_t vector of the
+same width. The memory is cannonically addressed as a 1-dimensional
+array of words, although indices are stored with the memory for
+calculating a canonical address from a multi-dimensional address.
+
 Three types of memory statement perform (1) creation of a memory, (2)
 connecting a read port to an existing memory, and (3) initializing the
 memory's contents.
 
        <label> .mem "name", <msb>,<lsb>, <last>,<first> ... ;
 
-The pair of numbers <msb>,<lsb> defines the data port width.  The pair
+The pair of numbers <msb>,<lsb> defines the word width.  The pair
 <last>,<first> defines the address range.  Multiple address ranges are
-allowed for multidimensional indexing.
+allowed for multidimensional indexing. This statement creates the
+memory array and makes it available to procedural code.
 
 Procedural access to the memory references the memory as single array
-of bits.  For this purpose, the number of bits in a memory word is
-rounded up to the next multiple of four.  That is, for an 18 bit wide
-data bus, bit 0 is the lsb of the first word, bit 20 is the lsb of the
-second word.
+of words.
 
 Structural read access is implemented in terms of address and data
 ports.  The addresses applied to the address port are expected to be
-withing the ranges specified, not based at zero.
+within the ranges specified, not based at zero.
 
 A read port is a vector of functors that is wide enough to accept all
 provided address bits and at least as wide as the requested subset of
@@ -346,18 +349,14 @@ to a memory, but synthesis may ask for lpm_ram_d[pq] objects.
 
 To initialize a memory, use:
 
-	        .mem/init <memid>[<start>],
-			val val val ...
-			;
+   .mem/init <memid> <start>, val , val ... ;
 
-<memid> is the label of the memory.  [<start>] is optional,
-identifying the bits location where the first value is loaded.
-<start> must be a multiple of four, and defaults to zero, if omitted.
+<memid> is the label of the memory, and the <start> is the start
+address (cannonical) of the first word to be initialized. The start
+address allows mustliple statements be used to initialize words of a
+memory.
 
-The values are decimal or hex numbers (0x prefix), which may be
-optionally separated by comma ','.  Each number in the range 0..256
-initializes four memory bits.  Two bits form each byte for each memory
-bit, in the usual encoding.
+The values are one per word.
 
 Procedural access to the memory employs an index register to address a
 bit location in the memory, via the commands:

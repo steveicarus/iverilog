@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.69 2004/12/17 04:47:47 steve Exp $"
+#ident "$Id: codes.h,v 1.70 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 
@@ -42,6 +42,7 @@ extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
@@ -79,6 +80,7 @@ extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_MV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_WR(vthread_t thr, vvp_code_t code);
@@ -99,7 +101,7 @@ extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
-extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_SET_MV(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
@@ -169,6 +171,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.70  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.69  2004/12/17 04:47:47  steve
  *  Replace single release with release/net and release/reg.
  *

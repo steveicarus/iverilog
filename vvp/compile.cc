@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.188 2005/02/19 01:32:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.189 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -90,6 +90,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
+      { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/wr",of_ASSIGN_WR,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
@@ -125,6 +126,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
+      { "%load/mv",of_LOAD_MV,3,  {OA_BIT1,     OA_MEM_PTR,  OA_BIT2} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
@@ -145,7 +147,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%release/net",of_RELEASE_NET,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%release/reg",of_RELEASE_REG,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
-      { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
+      { "%set/mv", of_SET_MV, 3,  {OA_MEM_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/x0", of_SET_X0, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
@@ -1235,18 +1237,39 @@ void compile_udp_functor(char*label, char*type,
 #endif
 }
 
-
+/*
+ * Take the detailed parse items from a .mem statement and generate
+ * the necessary internal structures.
+ *
+ *     <label>  .mem <name>, <msb>, <lsb>, <idxs...> ;
+ *
+ */
 void compile_memory(char *label, char *name, int msb, int lsb,
-		    unsigned idxs, long *idx)
+		    unsigned narg, long *args)
 {
-  vvp_memory_t mem = memory_create(label);
-  memory_new(mem, name, lsb, msb, idxs, idx);
+	/* Create an empty memory in the symbol table. */
+      vvp_memory_t mem = memory_create(label);
 
-  vpiHandle obj = vpip_make_memory(mem);
-  compile_vpi_symbol(label, obj);
-  vpip_attach_to_current_scope(obj);
+      assert( narg > 0 && narg%2 == 0 );
 
-  free(label);
+      struct memory_address_range*ranges
+	    = new struct memory_address_range[narg/2];
+
+      for (unsigned idx = 0 ;  idx < narg ;  idx += 2) {
+	    ranges[idx/2].msb = args[idx+0];
+	    ranges[idx/2].lsb = args[idx+1];
+      }
+
+      memory_configure(mem, msb, lsb, narg/2, ranges);
+
+      delete[]ranges;
+
+      vpiHandle obj = vpip_make_memory(mem, name);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
+
+      free(label);
+      free(name);
 }
 
 void compile_memory_port(char *label, char *memid,
@@ -1279,19 +1302,36 @@ void compile_memory_port(char *label, char *memid,
 #endif
 }
 
-void compile_memory_init(char *memid, unsigned i, unsigned char val)
+/*
+ * The parser calls this multiple times to parse a .mem/init
+ * statement. The first call includes a memid label and is used to
+ * select the memory and the start address. Subsequent calls contain
+ * only the word value to assign.
+ */
+void compile_memory_init(char *memid, unsigned i, long val)
 {
-  static vvp_memory_t mem = 0x0;
-  static unsigned idx;
-  if (memid)
-    {
-      mem = memory_find(memid);
-      free(memid);
-      idx = i/4;
-    }
-  assert(mem);
-  memory_init_nibble(mem, idx, val);
-  idx++;
+      static vvp_memory_t current_mem = 0;
+      static unsigned current_word;
+
+      if (memid) {
+	    current_mem = memory_find(memid);
+	    free(memid);
+	    current_word = i;
+	    return;
+      }
+
+      assert(current_mem);
+
+      unsigned word_wid = memory_word_width(current_mem);
+
+      vvp_vector4_t val4 (word_wid);
+      for (unsigned idx = 0 ;  idx < word_wid ;  idx += 1) {
+	    vvp_bit4_t bit = val & 1 ? BIT4_1 : BIT4_0;
+	    val4.set_bit(idx, bit);
+      }
+
+      memory_init_word(current_mem, current_word, val4);
+      current_word += 1;
 }
 
 /*
@@ -1617,6 +1657,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.189  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.188  2005/02/19 01:32:53  steve
  *  Implement .arith/div.
  *

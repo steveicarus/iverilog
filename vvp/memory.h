@@ -20,75 +20,105 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.7 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: memory.h,v 1.8 2005/03/03 04:33:10 steve Exp $"
 #endif
 
-#include "pointers.h"
-#include "functor.h"
+#include "vvp_net.h"
 
 /*
 **  vvp_memory_t         is a memory
-**  vvp_memory_bits_t    are bits in a memory
 **  vvp_memory_index_t   is a memory index range definition
 */
 typedef struct vvp_memory_s *vvp_memory_t;
-typedef unsigned char *vvp_memory_bits_t;
-typedef struct vvp_memory_index_s *vvp_memory_index_t;
 
-void memory_new(vvp_memory_t mem, char *name, int lsb, int msb,
-		unsigned idxs, long *idx);
+struct memory_address_range {
+      int msb;
+      int lsb;
+};
+
+/*
+ * Given a memory device, the memory_configure function configures it
+ * by defining the dimensions of the device. It is an error to
+ * redefine the dimensions of a device already configured.
+ *
+ * The lsb and msb define the dimensions of a word. They are in
+ * Verilog form. The actual word contents are vvp_vector4_t values.
+ *
+ * The idx array is an array of address ranges that describe the
+ * complete multi-dimensional array. In a normal Verilog array, idxs
+ * is 1, and idx is a pointer to a single memory_address_range. The
+ * table does not need to be persistent.
+ */
+extern void memory_configure(vvp_memory_t mem, int msb, int lsb,
+			     unsigned idxs,
+			     const struct memory_address_range *idx);
+
+/*
+ * init_word and set_word functions take the memory to be manipulated
+ * and write a word value at the given word address. The idx is the
+ * canonical (0-based, 1-dimensional) address of the word to be
+ * written. The caller needs to have converted any multi-dimensional
+ * address into a canonical address first.
+ *
+ * The difference between init_word and set_word are that the set_word
+ * function causes values to be propagated through structural ports,
+ * but the init_word does not.
+ */
+extern void memory_init_word(vvp_memory_t mem,
+			     unsigned idx,
+			     vvp_vector4_t val);
+extern void memory_set_word(vvp_memory_t mem,
+			    unsigned idx,
+			    vvp_vector4_t val);
+
+/*
+ * this doesn't actually write the value to the memory word, but
+ * scedules for the write to happen some time in the future. The delay
+ * is in simulation clock units
+ */
+void schedule_memory(vvp_memory_t mem, unsigned addr,
+		     vvp_vector4_t val, unsigned long delay);
+
+/*
+ * Get the word value at the given index into the memory.
+ */
+extern vvp_vector4_t memory_get_word(vvp_memory_t mem, unsigned idx);
+
+#if 0
 vvp_ipoint_t memory_port_new(vvp_memory_t mem,
 			     unsigned nbits, unsigned bitoff,
 			     unsigned naddr, bool writable);
+#endif
 
-void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val);
 
-void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val);
-unsigned memory_get(vvp_memory_t mem, unsigned idx);
-void schedule_memory(vvp_memory_t mem, unsigned idx,
-		     unsigned char val, unsigned delay);
-
-unsigned memory_size(vvp_memory_t mem);
-char *memory_name(vvp_memory_t mem);
-unsigned memory_data_width(vvp_memory_t mem);
-unsigned memory_root(vvp_memory_t mem, unsigned ix = 0);
-unsigned memory_left_range(vvp_memory_t mem, unsigned ix = 0);
-unsigned memory_right_range(vvp_memory_t mem, unsigned ix = 0);
-unsigned memory_word_left_range(vvp_memory_t mem);
-unsigned memory_word_right_range(vvp_memory_t mem);
+  /* Number of words in the memory. */
+unsigned memory_word_count(vvp_memory_t mem);
+  /* Width of a word */
+unsigned memory_word_width(vvp_memory_t mem);
+  /* Get the user declared geometry of the memory address. This is the
+     msb and lsb values for each pair in the multi-dimensional array. */
+long memory_left_range(vvp_memory_t mem, unsigned ix);
+long memory_right_range(vvp_memory_t mem, unsigned ix);
+  /* Get the user defined geometry for the memory *word*. */
+long memory_word_left_range(vvp_memory_t mem);
+long memory_word_right_range(vvp_memory_t mem);
 
 /*
 **  Access to the memory symbol table.
+**
+** The memory_find function locates the memory device by name. If the
+** device does not exist, a nil is returned.
+**
+** The memory_create functio create a new memory device with the given
+** name. It is a fatal error to try to create a device that already exists.
 */
 vvp_memory_t memory_find(char *label);
 vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
- * Revision 1.7  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.6  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/01/31 04:28:17  steve
- *  Full support for $readmem ranges (Tom Verbeure)
- *
- * Revision 1.4  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.3  2001/06/15 03:28:31  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.2  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.1  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
+ * Revision 1.8  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
  */
 

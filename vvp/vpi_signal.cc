@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.63 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.64 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 /*
@@ -491,27 +491,26 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 
       rfp = (struct __vpiSignal*)ref;
 
+      vvp_net_ptr_t destination (rfp->node, 0);
       wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
+      vvp_vector4_t val (wid);
+
       switch (vp->format) {
 
 	  case vpiIntVal: {
-		if (wid > 8*sizeof(long)) {
-		      fprintf(stderr, "internal error: wid(%u) "
-			      "too large.\n", wid);
-		      assert(0);
-		}
-
-		long val = vp->value.integer;
+		long vpi_val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      functor_poke(rfp, idx, val&1, (val&1)? St1 : St0, 0);
-		      val >>= 1;
+		      vvp_bit4_t bit = vpi_val&1 ? BIT4_1 : BIT4_0;
+		      val.set_bit(idx, bit);
+		      vpi_val >>= 1;
 		}
 		break;
 	  }
 
+#if 0
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
@@ -530,7 +529,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		  assert(0);
 	    }
 	    break;
-
+#endif
+#if 0
 	  case vpiVectorVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  unsigned long aval = vp->value.vector[idx/32].aval;
@@ -554,7 +554,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		  }
 	    }
 	    break;
-
+#endif
+#if 0
 	  case vpiBinStrVal: {
 		unsigned char*bits = new unsigned char[(wid+3) / 4];
 		vpip_bin_str_to_bits(bits, wid, vp->value.str, false);
@@ -583,7 +584,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		delete[]bits;
 		break;
 	  }
-
+#endif
+#if 0
 	  case vpiOctStrVal: {
 		unsigned char*bits = new unsigned char[(wid+3) / 4];
 		vpip_oct_str_to_bits(bits, wid, vp->value.str, false);
@@ -612,7 +614,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		delete[]bits;
 		break;
 	  }
-
+#endif
+#if 0
 	  case vpiHexStrVal: {
 		unsigned char*bits = new unsigned char[(wid+3) / 4];
 		vpip_hex_str_to_bits(bits, wid, vp->value.str, false);
@@ -641,7 +644,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		delete[]bits;
 		break;
 	  }
-
+#endif
+#if 0
 	  case vpiDecStrVal: {
 		unsigned char*bits = new unsigned char[wid];
 		vpip_dec_str_to_bits(bits, wid, vp->value.str, false);
@@ -667,7 +671,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		delete[]bits;
 		break;
 	  }
-
+#endif
 	  case vpiStringVal:
 	    signal_put_stringval(rfp, wid, vp->value.str);
 	    break;
@@ -680,6 +684,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	    assert(0);
 
       }
+
+      vvp_send_vec4(destination, val);
 
       return ref;
 }
@@ -772,6 +778,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.64  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.63  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.115 2005/02/15 07:12:55 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.116 2005/03/03 04:34:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1467,11 +1467,15 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * Draw code to evaluate a memory word index expression and write the
+ * value into index register 3. This expression converts the run-time
+ * calculated value to cannonical form that the %load/mv takes.
+ */
 void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 {
       int root = ivl_memory_root(mem);
       unsigned width = ivl_memory_width(mem);
-      width = (width+3) & ~3;
 
       switch (ivl_expr_type(ae)) {
 	  case IVL_EX_NUMBER: {
@@ -1493,14 +1497,14 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 			    unknown_flag = 1;
 			    break;
 		      }
-		fprintf(vvp_out, "    %%ix/load 3, %lu;\n", (v-root)*width);
+		fprintf(vvp_out, "    %%ix/load 3, %lu;\n", v-root);
 		fprintf(vvp_out, "    %%mov 4, %c, 1;\n",
 			unknown_flag?'1':'0');
 		break;
 	  }
 	  case IVL_EX_ULONG: {
 		unsigned v = ivl_expr_uvalue(ae);
-		fprintf(vvp_out, "    %%ix/load 3, %u;\n", (v-root)*width);
+		fprintf(vvp_out, "    %%ix/load 3, %u;\n", v-root);
 		fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
 		break;
 	  }
@@ -1511,8 +1515,6 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 		clr_vector(addr);
 		if (root>0)
 		      fprintf(vvp_out, "    %%ix/sub 3, %u;\n", root);
-		if (width>1)
-		      fprintf(vvp_out, "    %%ix/mul 3, %u;\n", width);
 		break;
 	  }
       }
@@ -1523,7 +1525,6 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       unsigned swid = ivl_expr_width(exp);
       ivl_memory_t mem = ivl_expr_memory(exp);
       struct vector_info res;
-      unsigned idx;
 
       draw_memory_index_expr(mem, ivl_expr_oper1(exp));
 
@@ -1533,12 +1534,8 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
-      for (idx = 0 ;  idx < swid ;  idx += 1) {
-	    if (idx)
-		  fprintf(vvp_out, "    %%ix/add 3, 1;\n");
-	    fprintf(vvp_out, "    %%load/m  %u, M_%s;\n",
-		    res.base+idx, vvp_memory_label(mem));
-      }
+      fprintf(vvp_out, "   %%load/mv  %u, M_%s, %u;\n",
+	      res.base, vvp_memory_label(mem), swid);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -2130,6 +2127,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.116  2005/03/03 04:34:42  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.115  2005/02/15 07:12:55  steve
  *  Support constant part select writes to l-values, and large part select reads from signals.
  *

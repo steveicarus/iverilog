@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.101 2005/02/15 07:12:55 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.102 2005/03/03 04:34:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -29,6 +29,7 @@
 # include  <stdlib.h>
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
+static void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
 
 unsigned local_count = 0;
 unsigned thread_count = 0;
@@ -71,13 +72,11 @@ unsigned bitchar_to_idx(char bit)
  * nexus.
  */
 
-static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
+static void set_to_lvariable(ivl_lval_t lval,
 			     unsigned bit, unsigned wid)
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
-
-      assert(idx == 0);
 
       if (ivl_lval_mux(lval)) {
 	    unsigned skip_set = transient_id++;
@@ -112,12 +111,28 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
       }
 }
 
+#if 0
+/* OBSOLETE */
 static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
 {
       if (idx)
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%set/m M_%s, %u;\n",
 	      vvp_memory_label(mem), bit);
+}
+#endif
+
+/*
+ * This function writes the code to set a vector to a memory word. The
+ * idx is the thread register that contains the address of the word in
+ * the memory, and bit is the base of the thread vector. The wid is
+ * the width of the vector to be written to the word.
+ */
+static void set_to_memory_word(ivl_memory_t mem, unsigned idx,
+			       unsigned bit, unsigned wid)
+{
+      fprintf(vvp_out, "   %%set/mv M_%s, %u, %u;\n",
+	      vvp_memory_label(mem), bit, wid);
 }
 
 /*
@@ -173,7 +188,7 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
  * This function, in addition to setting the value into index 0, sets
  * bit 4 to 1 if the value is unknown.
  */
-void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
+static void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 {
       struct vector_info vec;
       int word;
@@ -226,7 +241,6 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    unsigned skip_set = transient_id++;
 	    unsigned skip_set_flag = 0;
-	    unsigned idx;
 	    unsigned bit_limit = wid - cur_rbit;
 	    lval = ivl_stmt_lval(net, lidx);
 
@@ -246,25 +260,14 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 		  bit_limit = ivl_lval_width(lval);
 
 	    if (mem) {
-		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			unsigned bidx = res.base < 4
-			      ? res.base
-			      : (res.base+cur_rbit);
-			set_to_memory(mem, idx, bidx);
-			cur_rbit += 1;
-		  }
-#if 0
-		  for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
-			set_to_memory(mem, idx, 0);
-#else
-		  assert(0);
-#endif
+		  set_to_memory_word(mem, 3, res.base, res.wid);
+
 	    } else {
 
 		  unsigned bidx = res.base < 4
 			? res.base
 			: (res.base+cur_rbit);
-		  set_to_lvariable(lval, 0, bidx, bit_limit);
+		  set_to_lvariable(lval, bidx, bit_limit);
 		  cur_rbit += bit_limit;
 	    }
 
@@ -342,6 +345,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			bit_limit = ivl_lval_width(lval);
 
 		  if (mem) {
+#if 0
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      set_to_memory(mem, idx,
 					    bitchar_to_idx(bits[cur_rbit]));
@@ -352,7 +356,9 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			for (idx = bit_limit
 				   ; idx < ivl_lval_width(lval) ; idx += 1)
 			      set_to_memory(mem, idx, 0);
-
+#else
+			assert(0);
+#endif
 
 		  } else {
 			  /* Here we have the case of a blocking
@@ -388,7 +394,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			}
 
 			  /* write out the value into the .var. */
-			set_to_lvariable(lval, 0, vect.base, vect.wid);
+			set_to_lvariable(lval, vect.base, vect.wid);
 
 			clr_vector(vect);
 		  }
@@ -1560,6 +1566,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.102  2005/03/03 04:34:42  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.101  2005/02/15 07:12:55  steve
  *  Support constant part select writes to l-values, and large part select reads from signals.
  *

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
@@ -18,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.22 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: memory.cc,v 1.23 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -36,39 +37,26 @@ typedef struct vvp_memory_port_s *vvp_memory_port_t;
 
 struct vvp_memory_s
 {
-  char *name;                     // VPI scope.name
+	// Address ranges (1 or more)
+      unsigned nrange;
+      struct memory_address_range*ranges;
 
-  // Address port properties:
-  unsigned size;                  // total number of data words
-  unsigned a_idxs;                // number of address indices
-  vvp_memory_index_t a_idx;       // vector of address indices
+	// Data port properties:
+      unsigned width;                 // number of data bits
 
-  // Data port properties:
-  unsigned width;                 // number of data bits
-  unsigned fwidth;                // number of bytes (4bits) per data word
-  int msb, lsb;                   // Most/Least Significant data bit (VPI)
+      int msb, lsb;                   // Most/Least Significant data bit (VPI)
 
-  vvp_memory_bits_t bits;         // Array of bits
-  vvp_memory_port_t addr_root;    // Port list root;
+	// Array of words.
+      unsigned word_count;
+      vvp_vector4_t*words;
+
+	// List of ports into this memory.
+      vvp_memory_port_t port_list;
 };
-
-unsigned memory_data_width(vvp_memory_t mem)
-{
-  return mem->width;
-}
 
 #define VVP_MEMORY_NO_ADDR ((int)0x80000000)
 
-struct vvp_memory_index_s
-{
-  int first;       // first memory address
-  unsigned size;   // number of valid addresses
-
-  // Added to correctly support vpiLeftRange and vpiRightRange
-  int left;
-  int right;
-};
-
+#if 0
 struct vvp_memory_port_s : public functor_s
 {
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
@@ -86,47 +74,7 @@ struct vvp_memory_port_s : public functor_s
 
       bool writable;
 };
-
-unsigned memory_size(vvp_memory_t mem)
-{
-  return mem->size;
-}
-
-unsigned memory_root(vvp_memory_t mem, unsigned ix)
-{
-      if (ix >= mem->a_idxs)
-	    return 0;
-      return mem->a_idx[ix].first;
-}
-
-unsigned memory_left_range(vvp_memory_t mem, unsigned ix)
-{
-      if (ix >= mem->a_idxs)
-	    return 0;
-      return mem->a_idx[ix].left;
-}
-
-unsigned memory_right_range(vvp_memory_t mem, unsigned ix)
-{
-      if (ix >= mem->a_idxs)
-	    return 0;
-      return mem->a_idx[ix].right;
-}
-
-unsigned memory_word_left_range(vvp_memory_t mem)
-{
-      return mem->msb;
-}
-
-unsigned memory_word_right_range(vvp_memory_t mem)
-{
-      return mem->lsb;
-}
-
-char *memory_name(vvp_memory_t mem)
-{
-      return mem->name;
-}
+#endif
 
 // Compilation
 
@@ -143,65 +91,114 @@ vvp_memory_t memory_find(char *label)
 
 vvp_memory_t memory_create(char *label)
 {
-  if (!memory_table)
-    memory_table = new_symbol_table();
+      if (!memory_table)
+	    memory_table = new_symbol_table();
 
-  assert(!memory_find(label));
+      assert(!memory_find(label));
 
-  vvp_memory_t mem = new struct vvp_memory_s;
+      vvp_memory_t mem = new struct vvp_memory_s;
 
-  symbol_value_t v;
-  v.ptr = mem;
-  sym_set_value(memory_table, label, v);
+      symbol_value_t v;
+      v.ptr = mem;
+      sym_set_value(memory_table, label, v);
 
-  return mem;
+      return mem;
 }
 
-void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
-		unsigned idxs, long *idx)
+void memory_configure(vvp_memory_t mem,
+		      int msb, int lsb,
+		      unsigned nrange,
+		      const struct memory_address_range*ranges)
 {
-  mem->width = msb > lsb ? msb-lsb+1 : lsb-msb+1;
-  mem->msb = msb;
-  mem->lsb = lsb;
-  mem->fwidth = (mem->width+3)/4;
+	/* Get the word width details. */
+      mem->width = msb > lsb ? msb-lsb+1 : lsb-msb+1;
+      mem->msb = msb;
+      mem->lsb = lsb;
 
-  assert((idxs&1) == 0);
-  mem->a_idxs = idxs/2;
-  mem->a_idx = (vvp_memory_index_t)
-    malloc(mem->a_idxs*sizeof(struct vvp_memory_index_s));
-  assert(mem->a_idxs);
+	/* Make a private copy of the memory address ranges. */
+      assert(nrange > 0);
+      mem->nrange = nrange;
+      mem->ranges = new struct memory_address_range[nrange];
+      for (unsigned idx = 0 ;  idx < nrange ;  idx += 1)
+	    mem->ranges[idx] = ranges[idx];
 
-  mem->size = 1;
-  for (unsigned i=0; i < mem->a_idxs; i++)
-    {
-      vvp_memory_index_t x = mem->a_idx + i;
-      int msw = *(idx++);
-      int lsw = *(idx++);
+	/* Scan the indices (multiplying each range) to add up the
+	   total number of words in this memory. */
+      mem->word_count = 1;
+      for (unsigned idx = 0 ;  idx < mem->nrange ;  idx += 1) {
+	    struct memory_address_range*rp = mem->ranges+idx;
 
-      x->left = msw;
-      x->right = lsw;
+	    unsigned count = rp->msb > rp->lsb
+		  ? rp->msb - rp->lsb + 1
+		  : rp->lsb - rp->msb + 1;
 
-      if (msw > lsw) {
-	    x->size  = msw - lsw + 1;
-	    x->first = lsw;
+	    mem->word_count *= count;
       }
-      else {
-	    x->size  = lsw - msw + 1;
-	    x->first = msw;
-      }
-      mem->size *= x->size;
-    }
 
-  mem->bits  = (vvp_memory_bits_t) malloc(mem->size * mem->fwidth);
-  assert(mem->bits);
-  memset(mem->bits, 0xaa, mem->size * mem->fwidth);
+      mem->words = new vvp_vector4_t [mem->word_count];
+      assert(mem->words);
 
-  mem->addr_root = 0x0;
-  mem->name = name;
+      mem->port_list = 0;
 }
 
-static void update_addr(vvp_memory_port_t addr);
+unsigned memory_word_width(vvp_memory_t mem)
+{
+      return mem->width;
+}
 
+unsigned memory_word_count(vvp_memory_t mem)
+{
+      return mem->word_count;
+}
+
+long memory_word_left_range(vvp_memory_t mem)
+{
+      return mem->msb;
+}
+
+long memory_word_right_range(vvp_memory_t mem)
+{
+      return mem->lsb;
+}
+
+long memory_left_range(vvp_memory_t mem, unsigned ix)
+{
+      assert(ix < mem->nrange);
+      return mem->ranges[ix].msb;
+}
+
+long memory_right_range(vvp_memory_t mem, unsigned ix)
+{
+      assert(ix < mem->nrange);
+      return mem->ranges[ix].lsb;
+}
+
+vvp_vector4_t memory_get_word(vvp_memory_t mem, unsigned addr)
+{
+	// XXXX For now, assume this can't happen
+      assert(addr <= mem->word_count);
+
+      return mem->words[addr];
+}
+
+void memory_init_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
+{
+      if (addr >= mem->word_count)
+	    return;
+
+      mem->words[addr] = val;
+}
+
+void memory_set_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
+{
+      memory_init_word(mem, addr, val);
+
+      if (mem->port_list)
+	    fprintf(stderr, "XXXX memory_set_word(%u, ...)"
+		    " not fully implemented\n", addr);
+}
+
+#if 0
 vvp_ipoint_t memory_port_new(vvp_memory_t mem,
 			     unsigned nbits, unsigned bitoff,
 			     unsigned naddr, bool writable)
@@ -240,21 +237,23 @@ vvp_ipoint_t memory_port_new(vvp_memory_t mem,
 
   return a->ix;
 }
+#endif
 
-void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val)
+void schedule_memory(vvp_memory_t mem, unsigned addr,
+		     vvp_vector4_t val, unsigned long delay)
 {
-  assert(idx < mem->size*mem->fwidth);
-  mem->bits[idx] = val;
+      fprintf(stderr, "XXXX Forgot how to schedule memory write.\n");
 }
 
 // Utilities
-
+#if 0
 inline static
 vvp_memory_bits_t get_word_ix(vvp_memory_t mem, unsigned idx)
 {
   return mem->bits + idx*mem->fwidth;
 }
-
+#endif
+#if 0
 inline static
 vvp_memory_bits_t get_word(vvp_memory_t mem, int addr)
 {
@@ -266,7 +265,8 @@ vvp_memory_bits_t get_word(vvp_memory_t mem, int addr)
 
   return get_word_ix(mem, waddr);
 }
-
+#endif
+#if 0
 inline static
 bool set_bit(vvp_memory_bits_t bits, int bit, unsigned char val)
 {
@@ -276,7 +276,8 @@ bool set_bit(vvp_memory_bits_t bits, int bit, unsigned char val)
   bits[ix] = (bits[ix] &~ (3<<ip)) | ((val&3) << ip);
   return r;
 }
-
+#endif
+#if 0
 inline static
 unsigned char get_nibble(vvp_memory_bits_t bits, int bit)
 {
@@ -285,13 +286,15 @@ unsigned char get_nibble(vvp_memory_bits_t bits, int bit)
   int ix = bit/4;
   return bits[ix];
 }
-
+#endif
+#if 0
 inline static
 unsigned char get_bit(vvp_memory_bits_t bits, int bit)
 {
   return (get_nibble(bits, bit) >> (2*(bit&3))) & 3;
 }
-
+#endif
+#if 0
 inline static
 unsigned char functor_get_inputs(vvp_ipoint_t ip)
 {
@@ -299,14 +302,16 @@ unsigned char functor_get_inputs(vvp_ipoint_t ip)
   assert(fp);
   return fp->ival;
 }
-
+#endif
+#if 0
 inline static
 unsigned char functor_get_input(vvp_ipoint_t ip)
 {
   unsigned char bits = functor_get_inputs(ip);
   return (bits >> (2*ipoint_port(ip))) & 3;
 }
-
+#endif
+#if 0
 static
 bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
 {
@@ -330,7 +335,9 @@ bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
 
   return addr->cur_addr != old;
 }
+#endif
 
+#if 0
 static
 void update_addr(vvp_memory_port_t addr)
 {
@@ -342,7 +349,9 @@ void update_addr(vvp_memory_port_t addr)
 	break;
     }
 }
+#endif
 
+#if 0
 inline static
 void update_data(vvp_memory_port_t data)
 {
@@ -355,7 +364,9 @@ void update_data(vvp_memory_port_t data)
       df->put_oval(out, true);
     }
 }
+#endif
 
+#if 0
 static
 void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
 		       unsigned char val)
@@ -379,7 +390,9 @@ void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
       a = a->next;
     }
 }
+#endif
 
+#if 0
 static inline
 void write_event(vvp_memory_port_t p)
 {
@@ -406,7 +419,9 @@ void write_event(vvp_memory_port_t p)
 	}
     }
 }
+#endif
 
+#if 0
 void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
 {
   // !attention! "i" may not correspond to "this"
@@ -431,10 +446,11 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
       write_event(this);
     }
 }
+#endif
 
 
 // %set/mem
-
+#if 0
 void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
 {
   if (idx/4 >= (mem->size * mem->fwidth))
@@ -448,9 +464,10 @@ void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
 
   update_data_ports(mem, get_word_ix(mem, widx), bidx, val);
 }
+#endif
 
 // %load/mem
-
+#if 0
 unsigned memory_get(vvp_memory_t mem, unsigned idx)
 {
   if (idx/4 >= (mem->size * mem->fwidth))
@@ -458,7 +475,7 @@ unsigned memory_get(vvp_memory_t mem, unsigned idx)
 
   return get_bit(mem->bits, idx);
 }
-
+#endif
 // %assign/mem event scheduling
 
 struct mem_assign_s: public vvp_gen_event_s
@@ -490,41 +507,18 @@ inline static void ma_free(struct mem_assign_s* cur)
   ma_free_list = cur;
 }
 
+#if 0
 static void run_mem_assign(vvp_gen_event_t obj, unsigned char val)
 {
   struct mem_assign_s *e = (struct mem_assign_s *) obj;
   memory_set(e->mem, e->idx, val);
   ma_free(e);
 }
-
-void schedule_memory(vvp_memory_t mem, unsigned idx,
-		     unsigned char val, unsigned delay)
-{
-  struct mem_assign_s *e = ma_alloc();
-  e->run = run_mem_assign;
-  e->mem = mem;
-  e->idx = idx;
-  schedule_generic(e, val, delay, false);
-}
+#endif
 
 /*
  * $Log: memory.cc,v $
- * Revision 1.22  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.21  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.20  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.19  2002/09/17 00:42:22  steve
- *  Proper initialization of the memories table.
- *
- * Revision 1.18  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/08/11 23:47:05  steve
- *  Add missing Log and Ident strings.
+ * Revision 1.23  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
  */

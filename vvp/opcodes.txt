@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.60 2005/02/14 01:50:23 steve Exp $
+ *  $Id: opcodes.txt,v 1.61 2005/03/03 04:33:10 steve Exp $
  */
 
 
@@ -70,12 +70,24 @@ The %assign/d instruction is exactly the same as the %assign
 instruction, except that the <delay> specifies one of the index
 registers, that contain a calculated delay.
 
-* %assign/m <memory-label>, <delay>, <bit>
+* %assign/m <memory-label>, <delay>, <bit> (OBSOLETE)
 
 This instruction does a non-blocking assignment to a bit in a memory
 from the specified thread register <bit>.  The memory bit is addressed
 by index register 3.  Bit address zero is the LSB of the first memory
 word.
+
+* %assign/mv <memory-label>, <delay>, <bit>
+
+the %assign/mv instruction assigns a vector value to a word in the
+labeled memory. The <delay> is the delay in simulation time to the
+assignment (0 for non-blocking assignment) and the <bit> is the base
+of the vector to write.
+
+The width of the word is retrived from index register 0.
+
+The address of the word in the memory is from index register 3. The
+address is cannonical form.
 
 * %assign/v0 <var-label>, <delay>, <bit>
 
@@ -342,13 +354,18 @@ If the matching child instruction is still running, a %join suspends
 the calling thread until the child ends. If the child is already
 ended, then the %join does not block or yield the thread.
 
-* %load/m <bit>, <memory-label>
+* %load/m <bit>, <memory-label> (OBSOLETE)
 
 This instruction loads a value from a memory bit into the specified
 thread register bit. The memory bit is addressed by index register 3.
 Bit address zero is the LSB of the first memory word.  This
 instruction loads only a single bit.
 
+* %load/mv <bit>, <memory-label>, <wid>
+
+this inctruction loads a word from the specified memory. The word
+address is in index register 3. The width should match the width of
+the memory word.
 
 * %load/nx <bit>, <vpi-label>, <idx>
 
@@ -508,12 +525,13 @@ addressed variable bit and working up. If the <bit> is one of the
 constant bits, then the value is repeated for the width. Otherwise,
 the vector is taken from increasing thread bit addresses.
 
-* %set/m <memory-label>, <bit>
+* %set/mv <memory-label>, <bit>, <wid>
 
-This instruction set a bit in a memory from the specified thread
-register bit. The memory bit is addressed by index register 3.  Bit
-address zero is the LSB of the first memory word.  This instruction
-sets only a single bit.
+This sets a thread vector to a memory word. The <memory-label>
+addresses a memory device, and the <bit>,<wid> describe a vector to be
+written. Index register 3 contains the address of the word within the
+memory. The address (in canonical form) is precalculated and loaded
+into index register 3.
 
 
 * %set/wr <vpi-label>, <bit>

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.62 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: compile.h,v 1.63 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -204,7 +204,7 @@ extern void compile_memory_port(char *label, char *memid,
 				unsigned naddr,
 				unsigned argc, struct symb_s *argv);
 
-extern void compile_memory_init(char *memid, unsigned idx, unsigned char val);
+extern void compile_memory_init(char *memid, unsigned idx, long val);
 
 /*
  * Compile the .ufunc statement.
@@ -297,6 +297,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.63  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.62  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

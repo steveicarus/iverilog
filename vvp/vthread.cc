@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.129 2005/02/14 01:50:23 steve Exp $"
+#ident "$Id: vthread.cc,v 1.130 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -613,8 +613,18 @@ bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 
 bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       schedule_memory(cp->mem, thr->words[3].w_int, bit_val, cp->bit_idx[0]);
+#else
+      fprintf(stderr, "XXXX %%assign/m is obsolete.\n");
+#endif
+      return true;
+}
+
+bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX %%assign/mv not implemented yet\n");
       return true;
 }
 
@@ -1670,11 +1680,43 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
       unsigned char val = memory_get(cp->mem, thr->words[3].w_int);
       thr_put_bit(thr, cp->bit_idx[0], val);
+#else
+      fprintf(stderr, "XXXX %%load/m is obsolete\n");
+#endif
       return true;
 }
+
+/*
+ * %load/mv <bit>, <mem-label>, <wid> ;
+ *
+ * <bit> is the thread bit address for the result
+ * <mem-label> is the memory device to access, and
+ * <wid> is the width of the word to read.
+ *
+ * The address of the word in the memory is in index register 3.
+ */
+bool of_LOAD_MV(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+
+      vvp_vector4_t word = memory_get_word(cp->mem, adr);
+
+      assert(word.size() == wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, bit += 1) {
+	    vvp_bit4_t val = word.value(idx);
+	    thr_put_bit(thr, bit, val);
+      }
+
+      return true;
+}
+
 
 /*
  * %load/nx <bit>, <vpi-label>, <idx>  ; Load net/indexed.
@@ -2607,13 +2649,24 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 
 static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
-bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
+/*
+ * This implements the "%set/mv <label>, <bit>, <wid>" instruction. In
+ * this case, the <label> is a memory label, and the <bit> and <wid>
+ * are the thread vector of a value to be written in.
+ */
+bool of_SET_MV(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char val = thr_get_bit(thr, cp->bit_idx[0]);
-      memory_set(cp->mem, thr->words[3].w_int, val);
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
 
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      memory_set_word(cp->mem, adr, value);
       return true;
 }
+
 
 /*
  * This implements the "%set/v <label>, <bit>, <wid>" instruction.
@@ -3042,6 +3095,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.130  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.129  2005/02/14 01:50:23  steve
  *  Signals may receive part vectors from %set/x0
  *  instructions. Re-implement the %set/x0 to do

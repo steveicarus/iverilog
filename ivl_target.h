@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.143 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.144 2005/03/03 04:34:42 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -576,12 +576,22 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
 
 /*
  * Memory.
+ * Memories are declared in Verilog source as 2 dimensional arrays of
+ * reg bits. This means that they are simple arrays of vectors. The
+ * vectors in the array are called "words".
  *
  * ivl_memory_name (DEPRECATED)
  *
  * ivl_memory_basename
  *    This returns the base name of the memory object. The base name
  *    does not include the name of the scopes that contains the object.
+ *
+ * ivl_memory_root
+ *    The root of the memory is the value to add to a calculated
+ *    address to get to a canonical (0-based) address. This value is
+ *    used when external code wishes to access a word. All the
+ *    compiled references to the word within the compiled design are
+ *    converted to cannonical form by the compiler.
  *
  * ivl_memory_size
  * ivl_memory_width
@@ -1527,6 +1537,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.144  2005/03/03 04:34:42  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.143  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *

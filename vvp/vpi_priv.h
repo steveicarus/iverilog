@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.60 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.61 2005/03/03 04:33:10 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -216,7 +216,7 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  * the memory.
  */
 
-extern vpiHandle vpip_make_memory(vvp_memory_t mem);
+extern vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name);
 
 /*
  * These are the various variable types.
@@ -417,6 +417,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.61  2005/03/03 04:33:10  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.60  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

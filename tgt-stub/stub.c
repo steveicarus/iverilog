@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.111 2005/02/19 02:43:39 steve Exp $"
+#ident "$Id: stub.c,v 1.112 2005/03/03 04:34:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1080,11 +1080,14 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1)
 	    show_variable(ivl_scope_var(net, idx));
 
-      for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
-	    show_event(ivl_scope_event(net, idx));
-
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
+
+      for (idx = 0 ;  idx < ivl_scope_mems(net) ;  idx += 1)
+	    show_memory(ivl_scope_mem(net, idx));
+
+      for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
+	    show_event(ivl_scope_event(net, idx));
 
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1)
 	    show_logic(ivl_scope_log(net, idx));
@@ -1122,6 +1125,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.112  2005/03/03 04:34:42  steve
+ *  Rearrange how memories are supported as vvp_vector4 arrays.
+ *
  * Revision 1.111  2005/02/19 02:43:39  steve
  *  Support shifts and divide.
  *
