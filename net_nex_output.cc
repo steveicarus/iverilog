@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.6 2002/09/17 04:39:20 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.7 2003/10/26 04:51:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -85,8 +85,17 @@ void NetEvWait::nex_output(NexusSet&out)
       statement_->nex_output(out);
 }
 
+void NetWhile::nex_output(NexusSet&out)
+{
+      if (proc_ != 0)
+	    proc_->nex_output(out);
+}
+
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.7  2003/10/26 04:51:39  steve
+ *  Output of While is output of while substatement.
+ *
  * Revision 1.6  2002/09/17 04:39:20  steve
  *  Account for part select in l-value.
  *

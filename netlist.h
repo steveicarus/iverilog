@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.302 2003/09/20 01:05:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.303 2003/10/26 04:51:38 steve Exp $"
 #endif
 
 /*
@@ -2270,6 +2270,7 @@ class NetWhile  : public NetProc {
       void emit_proc_recurse(struct target_t*) const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3308,6 +3309,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.303  2003/10/26 04:51:38  steve
+ *  Output of While is output of while substatement.
+ *
  * Revision 1.302  2003/09/20 01:05:36  steve
  *  Obsolete find_symbol and find_event from the Design class.
  *
