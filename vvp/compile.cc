@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.102 2001/10/09 16:57:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.103 2001/10/11 18:29:21 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1155,6 +1155,10 @@ void compile_udp_functor(char*label, char*type,
 
   inputs_connect(fdx, argc, argv);
   free(argv);
+
+    // Propagate the initial value if the UDP has one and it isn't x.
+  if (u->init != 2)
+	schedule_functor(fdx, 0);
 }
 
 
@@ -1650,6 +1654,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.103  2001/10/11 18:29:21  steve
+ *  Propagate initial value of UDP.
+ *
  * Revision 1.102  2001/10/09 16:57:47  steve
  *  Collect functor reference handling into a single function. (Stephan Boettcher)
  *
