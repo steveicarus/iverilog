@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.126 1999/11/21 01:16:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.127 1999/11/21 17:35:37 steve Exp $"
 #endif
 
 /*
@@ -1047,7 +1047,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    if (NetMemory*mem = des->find_memory(path+"."+id->name()))
+	    if (NetMemory*mem = des->find_memory(path, id->name()))
 		  return assign_to_memory_(mem, id->msb_, des, path);
 
       } while(0);
@@ -1243,7 +1243,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    if (NetMemory*mem = des->find_memory(path+"."+id->name()))
+	    if (NetMemory*mem = des->find_memory(path, id->name()))
 		  return assign_to_memory_(mem, id->msb_, des, path);
 
       } while(0);
@@ -2133,6 +2133,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.127  1999/11/21 17:35:37  steve
+ *  Memory name lookup handles scopes.
+ *
  * Revision 1.126  1999/11/21 01:16:51  steve
  *  Fix coding errors handling names of logic devices,
  *  and add support for buf device in vvm.

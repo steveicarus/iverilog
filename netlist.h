@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.92 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: netlist.h,v 1.93 1999/11/21 17:35:37 steve Exp $"
 #endif
 
 /*
@@ -1862,7 +1862,7 @@ class Design {
 
 	// Memories
       void add_memory(NetMemory*);
-      NetMemory* find_memory(const string&name);
+      NetMemory* find_memory(const string&path, const string&name);
 
 	// Functions
       void add_function(const string&n, NetFuncDef*);
@@ -1977,6 +1977,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.93  1999/11/21 17:35:37  steve
+ *  Memory name lookup handles scopes.
+ *
  * Revision 1.92  1999/11/21 00:13:09  steve
  *  Support memories in continuous assignments.
  *

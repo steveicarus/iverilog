@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.7 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.8 1999/11/21 17:35:37 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -504,7 +504,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
       if (sig == 0) {
 	      /* If the identifier is a memory instead of a signal,
 		 then handle it elsewhere. Create a RAM. */
-	    if (NetMemory*mem = des->find_memory(path+"."+text_))
+	    if (NetMemory*mem = des->find_memory(path, text_))
 		  return elaborate_net_ram_(des, path, mem, lwidth,
 					    rise, fall, decay);
 
@@ -658,7 +658,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
-	    if (des->find_memory(path+"."+text_)) {
+	    if (des->find_memory(path, text_)) {
 		  cerr << get_line() << ": error: memories (" << text_
 		       << ") cannot be l-values in continuous "
 		       << "assignments." << endl;
@@ -816,6 +816,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.8  1999/11/21 17:35:37  steve
+ *  Memory name lookup handles scopes.
+ *
  * Revision 1.7  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.90 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.91 1999/11/21 17:35:37 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2326,13 +2326,26 @@ void Design::add_memory(NetMemory*mem)
       memories_[mem->name()] = mem;
 }
 
-NetMemory* Design::find_memory(const string&key)
+NetMemory* Design::find_memory(const string&path, const string&name)
 {
-      map<string,NetMemory*>::const_iterator cur = memories_.find(key);
-      if (cur == memories_.end())
-	    return 0;
+      string root = path;
 
-      return (*cur).second;
+      for (;;) {
+	    string fulname = root + "." + name;
+	    map<string,NetMemory*>::const_iterator cur
+		  = memories_.find(fulname);
+
+	    if (cur != memories_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
 }
 
 void Design::add_function(const string&key, NetFuncDef*def)
@@ -2518,6 +2531,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.91  1999/11/21 17:35:37  steve
+ *  Memory name lookup handles scopes.
+ *
  * Revision 1.90  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.8 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.9 1999/11/21 17:35:37 steve Exp $"
 #endif
 
 
@@ -260,7 +260,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	// If the identifier names a memory, then this is a
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
-      if (NetMemory*mem = des->find_memory(name)) {
+      if (NetMemory*mem = des->find_memory(path, text_)) {
 	    if (msb_ == 0) {
 		  cerr << get_line() << ": error: Memory ``" << name <<
 			"'' referenced without an index expression." << endl;
@@ -324,6 +324,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.9  1999/11/21 17:35:37  steve
+ *  Memory name lookup handles scopes.
+ *
  * Revision 1.8  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *
