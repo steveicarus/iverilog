@@ -16,8 +16,12 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
+#if !defined(WINNT)
+#ident "$Id: vpip_to_dec.cc,v 1.2 2002/02/03 05:51:31 steve Exp $"
+#endif
 
 # include  "config.h"
+# include  "vpi_priv.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <limits.h>     /* for CHAR_BIT */
