@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.57 2002/04/14 18:41:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.58 2002/04/22 02:41:30 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -72,7 +72,7 @@ void clr_vector(struct vector_info vec)
 	    clr_bit(vec.base + idx);
 }
 
-static unsigned short allocate_vector(unsigned short wid)
+unsigned short allocate_vector(unsigned short wid)
 {
       unsigned short base = 8;
 
@@ -1506,6 +1506,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.58  2002/04/22 02:41:30  steve
+ *  Reduce the while loop expression if needed.
+ *
  * Revision 1.57  2002/04/14 18:41:34  steve
  *  Support signed integer division.
  *

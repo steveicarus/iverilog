@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.12 2001/11/01 04:26:57 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.13 2002/04/22 02:41:30 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -78,6 +78,7 @@ extern struct vector_info draw_eval_expr(ivl_expr_t exp);
 extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w);
 extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 
+extern unsigned short allocate_vector(unsigned short wid);
 extern void clr_vector(struct vector_info vec);
 
 /*
@@ -88,6 +89,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.13  2002/04/22 02:41:30  steve
+ *  Reduce the while loop expression if needed.
+ *
  * Revision 1.12  2001/11/01 04:26:57  steve
  *  Generate code for deassign and cassign.
  *

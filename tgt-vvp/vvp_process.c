@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.56 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.57 2002/04/22 02:41:30 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -786,6 +786,36 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
 }
 
+static struct vector_info reduction_or(struct vector_info cvec)
+{
+      struct vector_info result;
+
+      switch (cvec.base) {
+	  case 0:
+	    result.base = 0;
+	    result.wid = 1;
+	    break;
+	  case 1:
+	    result.base = 1;
+	    result.wid = 1;
+	    break;
+	  case 2:
+	  case 3:
+	    result.base = 0;
+	    result.wid = 1;
+	    break;
+	  default:
+	    clr_vector(cvec);
+	    result.base = allocate_vector(1);
+	    result.wid = 1;
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", result.base,
+		    cvec.base, cvec.wid);
+	    break;
+      }
+
+      return result;
+}
+
 static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
@@ -800,6 +830,9 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
       cvec = draw_eval_expr(ivl_stmt_cond_expr(net));
+      if (cvec.wid > 1)
+	    cvec = reduction_or(cvec);
+
       fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, %u;\n",
 	      thread_count, out_label, cvec.base);
       clr_vector(cvec);
@@ -1135,6 +1168,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.57  2002/04/22 02:41:30  steve
+ *  Reduce the while loop expression if needed.
+ *
  * Revision 1.56  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated
