@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.170 2000/05/07 21:17:21 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.171 2000/05/08 05:28:29 steve Exp $"
 #endif
 
 /*
@@ -89,6 +89,27 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	    return;
       }
 
+
+	/* Handle the special case that the rval is simply an
+	   identifier. Get the rval as a NetNet, then use NetBUFZ
+	   objects to connect it to the l-value. This is necessary to
+	   direct drivers. This is how I attach strengths to the
+	   assignment operation. */
+      if (const PEIdent*id = dynamic_cast<const PEIdent*>(pin(1))) {
+	    NetNet*rid = id->elaborate_net(des, path, lval->pin_count(),
+					   0, 0, 0, Link::STRONG,
+					   Link::STRONG);
+	    assert(rid);
+	    for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
+		  NetBUFZ*dev = new NetBUFZ(des->local_symbol(path));
+		  connect(lval->pin(idx), dev->pin(0));
+		  connect(rid->pin(idx), dev->pin(1));
+		  dev->pin(0).drive0(drive0);
+		  dev->pin(0).drive1(drive1);
+		  des->add_node(dev);
+	    }
+	    return;
+      }
 
 	/* Elaborate the r-value. Account for the initial decays,
 	   which are going to be attached to the last gate before the
@@ -245,6 +266,9 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	    cur[idx]->rise_time(rise_time);
 	    cur[idx]->fall_time(fall_time);
 	    cur[idx]->decay_time(decay_time);
+
+	    cur[idx]->pin(0).drive0(drive_type(strength0()));
+	    cur[idx]->pin(0).drive1(drive_type(strength1()));
 
 	    des->add_node(cur[idx]);
       }
@@ -2358,6 +2382,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.171  2000/05/08 05:28:29  steve
+ *  Use bufz to make assignments directional.
+ *
  * Revision 1.170  2000/05/07 21:17:21  steve
  *  non-blocking assignment to a bit select.
  *
