@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.9 2002/09/16 00:30:33 steve Exp $"
+#ident "$Id: synth2.cc,v 1.10 2002/09/17 04:40:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,11 +70,12 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       assert(lsig);
       assert(lval_->more == 0);
 
-      assert(lsig->pin_count() == nex_map->pin_count());
+      assert(lval_->lwidth() == nex_map->pin_count());
       assert(nex_map->pin_count() <= rsig->pin_count());
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(idx).nexus());
+      for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
+	    unsigned off = lval_->get_loff()+idx;
+	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
 	    connect(nex_out->pin(ptr), rsig->pin(idx));
       }
 
@@ -98,27 +99,33 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
       do {
 	    cur = cur->next_;
 
-	      /* Create a temporary nex_out for the substatement. */
+	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-	    NetNet*tmp_out = new NetNet(scope, "tmp", NetNet::WIRE,
+	    NetNet*tmp_map = new NetNet(scope, "tmp1", NetNet::WIRE,
 					tmp_set.count());
-	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ;  idx += 1)
-		  connect(tmp_set[idx], tmp_out->pin(idx));
+	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
+		  connect(tmp_set[idx], tmp_map->pin(idx));
 
-	    bool ok_flag = cur->synth_async(des, scope, tmp_out, tmp_out);
+	      /* Create also a temporary net_out to collect the
+		 output. */
+	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
+					tmp_set.count());
+
+	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out);
 	    flag = flag && ok_flag;
 
 	    if (ok_flag == false)
 		  continue;
 
-	      /* Use tne nex_map to link up the output from the
+	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a whole. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
 		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
 	    }
 
+	    delete tmp_map;
 	    delete tmp_out;
 
       } while (cur != last_);
@@ -424,6 +431,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.10  2002/09/17 04:40:28  steve
+ *  Connect output of block to net_out, instead of statement outputs.
+ *
  * Revision 1.9  2002/09/16 00:30:33  steve
  *  Add to synth2 support for synthesis of
  *  synchronous logic. This includes DFF enables
