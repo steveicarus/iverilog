@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.1 2000/10/08 22:36:56 steve Exp $"
+#ident "$Id: build_string.c,v 1.2 2000/10/28 03:45:47 steve Exp $"
 #endif
 
 # include  "globals.h"
@@ -41,11 +41,11 @@ int build_string(char*output, size_t olen, const char*pattern)
 			*output++ = '%';
 			break;
 
-		      case '?': {
+		      case '[': {
 			    const char*tail;
 			    pattern += 1;
 			    assert(*pattern);
-			    tail = strchr(pattern+1, ';');
+			    tail = strchr(pattern+1, ']');
 			    assert(tail);
 			    strncpy(tmp_buf, pattern+1, tail-pattern-1);
 			    tmp_buf[tail-pattern-1] = 0;
@@ -68,12 +68,34 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(base);
 			break;
 
+		      case 'f':
+			if (f_list) {
+			      strcpy(output, f_list);
+			      output += strlen(f_list);
+			      olen -= strlen(f_list);
+			}
+			break;
+
+		      case 'm':
+			if (mod_list) {
+			      strcpy(output, mod_list);
+			      output += strlen(mod_list);
+			      olen -= strlen(mod_list);
+			}
+			break;
+
 		      case 'N':
 			if (npath) {
 			      strcpy(output, npath);
 			      output += strlen(npath);
 			      olen -= strlen(npath);
 			}
+			break;
+
+		      case 'o':
+			strcpy(output, opath);
+			output += strlen(opath);
+			olen -= strlen(opath);
 			break;
 
 		      case 's':
@@ -97,6 +119,13 @@ int build_string(char*output, size_t olen, const char*pattern)
 			output += strlen(targ);
 			olen -= strlen(targ);
 			break;
+
+		      case 'W':
+			strcpy(output, warning_flags);
+			output += strlen(warning_flags);
+			olen -= strlen(warning_flags);
+			break;
+
 		  }
 		  pattern += 1;
 
@@ -112,6 +141,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.2  2000/10/28 03:45:47  steve
+ *  Use the conf file to generate the vvm ivl string.
+ *
  * Revision 1.1  2000/10/08 22:36:56  steve
  *  iverilog with an iverilog.conf configuration file.
  *

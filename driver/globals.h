@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.1 2000/10/08 22:36:56 steve Exp $"
+#ident "$Id: globals.h,v 1.2 2000/10/28 03:45:47 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -27,11 +27,20 @@
   /* This is the base (i.e. -B<value>) of the Icarus Verilog files. */
 extern const char*base;
 
+  /* This is a list of all the -f<key>=<value> options from the
+     command line, concatenated together. */
+extern char*f_list;
+
+extern char*mod_list;
+
   /* This is the optional -Tmin|typ|max setting. */
 extern const char*mtm;
 
   /* Ths is the optional -N<path> value, if one was supplied. */
 extern const char*npath;
+
+  /* This is the name of the output file that the user selected. */
+extern const char*opath;
 
   /* This pointer is set if there was a -s<value> parameter. */
 extern const char*start;
@@ -39,12 +48,17 @@ extern const char*start;
   /* This is the name of the selected target. */
 extern const char*targ;
 
+extern char warning_flags[];
+
 extern const char*lookup_pattern(const char*key);
 
 extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.2  2000/10/28 03:45:47  steve
+ *  Use the conf file to generate the vvm ivl string.
+ *
  * Revision 1.1  2000/10/08 22:36:56  steve
  *  iverilog with an iverilog.conf configuration file.
  *

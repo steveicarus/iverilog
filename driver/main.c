@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.2 2000/10/28 03:45:47 steve Exp $"
+#ident "$Id: main.c,v 1.3 2000/10/28 03:47:25 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      pattern = lookup_pattern("<ivl>");
+      const char*pattern = lookup_pattern("<ivl>");
       if (pattern == 0) {
 	    fprintf(stderr, "No such target: %s\n", targ);
 	    return -1;
@@ -456,6 +456,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.3  2000/10/28 03:47:25  steve
+ *  Use the conf file to generate the vvm ivl string.
+ *
  * Revision 1.2  2000/10/28 03:45:47  steve
  *  Use the conf file to generate the vvm ivl string.
  *
