@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.190 2001/01/02 04:21:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.191 2001/01/04 16:49:50 steve Exp $"
 #endif
 
 /*
@@ -2176,7 +2176,8 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_eqeq_();
       NetEConst*eval_leeq_();
       NetEConst*eval_neeq_();
-
+      NetEConst*eval_eqeqeq_();
+      NetEConst*eval_neeqeq_();
 };
 
 /*
@@ -2843,6 +2844,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.191  2001/01/04 16:49:50  steve
+ *  Evaluate constant === and !== expressions.
+ *
  * Revision 1.190  2001/01/02 04:21:14  steve
  *  Support a bunch of unary operators in parameter expressions.
  *

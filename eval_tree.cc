@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.19 2001/01/04 04:28:42 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.20 2001/01/04 16:49:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -290,18 +290,72 @@ NetEConst* NetEBComp::eval_neeq_()
       return new NetEConst(verinum(res));
 }
 
+NetEConst* NetEBComp::eval_eqeqeq_()
+{
+      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      if (l == 0) return 0;
+      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      if (r == 0) return 0;
+
+      const verinum&lv = l->value();
+      const verinum&rv = r->value();
+
+      verinum::V res = verinum::V1;
+
+      unsigned cnt = lv.len();
+      if (cnt > rv.len())
+	    cnt = rv.len();
+
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+	    if (lv.get(idx) != rv.get(idx))
+		  res = verinum::V0;
+
+      for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
+	    if (lv.get(idx) != verinum::V0)
+		  res = verinum::V0;
+
+      for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1)
+	    if (rv.get(idx) != verinum::V0)
+		  res = verinum::V0;
+
+      return new NetEConst(verinum(res, 1));
+}
+
+NetEConst* NetEBComp::eval_neeqeq_()
+{
+      NetEConst*tmp = eval_eqeqeq_();
+      if (tmp == 0)
+	    return 0;
+
+      NetEConst*res;
+
+      if (tmp->value().get(0) == verinum::V0)
+	    res = new NetEConst(verinum(verinum::V1,1));
+      else
+	    res = new NetEConst(verinum(verinum::V0,1));
+
+      delete tmp;
+      return res;
+}
+
 NetEConst* NetEBComp::eval_tree()
 {
       eval_sub_tree_();
 
       switch (op_) {
-	  case 'e':
+	  case 'E': // Case equality (===)
+	    return eval_eqeqeq_();
+
+	  case 'e': // Equality (==)
 	    return eval_eqeq_();
 
-	  case 'L':
+	  case 'L': // <=
 	    return eval_leeq_();
 
-	  case 'n':
+	  case 'N': // Cse inequality (!==)
+	    return eval_neeqeq_();
+
+	  case 'n': // not-equal (!=)
 	    return eval_neeq_();
 
 	  default:
@@ -761,6 +815,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.20  2001/01/04 16:49:50  steve
+ *  Evaluate constant === and !== expressions.
+ *
  * Revision 1.19  2001/01/04 04:28:42  steve
  *  Evaluate constant logical && and ||.
  *
