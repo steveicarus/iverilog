@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.22 2000/11/23 01:55:52 steve Exp $"
+#ident "$Id: cprop.cc,v 1.23 2000/12/30 03:11:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -742,6 +742,28 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	}
       }
 
+	// For each bit, if this is the only driver, then set the
+	// initial value of all the signals to this value.
+      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
+	    if (count_outputs(obj->pin(idx)) > 1)
+		  continue;
+
+	    Nexus*nex = obj->pin(idx).nexus();
+	    for (Link*clnk = nex->first_nlink()
+		       ; clnk ; clnk = clnk->next_nlink()) {
+
+		  NetObj*cur;
+		  unsigned pin;
+		  clnk->cur_link(cur, pin);
+
+		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
+		  if (tmp == 0)
+			continue;
+
+		  tmp->pin(pin).set_init(obj->value(idx));
+	    }
+      }
+
 	// If there are any links that take input, the constant is
 	// used structurally somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
@@ -789,6 +811,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.23  2000/12/30 03:11:15  steve
+ *  Propagate initial value of constants into wires.
+ *
  * Revision 1.22  2000/11/23 01:55:52  steve
  *  Propagate constants through xnor gates. (PR#51)
  *
