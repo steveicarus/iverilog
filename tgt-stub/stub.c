@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.2 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: stub.c,v 1.3 2000/08/19 18:12:42 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -60,6 +60,23 @@ int target_net_const(const char*name, ivl_net_const_t net)
       return 0;
 }
 
+int target_net_event(const char*name, ivl_net_event_t net)
+{
+      fprintf(out, "STUB: %s: event\n", name);
+      return 0;
+}
+
+int target_net_logic(const char*name, ivl_net_logic_t net)
+{
+      fprintf(out, "STUB: %s: logic gate\n", name);
+      return 0;
+}
+
+int target_net_probe(const char*name, ivl_net_probe_t net)
+{
+      fprintf(out, "STUB: %s: probe\n", name);
+      return 0;
+}
 int target_process(ivl_process_t net)
 {
       fprintf(out, "STUB: process\n");
@@ -68,6 +85,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.3  2000/08/19 18:12:42  steve
+ *  Add target calls for scope, events and logic.
+ *
  * Revision 1.2  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

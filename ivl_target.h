@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.2 2000/08/14 04:39:56 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.3 2000/08/19 18:12:42 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -47,11 +47,23 @@ typedef struct ivl_design_s *ivl_design_t;
 
 typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
+typedef struct ivl_net_event_s*ivl_net_event_t;
+typedef struct ivl_net_logic_s*ivl_net_logic_t;
+typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_process_s  *ivl_process_t;
+typedef struct ivl_scope_s    *ivl_scope_t;
+
 
 /* This function returns the string value of the named flag. The key
    is used to select the flag. If the key does not exist or the flag
-   does not have a value, this function returns 0. */
+   does not have a value, this function returns 0.
+
+   Flags come from the "-fkey=value" options to the iverilog command
+   line.
+
+   The key "-o" is special and is the argument to the -o flag of the
+   iverilog command. This is generally how the target learns the name
+   of the output file. */
 extern const char* ivl_get_flag(ivl_design_t, const char*key);
 
 
@@ -79,14 +91,38 @@ typedef void (*end_design_f)(ivl_design_t des);
    in the netlist. */
 typedef int (*net_bufz_f)(const char*name, ivl_net_bufz_t net);
 
+
 /* target_net_const
 
    The "target_net_const" function is called for structural constant
-   values that appear in the design. the DLL is expected to return 0
-   for success, or <0 for some sort of error. If this function is not
-   implemented by the DLL, ivl will generate an error when a constant
-   is detected in the design. */
+   values that appear in the design. */
 typedef int (*net_const_f)(const char*name, ivl_net_const_t net);
+
+
+/* target_net_event
+
+   Verilog code such as @event and @(posedge foo) create event
+   objects. These named objects can be triggered by structural probes
+   or behavioral triggers. The target_net_event function is called
+   once for each event in the netlist. The event function is
+   guaranteed to be called before probe or trigger functions. */
+typedef int (*net_event_f)(const char*name, ivl_net_event_t net);
+
+
+/* target_net_logic
+
+   This function is called for each logic gate in the design. The name
+   parameter is the name of the gate in the design. If the gate is
+   part of an array of gates, the name includes its index. */
+typedef int (*net_logic_f)(const char*name, ivl_net_logic_t net);
+
+
+/* target_net_probe
+
+   This is the probe, or structural trigger, of an event. The
+   net_event_f is guaranteed to be called for the associated event
+   before this probe is called. */
+typedef int (*net_probe_f)(const char*name, ivl_net_probe_t net);
 
 
 /* target_process
@@ -99,10 +135,24 @@ typedef int (*net_const_f)(const char*name, ivl_net_const_t net);
    process statements, or if I will do that myself. Hmm... */
 typedef int (*process_f)(ivl_process_t net);
 
+
+/* target_scope (optional)
+
+   If the "target_scope" function is implemented in the module, it is
+   called to introduce a new scope in the design. If scopes are
+   nested, this method is always called for the containing scope
+   before the contained scope. Also, this is guaranteed to be called
+   before functions for any objects contained in this scope. */
+typedef void (*scope_f)(ivl_scope_t net);
+
+
 _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.3  2000/08/19 18:12:42  steve
+ *  Add target calls for scope, events and logic.
+ *
  * Revision 1.2  2000/08/14 04:39:56  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

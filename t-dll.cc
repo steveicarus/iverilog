@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.2 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.3 2000/08/19 18:12:42 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -36,6 +36,10 @@ struct ivl_process_s {
       const NetProcTop*top_;
 };
 
+struct ivl_scope_s {
+      const NetScope*scope_;
+};
+
 /*
  * The DLL target type loads a named object file to handle the process
  * of scanning the netlist. When it is time to start the design, I
@@ -49,9 +53,13 @@ struct dll_target  : public target_t {
       void end_design(const Design*);
 
       bool bufz(const NetBUFZ*);
+      void event(const NetEvent*);
+      void logic(const NetLogic*);
       bool net_const(const NetConst*);
+      void net_probe(const NetEvProbe*);
 
       bool process(const NetProcTop*);
+      void scope(const NetScope*);
 
       void*dll_;
       string dll_path_;
@@ -61,10 +69,14 @@ struct dll_target  : public target_t {
       start_design_f start_design_;
       end_design_f   end_design_;
 
-      net_bufz_f     net_bufz_;
-      net_const_f    net_const_;
+      net_bufz_f   net_bufz_;
+      net_const_f  net_const_;
+      net_event_f  net_event_;
+      net_logic_f  net_logic_;
+      net_probe_f  net_probe_;
 
-      process_f      process_;
+      process_f    process_;
+      scope_f      scope_;
 
 } dll_target_obj;
 
@@ -82,9 +94,14 @@ bool dll_target::start_design(const Design*des)
 
       start_design_ = (start_design_f)dlsym(dll_, "target_start_design");
       end_design_   = (end_design_f)  dlsym(dll_, "target_end_design");
-      net_bufz_     = (net_bufz_f)    dlsym(dll_, "target_net_bufz");
-      net_const_    = (net_const_f)   dlsym(dll_, "target_net_const");
-      process_      = (process_f)     dlsym(dll_, "target_process");
+
+      net_bufz_   = (net_bufz_f)  dlsym(dll_, "target_net_bufz");
+      net_const_  = (net_const_f) dlsym(dll_, "target_net_const");
+      net_event_  = (net_event_f) dlsym(dll_, "target_net_event");
+      net_logic_  = (net_logic_f) dlsym(dll_, "target_net_logic");
+      net_probe_  = (net_probe_f) dlsym(dll_, "target_net_probe");
+      process_    = (process_f)   dlsym(dll_, "target_process");
+      scope_      = (scope_f)     dlsym(dll_, "target_scope");
 
       (start_design_)(&ivl_des);
       return true;
@@ -111,6 +128,32 @@ bool dll_target::bufz(const NetBUFZ*net)
       return false;
 }
 
+void dll_target::event(const NetEvent*net)
+{
+      if (net_event_) {
+	    (net_event_)(net->full_name().c_str(), 0);
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_event function." << endl;
+      }
+
+      return;
+}
+
+void dll_target::logic(const NetLogic*net)
+{
+      if (net_logic_) {
+	    (net_logic_)(net->name().c_str(), 0);
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_logic function." << endl;
+      }
+
+      return;
+}
+
 bool dll_target::net_const(const NetConst*net)
 {
       struct ivl_net_const_s obj;
@@ -128,6 +171,21 @@ bool dll_target::net_const(const NetConst*net)
       }
 
       return false;
+}
+
+void dll_target::net_probe(const NetEvProbe*net)
+{
+      if (net_probe_) {
+	    int rc = (net_probe_)(net->name().c_str(), 0);
+	    return;
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_probe function." << endl;
+	    return;
+      }
+
+      return;
 }
 
 bool dll_target::process(const NetProcTop*net)
@@ -149,6 +207,16 @@ bool dll_target::process(const NetProcTop*net)
       return false;
 }
 
+void dll_target::scope(const NetScope*net)
+{
+      struct ivl_scope_s obj;
+
+      obj.scope_ = net;
+
+      if (scope_)
+	    (scope_)(&obj);
+}
+
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 
@@ -161,6 +229,9 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.3  2000/08/19 18:12:42  steve
+ *  Add target calls for scope, events and logic.
+ *
  * Revision 1.2  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *
