@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.7 1999/05/01 02:57:52 steve Exp $"
+#ident "$Id: PExpr.h,v 1.8 1999/05/10 00:16:57 steve Exp $"
 #endif
 
 # include  <string>
@@ -51,7 +51,7 @@ class PExpr : public LineInfo {
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
-      virtual verinum* eval_const() const;
+      virtual verinum* eval_const(const Design*des, const string&path) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -60,6 +60,18 @@ class PExpr : public LineInfo {
 };
 
 ostream& operator << (ostream&, const PExpr&);
+
+class PEConcat : public PExpr {
+
+    public:
+      PEConcat(const svector<PExpr*>&p) : parms_(p) { }
+
+      virtual void dump(ostream&) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+
+    private:
+      svector<PExpr*>parms_;
+};
 
 class PEEvent : public PExpr {
 
@@ -87,7 +99,10 @@ class PEIdent : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      verinum* eval_const(const Design*des, const string&path) const;
 
+	// XXXX
+      string name() const { return text_; }
 
     private:
       string text_;
@@ -114,7 +129,7 @@ class PENumber : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
-      virtual verinum* eval_const() const;
+      virtual verinum* eval_const(const Design*des, const string&path) const;
 
       virtual bool is_the_same(const PExpr*that) const;
 
@@ -160,6 +175,7 @@ class PEBinary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
       char op_;
@@ -169,6 +185,15 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.8  1999/05/10 00:16:57  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.7  1999/05/01 02:57:52  steve
  *  Handle much more complex event expressions.
  *

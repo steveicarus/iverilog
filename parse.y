@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.24 1999/05/08 20:19:20 steve Exp $"
+#ident "$Id: parse.y,v 1.25 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -41,7 +41,7 @@ extern void lex_end_table();
       svector<lgate>*gates;
 
       PExpr*expr;
-      list<PExpr*>*exprs;
+      svector<PExpr*>*exprs;
 
       svector<PEEvent*>*event_expr;
 
@@ -88,7 +88,7 @@ extern void lex_end_table();
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <text> identifier lpvalue register_variable
+%type <text> identifier register_variable
 %type <strings> register_variable_list
 %type <strings> list_of_variables
 
@@ -102,7 +102,7 @@ extern void lex_end_table();
 %type <gates> gate_instance_list
 
 %type <expr>  bitsel delay delay_opt expression expr_primary const_expression
-%type <expr>  lavalue
+%type <expr>  lavalue lpvalue
 %type <exprs> expression_list
 
 %type <exprs> range range_opt
@@ -182,12 +182,18 @@ const_expression
 			yyerror(@1, "XXXX internal error: const_expression.");
 			$$ = 0;
 		  } else {
-			$$ = new PENumber(tmp);
+			PENumber*tmp = new PENumber($1);
+			tmp->set_file(@1.text);
+			tmp->set_lineno(@1.first_line);
+			$$ = tmp;
 		  }
 		}
 	| STRING
-		{ $$ = new PEString(*$1);
+		{ PEString*tmp = new PEString(*$1);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
 		  delete $1;
+		  $$ = tmp;
 		}
 	| IDENTIFIER
 		{ if (!pform_is_parameter(*$1)) {
@@ -204,7 +210,10 @@ const_expression
 		  }
 		}
 	| const_expression '-' const_expression
-		{ $$ = new PEBinary('-', $1, $3);
+		{ PEBinary*tmp = new PEBinary('-', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	;
 
@@ -307,8 +316,9 @@ expression
 	| '(' expression ')'
 		{ $$ = $2; }
 	| '{' expression_list '}'
-		{ yyerror(@1, "Sorry, concatenation operator not supported.");
-		  $$ = 0;
+		{ PEConcat*tmp = new PEConcat(*$2);
+		  delete $2;
+		  $$ = tmp;
 		}
 	| '~' expression %prec UNARY_PREC
 		{ $$ = new PEUnary('~', $2);
@@ -363,18 +373,18 @@ expression
 
 expression_list
 	: expression_list ',' expression
-		{ list<PExpr*>*tmp = $1;
-		  tmp->push_back($3);
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
+		  delete $1;
 		  $$ = tmp;
 		}
 	| expression
-		{ list<PExpr*>*tmp = new list<PExpr*>;
-		  tmp->push_back($1);
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| expression_list ','
-		{ list<PExpr*>*tmp = $1;
-		  tmp->push_back(0);
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
+		  delete $1;
 		  $$ = tmp;
 		}
 	;
@@ -437,13 +447,11 @@ gate_instance
 		}
 	| IDENTIFIER range '(' expression_list ')'
 		{ lgate*tmp = new lgate;
-		  list<PExpr*>*rng = $2;
+		  svector<PExpr*>*rng = $2;
 		  tmp->name = *$1;
 		  tmp->parms = $4;
-		  tmp->range[0] = rng->front();
-		  rng->pop_front();
-		  tmp->range[1] = rng->front();
-		  rng->pop_front();
+		  tmp->range[0] = (*rng)[0];
+		  tmp->range[1] = (*rng)[1];
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete $1;
@@ -566,18 +574,24 @@ list_of_variables
 lavalue
 	: IDENTIFIER
 		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| IDENTIFIER bitsel
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  tmp->msb_ = $2;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| IDENTIFIER range
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  yyerror(@3, "Sorry, lvalue bit range not supported.");
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  delete $2;
 		  $$ = tmp;
@@ -593,12 +607,21 @@ lavalue
   /* An lpvalue is the expression that can go on the left side of a
      procedural assignment. This rule handles only procedural assignments. */
 lpvalue
-	: identifier { $$ = $1; }
+	: identifier
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
+		}
 	| identifier '[' expression ']'
-		{ yyerror(@2, "Sorry, bit/memory selects "
-		          "not supported in lvalue.");
-		  $$ = $1;
-		  delete $3;
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->msb_ = $3;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+
+		  $$ = tmp;
 		}
 	| '{' expression_list '}'
 		{ yyerror(@1, "Sorry, concatenation expressions"
@@ -753,9 +776,9 @@ port_type
 
 range
 	: '[' const_expression ':' const_expression ']'
-		{ list<PExpr*>*tmp = new list<PExpr*>;
-		  tmp->push_back($2);
-		  tmp->push_back($4);
+		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
+		  (*tmp)[0] = $2;
+		  (*tmp)[1] = $4;
 		  $$ = tmp;
 		}
 	;
@@ -830,9 +853,7 @@ statement
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  lpvalue '=' expression ')' statement
-		{ $$ = new PForStatement(*$3, $5, $7, *$9, $11, $13);
-		  delete $3;
-		  delete $9;
+		{ $$ = new PForStatement($3, $5, $7, $9, $11, $13);
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
@@ -873,18 +894,24 @@ statement
 		  }
 		}
 	| lpvalue '=' expression ';'
-		{ Statement*tmp = pform_make_assignment($1, $3);
+		{ PAssign*tmp = new PAssign($1,$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 	| lpvalue K_LE expression ';'
-		{ $$ = pform_make_assignment($1, $3);
-		  yyerror(@1, "Sorry, non-blocking assignment not implemented.");
+		{ yyerror(@1, "Sorry, non-blocking assignment not implemented.");
+		  PAssign*tmp = new PAssign($1,$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| lpvalue '=' delay expression ';'
-		{ $$ = pform_make_assignment($1, $3);
-		  yyerror(@1, "Sorry, assignment timing control not implemented.");
+		{ yyerror(@1, "Sorry, assignment timing control not implemented.");
+		  PAssign*tmp = new PAssign($1,$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_wait '(' expression ')' statement_opt
 		{ PEventStatement*tmp;
@@ -995,7 +1022,8 @@ udp_sequ_entry
 udp_initial
 	: K_initial IDENTIFIER '=' NUMBER ';'
 		{ PExpr*etmp = new PENumber($4);
-		  PAssign*atmp = new PAssign(*$2, etmp);
+		  PEIdent*itmp = new PEIdent(*$2);
+		  PAssign*atmp = new PAssign(itmp, etmp);
 		  atmp->set_file(@2.text);
 		  atmp->set_lineno(@2.first_line);
 		  delete $2;

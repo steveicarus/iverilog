@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.24 1999/05/05 03:04:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.25 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 /*
@@ -109,10 +109,22 @@ void PWire::elaborate(Design*des, const string&path) const
 	/* Wires, registers and memories can have a width, expressed
 	   as the msb index and lsb index. */
       if (msb && lsb) {
-	    verinum*mval = msb->eval_const();
-	    assert(mval);
-	    verinum*lval = lsb->eval_const();
-	    assert(lval);
+	    verinum*mval = msb->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << msb->get_line() << ": Unable to evaluate "
+			"constant expression ``" << *msb << "''." <<
+			endl;
+		  des->errors += 1;
+		  return;
+	    }
+	    verinum*lval = lsb->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << lsb->get_line() << ": Unable to evaluate "
+			"constant expression ``" << *lsb << "''." <<
+			endl;
+		  des->errors += 1;
+		  return;
+	    }
 
 	    long mnum = mval->as_long();
 	    long lnum = lval->as_long();
@@ -125,7 +137,7 @@ void PWire::elaborate(Design*des, const string&path) const
 		  wid = lnum - mnum + 1;
 
       } else if (msb) {
-	    verinum*val = msb->eval_const();
+	    verinum*val = msb->eval_const(des, path);
 	    assert(val);
 	    assert(val->as_ulong() > 0);
 	    wid = val->as_ulong();
@@ -134,9 +146,9 @@ void PWire::elaborate(Design*des, const string&path) const
       if (lidx || ridx) {
 	      // If the register has indices, then this is a
 	      // memory. Create the memory object.
-	    verinum*lval = lidx->eval_const();
+	    verinum*lval = lidx->eval_const(des, path);
 	    assert(lval);
-	    verinum*rval = ridx->eval_const();
+	    verinum*rval = ridx->eval_const(des, path);
 	    assert(rval);
 
 	    long lnum = lval->as_long();
@@ -188,8 +200,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	   gates, then I am expected to make more then one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    verinum*msb = msb_->eval_const();
-	    verinum*lsb = lsb_->eval_const();
+	    verinum*msb = msb_->eval_const(des, path);
+	    verinum*lsb = lsb_->eval_const(des, path);
 
 	    if (msb == 0) {
 		  cerr << get_line() << ": Unable to evaluate expression "
@@ -563,20 +575,61 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
       return osig;
 }
 
+/*
+ * The concatenation operator, as a net, is a wide signal that is
+ * connected to all the pins of the elaborated expression nets.
+ */
+NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
+{
+      svector<NetNet*>nets (parms_.count());
+      unsigned pins = 0;
+
+	/* Elaborate the operands of the concatenation. */
+      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+	    nets[idx] = parms_[idx]->elaborate_net(des, path);
+	    pins += nets[idx]->pin_count();
+      }
+
+	/* Make the temporary signal that connects to all the
+	   operands, and connect it up. Scan the operands of the
+	   concat operator from least significant to most significant,
+	   which is opposite from how they are given in the list. */
+      NetNet*osig = new NetNet(des->local_symbol(path),
+			       NetNet::IMPLICIT, pins);
+      pins = 0;
+      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
+	    NetNet*cur = nets[idx-1];
+	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
+		  connect(osig->pin(pins), cur->pin(pin));
+		  pins += 1;
+	    }
+      }
+
+      osig->local_flag(true);
+      des->add_signal(osig);
+      return osig;
+}
+
 NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 {
       NetNet*sig = des->find_signal(path+"."+text_);
 
       if (msb_ && lsb_) {
-	    verinum*mval = msb_->eval_const();
+	    verinum*mval = msb_->eval_const(des, path);
 	    assert(mval);
-	    verinum*lval = lsb_->eval_const();
+	    verinum*lval = lsb_->eval_const(des, path);
 	    assert(lval);
 	    unsigned midx = sig->sb_to_idx(mval->as_long());
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
 	    if (midx >= lidx) {
 		  NetTmp*tmp = new NetTmp(midx-lidx+1);
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": bit select out of "
+			     << "range for " << sig->name() << endl;
+			return sig;
+		  }
+
 		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
 			connect(tmp->pin(idx-lidx), sig->pin(idx));
 
@@ -584,6 +637,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 
 	    } else {
 		  NetTmp*tmp = new NetTmp(lidx-midx+1);
+		  assert(tmp->pin_count() <= sig->pin_count());
 		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
 
@@ -591,7 +645,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 	    }
 
       } else if (msb_) {
-	    verinum*mval = msb_->eval_const();
+	    verinum*mval = msb_->eval_const(des, path);
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
 	    NetTmp*tmp = new NetTmp(1);
@@ -751,12 +805,41 @@ NetProc* Statement::elaborate(Design*des, const string&path) const
       return cur;
 }
 
+NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
+				    Design*des, const string&path) const
+{
+      NetExpr*rval = expr_->elaborate_expr(des, path);
+      if (rval == 0) {
+	    cerr << get_line() << ": " << "failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
+      assert(rval);
+
+      NetExpr*idx = ix->elaborate_expr(des, path);
+      assert(idx);
+
+      NetAssignMem*am = new NetAssignMem(mem, idx, rval);
+      am->set_line(*this);
+      return am;
+}
+
 NetProc* PAssign::elaborate(Design*des, const string&path) const
 {
-      NetNet*reg = des->find_signal(path+"."+lval());
+      const PEIdent*id = dynamic_cast<const PEIdent*>(lval_);
+      assert(id);
+
+	/* Catch the case where the lvalue is a reference to a memory
+	   item. These are handled differently. */
+      if (NetMemory*mem = des->find_memory(path+"."+id->name()))
+	    return assign_to_memory_(mem, id->msb_, des, path);
+
+
+      NetNet*reg = des->find_signal(path+"."+id->name());
+
       if (reg == 0) {
 	    cerr << get_line() << ": Could not match signal: " <<
-		  lval() << endl;
+		  id->name() << endl;
 	    return 0;
       }
       assert(reg);
@@ -856,7 +939,7 @@ NetProc* PCallTask::elaborate(Design*des, const string&path) const
 
 NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 {
-      verinum*num = delay_->eval_const();
+      verinum*num = delay_->eval_const(des, path);
       assert(num);
 
       unsigned long val = num->as_ulong();
@@ -897,8 +980,8 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 		  cerr << get_line() << ": Failed to elaborate expression: ";
 		  expr_[0]->dump(cerr);
 		  cerr << endl;
-		  delete pe;
-		  return 0;
+		  des->errors += 1;
+		  continue;
 	    }
 	    assert(expr);
 
@@ -930,8 +1013,13 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
  */
 NetProc* PForStatement::elaborate(Design*des, const string&path) const
 {
+      const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
+      assert(id1);
+      const PEIdent*id2 = dynamic_cast<const PEIdent*>(name2_);
+      assert(id2);
+
       NetBlock*top = new NetBlock(NetBlock::SEQU);
-      NetNet*sig = des->find_signal(path+"."+name1_);
+      NetNet*sig = des->find_signal(path+"."+id1->name());
       assert(sig);
       NetAssign*init = new NetAssign(sig, expr1_->elaborate_expr(des, path));
       top->append(init);
@@ -940,7 +1028,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       body->append(statement_->elaborate(des, path));
 
-      sig = des->find_signal(path+"."+name2_);
+      sig = des->find_signal(path+"."+id2->name());
       assert(sig);
       NetAssign*step = new NetAssign(sig, expr2_->elaborate_expr(des, path));
       body->append(step);
@@ -1060,6 +1148,15 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.25  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.24  1999/05/05 03:04:46  steve
  *  Fix handling of null delay statements.
  *

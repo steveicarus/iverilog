@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.5 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: Statement.cc,v 1.6 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -47,14 +47,9 @@ PBlock::~PBlock()
       delete[]list_;
 }
 
-PCallTask::PCallTask(const string&n, const list<PExpr*>&p)
-: name_(n), nparms_(p.size()), parms_(nparms_?new PExpr*[nparms_]:0)
+PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
+: name_(n), parms_(p)
 {
-      list<PExpr*>::const_iterator s = p.begin();
-      for (unsigned idx = 0 ;  s != p.end() ;  s++, idx += 1) {
-	    parms_[idx] = *s;
-      }
-
 }
 
 PCase::PCase(PExpr*ex, list<PCase::Item*>*l)
@@ -104,6 +99,15 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.6  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.5  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

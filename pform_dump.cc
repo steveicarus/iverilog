@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.15 1999/05/05 03:04:46 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.16 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 /*
@@ -40,6 +40,20 @@ ostream& operator << (ostream&out, const PExpr&obj)
 void PExpr::dump(ostream&out) const
 {
       out << typeid(*this).name();
+}
+
+void PEConcat::dump(ostream&out) const
+{
+      if (parms_.count() == 0) {
+	    out << "{}";
+	    return;
+      }
+
+      out << "{" << *parms_[0];
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1)
+	    out << ", " << *parms_[idx];
+
+      out << "}";
 }
 
 void PEEvent::dump(ostream&out) const
@@ -229,7 +243,7 @@ void Statement::dump(ostream&out, unsigned ind) const
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << to_name_ << " = " << *expr_ << ";";
+      out << *lval_ << " = " << *expr_ << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
@@ -248,12 +262,12 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << name_;
 
-      if (nparms_) {
+      if (parms_.count() > 0) {
 	    out << "(";
 	    if (parms_[0])
 		  out << *parms_[0];
 
-	    for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
 		  out << ", ";
 		  if (parms_[idx])
 			out << *parms_[idx];
@@ -440,6 +454,15 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.16  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.15  1999/05/05 03:04:46  steve
  *  Fix handling of null delay statements.
  *

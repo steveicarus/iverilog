@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.22 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.23 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -283,6 +283,16 @@ NetAssign::NetAssign(NetNet*lv, NetExpr*rv)
 NetAssign::~NetAssign()
 {
 }
+
+NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
+: mem_(m), index_(i), rval_(r)
+{
+}
+
+NetAssignMem::~NetAssignMem()
+{
+}
+
 
 /*
  * This method looks at the objects connected to me, and searches for
@@ -1040,6 +1050,15 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.23  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.22  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

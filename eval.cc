@@ -17,23 +17,71 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.1 1998/11/03 23:28:58 steve Exp $"
+#ident "$Id: eval.cc,v 1.2 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  "PExpr.h"
+# include  "netlist.h"
 
-verinum* PExpr::eval_const() const
+verinum* PExpr::eval_const(const Design*, const string&) const
 {
       return 0;
 }
 
-verinum* PENumber::eval_const() const
+verinum* PEBinary::eval_const(const Design*des, const string&path) const
+{
+      verinum*l = left_->eval_const(des, path);
+      if (l == 0) return 0;
+      verinum*r = right_->eval_const(des, path);
+      if (r == 0) {
+	    delete l;
+	    return 0;
+      }
+
+      verinum*res;
+
+      switch (op_) {
+	  case '-': {
+		long lv = l->as_long();
+		long rv = r->as_long();
+		res = new verinum(lv-rv, l->len());
+		break;
+	  }
+	  default:
+	    delete l;
+	    delete r;
+	    return 0;
+      }
+
+      return res;
+}
+
+verinum* PEIdent::eval_const(const Design*des, const string&path) const
+{
+      assert(msb_ == 0);
+      NetExpr*expr = des->get_parameter(path + "." + text_);
+      if (expr == 0) return 0;
+      NetEConst*eval = dynamic_cast<NetEConst*>(expr);
+      assert(eval);
+      return new verinum(eval->value());
+}
+
+verinum* PENumber::eval_const(const Design*, const string&) const
 {
       return new verinum(value());
 }
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.2  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.1  1998/11/03 23:28:58  steve
  *  Introduce verilog to CVS.
  *

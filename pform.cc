@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.16 1999/05/08 20:19:20 steve Exp $"
+#ident "$Id: pform.cc,v 1.17 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -186,8 +186,11 @@ void pform_make_udp(string*name, list<string>*parms,
 	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
 	    assert(pa);
 
+	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
+	    assert(id);
+
 	      // XXXX
-	    assert(pa->lval() == pins[0]->name);
+	    assert(id->name() == pins[0]->name);
 
 	    const PENumber*np = dynamic_cast<const PENumber*>(pa->get_expr());
 	    assert(np);
@@ -236,14 +239,7 @@ void pform_makegate(PGBuiltin::Type type,
 		    unsigned long delay_val,
 		    const lgate&info)
 {
-      vector<PExpr*>wires (info.parms->size());
-      for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
-	    PExpr*ep = info.parms->front();
-	    info.parms->pop_front();
-	    wires[idx] = ep;
-      }
-
-      PGBuiltin*cur = new PGBuiltin(type, info.name, wires, delay_val);
+      PGBuiltin*cur = new PGBuiltin(type, info.name, *info.parms, delay_val);
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
@@ -266,10 +262,10 @@ void pform_makegates(PGBuiltin::Type type,
       delete gates;
 }
 
-void pform_make_modgate(const string&type,
-			const string&name,
-			const vector<PExpr*>&wires,
-			const string&fn, unsigned ln)
+static void pform_make_modgate(const string&type,
+			       const string&name,
+			       const svector<PExpr*>&wires,
+			       const string&fn, unsigned ln)
 {
       if (name == "") {
 	    cerr << fn << ":" << ln << ": Instantiation of " << type
@@ -289,15 +285,15 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
-	    vector<PExpr*>wires (cur.parms? cur.parms->size() : 0);
-	    for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
-		  PExpr*ep = cur.parms->front();
-		  cur.parms->pop_front();
-
-		  wires[idx] = ep;
+	    if (cur.parms) {
+		  svector<PExpr*>wires = *cur.parms;
+		  pform_make_modgate(type, cur.name, wires, cur.file,
+				     cur.lineno);
+	    } else {
+		  svector<PExpr*>wires (0);
+		  pform_make_modgate(type, cur.name, wires, cur.file,
+				     cur.lineno);
 	    }
-
-	    pform_make_modgate(type, cur.name, wires, cur.file, cur.lineno);
       }
 
       delete gates;
@@ -305,7 +301,7 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
 
 void pform_make_pgassign(PExpr*lval, PExpr*rval)
 {
-      vector<PExpr*> wires (2);
+      svector<PExpr*> wires (2);
       wires[0] = lval;
       wires[1] = rval;
       PGAssign*cur = new PGAssign(wires);
@@ -391,9 +387,9 @@ void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
       cur->ridx = r;
 }
 
-static void pform_set_net_range(const string&name, list<PExpr*>*range)
+static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 {
-      assert(range->size() == 2);
+      assert(range->count() == 2);
 
       PWire*cur = cur_module->get_wire(name);
       if (cur == 0) {
@@ -402,15 +398,11 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
       }
 
       if ((cur->msb == 0) && (cur->lsb == 0)){
-	    list<PExpr*>::const_iterator idx = range->begin();
-	    cur->msb = *idx;
-	    idx ++;
-	    cur->lsb = *idx;
+	    cur->msb = (*range)[0];
+	    cur->lsb = (*range)[1];
       } else {
-	    list<PExpr*>::const_iterator idx = range->begin();
-	    PExpr*msb = *idx;
-	    idx ++;
-	    PExpr*lsb = *idx;
+	    PExpr*msb = (*range)[0];
+	    PExpr*lsb = (*range)[1];
 	    if (msb == 0) {
 		  VLerror(yylloc, "failed to parse msb of range.");
 	    } else if (lsb == 0) {
@@ -419,8 +411,8 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
 			  cur->lsb->is_the_same(lsb))) {
 		  VLerror(yylloc, "net ranges are not identical.");
 	    }
-	    delete msb;
-	    delete lsb;
+	      //delete msb;
+	      //delete lsb;
       }
 }
 
@@ -445,9 +437,9 @@ void pform_set_port_type(list<string>*names, NetNet::PortType pt)
       }
 }
 
-void pform_set_net_range(list<string>*names, list<PExpr*>*range)
+void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
 {
-      assert(range->size() == 2);
+      assert(range->count() == 2);
 
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end()
@@ -489,17 +481,10 @@ Statement* pform_make_block(PBlock::BL_TYPE type, list<Statement*>*sl)
       return bl;
 }
 
-Statement* pform_make_assignment(string*text, PExpr*ex)
-{
-      PAssign*st = new PAssign (*text, ex);
-      delete text;
-      return st;
-}
-
-Statement* pform_make_calltask(string*name, list<PExpr*>*parms)
+Statement* pform_make_calltask(string*name, svector<PExpr*>*parms)
 {
       if (parms == 0)
-	    parms = new list<PExpr*>;
+	    parms = new svector<PExpr*>(0);
 
       PCallTask*ct = new PCallTask(*name, *parms);
       delete name;
@@ -533,6 +518,15 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.17  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.16  1999/05/08 20:19:20  steve
  *  Parse more things.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.7 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: Statement.h,v 1.8 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  <string>
@@ -79,18 +79,21 @@ class Statement : public LineInfo {
 class PAssign  : public Statement {
 
     public:
-      explicit PAssign(const string&name, PExpr*ex)
-      : to_name_(name), expr_(ex) { }
+      explicit PAssign(PExpr*lval, PExpr*ex)
+      : lval_(lval), expr_(ex) { }
 
-      string lval() const { return to_name_; }
+      const PExpr* lval() const { return lval_; }
       const PExpr* get_expr() const { return expr_; }
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
 
     private:
-      const string to_name_;
-      PExpr*const expr_;
+      PExpr* lval_;
+      PExpr* expr_;
+
+      NetProc*assign_to_memory_(class NetMemory*, PExpr*,
+				Design*des, const string&path) const;
 };
 
 /*
@@ -125,19 +128,19 @@ class PBlock  : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(const string&n, const list<PExpr*>&parms);
+      explicit PCallTask(const string&n, const svector<PExpr*>&parms);
 
       string name() const { return name_; }
 
-      unsigned nparms() const { return nparms_; }
+      unsigned nparms() const { return parms_.count(); }
 
       PExpr*&parm(unsigned idx)
-	    { assert(idx < nparms_);
+	    { assert(idx < parms_.count());
 	      return parms_[idx];
 	    }
 
       PExpr* parm(unsigned idx) const
-	    { assert(idx < nparms_);
+	    { assert(idx < parms_.count());
 	      return parms_[idx];
 	    }
 
@@ -146,8 +149,7 @@ class PCallTask  : public Statement {
 
     private:
       const string name_;
-      const unsigned nparms_;
-      PExpr**const parms_;
+      svector<PExpr*> parms_;
 };
 
 class PCase  : public Statement {
@@ -232,8 +234,8 @@ class PEventStatement  : public Statement {
 class PForStatement  : public Statement {
 
     public:
-      PForStatement(const string&n1, PExpr*e1, PExpr*cond,
-		    const string&n2, PExpr*e2, Statement*st)
+      PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
+		    PExpr*n2, PExpr*e2, Statement*st)
       : name1_(n1), expr1_(e1), cond_(cond), name2_(n2), expr2_(e2),
 	statement_(st)
       { }
@@ -242,12 +244,12 @@ class PForStatement  : public Statement {
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
-      string name1_;
+      PExpr* name1_;
       PExpr* expr1_;
 
       PExpr*cond_;
 
-      string name2_;
+      PExpr* name2_;
       PExpr* expr2_;
 
       Statement*statement_;
@@ -276,6 +278,15 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.8  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.7  1999/04/29 02:16:26  steve
  *  Parse OR of event expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.12 1999/05/07 04:26:49 steve Exp $"
+#ident "$Id: pform.h,v 1.13 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -70,7 +70,7 @@ struct lgate {
       }
 
       string name;
-      list<PExpr*>*parms;
+      svector<PExpr*>*parms;
 
       PExpr*range[2];
 
@@ -100,7 +100,7 @@ extern void pform_make_udp(string*name, list<string>*parms,
 extern void pform_makewire(const string&name, NetNet::Type type = NetNet::IMPLICIT);
 extern void pform_makewire(const list<string>*names, NetNet::Type type);
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
-extern void pform_set_net_range(list<string>*names, list<PExpr*>*);
+extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
@@ -110,8 +110,7 @@ extern void pform_set_parameter(const string&name, PExpr*expr);
 extern bool pform_is_parameter(const string&name);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
-extern Statement* pform_make_assignment(string*t, PExpr*e);
-extern Statement* pform_make_calltask(string*t, list<PExpr*>* =0);
+extern Statement* pform_make_calltask(string*t, svector<PExpr*>* =0);
 
 extern list<PWire*>* pform_make_udp_input_ports(list<string>*);
 
@@ -140,6 +139,15 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.13  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.12  1999/05/07 04:26:49  steve
  *  Parse more complex continuous assign lvalues.
  *

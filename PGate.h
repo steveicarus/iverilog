@@ -19,10 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.4 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: PGate.h,v 1.5 1999/05/10 00:16:58 steve Exp $"
 #endif
 
-# include  <vector>
+# include  "svector.h"
 # include  "LineInfo.h"
 class PExpr;
 class PUdp;
@@ -41,7 +41,7 @@ class Module;
 class PGate : public LineInfo {
       
     public:
-      explicit PGate(const string&name, const vector<PExpr*>&pins, long del)
+      explicit PGate(const string&name, const svector<PExpr*>&pins, long del)
       : name_(name), delay_(del), pins_(pins) { }
 
       virtual ~PGate() { }
@@ -50,7 +50,7 @@ class PGate : public LineInfo {
 
       long get_delay() const { return delay_; }
 
-      unsigned pin_count() const { return pins_.size(); }
+      unsigned pin_count() const { return pins_.count(); }
       const PExpr*pin(unsigned idx) const { return pins_[idx]; }
 
       virtual void dump(ostream&out) const;
@@ -62,7 +62,7 @@ class PGate : public LineInfo {
     private:
       const string name_;
       const unsigned long delay_;
-      const vector<PExpr*> pins_;
+      svector<PExpr*> pins_;
 
     private: // not implemented
       PGate(const PGate&);
@@ -76,8 +76,8 @@ class PGate : public LineInfo {
 class PGAssign  : public PGate {
 
     public:
-      explicit PGAssign(const vector<PExpr*>&pins)
-      : PGate("", pins, 0) { assert(pins.size() == 2); }
+      explicit PGAssign(const svector<PExpr*>&pins)
+      : PGate("", pins, 0) { assert(pins.count() == 2); }
 
       void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
@@ -106,7 +106,7 @@ class PGBuiltin  : public PGate {
 
     public:
       explicit PGBuiltin(Type t, const string&name,
-			 const vector<PExpr*>&pins, long del = 0)
+			 const svector<PExpr*>&pins, long del = 0)
       : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
       {  }
 
@@ -133,7 +133,7 @@ class PGModule  : public PGate {
 
     public:
       explicit PGModule(const string&type, const string&name,
-			const vector<PExpr*>&pins)
+			const svector<PExpr*>&pins)
       : PGate(name, pins, 0), type_(type) { }
 
       virtual void dump(ostream&out) const;
@@ -148,6 +148,15 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.5  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.4  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.22 1999/05/06 02:29:32 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.23 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 /*
@@ -300,6 +300,18 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       o << ";" << endl;
 }
 
+void NetAssignMem::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+      o << "/* " << get_line() << " */" << endl;
+      o << setw(ind) << "";
+      o << mem_->name() << "[";
+      index_->dump(o);
+      o << "] = ";
+      rval_->dump(o);
+      o << ";" << endl;
+}
+
 /* Dump a block statement */
 void NetBlock::dump(ostream&o, unsigned ind) const
 {
@@ -568,6 +580,15 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.23  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.22  1999/05/06 02:29:32  steve
  *  Excesss endl.
  *

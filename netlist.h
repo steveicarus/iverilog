@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.28 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.29 1999/05/10 00:16:58 steve Exp $"
 #endif
 
 /*
@@ -614,6 +614,24 @@ class NetAssign  : public NetProc, public NetNode, public LineInfo {
       NetExpr::REF rval_;
 };
 
+/*
+ * Assignment to memory is handled separately because memory is
+ * not a node.
+ */
+class NetAssignMem : public NetProc, public LineInfo {
+
+    public:
+      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
+      ~NetAssignMem();
+
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetMemory*mem_;
+      NetExpr::REF index_;
+      NetExpr::REF rval_;
+};
+
 /* A block is stuff line begin-end blocks, that contain and ordered
    list of NetProc statements.
 
@@ -1155,6 +1173,15 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.29  1999/05/10 00:16:58  steve
+ *  Parse and elaborate the concatenate operator
+ *  in structural contexts, Replace vector<PExpr*>
+ *  and list<PExpr*> with svector<PExpr*>, evaluate
+ *  constant expressions with parameters, handle
+ *  memories as lvalues.
+ *
+ *  Parse task declarations, integer types.
+ *
  * Revision 1.28  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.
