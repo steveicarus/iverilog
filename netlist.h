@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.222 2001/11/08 05:15:51 steve Exp $"
+#ident "$Id: netlist.h,v 1.223 2001/11/09 03:43:26 steve Exp $"
 #endif
 
 /*
@@ -2227,7 +2227,7 @@ class NetEBShift : public NetEBinary {
       virtual bool set_width(unsigned w);
 
 	// A shift expression only needs the left expression to have a
-	// definite with to give the expression a definite width.
+	// definite width to give the expression a definite width.
       virtual bool has_width() const;
 
       virtual NetEBShift* dup_expr() const;
@@ -2859,6 +2859,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.223  2001/11/09 03:43:26  steve
+ *  Spelling errors.
+ *
  * Revision 1.222  2001/11/08 05:15:51  steve
  *  Remove string paths from PExpr elaboration.
  *

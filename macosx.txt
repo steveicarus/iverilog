@@ -11,7 +11,7 @@
 
   Unpack this tar file and read the README and Makefile.  Install the library according to the instructions.  Installation in /usr/local is strongly recommended since otherwise autoconf very likely won't be able to find it.
 
-2) Make sure you have a copy of the 'gperf' tool.  This does not come with the Mac OS X 10.1 developer tools, so you probably don't.  You can whck with:
+2) Make sure you have a copy of the 'gperf' tool.  This does not come with the Mac OS X 10.1 developer tools, so you probably don't.  You can check with:
 
   %  which gperf
 
