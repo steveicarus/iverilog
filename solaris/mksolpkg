@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# mksolpkg
+#  a script to generate a native solaris package
+#
+
+
+if [ `whoami` != "root" ]; then
+  echo "you must be root to run this script"
+  exit 1
+fi
+
+# an ugly hack to get various bits of info
+ver=`grep VERSION pkginfo | sed 's/"/ /g' | awk '{print $2}'`
+basedir=`grep BASEDIR pkginfo | sed 's/"/ /g' | awk '{print $2}'`
+name=`grep NAME pkginfo | sed 's/"/ /g' | awk '{print $2}'`
+pkg=`grep PKG pkginfo | sed 's/"/ /g' | awk '{print $2}'`
+arch=`grep ARCH pkginfo | sed 's/"/ /g' | awk '{print $2}'`
+march=`uname -p`
+
+
+if [ "$arch" != "$march" ]; then
+  echo "Warning:  you have listed \"$arch\" in the pkginfo file but this machine"
+  echo "          has a \"$march\" processor"
+  exit 1
+fi
+
+oslabel=`uname -s`-`uname -r`-$march
+fname=$name-$ver-$oslabel
+
+cp -f prototype $basedir 
+cp -f pkginfo  $basedir
+cd $basedir
+
+pkgmk -o -r  `pwd`
+
+cd /var/spool/pkg
+pkgtrans -s `pwd` /tmp/$fname all
+cd /tmp
+gzip -f $fname
+
+echo "Your $oslabel package is left in /tmp/$fname.gz"
+
+# cleanup 
+rm -f $basedir/prototype $basedir/pkginfo
+rm -fr /var/spool/pkg/$pkg
+
