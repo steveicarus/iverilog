@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.31 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.32 2004/06/13 04:56:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -221,6 +221,16 @@ int NetScope::time_unit() const
 int NetScope::time_precision() const
 {
       return time_prec_;
+}
+
+void NetScope::default_nettype(NetNet::Type nt)
+{
+      default_nettype_ = nt;
+}
+
+NetNet::Type NetScope::default_nettype() const
+{
+      return default_nettype_;
 }
 
 perm_string NetScope::basename() const
@@ -457,6 +467,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.32  2004/06/13 04:56:54  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.31  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

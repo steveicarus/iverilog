@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.126 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: pform.cc,v 1.127 2004/06/13 04:56:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,6 +46,8 @@ string vl_file = "";
 extern int VLparse();
 
 static Module*pform_cur_module = 0;
+
+static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
 /*
  * These variables track the current time scale, as well as where the
@@ -87,6 +89,24 @@ static hname_t hier_name(const char*tail)
       hname_t name = scope_stack;
       name.append(tail);
       return name;
+}
+
+void pform_set_default_nettype(NetNet::Type type,
+			       const char*file, unsigned lineno)
+{
+      pform_default_nettype = type;
+
+      if (pform_cur_module) {
+	    cerr << file<<":"<<lineno << ": error: "
+		 << "`default_nettype directives must appear" << endl;
+	    cerr << file<<":"<<lineno << ":      : "
+		 << "outside module definitions. The containing" << endl;
+	    cerr << file<<":"<<lineno << ":      : "
+		 << "module " << pform_cur_module->mod_name()
+		 << " starts on line "
+		 << pform_cur_module->get_line() << "." << endl;
+	    error_count += 1;
+      }
 }
 
 /*
@@ -192,6 +212,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       pform_cur_module = new Module(lex_name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+      pform_cur_module->default_nettype = pform_default_nettype;
 
       pform_cur_module->set_file(file);
       pform_cur_module->set_lineno(lineno);
@@ -1566,6 +1587,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.127  2004/06/13 04:56:55  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.126  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

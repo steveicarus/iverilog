@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.23 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: Module.cc,v 1.24 2004/06/13 04:56:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@
 Module::Module(perm_string n)
 : name_(n)
 {
+      default_nettype = NetNet::NONE;
 }
 
 Module::~Module()
@@ -149,6 +150,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.24  2004/06/13 04:56:53  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.23  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

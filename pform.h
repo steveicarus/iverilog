@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.79 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: pform.h,v 1.80 2004/06/13 04:56:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -109,6 +109,11 @@ struct lgate {
       const char* file;
       unsigned lineno;
 };
+
+  /* The lexor calls this function to change the default nettype. */
+extern void pform_set_default_nettype(NetNet::Type net,
+				     const char*file,
+				     unsigned lineno);
 
 /*
  * The parser uses startmodule and endmodule together to build up a
@@ -290,6 +295,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.80  2004/06/13 04:56:56  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.79  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.85 2003/08/31 21:14:28 steve Exp $"
+#ident "$Id: lexor.lex,v 1.86 2004/06/13 04:56:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,6 +98,7 @@ static int comment_enter;
 %x CSTRING
 %s UDPTABLE
 %x PPTIMESCALE
+%x PPDEFAULT_NETTYPE
 
 W [ \t\b\f\r]+
 
@@ -269,7 +270,6 @@ W [ \t\b\f\r]+
      should handle these, not an external preprocessor. */
 
 ^{W}?`celldefine{W}?.*           {  }
-^{W}?`default_nettype{W}?.*      {  }
 ^{W}?`delay_mode_distributed{W}?.*  {  }
 ^{W}?`delay_mode_unit{W}?.*      {  }
 ^{W}?`delay_mode_path{W}?.*      {  }
@@ -284,6 +284,36 @@ W [ \t\b\f\r]+
 ^{W}?`suppress_faults{W}?.*      {  }
 ^{W}?`unconnected_drive{W}?.*    {  }
 ^{W}?`uselib{W}?.*               {  }
+
+  /* Notice and handle the default_nettype directive. The lexor
+     detects the default_nettype keyword, and the second part of the
+     rule collects the rest of the line and processes it. We only need
+     to look for the first work, and interpret it. */
+
+`default_nettype{W}? { BEGIN(PPDEFAULT_NETTYPE); }
+<PPDEFAULT_NETTYPE>.* {
+      NetNet::Type net_type;
+      size_t wordlen = strcspn(yytext, " \t\f\r\n");
+      yytext[wordlen] = 0;
+      if (strcmp(yytext,"wire") == 0) {
+	    net_type = NetNet::WIRE;
+
+      } else if (strcmp(yytext,"none") == 0) {
+	    net_type = NetNet::NONE;
+
+      } else {
+	    cerr << yylloc.text << ":" << yylloc.first_line
+		 << " error: Net type " << yytext
+		 << " is not a valid (and supported)"
+		 << " default net type." << endl;
+	    net_type = NetNet::WIRE;
+	    error_count += 1;
+      }
+      pform_set_default_nettype(net_type, yylloc.text, yylloc.first_line);
+ }
+<PPDEFAULT_NETTYPE>\n {
+      yylloc.first_line += 1;
+      BEGIN(0); }
 
 
   /* These are directives that are not supported by me and should have

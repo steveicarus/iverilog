@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.127 2004/06/01 01:04:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.128 2004/06/13 04:56:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1396,11 +1396,11 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	/* Fallback, this may be an implicitly declared net. */
       if (sig == 0) {
-
+	    NetNet::Type nettype = scope->default_nettype();
 	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
-			     NetNet::IMPLICIT, 1);
+			     nettype, 1);
 
-	    if (error_implicit) {
+	    if (error_implicit || (nettype == NetNet::NONE)) {
 		  cerr << get_line() << ": error: "
 		       << scope->name() << "." << path_.peek_name(0)
 		       << " not defined in this scope." << endl;
@@ -1656,8 +1656,9 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
       }
 
       if (sig == 0) {
+	    NetNet::Type nettype = scope->default_nettype();
 
-	    if (implicit_net_ok && !error_implicit) {
+	    if (implicit_net_ok && !error_implicit && nettype!=NetNet::NONE) {
 
 		  sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 				   NetNet::IMPLICIT, 1);
@@ -2432,6 +2433,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.128  2004/06/13 04:56:53  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.127  2004/06/01 01:04:57  steve
  *  Fix synthesis method for logical and/or
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.302 2004/05/31 23:34:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.303 2004/06/13 04:56:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2643,6 +2643,7 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope*scope = des->make_root_scope(*root);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
+	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
 	    if (! rmod->elaborate_scope(des, scope)) {
 		  delete des;
@@ -2708,6 +2709,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.303  2004/06/13 04:56:54  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.302  2004/05/31 23:34:37  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

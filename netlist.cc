@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.223 2004/05/31 23:34:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.224 2004/06/13 04:56:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,6 +34,9 @@
 ostream& operator<< (ostream&o, NetNet::Type t)
 {
       switch (t) {
+	  case NetNet::NONE:
+	    o << "net_none";
+	    break;
 	  case NetNet::IMPLICIT:
 	    o << "wire /*implicit*/";
 	    break;
@@ -2254,6 +2257,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.224  2004/06/13 04:56:54  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.223  2004/05/31 23:34:37  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

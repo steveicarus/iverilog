@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.36 2004/05/25 19:21:06 steve Exp $"
+#ident "$Id: Module.h,v 1.37 2004/06/13 04:56:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -29,7 +29,7 @@
 # include  "HName.h"
 # include  "named.h"
 # include  "LineInfo.h"
-# include  <string>
+# include  "netlist.h"
 class PData;
 class PEvent;
 class PExpr;
@@ -67,6 +67,7 @@ class Module : public LineInfo {
       explicit Module(perm_string name);
       ~Module();
 
+      NetNet::Type default_nettype;
 
 	/* The module has parameters that are evaluated when the
 	   module is elaborated. During parsing, I put the parameters
@@ -166,6 +167,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.37  2004/06/13 04:56:53  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.36  2004/05/25 19:21:06  steve
  *  More identifier lists use perm_strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.31 2004/05/25 19:21:06 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.32 2004/06/13 04:56:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -290,6 +290,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// Create the new scope as a MODULE with my name.
       NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
       my_scope->set_module_name(mod->mod_name());
+      my_scope->default_nettype(mod->default_nettype);
 
 	// Set time units and precision.
       my_scope->time_unit(mod->time_unit);
@@ -549,6 +550,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.32  2004/06/13 04:56:54  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.31  2004/05/25 19:21:06  steve
  *  More identifier lists use perm_strings.
  *

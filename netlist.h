@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.312 2004/05/31 23:34:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.313 2004/06/13 04:56:55 steve Exp $"
 #endif
 
 /*
@@ -364,8 +364,8 @@ class NetNode  : public NetObj {
 class NetNet  : public NetObj {
 
     public:
-      enum Type { IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1, SUPPLY0,
-		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG };
+      enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
+		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -3097,6 +3097,9 @@ class NetScope : public Attrib {
       int time_unit() const;
       int time_precision() const;
 
+      void default_nettype(NetNet::Type);
+      NetNet::Type default_nettype() const;
+
 	/* The name of the scope is the fully qualified hierarchical
 	   name, whereas the basename is just my name within my parent
 	   scope. */
@@ -3145,6 +3148,7 @@ class NetScope : public Attrib {
       perm_string name_;
 
       signed char time_unit_, time_prec_;
+      NetNet::Type default_nettype_;
 
       NetEvent *events_;
       NetVariable*vars_;
@@ -3327,6 +3331,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.313  2004/06/13 04:56:55  steve
+ *  Add support for the default_nettype directive.
+ *
  * Revision 1.312  2004/05/31 23:34:38  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better
@@ -3355,77 +3362,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *
  * Revision 1.304  2003/10/31 02:47:11  steve
  *  NetEUReduce has its own dup_expr method.
- *
- * Revision 1.303  2003/10/26 04:51:38  steve
- *  Output of While is output of while substatement.
- *
- * Revision 1.302  2003/09/20 01:05:36  steve
- *  Obsolete find_symbol and find_event from the Design class.
- *
- * Revision 1.301  2003/09/19 03:50:12  steve
- *  Remove find_memory method from Design class.
- *
- * Revision 1.300  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- * Revision 1.299  2003/09/13 01:01:52  steve
- *  Spelling fixes.
- *
- * Revision 1.298  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.297  2003/08/15 02:23:52  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.296  2003/08/09 03:23:40  steve
- *  Add support for IVL_LPM_MULT device.
- *
- * Revision 1.295  2003/07/26 03:34:42  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.294  2003/07/15 03:49:22  steve
- *  Spelling fixes.
- *
- * Revision 1.293  2003/07/02 04:19:16  steve
- *  Elide empty begin-end in conditionals.
- *
- * Revision 1.292  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.291  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.290  2003/06/18 03:55:18  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.289  2003/06/05 04:28:24  steve
- *  Evaluate <= with real operands.
- *
- * Revision 1.288  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.287  2003/05/01 01:13:57  steve
- *  More complete bit range internal error message,
- *  Better test of part select ranges on non-zero
- *  signal ranges.
- *
- * Revision 1.286  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.285  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.284  2003/04/08 04:33:55  steve
- *  Synthesize shift expressions.
- *
- * Revision 1.283  2003/03/29 05:51:25  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.282  2003/03/15 18:08:43  steve
- *  Comparison operators do have defined width.
  */
 #endif
