@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.20 2000/01/18 04:53:40 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.21 2000/02/14 06:04:52 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -117,6 +117,14 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '&': // AND
+	    if (lsig->pin_count() != rsig->pin_count()) {
+		  cerr << get_line() << ": internal error: lsig pin count ("
+		       << lsig->pin_count() << ") != rsig pin count ("
+		       << rsig->pin_count() << ")." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    assert(lsig->pin_count() == rsig->pin_count());
 	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
 			      lsig->pin_count());
@@ -1136,7 +1144,8 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned long fall,
 			       unsigned long decay) const
 {
-      NetNet* sub_sig = expr_->elaborate_net(des, path, width,
+      NetNet* sub_sig = expr_->elaborate_net(des, path,
+					     op_=='~'?width:0,
 					     0, 0, 0);
       if (sub_sig == 0) {
 	    des->errors += 1;
@@ -1281,6 +1290,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.21  2000/02/14 06:04:52  steve
+ *  Unary reduction operators do not set their operand width
+ *
  * Revision 1.20  2000/01/18 04:53:40  steve
  *  Support structural XNOR.
  *
