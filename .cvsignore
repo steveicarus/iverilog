@@ -9,6 +9,7 @@ configure
 Makefile
 verilog
 gverilog
+iverilog
 config.status
 config.log
 config.cache
