@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.58 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.59 2000/05/16 04:05:16 steve Exp $"
 #endif
 
 /*
@@ -211,9 +211,13 @@ void PWire::dump(ostream&out) const
 	    break;
       }
 
+      assert(msb_.count() == lsb_.count());
       for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-	    assert(lsb_[idx] && msb_[idx]);
-	    out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
+	    assert(msb_[idx]);
+	    if (lsb_[idx])
+		  out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
+	    else
+		  out << " [" << *msb_[idx] << "]";
       }
 
       out << " " << name_;
@@ -634,24 +638,9 @@ void Module::dump(ostream&out) const
 		  continue;
 	    }
 
-	    switch (cur->wires[0]->get_port_type()) {
-		case NetNet::PINPUT:
-		  out << "    input ." << cur->name << "(";
-		  break;
-		case NetNet::POUTPUT:
-		  out << "    output ." << cur->name << "(";
-		  break;
-		case NetNet::PINOUT:
-		  out << "    inout ." << cur->name << "(";
-		  break;
-		default:
-		  out << "    XXXX ." << cur->name << "(";
-		  break;
-	    }
-
-	    out << cur->wires[0]->name();
-	    for (unsigned wdx = 1 ;  wdx < cur->wires.count() ;  wdx += 1) {
-		  out << ", " << cur->wires[wdx]->name();
+	    out << "    ." << cur->name << "(" << *cur->expr[0];
+	    for (unsigned wdx = 1 ;  wdx < cur->expr.count() ;  wdx += 1) {
+		  out << ", " << *cur->expr[wdx];
 	    }
 
 	    out << ")" << endl;
@@ -785,6 +774,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.59  2000/05/16 04:05:16  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.58  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *

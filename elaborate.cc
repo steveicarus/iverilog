@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.172 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.173 2000/05/16 04:05:16 steve Exp $"
 #endif
 
 /*
@@ -414,13 +414,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	      // Inside the module, the port is one or more signals,
 	      // that were already elaborated. List all those signals,
 	      // and I will connect them up later.
-	    svector<PWire*> mport = rmod->get_port(idx);
+	    svector<PEIdent*> mport = rmod->get_port(idx);
 	    svector<NetNet*>prts (mport.count());
 
 	    unsigned prts_pin_count = 0;
 	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
-		  PWire*pport = mport[ldx];
-		  prts[ldx] = des->find_signal(my_scope, pport->name());
+		  PEIdent*pport = mport[ldx];
+		  prts[ldx] = pport->elaborate_port(des, my_scope);
+		  if (prts[ldx] == 0) {
+			cerr << pport->get_line() << ": internal error: "
+			     << "Failed to elaborate port expr: "
+			     << *pport << endl;
+			des->errors += 1;
+			continue;
+		  }
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
 	    }
@@ -2422,6 +2429,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.173  2000/05/16 04:05:16  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.172  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *

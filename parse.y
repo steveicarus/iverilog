@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.96 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: parse.y,v 1.97 2000/05/16 04:05:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1478,9 +1478,10 @@ parameter_value_byname_list
 		}
 	;
 
+
   /* The port (of a module) is a fairly complex item. Each port is
      handled as a Module::port_t object. A simple port reference has a
-     name and a PWire object, but more complex constructs are possible
+     name and a PExpr object, but more complex constructs are possible
      where the name can be attached to a list of PWire objects.
 
      The port_reference returns a Module::port_t, and so does the
@@ -1494,17 +1495,32 @@ parameter_value_byname_list
 port
 	: port_reference
 		{ $$ = $1; }
+
+  /* This syntax attaches an external name to the port reference so
+     that the caller can bind by name to non-trivial port
+     references. The port_t object gets its PWire from the
+     port_reference, but its name from the PORTNAME. */
+
 	| PORTNAME '(' port_reference ')'
 		{ Module::port_t*tmp = $3;
 		  tmp->name = $1;
 		  delete $1;
 		  $$ = tmp;
 		}
+
+  /* A port can also be a concatenation of port references. In this
+     case the port does not have a name available to the outside, only
+     positional parameter passing is possible here. */
+
 	| '{' port_reference_list '}'
 		{ Module::port_t*tmp = $2;
 		  tmp->name = "";
 		  $$ = tmp;
 		}
+
+  /* This attaches a name to a port reference contatenation list so
+     that parameter passing be name is possible. */
+
 	| PORTNAME '(' '{' port_reference_list '}' ')'
 		{ Module::port_t*tmp = $4;
 		  tmp->name = $1;
@@ -1518,58 +1534,91 @@ port_opt
 	| { $$ = 0; }
 	;
 
+
+  /* A port reference is an internal (to the module) name of the port,
+     possibly with a part of bit select to attach it to specific bits
+     of a signal fully declared inside the module.
+
+     The parser creates a PEIdent for every port reference, even if the
+     signal is bound to different ports. The elaboration figures out
+     the mess that this creates. The port_reference (and the
+     port_reference_list below) puts the port reference PEIdent into the
+     port_t object to pass it up to the module declaration code. */
+
 port_reference
+
 	: IDENTIFIER
-		{ Module::port_t*ptmp = new Module::port_t(1);
-		  PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
-					 NetNet::PIMPLICIT);
-		  wtmp->set_file(@1.text);
-		  wtmp->set_lineno(@1.first_line);
+		{ Module::port_t*ptmp = new Module::port_t;
+		  PEIdent*tmp = new PEIdent($1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  ptmp->name = $1;
-		  ptmp->wires[0] = wtmp;
+		  ptmp->expr = svector<PEIdent*>(1);
+		  ptmp->expr[0] = tmp;
 		  delete $1;
 		  $$ = ptmp;
 		}
+
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
-					 NetNet::PIMPLICIT);
+		{ PEIdent*wtmp = new PEIdent($1);
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
-			yyerror(@3, "error: msb expression of port bit select "
-			        "must be constant.");
+			yyerror(@3, "error: msb expression of "
+				"port part select must be constant.");
 		  }
 		  if (!pform_expression_is_constant($5)) {
-			yyerror(@5, "error: lsb expression of port bit select "
-			        "must be constant.");
+			yyerror(@5, "error: lsb expression of "
+				"port part select must be constant.");
 		  }
-		  wtmp->set_range($3, $5);
-		  Module::port_t*ptmp = new Module::port_t(1);
-		  ptmp->name = $1;
-		  ptmp->wires[0] = wtmp;
+		  wtmp->msb_ = $3;
+		  wtmp->lsb_ = $5;
+		  Module::port_t*ptmp = new Module::port_t;
+		  ptmp->name = "";
+		  ptmp->expr = svector<PEIdent*>(1);
+		  ptmp->expr[0] = wtmp;
 		  delete $1;
 		  $$ = ptmp;
 		}
+
+	| IDENTIFIER '[' expression ']'
+		{ PEIdent*tmp = new PEIdent($1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  if (!pform_expression_is_constant($3)) {
+			yyerror(@3, "error: port bit select "
+				"must be constant.");
+		  }
+		  tmp->msb_ = $3;
+		  Module::port_t*ptmp = new Module::port_t;
+		  ptmp->name = "";
+		  ptmp->expr = svector<PEIdent*>(1);
+		  ptmp->expr[0] = tmp;
+		  delete $1;
+		  $$ = ptmp;
+		}
+
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "error: invalid port bit select");
-		  Module::port_t*ptmp = new Module::port_t(1);
-		  PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
-					 NetNet::PIMPLICIT);
+		  Module::port_t*ptmp = new Module::port_t;
+		  PEIdent*wtmp = new PEIdent($1);
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
 		  ptmp->name = $1;
-		  ptmp->wires[0] = wtmp;
+		  ptmp->expr = svector<PEIdent*>(1);
+		  ptmp->expr[0] = wtmp;
 		  delete $1;
 		  $$ = ptmp;
 		}
 	;
+
 
 port_reference_list
 	: port_reference
 		{ $$ = $1; }
 	| port_reference_list ',' port_reference
 		{ Module::port_t*tmp = $1;
-		  tmp->wires = svector<PWire*>(tmp->wires, $3->wires);
+		  tmp->expr = svector<PEIdent*>(tmp->expr, $3->expr);
 		  delete $3;
 		  $$ = tmp;
 		}

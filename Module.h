@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.18 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: Module.h,v 1.19 2000/05/16 04:05:15 steve Exp $"
 #endif
 
 # include  <list>
@@ -29,6 +29,7 @@
 # include  <string>
 class PEvent;
 class PExpr;
+class PEIdent;
 class PGate;
 class PTask;
 class PFunction;
@@ -53,9 +54,7 @@ class Module {
     public:
       struct port_t {
 	    string name;
-	    svector<PWire*>wires;
-
-	    port_t(int c=0) : wires(c) { }
+	    svector<PEIdent*> expr;
       };
 
     public:
@@ -100,7 +99,7 @@ class Module {
       void add_function(const string&name, PFunction*def);
 
       unsigned port_count() const;
-      const svector<PWire*>& get_port(unsigned idx) const;
+      const svector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const string&) const;
 
 	// Find a wire by name. This is used for connecting gates to
@@ -137,6 +136,11 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.19  2000/05/16 04:05:15  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.18  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *

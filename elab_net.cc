@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.36 2000/05/07 20:48:14 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.37 2000/05/16 04:05:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1159,6 +1159,85 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 }
 
 /*
+ * This method is used to elaborate identifiers that are ports to a
+ * scope. The scope is presumed to be that of the module that has the
+ * port.
+ */
+NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
+{
+      const string path = scope->name();
+
+      NetNet*sig = des->find_signal(scope, text_);
+      if (sig == 0) {
+	    cerr << get_line() << ": error: no wire/reg " << text_
+		 << " in module " << scope->name() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+
+      if (msb_ && lsb_) {
+	      /* Detect a part select. Evaluate the bits and elaborate
+		 the l-value by creating a sub-net that links to just
+		 the right pins. */ 
+	    verinum*mval = msb_->eval_const(des, path);
+	    assert(mval);
+	    verinum*lval = lsb_->eval_const(des, path);
+	    assert(lval);
+	    unsigned midx = sig->sb_to_idx(mval->as_long());
+	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+
+	    if (midx >= lidx) {
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
+					  midx-lidx+1);
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": bit select out of "
+			     << "range for " << sig->name() << endl;
+			return sig;
+		  }
+
+		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
+			connect(tmp->pin(idx-lidx), sig->pin(idx));
+
+		  sig = tmp;
+
+	    } else {
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
+					  lidx-midx+1);
+		  assert(tmp->pin_count() <= sig->pin_count());
+		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
+			connect(tmp->pin(idx-midx), sig->pin(idx));
+
+		  sig = tmp;
+	    }
+
+      } else if (msb_) {
+	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << text_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    assert(mval);
+	    unsigned idx = sig->sb_to_idx(mval->as_long());
+	    if (idx >= sig->pin_count()) {
+		  cerr << get_line() << "; index " << sig->name() <<
+			"[" << mval->as_long() << "] out of range." << endl;
+		  des->errors += 1;
+		  idx = 0;
+	    }
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path), 1);
+	    connect(tmp->pin(0), sig->pin(idx));
+	    sig = tmp;
+      }
+
+      return sig;
+}
+
+
+/*
  * Elaborate a number as a NetConst object.
  */
 NetNet* PENumber::elaborate_net(Design*des, const string&path,
@@ -1480,6 +1559,11 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.37  2000/05/16 04:05:15  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.36  2000/05/07 20:48:14  steve
  *  Properly elaborate repeat concatenations.
  *

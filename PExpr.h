@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.37 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: PExpr.h,v 1.38 2000/05/16 04:05:15 steve Exp $"
 #endif
 
 # include  <string>
@@ -170,6 +170,10 @@ class PEIdent : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+
+	// Elaborate the PEIdent as a port to a module. This method
+	// only applies to Ident expressions.
+      NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
@@ -375,6 +379,11 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.38  2000/05/16 04:05:15  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.37  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.11 2000/03/12 17:09:40 steve Exp $"
+#ident "$Id: Module.cc,v 1.12 2000/05/16 04:05:15 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -28,28 +28,9 @@
 Module::Module(const string&name, const svector<Module::port_t*>*pp)
 : name_(name)
 {
-      if (pp) {
-	      // Save the list of ports, then scan the list to make
-	      // the implicit wires. Add those wires to the wire map.
+      if (pp)
 	    ports_ = *pp;
-	    for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
-		  port_t*cur = ports_[idx];
-		  if (cur == 0)
-			continue;
 
-		    // The port can actually be a list of wires, to
-		    // remember to scan the set. Also note the case
-		    // where a wire may be connected to multiple
-		    // ports, and reuse the link if that happens.
-		  for (unsigned jdx = 0; jdx < cur->wires.count(); jdx += 1) {
-			PWire*tmp = add_wire(cur->wires[jdx]);
-			if (tmp != cur->wires[jdx]) {
-			      delete cur->wires[jdx];
-			      cur->wires[jdx] = tmp;
-			}
-		  }
-	    }
-      }
 }
 
 void Module::add_gate(PGate*gate)
@@ -87,10 +68,10 @@ unsigned Module::port_count() const
       return ports_.count();
 }
 
-const svector<PWire*>& Module::get_port(unsigned idx) const
+const svector<PEIdent*>& Module::get_port(unsigned idx) const
 {
       assert(idx < ports_.count());
-      return ports_[idx]->wires;
+      return ports_[idx]->expr;
 }
 
 unsigned Module::find_port(const string&name) const
@@ -144,6 +125,11 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.12  2000/05/16 04:05:15  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.11  2000/03/12 17:09:40  steve
  *  Support localparam.
  *

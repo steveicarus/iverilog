@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.59 2000/05/08 05:30:20 steve Exp $"
+#ident "$Id: pform.cc,v 1.60 2000/05/16 04:05:16 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -567,12 +567,13 @@ void pform_makewire(const vlltype&li, const list<string>*names,
 
 }
 
-void pform_set_port_type(const string&name, NetNet::PortType pt)
+void pform_set_port_type(const string&nm, NetNet::PortType pt)
 {
+      const string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    VLerror("name is not a port.");
-	    return;
+	    cur = new PWire(name, NetNet::IMPLICIT, pt);
+	    pform_cur_module->add_wire(cur);
       }
 
       if (! cur->set_port_type(pt))
@@ -864,6 +865,11 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.60  2000/05/16 04:05:16  steve
+ *  Module ports are really special PEIdent
+ *  expressions, because a name can be used
+ *  many places in the port list.
+ *
  * Revision 1.59  2000/05/08 05:30:20  steve
  *  Deliver gate output strengths to the netlist.
  *
