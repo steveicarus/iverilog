@@ -12,7 +12,7 @@ IVL is not aimed at being a simulator in the traditional sense, but a
 compiler that generates code employed by back-end tools. These back-
 end tools currently include a simulator written in C++ called VVM 
 and an XNF (Xilinx Netlist Format) generator. See "vvm.txt" and
-"xnf.txt" for further details on the back-end processors.
+"xnf.txt" for further details on these back-end processors.
 
 2.0 How IVL Works
 
@@ -47,7 +47,7 @@ PFORM into the file named <path>.
 This phase takes the pform and generates a netlist. The driver selects
 (by user request or lucky guess) the root module to elaborate,
 resolves references and expands the instantiations to form the design
-netlist.
+netlist. (See netlist.txt.)
 
 The elaborate() function performs the elaboration.
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.14 1999/07/17 19:50:59 steve Exp $"
+#ident "$Id: PExpr.h,v 1.15 1999/07/22 02:05:20 steve Exp $"
 #endif
 
 # include  <string>
@@ -79,6 +79,7 @@ class PEConcat : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+      virtual bool is_constant(Module*) const;
 
     private:
       svector<PExpr*>parms_;
@@ -226,6 +227,9 @@ class PETernary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.15  1999/07/22 02:05:20  steve
+ *  is_constant method for PEConcat.
+ *
  * Revision 1.14  1999/07/17 19:50:59  steve
  *  netlist support for ternary operator.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.6 1999/07/17 19:50:59 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.7 1999/07/22 02:05:20 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -41,6 +41,15 @@ bool PExpr::is_constant(Module*) const
 bool PEBinary::is_constant(Module*mod) const
 {
       return left_->is_constant(mod) && right_->is_constant(mod);
+}
+
+bool PEConcat::is_constant(Module *mod) const
+{
+      bool constant = repeat_->is_constant(mod);
+      for (unsigned i = 0; constant && i < parms_.count(); ++i) {
+	    constant = constant && parms_[i]->is_constant(mod);
+      }
+      return constant;
 }
 
 PEConcat::~PEConcat()
@@ -93,6 +102,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.7  1999/07/22 02:05:20  steve
+ *  is_constant method for PEConcat.
+ *
  * Revision 1.6  1999/07/17 19:50:59  steve
  *  netlist support for ternary operator.
  *
