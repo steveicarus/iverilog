@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.38 2001/06/23 19:53:03 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.39 2001/06/30 21:28:35 steve Exp $"
 #endif
 
 
@@ -236,6 +236,22 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       unsigned parms_count = parms_.count();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
+
+      if (dscope->type() != NetScope::FUNC) {
+	    cerr << get_line() << ": error: Attempt to call scope "
+		 << dscope->name() << " as a function." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if ((parms_count+1) != dscope->func_def()->port_count()) {
+	    cerr << get_line() << ": error: Function " << dscope->name()
+		 << " expects " << (dscope->func_def()->port_count()-1)
+		 << " parameters, you passed " << parms_count << "."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       svector<NetExpr*> parms (parms_count);
 
@@ -616,6 +632,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.39  2001/06/30 21:28:35  steve
+ *  Detect parameter mismatches.
+ *
  * Revision 1.38  2001/06/23 19:53:03  steve
  *  Look up functor return register with tail of name.
  *
@@ -646,100 +665,5 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
  *
  * Revision 1.30  2000/11/29 05:24:00  steve
  *  synthesis for unary reduction ! and N operators.
- *
- * Revision 1.29  2000/09/26 05:05:58  steve
- *  Detect indefinite widths where definite widths are required.
- *
- * Revision 1.28  2000/09/24 17:41:13  steve
- *  fix null pointer when elaborating undefined task.
- *
- * Revision 1.27  2000/08/26 01:31:29  steve
- *  Handle out of range part select expressions.
- *
- * Revision 1.26  2000/05/19 01:55:09  steve
- *  Catch part select of memories as an error.
- *
- * Revision 1.25  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.24  2000/05/04 03:37:58  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.23  2000/05/02 03:13:30  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.22  2000/05/02 00:58:11  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.21  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.20  2000/03/29 04:06:28  steve
- *  Forgot to return elaborate result (Dan Nelsen)
- *
- * Revision 1.19  2000/03/20 16:57:22  steve
- *  select correct bit when reg has non-zero lsb.
- *
- * Revision 1.18  2000/03/12 18:22:11  steve
- *  Binary and unary operators in parameter expressions.
- *
- * Revision 1.17  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.16  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.15  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.14  2000/01/01 06:18:00  steve
- *  Handle synthesis of concatenation.
- *
- * Revision 1.13  1999/12/12 06:03:14  steve
- *  Allow memories without indices in expressions.
- *
- * Revision 1.12  1999/11/30 04:54:01  steve
- *  Match scope names as last resort.
- *
- * Revision 1.11  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.10  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.9  1999/11/21 17:35:37  steve
- *  Memory name lookup handles scopes.
- *
- * Revision 1.8  1999/11/10 02:52:24  steve
- *  Create the vpiMemory handle type.
- *
- * Revision 1.7  1999/10/18 00:02:21  steve
- *  Catch unindexed memory reference.
- *
- * Revision 1.6  1999/09/30 02:43:02  steve
- *  Elaborate ~^ and ~| operators.
- *
- * Revision 1.5  1999/09/30 00:48:49  steve
- *  Cope with errors during ternary operator elaboration.
- *
- * Revision 1.4  1999/09/29 22:57:10  steve
- *  Move code to elab_expr.cc
- *
- * Revision 1.3  1999/09/25 02:57:30  steve
- *  Parse system function calls.
- *
- * Revision 1.2  1999/09/21 00:13:40  steve
- *  Support parameters that reference other paramters.
- *
- * Revision 1.1  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
  */
 
