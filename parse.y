@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.44 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: parse.y,v 1.45 1999/06/19 03:21:21 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,7 +67,7 @@ extern void lex_end_table();
 %token <text>   HIDENTIFIER IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
 %token <realtime> REALTIME
-%token K_LE K_GE K_EQ K_NE K_CEQ K_CNE K_LS K_RS
+%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
@@ -629,11 +629,14 @@ expr_primary
 
 func_body
 	: function_item_list statement
+	| function_item_list
+		{ yyerror(@1, "function body has no statement."); }
 	;
 
 function_item
 	: K_input range_opt list_of_variables ';'
 	| K_reg range_opt list_of_variables ';'
+	| K_integer list_of_variables ';'
 	;
 
 function_item_list
@@ -1207,11 +1210,20 @@ register_variable_list
 
 specify_item
 	: K_specparam specparam_list ';'
+	| specify_simple_path '=' '(' expression_list ')' ';'
+		{ yyerror(@1, "Sorry, specify path declarations not supported.");
+		  delete $4;
+		}
 	;
 
 specify_item_list
 	: specify_item
 	| specify_item_list specify_item
+	;
+
+specify_simple_path
+	: '(' IDENTIFIER spec_polarity K_EG IDENTIFIER ')'
+	| '(' IDENTIFIER spec_polarity K_SG IDENTIFIER ')'
 	;
 
 specparam
@@ -1226,6 +1238,8 @@ specparam_list
 	: specparam
 	| specparam_list ',' specparam
 	;
+
+spec_polarity: '+' | '-' | ;
 
 statement
 	: K_assign lavalue '=' expression ';'
