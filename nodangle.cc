@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.9 2000/11/18 05:12:45 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.10 2000/11/19 20:48:53 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,8 @@ class nodangle_f  : public functor_t {
     public:
       void event(Design*des, NetEvent*ev);
       void signal(Design*des, NetNet*sig);
+
+      unsigned count_;
 };
 
 void nodangle_f::event(Design*des, NetEvent*ev)
@@ -98,18 +100,27 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 
 	/* If every pin is connected to another significant signal,
 	   then I can delete this one. */
-      if (significant_flags == sig->pin_count())
+      if (significant_flags == sig->pin_count()) {
+	    count_ += 1;
 	    delete sig;
+      }
 }
 
 void nodangle(Design*des)
 {
       nodangle_f fun;
-      des->functor(&fun);
+
+      do {
+	    fun.count_ = 0;
+	    des->functor(&fun);
+      } while (fun.count_ > 0);
 }
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.10  2000/11/19 20:48:53  steve
+ *  Killing some signals might make others killable.
+ *
  * Revision 1.9  2000/11/18 05:12:45  steve
  *  Delete unreferenced signals no matter what.
  *
