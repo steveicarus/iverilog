@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.63 2001/09/01 01:57:31 steve Exp $"
+#ident "$Id: t-dll.h,v 1.64 2001/09/16 22:19:42 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -346,6 +346,10 @@ struct ivl_net_logic_s {
 
       unsigned npins_;
       ivl_nexus_t*pins_;
+
+      char**akey_;
+      char**aval_;
+      unsigned nattr_;
 };
 
 
@@ -565,6 +569,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.64  2001/09/16 22:19:42  steve
+ *  Support attributes to logic gates.
+ *
  * Revision 1.63  2001/09/01 01:57:31  steve
  *  Make constants available through the design root
  *

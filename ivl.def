@@ -41,6 +41,7 @@ ivl_expr_string
 ivl_expr_uvalue
 ivl_expr_width
 
+ivl_logic_attr
 ivl_logic_name
 ivl_logic_basename
 ivl_logic_scope

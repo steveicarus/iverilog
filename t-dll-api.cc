@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.66 2001/09/01 01:57:31 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.67 2001/09/16 22:19:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -416,6 +416,20 @@ extern "C" ivl_memory_t ivl_expr_memory(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_MEMORY);
       return net->u_.memory_.mem_;
+}
+
+extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
+{
+      assert(net);
+      unsigned idx;
+
+      for (idx = 0 ;  idx < net->nattr_ ;  idx += 1) {
+
+	    if (strcmp(net->akey_[idx], key) == 0)
+		  return net->aval_[idx];
+      }
+
+      return 0;
 }
 
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
@@ -1371,6 +1385,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.67  2001/09/16 22:19:42  steve
+ *  Support attributes to logic gates.
+ *
  * Revision 1.66  2001/09/01 01:57:31  steve
  *  Make constants available through the design root
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.81 2001/09/09 22:21:57 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.82 2001/09/16 22:19:42 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -466,6 +466,10 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *
  * ivl_logic_pins
  * ivl_logic_pin
+ *
+ * ivl_logic_attr
+ *    Return the value of a specific attribute, given the key name as
+ *    a string. If the key is not defined, then return 0 (null).
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
@@ -475,6 +479,8 @@ extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
+
+extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
 
 /* UDP
  * 
@@ -949,6 +955,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.82  2001/09/16 22:19:42  steve
+ *  Support attributes to logic gates.
+ *
  * Revision 1.81  2001/09/09 22:21:57  steve
  *  pin down some enumerated constants.
  *
