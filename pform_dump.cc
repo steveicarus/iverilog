@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.59 2000/05/16 04:05:16 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.60 2000/05/23 16:03:13 steve Exp $"
 #endif
 
 /*
@@ -242,7 +242,7 @@ void PWire::dump(ostream&out) const
 void PGate::dump_pins(ostream&out) const
 {
       if (pin_count()) {
-	    out << *pin(0);
+	    if (pin(0)) out << *pin(0);
 			      
 	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 		  out << ", ";
@@ -774,6 +774,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.60  2000/05/23 16:03:13  steve
+ *  Better parsing of expressions lists will empty expressoins.
+ *
  * Revision 1.59  2000/05/16 04:05:16  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used

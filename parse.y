@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.97 2000/05/16 04:05:16 steve Exp $"
+#ident "$Id: parse.y,v 1.98 2000/05/23 16:03:13 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -714,7 +714,9 @@ expression
 	;
 
 
-
+  /* Many contexts take a comma separated list of expressions. Null
+     expressions can happen anywhere in the list, so there are two
+     extra rules for parsing and installing those nulls. */
 expression_list
 	: expression_list ',' expression
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
@@ -726,11 +728,17 @@ expression_list
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
+	|
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = 0;
+		  $$ = tmp;
+		}
+
 	| expression_list ','
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
 		  delete $1;
 		  $$ = tmp;
-		}
+		  }
 	;
 
 
@@ -882,15 +890,7 @@ gate_instance
 		  delete $1;
 		  $$ = tmp;
 		}
-	| IDENTIFIER '(' ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete $1;
-		  $$ = tmp;
-		}
+
 	| IDENTIFIER range '(' expression_list ')'
 		{ lgate*tmp = new lgate;
 		  svector<PExpr*>*rng = $2;
@@ -912,6 +912,9 @@ gate_instance
 		  tmp->lineno = @1.first_line;
 		  $$ = tmp;
 		}
+
+  /* Modules can also take ports by port-name expressions. */
+
 	| IDENTIFIER '(' port_name_list ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = $1;
@@ -2080,14 +2083,6 @@ statement
 		  delete $3;
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER '(' ')' ';'
-		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask($1, pt);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-		  $$ = tmp;
-		}
 	| SYSTEM_IDENTIFIER ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask($1, pt);
@@ -2102,14 +2097,6 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  delete $3;
-		  $$ = tmp;
-		}
-	| identifier '(' ')' ';'
-		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask($1, pt);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier ';'

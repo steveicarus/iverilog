@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.60 2000/05/16 04:05:16 steve Exp $"
+#ident "$Id: pform.cc,v 1.61 2000/05/23 16:03:13 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -439,10 +439,19 @@ void pform_make_modgates(const string&type,
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
+
+		    /* If there are no parameters, the parser will be
+		       tricked into thinking it is one empty
+		       parameter. This fixes that. */
+		  if ((cur.parms->count() == 1) && (cur.parms[0][0] == 0)) {
+			delete cur.parms;
+			cur.parms = new svector<PExpr*>(0);
+		  }
 		  pform_make_modgate(type, cur.name, overrides,
 				     cur.parms,
 				     cur.range[0], cur.range[1],
 				     cur.file, cur.lineno);
+
 	    } else {
 		  svector<PExpr*>*wires = new svector<PExpr*>(0);
 		  pform_make_modgate(type, cur.name, overrides,
@@ -865,6 +874,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.61  2000/05/23 16:03:13  steve
+ *  Better parsing of expressions lists will empty expressoins.
+ *
  * Revision 1.60  2000/05/16 04:05:16  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used
