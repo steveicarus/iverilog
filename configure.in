@@ -204,6 +204,10 @@ case "${host}" in
 	shared="-b"
 	;;
 
+     *-*-darwin1.4)
+	shared="-bundle -undefined suppress -flat_namespace"
+	;;
+
      *-*-darwin*)
 	shared="-bundle -undefined suppress"
 	;;

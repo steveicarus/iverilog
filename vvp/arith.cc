@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.18 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: arith.cc,v 1.19 2001/11/04 05:03:21 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -25,7 +25,10 @@
 # include  <limits.h>
 # include  <stdio.h>
 # include  <assert.h>
+# include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 
 void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
 {
@@ -505,6 +508,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.19  2001/11/04 05:03:21  steve
+ *  MacOSX 10.1 updates.
+ *
  * Revision 1.18  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

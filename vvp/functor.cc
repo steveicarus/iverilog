@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.30 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: functor.cc,v 1.31 2001/11/04 05:03:21 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -27,7 +27,10 @@
 # include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
+# include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 
 /*
  * Functors are created as the source design is read in. Each is
@@ -186,6 +189,9 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.31  2001/11/04 05:03:21  steve
+ *  MacOSX 10.1 updates.
+ *
  * Revision 1.30  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

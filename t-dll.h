@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.69 2001/11/01 04:25:31 steve Exp $"
+#ident "$Id: t-dll.h,v 1.70 2001/11/04 05:03:21 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -34,6 +34,8 @@ typedef void* ivl_dll_t;
 #elif defined(HAVE_DL_H)
 # include  <dl.h>
 typedef shl_t ivl_dll_t;
+#else
+# error No DLL stub support for this target.
 #endif
 
 struct ivl_design_s {
@@ -582,6 +584,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.70  2001/11/04 05:03:21  steve
+ *  MacOSX 10.1 updates.
+ *
  * Revision 1.69  2001/11/01 04:25:31  steve
  *  ivl_target support for cassign.
  *

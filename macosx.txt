@@ -11,7 +11,16 @@
 
   Unpack this tar file and read the README and Makefile.  Install the library according to the instructions.  Installation in /usr/local is strongly recommended since otherwise autoconf very likely won't be able to find it.
 
-2)  Configure, build and install the Icarus Verilog sources.
+2) Make sure you have a copy of the 'gperf' tool.  This does not come with the Mac OS X 10.1 developer tools, so you probably don't.  You can whck with:
+
+  %  which gperf
+
+  If not found, grab a gperf source package and install it.
+
+  ftp://ftp.gnu.org/gnu/gperf/gperf-2.7.2.tar.gz
+
+
+3)  Configure, build and install the Icarus Verilog sources.
 
   The only change you need to make here is to use a configure command like:
 
@@ -24,5 +33,5 @@
 
   You can, of course, add other configure options.
 
-3) Done!
+4) Done!
 
