@@ -1,0 +1,11 @@
+configure
+config.log
+config.status
+config.h
+dep
+Makefile
+lexor.cc
+parse.cc
+parse.cc.output
+parse.h
+vvp

@@ -1,0 +1,13 @@
+AC_INIT(Makefile.in)
+AC_CONFIG_HEADER(config.h)
+
+AC_PROG_CC
+AC_PROG_CXX
+AC_CHECK_TOOL(STRIP, strip, true)
+
+AC_PROG_INSTALL
+
+AC_CHECK_SIZEOF(unsigned long)
+AC_CHECK_SIZEOF(unsigned)
+
+AC_OUTPUT(Makefile)

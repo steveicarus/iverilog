@@ -1,0 +1,39 @@
+
+EXECUTABLE INSTRUCTION OPCODES
+
+Instruction opcodes all start with a % character and have 0 or more
+operands. In no case are there more then 3 operands.
+
+
+* %assign <var-label>, <delay>, <bit>
+
+This does a non-blocking assignment to a variable. The <label>
+identifies the affected variable, and the <delay> gives the delay when
+the assignment takes place. The delay may be 0. For blocking
+assignments, see %set. The <bit> is the address of the thread register
+that contains the bit value to assign.
+
+* %delay <delay>
+
+This opcode pauses the thread, and causes it to be rescheduled for a
+time in the future. The <amount> is the number of the ticks in the
+future to reschedule, and is >= 0. If the %delay is zero, then the
+thread yields the processor for another thread, but will be resumed in
+the current time step.
+
+* %load <bit>, <functor-label>
+
+This instruction loads a value from the given functor output into the
+specified thread register bit.
+
+* %set <var-label>, <bit>
+
+This sets a bit of a variable, and is used to implement blocking
+assignments. The <label> identifies the variable to receive the new
+value. Once the set completes, the value is immediately available to
+be read out of the variable. The <bit> is the address of the thread
+register that contains the bit value to assign.
+
+* %waitfor <functor-label>
+
+XXXX
