@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.33 2002/07/12 17:02:38 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.34 2002/07/12 17:09:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -537,6 +537,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    /* Value */
 	    vpiNet,
 	    vpiReg,
+	    vpiIntegerVar,
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
@@ -799,6 +800,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.34  2002/07/12 17:09:21  steve
+ *  Remember to scan IntegerVars.
+ *
  * Revision 1.33  2002/07/12 17:02:38  steve
  *  Scan scope objects before subscopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.6 2002/07/12 17:08:13 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.7 2002/07/12 17:09:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -531,6 +531,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    /* Value */
 	    vpiNet,
 	    vpiReg,
+	    vpiIntegerVar,
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
@@ -795,6 +796,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.7  2002/07/12 17:09:21  steve
+ *  Remember to scan IntegerVars.
+ *
  * Revision 1.6  2002/07/12 17:08:13  steve
  *  Eliminate use of vpiInternalScope.
  *
