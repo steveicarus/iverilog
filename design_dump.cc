@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.65 2000/01/10 01:35:23 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.66 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 /*
@@ -142,8 +142,14 @@ void NetCLShift::dump_node(ostream&o, unsigned ind) const
 
 void NetCompare::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " <<
-	    name() << endl;
+      o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetMult::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_MULT (NetMult): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -865,6 +871,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.66  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.65  2000/01/10 01:35:23  steve
  *  Elaborate parameters afer binding of overrides.
  *

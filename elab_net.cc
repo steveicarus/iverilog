@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.18 2000/01/11 04:20:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.19 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -35,6 +35,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 				unsigned long decay) const
 {
       switch (op_) {
+	  case '*':
+	      //case '/':
+	      //case '%':
+	    return elaborate_net_mul_(des, path, width, rise, fall, decay);
 	  case '+':
 	  case '-':
 	    return elaborate_net_add_(des, path, width, rise, fall, decay);
@@ -272,18 +276,6 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    return 0;
       }
 
-#if 0
-      if (lsig->pin_count() != rsig->pin_count()) {
-	    cerr << get_line() << ": internal error: Cannot match "
-		  "structural net widths " << lsig->pin_count() <<
-		  " and " << rsig->pin_count() << "." << endl;
-	    delete lsig;
-	    delete rsig;
-	    des->errors += 1;
-	    return 0;
-      }
-#endif
-
       unsigned dwidth = lsig->pin_count();
       if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
 
@@ -505,6 +497,52 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
       connect(gate->pin(0), osig->pin(0));
       des->add_signal(osig);
       des->add_node(gate);
+      return osig;
+}
+
+NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
+				       unsigned lwidth,
+				       unsigned long rise,
+				       unsigned long fall,
+				       unsigned long decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lsig == 0) return 0;
+      NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (rsig == 0) return 0;
+
+      unsigned rwidth = lsig->pin_count() + rsig->pin_count();
+      NetMult*mult = new NetMult(des->local_symbol(path), rwidth,
+				 lsig->pin_count(),
+				 rsig->pin_count());
+      des->add_node(mult);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
+	    connect(mult->pin_DataA(idx), lsig->pin(idx));
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
+	    connect(mult->pin_DataB(idx), rsig->pin(idx));
+
+      if (lwidth == 0) lwidth = rwidth;
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
+			       NetNet::IMPLICIT, lwidth);
+      osig->local_flag(true);
+      des->add_signal(osig);
+
+      unsigned cnt = osig->pin_count();
+      if (cnt > rwidth) cnt = rwidth;
+
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+	    connect(mult->pin_Result(idx), osig->pin(idx));
+
+	/* If the lvalue is larger then the result, then pad the
+	   output with constant 0. */
+      if (cnt < osig->pin_count()) {
+	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(tmp);
+	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
+		  connect(osig->pin(idx), tmp->pin(0));
+      }
+
       return osig;
 }
 
@@ -1224,6 +1262,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.19  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.18  2000/01/11 04:20:57  steve
  *  Elaborate net widths of constants to as small
  *  as is possible, obeying context constraints.

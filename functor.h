@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.6 1999/12/30 04:19:12 steve Exp $"
+#ident "$Id: functor.h,v 1.7 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 /*
@@ -53,6 +53,9 @@ struct functor_t {
 
 	/* Handle LPM combinational logic devices. */
       virtual void lpm_logic(class Design*des, class NetLogic*);
+
+	/* This method is called for each multiplier. */
+      virtual void lpm_mult(class Design*des, class NetMult*);
 };
 
 struct proc_match_t {
@@ -67,6 +70,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.7  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.6  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
  *

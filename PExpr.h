@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.26 1999/12/16 03:46:39 steve Exp $"
+#ident "$Id: PExpr.h,v 1.27 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  <string>
@@ -264,6 +264,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_mul_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
       NetNet* elaborate_net_shift_(Design*des, const string&path,
 				   unsigned lwidth,
 				   unsigned long rise,
@@ -318,6 +323,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.27  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.26  1999/12/16 03:46:39  steve
  *  Structural logical or.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.7 2000/01/01 19:56:51 steve Exp $"
+#ident "$Id: set_width.cc,v 1.8 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 /*
@@ -126,7 +126,6 @@ bool NetEBBits::set_width(unsigned w)
  */
 bool NetEBComp::set_width(unsigned w)
 {
-      bool flag = true;
       return (w == 1);
 }
 
@@ -137,6 +136,15 @@ bool NetEBLogic::set_width(unsigned w)
       if (!flag)
 	    flag = right_->set_width(left_->expr_width());
       return (w == 1);
+}
+
+/*
+ * There is nothing we can do to the operands of a multiply to make it
+ * confirm to the requested width. Force the context to pad or truncate.
+ */
+bool NetEBMult::set_width(unsigned w)
+{
+      return w == expr_width();
 }
 
 /*
@@ -266,6 +274,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.8  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.7  2000/01/01 19:56:51  steve
  *  Properly expand/shrink constants in expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.107 2000/01/10 01:35:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.108 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 /*
@@ -486,6 +486,56 @@ class NetMemory  {
       friend class NetRamDq;
       NetRamDq* ram_list_;
 };
+
+/*
+ * This class implements the LPM_MULT component as described in the
+ * EDIF LPM Version 2 1 0 standard. It is used as a structural
+ * implementation of the * operator. The device has inputs DataA and
+ * DataB that can have independent widths, as can the result. If the
+ * result is smaller then the widths of a and b together, then the
+ * device drops the least significant bits of the product.
+ */
+class NetMult  : public NetNode {
+
+    public:
+      NetMult(const string&n, unsigned width, unsigned wa, unsigned wb,
+	      unsigned width_s =0);
+      ~NetMult();
+
+	// Get the width of the device bussed inputs. There are these
+	// parameterized widths:
+      unsigned width_r() const; // Result
+      unsigned width_a() const; // DataA
+      unsigned width_b() const; // DataB
+      unsigned width_s() const; // Sum (my be 0)
+
+      NetObj::Link& pin_Aclr();
+      NetObj::Link& pin_Clock();
+
+      NetObj::Link& pin_DataA(unsigned idx);
+      NetObj::Link& pin_DataB(unsigned idx);
+      NetObj::Link& pin_Result(unsigned idx);
+      NetObj::Link& pin_Sum(unsigned idx);
+
+      const NetObj::Link& pin_Aclr() const;
+      const NetObj::Link& pin_Clock() const;
+
+      const NetObj::Link& pin_DataA(unsigned idx) const;
+      const NetObj::Link& pin_DataB(unsigned idx) const;
+      const NetObj::Link& pin_Result(unsigned idx) const;
+      const NetObj::Link& pin_Sum(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      unsigned width_r_;
+      unsigned width_a_;
+      unsigned width_b_;
+      unsigned width_s_;
+};
+
 
 /*
  * This class represents an LPM_MUX device. This device has some
@@ -1584,6 +1634,23 @@ class NetEBLogic : public NetEBinary {
 
 
 /*
+ * Support the binary multiplication (*) operator.
+ */
+class NetEBMult : public NetEBinary {
+
+    public:
+      NetEBMult(char op, NetExpr*l, NetExpr*r);
+      ~NetEBMult();
+
+      virtual bool set_width(unsigned w);
+      virtual NetEBMult* dup_expr() const;
+      virtual NetEConst* eval_tree();
+
+    private:
+};
+
+
+/*
  * The binary logical operators are those that return boolean
  * results. The supported operators are:
  *
@@ -2084,6 +2151,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.108  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.107  2000/01/10 01:35:24  steve
  *  Elaborate parameters afer binding of overrides.
  *

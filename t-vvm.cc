@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.94 2000/01/08 03:09:14 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.95 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -64,6 +64,7 @@ class target_vvm : public target_t {
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
       virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
+      virtual void lpm_mult(ostream&os, const NetMult*);
       virtual void lpm_mux(ostream&os, const NetMux*);
       virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
 
@@ -450,6 +451,18 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case '^':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_xor("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '*':
+	    os_ << setw(indent_) << "" << "vvm_binop_mult(" << result
+		<< "," << lres << "," << rres << ");" << endl;
+	    break;
+	  case '/':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_idiv("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '%':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_imod("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  default:
@@ -1014,6 +1027,23 @@ void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
 	    init_code << "      " << mangle(gate->name()) <<
 		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
 	    emit_gate_outputfun_(gate, pin);
+      }
+}
+
+void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
+{
+      string mname = mangle(mul->name());
+      os << "static vvm_mult " << mname << "(" << mul->width_r() <<
+	    "," << mul->width_a() << "," << mul->width_b() << "," <<
+	    mul->width_s() << ");" << endl;
+
+	// Write the output functions for the multiplier device.
+      for (unsigned idx = 0 ;  idx < mul->width_r() ;  idx += 1) {
+	    unsigned pin = mul->pin_Result(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, mul, pin);
+	    init_code << "      " << mangle(mul->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(mul, pin);
       }
 }
 
@@ -1993,6 +2023,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.95  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.94  2000/01/08 03:09:14  steve
  *  Non-blocking memory writes.
  *

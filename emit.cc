@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.31 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: emit.cc,v 1.32 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 /*
@@ -83,6 +83,11 @@ void NetConst::emit_node(ostream&o, struct target_t*tgt) const
 void NetFF::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->lpm_ff(o, this);
+}
+
+void NetMult::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_mult(o, this);
 }
 
 void NetMux::emit_node(ostream&o, struct target_t*tgt) const
@@ -389,6 +394,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.32  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.31  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

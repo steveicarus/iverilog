@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.27 1999/11/28 23:42:03 steve Exp $"
+#ident "$Id: target.h,v 1.28 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -74,6 +74,7 @@ struct target_t {
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
       virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
+      virtual void lpm_mult(ostream&os, const NetMult*);
       virtual void lpm_mux(ostream&os, const NetMux*);
       virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
 
@@ -146,6 +147,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.28  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.27  1999/11/28 23:42:03  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

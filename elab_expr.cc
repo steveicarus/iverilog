@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.14 2000/01/01 06:18:00 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.15 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 
@@ -65,6 +65,11 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	  case 'a':
 	  case 'o':
 	    tmp = new NetEBLogic(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case '*':
+	    tmp = new NetEBMult(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
 
@@ -373,6 +378,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.15  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.14  2000/01/01 06:18:00  steve
  *  Handle synthesis of concatenation.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.6 1999/10/22 23:57:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.7 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -133,6 +133,12 @@ NetEConst* NetEBComp::eval_tree()
 }
 
 NetEConst* NetEBLogic::eval_tree()
+{
+      eval_sub_tree_();
+      return 0;
+}
+
+NetEConst* NetEBMult::eval_tree()
 {
       eval_sub_tree_();
       return 0;
@@ -262,6 +268,9 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.7  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.6  1999/10/22 23:57:53  steve
  *  do the <= in bits, not numbers.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.16 1999/12/02 03:36:01 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.17 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -194,6 +194,24 @@ vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
 
       return res;
 }
+
+/*
+ * The multiply binary operator takes an A and B parameter and returns
+ * the result in the vpip_bit_t array. The template form arranges for
+ * the right parameters to be passed to the extern form.
+ */
+extern void vvm_binop_mult(vpip_bit_t*res, unsigned nres,
+			   const vpip_bit_t*a, unsigned na,
+			   const vpip_bit_t*b, unsigned nb);
+
+template <unsigned WR, unsigned WA, unsigned WB>
+void vvm_binop_mult(vvm_bitset_t<WR>&r, 
+		    const vvm_bitset_t<WA>&a,
+		    const vvm_bitset_t<WB>&b)
+{
+      vvm_binop_mult(r.bits, WR, a.bits, WA, b.bits, WB);
+}
+
 
 /*
  * The binary ^ (xor) operator is a bitwise XOR of equal width inputs
@@ -608,6 +626,9 @@ vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.17  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.16  1999/12/02 03:36:01  steve
  *  shiftl and shiftr take unsized second parameter.
  *

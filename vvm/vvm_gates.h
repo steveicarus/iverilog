@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.34 1999/12/19 20:57:07 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.35 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -406,6 +406,36 @@ template <unsigned WIDTH> class vvm_ff {
 			  ev->schedule();
 		    }
 	    }
+};
+
+/*
+ * This class behaves like a combinational multiplier. The device
+ * behaves like the LPM_MULT device.
+ */
+class vvm_mult {
+
+    public:
+      explicit vvm_mult(unsigned rwid, unsigned awid,
+			unsigned bwid, unsigned swid);
+      ~vvm_mult();
+
+      void init_DataA(unsigned idx, vpip_bit_t val);
+      void init_DataB(unsigned idx, vpip_bit_t val);
+      void init_Sum(unsigned idx, vpip_bit_t val);
+
+      void set_DataA(unsigned idx, vpip_bit_t val);
+      void set_DataB(unsigned idx, vpip_bit_t val);
+      void set_Sum(unsigned idx, vpip_bit_t val);
+
+      void config_rout(unsigned idx, vvm_out_event::action_t o);
+
+    private:
+      unsigned rwid_;
+      unsigned awid_;
+      unsigned bwid_;
+      unsigned swid_;
+      vpip_bit_t*bits_;
+      vvm_out_event::action_t*out_;
 };
 
 /*
@@ -933,6 +963,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.35  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.34  1999/12/19 20:57:07  steve
  *  Proper init_ method prototype.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.28 1999/11/28 23:42:03 steve Exp $"
+#ident "$Id: target.cc,v 1.29 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -95,6 +95,12 @@ void target_t::lpm_ff(ostream&, const NetFF*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetFF." << endl;
+}
+
+void target_t::lpm_mult(ostream&, const NetMult*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetMult." << endl;
 }
 
 void target_t::lpm_mux(ostream&, const NetMux*)
@@ -308,6 +314,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.29  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.28  1999/11/28 23:42:03  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.

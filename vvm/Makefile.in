@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.15 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: Makefile.in,v 1.16 2000/01/13 03:35:35 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -58,8 +58,8 @@ all: libvvm.a
 	$(CC) -Wall $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = vvm_bit.o vvm_calltf.o vvm_event.o vvm_gates.o vvm_pevent.o \
-vvm_thread.o vpip.o
+O = vvm_bit.o vvm_calltf.o vvm_event.o vvm_gates.o vvm_mult.o \
+vvm_pevent.o vvm_thread.o vpip.o
 
 P = vpi_callback.o \
 vpi_const.o vpi_iter.o vpi_memory.o vpi_null.o \

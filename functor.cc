@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.9 2000/01/02 17:57:20 steve Exp $"
+#ident "$Id: functor.cc,v 1.10 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -48,6 +48,10 @@ void functor_t::lpm_ff(class Design*, class NetFF*)
 }
 
 void functor_t::lpm_logic(class Design*, class NetLogic*)
+{
+}
+
+void functor_t::lpm_mult(class Design*, class NetMult*)
 {
 }
 
@@ -107,6 +111,11 @@ void NetLogic::functor_node(Design*des, functor_t*fun)
       fun->lpm_logic(des, this);
 }
 
+void NetMult::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_mult(des, this);
+}
+
 proc_match_t::~proc_match_t()
 {
 }
@@ -158,6 +167,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.10  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.9  2000/01/02 17:57:20  steve
  *  Handle nodes running out during node scan.
  *

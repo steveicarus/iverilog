@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.103 2000/01/10 01:35:24 steve Exp $"
+#ident "$Id: netlist.cc,v 1.104 2000/01/13 03:35:35 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -932,6 +932,126 @@ const NetObj::Link& NetCompare::pin_DataB(unsigned idx) const
       return pin(8+width_+idx);
 }
 
+NetMult::NetMult(const string&n, unsigned wr, unsigned wa, unsigned wb,
+		 unsigned ws)
+: NetNode(n, 2+wr+wa+wb+ws), width_r_(wr), width_a_(wa), width_b_(wb),
+    width_s_(ws)
+{
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr", 0);
+      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock", 0);
+
+
+      unsigned p = 2;
+      for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::OUTPUT);
+	    pin(p).set_name("Result", idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_name("DataA", idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_name("DataB", idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_s_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_name("Sum", idx);
+      }
+}
+
+NetMult::~NetMult()
+{
+}
+
+unsigned NetMult::width_r() const
+{
+      return width_r_;
+}
+
+unsigned NetMult::width_a() const
+{
+      return width_a_;
+}
+
+unsigned NetMult::width_b() const
+{
+      return width_b_;
+}
+
+unsigned NetMult::width_s() const
+{
+      return width_s_;
+}
+
+NetObj::Link& NetMult::pin_Aclr()
+{
+      return pin(0);
+}
+
+const NetObj::Link& NetMult::pin_Aclr() const
+{
+      return pin(0);
+}
+
+NetObj::Link& NetMult::pin_Clock()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetMult::pin_Clock() const
+{
+      return pin(1);
+}
+
+NetObj::Link& NetMult::pin_Result(unsigned idx)
+{
+      assert(idx < width_r_);
+      return pin(idx+2);
+}
+
+const NetObj::Link& NetMult::pin_Result(unsigned idx) const
+{
+      assert(idx < width_r_);
+      return pin(idx+2);
+}
+
+NetObj::Link& NetMult::pin_DataA(unsigned idx)
+{
+      assert(idx < width_a_);
+      return pin(idx+2+width_r_);
+}
+
+const NetObj::Link& NetMult::pin_DataA(unsigned idx) const
+{
+      assert(idx < width_a_);
+      return pin(idx+2+width_r_);
+}
+
+NetObj::Link& NetMult::pin_DataB(unsigned idx)
+{
+      assert(idx < width_b_);
+      return pin(idx+2+width_r_+width_a_);
+}
+
+const NetObj::Link& NetMult::pin_DataB(unsigned idx) const
+{
+      assert(idx < width_b_);
+      return pin(idx+2+width_r_+width_a_);
+}
+
+NetObj::Link& NetMult::pin_Sum(unsigned idx)
+{
+      assert(idx < width_s_);
+      return pin(idx+2+width_r_+width_a_+width_b_);
+}
+
+const NetObj::Link& NetMult::pin_Sum(unsigned idx) const
+{
+      assert(idx < width_s_);
+      return pin(idx+2+width_r_+width_a_+width_b_);
+}
+
 /*
  * The NetMux class represents an LPM_MUX device. The pinout is assigned
  * like so:
@@ -1795,6 +1915,23 @@ NetEBLogic* NetEBLogic::dup_expr() const
 {
       NetEBLogic*result = new NetEBLogic(op_, left_->dup_expr(),
 					 right_->dup_expr());
+      return result;
+}
+
+NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width(l->expr_width() + r->expr_width());
+}
+
+NetEBMult::~NetEBMult()
+{
+}
+
+NetEBMult* NetEBMult::dup_expr() const
+{
+      NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
+				       right_->dup_expr());
       return result;
 }
 
@@ -2775,6 +2912,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.104  2000/01/13 03:35:35  steve
+ *  Multiplication all the way to simulation.
+ *
  * Revision 1.103  2000/01/10 01:35:24  steve
  *  Elaborate parameters afer binding of overrides.
  *
