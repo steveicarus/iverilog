@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.11 2001/04/01 22:26:21 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.12 2001/04/02 03:47:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -232,6 +232,38 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
+						 unsigned wid)
+{
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      struct vector_info lv;
+      struct vector_info rv;
+
+      lv = draw_eval_expr_wid(le, wid);
+      rv = draw_eval_expr_wid(re, wid);
+
+      switch (ivl_expr_opcode(exp)) {
+
+	  case '&':
+	    fprintf(vvp_out, "   %%and %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
+	  case '|':
+	    fprintf(vvp_out, "   %%or %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      clr_vector(rv);
+      return lv;
+}
+
 static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
@@ -277,6 +309,11 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '+':
 	    rv = draw_binary_expr_plus(exp, wid);
+	    break;
+
+	  case '&':
+	  case '|':
+	    rv = draw_binary_expr_logic(exp, wid);
 	    break;
 
 	  default:
@@ -516,6 +553,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.12  2001/04/02 03:47:49  steve
+ *  Evaluate binary & and | operators.
+ *
  * Revision 1.11  2001/04/01 22:26:21  steve
  *  Unary ! is a reduction operator.
  *
