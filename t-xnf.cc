@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.27 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.28 2000/05/08 05:29:43 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -857,7 +857,7 @@ void target_xnf::bufz(ostream&os, const NetBUFZ*net)
       static int warned_once=0;
       if (!warned_once) {
 	    cerr << "Warning: BUFZ object found for xnf output."
-		  " Try -Fnobufz." << endl;
+		 << endl;
 	    warned_once=1;
       }
       os << "SYM, " << mangle(net->name()) << ", BUF, LIBVER=2.0.0" << endl;
@@ -887,6 +887,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.28  2000/05/08 05:29:43  steve
+ *  no need for nobufz functor.
+ *
  * Revision 1.27  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.
