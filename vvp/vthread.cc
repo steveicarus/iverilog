@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.55 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vthread.cc,v 1.56 2001/10/14 16:36:43 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -917,7 +917,7 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
-      assert(cp->number <= 8*sizeof(unsigned long));
+      if(cp->number <= 8*sizeof(unsigned long)) {
 
       unsigned idx1 = cp->bit_idx1;
       unsigned idx2 = cp->bit_idx2;
@@ -946,6 +946,66 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       }
 
       return true;
+      } else {
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      unsigned char *a, *b, *sum;
+      a = new unsigned char[cp->number];
+      b = new unsigned char[cp->number];
+      sum = new unsigned char[cp->number];
+
+      int mxa = -1;
+      int mxb = -1;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb | rb) & 2)
+		  {
+                  delete[]sum;
+                  delete[]b;
+                  delete[]a;
+		  goto x_out;
+		  }
+
+	    if((a[idx] = lb)) mxa=idx;
+	    if((b[idx] = rb)) mxb=idx;
+            sum[idx]=0;
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+//    do "unsigned ZZ sum = a * b" the hard way.. 
+      for(int i=0;i<=mxb;i++)
+                {
+                if(b[i])
+                        {
+                        unsigned char carry=0;
+                        unsigned char temp;
+
+                        for(int j=0;j<=mxa;j++)
+                                {
+                                if(i+j>=(int)cp->number) break;
+                                temp=sum[i+j]+a[j]+carry;
+                                sum[i+j]=(temp&1);
+                                carry=(temp>>1);
+                                }
+                        }
+                }
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx1+idx, sum[idx]);
+      }
+
+      delete[]sum;
+      delete[]b;
+      delete[]a;
+      return true;
+      }
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
@@ -1356,6 +1416,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.56  2001/10/14 16:36:43  steve
+ *  Very wide multiplication (Anthony Bybell)
+ *
  * Revision 1.55  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

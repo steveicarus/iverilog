@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.11 2001/07/13 00:38:57 steve Exp $"
+#ident "$Id: arith.cc,v 1.12 2001/10/14 16:36:43 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -56,8 +56,7 @@ vvp_arith_mult::vvp_arith_mult(vvp_ipoint_t b, unsigned w)
 
 void vvp_arith_mult::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      assert(wid_ <= 8*sizeof(unsigned long));
-
+if(wid_ <= 8*sizeof(unsigned long)) {
       unsigned long a = 0, b = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
@@ -96,6 +95,72 @@ void vvp_arith_mult::set(vvp_ipoint_t i, functor_t f, bool push)
 	    else
 		  schedule_functor(ptr, 0);
       }
+} else {	/* long form only used if > machine length long */
+      unsigned char *a, *b, *sum;
+      a = new unsigned char[wid_];
+      b = new unsigned char[wid_];
+      sum = new unsigned char[wid_];
+
+      int mxa = -1;
+      int mxb = -1;
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned ival = obj->ival;
+	    if (ival & 0xaa) {
+		  output_x_(push);
+		  delete[]sum;
+		  delete[]b;
+		  delete[]a;
+		  return;
+	    }
+
+	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx;  
+	    if((b[idx] = ((ival & 0x04) != 0))) mxb=idx;
+            sum[idx] = 0;                   
+      }
+
+//    do "unsigned ZZ sum = a * b" the hard way..
+      for(int i=0;i<=mxb;i++)
+		{
+		if(b[i])
+			{
+			unsigned char carry=0;
+			unsigned char temp;			
+
+			for(int j=0;j<=mxa;j++)
+				{
+				if(i+j>=(int)wid_) break;
+				temp=sum[i+j]+a[j]+carry;
+				sum[i+j]=(temp&1);
+				carry=(temp>>1);
+				}
+			}
+		}
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned oval = sum[idx];
+
+	    if (obj->oval == oval)
+		  continue;
+
+	    obj->oval = oval;
+	    if (push)
+		  functor_propagate(ptr);
+	    else
+		  schedule_functor(ptr, 0);
+      }
+
+delete[]sum;
+delete[]b;
+delete[]a;
+}
+
 }
 
 vvp_arith_sum::vvp_arith_sum(vvp_ipoint_t b, unsigned w)
@@ -509,6 +574,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.12  2001/10/14 16:36:43  steve
+ *  Very wide multiplication (Anthony Bybell)
+ *
  * Revision 1.11  2001/07/13 00:38:57  steve
  *  Remove width restriction on subtraction.
  *
