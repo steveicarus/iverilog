@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.10 1999/07/17 05:10:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.11 1999/07/25 00:03:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -91,6 +91,8 @@ static int comment_enter = 0;
 W [ \t\b\f]+
 
 %%
+
+"//".* { ECHO; }
 
   /* detect multiline, c-style comments, passing them directly to the
      output. This is necessary to allow for ignoring directives that
