@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.31 2001/04/13 03:55:18 steve Exp $"
+#ident "$Id: compile.cc,v 1.32 2001/04/14 05:10:56 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -322,6 +322,7 @@ void compile_event(char*label, char*type,
       obj->ival = 0xaa;
       obj->oval = 2;
       obj->mode = 1;
+      obj->out  = 0;
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
@@ -353,6 +354,7 @@ void compile_named_event(char*label, char*name)
       obj->ival = 0xaa;
       obj->oval = 2;
       obj->mode = 2;
+      obj->out  = 0;
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
@@ -360,6 +362,48 @@ void compile_named_event(char*label, char*name)
 
       free(label);
       free(name);
+}
+
+void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+
+      { symbol_value_t val;
+        val.num = fdx;
+	sym_set_value(sym_functors, label, val);
+      }
+
+      obj->ival = 0xaa;
+      obj->oval = 2;
+      obj->mode = 2;
+      obj->out  = 0;
+
+      obj->event = new struct vvp_event_s;
+      obj->event->threads = 0;
+      obj->event->ival = obj->ival;
+
+	/* Link the outputs of the named events to me. */
+
+      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
+	    vvp_ipoint_t tmp = val.num;
+
+	    assert(tmp);
+
+	    tmp = ipoint_index(tmp, argv[idx].idx);
+
+	    functor_t fport = functor_index(tmp);
+	    assert(fport->out == 0);
+	    fport->out = fdx;
+
+	    free(argv[idx].text);
+
+      }
+
+      free(argv);
+
+      free(label);
 }
 
 /*
@@ -714,6 +758,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.32  2001/04/14 05:10:56  steve
+ *  support the .event/or statement.
+ *
  * Revision 1.31  2001/04/13 03:55:18  steve
  *  More complete reap of all threads.
  *

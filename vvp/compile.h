@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.14 2001/04/05 01:34:26 steve Exp $"
+#ident "$Id: compile.h,v 1.15 2001/04/14 05:10:56 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -75,6 +75,8 @@ extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
 
 extern void compile_named_event(char*label, char*name);
+
+extern void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -137,6 +139,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.15  2001/04/14 05:10:56  steve
+ *  support the .event/or statement.
+ *
  * Revision 1.14  2001/04/05 01:34:26  steve
  *  Add the .var/s and .net/s statements for VPI support.
  *

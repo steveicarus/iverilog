@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.14 2001/04/13 03:55:18 steve Exp $
+ *  $Id: README.txt,v 1.15 2001/04/14 05:10:56 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -219,6 +219,15 @@ watches a single bit, so the generated code would only include a
 single symbol for the addressed bit. However, if there are several
 events of the same edge in an event OR expression, the compiler may
 combine up to 4 into a single event.
+
+If many more events need to be conbined together (for example due to
+an event or expression in the Verilog) then this form can be used:
+
+	<label> .event/or <symbols_list>;
+
+In this case, the symbols list all the events that are to be combined
+to trigger this event. Only one of the input events needs to trigger
+to make this one go.
 
 
 THREAD STATEMENTS:

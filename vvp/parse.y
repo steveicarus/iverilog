@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.18 2001/04/05 01:34:26 steve Exp $"
+#ident "$Id: parse.y,v 1.19 2001/04/14 05:10:56 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -51,7 +51,7 @@ extern FILE*yyin;
 };
 
 
-%token K_EVENT K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
+%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
 %token K_VAR K_VAR_S K_vpi_call
 %token K_vpi_module
 
@@ -121,6 +121,12 @@ statement
 
 	| T_LABEL K_EVENT T_STRING ';'
 		{ compile_named_event($1, $3); }
+
+	| T_LABEL K_EVENT_OR symbols ';'
+		{ struct symbv_s obj = $3;
+		  compile_event_or($1, obj.cnt, obj.vect);
+		}
+
 
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends
@@ -323,6 +329,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.19  2001/04/14 05:10:56  steve
+ *  support the .event/or statement.
+ *
  * Revision 1.18  2001/04/05 01:34:26  steve
  *  Add the .var/s and .net/s statements for VPI support.
  *

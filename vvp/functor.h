@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.10 2001/04/04 17:43:19 steve Exp $"
+#ident "$Id: functor.h,v 1.11 2001/04/14 05:10:56 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -27,6 +27,11 @@
 
 
 /*
+ *
+ * The major mode is selected by the mode parameter.
+ *
+ * MODE 0: TABLE MODE FUNCTORS
+ *
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
  * select the port of the referenced functor, and the remaining 30
  * index the functor itself. All together, the 32 bits can completely
@@ -50,10 +55,26 @@
  * output value is picked from the lookup table that the table pointer
  * points to.
  *
- * If the functor is an event functor, however, the event member
- * points to an extended structure where thread state is stored.
+ * MODE 1: EDGE EVENT FUNCTORS
  *
- * The major mode is selected by the mode parameter.
+ * These functors take inputs like mode 0 functors, but the input is
+ * compared with the preveous input for that bit, and the results of
+ * that comparison are used to detect edges. The functor may be
+ * programmed to detect posedge, negedge, or any edge events. These
+ * functors can have %wait instructions waiting on them.
+ *
+ * MODE 2: NAMED EVENT FUNCTORS
+ *
+ * These fuctors do not bother to check for edges. Any event on the
+ * input causes an event to be detected. Like mode-1 functors, these
+ * can have %wait instructions waiting on them. Mode-2 functors do not
+ * have structural inputs, however. They take their inputs from %set
+ * instructions.
+ *
+ * Mode-2 events can also be used to combine other mode-1 and mode-2
+ * functors by setting their outputs to put to the mode-2
+ * functor. Since the mode-2 functor does not take input, any number
+ * of mode-1 and mode-2 functors may point in.
  */
 
 struct functor_s {
@@ -155,6 +176,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.11  2001/04/14 05:10:56  steve
+ *  support the .event/or statement.
+ *
  * Revision 1.10  2001/04/04 17:43:19  steve
  *  support decimal strings from signals.
  *

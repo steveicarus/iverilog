@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.10 2001/04/03 03:18:34 steve Exp $"
+#ident "$Id: functor.cc,v 1.11 2001/04/14 05:10:56 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -190,6 +190,9 @@ static void functor_set_mode1(functor_t fp)
 
 	/* the new value is the new old value. */
       ep->ival = fp->ival;
+
+      if (fp->out)
+	    schedule_assign(fp->out, 0, 0);
 }
 
 /*
@@ -205,6 +208,9 @@ static void functor_set_mode2(functor_t fp)
 	    ep->threads = 0;
 	    vthread_schedule_list(tmp);
       }
+
+      if (fp->out)
+	    schedule_assign(fp->out, 0, 0);
 }
 
 /*
@@ -300,6 +306,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.11  2001/04/14 05:10:56  steve
+ *  support the .event/or statement.
+ *
  * Revision 1.10  2001/04/03 03:18:34  steve
  *  support functor_set push for blocking assignment.
  *
