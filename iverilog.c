@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.11 2000/05/05 01:07:42 steve Exp $"
+#ident "$Id: iverilog.c,v 1.12 2000/05/09 00:02:13 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -133,7 +133,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
       }
 
       sprintf(tmp, "%s -O -rdynamic -fno-exceptions -o %s -I%s "
-	      "-L%s %s.cc -lvvm -ldl", CXX, opath, IVL_INC, IVL_LIB,
+	      "-L%s %s.cc -lvvm %s", CXX, opath, IVL_INC, IVL_LIB,
 	      opath, DLLIB);
 
       if (verbose_flag)
@@ -355,6 +355,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.12  2000/05/09 00:02:13  steve
+ *  Parameterize LD lib in C++ command line.
+ *
  * Revision 1.11  2000/05/05 01:07:42  steve
  *  Add the -I and -D switches to iverilog.
  *
