@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.8 2003/07/04 00:10:09 steve Exp $"
+#ident "$Id: xilinx.c,v 1.9 2003/07/04 01:08:03 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -388,7 +388,7 @@ void xilinx_show_scope(ivl_scope_t scope)
 void xilinx_pad(ivl_signal_t sig, const char*str)
 {
       unsigned idx;
-      unsigned*pins;
+      char**pins;
 
       if (cell_ipad == 0) {
 	    cell_ipad = edif_xcell_create(xlib, "IPAD", 1);
@@ -407,20 +407,18 @@ void xilinx_pad(ivl_signal_t sig, const char*str)
 
 	/* Collect an array of pin assignments from the attribute
 	   string passed in as str. The format is a comma separated
-	   list of unsigned decimal integers. */
-      pins = calloc(ivl_signal_pins(sig), sizeof(unsigned));
+	   list of location names. */
+      pins = calloc(ivl_signal_pins(sig), sizeof(char*));
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
-	    char*tmp;
-	    pins[idx] = strtoul(str, &tmp, 10);
-	    switch (*tmp) {
-		case ',':
+	    const char*tmp = strchr(str, ',');
+	    if (tmp == 0) tmp = str+strlen(str);
+
+	    pins[idx] = malloc(tmp-str+1);
+	    strncpy(pins[idx], str, tmp-str);
+	    pins[idx][tmp-str] = 0;
+
+	    if (*tmp != 0)
 		  tmp += 1;
-		  break;
-		case 0:
-		  break;
-		default:
-		  assert(0);
-	    }
 
 	    str = tmp;
       }
@@ -465,11 +463,25 @@ void xilinx_pad(ivl_signal_t sig, const char*str)
 		  edif_add_to_joint(jnt, buf, BUF_I);
 		  break;
 
+		case IVL_SIP_INOUT:
+		  pad = edif_cellref_create(edf, cell_iopad);
+
+		  jnt = edif_joint_of_nexus(edf, ivl_signal_pin(sig, idx));
+		  edif_add_to_joint(jnt, pad, 0);
+		  break;
+
 		default:
 		  assert(0);
 	    }
 
+	    if (pins[idx])
+		  edif_cellref_pstring(pad, "LOC", pins[idx]);
+
       }
+
+	/* Don't free the allocated pad name strings. The
+	   edif_cellref_pstring function attached the string to the
+	   LOC attribute, so the reference is permanent. */
 
       free(pins);
 }
@@ -925,6 +937,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.9  2003/07/04 01:08:03  steve
+ *  PAD attribute can be used to assign pins.
+ *
  * Revision 1.8  2003/07/04 00:10:09  steve
  *  Generate MUXF5 based 4-input N-wide muxes.
  *

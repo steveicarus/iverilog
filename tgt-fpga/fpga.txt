@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.8 2003/07/02 00:26:49 steve Exp $
+  $Id: fpga.txt,v 1.9 2003/07/04 01:08:03 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -125,8 +125,8 @@ PADS AND PIN ASSIGNMENT
 
 The ports of a root module may be assigned to specific pins, or to a
 generic pad. If a signal (that is a port) has a PAD attribute, then
-the value of that attribute is a list of numbers, one for each bit of
-the signal, that specifies the pin for each bit of the signal. For
+the value of that attribute is a list of locations, one for each bit
+of the signal, that specifies the pin for each bit of the signal. For
 example:
 
 	module main(out, in);
@@ -179,6 +179,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.9  2003/07/04 01:08:03  steve
+ PAD attribute can be used to assign pins.
+
 Revision 1.8  2003/07/02 00:26:49  steve
  Fix spelling of part= flag.
 
