@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.34 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: pform.cc,v 1.35 1999/07/31 19:15:21 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -456,7 +456,7 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
  * port to act as an l-value in a procedural assignment. It is obvious
  * for output and inout ports that the type is reg, because the task
  * only contains behavior (no structure) to a procedural assignment is
- * the *only* way to affect the put. It is less obvious for input
+ * the *only* way to affect the output. It is less obvious for input
  * ports, but in practice an input port receives its value as if by a
  * procedural assignment from the calling behavior.
  *
@@ -657,6 +657,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.35  1999/07/31 19:15:21  steve
+ *  misspelled comment.
+ *
  * Revision 1.34  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *
