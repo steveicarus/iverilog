@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.148 2000/03/11 03:25:52 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.149 2000/03/12 21:41:47 steve Exp $"
 #endif
 
 /*
@@ -1089,7 +1089,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
 	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx));
+		  connect(cur->pin(idx), reg->pin(idx+lsb));
 
       } else {
 	    assert(reg->pin_count() == 1);
@@ -1962,6 +1962,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.149  2000/03/12 21:41:47  steve
+ *  Connect output of NB assign to indexed pin.
+ *
  * Revision 1.148  2000/03/11 03:25:52  steve
  *  Locate scopes in statements.
  *
