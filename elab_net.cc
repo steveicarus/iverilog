@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.40 2000/07/06 18:13:24 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.41 2000/07/08 04:59:20 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -441,6 +441,19 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 
 
 	  case 'e': // ==
+
+	      /* Handle the special case of single bit compare with a
+		 single XNOR gate. This is easy and direct. */
+	    if (dwidth == 1) {
+		  gate = new NetLogic(des->local_symbol(path),
+				      3, NetLogic::XNOR);
+		  connect(gate->pin(0), osig->pin(0));
+		  connect(gate->pin(1), lsig->pin(0));
+		  connect(gate->pin(2), rsig->pin(0));
+		  break;
+	    }
+
+	      /* Oh well, do the general case. */
 	    gate = new NetLogic(des->local_symbol(path),
 				1+dwidth,NetLogic::AND);
 	    connect(gate->pin(0), osig->pin(0));
@@ -465,9 +478,22 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
 	    }
+
 	    break;
 
 	  case 'n': // !=
+
+	      /* Handle the special case of single bit compare with a
+		 single XOR gate. This is easy and direct. */
+	    if (dwidth == 1) {
+		  gate = new NetLogic(des->local_symbol(path),
+				      3, NetLogic::XOR);
+		  connect(gate->pin(0), osig->pin(0));
+		  connect(gate->pin(1), lsig->pin(0));
+		  connect(gate->pin(2), rsig->pin(0));
+		  break;
+	    }
+
 	    gate = new NetLogic(des->local_symbol(path),
 				1+dwidth, NetLogic::OR);
 	    connect(gate->pin(0), osig->pin(0));
@@ -1578,6 +1604,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.41  2000/07/08 04:59:20  steve
+ *  Eleminate reduction gate for 1-bit compares.
+ *
  * Revision 1.40  2000/07/06 18:13:24  steve
  *  Connect all the l and r bits of a NE expression.
  *
