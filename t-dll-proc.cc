@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.15 2001/03/30 05:49:52 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.16 2001/03/30 23:24:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -327,9 +327,15 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	    }
       }	    
 
+	/* The ivl_statement_t for the wait statement is not complete
+	   until we calculate the sub-statement. */
+
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = stmt_cur_->u_.wait_.stmt_;
       bool flag = net->emit_recurse(this);
+      if (flag && (stmt_cur_->type_ == IVL_ST_NONE))
+	    stmt_cur_->type_ = IVL_ST_NOOP;
+
       stmt_cur_ = save_cur_;
 
       return flag;
@@ -358,6 +364,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.16  2001/03/30 23:24:02  steve
+ *  Make empty event sub-expression a noop.
+ *
  * Revision 1.15  2001/03/30 05:49:52  steve
  *  Generate code for fork/join statements.
  *
