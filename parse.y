@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.192 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: parse.y,v 1.193 2004/03/08 00:10:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,6 +78,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 	   strdup. They can be put into lists with the texts type. */
       char*text;
       list<char*>*texts;
+      list<perm_string>*perm_strings;
 
       hname_t*hier;
 
@@ -155,14 +156,16 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token KK_attribute
 
 %type <number>  number
-%type <flag>    signed_opt
+%type <flag>    signed_opt udp_reg_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
+%type <perm_strings> udp_input_declaration_list
 %type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
 %type <strings> udp_body udp_port_list
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
+%type <expr>    udp_initial_expr_opt
 
 %type <hier> identifier
 %type <text> register_variable
@@ -3015,15 +3018,59 @@ udp_port_list
 		}
 	;
 
+udp_reg_opt: K_reg  { $$ = true; } | { $$ = false; };
+
+udp_initial_expr_opt
+	: '=' expression { $$ = $2; }
+	|                { $$ = 0; }
+	;
+
+udp_input_declaration_list
+        : K_input IDENTIFIER
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($2));
+		  $$ = tmp;
+		  delete[]$2;
+		}
+	| udp_input_declaration_list ',' K_input IDENTIFIER
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($4));
+		  $$ = tmp;
+		  delete[]$4;
+		}
+	;
+
 udp_primitive
+        /* This is the syntax for primitives that uses the IEEE1364-1995
+	   format. The ports are simply names in the port list, and the
+	   declarations are in the body. */
+
 	: K_primitive IDENTIFIER '(' udp_port_list ')' ';'
 	    udp_port_decls
 	    udp_init_opt
 	    udp_body
 	  K_endprimitive
+
 		{ perm_string tmp2 = lex_strings.make($2);
 		  pform_make_udp(tmp2, $4, $7, $9, $8,
 				 @2.text, @2.first_line);
 		  delete[]$2;
+		}
+
+        /* This is the syntax for IEEE1364-2001 format definitions. The port
+	   names and declarations are all in the parameter list. */
+
+	| K_primitive IDENTIFIER
+	    '(' K_output udp_reg_opt IDENTIFIER udp_initial_expr_opt ','
+	    udp_input_declaration_list ')' ';'
+	    udp_body
+	  K_endprimitive
+
+		{ perm_string tmp2 = lex_strings.make($2);
+		  perm_string tmp6 = lex_strings.make($6);
+		  pform_make_udp(tmp2, $5, tmp6, $7, $9, $12,
+				 @2.text, @2.first_line);
+		  delete[]$2;
+		  delete[]$6;
 		}
 	;

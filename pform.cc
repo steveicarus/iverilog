@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.123 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: pform.cc,v 1.124 2004/03/08 00:10:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -323,6 +323,73 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       return res;
 }
 
+static void process_udp_table(PUdp*udp, list<string>*table,
+			      const char*file, unsigned lineno)
+{
+      const bool synchronous_flag = udp->sequential;
+
+	/* Interpret and check the table entry strings, to make sure
+	   they correspond to the inputs, output and output type. Make
+	   up vectors for the fully interpreted result that can be
+	   placed in the PUdp object.
+
+	   The table strings are made up by the parser to be two or
+	   three substrings seperated by ';', i.e.:
+
+	   0101:1:1  (synchronous device entry)
+	   0101:0    (combinational device entry)
+
+	   The parser doesn't check that we got the right kind here,
+	   so this loop must watch out. */
+      svector<string> input   (table->size());
+      svector<char>   current (table->size());
+      svector<char>   output  (table->size());
+      { unsigned idx = 0;
+        for (list<string>::iterator cur = table->begin()
+		   ; cur != table->end()
+		   ; cur ++, idx += 1) {
+	      string tmp = *cur;
+
+		/* Pull the input values from the string. */
+	      assert(tmp.find(':') == (udp->ports.count() - 1));
+	      input[idx] = tmp.substr(0, udp->ports.count()-1);
+	      tmp = tmp.substr(udp->ports.count()-1);
+
+	      assert(tmp[0] == ':');
+
+		/* If this is a synchronous device, get the current
+		   output string. */
+	      if (synchronous_flag) {
+		    if (tmp.size() != 4) {
+			  cerr << file<<":"<<lineno << ": error: "
+			       << "Invalid table format for"
+			       << " sequential primitive." << endl;
+			  error_count += 1;
+			  break;
+		    }
+		    assert(tmp.size() == 4);
+		    current[idx] = tmp[1];
+		    tmp = tmp.substr(2);
+
+	      } else if (tmp.size() != 2) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Invalid table format for"
+		       << " combinational primitive." << endl;
+		  error_count += 1;
+		  break;
+	      }
+
+		/* Finally, extract the desired output. */
+	      assert(tmp.size() == 2);
+	      output[idx] = tmp[1];
+	}
+      }
+
+      udp->tinput   = input;
+      udp->tcurrent = current;
+      udp->toutput  = output;
+}
+
 void pform_make_udp(perm_string name, list<string>*parms,
 		    svector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr,
@@ -462,66 +529,6 @@ void pform_make_udp(perm_string name, list<string>*parms,
 	    return;
       }
 
-      bool synchronous_flag = pins[0]->get_wire_type() == NetNet::REG;
-
-	/* Interpret and check the table entry strings, to make sure
-	   they correspond to the inputs, output and output type. Make
-	   up vectors for the fully interpreted result that can be
-	   placed in the PUdp object.
-
-	   The table strings are made up by the parser to be two or
-	   three substrings seperated by ';', i.e.:
-
-	   0101:1:1  (synchronous device entry)
-	   0101:0    (combinational device entry)
-
-	   The parser doesn't check that we got the right kind here,
-	   so this loop must watch out. */
-      svector<string> input   (table->size());
-      svector<char>   current (table->size());
-      svector<char>   output  (table->size());
-      { unsigned idx = 0;
-        for (list<string>::iterator cur = table->begin()
-		   ; cur != table->end()
-		   ; cur ++, idx += 1) {
-	      string tmp = *cur;
-
-		/* Pull the input values from the string. */
-	      assert(tmp.find(':') == (pins.count() - 1));
-	      input[idx] = tmp.substr(0, pins.count()-1);
-	      tmp = tmp.substr(pins.count()-1);
-
-	      assert(tmp[0] == ':');
-
-		/* If this is a synchronous device, get the current
-		   output string. */
-	      if (synchronous_flag) {
-		    if (tmp.size() != 4) {
-			  cerr << file<<":"<<lineno << ": error: "
-			       << "Invalid table format for"
-			       << " sequential primitive." << endl;
-			  error_count += 1;
-			  local_errors += 1;
-			  break;
-		    }
-		    assert(tmp.size() == 4);
-		    current[idx] = tmp[1];
-		    tmp = tmp.substr(2);
-
-	      } else if (tmp.size() != 2) {
-		  cerr << file<<":"<<lineno << ": error: "
-		       << "Invalid table format for"
-		       << " combinational primitive." << endl;
-		  error_count += 1;
-		  local_errors += 1;
-		  break;
-	      }
-
-		/* Finally, extract the desired output. */
-	      assert(tmp.size() == 2);
-	      output[idx] = tmp[1];
-	}
-      }
 
 	/* Verify the "initial" statement, if present, to be sure that
 	   it only assigns to the output and the output is
@@ -561,9 +568,7 @@ void pform_make_udp(perm_string name, list<string>*parms,
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->path().peek_name(0);
 
-	    udp->tinput   = input;
-	    udp->tcurrent = current;
-	    udp->toutput  = output;
+	    process_udp_table(udp, table, file, lineno);
 	    udp->initial  = init;
 
 	    pform_primitives[name] = udp;
@@ -573,6 +578,87 @@ void pform_make_udp(perm_string name, list<string>*parms,
 	/* Delete the excess tables and lists from the parser. */
       delete parms;
       delete decl;
+      delete table;
+      delete init_expr;
+}
+
+void pform_make_udp(perm_string name, bool synchronous_flag,
+		    perm_string out_name, PExpr*init_expr,
+		    list<perm_string>*parms, list<string>*table,
+		    const char*file, unsigned lineno)
+{
+
+      svector<PWire*> pins(parms->size() + 1);
+
+	/* Make the PWire for the output port. */
+      pins[0] = new PWire(hier_name(out_name),
+			  synchronous_flag? NetNet::REG : NetNet::WIRE,
+			  NetNet::POUTPUT);
+      pins[0]->set_file(file);
+      pins[0]->set_lineno(lineno);
+
+	/* Make the PWire objects for the input ports. */
+      { list<perm_string>::iterator cur;
+        unsigned idx;
+        for (cur = parms->begin(), idx = 1
+		   ;  cur != parms->end()
+		   ;  idx += 1, cur++) {
+	      assert(idx < pins.count());
+	      pins[idx] = new PWire(hier_name(*cur),
+				    NetNet::WIRE,
+				    NetNet::PINPUT);
+	      pins[idx]->set_file(file);
+	      pins[idx]->set_lineno(lineno);
+	}
+	assert(idx == pins.count());
+      }
+
+	/* Verify the initial expression, if present, to be sure that
+	   it only assigns to the output and the output is
+	   registered. Then save the initial value that I get. */
+      verinum::V init = verinum::Vx;
+      if (init_expr) {
+	      // XXXX
+	    assert(pins[0]->get_wire_type() == NetNet::REG);
+
+	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
+	    assert(pa);
+
+	    const PEIdent*id = dynamic_cast<const PEIdent*>(pa->lval());
+	    assert(id);
+
+	      // XXXX
+	      //assert(id->name() == pins[0]->name());
+
+	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
+	    assert(np);
+
+	    init = np->value()[0];
+      }
+
+	// Put the primitive into the primitives table
+      if (pform_primitives[name]) {
+	    VLerror("UDP primitive already exists.");
+
+      } else {
+	    PUdp*udp = new PUdp(name, pins.count());
+
+	      // Detect sequential udp.
+	    udp->sequential = synchronous_flag;
+
+	      // Make the port list for the UDP
+	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
+		  udp->ports[idx] = pins[idx]->path().peek_name(0);
+
+	    assert(udp);
+	    assert(table);
+	    process_udp_table(udp, table, file, lineno);
+	    udp->initial  = init;
+
+	    pform_primitives[name] = udp;
+      }
+
+      delete parms;
       delete table;
       delete init_expr;
 }
@@ -1519,6 +1605,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.124  2004/03/08 00:10:30  steve
+ *  Verilog2001 new style port declartions for primitives.
+ *
  * Revision 1.123  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.298 2004/03/07 20:04:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.299 2004/03/08 00:10:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -792,6 +792,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       }
 
 
+      assert(udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
       net->rise_time(rise_time);
       net->fall_time(fall_time);
@@ -807,10 +808,31 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
       delete[]attrib_list;
 
+	/* Handle the output port of the primitive special. It is an
+	   output port (the only output port) so must be passed an
+	   l-value net. */
+      if (pin(0) == 0) {
+	    cerr << get_line() << ": warning: output port unconnected."
+		 << endl;
+
+      } else {
+	    NetNet*sig = pin(0)->elaborate_lnet(des, scope, true);
+	    if (sig == 0) {
+		  cerr << get_line() << ": error: "
+		       << "Output port expression is not valid." << endl;
+		  cerr << get_line() << ":      : Output "
+		       << "port of " << udp->name_
+		       << " is " << udp->ports[0] << "." << endl;
+		  des->errors += 1;
+	    } else {
+		  connect(sig->pin(0), net->pin(0));
+	    }
+      }
+
 	/* Run through the pins, making netlists for the pin
 	   expressions and connecting them to the pin in question. All
 	   of this is independent of the nature of the UDP. */
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
 	    if (pin(idx) == 0)
 		  continue;
 
@@ -856,6 +878,7 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 	// Try a primitive type
       map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end()) {
+	    assert((*udp).second);
 	    elaborate_udp_(des, (*udp).second, scope);
 	    return;
       }
@@ -2584,6 +2607,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.299  2004/03/08 00:10:29  steve
+ *  Verilog2001 new style port declartions for primitives.
+ *
  * Revision 1.298  2004/03/07 20:04:10  steve
  *  MOre thorough use of elab_and_eval function.
  *

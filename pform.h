@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.76 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: pform.h,v 1.77 2004/03/08 00:10:30 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -140,6 +140,13 @@ extern void pform_endmodule(const char*);
 extern void pform_make_udp(perm_string name, list<string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
+			   const char*file, unsigned lineno);
+
+extern void pform_make_udp(perm_string name,
+			   bool sync_flag, perm_string out_name,
+			   PExpr*sync_init,
+			   list<perm_string>*parms,
+			   list<string>*table,
 			   const char*file, unsigned lineno);
 
 /*
@@ -283,6 +290,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.77  2004/03/08 00:10:30  steve
+ *  Verilog2001 new style port declartions for primitives.
+ *
  * Revision 1.76  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *
