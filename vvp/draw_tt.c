@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.4 2001/04/01 21:31:46 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.5 2001/04/15 16:37:48 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -188,6 +188,70 @@ static void draw_OR(void)
       printf("};\n");
 }
 
+static void draw_XNOR(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_XNOR[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+
+			      if ((i0 > 1) || (i1 > 1)
+				  || (i2 > 1) || (i3 > 1))
+				    val = 2;
+			      else
+				    val = (i0 + i1 + i2 + i3) % 2 ^ 1;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_XOR(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_XOR[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+
+			      if ((i0 > 1) || (i1 > 1)
+				  || (i2 > 1) || (i3 > 1))
+				    val = 2;
+			      else
+				    val = (i0 + i1 + i2 + i3) % 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
 /*
  * The hex_digits table is not a functor truth table per say, but a
  * map of a 4-vbit value to a hex digit. The table handles the display
@@ -293,6 +357,8 @@ main()
       draw_NOR();
       draw_NOT();
       draw_OR();
+      draw_XNOR();
+      draw_XOR();
       draw_hex_table();
       draw_oct_table();
       return 0;
@@ -300,6 +366,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.5  2001/04/15 16:37:48  steve
+ *  add XOR support.
+ *
  * Revision 1.4  2001/04/01 21:31:46  steve
  *  Add the buf functor type.
  *

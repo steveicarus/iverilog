@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.15 2001/04/14 05:11:49 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.16 2001/04/15 16:37:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -140,6 +140,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_OR:
 	    ltype = "OR";
+	    break;
+
+	  case IVL_LO_XOR:
+	    ltype = "XOR";
 	    break;
 
 	  default:
@@ -302,6 +306,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.16  2001/04/15 16:37:48  steve
+ *  add XOR support.
+ *
  * Revision 1.15  2001/04/14 05:11:49  steve
  *  Use event/or for wide anyedge statements.
  *

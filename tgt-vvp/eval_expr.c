@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.15 2001/04/15 04:07:56 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.16 2001/04/15 16:37:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -291,6 +291,11 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 		    lv.base, rv.base, wid);
 	    break;
 
+	  case '^':
+	    fprintf(vvp_out, "   %%xor %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
 	  case 'X': /* exclusive nor (~^) */
 	    fprintf(vvp_out, "    %%xnor %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
@@ -355,6 +360,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '&':
 	  case '|':
+	  case '^':
 	  case 'X':
 	    rv = draw_binary_expr_logic(exp, wid);
 	    break;
@@ -663,6 +669,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.16  2001/04/15 16:37:48  steve
+ *  add XOR support.
+ *
  * Revision 1.15  2001/04/15 04:07:56  steve
  *  Add support for behavioral xnor.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.11 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: functor.h,v 1.12 2001/04/15 16:37:48 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -172,10 +172,14 @@ extern const unsigned char ft_BUF[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
 extern const unsigned char ft_OR[];
+extern const unsigned char ft_XOR[];
 extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.12  2001/04/15 16:37:48  steve
+ *  add XOR support.
+ *
  * Revision 1.11  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *
@@ -193,21 +197,5 @@ extern const unsigned char ft_var[];
  *
  * Revision 1.6  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.5  2001/03/25 19:38:23  steve
- *  Support NOR and NOT gates.
- *
- * Revision 1.4  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.3  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 #endif

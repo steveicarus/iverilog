@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.12 2001/04/15 04:07:56 steve Exp $
+ *  $Id: opcodes.txt,v 1.13 2001/04/15 16:37:48 steve Exp $
  */
 
 
@@ -202,6 +202,19 @@ and leaves the result in the <dst> vector. xnor is this:
 	1 xnor 0 --> 0
 	1 xnor 1 --> 1
 	otherwise    x
+
+
+* %xor <dst>, <src>, <wid>
+
+This does a bitwise exclusive or (^) of the <src> and <dst> vector,
+and leaves the result in the <dst> vector. xor is this:
+
+	0 xnor 0 --> 0
+	0 xnor 1 --> 1
+	1 xnor 0 --> 1
+	1 xnor 1 --> 0
+	otherwise    x
+
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

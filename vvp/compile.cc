@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.33 2001/04/15 04:07:56 steve Exp $"
+#ident "$Id: compile.cc,v 1.34 2001/04/15 16:37:48 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -89,6 +89,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%xor",    of_XOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
@@ -266,6 +267,9 @@ void compile_functor(char*label, char*type, unsigned init,
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj->table = ft_NOT;
+
+      } else if (strcmp(type, "XOR") == 0) {
+	    obj->table = ft_XOR;
 
       } else {
 	    yyerror("invalid functor type.");
@@ -759,6 +763,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.34  2001/04/15 16:37:48  steve
+ *  add XOR support.
+ *
  * Revision 1.33  2001/04/15 04:07:56  steve
  *  Add support for behavioral xnor.
  *
