@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.5 2001/04/28 20:06:07 steve Exp $"
+#ident "$Id: vvp.c,v 1.6 2001/05/14 00:55:31 steve Exp $"
 #endif
 
 /*
@@ -52,6 +52,7 @@ inline static void draw_module_declarations(ivl_design_t des)
 	    fprintf(vvp_out, ":vpi_module \"%s\";\n", buffer);
 
 	    cp = comma;
+	    if (*cp) cp += 1;
       }
 }
 
