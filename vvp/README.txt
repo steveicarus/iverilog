@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.42 2003/02/09 23:33:26 steve Exp $
+ *  $Id: README.txt,v 1.43 2003/03/10 23:37:07 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -88,6 +88,36 @@ to reference a functor other then the first in the vector.
 There are some special symbols that in certain contexts have special
 meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
 and "C<z>" represent a constant driver of the given value.
+
+
+SCOPE STATEMENTS:
+
+
+PARAMETER STATEMENTS:
+
+Parameters are named constants within a scope. These parameters have a
+type and value, and also a label so that they can be referenced as VPI
+objects.
+
+The syntax of a parameter is:
+
+	<label> .param <name>, <type>, <value>;
+
+The <name> is a string that names the parameter. The name is placed in
+the current scope as a vpiParameter object. The <type> is one of the
+following:
+
+	real          -- The parameter has a real value
+	string        -- The parameter has a string value
+	[<msb>,<lsb>,<s>]
+		      -- The parameter is a vector, with specified
+		         indices. The <s> is s or u for signed or
+			 unsigned.
+
+The value, then, is appropriate for the data type. For example:
+
+	P_123 .param "hello", string, "Hello, World.";
+
 
 FUNCTOR STATEMENTS:
 

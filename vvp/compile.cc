@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.155 2003/02/27 20:36:29 steve Exp $"
+#ident "$Id: compile.cc,v 1.156 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1519,8 +1519,23 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       free(argv);
 }
 
+void compile_param_string(char*label, char*name, char*str, char*value)
+{
+      assert(strcmp(str,"string") == 0);
+      free(str);
+
+      vpiHandle obj = vpip_make_string_param(name, value);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
+
+      free(label);
+}
+
 /*
  * $Log: compile.cc,v $
+ * Revision 1.156  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.155  2003/02/27 20:36:29  steve
  *  Add the cvt/vr instruction.
  *
@@ -1543,55 +1558,5 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
  * Revision 1.149  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.148  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.147  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.146  2002/11/21 22:43:13  steve
- *  %set/x0 instruction to support bounds checking.
- *
- * Revision 1.145  2002/11/08 04:59:58  steve
- *  Add the %assign/v0 instruction.
- *
- * Revision 1.144  2002/11/07 02:32:39  steve
- *  Add vector set and load instructions.
- *
- * Revision 1.143  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.142  2002/09/18 02:55:18  steve
- *  Allow forward references of memories.
- *
- * Revision 1.141  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.140  2002/08/28 18:38:07  steve
- *  Add the %subi instruction, and use it where possible.
- *
- * Revision 1.139  2002/08/28 17:15:06  steve
- *  Add the %load/nx opcode to index vpi nets.
- *
- * Revision 1.138  2002/08/22 03:38:40  steve
- *  Fix behavioral eval of x?a:b expressions.
- *
- * Revision 1.137  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.136  2002/07/15 00:21:42  steve
- *  Fix initialization of symbol table string heap.
- *
- * Revision 1.135  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.134  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
  */
 

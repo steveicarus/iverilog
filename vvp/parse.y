@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.51 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: parse.y,v 1.52 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -59,7 +59,7 @@ extern FILE*yyin;
 
 %token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_GE K_CMP_GT
-%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
+%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
@@ -339,6 +339,12 @@ statement
 	| T_LABEL K_NET_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
 
+  /* Parameter statements come in a few simple forms. The most basic
+     is the string parameter. */
+
+	| T_LABEL K_PARAM T_STRING ',' T_SYMBOL ',' T_STRING ';'
+		{ compile_param_string($1, $3, $5, $7); }
+
   /* Oh and by the way, empty statements are OK as well. */
 
 	| ';'
@@ -569,6 +575,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.52  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.51  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.38 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.39 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -95,6 +95,7 @@
 ".functor"  { return K_FUNCTOR; }
 ".net"      { return K_NET; }
 ".net/s"    { return K_NET_S; }
+".param"    { return K_PARAM; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
@@ -176,6 +177,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.39  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.38  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.23 2003/03/10 19:14:27 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.24 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -64,7 +64,8 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
       char *cp;
 
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
+      assert((ref->vpi_type->type_code == vpiConstant)
+	     || ((ref->vpi_type->type_code == vpiParameter)));
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -197,6 +198,51 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
       return &obj->base;
 }
 
+    
+struct __vpiStringParam  : public __vpiStringConst {
+      const char*basename;
+};
+
+static char* string_param_get_str(int code, vpiHandle obj)
+{
+      struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      switch (code) {
+	  case vpiName:
+	    return const_cast<char*>(rfp->basename);
+	  default:
+	    return 0;
+      }
+}
+
+static const struct __vpirt vpip_string_param_rt = {
+      vpiParameter,
+      string_get,
+      string_param_get_str,
+      string_value,
+      0,
+
+      0,
+      0,
+      0,
+
+      0
+};
+
+
+vpiHandle vpip_make_string_param(char*name, char*text)
+{
+      struct __vpiStringParam*obj;
+
+      obj = (struct __vpiStringParam*)
+	    malloc(sizeof (struct __vpiStringParam));
+      obj->base.vpi_type = &vpip_string_param_rt;
+      obj->value = text;
+      obj->basename = name;
+
+      return &obj->base;
+}
 
 static int binary_get(int code, vpiHandle ref)
 {
@@ -585,6 +631,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.24  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.23  2003/03/10 19:14:27  steve
  *  More carful about shifting beyond word size.
  *
@@ -602,56 +651,5 @@ vpiHandle vpip_make_dec_const(int value)
  *
  * Revision 1.18  2002/06/23 18:23:09  steve
  *  trivial performance boost.
- *
- * Revision 1.17  2002/06/14 22:05:28  steve
- *  sign extend signed vectors vpiIntVal.
- *
- * Revision 1.16  2002/05/17 04:12:19  steve
- *  Rewire vpiMemory and vpiMemoryWord handles to
- *  support proper iteration of words, and the
- *  vpiIndex value.
- *
- * Revision 1.15  2002/04/27 23:26:24  steve
- *  Trim leading nulls from string forms.
- *
- * Revision 1.14  2002/04/27 22:36:39  steve
- *  Support drawing vpiBinaryConst in hex.
- *
- * Revision 1.13  2002/04/14 03:53:20  steve
- *  Allow signed constant vectors for call_vpi parameters.
- *
- * Revision 1.12  2002/03/18 05:33:24  steve
- *  vpip_bits_to_dec_str takes a bit array in a specific format.
- *
- * Revision 1.11  2002/02/03 01:01:51  steve
- *  Use Larrys bits-to-decimal-string code.
- *
- * Revision 1.10  2002/01/31 04:28:17  steve
- *  Full support for $readmem ranges (Tom Verbeure)
- *
- * Revision 1.8  2002/01/15 03:21:18  steve
- *  Support DesSTrVal for binary constants.
- *
- * Revision 1.7  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.6  2001/08/08 00:57:20  steve
- *  Unused variable warnings.
- *
- * Revision 1.5  2001/07/11 04:40:52  steve
- *  Get endian of vpiIntVal from constants.
- *
- * Revision 1.4  2001/04/04 05:07:19  steve
- *  Get intval from a binary constant.
- *
- * Revision 1.3  2001/04/04 04:33:08  steve
- *  Take vector form as parameters to vpi_call.
- *
- * Revision 1.2  2001/04/02 00:24:31  steve
- *  Take numbers as system task parameters.
- *
- * Revision 1.1  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
  */
 

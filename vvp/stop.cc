@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.5 2003/03/08 20:59:41 steve Exp $"
+#ident "$Id: stop.cc,v 1.6 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 /*
@@ -96,7 +96,7 @@ static void cmd_call(unsigned argc, char*argv[])
 
 	    for (unsigned tmp = 0 ;  (tmp < ntable)&& !handle ;  tmp += 1) {
 		  struct __vpiScope*scope;
-		  struct __vpiSignal*sig;
+		  const char*name;
 
 		  switch (table[tmp]->vpi_type->type_code) {
 
@@ -112,11 +112,11 @@ static void cmd_call(unsigned argc, char*argv[])
 
 		      case vpiReg:
 		      case vpiNet:
-			sig = (struct __vpiSignal*) table[tmp];
-			if (strcmp(sig->name, argv[idx+1]) == 0)
+		      case vpiParameter:
+			name = vpi_get_str(vpiName,table[tmp]);
+			if (strcmp(argv[idx+1], name) == 0)
 			      handle = table[tmp];
 			break;
-
 		  }
 	    }
 
@@ -193,6 +193,10 @@ static void cmd_list(unsigned, char*[])
 		case vpiModule:
 		  scope = (struct __vpiScope*) table[idx];
 		  printf("module  : %s\n", scope->name);
+		  break;
+
+		case vpiParameter:
+		  printf("param   : %s\n", vpi_get_str(vpiName, table[idx]));
 		  break;
 
 		case vpiReg:
@@ -416,6 +420,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.6  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.5  2003/03/08 20:59:41  steve
  *  Missing include ctype.h.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.51 2003/03/06 04:32:00 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.52 2003/03/10 23:37:07 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -273,6 +273,7 @@ struct __vpiStringConst {
 };
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
+vpiHandle vpip_make_string_param(char*name, char*value);
 
 struct __vpiBinaryConst {
       struct __vpiHandle base;
@@ -412,6 +413,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.52  2003/03/10 23:37:07  steve
+ *  Direct support for string parameters.
+ *
  * Revision 1.51  2003/03/06 04:32:00  steve
  *  Use hashed name strings for identifiers.
  *
