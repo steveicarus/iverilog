@@ -307,6 +307,9 @@ constructs.
 
   - trireg is not supported. tri0 and tri1 are supported.
 
+  - tran primitives, i.e. tran, tranif1, tranif0, rtran, rtranif1
+    and rtranif0 are not supported.
+
   - Module instance arrays are not supported, although gate instance
     arrays do work.
 
