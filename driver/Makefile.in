@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 2000/10/08 22:36:56 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 2000/11/09 21:58:00 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -71,7 +71,7 @@ main.o: main.c globals.h
 
 build_string.o: build_string.c globals.h
 lexor.o: lexor.c parse.h globals.h
-parse.o: parse.c
+parse.o: parse.c globals.h
 
 
 install: all installdirs $(bindir)/iverilog@EXEEXT@ $(mandir)/man1/iverilog.1

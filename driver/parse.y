@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.1 2000/10/08 22:36:56 steve Exp $"
+#ident "$Id: parse.y,v 1.2 2000/11/09 21:58:00 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -94,6 +94,10 @@ const char*lookup_pattern(const char*key)
 	    for (cc = cur->cond ;  cc ;  cc = cc->next) {
 
 		  switch (cc->code) {
+		      case CODE_S:
+			if (synth_flag)
+			      continue;
+			break;
 		      case CODE_t:
 			if (strcmp(targ, cc->text) == 0)
 			      continue;

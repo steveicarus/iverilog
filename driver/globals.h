@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.2 2000/10/28 03:45:47 steve Exp $"
+#ident "$Id: globals.h,v 1.3 2000/11/09 21:58:00 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -45,6 +45,9 @@ extern const char*opath;
   /* This pointer is set if there was a -s<value> parameter. */
 extern const char*start;
 
+  /* This flag is true if the -S flag was used on the command line. */
+extern int synth_flag;
+
   /* This is the name of the selected target. */
 extern const char*targ;
 
@@ -56,6 +59,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.3  2000/11/09 21:58:00  steve
+ *  Remember to include the -S condition.
+ *
  * Revision 1.2  2000/10/28 03:45:47  steve
  *  Use the conf file to generate the vvm ivl string.
  *
