@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.29 2003/03/12 02:50:32 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.30 2003/04/19 23:32:57 steve Exp $"
 #endif
 
 /*
@@ -342,11 +342,12 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
  * callbacks.
  */
 
+static struct __vpiCallback*NextSimTime = 0;
 static struct __vpiCallback*EndOfCompile = NULL;
 static struct __vpiCallback*StartOfSimulation = NULL;
 static struct __vpiCallback*EndOfSimulation = NULL;
 
-void vpiPresim() {
+void vpiPresim(void) {
       struct __vpiCallback* cur;
 
       /*
@@ -373,7 +374,7 @@ void vpiPresim() {
       vpi_mode_flag = VPI_MODE_NONE;
 }
 
-void vpiPostsim() {
+void vpiPostsim(void) {
       struct __vpiCallback* cur;
 
       /*
@@ -392,6 +393,23 @@ void vpiPostsim() {
       vpi_mode_flag = VPI_MODE_NONE;
 }
 
+/*
+ * The scheduler invokes this to clear out callbacks for the next
+ * simulation time.
+ */
+void vpiNextSimTime(void)
+{
+      struct __vpiCallback* cur;
+
+      while (NextSimTime) {
+	    cur = NextSimTime;
+	    NextSimTime = cur->next;
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpi_free_object(&cur->base);
+      }
+
+}
+
 static struct __vpiCallback* make_prepost(p_cb_data data)
 {
       struct __vpiCallback*obj = new_vpi_callback();
@@ -400,17 +418,20 @@ static struct __vpiCallback* make_prepost(p_cb_data data)
       /* Insert at head of list */
       switch (data->reason) {
 	  case cbEndOfCompile:
-	      obj->next = EndOfCompile;
-	      EndOfCompile = obj;
-	  break;
+	    obj->next = EndOfCompile;
+	    EndOfCompile = obj;
+	    break;
 	  case cbStartOfSimulation:
-	      obj->next = StartOfSimulation;
-	      StartOfSimulation = obj;
-	  break;
+	    obj->next = StartOfSimulation;
+	    StartOfSimulation = obj;
+	    break;
 	  case cbEndOfSimulation:
-	      obj->next = EndOfSimulation;
-	      EndOfSimulation = obj;
-	  break;
+	    obj->next = EndOfSimulation;
+	    EndOfSimulation = obj;
+	    break;
+	  case cbNextSimTime:
+	    obj->next = NextSimTime;
+	    NextSimTime = obj;
       }
 
       return obj;
@@ -442,6 +463,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	  case cbEndOfCompile:
 	  case cbStartOfSimulation:
 	  case cbEndOfSimulation:
+	  case cbNextSimTime:
 	    obj = make_prepost(data);
 	    break;
 
@@ -538,6 +560,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.30  2003/04/19 23:32:57  steve
+ *  Add support for cbNextSimTime.
+ *
  * Revision 1.29  2003/03/12 02:50:32  steve
  *  Add VPI tracing.
  *

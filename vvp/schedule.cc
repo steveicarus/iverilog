@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.24 2003/02/22 02:52:06 steve Exp $"
+#ident "$Id: schedule.cc,v 1.25 2003/04/19 23:32:57 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -358,6 +358,7 @@ vvp_time64_t schedule_simtime(void)
 
 extern void vpiPresim();
 extern void vpiPostsim();
+extern void vpiNextSimTime(void);
 
 void schedule_simulate(void)
 {
@@ -402,7 +403,8 @@ void schedule_simulate(void)
 
 
 		  schedule_time += cur->delay;
-		    //printf("TIME: %u\n", schedule_time);
+
+		  vpiNextSimTime();
 	    }
 
 	    switch (cur->type) {
@@ -479,6 +481,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.25  2003/04/19 23:32:57  steve
+ *  Add support for cbNextSimTime.
+ *
  * Revision 1.24  2003/02/22 02:52:06  steve
  *  Check for stopped flag in certain strategic points.
  *
