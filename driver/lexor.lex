@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.3 2000/12/14 23:36:59 steve Exp $"
+#ident "$Id: lexor.lex,v 1.4 2000/12/15 02:00:11 steve Exp $"
 #endif
 
 # include  <string.h>
@@ -56,6 +56,10 @@
 
 <PATTERN>.* {
       BEGIN(0);
+	/* Trim off a trailing \r. This is an issue in the DOS world. */
+      if (yytext[strlen(yytext)-1] == '\r')
+	    yytext[strlen(yytext)-1] = 0;
+
       yylval.text = strdup(yytext);
       return PATTERN_TEXT; }
 
