@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.14 2001/01/01 08:10:35 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.15 2001/01/22 20:58:31 steve Exp $"
 #endif
 
 /*
@@ -216,6 +216,41 @@ static int sys_dumpall_calltf(char*name)
       return 0;
 }
 
+static void open_dumpfile(const char*path)
+{
+      if (dump_file == 0) {
+	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
+	    return;
+      } else {
+	    int prec = vpi_get(vpiTimePrecision, 0);
+	    unsigned scale = 1;
+	    unsigned udx = 0;
+	    time_t walltime;
+
+	    time(&walltime);
+
+	    assert(prec >= -15);
+	    while (prec < 0) {
+		  udx += 1;
+		  prec += 3;
+	    }
+	    while (prec > 0) {
+		  scale *= 10;
+		  prec -= 1;
+	    }
+
+	    fprintf(dump_file, "$date\n");
+	    fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
+	    fprintf(dump_file, "$end\n");
+	    fprintf(dump_file, "$version\n");
+	    fprintf(dump_file, "\tIcarus Verilog\n");
+	    fprintf(dump_file, "$end\n");
+	    fprintf(dump_file, "$timescale\n");
+	    fprintf(dump_file, "\t%u%s\n", scale, units_names[udx]);
+	    fprintf(dump_file, "$end\n");
+      }
+}
+
 static int sys_dumpfile_calltf(char*name)
 {
       char*path;
@@ -248,38 +283,7 @@ static int sys_dumpfile_calltf(char*name)
       }
 
       assert(dump_file == 0);
-      dump_file = fopen(path, "w");
-      if (dump_file == 0) {
-	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
-	    return 0;
-      } else {
-	    int prec = vpi_get(vpiTimePrecision, 0);
-	    unsigned scale = 1;
-	    unsigned udx = 0;
-	    time_t walltime;
-
-	    time(&walltime);
-
-	    assert(prec >= -15);
-	    while (prec < 0) {
-		  udx += 1;
-		  prec += 3;
-	    }
-	    while (prec > 0) {
-		  scale *= 10;
-		  prec -= 1;
-	    }
-
-	    fprintf(dump_file, "$date\n");
-	    fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
-	    fprintf(dump_file, "$end\n");
-	    fprintf(dump_file, "$version\n");
-	    fprintf(dump_file, "\tIcarus Verilog\n");
-	    fprintf(dump_file, "$end\n");
-	    fprintf(dump_file, "$timescale\n");
-	    fprintf(dump_file, "\t%u%s\n", scale, units_names[udx]);
-	    fprintf(dump_file, "$end\n");
-      }
+      open_dumpfile(path);
 
       free(path);
 
@@ -367,8 +371,14 @@ static int sys_dumpvars_calltf(char*name)
       }
 
       if (dump_file == 0) {
-	    vpi_printf("ERROR: %s called but no dumpfile is opened.\n", name);
-	    return 0;
+	    vpi_printf("warning: %s caused default dumpfile "
+		       "dumpfile.vcd to be opened.\n", name);
+	    open_dumpfile("dumpfile.vcd");
+	    if (dump_file == 0) {
+		  vpi_printf("error: Unable to open "
+			     "dumpfile.vcd for output.\n");
+		  return 0;
+	    }
       }
 
       item = vpi_scan(argv);
@@ -432,6 +442,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.15  2001/01/22 20:58:31  steve
+ *  Support default dumpfiles.
+ *
  * Revision 1.14  2001/01/01 08:10:35  steve
  *  Handle function scopes in dumpvars scn (PR#95)
  *
