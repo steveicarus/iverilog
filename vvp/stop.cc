@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.4 2003/02/24 06:35:45 steve Exp $"
+#ident "$Id: stop.cc,v 1.5 2003/03/08 20:59:41 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,7 @@
 # include  "vthread.h"
 # include  "schedule.h"
 # include  <stdio.h>
+# include  <ctype.h>
 #ifdef HAVE_LIBREADLINE
 # include  <readline/readline.h>
 # include  <readline/history.h>
@@ -415,6 +416,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.5  2003/03/08 20:59:41  steve
+ *  Missing include ctype.h.
+ *
  * Revision 1.4  2003/02/24 06:35:45  steve
  *  Interactive task calls take string arguments.
  *
