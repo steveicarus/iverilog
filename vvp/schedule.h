@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: schedule.h,v 1.3 2001/03/19 01:55:38 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -47,12 +47,29 @@ extern void schedule_assign(vvp_ipoint_t fun, unsigned char val,
 			    unsigned delay);
 
 /*
- * This runs the simulator. It runs until all the functors run out.
+ * This runs the simulator. It runs until all the functors run out or
+ * the simulation is otherwise finished.
  */
 extern void schedule_simulate(void);
 
 /*
+ * This function is the equivilent of the $finish system task. It
+ * tells the simulator that simulation is done, the current thread
+ * should be stopped, all remaining events abandoned and the
+ * schedule_simulate() function will return.
+ *
+ * The schedule_finished() function will return true if the
+ * schedule_finish() function has been called.
+ */
+extern void schedule_finish(int rc);
+extern bool schedule_finished(void);
+
+
+/*
  * $Log: schedule.h,v $
+ * Revision 1.3  2001/03/19 01:55:38  steve
+ *  Add support for the vpiReset sim control.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

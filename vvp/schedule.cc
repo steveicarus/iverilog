@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: schedule.cc,v 1.3 2001/03/19 01:55:38 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -43,7 +43,26 @@ const unsigned TYPE_THREAD = 0;
 const unsigned TYPE_PROP   = 1;
 const unsigned TYPE_ASSIGN = 2;
 
+/*
+ * This is the head of the list of pending events.
+ */
 static struct event_s* list = 0;
+
+/*
+ * This flag is true until a VPI task or function finishes the
+ * simulation.
+ */
+static bool schedule_runnable = true;
+
+void schedule_finish(int)
+{
+      schedule_runnable = false;
+}
+
+bool schedule_finished(void)
+{
+      return !schedule_runnable;
+}
 
 static void schedule_event_(struct event_s*cur)
 {
@@ -136,7 +155,7 @@ void schedule_simulate(void)
 {
       schedule_time = 0;
 
-      while (list) {
+      while (schedule_runnable && list) {
 
 	      /* Pull the first item off the list. Fixup the last
 		 pointer in the next cell, if necessary. */
@@ -148,7 +167,7 @@ void schedule_simulate(void)
 
 	    } else {
 		  schedule_time += cur->delay;
-		  printf("TIME: %u\n", schedule_time);
+		    //printf("TIME: %u\n", schedule_time);
 	    }
 
 	    switch (cur->type) {
@@ -157,7 +176,7 @@ void schedule_simulate(void)
 		  break;
 
 		case TYPE_PROP:
-		  printf("Propagate %p\n", cur->fun);
+		    //printf("Propagate %p\n", cur->fun);
 		  functor_propagate(cur->fun);
 		  break;
 
@@ -173,6 +192,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.3  2001/03/19 01:55:38  steve
+ *  Add support for the vpiReset sim control.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

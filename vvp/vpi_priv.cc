@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.2 2001/03/19 01:55:38 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
+# include  "schedule.h"
 # include  <stdio.h>
 # include  <stdarg.h>
 # include  <assert.h>
@@ -148,11 +149,21 @@ int vpi_remove_cb(vpiHandle ref)
 
 void vpi_sim_control(int operation, ...)
 {
-      assert(0);
+      switch (operation) {
+	  case vpiFinish:
+	    schedule_finish(0);
+	    break;
+
+	  default:
+	    assert(0);
+      }
 }
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.2  2001/03/19 01:55:38  steve
+ *  Add support for the vpiReset sim control.
+ *
  * Revision 1.1  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.
