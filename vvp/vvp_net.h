@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.15 2005/02/12 06:13:22 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.16 2005/02/13 05:26:30 steve Exp $"
 
 # include  <stdio.h>
 # include  <assert.h>
@@ -172,6 +172,8 @@ class vvp_scaler_t {
 
 	// Get the vvp_bit4_t version of the value
       vvp_bit4_t value() const;
+
+      bool is_hiz() const { return value_ == 0; }
 
       void dump(FILE*fd);
 
@@ -573,6 +575,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.16  2005/02/13 05:26:30  steve
+ *  tri0 and tri1 resolvers must replace HiZ with 0/1 after resolution.
+ *
  * Revision 1.15  2005/02/12 06:13:22  steve
  *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
  *

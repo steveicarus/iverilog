@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.20 2005/01/09 20:11:16 steve Exp $"
+#ident "$Id: resolv.cc,v 1.21 2005/02/13 05:26:30 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -77,12 +77,22 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 	    out = resolve(out, val_[idx]);
       }
 
+      if (! hiz_.is_hiz()) {
+	    for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+		  if (out.value(idx).is_hiz())
+			out.set_bit(idx, hiz_);
+	    }
+      }
+
       vvp_send_vec8(ptr->out, out);
 }
 
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.21  2005/02/13 05:26:30  steve
+ *  tri0 and tri1 resolvers must replace HiZ with 0/1 after resolution.
+ *
  * Revision 1.20  2005/01/09 20:11:16  steve
  *  Add the .part/pv node and related functionality.
  *
