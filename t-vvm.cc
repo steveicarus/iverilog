@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.47 1999/09/28 01:21:27 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.48 1999/09/28 01:53:37 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -127,28 +127,42 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_ufunc(const NetEUFunc*);
 };
 
+/*
+ * Handle the concatenation operator in a procedural r-value
+ * expression. Evaluate the concatenation into a temporary variable
+ * with the right width, and return the name of that temporary as the
+ * symbol that the context can use.
+ */
 void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 {
-      assert(expr->repeat() == 1);
+      assert(expr->repeat() > 0);
       string tname = make_temp();
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << "> " << tname << ";" << endl;
 
       unsigned pos = 0;
-      for (unsigned idx = 0 ;  idx < expr->nparms() ;  idx += 1) {
+      for (unsigned rep = 0 ;  rep < expr->repeat() ;  rep += 1)
+	    for (unsigned idx = 0 ;  idx < expr->nparms() ;  idx += 1) {
 
-	    NetExpr*pp = expr->parm(expr->nparms() - idx - 1);
-	    pp->expr_scan(this);
+		  NetExpr*pp = expr->parm(expr->nparms() - idx - 1);
+		  pp->expr_scan(this);
 
-	    for (unsigned bit = 0 ;  bit < pp->expr_width() ;  bit += 1) {
-		  os_ << setw(indent_) << "" << tname << "[" << pos <<
-			"] = " << result << "[" << bit << "];" <<
-			endl;
-		  pos+= 1;
+		  for (unsigned bit = 0 ; bit < pp->expr_width() ; bit += 1) {
+			os_ << setw(indent_) << "" << tname << "[" << pos <<
+			      "] = " << result << "[" << bit << "];" <<
+			      endl;
+			pos+= 1;
+		  }
+		  assert(pos <= expr->expr_width());
 	    }
-	    assert(pos <= expr->expr_width());
+
+	/* Check that the positions came out to the right number of
+	   bits. */
+      if (pos != expr->expr_width()) {
+	    os_ << "#error \"" << expr->get_line() << ": vvm eror: "
+		  "width is " << expr->expr_width() << ", but I count "
+		<< pos << " bits.\"" << endl;
       }
-      assert(pos == expr->expr_width());
 
       result = tname;
 }
@@ -1486,6 +1500,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.48  1999/09/28 01:53:37  steve
+ *  Generate code for repeat concatenations.
+ *
  * Revision 1.47  1999/09/28 01:21:27  steve
  *  Proper syntax for method pointers.
  *
