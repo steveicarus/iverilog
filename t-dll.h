@@ -19,14 +19,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.10 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: t-dll.h,v 1.11 2000/10/08 04:01:55 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
 
 struct ivl_design_s {
+
       ivl_scope_t root_;
+
+      ivl_process_t threads_;
+
       const Design*self;
 };
 
@@ -161,8 +165,26 @@ struct ivl_net_logic_s {
 };
 
 
+/*
+ * The ivl_nexus_t is a single-bit link of some number of pins of
+ * devices. the __nexus_ptr structure is a helper that actually does
+ * the pointing.
+ */
+struct __nexus_ptr {
+      unsigned pin_  :24;
+      unsigned type_ : 8;
+      union {
+	    ivl_signal_t    sig; /* type 0 */
+	    ivl_net_logic_t log; /* type 1 */
+      } l;
+};
+# define __NEXUS_PTR_SIG 0
+# define __NEXUS_PTR_LOG 1
+
 struct ivl_nexus_s {
-      const Nexus*self;
+      unsigned nptr_;
+      struct __nexus_ptr*ptrs_;
+      char*name_;
 };
 
 /*
@@ -172,6 +194,8 @@ struct ivl_nexus_s {
 struct ivl_process_s {
       ivl_process_type_t type_;
       ivl_statement_t stmt_;
+
+      ivl_process_t next_;
 };
 
 /*
@@ -183,6 +207,7 @@ struct ivl_process_s {
 struct ivl_scope_s {
       ivl_scope_t child_, sibling_;
 
+      char* name_;
       const NetScope*self;
 
       unsigned nsigs_;
@@ -205,6 +230,7 @@ struct ivl_signal_s {
       unsigned width_  :24;
       unsigned signed_ : 1;
 
+      char*name_;
       ivl_scope_t scope_;
 
       union {
@@ -272,6 +298,12 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.11  2000/10/08 04:01:55  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.10  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

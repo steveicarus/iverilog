@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.8 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.9 2000/10/08 04:01:54 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -63,17 +63,11 @@ bool dll_target::process(const NetProcTop*net)
       obj->stmt_ = stmt_cur_;
       stmt_cur_ = 0;
 
-      if (process_) {
-	    int rc = (process_)(obj);
-	    return rc == 0;
+	/* Save the process in the design. */
+      obj->next_ = des_.threads_;
+      des_.threads_ = obj;
 
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_process function." << endl;
-	    return false;
-      }
-
-      return false;
+      return true;
 }
 
 /*
@@ -275,6 +269,12 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.9  2000/10/08 04:01:54  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.8  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced

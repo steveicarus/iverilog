@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.17 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.18 2000/10/08 04:01:54 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -269,6 +269,14 @@ extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 
 extern const char* ivl_nexus_name(ivl_nexus_t net);
 
+
+/* SCOPE
+ * Scopes of various sort have these properties. Use these methods to
+ * access them.
+ */
+extern const char* ivl_scope_name(ivl_scope_t net);
+
+
 /* SIGNALS
  * Signals are named things in the Verilog source, like wires and
  * regs, and also named things that are preated as temporaries during
@@ -281,6 +289,9 @@ extern const char* ivl_nexus_name(ivl_nexus_t net);
 extern unsigned  ivl_signal_pins(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
+extern const char* ivl_signal_name(ivl_signal_t net);
+extern const char* ivl_signal_basename(ivl_signal_t net);
+
 
 /*
  * These functions get information about a process. A process is
@@ -442,6 +453,12 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.18  2000/10/08 04:01:54  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.17  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.12 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.13 2000/10/08 04:01:55 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -51,6 +51,41 @@ static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
       return 0;
 }
 
+static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
+{
+      ivl_nexus_t tmp = new struct ivl_nexus_s;
+      tmp->nptr_ = 1;
+      tmp->ptrs_ = (struct __nexus_ptr*) malloc(sizeof(struct __nexus_ptr));
+      tmp->ptrs_[0].pin_  = pin;
+      tmp->ptrs_[0].type_ = __NEXUS_PTR_SIG;
+      tmp->ptrs_[0].l.sig = net;
+      return tmp;
+}
+
+static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
+{
+      unsigned top = nex->nptr_ + 1;
+      nex->ptrs_ = (struct __nexus_ptr*)
+	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->nptr_ = top;
+
+      nex->ptrs_[top-1].type_= __NEXUS_PTR_SIG;
+      nex->ptrs_[top-1].pin_ = pin;
+      nex->ptrs_[top-1].l.sig= net;
+}
+
+static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
+{
+      unsigned top = nex->nptr_ + 1;
+      nex->ptrs_ = (struct __nexus_ptr*)
+	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->nptr_ = top;
+
+      nex->ptrs_[top-1].type_= __NEXUS_PTR_LOG;
+      nex->ptrs_[top-1].pin_ = pin;
+      nex->ptrs_[top-1].l.log= net;
+}
+
 void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 {
       if (scope->nlog_ == 0) {
@@ -80,7 +115,8 @@ bool dll_target::start_design(const Design*des)
 
 	// Initialize the design object.
       des_.self = des;
-      des_.root_ = (ivl_scope_t)calloc(1, sizeof(struct ivl_scope_s));
+      des_.root_ = new struct ivl_scope_s;
+      des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
       des_.root_->self = des->find_root_scope();
 
       start_design_ = (start_design_f)dlsym(dll_, LU "target_start_design" TU);
@@ -98,12 +134,34 @@ bool dll_target::start_design(const Design*des)
       return true;
 }
 
+/*
+ * Here ivl is telling us that the design is scanned completely, and
+ * here is where we call the API to process the constructed design.
+ */
 void dll_target::end_design(const Design*)
 {
+      if (process_) {
+	    for (ivl_process_t idx = des_.threads_;  idx;  idx = idx->next_) {
+		  process_(idx);
+	    }
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_process function." << endl;
+      }
+
+
       (end_design_)(&des_);
       dlclose(dll_);
 }
 
+/*
+ * Add a bufz object to the scope that contains it.
+ *
+ * Note that in the ivl_target API a BUFZ device is a special kind of
+ * ivl_net_logic_t device, so create an ivl_net_logic_t cookie to
+ * handle it.
+ */
 bool dll_target::bufz(const NetBUFZ*net)
 {
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
@@ -115,11 +173,23 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->npins_ = 2;
       obj->pins_ = new ivl_nexus_t[2];
 
+
+	/* Get the ivl_nexus_t objects connected to the two pins.
+
+	   (We know a priori that the ivl_nexus_t objects have been
+	   allocated, because the signals have been scanned before
+	   me. This saves me the trouble of allocating them.) */
+
       assert(net->pin(0).nexus()->t_cookie());
       obj->pins_[0] = (ivl_nexus_t) net->pin(0).nexus()->t_cookie();
+      nexus_log_add(obj->pins_[0], obj, 0);
 
       assert(net->pin(1).nexus()->t_cookie());
       obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
+      nexus_log_add(obj->pins_[1], obj, 1);
+
+
+	/* Attach the logic device to the scope that contains it. */
 
       assert(net->scope());
       ivl_scope_t scope = find_scope(des_.root_, net->scope());
@@ -174,12 +244,16 @@ void dll_target::logic(const NetLogic*net)
 	    break;
       }
 
+	/* Connect all the ivl_nexus_t objects to the pins of the
+	   device. */
+
       obj->npins_ = net->pin_count();
       obj->pins_ = new ivl_nexus_t[obj->npins_];
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_log_add(obj->pins_[idx], obj, idx);
       }
 
       assert(net->scope());
@@ -286,6 +360,7 @@ void dll_target::scope(const NetScope*net)
       } else {
 	    scope = new struct ivl_scope_s;
 	    scope->self = net;
+	    scope->name_ = strdup(net->name().c_str());
 
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
 	    assert(parent != 0);
@@ -300,7 +375,9 @@ void dll_target::scope(const NetScope*net)
 
 void dll_target::signal(const NetNet*net)
 {
-      ivl_signal_t obj = (ivl_signal_t)calloc(1, sizeof(struct ivl_signal_s));
+      ivl_signal_t obj = new struct ivl_signal_s;
+
+      obj->name_ = strdup(net->name());
 
 	/* Attach the signal to the ivl_scope_t object that contains
 	   it. This involves growing the sigs_ array in the scope
@@ -322,6 +399,13 @@ void dll_target::signal(const NetNet*net)
 			  obj->scope_->nsigs_*sizeof(ivl_signal_t));
 	    obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
       }
+
+#ifndef NDEBUG
+      { const char*scope_name = obj->scope_->self->name().c_str();
+        size_t name_len = strlen(scope_name);
+	assert(0 == strncmp(scope_name, obj->name_, name_len));
+      }
+#endif
 
 	/* Save the privitive properties of the signal in the
 	   ivl_signal_t object. */
@@ -414,11 +498,11 @@ void dll_target::signal(const NetNet*net)
 	    const Nexus*nex = net->pin(0).nexus();
 	    if (nex->t_cookie()) {
 		  obj->n.pin_ = (ivl_nexus_t)nex->t_cookie();
+		  nexus_sig_add(obj->n.pin_, obj, 0);
 
 	    } else {
-		  ivl_nexus_t tmp = (ivl_nexus_t)
-			calloc(1, sizeof(struct ivl_nexus_s));
-		  tmp->self = nex;
+		  ivl_nexus_t tmp = nexus_sig_make(obj, 0);
+		  tmp->name_ = strdup(nex->name());
 		  nex->t_cookie(tmp);
 		  obj->n.pin_ = tmp;
 	    }
@@ -433,11 +517,11 @@ void dll_target::signal(const NetNet*net)
 		  const Nexus*nex = net->pin(idx).nexus();
 		  if (nex->t_cookie()) {
 			obj->n.pins_[idx] = (ivl_nexus_t)nex->t_cookie();
+			nexus_sig_add(obj->n.pins_[idx], obj, idx);
 
 		  } else {
-			ivl_nexus_t tmp = (ivl_nexus_t)
-			      calloc(1, sizeof(struct ivl_nexus_s));
-			tmp->self = nex;
+			ivl_nexus_t tmp = nexus_sig_make(obj, idx);
+			tmp->name_ = strdup(nex->name());
 			nex->t_cookie(tmp);
 			obj->n.pins_[idx] = tmp;
 		  }
@@ -448,7 +532,7 @@ void dll_target::signal(const NetNet*net)
 	   module, if it exists. */
 
       if (net_signal_) {
-	    int rc = (net_signal_)(net->name(), obj);
+	    int rc = (net_signal_)(obj->name_, obj);
 	    return;
 
       } else {
@@ -463,6 +547,12 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.13  2000/10/08 04:01:55  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.12  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.9 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: verilog.c,v 1.10 2000/10/08 04:01:55 steve Exp $"
 #endif
 
 /*
@@ -115,11 +115,13 @@ int target_net_signal(const char*name, ivl_signal_t net)
       switch (ivl_signal_type(net)) {
 
 	  case IVL_SIT_REG:
-	    fprintf(out, "      reg [%u:0] %s;\n", cnt-1, name);
+	    fprintf(out, "      reg [%u:0] %s; // %s\n", cnt-1,
+		    ivl_signal_basename(net), name);
 	    break;
 
 	  case IVL_SIT_WIRE:
-	    fprintf(out, "      wire [%u:0] %s;\n", cnt-1, name);
+	    fprintf(out, "      wire [%u:0] %s; // %s\n", cnt-1,
+		    ivl_signal_basename(net), name);
 	    break;
 
 	  default:
@@ -284,6 +286,12 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.10  2000/10/08 04:01:55  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.9  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.10 2000/10/06 23:46:50 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.11 2000/10/08 04:01:54 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -38,7 +38,7 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 
 extern "C" const char*ivl_get_root_name(ivl_design_t des)
 {
-      return des->root_->self->basename();
+      return des->root_->name_;
 }
 
 extern "C" const char*ivl_const_bits(ivl_net_const_t net)
@@ -171,8 +171,8 @@ extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
 
 extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
 {
-      const Nexus*nex = net->self;
-      return nex->name();
+      assert(net);
+      return net->name_;
 }
 
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
@@ -183,6 +183,25 @@ extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
 {
       return net->stmt_;
+}
+
+extern "C" const char* ivl_scope_name(ivl_scope_t net)
+{
+      return net->name_;
+}
+
+extern "C" const char* ivl_signal_basename(ivl_signal_t net)
+{
+      const char*nam = net->name_;
+      nam += strlen(ivl_scope_name(net->scope_));
+      assert(*nam == '.');
+      nam += 1;
+      return nam;
+}
+
+extern "C" const char* ivl_signal_name(ivl_signal_t net)
+{
+      return net->name_;
 }
 
 extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
@@ -321,6 +340,12 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.11  2000/10/08 04:01:54  steve
+ *  Back pointers in the nexus objects into the devices
+ *  that point to it.
+ *
+ *  Collect threads into a list in the design.
+ *
  * Revision 1.10  2000/10/06 23:46:50  steve
  *  ivl_target updates, including more complete
  *  handling of ivl_nexus_t objects. Much reduced
