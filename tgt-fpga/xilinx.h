@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.4 2003/06/28 04:18:47 steve Exp $"
+#ident "$Id: xilinx.h,v 1.5 2003/07/02 00:25:40 steve Exp $"
 #endif
 
 /*
@@ -38,6 +38,7 @@
    assignments. The BUF, INV, and certain specialized devices fit in
    this category. */
 extern edif_cell_t xilinx_cell_buf (edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_bufe(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_bufg(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_buft(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_inv (edif_xlibrary_t xlib);
@@ -45,7 +46,7 @@ extern edif_cell_t xilinx_cell_ibuf(edif_xlibrary_t xlib);
 extern edif_cell_t xilinx_cell_obuf(edif_xlibrary_t xlib);
 #define BUF_O 0
 #define BUF_I 1
-  /* Only some buffers have this input. */
+  /* Only bufe and buft buffers have this input. */
 #define BUF_T 2
 
 /* === LUT Devices === */
@@ -113,6 +114,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.5  2003/07/02 00:25:40  steve
+ *  Add xilinx support for bufif1.
+ *
  * Revision 1.4  2003/06/28 04:18:47  steve
  *  Add support for wide OR/NOR gates.
  *
