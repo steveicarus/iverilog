@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.27 1999/05/20 05:07:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.28 1999/05/27 04:13:08 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -270,14 +270,19 @@ NetProc::~NetProc()
 {
 }
 
-NetAssign::NetAssign(NetNet*lv, NetExpr*rv)
+NetAssign::NetAssign(Design*des, NetNet*lv, NetExpr*rv)
 : NetNode("@assign", lv->pin_count()), rval_(rv)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    connect(pin(idx), lv->pin(idx));
       }
 
-      rval_->set_width(lv->pin_count());
+      bool flag = rval_->set_width(lv->pin_count());
+      if (flag == false) {
+	    cerr << rv->get_line() << ": Expression bit width" <<
+		  " conflicts with l-value bit width." << endl;
+	    des->errors += 1;
+      }
 }
 
 NetAssign::~NetAssign()
@@ -391,11 +396,12 @@ NetExpr::~NetExpr()
 {
 }
 
-void NetExpr::set_width(unsigned w)
+bool NetExpr::set_width(unsigned w)
 {
       cerr << typeid(*this).name() << ": set_width(unsigned) "
 	    "not implemented." << endl;
       expr_width(w);
+      return false;
 }
 
 void NetExpr::REF::clr()
@@ -454,32 +460,29 @@ NetEBinary::~NetEBinary()
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
-      switch (op_) {
-	      // comparison operators return a 1-bin wide result.
-	  case 'e':
-	  case 'n':
-	    expr_width(1);
-	    right_->set_width(left_->expr_width());
-	    break;
-	  default:
-	    expr_width(left_->expr_width() > right_->expr_width()
-			  ? left_->expr_width() : right_->expr_width());
-	    break;
-      }
 }
 
-void NetEBinary::set_width(unsigned w)
+bool NetEBinary::set_width(unsigned w)
 {
+      bool flag = true;
       switch (op_) {
 	      /* Comparison operators allow the subexpressions to have
 		 their own natural width. However, I do need to make
 		 sure that the subexpressions have the same width. */
-	  case 'e':
+	  case 'e': /* == */
+	  case 'n': /* != */
 	    assert(w == 1);
+	    expr_width(w);
+	    flag = right_->set_width(left_->expr_width());
+	    break;
+
+	  case 'l': // left shift  (<<)
+	  case 'r': // right shift (>>)
+	    flag = left_->set_width(w);
 	    expr_width(w);
 	    break;
 
-	  case 'o':
+	  case 'o': // logical or (||)
 	    assert(w == 1);
 	    expr_width(w);
 	    break;
@@ -488,33 +491,40 @@ void NetEBinary::set_width(unsigned w)
 		 operator might as well use the same width as the
 		 output from the binary operation. */
 	  default:
+	    expr_width(left_->expr_width() > right_->expr_width()
+			  ? left_->expr_width() : right_->expr_width());
 	    cerr << "NetEBinary::set_width(): Using default for " <<
 		  op_ << "." << endl;
+	    flag = false;
 
 	  case '+':
 	  case '-':
 	  case '^':
-	    left_->set_width(w);
-	    right_->set_width(w);
+	  case '&':
+	  case '|':
+	    flag = left_->set_width(w) && flag;
+	    flag = right_->set_width(w) && flag;
 	    expr_width(w);
 	    break;
       }
+      return flag;
 }
 
 NetEConst::~NetEConst()
 {
 }
 
-void NetEConst::set_width(unsigned w)
+bool NetEConst::set_width(unsigned w)
 {
       if (w > value_.len()) {
 	    cerr << get_line() << ": Cannot expand " << *this
 		 << " to " << w << " bits." << endl;
-	    assert(0);
+	    return false;
       }
       assert(w <= value_.len());
       value_ = verinum(value_, w);
       expr_width(w);
+      return true;
 }
 
 NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
@@ -532,10 +542,11 @@ void NetMemory::set_attributes(const map<string,string>&attr)
       attributes_ = attr;
 }
 
-void NetEMemory::set_width(unsigned w)
+bool NetEMemory::set_width(unsigned w)
 {
       assert(w == mem_->width());
       expr_width(w);
+      return true;
 }
 
 NetESignal::NetESignal(NetNet*n)
@@ -550,15 +561,16 @@ NetESignal::~NetESignal()
 {
 }
 
-void NetESignal::set_width(unsigned w)
+bool NetESignal::set_width(unsigned w)
 {
       if (w != pin_count()) {
 	    cerr << get_line() << ": Width of " << w << " does not match "
 		 << *this << endl;
-	    assert(0);
+	    return false;
       }
       assert(w == pin_count());
       expr_width(w);
+      return true;
 }
 
 NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
@@ -576,18 +588,25 @@ NetEUnary::~NetEUnary()
       expr_.clr_and_delete();
 }
 
-void NetEUnary::set_width(unsigned w)
+bool NetEUnary::set_width(unsigned w)
 {
+      bool flag = true;
       switch (op_) {
+	  case '~':
+	    flag = expr_->set_width(w);
+	    break;
 	  case '&':
-	    assert(w == 1);
+	  case '!':
+	    if (w != 1) {
+		  flag = false;
+	    }
 	    break;
 	  default:
-	  case '~':
-	    expr_->set_width(w);
+	    flag = false;
 	    break;
       }
       expr_width(w);
+      return flag;
 }
 
 NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
@@ -1059,6 +1078,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.28  1999/05/27 04:13:08  steve
+ *  Handle expression bit widths with non-fatal errors.
+ *
  * Revision 1.27  1999/05/20 05:07:37  steve
  *  Line number info with match error message.
  *

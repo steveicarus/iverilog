@@ -1,0 +1,97 @@
+/*
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#ident "$Id: netlist.txt,v 1.1 1999/05/27 04:13:08 steve Exp $"
+
+
+Note that the netlist.h header contains detailed descriptions of how
+things work. This is just an overview.
+
+NETLIST FORMAT
+
+The output from the parse and elaboration steps is a "netlist" rooted
+in a Design object. Parsing translates the design described in the
+initial source file into a temporary symbolic "pform". Elaboration
+then expands the design, resolving references and expanding
+hierarchies, to produce a flattened netlist. This is the form that
+optimizers and code generators use.
+
+The design optimization processes all manipulate the netlist,
+translating it to a (hopefully) better netlist after each step. The
+complete netlist is then passed to the code generator, the emit
+function, where the final code (in the target format) is produced.
+
+EXPRESSIONS
+
+Expressions are represented as a tree of NetExpr nodes. The NetExpr
+base class contains the core methods that represent an expression
+node, including virtual methods to help with dealing with nested
+complexities of expressions.
+
+Expressions (as expressed in the source and p-form) may also be
+elaborated structurally, where it makes sense. In this case, the
+expression is represented as the equivilent set of gates. For example,
+continuous assignment module items are elaborated as gates instead of
+as a procedural expression as it is really a structural
+description. Event expressions are also elaborated structurally as
+events are like devices that trigger behavioral statements.
+
+EXPRESSION BIT WIDTH
+
+The NetExpr class represents an expression. The expression has a bit
+width that it either explicitly specified, or implied by context or
+contents.
+
+When each node of the expression is first constructed during
+elaboration, it is given, by type and parameters, an idea what its
+width should be. It certain cases, this is definitive, for example
+with signals. In others, it is ambiguous, as with unsized constants.
+
+As the expression is built up by elaboration, operators that combine
+expressions impose bit widths of the environment or expose the bit
+widths of the sub expressions. For example, the bitwise AND (&)
+operator has a bit size implied by its operands, whereas the
+comparison (==) operator has a bit size of 1. The building up of the
+elaborated expression checks and adjusts the bit widths as the
+expression is built up, util finally the context of the expression
+takes the final bit width and makes any final adjustments.
+
+The NetExpr::expr_width() method returns the calculated (or guessed)
+expression width. This method will return 0 until the width is set by
+calculation or context. If this method returns false, then it is up to
+the context that wants the width to set one. The elaboration phase
+will call the NetExpr::set_width method on an expression as soon as it
+gets to a point where it believes that it knows what the width should
+be.
+
+The NetExpr::set_width(unsigned) virtual method is used by the context
+of an expression node to note to the expression that the width is
+determined and please adapt. If the expression cannot reasonably
+adapt, it will return false. Otherwise, it will adjust bit widths and
+return true.
+
+XXXX I do not yet properly deal with cases where elaboration knows for
+XXXX certain that the bit width does not matter. In this case, I
+XXXX really should tell the expression node about it so that it can
+XXXX pick a practical (and optimal) width.
+
+
+ $Log: netlist.txt,v $
+ Revision 1.1  1999/05/27 04:13:08  steve
+  Handle expression bit widths with non-fatal errors.
+

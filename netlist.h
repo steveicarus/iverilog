@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.31 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.32 1999/05/27 04:13:08 steve Exp $"
 #endif
 
 /*
@@ -34,6 +34,7 @@
 # include  "sref.h"
 # include  "LineInfo.h"
 
+class Design;
 class NetNode;
 class NetProc;
 class NetProcTop;
@@ -335,8 +336,12 @@ class NetExpr  : public LineInfo {
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
 
+	// How wide am I?
       unsigned expr_width() const { return width_; }
-      virtual void set_width(unsigned);
+
+	// Coerce the expression to have a specific width. If the
+	// coersion works, then return true. Otherwise, return false.
+      virtual bool set_width(unsigned);
 
     public:
       class REF {
@@ -597,7 +602,7 @@ class NetProc {
  */
 class NetAssign  : public NetProc, public NetNode, public LineInfo {
     public:
-      explicit NetAssign(NetNet*lv, NetExpr*rv);
+      explicit NetAssign(Design*des, NetNet*lv, NetExpr*rv);
       ~NetAssign();
 
       const NetExpr*rval() const { return rval_.ref(); }
@@ -909,7 +914,7 @@ class NetEBinary  : public NetExpr {
 
       char op() const { return op_; }
 
-      void set_width(unsigned w);
+      virtual bool set_width(unsigned w);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -929,7 +934,7 @@ class NetEConst  : public NetExpr {
 
       const verinum&value() const { return value_; }
 
-      virtual void set_width(unsigned w);
+      virtual bool set_width(unsigned w);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -955,7 +960,7 @@ class NetEUnary  : public NetExpr {
       char op() const { return op_; }
       const NetExpr* expr() const { return expr_.ref(); }
 
-      void set_width(unsigned w);
+      virtual bool set_width(unsigned w);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -993,7 +998,7 @@ class NetEMemory  : public NetExpr {
       const string& name () const { return mem_->name(); }
       const NetExpr* index() const { return idx_.ref(); }
 
-      virtual void set_width(unsigned);
+      virtual bool set_width(unsigned);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -1018,7 +1023,7 @@ class NetESignal  : public NetExpr, public NetNode {
 
       const string& name() const { return NetNode::name(); }
 
-      virtual void set_width(unsigned);
+      virtual bool set_width(unsigned);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -1185,6 +1190,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.32  1999/05/27 04:13:08  steve
+ *  Handle expression bit widths with non-fatal errors.
+ *
  * Revision 1.31  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

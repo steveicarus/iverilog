@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.27 1999/05/20 04:31:45 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.28 1999/05/27 04:13:08 steve Exp $"
 #endif
 
 /*
@@ -732,8 +732,24 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
 
 NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 {
-      return new NetEBinary(op_, left_->elaborate_expr(des, path),
-			    right_->elaborate_expr(des, path));
+      bool flag;
+      NetEBinary*tmp = new NetEBinary(op_, left_->elaborate_expr(des, path),
+				      right_->elaborate_expr(des, path));
+      tmp->set_line(*this);
+      switch (op_) {
+	  case 'e':
+	  case 'n':
+	    flag = tmp->set_width(1);
+	    if (flag == false) {
+		  cerr << get_line() << ": expression bit width"
+			" is ambiguous." << endl;
+		  des->errors += 1;
+	    }
+	    break;
+	  default:
+	    ;
+      }
+      return tmp;
 }
 
 NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
@@ -746,7 +762,9 @@ NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
 {
-      return new NetEConst(value());
+      NetEConst*tmp = new NetEConst(value());
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
@@ -775,6 +793,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 	    if (msb_) {
 		  NetExpr*ex = msb_->elaborate_expr(des, path);
 		  NetESubSignal*ss = new NetESubSignal(node, ex);
+		  ss->set_line(*this);
 		  return ss;
 	    }
 	    assert(msb_ == 0);
@@ -797,6 +816,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 	    }
 
 	    NetEMemory*node = new NetEMemory(mem, i);
+	    node->set_line(*this);
 	    return node;
       }
 
@@ -815,7 +835,9 @@ NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PEUnary::elaborate_expr(Design*des, const string&path) const
 {
-      return new NetEUnary(op_, expr_->elaborate_expr(des, path));
+      NetEUnary*tmp = new NetEUnary(op_, expr_->elaborate_expr(des, path));
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetProc* Statement::elaborate(Design*des, const string&path) const
@@ -881,7 +903,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       }
       assert(rval);
 
-      NetAssign*cur = new NetAssign(reg, rval);
+      NetAssign*cur = new NetAssign(des, reg, rval);
       cur->set_line(*this);
       des->add_node(cur);
 
@@ -1042,7 +1064,8 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       NetBlock*top = new NetBlock(NetBlock::SEQU);
       NetNet*sig = des->find_signal(path+"."+id1->name());
       assert(sig);
-      NetAssign*init = new NetAssign(sig, expr1_->elaborate_expr(des, path));
+      NetAssign*init = new NetAssign(des, sig,
+				     expr1_->elaborate_expr(des, path));
       top->append(init);
 
       NetBlock*body = new NetBlock(NetBlock::SEQU);
@@ -1051,7 +1074,8 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       sig = des->find_signal(path+"."+id2->name());
       assert(sig);
-      NetAssign*step = new NetAssign(sig, expr2_->elaborate_expr(des, path));
+      NetAssign*step = new NetAssign(des, sig,
+				     expr2_->elaborate_expr(des, path));
       body->append(step);
 
       NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path), body);
@@ -1169,6 +1193,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.28  1999/05/27 04:13:08  steve
+ *  Handle expression bit widths with non-fatal errors.
+ *
  * Revision 1.27  1999/05/20 04:31:45  steve
  *  Much expression parsing work,
  *  mark continuous assigns with source line info,
