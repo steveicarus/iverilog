@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt.vl,v 1.2 2000/09/23 17:46:11 steve Exp $"
+ *   $Id: sqrt.vl,v 1.3 2000/11/04 01:53:24 steve Exp $"
  */
 
  /*
@@ -133,7 +133,7 @@ module main;
    initial begin
       clk = 0;
       reset = 1;
-      $monitor($time,,"%m = %b", root.acc, root.acc);
+      $monitor($time,,"%m.acc = %b", root.acc);
       #100 value = 63;
       reset = 0;
    end
