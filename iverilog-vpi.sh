@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.8 2002/09/24 01:50:53 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.9 2002/10/19 23:18:52 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -84,8 +84,7 @@ OUT=$OUT".vpi"
 compile_errors=0
 
 # Compile all the source files into object files
-for src
-in $CCSRC
+for src in $CCSRC
 do
     base=`basename $src .c`
     obj=$base".o"
@@ -95,8 +94,7 @@ do
     OBJ="$OBJ $obj"
 done
 
-for src
-in $CXSRC
+for src in $CXSRC
 do
     base=`basename $src .cc`
     obj=$base".o"
