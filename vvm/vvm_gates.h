@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.22 1999/11/14 23:43:46 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.23 1999/11/15 00:42:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -175,11 +175,14 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	    { dist_[idx] = val;
 	      calculate_dist_();
 	    }
+      void init_Direction(vpip_bit_t val)
+	    { dir_ = val; }
 
       void set_Data(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (data_[idx] == val) return;
 	      data_[idx] = val;
 	      if ((dist_val_ + idx) >= WIDTH) return;
+	      if ((dist_val_ + idx) < 0) return;
 	      vvm_out_event::action_t out = out_[dist_val_+idx];
 	      if (out == 0) return;
 	      vvm_event*ev = new vvm_out_event(sim, val, out);
@@ -193,6 +196,13 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	      compute_(sim);
 	    }
 
+      void set_Direction(vvm_simulation*sim, unsigned, vpip_bit_t val)
+	    { if (dir_ == val) return;
+	      dir_ = val;
+	      calculate_dist_();
+	      compute_(sim);
+	    }
+
       void config_rout(unsigned idx, vvm_out_event::action_t o)
 	    { out_[idx] = o;
 	    }
@@ -202,10 +212,10 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
       vpip_bit_t data_[WIDTH];
       vpip_bit_t dist_[WDIST];
       vvm_out_event::action_t out_[WIDTH];
-      unsigned dist_val_;
+      int dist_val_;
 
       void calculate_dist_()
-	    { unsigned tmp = 0;
+	    { int tmp = 0;
 	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
 		    switch (dist_[idx]) {
 			case V0:
@@ -216,7 +226,10 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 			default:
 			  tmp = WIDTH;
 		    }
-	      if (tmp > WIDTH) tmp = WIDTH;
+	      if (tmp > WIDTH)
+		    tmp = WIDTH;
+	      else if (dir_ == V1)
+		    tmp = -tmp;
 	      dist_val_ = tmp;
 	    }
 
@@ -230,15 +243,13 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 		    }
 		    return;
 	      }
-	      for (unsigned idx = 0 ;  idx < dist_val_ ;  idx += 1) {
+	      for (int idx = 0 ;  idx < WIDTH ;  idx += 1) {
 		    if (out_[idx] == 0) continue;
-		    ev = new vvm_out_event(sim, V0, out_[idx]);
-		    sim->active_event(ev);
-	      }
-	      for (unsigned idx = dist_val_ ; idx < WIDTH ;  idx += 1) {
-		    if (out_[idx] == 0) continue;
-		    ev = new vvm_out_event(sim, data_[idx-dist_val_],
-					   out_[idx]);
+		    vpip_bit_t val;
+		    if ((idx-dist_val_) >= WIDTH) val = V0;
+		    else if ((idx-dist_val_) < 0) val = V0;
+		    else val = data_[idx-dist_val_];
+		    ev = new vvm_out_event(sim, val, out_[idx]);
 		    sim->active_event(ev);
 	      }
 	    }
@@ -920,6 +931,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.23  1999/11/15 00:42:31  steve
+ *  Fixup to include right shift support.
+ *
  * Revision 1.22  1999/11/14 23:43:46  steve
  *  Support combinatorial comparators.
  *
