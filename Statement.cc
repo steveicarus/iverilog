@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.18 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: Statement.cc,v 1.19 2000/04/12 04:23:57 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -122,12 +122,28 @@ PCase::~PCase()
       delete[]items_;
 }
 
+PCondit::PCondit(PExpr*ex, Statement*i, Statement*e)
+: expr_(ex), if_(i), else_(e)
+{
+}
+
 PCondit::~PCondit()
 {
       delete expr_;
       delete if_;
       delete else_;
 }
+
+
+PDelayStatement::PDelayStatement(PExpr*d, Statement*st)
+: delay_(d), statement_(st)
+{
+}
+
+PDelayStatement::~PDelayStatement()
+{
+}
+
 
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
 : expr_(ee), statement_(0)
@@ -144,6 +160,11 @@ PEventStatement::PEventStatement(PEEvent*ee)
 PEventStatement::~PEventStatement()
 {
 	// delete the events and the statement?
+}
+
+void PEventStatement::set_statement(Statement*st)
+{
+      statement_ = st;
 }
 
 PForever::PForever(Statement*s)
@@ -189,6 +210,19 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.19  2000/04/12 04:23:57  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.18  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.34 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: target.cc,v 1.35 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -155,13 +155,6 @@ void target_t::net_const(ostream&os, const NetConst*)
 	    "Unhandled CONSTANT node." << endl;
 }
 
-void target_t::net_event(ostream&os, const NetNEvent*net)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled EVENT net node." << endl;
-      net->dump_node(cerr, 4);
-}
-
 void target_t::net_probe(ostream&os, const NetEvProbe*net)
 {
       cerr << "target (" << typeid(*this).name() << "): "
@@ -223,13 +216,6 @@ void target_t::proc_delay(ostream&os, const NetPDelay*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_delay." << endl;
-}
-
-void target_t::proc_event(ostream&os, const NetPEvent*net)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled proc_event." << endl;
-      net->dump(cerr, 4);
 }
 
 void target_t::proc_forever(ostream&os, const NetForever*)
@@ -353,6 +339,19 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.35  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.34  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

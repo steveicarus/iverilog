@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.157 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.158 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 /*
@@ -1541,12 +1541,66 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
  *
  *       NetEvWait ---/--->  NetEvent  <----\---- NetEvProbe
  *        ...         |                     |         ...
- *       NetEvWait ---+                     +-----NetEvProbe
+ *       NetEvWait ---+                     +---- NetEvProbe
+ *                                          |         ...
+ *                                          +---- NetEvTrig
  *
  * That is, many NetEvWait statements may wait on a single NetEvent
  * object, and Many NetEvProbe objects may trigger the NetEvent
- * object.
+ * object. The many NetEvWait objects pointing to the NetEvent object
+ * reflects the possibility of different places in the code blocking
+ * on the same named event, like so:
+ *
+ *         event foo;
+ *           [...]
+ *         always begin @foo <statement1>; @foo <statement2> end
+ *
+ * This tends to not happen with signal edges. The multiple probes
+ * pointing to the same event reflect the possibility of many
+ * expressions in the same blocking statement, like so:
+ *
+ *         wire reset, clk;
+ *           [...]
+ *         always @(reset or posedge clk) <stmt>;
+ *
+ * Conjunctions like this cause a NetEvent object be created to
+ * represent the overall conjuction, and NetEvProbe objects for each
+ * event expression.
+ *
+ * If the NetEvent object represents a named event from the source,
+ * then there are NetEvTrig objects that represent the trigger
+ * statements instead of the NetEvProbe objects representing signals.
+ * For example:
+ *
+ *         event foo;
+ *         always @foo <stmt>;
+ *         initial begin
+ *                [...]
+ *            -> foo;
+ *                [...]
+ *            -> foo;
+ *                [...]
+ *         end
+ *
+ * Each trigger statement in the source generates a separate NetEvTrig
+ * object in the netlist. Those trigger objects are elaborated
+ * elsewhere.
+ *
+ * Additional complications arise when named events show up in
+ * conjunctions. An example of such a case is:
+ *
+ *         event foo;
+ *         wire bar;
+ *         always @(foo or posedge bar) <stmt>;
+ *
+ * Since there is by definition a NetEvent object for the foo object,
+ * this is handled by allowing the NetEvWait object to point to
+ * multiple NetEvent objects. All the NetEvProbe based objects are
+ * collected and pointed as the synthetic NetEvent object, and all the
+ * named events are added into the list of NetEvent object that the
+ * NetEvWait object can refer to.
  */
+
 NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 				    NetProc*enet) const
 {
@@ -1573,10 +1627,11 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 			   |
 			   +---> <statement>
 
-	   This is quite a mouthful */
+	   This is quite a mouthful. Should I not move wait handling
+	   to specialized objects? */
 
 
-      if ((expr_.count() == 1) && (expr_[0]->type() == NetNEvent::POSITIVE)) {
+      if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE)) {
 
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
 
@@ -1592,7 +1647,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetEvent*ev = new NetEvent(scope->local_symbol());
 	    scope->add_event(ev);
 
-	    NetEvWait*we = new NetEvWait(ev, 0);
+	    NetEvWait*we = new NetEvWait(0);
+	    we->add_event(ev);
 
 	    NetEvProbe*po = new NetEvProbe(path+"."+scope->local_symbol(),
 					   ev, NetEvProbe::POSEDGE, 1);
@@ -1604,34 +1660,26 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetCondit*co = new NetCondit(new NetEUnary('!', ce), we, 0);
 	    bl->append(co);
 	    bl->append(enet);
+
+	    ev->set_line(*this);
+	    bl->set_line(*this);
+	    we->set_line(*this);
+	    co->set_line(*this);
+
 	    return bl;
       }
 
-	/* Handle as a special case the block on an event. In this
-	   case I generate a NetEvWait object to represent me. */
-
-      if ((expr_.count() == 1) && (expr_[0]->expr() == 0)) {
-	    string ename = expr_[0]->name();
-	    NetEvent*ev = scope->find_event(ename);
-	    if (ev == 0) {
-		  cerr << get_line() << ": error: no such named event "
-		       << "``" << ename << "''." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    NetEvWait*pr = new NetEvWait(ev, enet);
-	    pr->set_line(*this);
-	    return pr;
-      }
 
 	/* Handle the special case of an event name as an identifier
 	   in an expression. Make a named event reference. */
+
       if (expr_.count() == 1) {
+	    assert(expr_[0]->expr());
 	    PEIdent*id = dynamic_cast<PEIdent*>(expr_[0]->expr());
 	    NetEvent*ev;
 	    if (id && (ev = scope->find_event(id->name()))) {
-		  NetEvWait*pr = new NetEvWait(ev, enet);
+		  NetEvWait*pr = new NetEvWait(enet);
+		  pr->add_event(ev);
 		  pr->set_line(*this);
 		  return pr;
 	    }
@@ -1643,27 +1691,31 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	   object. */
 
       NetEvent*ev = new NetEvent(scope->local_symbol());
-      scope->add_event(ev);
+      ev->set_line(*this);
+      unsigned expr_count = 0;
 
-      NetEvWait*wa = new NetEvWait(ev, enet);
+      NetEvWait*wa = new NetEvWait(enet);
+      wa->set_line(*this);
 
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
-	    if (expr_[idx]->expr() == 0) {
-		  cerr << get_line() << ": sorry: block on named events "
-		       << "not supported." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+
+	    assert(expr_[idx]->expr());
+
+	      /* If the expression is an identifier that matches a
+		 named event, then handle this case all at once at
+		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
-		  NetEvent*ev = scope->find_event(id->name());
-		  if (ev) {
-			cerr << get_line() << ": sorry: block on named events "
-			     << "not supported." << endl;
-			des->errors += 1;
-			return 0;
+		  NetEvent*tmp = scope->find_event(id->name());
+		  if (tmp) {
+			wa->add_event(tmp);
+			continue;
 		  }
 	    }
+
+	      /* So now we have a normal event expression. Elaborate
+		 the sub-expression as a net and decide how to handle
+		 the edge. */
 
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
 							    0, 0, 0, 0);
@@ -1675,22 +1727,22 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    }
 	    assert(expr);
 
-	    unsigned pins = (expr_[idx]->type() == NetNEvent::ANYEDGE)
+	    unsigned pins = (expr_[idx]->type() == PEEvent::ANYEDGE)
 		  ? expr->pin_count() : 1;
 
 	    NetEvProbe*pr;
 	    switch (expr_[idx]->type()) {
-		case NetNEvent::POSEDGE:
+		case PEEvent::POSEDGE:
 		  pr = new NetEvProbe(des->local_symbol(path), ev,
 				      NetEvProbe::POSEDGE, pins);
 		  break;
 
-		case NetNEvent::NEGEDGE:
+		case PEEvent::NEGEDGE:
 		  pr = new NetEvProbe(des->local_symbol(path), ev,
 				      NetEvProbe::NEGEDGE, pins);
 		  break;
 
-		case NetNEvent::ANYEDGE:
+		case PEEvent::ANYEDGE:
 		  pr = new NetEvProbe(des->local_symbol(path), ev,
 				      NetEvProbe::ANYEDGE, pins);
 		  break;
@@ -1703,6 +1755,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 		  connect(pr->pin(p), expr->pin(p));
 
 	    des->add_node(pr);
+	    expr_count += 1;
+      }
+
+	/* If there was at least one conjunction that was an
+	   expression (and not a named event) then add this
+	   event. Otherwise, we didn't use it so delete it. */
+      if (expr_count > 0) {
+	    scope->add_event(ev);
+	    wa->add_event(ev);
+      } else {
+	    delete ev;
       }
 
       return wa;
@@ -2161,6 +2224,19 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.158  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.157  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

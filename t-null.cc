@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.10 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: t-null.cc,v 1.11 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -37,11 +37,9 @@ static class target_null_t  : public target_t {
       void net_assign_nb(ostream&os, const NetAssignNB*) { }
       void net_const(ostream&, const NetConst*) { }
       void net_esignal(ostream&, const NetESignal*) { }
-      void net_event(ostream&, const NetNEvent*) { }
       bool proc_block(ostream&, const NetBlock*) { return true; }
       void proc_condit(ostream&, const NetCondit*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
-      void proc_event(ostream&, const NetPEvent*) { }
       void proc_forever(ostream&, const NetForever*) { }
       void proc_repeat(ostream&, const NetRepeat*) { }
       void proc_stask(ostream&, const NetSTask*) { }
@@ -52,6 +50,19 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.11  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.10  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

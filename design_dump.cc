@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.74 2000/04/10 05:26:05 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.75 2000/04/12 04:23:57 steve Exp $"
 #endif
 
 /*
@@ -555,8 +555,14 @@ void NetEvTrig::dump(ostream&o, unsigned ind) const
 
 void NetEvWait::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "@" << event_->name()
-	<< "  // " << get_line() << endl;
+      assert(nevents() > 0);
+      o << setw(ind) <<"" << "@(" << event(0)->name();
+
+      for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
+	    o << " or " << event(idx)->name();
+
+      o << ")  // " << get_line() << endl;
+
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
@@ -948,6 +954,19 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.75  2000/04/12 04:23:57  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.74  2000/04/10 05:26:05  steve
  *  All events now use the NetEvent class.
  *

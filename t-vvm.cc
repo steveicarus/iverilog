@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.132 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.133 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -80,7 +80,6 @@ class target_vvm : public target_t {
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
-      virtual void net_event(ostream&os, const NetNEvent*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
       virtual bool process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
@@ -99,7 +98,6 @@ class target_vvm : public target_t {
       virtual void proc_utask(ostream&os, const NetUTask*);
       virtual bool proc_wait(ostream&os, const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
-      virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
       virtual void end_design(ostream&os, const Design*);
 
@@ -1749,63 +1747,6 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 	    emit_init_value_(gate->pin(idx), gate->value(idx));
 }
 
-/*
- * The net_event device is a synthetic device type--a fabrication of
- * the elaboration phase. An event device receives value changes from
- * the attached signal. It is an input only device, its only value
- * being the side-effects that threads waiting on events can be
- * awakened.
- *
- * The proc_event method handles the other half of this, the process
- * that blocks on the event.
- */
-void target_vvm::net_event(ostream&os, const NetNEvent*gate)
-{
-      string gname = mangle(gate->name());
-      string pevent = mangle(gate->pevent()->name());
-      os << "  /* " << gate->name() << " */" << endl;
-
-      bool&printed = pevent_printed_flag[pevent];
-      if (! printed) {
-	    printed = true;
-	    os << "static vvm_sync " << pevent << ";" << endl;
-      }
-
-      switch (gate->type()) {
-
-	  case NetNEvent::POSEDGE:
-	  case NetNEvent::POSITIVE:
-	    assert(gate->pin_count() == 1);
-	    os << "static vvm_posedge " << gname
-	       << "(&" << pevent << ");" << endl;
-	    break;
-
-	  case NetNEvent::NEGEDGE:
-	    assert(gate->pin_count() == 1);
-	    os << "static vvm_negedge " << gname
-	       << "(&" << pevent << ");" << endl;
-	    break;
-
-
-	  case NetNEvent::ANYEDGE:
-	    assert(gate->pin_count() == 1);
-	    os << "static vvm_anyedge " << gname
-	       << "(&" << pevent << ");" << endl;
-	    break;
-      }
-
-
-	/* Connect this device as a receiver to the nexus that is my
-	   source. Write the connect calls into the init code. */
-
-      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1) {
-	    string nexus = nexus_from_link(&gate->pin(idx));
-	    unsigned ncode = nexus_wire_map[nexus];
-
-	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
-		  mangle(gate->name()) << ", " << idx << ");" << endl;
-      }
-}
 
 void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
 {
@@ -2446,15 +2387,17 @@ bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
 {
       unsigned out_step = ++thread_step_;
 
-      const NetEvent*ev = wait->event();
-      assert(ev);
-
-      string ename = mangle(ev->full_name());
-
       defn << "      step_ = &" << thread_class_ << "::step_"
 	   << out_step << "_;" << endl;
-      defn << "      " << ename << ".wait(this); // "
-	   << wait->get_line() << ": @" << ev->full_name() << "..." << endl;
+
+      for (unsigned idx = 0 ;  idx < wait->nevents() ;  idx+= 1) {
+	    const NetEvent*ev = wait->event(idx);
+	    assert(ev);
+	    string ename = mangle(ev->full_name());
+	    defn << "      " << ename << ".wait(this); // "
+		 << wait->get_line() << ": @" << ev->full_name()
+		 << "..." << endl;
+      }
 
       defn << "      return false;" << endl;
       defn << "}" << endl;
@@ -2521,69 +2464,6 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
 	    "_() {" << endl;
 }
 
-/*
- * Within a process, the proc_event is a statement that is blocked
- * until the event is signalled.
- */
-void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
-{
-      thread_step_ += 1;
-      defn << "      step_ = &" << thread_class_ << "::step_" <<
-	    thread_step_ << "_;" << endl;
-
-	/* POSITIVE is for the wait construct, and needs to be handled
-	   specially. The structure of the generated code is:
-
-	     if (event.get(0)==V1) {
-	         return true;
-	     } else {
-	         event.wait(this);
-		 return false;
-	     }
-
-	   This causes the wait to not even block the thread if the
-	   event value is already positive, otherwise wait for a
-	   rising edge. All the edge triggers look like this:
-
-	     event.wait(vvm_pevent::POSEDGE, this);
-	     return false;
-
-	   POSEDGE is replaced with the correct type for the desired
-	   edge. */
-
-      const NetNEvent*tmp = proc->first();
-      if (tmp && (tmp->type() == NetNEvent::POSITIVE)) {
-	      // POSITIVE can have only one input.
-	    assert(0 == proc->next());
-
-	    defn << "      if (B_IS1(" << mangle(tmp->name()) <<
-		  ".get(0))) {" << endl;
-	    defn << "         return true;" << endl;
-	    defn << "      } else {" << endl;
-	    defn << "         " << mangle(proc->name()) <<
-		  ".wait(this);" << endl;
-	    defn << "         return false;" << endl;
-	    defn << "      }" << endl;
-
-      } else {
-	      /* The canonical wait for an edge puts the thread into
-		 the correct wait object, then returns false from the
-		 thread to suspend execution. When things are ready to
-		 proceed, the correct vvm_pevent will send a wakeup to
-		 start the next basic block. */
-	    defn << "      " << mangle(proc->name()) << ".wait(this);" << endl;
-	    defn << "      return false;" << endl;
-      }
-
-      defn << "}" << endl;
-
-      os << "      bool step_" << thread_step_ << "_();" << endl;
-
-      defn << "bool " << thread_class_ << "::step_" << thread_step_ <<
-	    "_() {" << endl;
-
-      proc->emit_proc_recurse(os, this);
-}
 
 /*
  * A delay suspends the thread for a period of time.
@@ -2629,6 +2509,19 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.133  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.132  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

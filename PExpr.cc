@@ -17,12 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.15 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.16 2000/04/12 04:23:57 steve Exp $"
 #endif
 
 # include  "PExpr.h"
 # include  "Module.h"
 # include  <typeinfo>
+
+PExpr::PExpr()
+{
+}
 
 PExpr::~PExpr()
 {
@@ -69,6 +73,11 @@ PECallFunction::~PECallFunction()
 {
 }
 
+PEConcat::PEConcat(const svector<PExpr*>&p, PExpr*r)
+: parms_(p), repeat_(r)
+{
+}
+
 bool PEConcat::is_constant(Module *mod) const
 {
       bool constant = repeat_? repeat_->is_constant(mod) : true;
@@ -83,13 +92,8 @@ PEConcat::~PEConcat()
       delete repeat_;
 }
 
-PEEvent::PEEvent(NetNEvent::Type t, PExpr*e)
+PEEvent::PEEvent(PEEvent::edge_t t, PExpr*e)
 : type_(t), expr_(e)
-{
-}
-
-PEEvent::PEEvent(const string&n)
-: name_(n)
 {
 }
 
@@ -97,7 +101,7 @@ PEEvent::~PEEvent()
 {
 }
 
-NetNEvent::Type PEEvent::type() const
+PEEvent::edge_t PEEvent::type() const
 {
       return type_;
 }
@@ -107,9 +111,18 @@ PExpr* PEEvent::expr() const
       return expr_;
 }
 
-string PEEvent::name() const
+PEIdent::PEIdent(const string&s)
+: text_(s), msb_(0), lsb_(0), idx_(0)
 {
-      return name_;
+}
+
+PEIdent::~PEIdent()
+{
+}
+
+string PEIdent::name() const
+{
+      return text_;
 }
 
 /*
@@ -129,6 +142,22 @@ bool PEIdent::is_constant(Module*mod) const
       return false;
 }
 
+PENumber::PENumber(verinum*vp)
+: value_(vp)
+{
+      assert(vp);
+}
+
+PENumber::~PENumber()
+{
+      delete value_;
+}
+
+const verinum& PENumber::value() const
+{
+      return *value_;
+}
+
 bool PENumber::is_the_same(const PExpr*that) const
 {
       const PENumber*obj = dynamic_cast<const PENumber*>(that);
@@ -141,6 +170,20 @@ bool PENumber::is_the_same(const PExpr*that) const
 bool PENumber::is_constant(Module*) const
 {
       return true;
+}
+
+PEString::PEString(const string&s)
+: text_(s)
+{
+}
+
+PEString::~PEString()
+{
+}
+
+string PEString::value() const
+{
+      return text_;
 }
 
 bool PEString::is_constant(Module*) const
@@ -164,6 +207,19 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.16  2000/04/12 04:23:57  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.15  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

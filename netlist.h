@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.119 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: netlist.h,v 1.120 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 /*
@@ -1312,18 +1312,23 @@ class NetEvTrig  : public NetProc {
 class NetEvWait  : public NetProc {
 
     public:
-      explicit NetEvWait(NetEvent*tgt, NetProc*st);
+      explicit NetEvWait(NetProc*st);
       ~NetEvWait();
 
-      const NetEvent*event() const;
+      void add_event(NetEvent*tgt);
+
+      unsigned nevents() const;
+      const NetEvent*event(unsigned) const;
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       bool emit_recurse(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetEvent*event_;
       NetProc*statement_;
+
+      unsigned nevents_;
+      NetEvent**events_;
 };
 
 class NetEvProbe  : public NetNode {
@@ -1440,10 +1445,7 @@ class NetPEvent : public NetProc {
       const NetNEvent* next() const;
 
       virtual int match_proc(struct proc_match_t*);
-      virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-
-      void emit_proc_recurse(ostream&, struct target_t*) const;
 
     private:
       string name_;
@@ -1476,8 +1478,6 @@ class NetNEvent  : public NetNode {
 
       Type type() const;
       const NetPEvent*pevent() const;
-
-      virtual void emit_node(ostream&, struct target_t*) const;
 
       void dump_proc(ostream&) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -2399,6 +2399,19 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.120  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.119  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

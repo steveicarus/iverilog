@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.2 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: net_event.cc,v 1.3 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -82,23 +82,63 @@ const NetEvent* NetEvProbe::event() const
       return event_;
 }
 
-NetEvWait::NetEvWait(NetEvent*ev, NetProc*pr)
-: event_(ev), statement_(pr)
+NetEvWait::NetEvWait(NetProc*pr)
+: statement_(pr), nevents_(0), events_(0)
 {
 }
 
 NetEvWait::~NetEvWait()
 {
+      if (events_) delete[]events_;
       delete statement_;
 }
 
-const NetEvent* NetEvWait::event() const
+void NetEvWait::add_event(NetEvent*tgt)
 {
-      return event_;
+      assert(tgt);
+      if (nevents_ == 0) {
+	    events_ = new NetEvent*[1];
+
+      } else {
+	    NetEvent**tmp = new NetEvent*[nevents_+1];
+	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
+		  tmp[idx] = events_[idx];
+		  assert(tmp[idx] != tgt);
+	    }
+	    delete[]events_;
+	    events_ = tmp;
+      }
+
+      events_[nevents_] = tgt;
+      nevents_ += 1;
+}
+
+unsigned NetEvWait::nevents() const
+{
+      return nevents_;
+}
+
+const NetEvent* NetEvWait::event(unsigned idx) const
+{
+      assert(idx < nevents_);
+      return events_[idx];
 }
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.3  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.2  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

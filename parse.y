@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.88 2000/04/02 04:25:39 steve Exp $"
+#ident "$Id: parse.y,v 1.89 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -398,10 +398,11 @@ dr_strength1 : K_supply1 | K_strong1 | K_pull1 | K_weak1 ;
 
 event_control
 	: '@' IDENTIFIER
-		{ PEEvent*tmpe = new PEEvent($2);
-		  tmpe->set_file(@2.text);
-		  tmpe->set_lineno(@2.first_line);
+		{ PEIdent*tmpi = new PEIdent($2);
+		  tmpi->set_file(@2.text);
+		  tmpi->set_lineno(@2.first_line);
 		  delete[]$2;
+		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
 		  tmps->set_file(@1.text);
 		  tmps->set_lineno(@1.first_line);
@@ -433,7 +434,7 @@ event_expression_list
 
 event_expression
 	: K_posedge expression
-		{ PEEvent*tmp = new PEEvent(NetNEvent::POSEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(PEEvent::POSEDGE, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -441,7 +442,7 @@ event_expression
 		  $$ = tl;
 		}
 	| K_negedge expression
-		{ PEEvent*tmp = new PEEvent(NetNEvent::NEGEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -449,7 +450,7 @@ event_expression
 		  $$ = tl;
 		}
 	| expression
-		{ PEEvent*tmp = new PEEvent(NetNEvent::ANYEDGE, $1);
+		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -1860,7 +1861,7 @@ statement
 		}
 	| K_wait '(' expression ')' statement_opt
 		{ PEventStatement*tmp;
-		  PEEvent*etmp = new PEEvent(NetNEvent::POSITIVE, $3);
+		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
 		  tmp = new PEventStatement(etmp);
 		  tmp->set_statement($5);
 		  $$ = tmp;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.38 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: emit.cc,v 1.39 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 /*
@@ -110,11 +110,6 @@ void NetRamDq::emit_node(ostream&o, struct target_t*tgt) const
       tgt->lpm_ram_dq(o, this);
 }
 
-void NetNEvent::emit_node(ostream&o, struct target_t*tgt) const
-{
-      tgt->net_event(o, this);
-}
-
 void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->bufz(o, this);
@@ -185,17 +180,6 @@ bool NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 }
 
 void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
-{
-      if (statement_) statement_->emit_proc(o, tgt);
-}
-
-bool NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
-{
-      tgt->proc_event(o, this);
-      return true;
-}
-
-void NetPEvent::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
       if (statement_) statement_->emit_proc(o, tgt);
 }
@@ -432,6 +416,19 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.39  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.38  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

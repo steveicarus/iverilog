@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.34 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: PExpr.h,v 1.35 2000/04/12 04:23:57 steve Exp $"
 #endif
 
 # include  <string>
@@ -44,7 +44,9 @@ class NetScope;
  */
 
 class PExpr : public LineInfo {
+
     public:
+      PExpr();
       virtual ~PExpr();
 
       virtual void dump(ostream&) const;
@@ -86,6 +88,9 @@ class PExpr : public LineInfo {
 	// of expresions.
       virtual bool is_constant(Module*) const;
 
+    private: // not implemented
+      PExpr(const PExpr&);
+      PExpr& operator= (const PExpr&);
 };
 
 ostream& operator << (ostream&, const PExpr&);
@@ -93,8 +98,7 @@ ostream& operator << (ostream&, const PExpr&);
 class PEConcat : public PExpr {
 
     public:
-      PEConcat(const svector<PExpr*>&p, PExpr*r =0)
-      : parms_(p), repeat_(r) { }
+      PEConcat(const svector<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
       virtual void dump(ostream&) const;
@@ -122,30 +126,28 @@ class PEConcat : public PExpr {
 class PEEvent : public PExpr {
 
     public:
+      enum edge_t {ANYEDGE, POSEDGE, NEGEDGE, POSITIVE};
+
 	// Use this constructor to create events based on edges or levels.
-      PEEvent(NetNEvent::Type t, PExpr*e);
-	// Use this to create named events.
-      PEEvent(const string&n);
+      PEEvent(edge_t t, PExpr*e);
 
       ~PEEvent();
 
-      NetNEvent::Type type() const;
-      PExpr*          expr() const;
-      string          name() const;
+      edge_t type() const;
+      PExpr* expr() const;
 
       virtual void dump(ostream&) const;
 
     private:
-      NetNEvent::Type type_;
-      PExpr*expr_;
-      string name_;
+      edge_t type_;
+      PExpr *expr_;
 };
 
 class PEIdent : public PExpr {
 
     public:
-      explicit PEIdent(const string&s)
-      : text_(s), msb_(0), lsb_(0), idx_(0) { }
+      explicit PEIdent(const string&s);
+      ~PEIdent();
 
       virtual void dump(ostream&) const;
 
@@ -165,8 +167,7 @@ class PEIdent : public PExpr {
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
 
-	// XXXX
-      string name() const { return text_; }
+      string name() const;
 
     private:
       string text_;
@@ -190,11 +191,10 @@ class PEIdent : public PExpr {
 class PENumber : public PExpr {
 
     public:
-      explicit PENumber(verinum*vp)
-      : value_(vp) { assert(vp); }
-      ~PENumber() { delete value_; }
+      explicit PENumber(verinum*vp);
+      ~PENumber();
 
-      const verinum& value() const { return *value_; }
+      const verinum& value() const;
 
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
@@ -216,10 +216,10 @@ class PENumber : public PExpr {
 class PEString : public PExpr {
 
     public:
-      explicit PEString(const string&s)
-      : text_(s) { }
+      explicit PEString(const string&s);
+      ~PEString();
 
-      string value() const { return text_; }
+      string value() const;
       virtual void dump(ostream&) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
 
@@ -358,6 +358,19 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.35  2000/04/12 04:23:57  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.34  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

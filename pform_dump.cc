@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.52 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.53 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 /*
@@ -81,24 +81,21 @@ void PECallFunction::dump(ostream &out) const
 
 void PEEvent::dump(ostream&out) const
 {
-      if (expr_) {
-	    switch (type_) {
-		case NetNEvent::ANYEDGE:
-		  break;
-		case NetNEvent::POSEDGE:
-		  out << "posedge ";
-		  break;
-		case NetNEvent::NEGEDGE:
-		  out << "negedge ";
-		  break;
-		case NetNEvent::POSITIVE:
-		  out << "positive ";
-		  break;
-	    }
-	    out << *expr_;
-      } else {
-	    out << "<event " << name_ << ">";
+      switch (type_) {
+	  case NetNEvent::ANYEDGE:
+	    break;
+	  case NetNEvent::POSEDGE:
+	    out << "posedge ";
+	    break;
+	  case NetNEvent::NEGEDGE:
+	    out << "negedge ";
+	    break;
+	  case NetNEvent::POSITIVE:
+	    out << "positive ";
+	    break;
       }
+      out << *expr_;
+
 }
 
 void PENumber::dump(ostream&out) const
@@ -736,6 +733,19 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.53  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.52  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

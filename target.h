@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.33 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: target.h,v 1.34 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -91,7 +91,6 @@ struct target_t {
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
-      virtual void net_event(ostream&os, const NetNEvent*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
 
 	/* Output a process (called for each process). It is up to the
@@ -113,8 +112,6 @@ struct target_t {
       virtual void proc_utask(ostream&os, const NetUTask*);
       virtual bool proc_wait(ostream&os,  const NetEvWait*);
       virtual void proc_while(ostream&os, const NetWhile*);
-
-      virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
 
 	/* Done with the design. */
@@ -155,6 +152,19 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.34  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.33  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

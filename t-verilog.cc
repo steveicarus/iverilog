@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.9 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.10 2000/04/12 04:23:58 steve Exp $"
 #endif
 
 /*
@@ -45,7 +45,6 @@ class target_verilog : public target_t {
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
-      virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_stask(ostream&os, const NetSTask*);
       virtual void end_design(ostream&os, const Design*);
     private:
@@ -192,35 +191,6 @@ void target_verilog::proc_delay(ostream&os, const NetPDelay*net)
       indent_ -= 4;
 }
 
-void target_verilog::proc_event(ostream&os, const NetPEvent*net)
-{
-      os << setw(indent_) << "" << "@";
-
-#if 0
-      unsigned sidx;
-      const NetNet*sig = find_link_signal(net, 0, sidx);
-
-      switch (net->edge()) {
-	  case NetNEvent::ANYEDGE:
-	    os << mangle(sig->name()) << "[" << sidx << "]";
-	    break;
-	  case NetNEvent::POSEDGE:
-	    os << "(posedge " << mangle(sig->name()) << "[" << sidx << "])";
-	    break;
-	  case NetNEvent::NEGEDGE:
-	    os << "(negedge " << mangle(sig->name()) << "[" << sidx << "])";
-	    break;
-      }
-#else
-      os << endl;
-      os << "#error \"proc_event temporarily out of order\"";
-#endif
-      os << endl;
-
-      indent_ += 4;
-      net->emit_proc_recurse(os, this);
-      indent_ -= 4;
-}
 
 static void vtask_parm(ostream&os, const NetExpr*ex)
 {
@@ -272,6 +242,19 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.10  2000/04/12 04:23:58  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.9  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.23 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: Statement.h,v 1.24 2000/04/12 04:23:57 steve Exp $"
 #endif
 
 # include  <string>
@@ -225,8 +225,7 @@ class PCase  : public Statement {
 class PCondit  : public Statement {
 
     public:
-      PCondit(PExpr*ex, Statement*i, Statement*e)
-      : expr_(ex), if_(i), else_(e) { }
+      PCondit(PExpr*ex, Statement*i, Statement*e);
       ~PCondit();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
@@ -246,8 +245,8 @@ class PCondit  : public Statement {
 class PDelayStatement  : public Statement {
 
     public:
-      PDelayStatement(PExpr*d, Statement*st)
-      : delay_(d), statement_(st) { }
+      PDelayStatement(PExpr*d, Statement*st);
+      ~PDelayStatement();
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
@@ -274,7 +273,7 @@ class PEventStatement  : public Statement {
 
       ~PEventStatement();
 
-      void set_statement(Statement*st) { statement_ = st; }
+      void set_statement(Statement*st);
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
@@ -382,6 +381,19 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.24  2000/04/12 04:23:57  steve
+ *  Named events really should be expressed with PEIdent
+ *  objects in the pform,
+ *
+ *  Handle named events within the mix of net events
+ *  and edges. As a unified lot they get caught together.
+ *  wait statements are broken into more complex statements
+ *  that include a conditional.
+ *
+ *  Do not generate NetPEvent or NetNEvent objects in
+ *  elaboration. NetEvent, NetEvWait and NetEvProbe
+ *  take over those functions in the netlist.
+ *
  * Revision 1.23  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *
