@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.7 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: event.cc,v 1.8 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -179,10 +179,14 @@ void compile_named_event(char*label, char*name)
       vpip_attach_to_current_scope(obj->handle);
 
       free(label);
+      free(name);
 }
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.8  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.7  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *

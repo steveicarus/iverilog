@@ -27,11 +27,12 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.15 2002/07/04 16:37:07 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.16 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "memory.h"
+# include  "statistics.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -563,6 +564,7 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 {
       struct __vpiMemory*obj = (struct __vpiMemory*)
 	    malloc(sizeof(struct __vpiMemory));
+      count_vpi_memories += 1;
 
       obj->base.vpi_type = &vpip_memory_rt;
       obj->scope = vpip_peek_current_scope();
@@ -579,6 +581,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.16  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.15  2002/07/04 16:37:07  steve
  *  Fix s_vpi_vecval array byte size.
  *

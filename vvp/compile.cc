@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.133 2002/07/05 04:40:59 steve Exp $"
+#ident "$Id: compile.cc,v 1.134 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1391,6 +1391,7 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       vpip_attach_to_current_scope(obj);
 
       free(label);
+      free(name);
 }
 
 void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
@@ -1414,11 +1415,15 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       vpip_attach_to_current_scope(obj);
 
       free(label);
+      free(name);
       free(argv);
 }
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.134  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.133  2002/07/05 04:40:59  steve
  *  Symbol table uses more efficient key string allocator,
  *  and remove all the symbol tables after compile is done.

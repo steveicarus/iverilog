@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.15 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.16 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "symbols.h"
 # include  "functor.h"
+# include  "statistics.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -55,10 +56,10 @@ static char* scope_get_str(int code, vpiHandle obj)
 
       switch (code) {
 	  case vpiFullName:
-	    return ref->name;
+	    return const_cast<char*>(ref->name);
 
 	  case vpiName:
-	    nn = n = ref->name;
+	    nn = n = const_cast<char*>(ref->name);
 	    while (*n)
 		  if (*n=='\\' && *++n)
 			++n;
@@ -310,6 +311,7 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
 void compile_scope_decl(char*label, char*type, char*name, char*parent)
 {
       struct __vpiScope*scope = new struct __vpiScope;
+      count_vpi_scopes += 1;
 
       switch(type[2]) {
 	  case 'd': /* type == moDule */
@@ -334,7 +336,7 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 
       assert(scope->base.vpi_type);
 
-      scope->name = name;
+      scope->name = vpip_string(name);
       scope->intern = 0;
       scope->nintern = 0;
       scope->threads = 0;
@@ -342,7 +344,10 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
       current_scope = scope;
 
       compile_vpi_symbol(label, &scope->base);
+
       free(label);
+      free(type);
+      free(name);
 
       if (parent) {
 	    static vpiHandle obj;
@@ -384,6 +389,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.16  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.15  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

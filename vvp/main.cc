@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.26 2002/07/05 03:47:06 steve Exp $"
+#ident "$Id: main.cc,v 1.27 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -242,6 +242,8 @@ int main(int argc, char*argv[])
 	    fprintf(stderr, " ... %8lu opcodes (%lu bytes)\n",
 		    count_opcodes, size_opcodes);
 	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
+	    fprintf(stderr, " ... %8lu memories\n", count_vpi_memories);
+	    fprintf(stderr, " ... %8lu scopes\n",   count_vpi_scopes);
       }
 
       if (verbose_flag) {
@@ -273,6 +275,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.27  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.26  2002/07/05 03:47:06  steve
  *  Track opcode memory space.
  *

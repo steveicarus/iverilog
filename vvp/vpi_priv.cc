@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.17 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.18 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <stdarg.h>
+# include  <string.h>
 # include  <assert.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -31,6 +32,39 @@
 # include  <stdlib.h>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
+
+/*
+ * The vpip_string function creates a constant string from the pass
+ * input. This constant string is permanently allocate from an
+ * efficient string buffer store.
+ */
+struct vpip_string_chunk {
+      struct vpip_string_chunk*next;
+      char data[64*1024 - sizeof (struct vpip_string_chunk*)];
+};
+
+const char *vpip_string(const char*str)
+{
+      static vpip_string_chunk first_chunk = {0, {0}};
+      static vpip_string_chunk*chunk_list = &first_chunk;
+      static unsigned chunk_fill = 0;
+
+      unsigned len = strlen(str);
+      assert( (len+1) <= sizeof chunk_list->data );
+
+      if ( (len+1) > (sizeof chunk_list->data - chunk_fill) ) {
+	    vpip_string_chunk*tmp = new vpip_string_chunk;
+	    tmp->next = chunk_list;
+	    chunk_list = tmp;
+	    chunk_fill = 0;
+      }
+
+      char*res = chunk_list->data + chunk_fill;
+      chunk_fill += len + 1;
+
+      strcpy(res, str);
+      return res;
+}
 
 /*
  * When a task is called, this value is set so that vpi_handle can
@@ -212,6 +246,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.18  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.17  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *

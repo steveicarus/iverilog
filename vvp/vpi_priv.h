@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.37 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.38 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -135,7 +135,7 @@ struct __vpiScope {
       struct __vpiHandle base;
       struct __vpiScope *scope;
 	/* The scope has a name. */
-      char*name;
+      const char*name;
       /* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
       unsigned nintern;
@@ -156,7 +156,7 @@ struct __vpiSignal {
       struct __vpiHandle base;
       struct __vpiScope* scope;
 	/* The name of this reg/net object */
-      char*name;
+      const char*name;
 	/* The indices that define the width and access offset. */
       int msb, lsb;
 	/* Flags */
@@ -167,11 +167,12 @@ struct __vpiSignal {
         /* This is the callback event functor */
       struct callback_functor_s *callback;
 };
-extern vpiHandle vpip_make_int(char*name, int msb, int lsb, vvp_fvector_t vec);
-extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
+extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
 			       vvp_fvector_t vec);
-extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
-			       vvp_fvector_t vec);
+extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
+			       bool signed_flag, vvp_fvector_t vec);
+extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
+			       bool signed_flag, vvp_fvector_t vec);
 
 /*
  * These methods support the vpi creation of events. The name string
@@ -181,14 +182,14 @@ extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 struct __vpiNamedEvent {
       struct __vpiHandle base;
 	/* base name of the event object */
-      char*name;
+      const char*name;
 	/* Parent scope of this object. */
       struct __vpiScope*scope;
 	/* List of callbacks interested in this event. */
       struct __vpiCallback*callbacks;
 };
 
-extern vpiHandle vpip_make_named_event(char*name);
+extern vpiHandle vpip_make_named_event(const char*name);
 extern void vpip_run_named_event_callbacks(vpiHandle ref);
 
 /*
@@ -324,6 +325,7 @@ extern void vpip_set_time_precision(int pres);
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
+extern const char* vpip_string(const char*str);
 
 /*
 **  Functions defined in vpi_scope.cc, to keep track of functor scope.
@@ -360,6 +362,9 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.38  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.37  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *

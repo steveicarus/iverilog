@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.cc,v 1.2 2002/07/05 03:46:43 steve Exp $"
+#ident "$Id: statistics.cc,v 1.3 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "statistics.h"
@@ -31,12 +31,18 @@ unsigned long count_functors = 0;
 
 unsigned long count_vpi_nets = 0;
 
+unsigned long count_vpi_memories = 0;
+
+unsigned long count_vpi_scopes = 0;
 
 size_t size_opcodes = 0;
 
 
 /*
  * $Log: statistics.cc,v $
+ * Revision 1.3  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.2  2002/07/05 03:46:43  steve
  *  Track opcode memory space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_event.cc,v 1.2 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.3 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -39,7 +39,7 @@ static char* named_event_str(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiName:
-	    return obj->name;
+	    return const_cast<char*>(obj->name);
 
       }
 
@@ -85,13 +85,13 @@ static const struct __vpirt vpip_named_event_rt = {
       named_event_free_object
 };
 
-vpiHandle vpip_make_named_event(char*name)
+vpiHandle vpip_make_named_event(const char*name)
 {
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)
 	    malloc(sizeof(struct __vpiNamedEvent));
 
       obj->base.vpi_type = &vpip_named_event_rt;
-      obj->name = name;
+      obj->name = vpip_string(name);
       obj->scope = vpip_peek_current_scope();
       obj->callbacks = 0;
 
@@ -114,6 +114,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.3  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.2  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *

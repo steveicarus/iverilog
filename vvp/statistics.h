@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.h,v 1.2 2002/07/05 03:46:43 steve Exp $"
+#ident "$Id: statistics.h,v 1.3 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -27,11 +27,16 @@
 extern unsigned long count_opcodes;
 extern unsigned long count_functors;
 extern unsigned long count_vpi_nets;
+extern unsigned long count_vpi_scopes;
+extern unsigned long count_vpi_memories;
 
 extern size_t size_opcodes;
 
 /*
  * $Log: statistics.h,v $
+ * Revision 1.3  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.2  2002/07/05 03:46:43  steve
  *  Track opcode memory space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.40 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.41 2002/07/05 17:14:15 steve Exp $"
 #endif
 
 /*
@@ -628,7 +628,7 @@ static const struct __vpirt vpip_net_rt = {
  * to minimize the code modifications. Icarus implements integers
  * as 'reg signed [31:0]'.
  */
-vpiHandle vpip_make_int(char*name, int msb, int lsb, vvp_fvector_t vec)
+vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_fvector_t vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, true, vec);
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
@@ -640,8 +640,8 @@ vpiHandle vpip_make_int(char*name, int msb, int lsb, vvp_fvector_t vec)
 /*
  * Construct a vpiReg object. It's like a net, except for the type.
  */
-vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
-			vvp_fvector_t vec)
+vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
+			bool signed_flag, vvp_fvector_t vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
       obj->vpi_type = &vpip_reg_rt;
@@ -652,13 +652,13 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
  * Construct a vpiNet object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  */
-vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
-			vvp_fvector_t vec)
+vpiHandle vpip_make_net(const char*name, int msb, int lsb,
+			bool signed_flag, vvp_fvector_t vec)
 {
       struct __vpiSignal*obj = (struct __vpiSignal*)
 	    malloc(sizeof(struct __vpiSignal));
       obj->base.vpi_type = &vpip_net_rt;
-      obj->name = name;
+      obj->name = vpip_string(name);
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
@@ -676,6 +676,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.41  2002/07/05 17:14:15  steve
+ *  Names of vpi objects allocated as vpip_strings.
+ *
  * Revision 1.40  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *
