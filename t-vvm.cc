@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.56 1999/10/01 15:26:28 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.57 1999/10/05 04:02:10 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -917,7 +917,7 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
 void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 {
       const string name = mangle(net->name());
-      unsigned iwid = net->rval()->expr_width();
+      unsigned iwid = net->pin_count();
       os << "class " << name << " : public vvm_event {" << endl;
       os << "    public:" << endl;
 
@@ -926,8 +926,8 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 	       << iwid << ">&v, unsigned idx)" << endl;
 	    os << "      : sim_(s), value_(v), idx_(idx) { }" << endl;
       } else {
-	    os << "      " << name << "(vvm_simulation*s, const vvm_bitset_t<"
-	       << iwid << ">&v)" << endl;
+	    os << "      " << name << "(vvm_simulation*s, const vvm_bits_t&v)"
+	       << endl;
 	    os << "      : sim_(s), value_(v) { }" << endl;
       }
       os << "      void event_function();" << endl;
@@ -1681,6 +1681,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.57  1999/10/05 04:02:10  steve
+ *  Relaxed width handling for <= assignment.
+ *
  * Revision 1.56  1999/10/01 15:26:28  steve
  *  Add some vvm operators from Eric Aardoom.
  *

@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.72 1999/09/30 21:28:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.73 1999/10/05 04:02:10 steve Exp $"
 #endif
 
 # include  <cassert>
 # include  <typeinfo>
 # include  "netlist.h"
+# include  "netmisc.h"
 
 ostream& operator<< (ostream&o, NetNet::Type t)
 {
@@ -405,10 +406,10 @@ NetAssign::~NetAssign()
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
 : NetAssign_(n, w), rval_(rv), bmux_(0)
 {
-      bool flag = rval_->set_width(w);
-      if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
+      if (rval_->expr_width() < w) {
+	    cerr << rv->get_line() << ": Expression bit width (" <<
+		  rval_->expr_width() << ") conflicts with l-value "
+		  "bit width (" << w << ")." << endl;
 	    des->errors += 1;
       }
 }
@@ -765,6 +766,29 @@ NetEBAdd::~NetEBAdd()
 NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+	/* First try to naturally adjust the size of the
+	   expressions to match. */
+      if (l->expr_width() > r->expr_width())
+	    r->set_width(l->expr_width());
+
+      if (r->expr_width() > l->expr_width())
+	    l->set_width(r->expr_width());
+
+      if (l->expr_width() < r->expr_width())
+	    r->set_width(l->expr_width());
+
+      if (r->expr_width() < l->expr_width())
+	    l->set_width(r->expr_width());
+
+	/* If the expressions cannot be matched, pad them to fit. */
+      if (l->expr_width() > r->expr_width())
+	    right_ = pad_to_width(r, l->expr_width());
+
+      if (r->expr_width() > l->expr_width())
+	    left_ = pad_to_width(l, r->expr_width());
+
+      assert(left_->expr_width() == right_->expr_width());
+      expr_width(left_->expr_width());
 }
 
 NetEBBits::~NetEBBits()
@@ -784,28 +808,6 @@ NetEBComp::~NetEBComp()
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
-      switch (op_) {
-	  case '^':
-	  case '&':
-	  case '|':
-	  case '%':
-	  case '/':
-	    if (l->expr_width() > r->expr_width())
-		  r->set_width(l->expr_width());
-
-	    if (r->expr_width() > l->expr_width())
-		  l->set_width(r->expr_width());
-
-	    if (l->expr_width() < r->expr_width())
-		  r->set_width(l->expr_width());
-
-	    if (r->expr_width() < l->expr_width())
-		  l->set_width(r->expr_width());
-
-	    assert(l->expr_width() == r->expr_width());
-	    expr_width(l->expr_width());
-	    break;
-      }
 }
 
 NetEBinary::~NetEBinary()
@@ -1682,6 +1684,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.73  1999/10/05 04:02:10  steve
+ *  Relaxed width handling for <= assignment.
+ *
  * Revision 1.72  1999/09/30 21:28:34  steve
  *  Handle mutual reference of tasks by elaborating
  *  task definitions in two passes, like functions.

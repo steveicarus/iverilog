@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.12 1999/09/29 18:36:04 steve Exp $"
+#ident "$Id: vvm.h,v 1.13 1999/10/05 04:02:10 steve Exp $"
 #endif
 
 # include  <vector>
@@ -126,6 +126,18 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  bits_[idx] = Vz;
 	    }
+      vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
+	    { bits_ = that.bits_; }
+      vvm_bitset_t(const vvm_bits_t&that)
+	    { unsigned wid = WIDTH;
+	      if (that.get_width() < WIDTH)
+		    wid = that.get_width();
+	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		    bits_[idx] = that.get_bit(idx);
+	      for (unsigned idx = wid ;  idx < WIDTH ;  idx += 1)
+		    bits_[idx] = V0;
+	    }
+	    
 
       vvm_bit_t operator[] (unsigned idx) const { return bits_[idx]; }
       vvm_bit_t&operator[] (unsigned idx) { return bits_[idx]; }
@@ -140,6 +152,12 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 		    if (bits_[idx-1]) result |= 1;
 	      }
 	      return result;
+	    }
+
+      vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&that)
+	    { if (this == &that) return *this;
+	      bits_ = that.bits_;
+	      return *this;
 	    }
 
     private:
@@ -282,6 +300,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.13  1999/10/05 04:02:10  steve
+ *  Relaxed width handling for <= assignment.
+ *
  * Revision 1.12  1999/09/29 18:36:04  steve
  *  Full case support
  *

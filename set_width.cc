@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.4 1999/09/29 00:42:51 steve Exp $"
+#ident "$Id: set_width.cc,v 1.5 1999/10/05 04:02:10 steve Exp $"
 #endif
 
 /*
@@ -113,7 +113,8 @@ bool NetEBBits::set_width(unsigned w)
 
       flag = left_->set_width(w) && flag;
       flag = right_->set_width(w) && flag;
-      expr_width(w);
+      if (flag)
+	    expr_width(w);
 
       return flag;
 }
@@ -261,6 +262,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.5  1999/10/05 04:02:10  steve
+ *  Relaxed width handling for <= assignment.
+ *
  * Revision 1.4  1999/09/29 00:42:51  steve
  *  Allow expanding of additive operators.
  *
