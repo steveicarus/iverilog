@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.79 2003/05/14 05:26:41 steve Exp $"
+#ident "$Id: stub.c,v 1.80 2003/06/23 01:25:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -805,6 +805,23 @@ static int show_scope(ivl_scope_t net, void*x)
 
       fprintf(out, " time units = 10e%d\n", ivl_scope_time_units(net));
 
+      for (idx = 0 ;  idx < ivl_scope_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t attr = ivl_scope_attr_val(net, idx);
+	    switch (attr->type) {
+		case IVL_ATT_VOID:
+		  fprintf(out, "  (* %s *)\n", attr->key);
+		  break;
+		case IVL_ATT_STR:
+		  fprintf(out, "  (* %s = \"%s\" *)\n", attr->key,
+			  attr->val.str);
+		  break;
+		case IVL_ATT_NUM:
+		  fprintf(out, "  (* %s = %ld *)\n", attr->key,
+			  attr->val.num);
+		  break;
+	    }
+      }
+
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
 	    show_parameter(ivl_scope_param(net, idx));
 
@@ -853,6 +870,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.80  2003/06/23 01:25:44  steve
+ *  Module attributes make it al the way to ivl_target.
+ *
  * Revision 1.79  2003/05/14 05:26:41  steve
  *  Support real expressions in case statements.
  *
@@ -885,206 +905,4 @@ int target_design(ivl_design_t des)
  *  implementation of vpiSystemTime the $time functions
  *  to properly account for this. Also add $simtime
  *  to get the simulation time.
- *
- * Revision 1.70  2002/10/23 01:45:24  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.69  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.68  2002/09/18 03:33:10  steve
- *  Fix switch case warnings.
- *
- * Revision 1.67  2002/09/16 00:28:25  steve
- *  Display FF enables.
- *
- * Revision 1.66  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.65  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.64  2002/07/28 23:57:22  steve
- *  dump NOT gates.
- *
- * Revision 1.63  2002/06/05 03:43:14  steve
- *  Dump l-value memory indices.
- *
- * Revision 1.62  2002/05/29 22:05:55  steve
- *  Offset lvalue index expressions.
- *
- * Revision 1.61  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.60  2002/05/26 01:39:03  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.59  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.58  2002/05/23 03:08:52  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.57  2002/04/27 04:20:52  steve
- *  Dump parametres for system functions.
- *
- * Revision 1.56  2002/04/25 05:03:11  steve
- *  Dump bit select expressions.
- *
- * Revision 1.55  2002/04/22 03:15:25  steve
- *  Keep delays applied to BUFZ devices.
- *
- * Revision 1.54  2002/04/22 02:40:32  steve
- *  Dump the while loop expression.
- *
- * Revision 1.53  2002/04/14 19:02:34  steve
- *  Ternary expressions can be signed.
- *
- * Revision 1.52  2002/04/14 02:44:53  steve
- *  Show unary subexpressions.
- *
- * Revision 1.51  2001/12/15 02:13:17  steve
- *  The IVL_SIT_WIRE type does not exist, it is a
- *  synonym for IVL_SIT_TRI.
- *
- * Revision 1.50  2001/09/30 16:45:10  steve
- *  Fix some Cygwin DLL handling. (Venkat Iyer)
- *
- * Revision 1.49  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.48  2001/07/22 21:30:56  steve
- *  Recognize supply signal types.
- *
- * Revision 1.47  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.46  2001/07/01 23:44:19  steve
- *  Print memory l-values.
- *
- * Revision 1.45  2001/06/07 04:20:10  steve
- *  Account for carry out on add devices.
- *
- * Revision 1.44  2001/06/07 03:09:37  steve
- *  support subtraction in tgt-vvp.
- *
- * Revision 1.43  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.42  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.41  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.40  2001/05/03 01:52:45  steve
- *  dll build of many probes forgot to index the probe.
- *
- * Revision 1.39  2001/04/29 23:17:38  steve
- *  Carry drive strengths in the ivl_nexus_ptr_t, and
- *  handle constant devices in targets.'
- *
- * Revision 1.38  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.37  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.36  2001/04/03 04:50:37  steve
- *  Support non-blocking assignments.
- *
- * Revision 1.35  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.34  2001/04/01 01:48:21  steve
- *  Redesign event information to support arbitrary edge combining.
- *
- * Revision 1.33  2001/03/31 17:36:39  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.32  2001/03/30 05:49:52  steve
- *  Generate code for fork/join statements.
- *
- * Revision 1.31  2001/03/29 02:52:39  steve
- *  Add unary ~ operator to tgt-vvp.
- *
- * Revision 1.30  2001/03/28 06:07:39  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.29  2001/02/07 22:22:00  steve
- *  ivl_target header search path fixes.
- *
- * Revision 1.28  2001/01/15 00:47:02  steve
- *  Pass scope type information to the target module.
- *
- * Revision 1.27  2001/01/15 00:05:39  steve
- *  Add client data pointer for scope and process scanners.
- *
- * Revision 1.26  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.25  2000/11/12 17:47:29  steve
- *  flip-flop pins for ivl_target API.
- *
- * Revision 1.24  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.23  2000/10/28 22:32:34  steve
- *  API for concatenation expressions.
- *
- * Revision 1.22  2000/10/28 17:55:03  steve
- *  stub for the concat operator.
- *
- * Revision 1.21  2000/10/25 05:41:24  steve
- *  Get target signal from nexus_ptr.
- *
- * Revision 1.20  2000/10/21 16:49:45  steve
- *  Reduce the target entry points to the target_design.
- *
- * Revision 1.19  2000/10/18 20:04:39  steve
- *  Add ivl_lval_t and support for assignment l-values.
- *
- * Revision 1.18  2000/10/15 21:02:08  steve
- *  Makefile patches to support target loading under cygwin.
- *
- * Revision 1.17  2000/10/15 04:46:23  steve
- *  Scopes and processes are accessible randomly from
- *  the design, and signals and logic are accessible
- *  from scopes. Remove the target calls that are no
- *  longer needed.
- *
- *  Add the ivl_nexus_ptr_t and the means to get at
- *  them from nexus objects.
- *
- *  Give names to methods that manipulate the ivl_design_t
- *  type more consistent names.
- *
- * Revision 1.16  2000/10/08 05:00:04  steve
- *  Missing stream in call to fprintf.
- *
- * Revision 1.15  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.14  2000/10/06 23:46:51  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.13  2000/10/05 05:03:01  steve
- *  xor and constant devices.
  */
-

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.113 2003/06/17 21:28:59 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.114 2003/06/23 01:25:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -537,6 +537,8 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
       root_->time_units = s->time_unit();
+      root_->nattr = s->attr_cnt();
+      root_->attr  = fill_in_attributes(s);
 
       des_.nroots_++;
       if (des_.roots_)
@@ -1925,6 +1927,8 @@ void dll_target::scope(const NetScope*net)
 	    scope->var_ = 0;
 	    make_scope_parameters(scope, net);
 	    scope->time_units = net->time_unit();
+	    scope->nattr = net->attr_cnt();
+	    scope->attr  = fill_in_attributes(net);
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
@@ -2128,6 +2132,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.114  2003/06/23 01:25:44  steve
+ *  Module attributes make it al the way to ivl_target.
+ *
  * Revision 1.113  2003/06/17 21:28:59  steve
  *  Remove short int restrictions from vvp opcodes. (part 2)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.99 2003/05/14 05:26:41 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.100 2003/06/23 01:25:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1186,6 +1186,19 @@ extern "C" ivl_attribute_t ivl_process_attr_val(ivl_process_t net,
       return net->attr + idx;
 }
 
+extern "C" unsigned ivl_scope_attr_cnt(ivl_scope_t net)
+{
+      assert(net);
+      return net->nattr;
+}
+
+extern "C" ivl_attribute_t ivl_scope_attr_val(ivl_scope_t net,
+					      unsigned idx)
+{
+      assert(idx < net->nattr);
+      return net->attr + idx;
+}
+
 extern "C" const char* ivl_scope_basename(ivl_scope_t net)
 {
       assert(net);
@@ -1837,6 +1850,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.100  2003/06/23 01:25:44  steve
+ *  Module attributes make it al the way to ivl_target.
+ *
  * Revision 1.99  2003/05/14 05:26:41  steve
  *  Support real expressions in case statements.
  *

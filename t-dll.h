@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.103 2003/06/17 21:28:59 steve Exp $"
+#ident "$Id: t-dll.h,v 1.104 2003/06/23 01:25:44 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -547,6 +547,9 @@ struct ivl_scope_s {
       ivl_signal_t*port;
 
       signed int time_units :8;
+
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
 };
 
 /*
@@ -678,6 +681,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.104  2003/06/23 01:25:44  steve
+ *  Module attributes make it al the way to ivl_target.
+ *
  * Revision 1.103  2003/06/17 21:28:59  steve
  *  Remove short int restrictions from vvp opcodes. (part 2)
  *

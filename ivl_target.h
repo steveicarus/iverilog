@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.118 2003/05/14 05:26:41 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.119 2003/06/23 01:25:44 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -566,7 +566,7 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * ivl_logic_pins
  * ivl_logic_pin
  *
- * ivl_logic_attr
+ * ivl_logic_attr (obsolete)
  *    Return the value of a specific attribute, given the key name as
  *    a string. If the key is not defined, then return 0 (null).
  *
@@ -898,6 +898,10 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  * - task scopes (IVL_SCT_TASK)
  *    [...]
  *
+ * ivl_scope_attr_cnt
+ * ivl_scope_attr_val
+ *    A scope may have attributes attached to it. These functions
+ *    allow the target to access the attributes values.
  *
  * ivl_scope_children
  *    A scope may in turn contain other scopes. This method iterates
@@ -974,6 +978,9 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *    type name is "foo". This is different from the instance name
  *    returned by ivl_scope_name above.
  */
+
+extern unsigned        ivl_scope_attr_cnt(ivl_scope_t net);
+extern ivl_attribute_t ivl_scope_attr_val(ivl_scope_t net, unsigned idx);
 
 extern int          ivl_scope_children(ivl_scope_t net,
 				       ivl_scope_f func, void*cd);
@@ -1215,6 +1222,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.119  2003/06/23 01:25:44  steve
+ *  Module attributes make it al the way to ivl_target.
+ *
  * Revision 1.118  2003/05/14 05:26:41  steve
  *  Support real expressions in case statements.
  *
