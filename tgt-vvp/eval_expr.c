@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.32 2001/06/21 04:53:59 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.33 2001/06/23 18:40:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -381,19 +381,24 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       return lv;
 }
 
+/*
+ * Draw code to evaluate the << expression. Use the %shiftl/i0
+ * instruction to do the real work of shifting.
+ */
 static struct vector_info draw_binary_expr_ls(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
 
-      unsigned shift = 0;
-
       struct vector_info lv;
-      struct vector_info rs;
 
-	/* XXXX support only constant right expressions. */
+	/* Figure out the shift amount and load that into the index
+	   register. The value may be a constant, or may need to be
+	   evaluated at run time. */
       switch (ivl_expr_type(re)) {
+
 	  case IVL_EX_NUMBER: {
+		unsigned shift = 0;
 		unsigned idx, nbits = ivl_expr_width(re);
 		const char*bits = ivl_expr_bits(re);
 
@@ -408,35 +413,29 @@ static struct vector_info draw_binary_expr_ls(ivl_expr_t exp, unsigned wid)
 		    default:
 		      assert(0);
 		}
+
+		fprintf(vvp_out, "    %%ix/load 0, %u;\n", shift);
 		break;
 	  }
 	    
 	  case IVL_EX_ULONG:
-	    shift = ivl_expr_uvalue(re);
+	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", ivl_expr_uvalue(re));
 	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
 
-      if (shift >= wid) {
-	    rs.base = 0;
-	    rs.wid  = wid;
-	    return rs;
+	  default: {
+		  struct vector_info rv;
+		  rv = draw_eval_expr(re);
+		  fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
+			  rv.base, rv.wid);
+		  clr_vector(rv);
+		  break;
+	    }
       }
 
       lv = draw_eval_expr_wid(le, wid);
 
-      assert(lv.wid >= (wid - shift));
-      rs.base = allocate_vector(wid);
-      rs.wid = wid;
-
-      fprintf(vvp_out, "    %%mov %u, %u, %u;\n", rs.base+shift,
-	      lv.base, wid-shift);
-      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", rs.base, shift);
-      clr_vector(lv);
-
-      return rs;
+      fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
+      return lv;
 }
 
 static struct vector_info draw_binary_expr_rs(ivl_expr_t exp, unsigned wid)
@@ -1067,6 +1066,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.33  2001/06/23 18:40:34  steve
+ *  Generate %shiftl instructions for shift.
+ *
  * Revision 1.32  2001/06/21 04:53:59  steve
  *  Escaped identifiers in behavioral expressions. (Stephan Boettcher)
  *
