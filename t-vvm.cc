@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.60 1999/10/07 05:25:34 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.61 1999/10/08 02:00:48 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -314,6 +314,9 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	  case '&':
 	    os_ << "vvm_unop_and(" << result << ");" << endl;
 	    break;
+	  case '|':
+	    os_ << "vvm_unop_or(" << result << ");" << endl;
+	    break;
 	  case '^':
 	    os_ << "vvm_unop_xor(" << result << ");" << endl;
 	    break;
@@ -330,7 +333,7 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	    os_ << "vvm_unop_xnor(" << result << ");" << endl;
 	    break;
 	  default:
-	    cerr << "vvm: Unhandled unary op `" << expr->op() << "'"
+	    cerr << "vvm error: Unhandled unary op `" << expr->op() << "'"
 		 << endl;
 	    os_ << "#error \"" << expr->get_line() << ": vvm error: "
 		  "Unhandled unary op: " << *expr << "\"" << endl;
@@ -1724,6 +1727,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.61  1999/10/08 02:00:48  steve
+ *  vvm supports unary | operator.
+ *
  * Revision 1.60  1999/10/07 05:25:34  steve
  *  Add non-const bit select in l-value of assignment.
  *
