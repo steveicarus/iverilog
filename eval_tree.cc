@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.57 2003/09/04 01:52:50 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.58 2003/10/26 04:54:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,6 +146,24 @@ NetEConst* NetEBBits::eval_tree()
 		if (cnt > rwid) cnt = rwid;
 		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 		      res.set(idx, lval.get(idx) & rval.get(idx));
+
+		break;
+	  }
+
+	  case '^': {
+		unsigned cnt = lwid;
+		if (cnt > wid)  cnt = wid;
+		if (cnt > rwid) cnt = rwid;
+		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		      res.set(idx, lval.get(idx) ^ rval.get(idx));
+
+		if (lwid < rwid)
+		      for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
+			    res.set(idx, rval.get(idx));
+
+		if (rwid < lwid)
+		      for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
+			    res.set(idx, lval.get(idx));
 
 		break;
 	  }
@@ -1495,6 +1513,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.58  2003/10/26 04:54:56  steve
+ *  Support constant evaluation of binary ^ operator.
+ *
  * Revision 1.57  2003/09/04 01:52:50  steve
  *  Evaluate real parameter expressions that contain real parameters.
  *

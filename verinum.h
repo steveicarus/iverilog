@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.24 2003/04/14 03:40:21 steve Exp $"
+#ident "$Id: verinum.h,v 1.25 2003/10/26 04:54:56 steve Exp $"
 #endif
 
 # include  <string>
@@ -112,6 +112,7 @@ extern ostream& operator<< (ostream&, verinum::V);
 
 extern verinum::V operator | (verinum::V l, verinum::V r);
 extern verinum::V operator & (verinum::V l, verinum::V r);
+extern verinum::V operator ^ (verinum::V l, verinum::V r);
 
 extern verinum::V operator == (const verinum&left, const verinum&right);
 extern verinum::V operator <= (const verinum&left, const verinum&right);
@@ -143,6 +144,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.25  2003/10/26 04:54:56  steve
+ *  Support constant evaluation of binary ^ operator.
+ *
  * Revision 1.24  2003/04/14 03:40:21  steve
  *  Make some effort to preserve bits while
  *  operating on constant values.

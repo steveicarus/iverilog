@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.40 2003/05/25 03:01:19 steve Exp $"
+#ident "$Id: verinum.cc,v 1.41 2003/10/26 04:54:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -843,8 +843,23 @@ verinum::V operator & (verinum::V l, verinum::V r)
       return verinum::V1;
 }
 
+verinum::V operator ^ (verinum::V l, verinum::V r)
+{
+      if (l == verinum::V0)
+	    return r;
+      if (r == verinum::V0)
+	    return l;
+      if ((l == verinum::V1) && (r == verinum::V1))
+	    return verinum::V0;
+
+      return verinum::Vx;
+}
+
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.41  2003/10/26 04:54:56  steve
+ *  Support constant evaluation of binary ^ operator.
+ *
  * Revision 1.40  2003/05/25 03:01:19  steve
  *  Get length of trimed unsigned value right.
  *
