@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.6 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.7 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,7 +86,7 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 	   Allow for a repeat count other then 1 by repeating the
 	   connect loop as many times as necessary. */
 
-      NetNet*osig = new NetNet(scope, des->local_symbol(scope->name()),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT_REG, pins);
 
       pins = 0;
@@ -149,6 +149,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.7  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.6  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

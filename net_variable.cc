@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_variable.cc,v 1.1 2003/01/28 16:23:27 steve Exp $"
+#ident "$Id: net_variable.cc,v 1.2 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,14 +25,13 @@
 
 NetVariable::NetVariable(const char*name)
 {
-      name_ = strdup(name);
+      name_ = name;
       scope_ = 0;
       snext_ = 0;
 }
 
 NetVariable::~NetVariable()
 {
-      free(name_);
 }
 
 const char*NetVariable::basename() const
@@ -71,6 +70,9 @@ const NetVariable* NetEVariable::variable() const
 
 /*
  * $Log: net_variable.cc,v $
+ * Revision 1.2  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.1  2003/01/28 16:23:27  steve
  *  Add missing net_variable.cc to CVS.
  *

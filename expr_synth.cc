@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.40 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.41 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -48,7 +48,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
-      string path = lsig->scope()->name()+"."+lsig->scope()->local_symbol();
+      string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
@@ -100,12 +100,12 @@ NetNet* NetEBBits::synthesize(Design*des)
       }
 
       assert(lsig->pin_count() == rsig->pin_count());
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT,
-			       lsig->pin_count());
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, lsig->pin_count());
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    string oname = des->local_symbol(path);
+	    string oname = scope->local_hsymbol();
 	    NetLogic*gate;
 
 	      /* If the rsig bit is constant, then look for special
@@ -175,21 +175,21 @@ NetNet* NetEBComp::synthesize(Design*des)
 		  : right_->synthesize(des);
 	    NetScope*scope = lsig->scope();
 	    assert(scope);
-	    string path = des->local_symbol(scope->name());
 
-	    NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::IMPLICIT, 1);
 	    osig->local_flag(true);
 
 	    NetLogic*gate;
 	    switch (op_) {
 		case 'e':
 		case 'E':
-		  gate = new NetLogic(scope, des->local_symbol(path),
+		  gate = new NetLogic(scope, scope->local_hsymbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  break;
 		case 'n':
 		case 'N':
-		  gate = new NetLogic(scope, des->local_symbol(path),
+		  gate = new NetLogic(scope, scope->local_hsymbol(),
 				      lsig->pin_count()+1, NetLogic::OR);
 		  break;
 
@@ -198,11 +198,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		       is very much like sig != 0. (0 > sig) shouldn't
 		       happen. */
 		  if (rcon) {
-			gate = new NetLogic(scope, des->local_symbol(path),
+			gate = new NetLogic(scope, scope->local_hsymbol(),
 					    lsig->pin_count()+1, NetLogic::OR);
 		  } else {
 			assert(0);
-			gate = new NetLogic(scope, des->local_symbol(path),
+			gate = new NetLogic(scope, scope->local_hsymbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  }
 		  break;
@@ -210,11 +210,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		case '<':
 		    /* 0 < sig is handled like sig > 0. */
 		  if (! rcon) {
-			gate = new NetLogic(scope, des->local_symbol(path),
+			gate = new NetLogic(scope, scope->local_hsymbol(),
 					    lsig->pin_count()+1, NetLogic::OR);
 		  } else {
 			assert(0);
-			gate = new NetLogic(scope, des->local_symbol(path),
+			gate = new NetLogic(scope, scope->local_hsymbol(),
 				      lsig->pin_count()+1, NetLogic::NOR);
 		  }
 		  break;
@@ -236,7 +236,6 @@ NetNet* NetEBComp::synthesize(Design*des)
 
       NetScope*scope = lsig->scope();
       assert(scope);
-      string path = des->local_symbol(scope->name());
 
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
@@ -245,13 +244,14 @@ NetNet* NetEBComp::synthesize(Design*des)
       lsig = pad_to_width(des, lsig, width);
       rsig = pad_to_width(des, rsig, width);
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
-	    NetLogic*gate = new NetLogic(scope, des->local_symbol(path),
+	    NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
 					 3, NetLogic::XNOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -264,7 +264,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   operation. This is similar to single bit equality, but uses
 	   an XOR instead of an XNOR gate. */
       if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
-	    NetLogic*gate = new NetLogic(scope, des->local_symbol(path),
+	    NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
 					 3, NetLogic::XOR);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -274,7 +274,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       }
 
 
-      NetCompare*dev = new NetCompare(scope, des->local_symbol(path), width);
+      NetCompare*dev = new NetCompare(scope, scope->local_symbol(), width);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
@@ -337,9 +337,9 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
       NetScope*scope = lsig->scope();
       assert(scope);
-      string path = des->local_symbol(scope->name());
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
 
@@ -349,12 +349,11 @@ NetNet* NetEBLogic::synthesize(Design*des)
 		 comparison with a single wide OR gate. So handle this
 		 magically. */
 
-	    string oname = des->local_symbol(path);
-	    NetLogic*olog;
+	    string oname = scope->local_hsymbol();
 
-	    olog = new NetLogic(scope, oname,
-				lsig->pin_count()+rsig->pin_count()+1,
-				NetLogic::OR);
+	    NetLogic*olog = new NetLogic(scope, oname,
+					 lsig->pin_count()+rsig->pin_count()+1,
+					 NetLogic::OR);
 
 	    connect(osig->pin(0), olog->pin(0));
 
@@ -374,7 +373,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 	      /* Create the logic AND gate. This is a single bit
 		 output, with inputs for each of the operands. */
 	    NetLogic*olog;
-	    string oname = des->local_symbol(path);
+	    string oname = scope->local_hsymbol();
 
 	    olog = new NetLogic(scope, oname, 3, NetLogic::AND);
 
@@ -411,7 +410,7 @@ NetNet* NetEConcat::synthesize(Design*des)
       assert(scope);
 
 	/* Make a NetNet object to carry the output vector. */
-      string path = scope->name() + "." + scope->local_symbol();
+      string path = scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
@@ -439,12 +438,12 @@ NetNet* NetEConst::synthesize(Design*des)
       NetScope*scope = des->find_root_scope();
       assert(scope);
 
-      string path = scope->name() + "." + scope->local_symbol();
+      string path = scope->local_symbol();
       unsigned width=expr_width();
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
-      NetConst*con = new NetConst(scope, des->local_symbol(path), value());
+      NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       for (unsigned idx = 0 ;  idx < width;  idx += 1)
 	    connect(osig->pin(idx), con->pin(idx));
 
@@ -470,14 +469,13 @@ NetNet* NetEUBits::synthesize(Design*des)
 
       NetScope*scope = isig->scope();
       assert(scope);
-      string path = des->local_symbol(scope->name());
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT,
-			       isig->pin_count());
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, isig->pin_count());
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    string oname = des->local_symbol(path);
+	    string oname = scope->local_hsymbol();
 	    NetLogic*gate;
 
 	    switch (op()) {
@@ -503,12 +501,12 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
       NetScope*scope = isig->scope();
       assert(scope);
-      string path = des->local_symbol(scope->name());
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
-      string oname = des->local_symbol(path);
+      string oname = scope->local_hsymbol();
       NetLogic*gate;
 
       switch (op()) {
@@ -569,7 +567,7 @@ NetNet* NetETernary::synthesize(Design *des)
       NetNet*tsig = true_val_->synthesize(des);
       NetNet*fsig = false_val_->synthesize(des);
 
-      string path = csig->scope()->name()+"."+csig->scope()->local_symbol();
+      string path = csig->scope()->local_symbol();
 
       assert(csig->pin_count() == 1);
       assert(tsig->pin_count() == fsig->pin_count());
@@ -631,7 +629,7 @@ NetNet* NetESignal::synthesize(Design*des)
       NetScope*scope = net_->scope();
       assert(scope);
 
-      string name = scope->name() + "." + scope->local_symbol();
+      string name = scope->local_symbol();
       NetNet*tmp = new NetNet(scope, name, NetNet::NetNet::WIRE, wid);
       tmp->local_flag(true);
 
@@ -643,6 +641,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.41  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.40  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

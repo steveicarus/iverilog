@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.278 2003/03/03 02:22:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.279 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 /*
@@ -86,7 +86,8 @@ class NetObj  : public Attrib {
 
     public:
     public:
-      explicit NetObj(NetScope*s, const string&n, unsigned npins);
+	// The name of the object must be a a perallocated string. A
+	// lex_strings string, for example.
       explicit NetObj(NetScope*s, const char*n, unsigned npins);
       virtual ~NetObj();
 
@@ -113,7 +114,7 @@ class NetObj  : public Attrib {
 
     private:
       NetScope*scope_;
-      char* name_;
+      const char* name_;
       Link*pins_;
       const unsigned npins_;
       unsigned delay1_;
@@ -321,7 +322,7 @@ class NexusSet {
 class NetNode  : public NetObj {
 
     public:
-      explicit NetNode(NetScope*s, const string&n, unsigned npins);
+	// The name paramter must be a permallocated string.
       explicit NetNode(NetScope*s, const char*n, unsigned npins);
 
       virtual ~NetNode();
@@ -2103,6 +2104,8 @@ class NetVariable : public LineInfo {
       friend class NetScope;
 
     public:
+	// The name must be a permallocated string. This class makes
+	// no attempt to preserve it.
       NetVariable(const char* name);
       ~NetVariable();
 
@@ -2112,7 +2115,7 @@ class NetVariable : public LineInfo {
       const NetScope* scope() const;
 
     private:
-      char* name_;
+      const char* name_;
 
       NetScope*scope_;
       NetVariable*snext_;
@@ -3204,6 +3207,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.279  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.278  2003/03/03 02:22:41  steve
  *  Scope names stored only as basename.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.5 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.6 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,11 +39,11 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 
       NetConst*val_c = new NetConst(scope, scope->local_hsymbol(), val_v);
 
-      NetNet*val_s = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*val_s = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, width);
       val_s->local_flag(true);
 
-      NetNet*res = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*res = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, width);
       res->local_flag(true);
 
@@ -90,6 +90,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.6  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.5  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.13 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.14 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -85,7 +85,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 				  pad);
       des->add_node(con);
 
-      NetNet*tmp = new NetNet(scope, path + "." + scope->local_symbol(),
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, wid);
       tmp->local_flag(true);
 
@@ -99,6 +99,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.14  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.13  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.27 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.28 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -508,10 +508,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else {
 
-	      /* Make a hierarchical make for the signal. */
-	    string name = scope->name();
-	    name = name + "." + hname_.peek_tail_name();
-
+	    string name = hname_.peek_tail_name();
 	    NetNet*sig = new NetNet(scope, name, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
@@ -525,6 +522,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.28  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.27  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

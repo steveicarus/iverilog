@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.107 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.108 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,7 +180,6 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       NetNode*gate;
       NetNode*gate_t;
 
-      string name = scope->local_symbol();
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
@@ -219,10 +218,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 	    rsig = pad_to_width(des, rsig, width);
 
 	// Make the adder as wide as the widest operand
-      osig = new NetNet(scope, scope->local_hsymbol(),
+      osig = new NetNet(scope, scope->local_symbol(),
 			NetNet::WIRE, owidth);
       osig->local_flag(true);
-      NetAddSub*adder = new NetAddSub(scope, name, width);
+      NetAddSub*adder = new NetAddSub(scope, scope->local_symbol(), width);
 
 	// Connect the adder to the various parts.
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
@@ -295,14 +294,14 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
       assert(lsig->pin_count() == rsig->pin_count());
 
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE,
+      NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
 			       lsig->pin_count());
       osig->local_flag(true);
 
       switch (op_) {
 	  case '^': // XOR
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::XOR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -316,7 +315,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
 	  case 'X': // XNOR
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::XNOR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -330,7 +329,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
 	  case '&': // AND
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::AND);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -344,7 +343,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
 	  case 'A': // NAND (~&)
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::NAND);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -358,7 +357,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
 	  case '|': // Bitwise OR
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::OR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -372,7 +371,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
 	  case 'O': // Bitwise NOR
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					       3, NetLogic::NOR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
@@ -424,15 +423,15 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
       NetNet*zero = 0;
       if (lsig->pin_count() != rsig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					verinum::V0);
 	    des->add_node(tmp);
-	    zero = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    zero = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    zero->local_flag(true);
 	    connect(tmp->pin(0), zero->pin(0));
       }
 
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
       osig->local_flag(true);
 
       NetNode*gate;
@@ -477,13 +476,13 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	      // The comparison generates gates to bitwise compare
 	      // each pair, and AND all the comparison results.
 
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+dwidth,
 				(op_ == 'E')? NetLogic::AND : NetLogic::NAND);
 	    connect(gate->pin(0), osig->pin(0));
 	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 		  NetCaseCmp*cmp = new NetCaseCmp(scope,
-						  scope->local_hsymbol());
+						  scope->local_symbol());
 
 		  if (idx < lsig->pin_count())
 			connect(cmp->pin(1), lsig->pin(idx));
@@ -499,7 +498,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  des->add_node(cmp);
 
 		    // Attach a label to this intermediate wire
-		  NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
@@ -512,7 +511,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	      /* Handle the special case of single bit compare with a
 		 single XNOR gate. This is easy and direct. */
 	    if (dwidth == 1) {
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      3, NetLogic::XNOR);
 		  connect(gate->pin(0), osig->pin(0));
 		  connect(gate->pin(1), lsig->pin(0));
@@ -546,7 +545,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	      /* Handle the special case of single bit compare with a
 		 single XOR gate. This is easy and direct. */
 	    if (dwidth == 1) {
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      3, NetLogic::XOR);
 		  connect(gate->pin(0), osig->pin(0));
 		  connect(gate->pin(1), lsig->pin(0));
@@ -646,7 +645,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 	// will be no more then the l-value, so it is safe to connect
 	// all the result pins to the osig.
 
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
 
@@ -661,7 +660,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 	//    wire [7:0] r = a / b;
 
       if (rwidth < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = rwidth ;  idx < osig->pin_count() ;  idx += 1)
@@ -702,7 +701,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    connect(mod->pin_DataB(idx), rsig->pin(idx));
 
       if (lwidth == 0) lwidth = rwidth;
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
 
@@ -715,7 +714,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	/* If the lvalue is larger then the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
@@ -750,11 +749,11 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       NetLogic*gate_t;
       switch (op_) {
 	  case 'a':
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				3, NetLogic::AND);
 	    break;
 	  case 'o':
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				3, NetLogic::OR);
 	    break;
 	  default:
@@ -766,7 +765,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	// The first OR gate returns 1 if the left value is true...
       if (lsig->pin_count() > 1) {
-	    gate_t = new NetLogic(scope, scope->local_hsymbol(),
+	    gate_t = new NetLogic(scope, scope->local_symbol(),
 				  1+lsig->pin_count(), NetLogic::OR);
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
 		  connect(gate_t->pin(idx+1), lsig->pin(idx));
@@ -775,7 +774,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    connect(gate->pin(1), tmp->pin(0));
@@ -788,7 +787,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	// The second OR gate returns 1 if the right value is true...
       if (rsig->pin_count() > 1) {
-	    gate_t = new NetLogic(scope, scope->local_hsymbol(),
+	    gate_t = new NetLogic(scope, scope->local_symbol(),
 				  1+rsig->pin_count(), NetLogic::OR);
 	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 		  connect(gate_t->pin(idx+1), rsig->pin(idx));
@@ -796,7 +795,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    connect(gate->pin(2), tmp->pin(0));
@@ -808,7 +807,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       }
 
 	// The output is the AND/OR of the two logic values.
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+      NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
       osig->local_flag(true);
       connect(gate->pin(0), osig->pin(0));
       des->add_node(gate);
@@ -839,8 +838,8 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 		  res.set(idx, prod.get(idx));
 	    }
 
-	    NetConst*odev = new NetConst(scope, scope->local_hsymbol(), res);
-	    NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+	    NetConst*odev = new NetConst(scope, scope->local_symbol(), res);
+	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, lwidth);
 	    for (unsigned idx = 0 ;  idx < lwidth ;  idx += 1)
 		  connect(odev->pin(idx), osig->pin(idx));
@@ -871,7 +870,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	    connect(mult->pin_DataB(idx), rsig->pin(idx));
 
       if (lwidth == 0) lwidth = rwidth;
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
 
@@ -884,7 +883,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	/* If the lvalue is larger then the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					verinum::V0);
 	    des->add_node(tmp);
 	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
@@ -919,11 +918,11 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	      /* Very special case, constant 0 shift. */
 	    if (dist == 0) return lsig;
 
-	    NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, lwidth);
 	    osig->local_flag(true);
 
-	    NetConst*zero = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*zero = new NetConst(scope, scope->local_symbol(),
 					 verinum::V0);
 	    des->add_node(zero);
 
@@ -964,7 +963,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       NetCLShift*gate = new NetCLShift(scope, scope->local_symbol(),
 				       lwidth, rsig->pin_count());
 
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, lwidth);
       osig->local_flag(true);
 
@@ -977,9 +976,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    connect(lsig->pin(idx), gate->pin_Data(idx));
 
       if (lsig->pin_count() < lwidth) {
-	    NetConst*zero = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*zero = new NetConst(scope, scope->local_symbol(),
 					 verinum::V0);
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    des->add_node(zero);
@@ -994,10 +993,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    connect(rsig->pin(idx), gate->pin_Distance(idx));
 
       if (op_ == 'r') {
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
-	    NetConst*dir = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*dir = new NetConst(scope, scope->local_symbol(),
 					verinum::V1);
 	    connect(dir->pin(0), gate->pin_Direction());
 	    connect(tmp->pin(0), gate->pin_Direction());
@@ -1069,13 +1068,13 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope, unsigned,
 
 
       NetUserFunc*net = new NetUserFunc(scope,
-					scope->local_hsymbol().c_str(),
+					scope->local_symbol().c_str(),
 					dscope);
       des->add_node(net);
 
 	/* Create an output signal and connect it to the output pins
 	   of the function net. */
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE,
 			       def->port(0)->pin_count());
       osig->local_flag(true);
@@ -1185,7 +1184,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	   Allow for a repeat count other then 1 by repeating the
 	   connect loop as many times as necessary. */
 
-      NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, pins * repeat);
 
       pins = 0;
@@ -1241,7 +1240,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < sel->pin_count() ;  idx += 1)
 	    connect(mux->pin_Sel(idx), sel->pin(idx));
 
-      NetNet*out = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*out = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, 1);
       connect(mux->pin_Result(0), out->pin(0));
 
@@ -1273,10 +1272,9 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
 		  verinum pvalue = pc->value();
-		  sig = new NetNet(scope,
-				   scope->name()+"."+path_.peek_name(0),
+		  sig = new NetNet(scope, path_.peek_name(0),
 				   NetNet::IMPLICIT, pc->expr_width());
-		  NetConst*cp = new NetConst(scope, scope->local_hsymbol(),
+		  NetConst*cp = new NetConst(scope, scope->local_symbol(),
 					     pvalue);
 		  des->add_node(cp);
 		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
@@ -1284,7 +1282,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    } else {
 
-		  sig = new NetNet(scope, scope->name()+"."+path_.peek_name(0),
+		  sig = new NetNet(scope, path_.peek_name(0),
 				   NetNet::IMPLICIT, 1);
 
 		  if (error_implicit) {
@@ -1415,19 +1413,14 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
       if (adr == 0)
 	    return 0;
 
-	// Memory names are only the base names. Since NetObj names
-	// are still fullnames, and we are deriving such names from
-	// the memory name, make a fullname here.
-      string hname = scope->name() + "." + mem->name();
-
-      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(hname),
+      NetRamDq*ram = new NetRamDq(scope, scope->local_symbol(),
 				  mem, adr->pin_count());
       des->add_node(ram);
 
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(ram->pin_Address(idx), adr->pin(idx));
 
-      NetNet*osig = new NetNet(scope, des->local_symbol(hname),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, ram->width());
       osig->local_flag(true);
 
@@ -1488,7 +1481,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(scope, des->local_symbol(scope->name()),
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -1522,7 +1515,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 
 	    if (implicit_net_ok && !error_implicit) {
 
-		  sig = new NetNet(scope, scope->name()+"."+path_.peek_name(0),
+		  sig = new NetNet(scope, path_.peek_name(0),
 				   NetNet::IMPLICIT, 1);
 
 		  if (warn_implicit) {
@@ -1746,7 +1739,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	   number constant with the correct size and set as many bits
 	   in that constant as make sense. Pad excess with zeros. */
       if (lwidth > 0) {
-	    NetNet*net = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, lwidth);
 	    net->local_flag(true);
 
@@ -1768,7 +1761,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    for (idx = 0 ;  idx < num.len() && idx < value_->len(); idx += 1)
 		  num.set(idx, value_->get(idx));
 
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					num);
 	    for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 		  tmp->pin(idx).drive0(drive0);
@@ -1784,10 +1777,10 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	   number. Generate a constant object of exactly the user
 	   specified size. */
       if (value_->has_len()) {
-	    NetNet*net = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, value_->len());
 	    net->local_flag(true);
-	    NetConst*tmp = new NetConst(scope, scope->local_hsymbol(),
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					*value_);
 	    for (unsigned idx = 0 ;  idx < value_->len() ;  idx += 1)
 		  connect(net->pin(idx), tmp->pin(idx));
@@ -1821,10 +1814,10 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    num.set(idx, value_->get(idx));
 
-      NetNet*net = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
-      NetConst*tmp = new NetConst(scope, scope->local_hsymbol(), num);
+      NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    connect(net->pin(idx), tmp->pin(idx));
 
@@ -1852,11 +1845,11 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 	   number constant with the correct size and set as many bits
 	   in that constant as make sense. Pad excess with zeros. */
       if (lwidth > 0) {
-	    net = new NetNet(scope, scope->local_hsymbol(),
+	    net = new NetNet(scope, scope->local_symbol(),
 			     NetNet::IMPLICIT, lwidth);
 
       } else {
-	    net = new NetNet(scope, scope->local_hsymbol(),
+	    net = new NetNet(scope, scope->local_symbol(),
 			     NetNet::IMPLICIT, strbits);
       }
       net->local_flag(true);
@@ -1871,7 +1864,7 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 	    num.set(idx, (byte & mask)? verinum::V1 : verinum::V0);
       }
 
-      NetConst*tmp = new NetConst(scope, scope->local_hsymbol(), num);
+      NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
       for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    tmp->pin(idx).drive0(drive0);
 	    tmp->pin(idx).drive1(drive1);
@@ -1931,13 +1924,13 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   by connecting an OR gate to calculate the truth value of
 	   the result. In the end, the result needs to be a single bit. */
       if (expr_sig->pin_count() > 1) {
-	    NetLogic*log = new NetLogic(scope, scope->local_hsymbol(),
+	    NetLogic*log = new NetLogic(scope, scope->local_symbol(),
 					expr_sig->pin_count()+1,
 					NetLogic::OR);
 	    for (unsigned idx = 0;  idx < expr_sig->pin_count(); idx += 1)
 		  connect(log->pin(idx+1), expr_sig->pin(idx));
 
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    connect(tmp->pin(0), log->pin(0));
@@ -1958,7 +1951,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
       unsigned dwidth = (iwidth > width)? width : iwidth;
 
-      NetNet*sig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, width);
       sig->local_flag(true);
 
@@ -1989,11 +1982,11 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   devices to carry the propagation delays. Otherwise, just
 	   connect the result to the output. */
       if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, dwidth);
 	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 
-		  NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_hsymbol());
+		  NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol());
 		  tmpz->rise_time(rise);
 		  tmpz->fall_time(fall);
 		  tmpz->decay_time(decay);
@@ -2018,7 +2011,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
       if (dwidth < width) {
 	    verinum vpad (verinum::V0, width-dwidth);
-	    NetConst*pad = new NetConst(scope, scope->local_hsymbol(), vpad);
+	    NetConst*pad = new NetConst(scope, scope->local_symbol(), vpad);
 	    des->add_node(pad);
 	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), pad->pin(idx-dwidth));
@@ -2063,7 +2056,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  width = val->len();
 
 	    assert(width > 0);
-	    sig = new NetNet(scope, scope->local_hsymbol(),
+	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, width);
 	    sig->local_flag(true);
 
@@ -2072,7 +2065,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    verinum tmp (v_not(*val));
 	    verinum one (1UL, width);
 	    tmp = tmp + one;
-	    NetConst*con = new NetConst(scope, scope->local_hsymbol(), tmp);
+	    NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), con->pin(idx));
 
@@ -2089,11 +2082,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
       switch (op_) {
 	  case '~': // Bitwise NOT
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE,
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
 			     sub_sig->pin_count());
 	    sig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      2, NetLogic::NOT);
 		  connect(gate->pin(1), sub_sig->pin(idx));
 		  connect(gate->pin(0), sig->pin(idx));
@@ -2106,9 +2099,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::NOR);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2121,9 +2114,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  case '&': // Reduction AND
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::AND);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2136,9 +2129,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  case '|': // Reduction OR
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::OR);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2151,9 +2144,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  case '^': // Reduction XOR
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::XOR);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2166,9 +2159,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  case 'A': // Reduction NAND (~&)
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::NAND);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2182,9 +2175,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 
 	  case 'X': // Reduction XNOR (~^)
-	    sig = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_hsymbol(),
+	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+sub_sig->pin_count(), NetLogic::XNOR);
 	    connect(gate->pin(0), sig->pin(0));
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
@@ -2197,7 +2190,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  case '-': // Unary 2's complement.
-	    sig = new NetNet(scope, scope->local_hsymbol(),
+	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, owidth);
 	    sig->local_flag(true);
 
@@ -2210,7 +2203,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  break;
 
 		case 1:
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      2, NetLogic::BUF);
 		  connect(gate->pin(0), sig->pin(0));
 		  connect(gate->pin(1), sub_sig->pin(0));
@@ -2221,7 +2214,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  break;
 
 		case 2:
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      2, NetLogic::BUF);
 		  connect(gate->pin(0), sig->pin(0));
 		  connect(gate->pin(1), sub_sig->pin(0));
@@ -2230,7 +2223,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  gate->fall_time(fall);
 		  gate->decay_time(decay);
 
-		  gate = new NetLogic(scope, scope->local_hsymbol(),
+		  gate = new NetLogic(scope, scope->local_symbol(),
 				      3, NetLogic::XOR);
 		  connect(gate->pin(0), sig->pin(1));
 		  connect(gate->pin(1), sub_sig->pin(0));
@@ -2256,11 +2249,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 		  verinum tmp_num (verinum::V0, sub->width(), true);
 		  NetConst*tmp_con = new NetConst(scope,
-						  scope->local_hsymbol(),
+						  scope->local_symbol(),
 						  tmp_num);
 		  des->add_node(tmp_con);
 
-		  NetNet*tmp_sig = new NetNet(scope, scope->local_hsymbol(),
+		  NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
 					      NetNet::WIRE,
 					      sub_sig->pin_count());
 		  tmp_sig->local_flag(true);
@@ -2284,6 +2277,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.108  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.107  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

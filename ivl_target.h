@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.112 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.113 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -523,7 +523,7 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *    This method returns the type of logic gate that the cookie
  *    represents.
  *
- * ivl_logic_name
+ * ivl_logic_name (obsolete)
  *    This method returns the complete name of the logic gate. Every
  *    gate has a complete name (that includes the scope) even if the
  *    Verilog source doesn't include one. The compiler will choose one
@@ -1144,6 +1144,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.113  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.112  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.22 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: synth2.cc,v 1.23 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -208,7 +208,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    verinum gval = ge->value();
 	    unsigned sel_idx = guard2sel[gval.as_ulong()];
 
-	    NetNet*sig = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*sig = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, nex_map->pin_count());
 	    sig->local_flag(true);
 	    items_[item].statement->synth_async(des, scope, nex_map, sig);
@@ -239,13 +239,13 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       assert(if_ != 0);
       assert(else_ != 0);
 
-      NetNet*asig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*asig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       asig->local_flag(true);
 
       if_->synth_async(des, scope, nex_map, asig);
 
-      NetNet*bsig = new NetNet(scope, scope->local_hsymbol(),
+      NetNet*bsig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       bsig->local_flag(true);
 
@@ -458,7 +458,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 		    /* Synthesize the true clause to figure out what
 		       kind of set/reset we have. */
-		  NetNet*asig = new NetNet(scope, scope->local_hsymbol(),
+		  NetNet*asig = new NetNet(scope, scope->local_symbol(),
 					   NetNet::WIRE, nex_map->pin_count());
 		  asig->local_flag(true);
 		  flag = if_->synth_async(des, scope, nex_map, asig) && flag;
@@ -540,7 +540,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    ff->pin_Enable().unlink();
 	    connect(ff->pin_Enable(), ce_and->pin(0));
 
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    connect(ff->pin_Enable(), tmp->pin(0));
@@ -638,7 +638,7 @@ bool NetProcTop::synth_sync(Design*des)
 
 	/* The D inputs to the DFF device will receive the output from
 	   the statements of the process. */
-      NetNet*nex_d = new NetNet(scope(), scope()->local_hsymbol().c_str(),
+      NetNet*nex_d = new NetNet(scope(), scope()->local_symbol(),
 				NetNet::WIRE, nex_set.count());
       nex_d->local_flag(true);
       for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
@@ -738,6 +738,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.23  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.22  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.92 2003/03/03 02:22:41 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.93 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -483,12 +483,14 @@ extern "C" ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net,
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
 {
       assert(net);
+      cerr << "ANACHRONISM: Call to anachronistic ivl_logic_name." << endl;
       return net->name_;
 }
 
 extern "C" const char* ivl_logic_basename(ivl_net_logic_t net)
 {
-      return basename(net->scope_, net->name_);
+      assert(net);
+      return net->name_;
 }
 
 extern "C" ivl_scope_t ivl_logic_scope(ivl_net_logic_t net)
@@ -1188,6 +1190,16 @@ extern "C" ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx)
       return net->mem_[idx];
 }
 
+static unsigned scope_name_len(ivl_scope_t net)
+{
+      unsigned len = 0;
+
+      for (ivl_scope_t cur = net ;  cur ;  cur = cur->parent)
+	    len += strlen(cur->name_) + 1;
+
+      return len;
+}
+
 static void push_scope_basename(ivl_scope_t net, char*buf)
 {
       if (net->parent == 0) {
@@ -1210,9 +1222,7 @@ extern "C" const char* ivl_scope_name(ivl_scope_t net)
 
       ivl_scope_t cur;
 
-      unsigned needlen = 0;
-      for (cur = net ;  cur ;  cur = cur->parent)
-	    needlen += strlen(cur->name_) + 1;
+      unsigned needlen = scope_name_len(net);
 
       if (name_size < needlen) {
 	    name_buffer = (char*)realloc(name_buffer, needlen);
@@ -1305,12 +1315,27 @@ extern "C" ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx)
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
 {
-      return basename(net->scope_, net->name_);
+      return net->name_;
 }
 
 extern "C" const char* ivl_signal_name(ivl_signal_t net)
 {
-      return net->name_;
+      static char*name_buffer = 0;
+      static unsigned name_size = 0;
+
+      unsigned needlen = scope_name_len(net->scope_);
+      needlen += strlen(net->name_) + 2;
+
+      if (name_size < needlen) {
+	    name_buffer = (char*)realloc(name_buffer, needlen);
+	    name_size = needlen;
+      }
+
+      push_scope_basename(net->scope_, name_buffer);
+      strcat(name_buffer, ".");
+      strcat(name_buffer, net->name_);
+
+      return name_buffer;
 }
 
 extern "C" ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx)
@@ -1708,6 +1733,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.93  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.92  2003/03/03 02:22:41  steve
  *  Scope names stored only as basename.
  *

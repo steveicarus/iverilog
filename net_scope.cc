@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.25 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.26 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -311,10 +311,9 @@ NetNet* NetScope::find_signal(const string&key)
       if (signals_ == 0)
 	    return 0;
 
-      string fulname = name()+"."+key;
       NetNet*cur = signals_;
       do {
-	    if (cur->name() == fulname)
+	    if (cur->name() == key)
 		  return cur;
 	    cur = cur->sig_prev_;
       } while (cur != signals_);
@@ -449,6 +448,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.26  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.25  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

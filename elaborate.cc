@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.275 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.276 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -167,7 +167,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  if (cnt < lval->pin_count()) {
 			verinum tmpv (0UL, lval->pin_count()-cnt);
 			NetConst*tmp = new NetConst(scope,
-						    scope->local_hsymbol(),
+						    scope->local_symbol(),
 						    tmpv);
 			des->add_node(tmp);
 			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
@@ -180,7 +180,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  unsigned idx;
 		  for (idx = 0 ; idx < cnt ;  idx += 1) {
 			NetBUFZ*dev = new NetBUFZ(scope,
-						  scope->local_hsymbol());
+						  scope->local_symbol());
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
 			dev->rise_time(rise_time);
@@ -193,7 +193,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 		  if (cnt < lval->pin_count()) {
 			NetConst*dev = new NetConst(scope,
-						    scope->local_hsymbol(),
+						    scope->local_symbol(),
 						    verinum::V0);
 			
 			des->add_node(dev);
@@ -250,9 +250,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       string name = get_name();
 
       if (name == "")
-	    name = scope->local_hsymbol();
-      else
-	    name = scope->name()+"."+name;
+	    name = scope->local_symbol();
 
 	/* If the Verilog source has a range specification for the
 	   gates, then I am expected to make more then one
@@ -745,9 +743,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
       string my_name = get_name();
       if (my_name == "")
-	    my_name = scope->local_hsymbol();
-      else
-	    my_name = scope->name()+"."+my_name;
+	    my_name = scope->local_symbol();
 
 	/* When the parser notices delay expressions in front of a
 	   module or primitive, it interprets them as parameter
@@ -1006,7 +1002,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   netlist. The compound statement is exactly equivalent. */
 
       if (delay || event_) {
-	    string n = scope->local_hsymbol();
 	    unsigned wid = lv->lwidth();
 
 	    rv->set_width(wid);
@@ -1020,13 +1015,14 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    NetNet*tmp = new NetNet(scope, n, NetNet::REG, wid);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::REG, wid);
 	    tmp->set_line(*this);
 
 	    NetESignal*sig = new NetESignal(tmp);
 
 	      /* Generate an assignment of the l-value to the temporary... */
-	    n = scope->local_hsymbol();
+	    string n = scope->local_hsymbol();
 	    NetAssign_*lvt = new NetAssign_(tmp);
 
 	    NetAssign*a1 = new NetAssign(lvt, rv);
@@ -1588,7 +1584,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetCAssign* dev = new NetCAssign(scope, scope->local_hsymbol(), lval);
+      NetCAssign* dev = new NetCAssign(scope, scope->local_symbol(), lval);
       dev->set_line(*this);
       des->add_node(dev);
 
@@ -1813,7 +1809,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    we->add_event(ev);
 
 	    NetEvProbe*po = new NetEvProbe(scope,
-					   scope->local_hsymbol(),
+					   scope->local_symbol(),
 					   ev, NetEvProbe::POSEDGE, 1);
 	    connect(po->pin(0), ex->pin(0));
 
@@ -1893,7 +1889,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  return enet;
 	    }
 
-	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_hsymbol(),
+	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
 					   ev, NetEvProbe::ANYEDGE,
 					   nset->count());
 	    for (unsigned idx = 0 ;  idx < nset->count() ;  idx += 1)
@@ -1943,17 +1939,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    NetEvProbe*pr;
 	    switch (expr_[idx]->type()) {
 		case PEEvent::POSEDGE:
-		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
+		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
 				      NetEvProbe::POSEDGE, pins);
 		  break;
 
 		case PEEvent::NEGEDGE:
-		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
+		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
 				      NetEvProbe::NEGEDGE, pins);
 		  break;
 
 		case PEEvent::ANYEDGE:
-		  pr = new NetEvProbe(scope, scope->local_hsymbol(), ev,
+		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
 				      NetEvProbe::ANYEDGE, pins);
 		  break;
 
@@ -2029,7 +2025,7 @@ NetProc* PForce::elaborate(Design*des, NetScope*scope) const
       if (rval->pin_count() < lval->pin_count())
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
-      NetForce* dev = new NetForce(scope, scope->local_hsymbol(), lval);
+      NetForce* dev = new NetForce(scope, scope->local_symbol(), lval);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
@@ -2502,6 +2498,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.276  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.275  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

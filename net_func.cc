@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.3 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_func.cc,v 1.4 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
+# include  "compiler.h"
 # include  "PExpr.h"
 # include  <iostream>
 
@@ -35,7 +36,8 @@ static unsigned count_def_pins(const NetFuncDef*def)
 }
 
 NetUserFunc::NetUserFunc(NetScope*s, const char*n, NetScope*d)
-: NetNode(s, n, count_def_pins(d->func_def())), def_(d)
+: NetNode(s, lex_strings.add(n), count_def_pins(d->func_def())),
+  def_(d)
 {
       NetFuncDef*def = def_->func_def();
 
@@ -145,6 +147,9 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.4  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.3  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

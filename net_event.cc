@@ -17,12 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_event.cc,v 1.21 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: net_event.cc,v 1.22 2003/03/06 00:28:41 steve Exp $"
 #endif
 
-# include "config.h"
-# include "compiler.h"
-
+# include  "config.h"
+# include  "compiler.h"
 # include  "netlist.h"
 
 /*
@@ -242,7 +241,7 @@ const NetEvent* NetEvTrig::event() const
 
 NetEvProbe::NetEvProbe(NetScope*s, const string&n, NetEvent*tgt,
 		       edge_t t, unsigned p)
-: NetNode(s, n, p), event_(tgt), edge_(t)
+: NetNode(s, lex_strings.add(n.c_str()), p), event_(tgt), edge_(t)
 {
       for (unsigned idx = 0 ;  idx < p ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
@@ -444,6 +443,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.22  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.21  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.42 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: cprop.cc,v 1.43 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -118,8 +118,8 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	    NetLogic*tmp;
 	    if (obj->pin_Cout().is_linked()) {
 		  tmp = new NetLogic(obj->scope(),
-				     des->local_symbol(obj->name()), 3,
-				     NetLogic::AND);
+				     obj->scope()->local_symbol(),
+				     3, NetLogic::AND);
 		  connect(tmp->pin(0), obj->pin_Cout());
 		  connect(tmp->pin(1), obj->pin_DataA(0));
 		  connect(tmp->pin(2), obj->pin_DataB(0));
@@ -837,7 +837,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    NetScope*scope = obj->scope();
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      scope->local_hsymbol(),
+					      scope->local_symbol(),
 					      3, NetLogic::BUFIF1);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -870,7 +870,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    NetScope*scope = obj->scope();
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      scope->local_hsymbol(),
+					      scope->local_symbol(),
 					      3, NetLogic::BUFIF0);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -996,6 +996,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.43  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.42  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *

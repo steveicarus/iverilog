@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.25 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.26 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,7 +145,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(1)) == 0) {
-	    NetNet*tmp = new NetNet(scope, des->local_symbol(scope->name()),
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE);
 	    tmp->local_flag(true);
 	    connect(buf->pin(1), tmp->pin(0));
@@ -362,6 +362,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.26  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.25  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

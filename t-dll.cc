@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.105 2003/03/03 02:22:41 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.106 2003/03/06 00:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -608,7 +608,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       obj->scope_ = scope;
 
-      obj->name_ = strings_.add(net->name());
+      obj->name_ = net->name();
       logic_attributes(obj, net);
 
       obj->delay[0] = net->rise_time();
@@ -665,7 +665,7 @@ void dll_target::variable(const NetVariable*net)
 
       ivl_scope_t scope = find_scope(des_, net->scope());
       obj->type = IVL_VT_REAL;
-      obj->name = strings_.add(net->basename());
+      obj->name = net->basename();
       obj->scope = scope;
 
       scope_add_var(scope, obj);
@@ -794,7 +794,7 @@ void dll_target::logic(const NetLogic*net)
       assert(scope);
 
       obj->scope_= scope;
-      obj->name_ = strings_.add(net->name());
+      obj->name_ = net->name();
 
       logic_attributes(obj, net);
 
@@ -829,7 +829,7 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       ivl_scope_t scope = des_.roots_[0];
 
       obj->scope_= scope;
-      obj->name_ = strings_.add(net->name());
+      obj->name_ = net->name();
 
       obj->delay[0] = net->rise_time();
       obj->delay[1] = net->fall_time();
@@ -858,7 +858,7 @@ bool dll_target::net_function(const NetUserFunc*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_UFUNC;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -961,7 +961,7 @@ void dll_target::udp(const NetUDP*net)
       assert(scope);
 
       obj->scope_= scope;
-      obj->name_ = strings_.add(net->name());
+      obj->name_ = net->name();
 
       obj->delay[0] = net->rise_time();
       obj->delay[1] = net->fall_time();
@@ -991,7 +991,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->type = IVL_LPM_SUB;
       else
 	    obj->type = IVL_LPM_ADD;
-      obj->name = strings_.add(net->name());
+      obj->name = net->name(); // NetAddSub names are permallocated.
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1060,7 +1060,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SHIFTL;
-      obj->name = strings_.add(net->name());
+      obj->name = net->name();
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1136,7 +1136,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 void dll_target::lpm_compare(const NetCompare*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->name = strings_.add(net->name());
+      obj->name = net->name(); // NetCompare names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1248,7 +1248,7 @@ void dll_target::lpm_divide(const NetDivide*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_DIVIDE;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1306,7 +1306,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MOD;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1373,7 +1373,7 @@ void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -1464,7 +1464,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       obj->u_.ff.mem = find_memory(des_, net->mem());
       assert(obj->u_.ff.mem);
       obj->scope = find_scope(des_, net->mem()->scope());
@@ -1578,7 +1578,7 @@ void dll_target::lpm_mult(const NetMult*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MULT;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name();
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1640,7 +1640,7 @@ void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
-      obj->name  = strings_.add(net->name());
+      obj->name  = net->name(); // The NetMux perallocates its name.
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -1863,7 +1863,7 @@ void dll_target::signal(const NetNet*net)
 {
       ivl_signal_t obj = new struct ivl_signal_s;
 
-      obj->name_ = strings_.add(net->name());
+      obj->name_ = net->name();
 
 	/* Attach the signal to the ivl_scope_t object that contains
 	   it. This involves growing the sigs_ array in the scope
@@ -2023,6 +2023,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.106  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.105  2003/03/03 02:22:41  steve
  *  Scope names stored only as basename.
  *
@@ -2102,53 +2105,5 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
  *
  *  Divide signal reference counts between rval
  *  and lval references.
- *
- * Revision 1.83  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.82  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.81  2002/04/22 03:15:25  steve
- *  Keep delays applied to BUFZ devices.
- *
- * Revision 1.80  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.79  2002/01/23 04:54:37  steve
- *  Load modules with RTLD_LAZY
- *
- * Revision 1.78  2002/01/19 19:02:08  steve
- *  Pass back target errors processing conditionals.
- *
- * Revision 1.77  2002/01/12 04:03:09  steve
- *  Make BUFZ device strengths available.
- *
- * Revision 1.76  2002/01/06 03:15:43  steve
- *  Constant values have drive strengths.
- *
- * Revision 1.75  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.74  2001/12/18 05:34:02  steve
- *  Comments about MUX synthesis.
- *
- * Revision 1.73  2001/12/15 02:13:17  steve
- *  The IVL_SIT_WIRE type does not exist, it is a
- *  synonym for IVL_SIT_TRI.
- *
- * Revision 1.72  2001/12/14 02:05:13  steve
- *  Parse and handle drive strengths of gates to vvp.
- *
- * Revision 1.71  2001/12/06 03:11:00  steve
- *  Add ivl_logic_delay function to ivl_target.
- *
- * Revision 1.70  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
  */
 

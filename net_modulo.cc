@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_modulo.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.6 2003/03/06 00:28:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,11 +28,13 @@
 # include  <cassert>
 
 # include  "netlist.h"
+# include  "compiler.h"
 
 
 NetModulo::NetModulo(NetScope*s, const string&n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(s, n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
+: NetNode(s, lex_strings.add(n.c_str()), wr+wa+wb),
+  width_r_(wr), width_a_(wa), width_b_(wb)
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
@@ -106,6 +108,9 @@ const Link& NetModulo::pin_DataB(unsigned idx) const
 
 /*
  * $Log: net_modulo.cc,v $
+ * Revision 1.6  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.5  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

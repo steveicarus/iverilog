@@ -17,11 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.19 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.20 2003/03/06 00:28:41 steve Exp $"
 #endif
 
-# include "config.h"
-
+# include  "config.h"
+# include  "compiler.h"
 # include  <iostream>
 
 /*
@@ -352,7 +352,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 void PData::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(hname_.component_count() == 1);
-      NetVariable*tmp = new NetVariable(hname_.peek_tail_name());
+      const char*basename = hname_.peek_tail_name();
+      NetVariable*tmp = new NetVariable(lex_strings.add(basename));
       tmp->set_line(*this);
       scope->add_variable(tmp);
 }
@@ -512,6 +513,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.20  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.19  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

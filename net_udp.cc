@@ -18,15 +18,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_udp.cc,v 1.7 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.8 2003/03/06 00:28:42 steve Exp $"
 #endif
 
-# include "config.h"
+# include  "config.h"
+# include  "compiler.h"
 
 # include  "netlist.h"
 
 NetUDP::NetUDP(NetScope*s, const string&n, unsigned pins, PUdp *u)
-  : NetNode(s, n, pins), udp(u)
+  : NetNode(s, lex_strings.add(n.c_str()), pins), udp(u)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
@@ -91,6 +92,9 @@ char NetUDP::get_initial() const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.8  2003/03/06 00:28:42  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.7  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

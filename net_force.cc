@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_force.cc,v 1.10 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: net_force.cc,v 1.11 2003/03/06 00:28:41 steve Exp $"
 #endif
 
-# include "config.h"
+# include  "config.h"
+# include  "compiler.h"
 
 /*
  * This file contains implementation of the NetForce, NetRelease,
@@ -45,7 +46,7 @@
  * link ring to grow, and that is not quite correct either. Hmm...
  */
 NetCAssign::NetCAssign(NetScope*s, const string&n, NetNet*l)
-: NetNode(s, n, l->pin_count()), lval_(l)
+: NetNode(s, lex_strings.add(n.c_str()), l->pin_count()), lval_(l)
 {
       lval_->incr_eref();
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
@@ -87,7 +88,7 @@ const NetNet*NetDeassign::lval() const
 }
 
 NetForce::NetForce(NetScope*s, const string&n, NetNet*l)
-: NetNode(s, n, l->pin_count()), lval_(l)
+: NetNode(s, lex_strings.add(n.c_str()), l->pin_count()), lval_(l)
 {
       lval_->incr_eref();
 
@@ -136,6 +137,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.11  2003/03/06 00:28:41  steve
+ *  All NetObj objects have lex_string base names.
+ *
  * Revision 1.10  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *
