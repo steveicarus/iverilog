@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.42 2001/04/29 23:17:38 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.43 2001/05/06 17:48:20 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -53,6 +53,23 @@ extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
 	    return IVL_EX_NONE;
       return net->type_;
 }
+
+
+extern "C" char*ivl_memory_name(ivl_memory_t net)
+{
+      return net->name_;
+}
+
+extern "C" unsigned ivl_memory_root(ivl_memory_t net)
+{
+      return net->root_;
+}
+
+extern "C" unsigned ivl_memory_width(ivl_memory_t net)
+{
+      return net->width_;
+}
+
 
 extern "C" const char*ivl_const_bits(ivl_net_const_t net)
 {
@@ -171,6 +188,9 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	  case IVL_EX_SIGNAL:
 	    return net->u_.subsig_.name_;
 
+	  case IVL_EX_MEMORY:
+	    return net->u_.memory_.mem_->name_;
+
 	  default:
 	    assert(0);
       }
@@ -202,6 +222,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 
 	  case IVL_EX_UNARY:
 	    return net->u_.unary_.sub_;
+
+	  case IVL_EX_MEMORY:
+	    return net->u_.memory_.idx_;
 
 	  default:
 	    assert(0);
@@ -302,6 +325,12 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
       assert(net);
       return net->width_;
+}
+
+extern "C" ivl_memory_t ivl_expr_memory(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_MEMORY);
+      return net->u_.memory_.mem_;
 }
 
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
@@ -1054,6 +1083,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.43  2001/05/06 17:48:20  steve
+ *  Support memory objects. (Stephan Boettcher)
+ *
  * Revision 1.42  2001/04/29 23:17:38  steve
  *  Carry drive strengths in the ivl_nexus_ptr_t, and
  *  handle constant devices in targets.'

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.57 2001/04/29 23:17:38 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.58 2001/05/06 17:48:20 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -135,6 +135,7 @@ typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
+typedef struct ivl_memory_s   *ivl_memory_t;
 typedef struct ivl_statement_s*ivl_statement_t;
 
 /*
@@ -163,6 +164,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SCOPE,
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
+      IVL_EX_MEMORY,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
       IVL_EX_UFUNC,
@@ -376,11 +378,11 @@ extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 extern const char* ivl_expr_bits(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
-  /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
+  /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_MEMORY */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY IVL_EX_UNARY */
+  /* IVL_EX_BINARY IVL_EX_UNARY, IVL_EX_MEMORY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
   /* IVL_EX_BINARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
@@ -402,6 +404,16 @@ extern const char* ivl_expr_string(ivl_expr_t net);
 extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
+
+/*
+ * Memory.
+ *
+ */
+
+extern char*ivl_memory_name(ivl_memory_t net);
+extern unsigned ivl_memory_root(ivl_memory_t net);
+extern unsigned ivl_memory_width(ivl_memory_t net);
+extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -812,6 +824,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.58  2001/05/06 17:48:20  steve
+ *  Support memory objects. (Stephan Boettcher)
+ *
  * Revision 1.57  2001/04/29 23:17:38  steve
  *  Carry drive strengths in the ivl_nexus_ptr_t, and
  *  handle constant devices in targets.'

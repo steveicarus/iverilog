@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.41 2001/04/29 23:17:38 steve Exp $"
+#ident "$Id: t-dll.h,v 1.42 2001/05/06 17:48:20 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -167,6 +167,11 @@ struct ivl_expr_s {
 		  ivl_expr_t msb_;
 		  ivl_expr_t lsb_;
 	    } subsig_;
+
+	    struct {
+		  ivl_memory_t mem_;
+		  ivl_expr_t idx_;
+	    } memory_;
 
 	    struct {
 		  ivl_scope_t def;
@@ -326,6 +331,20 @@ struct ivl_nexus_s {
       char*name_;
 };
 
+
+/* 
+ * Memory.
+ */
+struct ivl_memory_s {
+      char*name_;
+      ivl_scope_t scope_;
+      unsigned width_  :24;
+      unsigned signed_ : 1;
+      unsigned size_;
+      int root_;
+};
+
+
 /*
  * All we know about a process it its type (initial or always) and the
  * single statement that is it. A process also has a scope, although
@@ -477,6 +496,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.42  2001/05/06 17:48:20  steve
+ *  Support memory objects. (Stephan Boettcher)
+ *
  * Revision 1.41  2001/04/29 23:17:38  steve
  *  Carry drive strengths in the ivl_nexus_ptr_t, and
  *  handle constant devices in targets.'
@@ -516,106 +538,5 @@ struct ivl_statement_s {
  *
  * Revision 1.29  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
- *
- * Revision 1.28  2001/03/31 17:36:39  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.27  2001/03/30 05:49:52  steve
- *  Generate code for fork/join statements.
- *
- * Revision 1.26  2001/03/29 02:52:39  steve
- *  Add unary ~ operator to tgt-vvp.
- *
- * Revision 1.25  2001/03/28 06:07:39  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.24  2001/03/27 06:27:40  steve
- *  Generate code for simple @ statements.
- *
- * Revision 1.23  2001/03/27 03:31:06  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.22  2001/03/20 01:44:14  steve
- *  Put processes in the proper scope.
- *
- * Revision 1.21  2001/01/15 00:47:02  steve
- *  Pass scope type information to the target module.
- *
- * Revision 1.20  2000/12/15 05:45:25  steve
- *  Autoconfigure the dlopen functions.
- *
- * Revision 1.19  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.18  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.17  2000/10/28 22:32:34  steve
- *  API for concatenation expressions.
- *
- * Revision 1.16  2000/10/28 17:55:03  steve
- *  stub for the concat operator.
- *
- * Revision 1.15  2000/10/21 16:49:45  steve
- *  Reduce the target entry points to the target_design.
- *
- * Revision 1.14  2000/10/18 20:04:39  steve
- *  Add ivl_lval_t and support for assignment l-values.
- *
- * Revision 1.13  2000/10/15 04:46:23  steve
- *  Scopes and processes are accessible randomly from
- *  the design, and signals and logic are accessible
- *  from scopes. Remove the target calls that are no
- *  longer needed.
- *
- *  Add the ivl_nexus_ptr_t and the means to get at
- *  them from nexus objects.
- *
- *  Give names to methods that manipulate the ivl_design_t
- *  type more consistent names.
- *
- * Revision 1.12  2000/10/13 03:39:27  steve
- *  Include constants in nexus targets.
- *
- * Revision 1.11  2000/10/08 04:01:55  steve
- *  Back pointers in the nexus objects into the devices
- *  that point to it.
- *
- *  Collect threads into a list in the design.
- *
- * Revision 1.10  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.9  2000/10/06 23:46:51  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.8  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.7  2000/09/30 02:18:15  steve
- *  ivl_expr_t support for binary operators,
- *  Create a proper ivl_scope_t object.
- *
- * Revision 1.6  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.5  2000/09/24 02:21:53  steve
- *  Add support for signal expressions.
- *
- * Revision 1.4  2000/09/23 05:15:07  steve
- *  Add enough tgt-verilog code to support hello world.
- *
- * Revision 1.3  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.2  2000/09/19 04:15:27  steve
- *  Introduce the means to get statement types.
- *
- * Revision 1.1  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
  */
 #endif
