@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.169 2000/09/29 04:43:09 steve Exp $"
+#ident "$Id: netlist.h,v 1.170 2000/10/04 16:30:39 steve Exp $"
 #endif
 
 /*
@@ -1558,7 +1558,7 @@ class NetEvent : public LineInfo {
       explicit NetEvent (const string&n);
       ~NetEvent();
 
-      string name() const;
+      const char* name() const;
       string full_name() const;
 
 	// Get information about probes connected to me.
@@ -1583,7 +1583,7 @@ class NetEvent : public LineInfo {
       void replace_event(NetEvent*that);
 
     private:
-      string name_;
+      char* name_;
 
 	// The NetScope class uses these to list the events.
       NetScope*scope_;
@@ -2796,6 +2796,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.170  2000/10/04 16:30:39  steve
+ *  Use char8 instead of string to store name.
+ *
  * Revision 1.169  2000/09/29 04:43:09  steve
  *  Cnstant evaluation of NE.
  *

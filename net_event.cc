@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.10 2000/09/19 03:00:36 steve Exp $"
+#ident "$Id: net_event.cc,v 1.11 2000/10/04 16:30:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
 
 NetEvent::NetEvent(const string&n)
-: name_(n)
+: name_(0)
 {
       scope_ = 0;
       snext_ = 0;
@@ -31,6 +31,8 @@ NetEvent::NetEvent(const string&n)
       trig_ = 0;
       waitref_ = 0;
       wlist_ = 0;
+      name_ = new char[n.length()+1];
+      strcpy(name_, n.c_str());
 }
 
 NetEvent::~NetEvent()
@@ -42,9 +44,10 @@ NetEvent::~NetEvent()
 	    delete probes_;
 	    probes_ = tmp;
       }
+      delete[]name_;
 }
 
-string NetEvent::name() const
+const char* NetEvent::name() const
 {
       return name_;
 }
@@ -383,6 +386,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.11  2000/10/04 16:30:39  steve
+ *  Use char8 instead of string to store name.
+ *
  * Revision 1.10  2000/09/19 03:00:36  steve
  *  Typo stepping ot next probe in delete.
  *
