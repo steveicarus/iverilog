@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.49 2000/10/07 19:45:42 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.50 2000/10/08 04:59:36 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -900,6 +900,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
       svector<NetNet*>nets (parms_.count());
       unsigned pins = 0;
       unsigned errors = 0;
+      unsigned repeat = 1;
 
       if (repeat_) {
 	    verinum*rep = repeat_->eval_const(des, path);
@@ -910,37 +911,15 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 		  return 0;
 	    }
 
-	    unsigned long repeat = rep->as_ulong();
+	    repeat = rep->as_ulong();
 
-	      /* Elaborate the expression the first time to figure out
-		 how wide the expression is. Then create a NetTmp
-		 object big enough to hold all the repetitions. */
-
-	    assert(parms_.count() == 1);
-	    NetNet*obj = parms_[0]->elaborate_net(des, path, 0, rise,
-						  fall, decay);
-
-	    unsigned per_count = obj->pin_count();
-	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
-				    repeat * per_count);
-
-	    for (unsigned pin = 0 ;  pin < per_count ; pin += 1)
-		  connect(tmp->pin(pin), obj->pin(pin));
-
-	      /* Now elaborate the expression again to fill out the
-		 repetitions, connecting each to the tmp NetNet
-		 object. */
-
-	    for (unsigned idx = 1 ;  idx < repeat ;  idx += 1) {
-		  unsigned base = per_count * idx;
-
-		  obj = parms_[0]->elaborate_net(des, path, per_count,
-						 rise, fall, decay);
-		  for (unsigned pin = 0 ;  pin < per_count ; pin += 1)
-			connect(tmp->pin(base+pin), obj->pin(pin));
+	    if (repeat == 0) {
+		  cerr << get_line() << ": error: Invalid repeat value."
+		       << endl;
+		  des->errors += 1;
+		  delete rep;
+		  return 0;
 	    }
-
-	    return tmp;
       }
 
 	/* Elaborate the operands of the concatenation. */
@@ -981,17 +960,23 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 	/* Make the temporary signal that connects to all the
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
-	   which is opposite from how they are given in the list. */
+	   which is opposite from how they are given in the list.
+
+	   Allow for a repeat count other then 1 by repeating the
+	   connect loop as many times as necessary. */
+
       NetNet*osig = new NetNet(scope, des->local_symbol(path),
-			       NetNet::IMPLICIT, pins);
+			       NetNet::IMPLICIT, pins * repeat);
+
       pins = 0;
-      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
-	    NetNet*cur = nets[idx-1];
-	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
-		  connect(osig->pin(pins), cur->pin(pin));
-		  pins += 1;
+      for (unsigned rpt = 0 ;  rpt < repeat ;  rpt += 1)
+	    for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
+		  NetNet*cur = nets[idx-1];
+		  for (unsigned pin = 0;  pin < cur->pin_count();  pin += 1) {
+			connect(osig->pin(pins), cur->pin(pin));
+			pins += 1;
+		  }
 	    }
-      }
 
       osig->local_flag(true);
       return osig;
@@ -1760,6 +1745,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.50  2000/10/08 04:59:36  steve
+ *  Fix repeat concatenation with multiple expressions (PR#10)
+ *
  * Revision 1.49  2000/10/07 19:45:42  steve
  *  Put logic devices into scopes.
  *
