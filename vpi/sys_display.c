@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.40 2002/07/23 02:41:15 steve Exp $"
+#ident "$Id: sys_display.c,v 1.41 2002/07/25 03:35:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -673,8 +673,9 @@ static int sys_strobe_calltf(char*name)
  */
 
 static struct strobe_cb_info monitor_info = { 0, 0, 0, 0, 0 };
-static int monitor_scheduled = 0;
 static vpiHandle *monitor_callbacks = 0;
+static int monitor_scheduled = 0;
+static int monitor_enabled = 1;
 
 static int monitor_cb_2(p_cb_data cb)
 {
@@ -684,11 +685,18 @@ static int monitor_cb_2(p_cb_data cb)
       return 0;
 }
 
+/*
+ * The monitor_cb_1 callback is called when an even occurs somewhere
+ * in the simulation. All this function does is schedule the actual
+ * display to occur in a ReadOnlySync callback. The monitor_scheduled
+ * flag is used to allow only one monitor strobe to be scheduled.
+ */
 static int monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
 
+      if (monitor_enabled == 0) return 0;
       if (monitor_scheduled) return 0;
 
 	/* This this action caused the first trigger, then schedule
@@ -719,6 +727,8 @@ static int sys_monitor_calltf(char*name)
       vpiHandle scope = vpi_handle(vpiScope, sys);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
+	/* If there was a previous $monitor, then remove the calbacks
+	   related to it. */
       if (monitor_callbacks) {
 	    for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1)
 		  if (monitor_callbacks[idx])
@@ -734,11 +744,13 @@ static int sys_monitor_calltf(char*name)
 	    monitor_info.name = 0;
       }
 
+	/* Make an array of handles from the argument list. */
       array_from_iterator(&monitor_info, argv);
       monitor_info.name = strdup(name);
       monitor_info.default_format = get_default_format(name);
       monitor_info.scope = scope;
 
+	/* Attach callbacks to all the parameters that might change. */
       monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
 
       time.type = vpiSuppressTime;
@@ -764,6 +776,23 @@ static int sys_monitor_calltf(char*name)
 	    }
       }
 
+	/* When the $monitor is called, it schedules a first display
+	   for the end of the current time, like a $strobe. */
+      monitor_cb_1(0);
+
+      return 0;
+}
+
+static int sys_monitoron_calltf(char*name)
+{
+      monitor_enabled = 1;
+      monitor_cb_1(0);
+      return 0;
+}
+
+static int sys_monitoroff_calltf(char*name)
+{
+      monitor_enabled = 0;
       return 0;
 }
 
@@ -1208,6 +1237,22 @@ void sys_display_register()
       tf_data.user_data = "$monitorb";
       vpi_register_systf(&tf_data);
 
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitoron";
+      tf_data.calltf    = sys_monitoron_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitoron";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitoroff";
+      tf_data.calltf    = sys_monitoroff_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitoroff";
+      vpi_register_systf(&tf_data);
+
       //============================== fopen
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$fopen";
@@ -1303,6 +1348,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.41  2002/07/25 03:35:51  steve
+ *  Add monitoron and monitoroff system tasks.
+ *
  * Revision 1.40  2002/07/23 02:41:15  steve
  *  Fix display of no arguments.
  *
