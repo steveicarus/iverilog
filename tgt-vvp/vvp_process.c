@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.66 2002/08/31 03:48:50 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.67 2002/09/01 00:19:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -305,48 +305,70 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		  calculate_into_x1(del);
 
 	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+		  unsigned skip_set = transient_id++;
+		  unsigned skip_set_flag = 0;
 		  unsigned idx;
 		  unsigned bit_limit = wid - cur_rbit;
 		  lval = ivl_stmt_lval(net, lidx);
 
 		    /* If there is a mux for the lval, calculate the
 		       value and write it into index0. */
-		  if (ivl_lval_mux(lval))
+		  if (ivl_lval_mux(lval)) {
 			calculate_into_x0(ivl_lval_mux(lval));
+			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+			skip_set_flag = 1;
+		  }
 
 		  mem = ivl_lval_mem(lval);
-		  if (mem)
+		  if (mem) {
 			draw_memory_index_expr(mem, ivl_lval_idx(lval));
+			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+			skip_set_flag = 1;
+		  }
 
 		  if (bit_limit > ivl_lval_pins(lval))
 			bit_limit = ivl_lval_pins(lval);
 
-		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			if (mem)
+		  if (mem) {
+			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      assign_to_memory(mem, idx, 
 					       bitchar_to_idx(bits[cur_rbit]),
 					       delay);
-			else if (del != 0)
-			      assign_to_lvariable(lval, idx,
-						  bitchar_to_idx(bits[cur_rbit]),
-						  1, 1);
-			else
-			      assign_to_lvariable(lval, idx,
-						  bitchar_to_idx(bits[cur_rbit]),
-						  delay, 0);
-			cur_rbit += 1;
+			      cur_rbit += 1;
+			}
+
+			for (idx = bit_limit
+				   ; idx < ivl_lval_pins(lval)
+				   ; idx += 1) {
+			      assign_to_memory(mem, idx, 0, delay);
+			}
+		  } else {
+			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
+			      if (del != 0)
+				    assign_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       1, 1);
+			      else
+				    assign_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       delay, 0);
+			      cur_rbit += 1;
+			}
+
+			for (idx = bit_limit
+				   ; idx < ivl_lval_pins(lval)
+				   ; idx += 1) {
+			      if (del != 0)
+				    assign_to_lvariable(lval, idx, 0,
+							1, 1);
+			      else
+				    assign_to_lvariable(lval, idx, 0,
+							delay, 0);
+			}
 		  }
 
-		  for (idx = bit_limit; idx < ivl_lval_pins(lval); idx += 1)
-			if (mem)
-			      assign_to_memory(mem, idx, 0, delay);
-			else if (del != 0)
-			      assign_to_lvariable(lval, idx, 0,
-						  1, 1);
-			else
-			      assign_to_lvariable(lval, idx, 0,
-						  delay, 0);
-
+		  if (skip_set_flag)
+			fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    }
 	    return 0;
       }
@@ -361,19 +383,26 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      calculate_into_x1(del);
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	      unsigned skip_set = transient_id++;
+	      unsigned skip_set_flag = 0;
 	      unsigned idx;
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
 		/* If there is a mux for the lval, calculate the
 		   value and write it into index0. */
-	      if (ivl_lval_mux(lval))
+	      if (ivl_lval_mux(lval)) {
 		    calculate_into_x0(ivl_lval_mux(lval));
-
+		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		    skip_set_flag = 1;
+	      }
 
 	      mem = ivl_lval_mem(lval);
-	      if (mem) 
+	      if (mem) {
 		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
+		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		    skip_set_flag = 1;
+	      }
 
 	      if (bit_limit > ivl_lval_pins(lval))
 		    bit_limit = ivl_lval_pins(lval);
@@ -401,6 +430,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			  assign_to_lvariable(lval, idx, 0, 1, 1);
 		    else
 			  assign_to_lvariable(lval, idx, 0, delay, 0);
+
+
+	      if (skip_set_flag)
+		    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
 	}
 
@@ -1269,6 +1302,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.67  2002/09/01 00:19:35  steve
+ *  Watch for x indices in l-value of non-blocking assignments.
+ *
  * Revision 1.66  2002/08/31 03:48:50  steve
  *  Fix reverse bit ordered bit select in continuous assignment.
  *
