@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.60 1999/07/24 19:19:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.61 1999/07/28 03:46:57 steve Exp $"
 #endif
 
 /*
@@ -1838,7 +1838,7 @@ void PTask::elaborate(Design*des, const string&path) const
 	   up in the design. Then save that pointer for later use by
 	   calls to the task. (Remember, the task itself does not need
 	   these ports.) */
-      svector<NetNet*>ports (ports_->count());
+      svector<NetNet*>ports (ports_? ports_->count() : 0);
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
 
@@ -1969,6 +1969,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.61  1999/07/28 03:46:57  steve
+ *  Handle no ports at all for tasks.
+ *
  * Revision 1.60  1999/07/24 19:19:06  steve
  *  Add support for task output and inout ports.
  *
