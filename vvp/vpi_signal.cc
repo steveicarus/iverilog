@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.31 2001/12/18 05:31:54 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.32 2002/01/09 03:29:12 steve Exp $"
 #endif
 
 /*
@@ -219,36 +219,37 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
       char*cp;
-      unsigned idx;
       unsigned wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
-      assert(wid % 8 == 0);
 
-	/* The result will use a character for each 8 bits of the
-	   vector. */
-      need_result_buf(wid/8 + 1);
+      /* The result will use a character for each 8 bits of the
+	 vector. Add one extra character for the highest bits that
+         don't form an 8 bit group. */
+      need_result_buf(wid/8 + ((wid&7)!=0) + 1);
 
       cp = result_buf;
-      for (idx = wid ;  idx >= 8 ;  idx -= 8) {
-	    char tmp = 0;
-	    unsigned bdx;
+      char tmp = 0;
+      int bitnr;
+      for(bitnr=wid-1; bitnr>=0; bitnr--){
+	  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, bitnr);
+	  tmp <<= 1;
 
-	    for (bdx = 8 ;  bdx > 0 ;  bdx -= 1) {
-		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx-8+bdx-1);
-		  tmp <<= 1;
-		  switch (functor_get(fptr)) {
-		      case 0:
-			break;
-		      case 1:
-			tmp |= 1;
-			break;
-		      default:
-			break;
-		  }
-	    }
-	    *cp++ = tmp? tmp : ' ';
+	  switch (functor_get(fptr)) {
+	  case 0:
+	      break;
+	  case 1:
+	      tmp |= 1;
+	      break;
+	  default:
+	      break;
+	  }
+
+	  if ((bitnr&7)==0){
+	      *cp++ = tmp? tmp : ' ';
+	      tmp = 0;
+	  }
       }
       *cp++ = 0;
 }
@@ -586,6 +587,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.32  2002/01/09 03:29:12  steve
+ *  String prints of non-round vectors (PR378)
+ *
  * Revision 1.31  2001/12/18 05:31:54  steve
  *  Remove result length restrictions for vpi_get_value.
  *
