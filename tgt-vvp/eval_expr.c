@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.79 2002/09/24 04:20:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.80 2002/09/27 16:33:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -28,70 +28,6 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
-
-static unsigned char allocation_map[0x10000/8];
-
-static inline int peek_bit(unsigned addr)
-{
-      unsigned bit = addr % 8;
-      addr /= 8;
-      return 1 & (allocation_map[addr] >> bit);
-}
-
-static inline void set_bit(unsigned addr)
-{
-      unsigned bit = addr % 8;
-      addr /= 8;
-      allocation_map[addr] |= (1 << bit);
-}
-
-static inline void clr_bit(unsigned addr)
-{
-      unsigned bit = addr % 8;
-      addr /= 8;
-      allocation_map[addr] &= ~(1 << bit);
-}
-
-/*
- * This clears a vector that was previously allocated by
- * allocate_vector. That is, it unmarks all the bits of the map that
- * represent this vector.
- *
- * If the vector is based in one of 4 constant bit values, then there
- * are no bits to clear. If the vector is based in the 4-8 result
- * area, then someone is broken.
- */
-void clr_vector(struct vector_info vec)
-{
-      unsigned idx;
-      if (vec.base < 4)
-	    return;
-      assert(vec.base >= 8);
-      for (idx = 0 ;  idx < vec.wid ;  idx += 1)
-	    clr_bit(vec.base + idx);
-}
-
-unsigned short allocate_vector(unsigned short wid)
-{
-      unsigned short base = 8;
-
-      unsigned short idx = 0;
-      while (idx < wid) {
-	    assert((base + idx) < 0x10000);
-	    if (peek_bit(base+idx)) {
-		  base = base + idx + 1;
-		  idx = 0;
-
-	    } else {
-		  idx += 1;
-	    }
-      }
-
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    set_bit(base+idx);
-
-      return base;
-}
 
 int number_is_unknown(ivl_expr_t ex)
 {
@@ -958,6 +894,8 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    assert(0);
       }
 
+      if (rv.base >= 8)
+	    save_expression_lookaside(rv.base, exp, wid);
       return rv;
 }
 
@@ -989,6 +927,8 @@ static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
 	    break;
       }
 
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
       return res;
 }
 
@@ -1026,10 +966,22 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
 		  unsigned awid = ivl_expr_width(arg);
 
-		    /* Evaluate this sub expression. */
-		  struct vector_info avec = draw_eval_expr_wid(arg, awid, 0);
+		  unsigned trans;
+		  struct vector_info avec;
 
-		  unsigned trans = awid;
+		    /* Try to locate the subexpression in the
+		       lookaside map. */
+		  avec.base = allocate_vector_exp(arg, awid);
+		  avec.wid = awid;
+
+		    /* If it's not in the lookaside map, then
+		       evaluate the expression here. */
+		  if (avec.base == 0) {
+			  /* Evaluate this sub expression. */
+			avec = draw_eval_expr_wid(arg, awid, 0);
+		  }
+
+		  trans = awid;
 		  if ((off + awid) > wid)
 			trans = wid - off;
 
@@ -1051,6 +1003,10 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+off, wid-off);
       }
+
+	/* Save the accumulated result in the lookaside map. */
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
 
       return res;
 }
@@ -1137,6 +1093,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       if (idx < wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
+
       return res;
 }
 
@@ -1184,6 +1143,9 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
       if (idx < wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
+
       return res;
 }
 
@@ -1204,8 +1166,16 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       if (swid > wid)
 	    swid = wid;
 
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
+      res.base = allocate_vector_exp(exp, wid);
+      res.wid = wid;
+      if (res.base != 0)
+	    return res;
+
+      if (res.base == 0) {
+	    res.base = allocate_vector(wid);
+	    res.wid  = wid;
+	    save_expression_lookaside(res.base, exp, wid);
+      }
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
@@ -1296,6 +1266,9 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+swid, wid-swid);
 
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
+
       return res;
 }
 
@@ -1344,6 +1317,9 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
       } else if (subv.wid == wid) {
 	    res = subv;
       }
+
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
 
       return res;
 }
@@ -1411,6 +1387,9 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
 
       return res;
 }
@@ -1541,6 +1520,9 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 	    free(vec);
       }
 
+	/* New basic block starts after VPI calls. */
+      clear_expression_lookaside();
+
       fprintf(vvp_out, ";\n");
 
 
@@ -1594,6 +1576,9 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
       fprintf(vvp_out, ", S_%s;\n", vvp_mangle_id(ivl_scope_name(def)));
       fprintf(vvp_out, "    %%join;\n");
+
+	/* Fresh basic block starts after the join. */
+      clear_expression_lookaside();
 
 	/* The return value is in a signal that has the name of the
 	   expression. Load that into the thread and return the
@@ -1784,6 +1769,9 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    assert(0);
       }
 
+      if (res.base >= 8)
+	    save_expression_lookaside(res.base, exp, wid);
+
       return res;
 }
 
@@ -1791,6 +1779,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 				      int stuff_ok_flag)
 {
       struct vector_info res;
+
+	/* This is too conservative, but is certainly safe. Relaxing
+	   this will require extensive testing. */
+      clear_expression_lookaside();
 
       switch (ivl_expr_type(exp)) {
 	  default:
@@ -1861,6 +1853,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.80  2002/09/27 16:33:34  steve
+ *  Add thread expression lookaside map.
+ *
  * Revision 1.79  2002/09/24 04:20:32  steve
  *  Allow results in register bits 47 in certain cases.
  *
@@ -1907,93 +1902,5 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
  *  generate vvp labels. -tdll target does not
  *  used hierarchical name string to look up the
  *  memory objects in the design.
- *
- * Revision 1.66  2002/08/03 22:30:48  steve
- *  Eliminate use of ivl_signal_name for signal labels.
- *
- * Revision 1.65  2002/07/12 18:10:45  steve
- *  Use all bits of ?: condit expression.
- *
- * Revision 1.64  2002/07/01 00:52:47  steve
- *  Carry can propagate to the otp in addi.
- *
- * Revision 1.63  2002/06/02 18:57:17  steve
- *  Generate %cmpi/u where appropriate.
- *
- * Revision 1.62  2002/05/31 20:04:57  steve
- *   Generate %muli instructions when possible.
- *
- * Revision 1.61  2002/05/30 01:57:23  steve
- *  Use addi with wide immediate values.
- *
- * Revision 1.60  2002/05/29 16:29:34  steve
- *  Add %addi, which is faster to simulate.
- *
- * Revision 1.59  2002/05/07 03:49:58  steve
- *  Handle x case of unary ! properly.
- *
- * Revision 1.58  2002/04/22 02:41:30  steve
- *  Reduce the while loop expression if needed.
- *
- * Revision 1.57  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- *
- * Revision 1.56  2002/02/03 05:53:00  steve
- *  Fix parameter bit select check for magic constants.
- *
- * Revision 1.55  2002/01/28 00:52:42  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.54  2002/01/11 05:23:05  steve
- *  Handle certain special cases of stime.
- *
- * Revision 1.53  2001/11/19 04:25:46  steve
- *  Handle padding out of logical values.
- *
- * Revision 1.52  2001/10/24 05:06:54  steve
- *  The ! expression returns 0 to x and z values.
- *
- * Revision 1.51  2001/10/18 16:41:49  steve
- *  Evaluate string expressions (Philip Blundell)
- *
- * Revision 1.50  2001/10/16 01:27:17  steve
- *  Generate %div instructions for binary /.
- *
- * Revision 1.49  2001/10/14 03:24:35  steve
- *  Handle constant bits in arithmetic expressions.
- *
- * Revision 1.48  2001/10/10 04:47:43  steve
- *  Support vectors as operands to logical and.
- *
- * Revision 1.47  2001/09/29 04:37:44  steve
- *  Generate code for unary minus (PR#272)
- *
- * Revision 1.46  2001/09/29 01:53:22  steve
- *  Fix the size of unsized constant operants to compare (PR#274)
- *
- * Revision 1.45  2001/09/20 03:46:38  steve
- *  Handle short l-values to concatenation.
- *
- * Revision 1.44  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.43  2001/08/31 01:37:56  steve
- *  Handle update in place of repeat constants.
- *
- * Revision 1.42  2001/08/23 02:54:15  steve
- *  Handle wide assignment to narrow return value.
- *
- * Revision 1.41  2001/08/03 17:06:10  steve
- *  More detailed messages about unsupported things.
- *
- * Revision 1.40  2001/07/27 04:51:45  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.39  2001/07/27 02:41:56  steve
- *  Fix binding of dangling function ports. do not elide them.
  */
 

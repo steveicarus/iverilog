@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.69 2002/09/24 04:20:32 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.70 2002/09/27 16:33:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -480,6 +480,7 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
       fprintf(vvp_out, "    %%end;\n");
 
       fprintf(vvp_out, "t_%u %%join;\n", out_id);
+      clear_expression_lookaside();
 
       return rc;
 }
@@ -584,6 +585,8 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    if (idx == default_case)
 		  continue;
 
+	    clear_expression_lookaside();
+
 	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
 	    show_statement(cst, sscope);
 
@@ -591,6 +594,8 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		    local_base+count);
 
       }
+
+      clear_expression_lookaside();
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
@@ -668,12 +673,15 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       if (ivl_stmt_cond_true(net))
 	    rc += show_statement(ivl_stmt_cond_true(net), sscope);
 
+      clear_expression_lookaside();
+
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
 	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
 
 	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
+	    clear_expression_lookaside();
 	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_out);
 
       } else {
@@ -698,6 +706,9 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
       fprintf(vvp_out, "    %%delay %lu;\n", delay);
+	/* Lots of things can happen during a delay. */
+      clear_expression_lookaside();
+
       rc += show_statement(stmt, sscope);
 
       return rc;
@@ -721,6 +732,8 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
       }
 
       fprintf(vvp_out, "    %%delayx 0;\n");
+	/* Lots of things can happen during a delay. */
+      clear_expression_lookaside();
 
       rc += show_statement(stmt, sscope);
       return rc;
@@ -809,12 +822,14 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
+	    clear_expression_lookaside();
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
 
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
+      clear_expression_lookaside();
       fprintf(vvp_out, "t_%u ;\n", out);
 
       return rc;
@@ -881,6 +896,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+      clear_expression_lookaside();
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 
       clr_vector(cnt);
@@ -906,6 +922,7 @@ static int show_stmt_utask(ivl_statement_t net)
       fprintf(vvp_out, ", S_%s;\n", 
 	      vvp_mangle_id(ivl_scope_name(task)));
       fprintf(vvp_out, "    %%join;\n");
+      clear_expression_lookaside();
       return 0;
 }
 
@@ -914,6 +931,8 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
       ivl_event_t ev = ivl_stmt_event(net);
       fprintf(vvp_out, "    %%wait E_%s;\n", 
 	      vvp_mangle_id(ivl_event_name(ev)));
+
+      clear_expression_lookaside();
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
 }
@@ -976,6 +995,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* This is the bottom of the loop. branch to the top where the
 	   test is repeased, and also draw the out label. */
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
+      clear_expression_lookaside();
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, out_label);
       return rc;
 }
@@ -990,6 +1010,7 @@ static int show_system_task_call(ivl_statement_t net)
       
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
+	    clear_expression_lookaside();
 	    return 0;
       }
 
@@ -1108,6 +1129,8 @@ static int show_system_task_call(ivl_statement_t net)
 
       fprintf(vvp_out, ";\n");
 
+      clear_expression_lookaside();
+
       return 0;
 }
 
@@ -1120,6 +1143,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
+
+	/* This is more conservitive then it needs to be, but
+	   relaxing this will require extensive testing. */
+      clear_expression_lookaside();
 
       switch (code) {
 
@@ -1242,6 +1269,7 @@ int draw_process(ivl_process_t net, void*x)
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
       fprintf(vvp_out, "T_%d ;\n", thread_count);
+      clear_expression_lookaside();
 
 	/* Draw the contents of the thread. */
       rc += show_statement(stmt, scope);
@@ -1276,6 +1304,7 @@ int draw_task_definition(ivl_scope_t scope)
       ivl_statement_t def = ivl_scope_def(scope);
 
       fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      clear_expression_lookaside();
 
       assert(def);
       rc += show_statement(def, scope);
@@ -1292,6 +1321,7 @@ int draw_func_definition(ivl_scope_t scope)
       ivl_statement_t def = ivl_scope_def(scope);
 
       fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
+      clear_expression_lookaside();
 
       assert(def);
       rc += show_statement(def, scope);
@@ -1304,6 +1334,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.70  2002/09/27 16:33:34  steve
+ *  Add thread expression lookaside map.
+ *
  * Revision 1.69  2002/09/24 04:20:32  steve
  *  Allow results in register bits 47 in certain cases.
  *
@@ -1392,99 +1425,5 @@ int draw_func_definition(ivl_scope_t scope)
  *
  * Revision 1.44  2001/09/01 00:58:16  steve
  *  dead comments.
- *
- * Revision 1.43  2001/08/26 23:00:13  steve
- *  Generate code for l-value bit selects.
- *
- * Revision 1.42  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.41  2001/08/16 03:45:17  steve
- *  statement ends after while loop labels.
- *
- * Revision 1.40  2001/07/28 01:18:07  steve
- *  Evaluate part selects when passed to system tasks.
- *
- * Revision 1.39  2001/07/19 04:55:06  steve
- *  Support calculated delays in vvp.tgt.
- *
- * Revision 1.38  2001/06/29 02:41:05  steve
- *  Handle null parameters to system tasks.
- *
- * Revision 1.37  2001/06/23 00:30:42  steve
- *  Handle short inputs to tasks. (Stephan Boettcher)
- *
- * Revision 1.36  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- *
- * Revision 1.35  2001/05/24 04:31:00  steve
- *  Attach noops to case labels.
- *
- * Revision 1.34  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.33  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.32  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.31  2001/05/03 04:55:28  steve
- *  Generate null statements for conditional labels.
- *
- * Revision 1.30  2001/04/21 03:26:23  steve
- *  Right shift by constant.
- *
- * Revision 1.29  2001/04/21 00:55:46  steve
- *  Generate code for disable.
- *
- * Revision 1.28  2001/04/18 05:12:03  steve
- *  Use the new %fork syntax.
- *
- * Revision 1.27  2001/04/15 02:58:11  steve
- *  vvp support for <= with internal delay.
- *
- * Revision 1.26  2001/04/06 02:28:03  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.25  2001/04/05 03:20:58  steve
- *  Generate vvp code for the repeat statement.
- *
- * Revision 1.24  2001/04/04 04:50:35  steve
- *  Support forever loops in the tgt-vvp target.
- *
- * Revision 1.23  2001/04/04 04:28:41  steve
- *  Fix broken look scanning down bits of number.
- *
- * Revision 1.22  2001/04/04 04:14:09  steve
- *  emit vpi parameters values as vectors.
- *
- * Revision 1.21  2001/04/03 04:50:37  steve
- *  Support non-blocking assignments.
- *
- * Revision 1.20  2001/04/02 04:09:20  steve
- *  thread bit allocation leak in assign.
- *
- * Revision 1.19  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.18  2001/04/02 00:27:53  steve
- *  Scopes and numbers as vpi_call parameters.
- *
- * Revision 1.17  2001/04/01 06:49:04  steve
- *  Generate code for while statements.
  */
 

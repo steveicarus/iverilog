@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.21 2002/09/24 04:20:32 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.22 2002/09/27 16:33:34 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -114,8 +114,45 @@ extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
  */
 extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 
+/*
+ * These functions manage vector allocation in the thread register
+ * space. They presume that we work on one thread at a time, to
+ * completion.
+ *
+ *  allocate_vector
+ *    Return the base of an allocated vector in the thread. The bits
+ *    are marked allocated in the process.
+ *
+ *  clr_bector
+ *    Clear a vector previously allocated.
+ *
+ * The thread vector allocator also keeps a lookaside of expression
+ * results that are stored in register bit. This lookaside can be used
+ * by the code generator to notice that certain expression bits are
+ * already calculated, and can be reused.
+ *
+ *  clear_expression_lookaside
+ *    Clear the lookaside tables for the current thread.
+ *
+ *  save_expression_lookaside
+ *    Mark the given expression as available in the given register
+ *    bits. This remains until the lookaside is cleared.
+ *
+ *  allocate_vector_exp
+ *    This function attempts to locate the expression in the
+ *    lookaside. If it finds it, return a reallocated base for the
+ *    expression. Otherwise, return 0.
+ */
 extern unsigned short allocate_vector(unsigned short wid);
 extern void clr_vector(struct vector_info vec);
+
+extern void clear_expression_lookaside(void);
+extern void save_expression_lookaside(unsigned short addr,
+				      ivl_expr_t exp,
+				      unsigned short wid);
+
+extern unsigned short allocate_vector_exp(ivl_expr_t exp,
+					  unsigned short wid);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
@@ -129,6 +166,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.22  2002/09/27 16:33:34  steve
+ *  Add thread expression lookaside map.
+ *
  * Revision 1.21  2002/09/24 04:20:32  steve
  *  Allow results in register bits 47 in certain cases.
  *
