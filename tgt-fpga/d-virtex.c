@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.19 2002/11/22 01:45:40 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.20 2002/11/22 05:46:06 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -431,6 +431,226 @@ void edif_show_cellref_logic(ivl_net_logic_t net, const char*cellref)
       }
 }
 
+/*
+ * This function draw wide AND-like devices. The input must have at
+ * least 5 bits.
+ */
+static void wide_AND_logic(ivl_net_logic_t net, unsigned edif_uref)
+{
+      char jbuf[1024];
+
+	/* This is the number of input bits left to connect. */
+      unsigned ibits = ivl_logic_pins(net) - 1;
+	/* Index to the next input bit. */
+      unsigned idx = 1;
+      unsigned slice = 0;
+
+      const char*lut4_init;
+      const char*lut3_init;
+      const char*lut2_init;
+      const char*lut1_dev;
+
+      switch (ivl_logic_type(net)) {
+	  case IVL_LO_AND:
+	    lut4_init = "\"8000\"";
+	    lut3_init = "\"80\"";
+	    lut2_init = "\"8\"";
+	    lut1_dev  = "BUF";
+	    break;
+	  case IVL_LO_NOR:
+	    lut4_init = "\"0001\"";
+	    lut3_init = "\"01\"";
+	    lut2_init = "\"1\"";
+	    lut1_dev  = "INV";
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      assert(ibits > 4);
+
+      while (ibits >= 4) {
+
+	      /* The least significant bits are ANDed together 4 at a
+		 time with LUT4 devices. The output of the LUT4 device
+		 connects to a MUXCY device that passes its output
+		 up to the next stage.
+
+		 The DI input of the MUXCY (S==0) is connected to
+		 ground, so that the ouput of the chain is pinned to 0
+		 if this slice does not AND to 1.
+
+		 If the LUT emits 1, S==1 and this slice passes the
+		 compare from below. So the CI of the MUXCY gets the O
+		 of the MUXCY one slice back. */
+
+	    fprintf(xnf, "(instance U%uL%u"
+		    " (viewRef net"
+		    " (cellRef LUT4 (libraryRef VIRTEX)))"
+		    " (property INIT (string %s)))\n",
+		    edif_uref, slice, lut4_init);
+
+	    fprintf(xnf, "(instance U%uM%u"
+		    " (viewRef net"
+		    " (cellRef MUXCY (libraryRef VIRTEX))))\n",
+		    edif_uref, slice);
+
+	    fprintf(xnf, "(instance U%uG%u"
+		    " (viewRef net"
+		    " (cellRef GND (libraryRef VIRTEX))))\n",
+		    edif_uref, slice);
+
+	    fprintf(xnf, "(net U%uLM%u (joined"
+		    " (portRef O (instanceRef U%uL%u))"
+		    " (portRef S (instanceRef U%uM%u))))\n",
+		    edif_uref, slice,
+		    edif_uref, slice,
+		    edif_uref, slice);
+
+	    fprintf(xnf, "(net U%uGM%u (joined"
+		    " (portRef GROUND (instanceRef U%uG%u))"
+		    " (portRef DI (instanceRef U%uM%u))))\n",
+		    edif_uref, slice,
+		    edif_uref, slice,
+		    edif_uref, slice);
+
+	    if (slice == 0) {
+		  fprintf(xnf, "(instance U%uV%u"
+			  " (viewRef net"
+			  " (cellRef VCC (libraryRef VIRTEX))))\n",
+			  edif_uref, slice);
+
+		  fprintf(xnf, "(net U%uMM%u (joined"
+			  " (portRef VCC (instanceRef U%uG%u))"
+			  " (portRef CI (instanceRef U%uM%u))))\n",
+			  edif_uref, slice,
+			  edif_uref, slice,
+			  edif_uref, slice);
+	    } else {
+		  fprintf(xnf, "(net U%uMM%u (joined"
+			  " (portRef O (instanceReg U%uM%u))"
+			  " (portReg CI (instanceRef U%uM%u))))\n",
+			  edif_uref, slice,
+			  edif_uref, slice-1,
+			  edif_uref, slice);
+	    }
+
+	    sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+0), jbuf);
+
+	    sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+1), jbuf);
+
+	    sprintf(jbuf, "(portRef I2 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+2), jbuf);
+
+	    sprintf(jbuf, "(portRef I3 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+3), jbuf);
+
+	    ibits -= 4;
+	    idx   += 4;
+	    slice += 1;
+      }
+
+      if (ibits == 0) {
+	    sprintf(jbuf, "(portRef O (instanceRef U%uM%u))",
+		    edif_uref, slice-1);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+	    return;
+      }
+
+      switch (ibits) {
+
+	  case 1:
+	    fprintf(xnf, "(instance U%uL%u"
+		    " (viewRef net"
+		    " (cellRef %s (libraryRef VIRTEX))))\n",
+		    edif_uref, slice, lut1_dev);
+
+	    sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+0), jbuf);
+	    break;
+
+	  case 2:
+	    fprintf(xnf, "(instance U%uL%u"
+		   " (viewRef net"
+		   " (cellRef LUT2 (libraryRef VIRTEX)))"
+		   " (property INIT (string %s)))\n",
+		   edif_uref, slice, lut2_init);
+
+	    sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+0), jbuf);
+
+	    sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+1), jbuf);
+	    break;
+
+	  case 3:
+	    fprintf(xnf, "(instance U%uL%u"
+		   " (viewRef net"
+		   " (cellRef LUT3 (libraryRef VIRTEX)))"
+		   " (property INIT (string %s)))\n",
+		   edif_uref, slice, lut3_init);
+
+	    sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+0), jbuf);
+
+	    sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+1), jbuf);
+
+	    sprintf(jbuf, "(portRef I2 (instanceRef U%uL%u))",
+		    edif_uref, slice);
+	    edif_set_nexus_joint(ivl_logic_pin(net, idx+2), jbuf);
+
+	  default:
+	    assert(0);
+      }
+
+      fprintf(xnf, "(instance U%uM%u"
+	     " (viewRef net"
+	     " (cellRef MUXCY (libraryRef VIRTEX))))\n",
+	     edif_uref, slice);
+
+      fprintf(xnf, "(instance U%uG%u"
+	      " (viewRef net"
+	      " (cellRef GND (libraryRef VIRTEX))))\n",
+	      edif_uref, slice);
+
+      fprintf(xnf, "(net U%uLM%u (joined"
+	      " (portRef O (instanceRef U%uL%u))"
+	      " (portRef S (instanceRef U%uM%u))))\n",
+	      edif_uref, slice,
+	      edif_uref, slice,
+	      edif_uref, slice);
+
+      fprintf(xnf, "(net U%uGM%u (joined"
+	      " (portRef GROUND (instanceRef U%uG%u))"
+	      " (portRef DI (instanceRef U%uM%u))))\n",
+	      edif_uref, slice,
+	      edif_uref, slice,
+	      edif_uref, slice);
+
+      fprintf(xnf, "(net U%uMM%u (joined"
+	      " (portRef O (instanceReg U%uM%u))"
+	      " (portReg CI (instanceRef U%uM%u))))\n",
+	      edif_uref, slice,
+	      edif_uref, slice-1,
+	      edif_uref, slice);
+
+      sprintf(jbuf, "(portRef O (instanceRef U%uM%u))",
+	      edif_uref, slice);
+      edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+}
+
 static void edif_show_virtex_logic(ivl_net_logic_t net)
 {
       char jbuf[1024];
@@ -447,7 +667,6 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
       switch (ivl_logic_type(net)) {
 
 	  case IVL_LO_AND:
-	    assert(ivl_logic_pins(net) <= 5);
 	    assert(ivl_logic_pins(net) >= 3);
 
 	    switch (ivl_logic_pins(net)) {
@@ -471,6 +690,9 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3),
 				 ivl_logic_pin(net, 4), "8000");
+		  break;
+		default:
+		  wide_AND_logic(net, edif_uref);
 		  break;
 	    }
 	    break;
@@ -508,7 +730,6 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_NOR:
-	    assert(ivl_logic_pins(net) <= 5);
 	    assert(ivl_logic_pins(net) >= 3);
 
 	    switch (ivl_logic_pins(net)) {
@@ -532,6 +753,9 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3),
 				 ivl_logic_pin(net, 4), "0001");
+		  break;
+		default:
+		  wide_AND_logic(net, edif_uref);
 		  break;
 	    }
 	    break;
@@ -1683,6 +1907,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.20  2002/11/22 05:46:06  steve
+ *  Handle wide AND/NOR devices with Virtex carry logic.
+ *
  * Revision 1.19  2002/11/22 01:45:40  steve
  *  Implement bufif1 as BUFT
  *
