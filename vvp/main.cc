@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.19 2001/07/26 03:13:51 steve Exp $"
+#ident "$Id: main.cc,v 1.20 2001/07/30 02:44:05 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -35,6 +35,10 @@
 #endif
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
+#endif
+
+#if defined(__MINGW32__)
+# include  <windows.h>
 #endif
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
@@ -80,7 +84,7 @@ int main(int argc, char*argv[])
       bool debug_flag = false;
       bool verbose_flag = false;
       struct tms cycles[3];
-      char *logfile_name = 0x0;
+      const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
 
 #ifdef __MINGW32__
@@ -218,6 +222,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.20  2001/07/30 02:44:05  steve
+ *  Cleanup defines and types for mingw compile.
+ *
  * Revision 1.19  2001/07/26 03:13:51  steve
  *  Make the -M flag add module search paths.
  *

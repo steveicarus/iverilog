@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.7 2001/07/28 03:29:42 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.8 2001/07/30 02:44:05 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -31,7 +31,7 @@ typedef void (*vlog_startup_routines_t)(void);
 typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
 
 
-char* vpip_module_path[64] = {
+const char* vpip_module_path[64] = {
       MODULE_DIR,
       0
 };
@@ -109,6 +109,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.8  2001/07/30 02:44:05  steve
+ *  Cleanup defines and types for mingw compile.
+ *
  * Revision 1.7  2001/07/28 03:29:42  steve
  *  If module name has a /, skip the path search.
  *

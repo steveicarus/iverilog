@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.46 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: main.cc,v 1.47 2001/07/30 02:44:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -59,6 +59,12 @@ const char NOTICE[] =
 # include  "compiler.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
+extern "C" int getopt(int argc, char*argv[], const char*fmt);
+extern "C" int optind;
+extern "C" const char*optarg;
+#endif
+
+#if defined(__CYGWIN32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;
 extern "C" const char*optarg;
@@ -448,6 +454,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.47  2001/07/30 02:44:05  steve
+ *  Cleanup defines and types for mingw compile.
+ *
  * Revision 1.46  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

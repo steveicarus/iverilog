@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.20 2001/07/26 03:13:51 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.21 2001/07/30 02:44:05 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -220,7 +220,7 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid);
 extern void vpip_load_module(const char*name);
 
 # define VPIP_MODULE_PATH_MAX 64
-extern char* vpip_module_path[64];
+extern const char* vpip_module_path[64];
 extern unsigned vpip_module_path_cnt;
 
 /*
@@ -263,6 +263,9 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.21  2001/07/30 02:44:05  steve
+ *  Cleanup defines and types for mingw compile.
+ *
  * Revision 1.20  2001/07/26 03:13:51  steve
  *  Make the -M flag add module search paths.
  *
