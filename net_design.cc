@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.13 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: net_design.cc,v 1.14 2000/08/12 17:59:48 steve Exp $"
 #endif
 
 /*
@@ -293,24 +293,35 @@ string Design::get_flag(const string&key) const
 }
 
 /*
- * This method looks for a string given a current context as a
- * starting point.
+ * This method looks for a signal (reg, wire, whatever) starting at
+ * the specified scope. If the name is hierarchical, it is split into
+ * scope and name and the scope used to find the proper starting point
+ * for the real search.
+ *
+ * It is the job of this function to properly implement Verilog scope
+ * rules as signals are concerned.
  */
 NetNet* Design::find_signal(NetScope*scope, const string&name)
 {
       assert(scope);
 
 	/* If the name has a path attached to it, parse it off and use
-	   that to locate the desired scope. */
+	   that to locate the desired starting scope. */
       string path = name;
       string key = parse_last_name(path);
       if (path != "")
 	    scope = find_scope(scope, path);
 
+	/* Now from the starting point, scan upwards until we find the
+	   signal or we find a module boundary. */
       while (scope) {
 
 	    if (NetNet*net = scope->find_signal(key))
 		  return net;
+
+	    if (scope->type() == NetScope::MODULE)
+		  break;
+
 	    scope = scope->parent();
       }
 
@@ -472,6 +483,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.14  2000/08/12 17:59:48  steve
+ *  Limit signal scope search at module boundaries.
+ *
  * Revision 1.13  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during
