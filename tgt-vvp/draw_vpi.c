@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.1 2003/02/28 20:21:13 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.2 2003/03/07 02:43:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -27,6 +27,25 @@
 #endif
 # include  <stdlib.h>
 # include  <assert.h>
+
+static const char* magic_sfuncs[] = {
+      "$time",
+      "$stime",
+      "$realtime",
+      "$simtime",
+      0
+};
+
+static int is_magic_sfunc(const char*name)
+{
+      int idx;
+      for (idx = 0 ;  magic_sfuncs[idx] ;  idx += 1)
+	    if (strcmp(magic_sfuncs[idx],name) == 0)
+		  return 1;
+
+      return 0;
+}
+
 
 struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
 			    ivl_expr_t fnet, unsigned wid)
@@ -58,9 +77,14 @@ struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
 		case IVL_EX_NUMBER:
 		case IVL_EX_STRING:
 		case IVL_EX_SCOPE:
-		case IVL_EX_SFUNC:
 		case IVL_EX_VARIABLE:
 		  continue;
+
+		case IVL_EX_SFUNC:
+		  if (is_magic_sfunc(ivl_expr_name(expr)))
+			continue;
+
+		  break;
 
 		case IVL_EX_SIGNAL:
 		    /* If the signal node is narrower then the signal
@@ -170,17 +194,11 @@ struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
 		  continue;
 
 		case IVL_EX_SFUNC:
-		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $time");
-		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $stime");
-		  else if (strcmp("$realtime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $realtime");
-		  else if (strcmp("$simtime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $simtime");
-		  else
-			fprintf(vvp_out, ", ?%s?", ivl_expr_name(expr));
-		  continue;
+		  if (is_magic_sfunc(ivl_expr_name(expr))) {
+			fprintf(vvp_out, ", %s", ivl_expr_name(expr));
+			continue;
+		  }
+		  break;
 		  
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
@@ -229,6 +247,9 @@ struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.2  2003/03/07 02:43:32  steve
+ *  Handle general $function arguments as expresions.
+ *
  * Revision 1.1  2003/02/28 20:21:13  steve
  *  Merge vpi_call and vpi_func draw functions.
  *
