@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.82 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.83 2002/07/05 21:26:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1194,6 +1194,11 @@ extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
       return net->port_;
 }
 
+extern "C" int ivl_signal_local(ivl_signal_t net)
+{
+      return net->local_;
+}
+
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
       return net->signed_;
@@ -1547,6 +1552,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.83  2002/07/05 21:26:17  steve
+ *  Avoid emitting to vvp local net symbols.
+ *
  * Revision 1.82  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *

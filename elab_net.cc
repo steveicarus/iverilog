@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.92 2002/06/22 04:22:40 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.93 2002/07/05 21:26:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -398,6 +398,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 					verinum::V0);
 	    des->add_node(tmp);
 	    zero = new NetNet(scope, scope->local_hsymbol(), NetNet::WIRE);
+	    zero->local_flag(true);
 	    connect(tmp->pin(0), zero->pin(0));
       }
 
@@ -2121,6 +2122,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.93  2002/07/05 21:26:17  steve
+ *  Avoid emitting to vvp local net symbols.
+ *
  * Revision 1.92  2002/06/22 04:22:40  steve
  *  Wide unary minus in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.88 2002/06/25 01:33:22 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.89 2002/07/05 21:26:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1824,6 +1824,7 @@ void dll_target::signal(const NetNet*net)
       obj->lsb_index = net->lsb();
       obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
       obj->isint_ = false;
+      obj->local_ = (net->local_flag() && (net->peek_eref() == 0))? 1 : 0;
 
       switch (net->port_type()) {
 
@@ -1950,6 +1951,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.89  2002/07/05 21:26:17  steve
+ *  Avoid emitting to vvp local net symbols.
+ *
  * Revision 1.88  2002/06/25 01:33:22  steve
  *  Cache calculated driven value.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.33 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.34 2002/07/05 21:26:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -50,6 +50,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
 
       string path = lsig->scope()->name()+"."+lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
+      osig->local_flag(true);
 
       string oname = des->local_symbol(path);
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
@@ -587,6 +588,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.34  2002/07/05 21:26:17  steve
+ *  Avoid emitting to vvp local net symbols.
+ *
  * Revision 1.33  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

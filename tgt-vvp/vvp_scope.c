@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.71 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.72 2002/07/05 21:26:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -548,6 +548,10 @@ static void draw_net_in_scope(ivl_signal_t sig)
       const_charp* args;
 
       const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
+
+	/* Skip the local signal. */
+      if (ivl_signal_local(sig))
+	    return;
 
       args = (const_charp*)calloc(ivl_signal_pins(sig), sizeof(char*));
 
@@ -1573,6 +1577,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.72  2002/07/05 21:26:17  steve
+ *  Avoid emitting to vvp local net symbols.
+ *
  * Revision 1.71  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *
