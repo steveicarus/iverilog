@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.17 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.18 2003/01/09 04:09:44 steve Exp $"
 #endif
 
 /*
@@ -276,6 +276,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
       obj->args  = argv;
       obj->vbit  = vbit;
       obj->vwid  = vwid;
+      obj->userdata = 0;
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf) {
@@ -342,8 +343,31 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
       cur->info.tfname = strdup(ss->tfname);
 }
 
+int vpi_put_userdata(vpiHandle ref, void*data)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      rfp->userdata = data;
+      return 0;
+}
+
+void* vpi_get_userdata(vpiHandle ref)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      return rfp->userdata;
+}
+
+
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.18  2003/01/09 04:09:44  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.17  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

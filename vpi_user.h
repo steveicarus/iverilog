@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.15 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.16 2003/01/09 04:10:17 steve Exp $"
 #endif
 
 
@@ -323,6 +323,13 @@ extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 extern int vpi_free_object(vpiHandle ref);
 extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
+/*
+ * These functions support attaching user data to an instance of a
+ * system task or function. These functions only apply to
+ * vpiSysTaskCall or vpiSysFuncCall handles.
+ */
+extern int  vpi_put_userdata(vpiHandle obj, void*data);
+extern void*vpi_get_userdata(vpiHandle obj);
 
 /*
  * Support for handling errors.
@@ -359,6 +366,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.16  2003/01/09 04:10:17  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.15  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpithunk.c,v 1.7 2002/12/11 23:55:22 steve Exp $"
+#ident "$Id: vpithunk.c,v 1.8 2003/01/09 04:10:17 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -235,8 +235,21 @@ extern int vpi_chk_error(p_vpi_error_info info)
   VPIT_CALL(vpi_chk_error, 0, (info));
 }
 
+extern void* vpi_get_userdata(vpiHandle obj)
+{
+      VPIT_CALL(vpi_get_userdata, 0, (obj));
+}
+
+extern int vpi_put_userdata(vpiHandle obj, void*data)
+{
+      VPIT_CALL(vpi_put_userdata, 0, (obj, data));
+}
+
 /*
  * $Log: vpithunk.c,v $
+ * Revision 1.8  2003/01/09 04:10:17  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.7  2002/12/11 23:55:22  steve
  *  Add vpi_handle_by_name to the VPI interface,
  *  and bump the vpithunk magic number.

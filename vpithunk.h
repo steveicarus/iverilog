@@ -2,7 +2,7 @@
 #define _VPI_THUNK_H_ 1
 
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpithunk.h,v 1.5 2002/12/11 23:55:22 steve Exp $"
+#ident "$Id: vpithunk.h,v 1.6 2003/01/09 04:10:17 steve Exp $"
 #endif
 
 /* These functions are actually defined in lieu of the vpi functions
@@ -70,6 +70,15 @@ typedef struct {
   int (*vpi_get_vlog_info)(p_vpi_vlog_info vlog_info_p);
   int (*vpi_chk_error)(p_vpi_error_info info);
   vpiHandle (*vpi_handle_by_name)(char *name, vpiHandle scope);
+
+  int   (*vpi_put_userdata)(vpiHandle obj, void*data);
+  void* (*vpi_get_userdata)(vpiHandle obj);
+
+      void*pad3;
+      void*pad2;
+      void*pad1;
+      void*pad0;
+
 } vpi_thunk, *p_vpi_thunk;
 
 DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);
@@ -78,6 +87,9 @@ DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);
 
 /*
  * $Log: vpithunk.h,v $
+ * Revision 1.6  2003/01/09 04:10:17  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.5  2002/12/11 23:55:22  steve
  *  Add vpi_handle_by_name to the VPI interface,
  *  and bump the vpithunk magic number.

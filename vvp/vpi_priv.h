@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.41 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.42 2003/01/09 04:09:44 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -240,7 +240,8 @@ struct __vpiSysTaskCall {
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
-
+	/* Support for vpi_get_userdata. */
+      void*userdata;
 	/* These represent where in the vthread to put the return value. */
       unsigned short vbit, vwid;
 };
@@ -384,6 +385,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.42  2003/01/09 04:09:44  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.41  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

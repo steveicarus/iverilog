@@ -1,5 +1,5 @@
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_vpi.cc,v 1.6 2002/12/11 23:55:22 steve Exp $"
+#ident "$Id: vvp_vpi.cc,v 1.7 2003/01/09 04:09:44 steve Exp $"
 #endif
 
 #include <stdarg.h>
@@ -36,10 +36,15 @@ void vvp_vpi_init()
   vvpt.vpi_free_object= vpi_free_object;
   vvpt.vpi_get_vlog_info = vpi_get_vlog_info;
   vvpt.vpi_chk_error = vpi_chk_error;
+  vvpt.vpi_get_userdata = vpi_get_userdata;
+  vvpt.vpi_put_userdata = vpi_put_userdata;
 }
 
 /*
  * $Log: vvp_vpi.cc,v $
+ * Revision 1.7  2003/01/09 04:09:44  steve
+ *  Add vpi_put_userdata
+ *
  * Revision 1.6  2002/12/11 23:55:22  steve
  *  Add vpi_handle_by_name to the VPI interface,
  *  and bump the vpithunk magic number.
