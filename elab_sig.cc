@@ -17,17 +17,44 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.8 2001/01/04 04:47:51 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.9 2001/01/07 07:00:31 steve Exp $"
 #endif
 
 # include  "Module.h"
-# include "PExpr.h"
+# include  "PExpr.h"
 # include  "PGate.h"
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "netlist.h"
 # include  "util.h"
 
+/*
+ * This local function checks if a named signal is connected to a
+ * port. It looks in the array of ports passed, for NetEIdent objects
+ * within the port_t that have a matching name.
+ */
+static bool signal_is_in_port(const svector<Module::port_t*>&ports,
+			      const string&name)
+{
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+
+	    Module::port_t*pp = ports[idx];
+	      // Skip internally unconnected ports.
+	    if (pp == 0)
+		  continue;
+
+	      // This port has an internal connection. In this case,
+	      // the port has 0 or more NetEIdent objects concatenated
+	      // together that form the port.
+	    for (unsigned cc = 0 ;  cc < pp->expr.count() ;  cc += 1) {
+		  assert(pp->expr[cc]);
+		  if (pp->expr[cc]->name() == name)
+			return true;
+	    }
+      }
+
+      return false;
+}
 
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
 {
@@ -41,7 +68,25 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		 ; wt != wl.end()
 		 ; wt ++ ) {
 
-	    (*wt).second->elaborate_sig(des, scope);
+	    PWire*cur = (*wt).second;
+	    cur->elaborate_sig(des, scope);
+
+	      // If this wire is a signal of the module (as opposed to
+	      // a port of a function) and is a port, then check that
+	      // the module knows about it.
+	    NetNet*sig = scope->find_signal(cur->name());
+	    if (sig && (sig->scope() == scope)
+		&& (cur->get_port_type() != NetNet::NOT_A_PORT)) {
+		  string name = (*wt).first;
+
+		  if (! signal_is_in_port(ports_, name)) {
+
+			cerr << cur->get_line() << ": error: Signal "
+			     << name << " has a declared direction "
+			     << "but is not a port." << endl;
+			des->errors += 1;
+		  }
+	    }
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -357,6 +402,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.9  2001/01/07 07:00:31  steve
+ *  Detect port direction attached to non-ports.
+ *
  * Revision 1.8  2001/01/04 04:47:51  steve
  *  Add support for << is signal indices.
  *
