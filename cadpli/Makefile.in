@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.9 2004/02/10 19:25:00 steve Exp $"
+#ident "$Id: Makefile.in,v 1.10 2004/03/11 06:06:59 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -75,7 +75,7 @@ O = cadpli.o
 
 SYSTEM_VPI_LDFLAGS = -L../vvp -lvpi
 ifeq (@WIN32@,yes)
-    SYSTEM_VPI_LDFLAGS += -liberty
+    SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
 endif
 
 cadpli.vpl: $O ../vvp/libvpi.a ../libveriuser/libveriuser.o

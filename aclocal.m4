@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.3 2004/02/15 03:17:36 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.4 2004/03/11 06:06:59 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -84,3 +84,20 @@ AC_SUBST(MINGW32)
 AC_SUBST(WIN32)
 AC_MSG_RESULT($WIN32)
 ])# AX_WIN32
+
+# AX_LD_EXTRALIBS
+# ---------------
+# mingw needs to link with libiberty.a, but cygwin alone can't tolerate it
+AC_DEFUN([AX_LD_EXTRALIBS],
+[AC_MSG_CHECKING([for extra libs needed])
+EXTRALIBS=
+case "${host}" in
+     *-*-cygwin* )
+        if test "$MINGW32" = "yes"; then
+            EXTRALIBS="-liberty"
+        fi
+        ;;
+esac
+AC_SUBST(EXTRALIBS)
+AC_MSG_RESULT($EXTRALIBS)
+])# AX_LD_EXTRALIBS

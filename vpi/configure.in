@@ -96,19 +96,8 @@ esac
 AC_SUBST(PICFLAG)
 AC_MSG_RESULT($PICFLAG)
 
+AX_LD_EXTRALIBS
 
-# mingw needs to link with libiberty.a, cygwin can tolerate it
-
-AC_MSG_CHECKING("for extra libs needed")
-EXTRALIBS=
-case "${host}" in
-     *-*-cygwin*)
-	EXTRALIBS="-liberty"
-	;;
-esac
-AC_SUBST(EXTRALIBS)
-AC_MSG_RESULT($EXTRALIBS)
-   
 # Darwin requires -no-cpp-precomp
 case "${host}" in
     *-*-darwin*)

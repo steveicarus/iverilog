@@ -119,15 +119,7 @@ esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
 
-AC_MSG_CHECKING("for extra libs needed")
-EXTRALIBS=
-case "${host}" in
-     *-*-cygwin*)
-	EXTRALIBS="-liberty"
-	;;
-esac
-AC_SUBST(EXTRALIBS)
-AC_MSG_RESULT($EXTRALIBS)
+AX_LD_EXTRALIBS
 
 #######################
 ## test for underscores. The vpi module loader in vvm needs to know this
