@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.10 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: bufif.cc,v 1.11 2005/03/12 04:27:42 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -56,25 +56,25 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 	    switch (b_en) {
 		case BIT4_0:
-		  out.set_bit(idx, vvp_scaler_t(BIT4_Z,drive0_,drive1_));
+		  out.set_bit(idx, vvp_scalar_t(BIT4_Z,drive0_,drive1_));
 		  break;
 		case BIT4_1:
 		  if (bit4_is_xz(b_bit))
-			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,drive1_));
+			out.set_bit(idx, vvp_scalar_t(BIT4_X,drive0_,drive1_));
 		  else
-			out.set_bit(idx, vvp_scaler_t(b_bit,drive0_,drive1_));
+			out.set_bit(idx, vvp_scalar_t(b_bit,drive0_,drive1_));
 		  break;
 
 		default:
 		  switch (b_bit) {
 		      case BIT4_0:
-			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,0));
+			out.set_bit(idx, vvp_scalar_t(BIT4_X,drive0_,0));
 			break;
 		      case BIT4_1:
-			out.set_bit(idx, vvp_scaler_t(BIT4_X,0,drive1_));
+			out.set_bit(idx, vvp_scalar_t(BIT4_X,0,drive1_));
 			break;
 		      default:
-			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,drive1_));
+			out.set_bit(idx, vvp_scalar_t(BIT4_X,drive0_,drive1_));
 			break;
 		  }
 		  break;
@@ -87,6 +87,11 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.11  2005/03/12 04:27:42  steve
+ *  Implement VPI access to signal strengths,
+ *  Fix resolution of ambiguous drive pairs,
+ *  Fix spelling of scalar.
+ *
  * Revision 1.10  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

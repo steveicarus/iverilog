@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.17 2005/02/14 01:50:23 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.18 2005/03/12 04:27:43 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -474,7 +474,7 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
 
-      bits_ = new vvp_scaler_t[size_];
+      bits_ = new vvp_scalar_t[size_];
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
@@ -489,7 +489,7 @@ vvp_vector8_t::vvp_vector8_t(unsigned size)
 	    return;
       }
 
-      bits_ = new vvp_scaler_t[size_];
+      bits_ = new vvp_scalar_t[size_];
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
@@ -500,10 +500,10 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
 	    return;
       }
 
-      bits_ = new vvp_scaler_t[size_];
+      bits_ = new vvp_scalar_t[size_];
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = vvp_scaler_t (that.value(idx), str);
+	    bits_[idx] = vvp_scalar_t (that.value(idx), str);
 
 }
 
@@ -528,7 +528,7 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 
       if (size_ == 0) {
 	    size_ = that.size_;
-	    bits_ = new vvp_scaler_t[size_];
+	    bits_ = new vvp_scalar_t[size_];
       }
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
@@ -537,13 +537,13 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
       return *this;
 }
 
-vvp_scaler_t vvp_vector8_t::value(unsigned idx) const
+vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 {
       assert(idx < size_);
       return bits_[idx];
 }
 
-void vvp_vector8_t::set_bit(unsigned idx, vvp_scaler_t val)
+void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
       bits_[idx] = val;
@@ -553,7 +553,7 @@ void vvp_vector8_t::dump(FILE*out)
 {
       fprintf(out, "C8<");
       for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
-	    vvp_scaler_t tmp = value(size()-idx-1);
+	    vvp_scalar_t tmp = value(size()-idx-1);
 	    tmp.dump(out);
       }
 
@@ -761,7 +761,17 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 	    return bits4_.value(idx);
 }
 
-/* **** vvp_scaler_t methods **** */
+vvp_scalar_t vvp_fun_signal::scalar_value(unsigned idx) const
+{
+      if (force_active_)
+	    return vvp_scalar_t(force_.value(idx), 6, 6);
+      else if (type_is_vector8_())
+	    return bits8_.value(idx);
+      else
+	    return vvp_scalar_t(bits4_.value(idx), 6, 6);
+}
+
+/* **** vvp_scalar_t methods **** */
 
 /*
  * DRIVE STRENGTHS:
@@ -781,7 +791,7 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
  *    STRONG = 6,
  *    SUPPLY = 7
  *
- * The vvp_scaler_t value, however, is a combination of value and
+ * The vvp_scalar_t value, however, is a combination of value and
  * strength, used in strength-aware contexts.
  *
  * OUTPUT STRENGTHS:
@@ -809,7 +819,7 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 # define STREN0(v) ((v)&0x07)
 #endif
 
-vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
+vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
 {
       assert(str <= 7);
 
@@ -829,7 +839,7 @@ vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
       }
 }
 
-vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str0, unsigned str1)
+vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 {
       assert(str0 <= 7);
       assert(str1 <= 7);
@@ -850,12 +860,12 @@ vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str0, unsigned str1)
       }
 }
 
-vvp_scaler_t::vvp_scaler_t()
+vvp_scalar_t::vvp_scalar_t()
 {
       value_ = 0;
 }
 
-vvp_bit4_t vvp_scaler_t::value() const
+vvp_bit4_t vvp_scalar_t::value() const
 {
       if (value_ == 0) {
 	    return BIT4_Z;
@@ -870,7 +880,17 @@ vvp_bit4_t vvp_scaler_t::value() const
       }
 }
 
-void vvp_scaler_t::dump(FILE*out)
+unsigned vvp_scalar_t::strength0() const
+{
+      return STREN0(value_);
+}
+
+unsigned vvp_scalar_t::strength1() const
+{
+      return STREN1(value_);
+}
+
+void vvp_scalar_t::dump(FILE*out)
 {
       fprintf(out, "%01u%01u", STREN0(value_), STREN1(value_));
       switch (value()) {
@@ -889,7 +909,7 @@ void vvp_scaler_t::dump(FILE*out)
       }
 }
 
-vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
+vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 {
 	// If the value is 0, that is the same as HiZ. In that case,
 	// resolution is simply a matter of returning the *other* value.
@@ -898,7 +918,7 @@ vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
       if (b.value_ == 0)
 	    return a;
 
-      vvp_scaler_t res = a;
+      vvp_scalar_t res = a;
 
       if (UNAMBIG(a.value_) && UNAMBIG(b.value_)) {
 
@@ -967,20 +987,44 @@ vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
 		 has an even wider ambiguity. */
 
 	    unsigned tmp = 0;
+	    int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
+	    int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
+	    int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
+	    int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
 
-	    if (STREN1(b.value_) > STREN1(res.value_))
-		  tmp |= b.value_&0xf0;
-	    else
-		  tmp |= res.value_&0xf0;
+	    int sv1 = sv1a;
+	    int sv0 = sv0a;
 
-	    if (STREN0(b.value_) < STREN0(res.value_))
-		  tmp |= b.value_&0x0f;
-	    else
-		  tmp |= res.value_&0x0f;
+	    if (sv0a > sv1)
+		  sv1 = sv0a;
+	    if (sv1b > sv1)
+		  sv1 = sv1b;
+	    if (sv0b > sv1)
+		  sv1 = sv0b;
+
+	    if (sv1a < sv0)
+		  sv0 = sv1a;
+	    if (sv1b < sv0)
+		  sv0 = sv1b;
+	    if (sv0b < sv0)
+		  sv0 = sv0b;
+
+	    if (sv1 > 0) {
+		  tmp |= 0x80;
+		  tmp |= sv1 << 4;
+	    } else {
+		  tmp |= (-sv1) << 4;
+	    }
+
+	    if (sv0 > 0) {
+		  tmp |= 0x08;
+		  tmp |= sv0;
+	    } else {
+		  tmp |= (-sv0);
+	    }
 
 	    res.value_ = tmp;
       }
-
 
 	/* Canonicalize the HiZ value. */
       if ((res.value_&0x77) == 0)
@@ -1124,6 +1168,11 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.18  2005/03/12 04:27:43  steve
+ *  Implement VPI access to signal strengths,
+ *  Fix resolution of ambiguous drive pairs,
+ *  Fix spelling of scalar.
+ *
  * Revision 1.17  2005/02/14 01:50:23  steve
  *  Signals may receive part vectors from %set/x0
  *  instructions. Re-implement the %set/x0 to do
@@ -1166,7 +1215,7 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
  *  Add the .part/pv node and related functionality.
  *
  * Revision 1.4  2005/01/01 02:12:34  steve
- *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
+ *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate
  *
  * Revision 1.3  2004/12/31 06:00:06  steve
  *  Implement .resolv functors, and stub signals recv_vec8 method.

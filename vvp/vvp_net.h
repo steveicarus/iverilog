@@ -18,14 +18,14 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.17 2005/02/14 01:50:23 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.18 2005/03/12 04:27:43 steve Exp $"
 
 # include  <stdio.h>
 # include  <assert.h>
 
 
 /* Data types */
-class  vvp_scaler_t;
+class  vvp_scalar_t;
 
 /* Basic netlist types. */
 class  vvp_net_t;
@@ -38,7 +38,7 @@ class  vvp_fun_drive;
 class  vvp_fun_part;
 
 /*
- * This is the set of Verilog 4-value bit values. Scalers have this
+ * This is the set of Verilog 4-value bit values. Scalars have this
  * value along with strength, vectors are a collection of these
  * values. The enumeration has fixed numeric values that can be
  * expressed in 2 real bits, so that some of the internal classes can
@@ -68,7 +68,7 @@ extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
  * zero(LSB) to size-1(MSB).
  *
  * No strength values are stored here, if strengths are needed, use a
- * collection of vvp_scaler_t objects instead.
+ * collection of vvp_scalar_t objects instead.
  */
 class vvp_vector4_t {
 
@@ -157,21 +157,28 @@ extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
  *   Pull   - 5
  *   Strong - 6
  *   Supply - 7
+ *
+ * There are two strengths for a value: strength0 and strength1. If
+ * the value is Z, then strength0 is the strength of the 0-value, and
+ * strength of the 1-value. If the value is 0 or 1, then the strengths
+ * are the range for that value.
  */
-class vvp_scaler_t {
+class vvp_scalar_t {
 
-      friend vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b);
+      friend vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
 
     public:
 	// Make a HiZ value.
-      explicit vvp_scaler_t();
+      explicit vvp_scalar_t();
 
 	// Make an unambiguous value.
-      explicit vvp_scaler_t(vvp_bit4_t val, unsigned str);
-      explicit vvp_scaler_t(vvp_bit4_t val, unsigned str0, unsigned str1);
+      explicit vvp_scalar_t(vvp_bit4_t val, unsigned str);
+      explicit vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1);
 
 	// Get the vvp_bit4_t version of the value
       vvp_bit4_t value() const;
+      unsigned strength0() const;
+      unsigned strength1() const;
 
       bool is_hiz() const { return value_ == 0; }
 
@@ -181,14 +188,14 @@ class vvp_scaler_t {
       unsigned char value_;
 };
 
-extern vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b);
+extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
 
 
 /*
  * This class is a way to carry vectors of strength modeled
  * values. The 8 in the name is the number of possible distinct values
  * a well defined bit may have. When you add in ambiguous values, the
- * number of distinct values span the vvp_scaler_t.
+ * number of distinct values span the vvp_scalar_t.
  *
  * a vvp_vector8_t object can be created from a vvp_vector4_t and a
  * strength value. The vvp_vector8_t bits have the values of the input
@@ -207,8 +214,8 @@ class vvp_vector8_t {
       ~vvp_vector8_t();
 
       unsigned size() const { return size_; }
-      vvp_scaler_t value(unsigned idx) const;
-      void set_bit(unsigned idx, vvp_scaler_t val);
+      vvp_scalar_t value(unsigned idx) const;
+      void set_bit(unsigned idx, vvp_scalar_t val);
 
       void dump(FILE*fd);
 
@@ -217,7 +224,7 @@ class vvp_vector8_t {
 
     private:
       unsigned size_;
-      vvp_scaler_t*bits_;
+      vvp_scalar_t*bits_;
 };
 
 extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
@@ -571,6 +578,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 	// Get information about the vector value.
       unsigned   size() const;
       vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
 
 	// Commands
       void deassign();
@@ -595,6 +603,11 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.18  2005/03/12 04:27:43  steve
+ *  Implement VPI access to signal strengths,
+ *  Fix resolution of ambiguous drive pairs,
+ *  Fix spelling of scalar.
+ *
  * Revision 1.17  2005/02/14 01:50:23  steve
  *  Signals may receive part vectors from %set/x0
  *  instructions. Re-implement the %set/x0 to do

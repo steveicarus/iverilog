@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.64 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.65 2005/03/12 04:27:43 steve Exp $"
 #endif
 
 /*
@@ -241,6 +241,102 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       return rbuf;
 }
 
+static unsigned signal_width(const struct __vpiSignal*rfp)
+{
+      unsigned wid = (rfp->msb >= rfp->lsb)
+	    ? (rfp->msb - rfp->lsb + 1)
+	    : (rfp->lsb - rfp->msb + 1);
+
+      return wid;
+}
+
+static void signal_get_IntVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+{
+      unsigned wid = signal_width(rfp);
+      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+
+      assert(wid <= 8 * sizeof vp->value.integer);
+      vp->value.integer = 0;
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    switch (vsig->value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  vp->value.integer |= 1<<idx;
+		  break;
+		default:
+		    /* vpi_get_value of vpiIntVal treats x and z
+		       values as 0. */
+		  break;
+	    }
+      }
+}
+
+static void signal_get_ScalarVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+{
+     vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+
+      switch (vsig->value(0)) {
+	  case BIT4_0:
+	    vp->value.scalar = vpi0;
+	    break;
+	  case BIT4_1:
+	    vp->value.scalar = vpi1;
+	    break;
+	  case BIT4_X:
+	    vp->value.scalar = vpiX;
+	    break;
+	  case BIT4_Z:
+	    vp->value.scalar = vpiZ;
+	    break;
+      }
+}
+
+static void signal_get_StrengthVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+{
+     vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+     unsigned wid = signal_width(rfp);
+     s_vpi_strengthval*op;
+
+     op = (s_vpi_strengthval*)
+	   need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL);
+
+     for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	   vvp_scalar_t val = vsig->scalar_value(idx);
+
+	     /* vvp_scalar_t strengths are 0-7, but the vpi strength
+		is bit0-bit7. This gets the vpi form of the strengths
+		from the vvp_scalar_t strengths. */
+	   unsigned s0 = 1 << val.strength0();
+	   unsigned s1 = 1 << val.strength1();
+
+	   switch (val.value()) {
+	       case BIT4_0:
+		 op[idx].logic = vpi0;
+		 op[idx].s0 = s0|s1;
+		 op[idx].s1 = 0;
+		 break;
+	       case BIT4_1:
+		 op[idx].logic = vpi1;
+		 op[idx].s0 = 0;
+		 op[idx].s1 = s0|s1;
+		 break;
+	       case BIT4_X:
+		 op[idx].logic = vpiX;
+		 op[idx].s0 = s0;
+		 op[idx].s1 = s1;
+		 break;
+	       case BIT4_Z:
+		 op[idx].logic = vpiZ;
+		 op[idx].s0 = vpiHiZ;
+		 op[idx].s1 = vpiHiZ;
+		 break;
+	   }
+     }
+
+}
+
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -253,9 +349,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
-      unsigned wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
+      unsigned wid = signal_width(rfp);
 
       vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
 
@@ -264,41 +358,16 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       switch (vp->format) {
 
 	  case vpiIntVal:
-	    assert(wid <= 8 * sizeof vp->value.integer);
-	    vp->value.integer = 0;
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  switch (vsig->value(idx)) {
-		      case BIT4_0:
-			break;
-		      case BIT4_1:
-			vp->value.integer |= 1<<idx;
-			break;
-		      default:
-			  /* vpi_get_value of vpiIntVal treats x and z
-			     values as 0. */
-			break;
-		  }
-	    }
+	    signal_get_IntVal(rfp, vp);
 	    break;
 
-	  case vpiScalarVal: {
-		switch (vsig->value(0)) {
-		    case BIT4_0:
-		      vp->value.scalar = vpi0;
-		      break;
-		    case BIT4_1:
-		      vp->value.scalar = vpi1;
-		      break;
-		    case BIT4_X:
-		      vp->value.scalar = vpiX;
-		      break;
-		    case BIT4_Z:
-		      vp->value.scalar = vpiZ;
-		      break;
-		}
+	  case vpiScalarVal:
+	    signal_get_ScalarVal(rfp, vp);
+	    break;
 
-		break;
-	  }
+	  case vpiStrengthVal:
+	    signal_get_StrengthVal(rfp, vp);
+	    break;
 
 	  case vpiBinStrVal:
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
@@ -778,6 +847,11 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.65  2005/03/12 04:27:43  steve
+ *  Implement VPI access to signal strengths,
+ *  Fix resolution of ambiguous drive pairs,
+ *  Fix spelling of scalar.
+ *
  * Revision 1.64  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

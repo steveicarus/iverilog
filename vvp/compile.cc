@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.191 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: compile.cc,v 1.192 2005/03/12 04:27:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -747,7 +747,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 			break;
 		  }
 
-		  tmp.set_bit(vsize-idx-1, vvp_scaler_t(bit, dr0, dr1));
+		  tmp.set_bit(vsize-idx-1, vvp_scalar_t(bit, dr0, dr1));
 	    }
 
 	    schedule_set_vector(ifdx, tmp);
@@ -1134,13 +1134,13 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       vvp_net_fun_t* obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor(vvp_scaler_t(BIT4_Z, 0));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor(vvp_scaler_t(BIT4_0, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor(vvp_scaler_t(BIT4_1, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5));
 
       } else if (strcmp(type,"triand") == 0) {
 	    obj = new table_functor_s(ft_TRIAND);
@@ -1661,6 +1661,11 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.192  2005/03/12 04:27:42  steve
+ *  Implement VPI access to signal strengths,
+ *  Fix resolution of ambiguous drive pairs,
+ *  Fix spelling of scalar.
+ *
  * Revision 1.191  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *
