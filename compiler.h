@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,12 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.20 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: compiler.h,v 1.21 2004/03/09 04:29:42 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
-# include  <string>
+# include  "netlist.h"
 # include  "StringHeap.h"
 
 /*
@@ -111,8 +111,32 @@ extern map<perm_string,unsigned> missing_modules;
  */
 extern StringHeapLex lex_strings;
 
+
+/*
+ * system task/function listings.
+ */
+/*
+ * This table describes all the return values of various system
+ * functions. This table is used to elaborate expressions that are
+ * system function calls.
+ */
+struct sfunc_return_type {
+      const char*   name;
+      NetExpr::TYPE type;
+      unsigned      wid;
+      int           signed_flag;
+};
+
+extern const struct sfunc_return_type* lookup_sys_func(const char*name);
+
 /*
  * $Log: compiler.h,v $
+ * Revision 1.21  2004/03/09 04:29:42  steve
+ *  Separate out the lookup_sys_func table, for eventual
+ *  support for function type tables.
+ *
+ *  Remove ipal compile flags.
+ *
  * Revision 1.20  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *
@@ -136,29 +160,5 @@ extern StringHeapLex lex_strings;
  *
  * Revision 1.14  2003/01/30 16:23:07  steve
  *  Spelling fixes.
- *
- * Revision 1.13  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.12  2002/05/28 20:40:37  steve
- *  ivl indexes the search path for libraries, and
- *  supports case insensitive module-to-file lookup.
- *
- * Revision 1.11  2002/05/28 00:50:39  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- *
- * Revision 1.10  2002/05/24 01:13:00  steve
- *  Support language generation flag -g.
- *
- * Revision 1.9  2002/04/22 00:53:39  steve
- *  Do not allow implicit wires in sensitivity lists.
- *
- * Revision 1.8  2002/04/15 00:04:22  steve
- *  Timescale warnings.
- *
- * Revision 1.7  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.84 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.85 2004/03/09 04:29:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,30 +27,6 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
-
-/*
- * This table describes all the return values of various system
- * functions. This table is used to elaborate expressions that are
- * system function calls.
- */
-struct sfunc_return_type {
-      const char*   name;
-      NetExpr::TYPE type;
-      unsigned      wid;
-      int           signed_flag;
-};
-
-static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   NetExpr::ET_REAL,    0, 0 },
-      { "$bitstoreal", NetExpr::ET_REAL,    0, 0 },
-      { "$itor",       NetExpr::ET_REAL,    0, 0 },
-      { "$realtobits", NetExpr::ET_VECTOR, 64, 0 },
-      { "$time",       NetExpr::ET_VECTOR, 64, 0 },
-      { "$stime",      NetExpr::ET_VECTOR, 32, 0 },
-      { "$simtime",    NetExpr::ET_VECTOR, 64, 0 },
-      { 0,             NetExpr::ET_VECTOR, 32, 0 }
-};
-
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
 {
@@ -247,13 +223,11 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
 	/* Get the return type of the system function by looking it up
 	   in the sfunc_table. */
-      unsigned sfunc_idx;
-      for (sfunc_idx = 0 ;  sfunc_table[sfunc_idx].name ;  sfunc_idx += 1)
-	    if (strcmp(path_.peek_name(0), sfunc_table[sfunc_idx].name) == 0)
-		  break;
+      const struct sfunc_return_type*sfunc_info
+	    = lookup_sys_func(path_.peek_name(0));
 
-      NetExpr::TYPE sfunc_type = sfunc_table[sfunc_idx].type;
-      unsigned wid = sfunc_table[sfunc_idx].wid;
+      NetExpr::TYPE sfunc_type = sfunc_info->type;
+      unsigned wid = sfunc_info->wid;
 
 
 	/* How many parameters are there? The Verilog language allows
@@ -977,6 +951,12 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.85  2004/03/09 04:29:42  steve
+ *  Separate out the lookup_sys_func table, for eventual
+ *  support for function type tables.
+ *
+ *  Remove ipal compile flags.
+ *
  * Revision 1.84  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

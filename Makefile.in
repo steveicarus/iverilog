@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.162 2004/02/10 19:25:00 steve Exp $"
+#ident "$Id: Makefile.in,v 1.163 2004/03/09 04:29:42 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -64,9 +64,6 @@ LDFLAGS = @rdynamic@ @LDFLAGS@
 # installed. Some of them depend on external things, so are only
 # compiled if the prerequisites are installed.
 TARGETS = tgt-null
-ifeq ('@HAVE_IPAL@','yes')
-TARGETS += tgt-pal
-endif
 
 all: dep ivl@EXEEXT@
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
@@ -125,7 +122,7 @@ net_design.o net_event.o net_expr.o net_force.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_udp.o net_variable.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
-set_width.o symbol_search.o sync.o \
+set_width.o symbol_search.o sync.o sys_funcs.o \
 verinum.o verireal.o target.o targets.o \
 Attrib.o HName.o LineInfo.o Module.o PData.o PDelays.o PEvent.o \
 PExpr.o PGate.o \
@@ -145,12 +142,12 @@ ivl@EXEEXT@: $O ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@	
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
-	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@	
+	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
-endif
 
+endif
 
 ifeq (@WIN32@,yes)
 
