@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.167 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: compile.cc,v 1.168 2003/07/22 20:30:24 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -128,7 +128,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
-      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
+      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1532,6 +1532,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.168  2003/07/22 20:30:24  steve
+ *  Forgot to read the /x parameter for %load/x
+ *
  * Revision 1.167  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *
