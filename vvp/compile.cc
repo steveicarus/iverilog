@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.94 2001/08/09 19:38:23 steve Exp $"
+#ident "$Id: compile.cc,v 1.95 2001/08/10 00:50:50 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -700,6 +700,9 @@ static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
 
 	    inputs_connect(ptr, opcount, tmp_argv);
       }
+
+	/* This runs a calculation, so that the output is propagated. */
+      arith->set(fdx, functor_index(fdx), false);
 
       free(argv);
 }
@@ -1587,6 +1590,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.95  2001/08/10 00:50:50  steve
+ *  Make sure arithmetic objects run at time 0.
+ *
  * Revision 1.94  2001/08/09 19:38:23  steve
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.
