@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.238 2001/12/31 00:39:20 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.239 2002/01/19 20:09:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1200,6 +1200,10 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
       NetCase*res = new NetCase(type_, expr, icount);
       res->set_line(*this);
 
+	/* Iterate over all the case items (guard/statement pairs)
+	   elaborating them. If the guard has no expression, then this
+	   is a "default" cause. Otherwise, the guard has one or more
+	   expressions, and each guard is a case. */
       unsigned inum = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 
@@ -1226,6 +1230,16 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
 		  gu = cur->expr[e]->elaborate_expr(des, scope);
+
+		    /* Try to evaluate the guard expression down to a
+		       simple constant. */
+		  if (! dynamic_cast<NetEConst*>(gu)) {
+			NetExpr*tmp = gu->eval_tree();
+			if (tmp != 0) {
+			      delete gu;
+			      gu = tmp;
+			}
+		  }
 
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, scope);
@@ -2394,6 +2408,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.239  2002/01/19 20:09:56  steve
+ *  Evaluate case guards, if possible.
+ *
  * Revision 1.238  2001/12/31 00:39:20  steve
  *  Remove test print
  *
