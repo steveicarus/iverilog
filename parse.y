@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.199 2004/09/05 21:01:51 steve Exp $"
+#ident "$Id: parse.y,v 1.200 2004/09/14 18:24:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -308,14 +308,17 @@ attribute
      integers. This rule matches those declarations. The containing
      rule has presumably set up the scope. */
 block_item_decl
-	: K_reg signed_opt range register_variable_list ';'
-		{ pform_set_net_range($4, $3, $2);
+	: attribute_list_opt K_reg signed_opt range register_variable_list ';'
+		{ pform_set_net_range($5, $4, $3);
+		  if ($1) delete $1;
 		}
-	| K_reg signed_opt register_variable_list ';'
-		{ pform_set_net_range($3, 0, $2);
+	| attribute_list_opt K_reg signed_opt register_variable_list ';'
+		{ pform_set_net_range($4, 0, $3);
+		  if ($1) delete $1;
 		}
-	| K_integer register_variable_list ';'
-		{ pform_set_reg_integer($2);
+	| attribute_list_opt K_integer register_variable_list ';'
+		{ pform_set_reg_integer($3);
+		  if ($1) delete $1;
 		}
 	| K_time register_variable_list ';'
 		{ pform_set_reg_time($2);
@@ -332,13 +335,15 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-	| K_reg error ';'
-		{ yyerror(@1, "error: syntax error in reg variable list.");
+	| attribute_list_opt K_reg error ';'
+		{ yyerror(@2, "error: syntax error in reg variable list.");
 		  yyerrok;
+		  if ($1) delete $1;
 		}
-	| K_integer error ';'
-		{ yyerror(@1, "error: syntax error in integer variable list.");
+	| attribute_list_opt K_integer error ';'
+		{ yyerror(@2, "error: syntax error in integer variable list.");
 		  yyerrok;
+		  if ($1) delete $1;
 		}
 	| K_time error ';'
 		{ yyerror(@1, "error: syntax error in time variable list.");
