@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.73 2003/10/26 22:43:42 steve Exp $"
+#ident "$Id: main.cc,v 1.74 2003/11/01 04:22:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -123,6 +123,47 @@ const bool CASE_SENSITIVE = false;
 const bool CASE_SENSITIVE = true;
 #endif
 
+extern void cprop(Design*des);
+extern void synth(Design*des);
+extern void synth2(Design*des);
+extern void syn_rules(Design*des);
+extern void nodangle(Design*des);
+extern void xnfio(Design*des);
+
+typedef void (*net_func)(Design*);
+static struct net_func_map {
+      const char*name;
+      void (*func)(Design*);
+} func_table[] = {
+      { "cprop",   &cprop },
+      { "nodangle",&nodangle },
+      { "synth",   &synth },
+      { "synth2",  &synth2 },
+      { "syn-rules",   &syn_rules },
+      { "xnfio",   &xnfio },
+      { 0, 0 }
+};
+
+queue<net_func> net_func_queue;
+
+net_func name_to_net_func(const string&name)
+{
+      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
+	    if (name == func_table[idx].name)
+		  return func_table[idx].func;
+
+      return 0;
+}
+
+const char *net_func_to_name(const net_func func)
+{
+      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
+	    if (func == func_table[idx].func)
+		  return func_table[idx].name;
+
+      return "This cannot happen";
+}
+
 static void process_generation_flag(const char*gen)
 {
       if (strcmp(gen,"1") == 0)
@@ -164,6 +205,9 @@ static void process_generation_flag(const char*gen)
  *    depfile:<path>
  *        Give the path to an output dependency file.
  *
+ *    functor:<name>
+ *        Append a named functor to the processing path.
+ *
  *    generation:<1|2|3.0>
  *        This is the generation flag
  *
@@ -188,10 +232,14 @@ static void read_iconfig_file(const char*ipath)
       char buf[8*1024];
 
       FILE*ifile = fopen(ipath, "r");
-      if (ifile == 0)
+      if (ifile == 0) {
+	    cerr << "ERROR: Unable to read config file: " << ipath << endl;
 	    return;
+      }
 
       while (fgets(buf, sizeof buf, ifile) != 0) {
+	    if (buf[0] == '#')
+		  continue;
 	    char*cp = strchr(buf, ':');
 	    if (cp == 0)
 		  continue;
@@ -214,6 +262,16 @@ static void read_iconfig_file(const char*ipath)
 
 	    if (strcmp(buf, "depfile") == 0) {
 		  depfile_name = strdup(cp);
+
+	    } else if (strcmp(buf,"functor") == 0) {
+		net_func tmp = name_to_net_func(cp);
+		if (tmp == 0) {
+		      cerr << "No such design transform function ``"
+			   << cp << "''." << endl;
+		      flag_errors += 1;
+		      break;
+		}
+		net_func_queue.push(tmp);
 
 	    } else if (strcmp(buf, "generation") == 0) {
 		  process_generation_flag(cp);
@@ -293,45 +351,6 @@ static void parm_to_flagmap(const string&flag)
 
 extern Design* elaborate(list <const char*>root);
 
-extern void cprop(Design*des);
-extern void synth(Design*des);
-extern void synth2(Design*des);
-extern void syn_rules(Design*des);
-extern void nodangle(Design*des);
-extern void xnfio(Design*des);
-
-typedef void (*net_func)(Design*);
-static struct net_func_map {
-      const char*name;
-      void (*func)(Design*);
-} func_table[] = {
-      { "cprop",   &cprop },
-      { "nodangle",&nodangle },
-      { "synth",   &synth },
-      { "synth2",  &synth2 },
-      { "syn-rules",   &syn_rules },
-      { "xnfio",   &xnfio },
-      { 0, 0 }
-};
-
-net_func name_to_net_func(const string&name)
-{
-      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
-	    if (name == func_table[idx].name)
-		  return func_table[idx].func;
-
-      return 0;
-}
-
-const char *net_func_to_name(const net_func func)
-{
-      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
-	    if (func == func_table[idx].func)
-		  return func_table[idx].name;
-
-      return "This cannot happen";
-}
-
 #if defined(HAVE_TIMES)
 static double cycles_diff(struct tms *a, struct tms *b)
 {
@@ -362,7 +381,6 @@ int main(int argc, char*argv[])
       const char* net_path = 0;
       const char* pf_path = 0;
       int opt;
-      queue<net_func> net_func_queue;
 
       struct tms cycles[5];
 
@@ -684,6 +702,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.74  2003/11/01 04:22:30  steve
+ *  Accept functors in the config file.
+ *
  * Revision 1.73  2003/10/26 22:43:42  steve
  *  Improve -V messages,
  *
