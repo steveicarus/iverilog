@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.201 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: netlist.cc,v 1.202 2002/11/06 02:25:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1760,34 +1760,6 @@ bool NetExpr::has_width() const
  * Create a bitwise operator node from the opcode and the left and
  * right expressions. Don't worry about the width of the expression
  * yet, we'll get that from the l-value, whatever that turns out to
- * be.
- */
-NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
-{
-      if (r->expr_width() > l->expr_width())
-	    expr_width(r->expr_width());
-      else
-	    expr_width(l->expr_width());
-
-      cast_signed(l->has_sign() && r->has_sign());
-}
-
-NetEBAdd::~NetEBAdd()
-{
-}
-
-NetEBAdd* NetEBAdd::dup_expr() const
-{
-      NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
-				     right_->dup_expr());
-      return result;
-}
-
-/*
- * Create a bitwise operator node from the opcode and the left and
- * right expressions. Don't worry about the width of the expression
- * yet, we'll get that from the l-value, whatever that turns out to
  * be. However, if we don't, our default will be the width of the
  * largest operand.
  */
@@ -2320,6 +2292,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.202  2002/11/06 02:25:13  steve
+ *  No need to keep excess width from an
+ *  unsigned constant value, if it can
+ *  be trimmed safely.
+ *
  * Revision 1.201  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

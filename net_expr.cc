@@ -17,12 +17,78 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.8 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.9 2002/11/06 02:25:13 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
 # include  <iostream>
+
+/*
+ * Create an add/sub node from the two operands. Make a best guess of
+ * the 
+ */
+NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      NetEConst* tmp;
+
+	/* Catch the special case that one of the operands is an
+	   unsized constant number. If so, then we should set the
+	   width of that number to the size of the other operand, plus
+	   one. This expands the expression to account for the largest
+	   possible result.
+
+	   The set_width applied to a constant value will only
+	   truncate the constant so far as it can still hold its
+	   logical value, so this is safe to do. */
+      if ( (tmp = dynamic_cast<NetEConst*>(r))
+	   && (! tmp->has_width())
+	   && (tmp->expr_width() > l->expr_width()) ) {
+
+	    unsigned target_width = l->expr_width() + 1;
+	    r->set_width(target_width);
+
+	      /* Note: This constant value will not gain a defined
+		 with from this. Make sure. */
+	    assert(! r->has_width() );
+
+      } else if ( (tmp = dynamic_cast<NetEConst*>(l))
+	   && (! tmp->has_width())
+	   && (tmp->expr_width() > r->expr_width()) ) {
+
+	    unsigned target_width = r->expr_width() + 1;
+	    l->set_width(target_width);
+
+	      /* Note: This constant value will not gain a defined
+		 with from this. Make sure. */
+	    assert(! l->has_width() );
+
+      }
+
+	/* Now that we have the operand sizes the way we like, or as
+	   good as we are going to get them, set the size of myself. */
+      if (r->expr_width() > l->expr_width()) {
+
+	    expr_width(r->expr_width());
+
+      } else {
+	    expr_width(l->expr_width());
+      }
+
+      cast_signed(l->has_sign() && r->has_sign());
+}
+
+NetEBAdd::~NetEBAdd()
+{
+}
+
+NetEBAdd* NetEBAdd::dup_expr() const
+{
+      NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
+				     right_->dup_expr());
+      return result;
+}
 
 NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
 : parms_(cnt), repeat_(r)
@@ -171,6 +237,11 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.9  2002/11/06 02:25:13  steve
+ *  No need to keep excess width from an
+ *  unsigned constant value, if it can
+ *  be trimmed safely.
+ *
  * Revision 1.8  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.
