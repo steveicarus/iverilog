@@ -5,6 +5,7 @@ parse.cc.output
 syn-rules.cc
 syn-rules.cc.output
 lexor.cc
+iverilog-vpi
 ivl
 ivl.exp
 dep
