@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.12 2000/12/15 17:45:07 steve Exp $"
+#ident "$Id: net_event.cc,v 1.13 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -56,6 +56,12 @@ string NetEvent::full_name() const
 {
       assert(scope_);
       return scope_->name() + "." + name_;
+}
+
+const NetScope* NetEvent::scope() const
+{
+      assert(scope_);
+      return scope_;
 }
 
 unsigned NetEvent::nprobe() const
@@ -433,6 +439,10 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.13  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.12  2000/12/15 17:45:07  steve
  *  Remove limits from the similar events search.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.24 2001/03/27 06:27:40 steve Exp $"
+#ident "$Id: t-dll.h,v 1.25 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -99,6 +99,14 @@ struct dll_target  : public target_t, public expr_scan_t {
 /*
  * These are various private declarations used by the t-dll target.
  */
+
+struct ivl_event_s {
+      char*name;
+      ivl_scope_t scope;
+      ivl_edge_type_t edge;
+      unsigned npins;
+      ivl_nexus_t*pins;
+};
 
 /*
  * The ivl_expr_t is an opaque reference to one of these
@@ -279,6 +287,9 @@ struct ivl_scope_s {
       unsigned nlog_;
       ivl_net_logic_t*log_;
 
+      unsigned nevent_;
+      ivl_event_t* event_;
+
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
 };
@@ -352,12 +363,11 @@ struct ivl_statement_s {
 	    } stask_;
 
 	    struct { /* IVL_ST_TRIGGER */
-		  ivl_net_event_t event_;
+		  ivl_event_t event_;
 	    } trig_;
 
 	    struct { /* IVL_ST_WAIT */
-		  ivl_edge_type_t edge_;
-		  ivl_nexus_t cond_;
+		  ivl_event_t event_;
 		  ivl_statement_t stmt_;
 	    } wait_;
 
@@ -370,6 +380,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.25  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.24  2001/03/27 06:27:40  steve
  *  Generate code for simple @ statements.
  *

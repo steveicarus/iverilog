@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.9 2001/03/27 06:27:41 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.10 2001/03/28 06:07:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -195,12 +195,8 @@ static int show_stmt_noop(ivl_statement_t net)
 
 static int show_stmt_wait(ivl_statement_t net)
 {
-      ivl_nexus_t nex;
-
-      assert(ivl_stmt_pins(net) == 1);
-      nex = ivl_stmt_pin(net, 0);
-
-      fprintf(vvp_out, "    %%wait L_%s;\n", ivl_nexus_name(nex));
+      ivl_event_t ev = ivl_stmt_event(net);
+      fprintf(vvp_out, "    %%wait E_%s;\n", ivl_event_name(ev));
 
       return show_statement(ivl_stmt_sub_stmt(net));
 }
@@ -294,7 +290,7 @@ static int show_statement(ivl_statement_t net)
 
       return rc;
 }
-
+#if 0
 static void show_stmt_event_wait(ivl_statement_t net)
 {
       ivl_edge_type_t edge = ivl_stmt_edge(net);
@@ -322,7 +318,8 @@ static void show_stmt_event_wait(ivl_statement_t net)
       fprintf(vvp_out, ";\n");
 
 }
-
+#endif
+#if 0
 static void show_stmt_events(ivl_statement_t net)
 {
       switch (ivl_statement_type(net)) {
@@ -336,6 +333,7 @@ static void show_stmt_events(ivl_statement_t net)
 	    return;
       }
 }
+#endif
 
 /*
  * The process as a whole is surrounded by this code. We generate a
@@ -351,11 +349,11 @@ int draw_process(ivl_process_t net, void*x)
 
       local_count = 0;
       fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
-
+#if 0
 	/* Show any .event statements that are needed to support this
 	   thread. */
       show_stmt_events(stmt);
-
+#endif
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
       fprintf(vvp_out, "T_%d\n", thread_count);
@@ -389,6 +387,10 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.10  2001/03/28 06:07:40  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.9  2001/03/27 06:27:41  steve
  *  Generate code for simple @ statements.
  *

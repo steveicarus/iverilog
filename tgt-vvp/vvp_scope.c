@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.6 2001/03/27 06:27:41 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.7 2001/03/28 06:07:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -158,6 +158,43 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_event_in_scope(ivl_event_t obj)
+{
+      ivl_edge_type_t edge = ivl_event_edge(obj);
+
+      if (edge == IVL_EDGE_NONE) {
+	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
+		    ivl_event_name(obj), ivl_event_basename(obj));
+
+      } else {
+	    unsigned idx;
+	    unsigned pins = ivl_event_pins(obj);
+	    assert(pins < 4);
+	    fprintf(vvp_out, "E_%s .event ", ivl_event_name(obj));
+	    switch (edge) {
+		case IVL_EDGE_POS:
+		  fprintf(vvp_out, "posedge");
+		  break;
+		case IVL_EDGE_NEG:
+		  fprintf(vvp_out, "posedge");
+		  break;
+		case IVL_EDGE_ANY:
+		  fprintf(vvp_out, "edge");
+		  break;
+		case IVL_EDGE_NONE:
+		  assert(0);
+	    }
+
+	    for (idx = 0 ;  idx < pins ;  idx += 1) {
+		  ivl_nexus_t nex = ivl_event_pin(obj, idx);
+		  fprintf(vvp_out, ", ");
+		  draw_nexus_input(nex);
+	    }
+
+	    fprintf(vvp_out, ";\n");
+      }
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -197,12 +234,21 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    }
       }
 
+      for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1) {
+	    ivl_event_t event = ivl_scope_event(net, idx);
+	    draw_event_in_scope(event);
+      }
+
       ivl_scope_children(net, draw_scope, net);
       return 0;
 }
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.7  2001/03/28 06:07:40  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.6  2001/03/27 06:27:41  steve
  *  Generate code for simple @ statements.
  *

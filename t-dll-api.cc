@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.23 2001/03/27 06:27:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.24 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -83,6 +83,39 @@ extern "C" int ivl_const_signed(ivl_net_const_t net)
 {
       assert(net);
       return net->signed_ == 1;
+}
+
+extern "C" const char* ivl_event_name(ivl_event_t net)
+{
+      return net->name;
+}
+
+extern "C" const char* ivl_event_basename(ivl_event_t net)
+{
+      const char*nam = net->name;
+      nam += strlen(ivl_scope_name(net->scope));
+      assert(*nam == '.');
+      nam += 1;
+      return nam;
+}
+
+extern "C" ivl_edge_type_t ivl_event_edge(ivl_event_t net)
+{
+      assert(net);
+      return net->edge;
+}
+
+extern "C" unsigned ivl_event_pins(ivl_event_t net)
+{
+      assert(net);
+      return net->npins;
+}
+
+extern "C" ivl_nexus_t ivl_event_pin(ivl_event_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->npins);
+      return net->pins[idx];
 }
 
 extern "C" const char* ivl_expr_bits(ivl_expr_t net)
@@ -385,6 +418,19 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
       return 0;
 }
 
+extern "C" unsigned ivl_scope_events(ivl_scope_t net)
+{
+      assert(net);
+      return net->nevent_;
+}
+
+extern "C" ivl_event_t ivl_scope_event(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nevent_);
+      return net->event_[idx];
+}
+
 extern "C" unsigned ivl_scope_logs(ivl_scope_t net)
 {
       assert(net);
@@ -547,10 +593,10 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.delay_;
 }
 
-extern "C" ivl_edge_type_t ivl_stmt_edge(ivl_statement_t net)
+extern "C" ivl_event_t ivl_stmt_event(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_WAIT);
-      return net->u_.wait_.edge_;
+      return net->u_.wait_.event_;
 }
 
 extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
@@ -627,29 +673,6 @@ extern "C" unsigned ivl_stmt_parm_count(ivl_statement_t net)
       return 0;
 }
 
-extern "C" unsigned ivl_stmt_pins(ivl_statement_t net)
-{
-      switch (net->type_) {
-	  case IVL_ST_WAIT:
-	    return 1;
-	  default:
-	    assert(0);
-      }
-      return 0;
-}
-
-extern "C" ivl_nexus_t ivl_stmt_pin(ivl_statement_t net, unsigned idx)
-{
-      switch (net->type_) {
-	  case IVL_ST_WAIT:
-	    assert(idx == 0);
-	    return net->u_.wait_.cond_;
-	  default:
-	    assert(0);
-      }
-      return 0;
-}
-
 extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 {
       switch (net->type_) {
@@ -680,6 +703,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.24  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.23  2001/03/27 06:27:40  steve
  *  Generate code for simple @ statements.
  *

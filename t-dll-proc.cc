@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.12 2001/03/27 06:27:40 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.13 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -279,28 +279,36 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	    return false;
       }
 
-      NetEvent*ev = net->event(0);
-      assert(ev->nprobe() == 1);
+	/* Locate the event by name. Save the ivl_event_t in the
+	   statement so that the generator can find it easily. */
+      const NetEvent*ev = net->event(0);
+      ivl_scope_t ev_scope = lookup_scope_(ev->scope());
 
-      const NetEvProbe*pr = ev->probe(0);
-      assert(pr->pin_count() == 1);
-
-      switch (pr->edge()) {
-	  case NetEvProbe::ANYEDGE:
-	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_ANY;
-	    break;
-	  case NetEvProbe::NEGEDGE:
-	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_NEG;
-	    break;
-	  case NetEvProbe::POSEDGE:
-	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_POS;
-	    break;
+      for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
+	    const char*ename = ivl_event_basename(ev_scope->event_[idx]);
+	    if (strcmp(ev->name(), ename) == 0) {
+		  stmt_cur_->u_.wait_.event_ = ev_scope->event_[idx];
+		  break;
+	    }
       }
 
-      const Nexus*nex = pr->pin(0).nexus();
-      assert(nex);
-      assert(nex->t_cookie());
-      stmt_cur_->u_.wait_.cond_ = (ivl_nexus_t) nex->t_cookie();
+	/* If this is an event with a probe, then connect up the
+	   pins. This wasn't done during the ::event method because
+	   the signals weren't scanned yet. */
+
+      if (ev->nprobe() == 1) {
+	    const NetEvProbe*pr = ev->probe(0);
+	    ivl_event_t evnt = stmt_cur_->u_.wait_.event_;
+
+	    assert(pr->pin_count() == evnt->npins);
+
+	    for (unsigned idx = 0 ;  idx < evnt->npins ;  idx += 1) {
+		  ivl_nexus_t nex = (ivl_nexus_t)
+			pr->pin(idx).nexus()->t_cookie();
+		  assert(nex);
+		  evnt->pins[idx] = nex;
+	    }
+      }	    
 
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = stmt_cur_->u_.wait_.stmt_;
@@ -333,6 +341,10 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.13  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.12  2001/03/27 06:27:40  steve
  *  Generate code for simple @ statements.
  *

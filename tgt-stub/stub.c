@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.29 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: stub.c,v 1.30 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 /*
@@ -144,7 +144,8 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		  fprintf(out, "}\n");
 	    }
 
-	    show_expression(ivl_stmt_rval(net), ind+4);
+	    if (ivl_stmt_rval(net))
+		  show_expression(ivl_stmt_rval(net), ind+4);
 	    break;
 
 	  case IVL_ST_BLOCK: {
@@ -189,7 +190,8 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		fprintf(out, "%*sCall %s(%u parameters);\n", ind, "",
 			ivl_stmt_name(net), ivl_stmt_parm_count(net));
 		for (idx = 0 ;  idx < ivl_stmt_parm_count(net) ;  idx += 1)
-		      show_expression(ivl_stmt_parm(net, idx), ind+4);
+		      if (ivl_stmt_parm(net, idx))
+			    show_expression(ivl_stmt_parm(net, idx), ind+4);
 		break;
 	  }
 
@@ -197,11 +199,11 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    fprintf(out, "%*s-> ...\n", ind, "");
 	    break;
 
-
-	  case IVL_ST_WAIT:
-	    fprintf(out, "%*s@(...)\n", ind, "");
-	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
-	    break;
+	  case IVL_ST_WAIT: {
+		ivl_event_t evnt = ivl_stmt_event(net);
+		fprintf(out, "%*s@(%s)\n", ind, "", ivl_event_name(evnt));
+		break;
+	  }
 
 	  case IVL_ST_WHILE:
 	    fprintf(out, "%*swhile (<?>)\n", ind, "");
@@ -229,6 +231,29 @@ static int show_process(ivl_process_t net, void*x)
       return 0;
 }
 
+static void show_event(ivl_event_t net)
+{
+      ivl_edge_type_t edge = ivl_event_edge(net);
+
+      switch (edge) {
+	  case IVL_EDGE_NONE:
+	    fprintf(out, "  event %s;\n", ivl_event_name(net));
+	    break;
+
+	  case IVL_EDGE_ANY:
+	    fprintf(out, "  event %s @(", ivl_event_name(net));
+	    fprintf(out, ");\n");
+	    break;
+	  case IVL_EDGE_NEG:
+	    fprintf(out, "  event %s @(negedge ", ivl_event_name(net));
+	    fprintf(out, ");\n");
+	    break;
+	  case IVL_EDGE_POS:
+	    fprintf(out, "  event %s @(posedge ", ivl_event_name(net));
+	    fprintf(out, ");\n");
+	    break;
+      }
+}
 
 static void show_signal(ivl_signal_t net)
 {
@@ -372,6 +397,9 @@ static int show_scope(ivl_scope_t net, void*x)
 	    break;
       }
 
+      for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
+	    show_event(ivl_scope_event(net, idx));
+
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
 
@@ -415,6 +443,10 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.30  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.29  2001/02/07 22:22:00  steve
  *  ivl_target header search path fixes.
  *

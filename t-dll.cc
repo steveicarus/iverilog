@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.29 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.30 2001/03/28 06:07:39 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -160,6 +160,22 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 
 }
 
+void scope_add_event(ivl_scope_t scope, ivl_event_t net)
+{
+      if (scope->nevent_ == 0) {
+	    scope->nevent_ = 1;
+	    scope->event_ = (ivl_event_t*)malloc(sizeof(ivl_event_t));
+	    scope->event_[0] = net;
+
+      } else {
+	    scope->nevent_ += 1;
+	    scope->event_ = (ivl_event_t*)
+		  realloc(scope->event_, scope->nevent_*sizeof(ivl_event_t));
+	    scope->event_[scope->nevent_-1] = net;
+      }
+
+}
+
 static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
 {
       if (scope->nlpm_ == 0) {
@@ -273,6 +289,45 @@ bool dll_target::bufz(const NetBUFZ*net)
 
 void dll_target::event(const NetEvent*net)
 {
+      struct ivl_event_s *obj = new struct ivl_event_s;
+
+      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      obj->name = strdup(net->full_name().c_str());
+      obj->scope = scope;
+      scope_add_event(scope, obj);
+
+      assert(net->nprobe() <= 1);
+
+      if (net->nprobe() == 1) {
+	    const NetEvProbe*pr = net->probe(0);
+	    switch (pr->edge()) {
+		case NetEvProbe::ANYEDGE:
+		  obj->edge = IVL_EDGE_ANY;
+		  break;
+		case NetEvProbe::NEGEDGE:
+		  obj->edge = IVL_EDGE_NEG;
+		  break;
+		case NetEvProbe::POSEDGE:
+		  obj->edge = IVL_EDGE_POS;
+		  break;
+	    }
+
+	    obj->npins = pr->pin_count();
+	    obj->pins = (ivl_nexus_t*)calloc(obj->npins, sizeof(ivl_nexus_t));
+#if 0
+	    for (unsigned idx = 0 ;  idx < obj->npins ;  idx += 1) {
+		  ivl_nexus_t nex = (ivl_nexus_t)
+			pr->pin(idx).nexus()->t_cookie();
+		  assert(nex);
+		  obj->pins[idx] = nex;
+	    }
+#endif
+      } else {
+	    obj->npins = 0;
+	    obj->pins  = 0;
+	    obj->edge = IVL_EDGE_NONE;
+      }
+
 }
 
 void dll_target::logic(const NetLogic*net)
@@ -691,6 +746,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.30  2001/03/28 06:07:39  steve
+ *  Add the ivl_event_t to ivl_target, and use that to generate
+ *  .event statements in vvp way ahead of the thread that uses it.
+ *
  * Revision 1.29  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *
