@@ -1,5 +1,5 @@
 /* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002,2003 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.6 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.7 2003/06/13 19:23:42 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -25,73 +25,121 @@
 #include  "priv.h"
 
 /*
- * acc_fetch_tfarg routines implemented using VPI interface
+ * acc_fetch_tfarg and friends implemented using VPI interface
  */
-int acc_fetch_tfarg_int(int n)
+double acc_fetch_itfarg(PLI_INT32 n, handle obj)
 {
-      vpiHandle sys_h, sys_i, arg_h = 0;
+      vpiHandle iter, hand = 0;
       s_vpi_value value;
-      int rtn;
+      int idx = n;
+      double rtn;
 
-      sys_h = vpi_handle(vpiSysTfCall, 0);
-      sys_i = vpi_iterate(vpiArgument, sys_h);
+      iter = vpi_iterate(vpiArgument, obj);
 
       /* scan to nth argument */
-      while (n > 0 && (arg_h = vpi_scan(sys_i))) n--;
+      while (idx > 0 && (hand = vpi_scan(iter))) idx--;
 
-      if (arg_h) {
-	    value.format=vpiIntVal;
-	    vpi_get_value(arg_h, &value);
-	    rtn = value.value.integer; 
-	    vpi_free_object(sys_i);
+      if (hand) {
+	    value.format=vpiRealVal;
+	    vpi_get_value(hand, &value);
+	    rtn = value.value.real; 
+	    vpi_free_object(iter);
       } else {
-	    rtn = 0;
+	    rtn = 0.0;
       }
 
-
       if (pli_trace) {
-	    fprintf(pli_trace, "%s: acc_fetch_tfarg_int(%d) --> %d\n",
-		    vpi_get_str(vpiName, sys_h), n, rtn);
-	    fflush(pli_trace);
+	    fprintf(pli_trace, "%s: acc_fetch_itfarg(%d, %p) --> %f\n",
+		    vpi_get_str(vpiName, obj), n, obj, rtn);
       }
 
       return rtn;
 }
 
-char *acc_fetch_tfarg_str(int n)
+double acc_fetch_tfarg(int n)
 {
-      vpiHandle sys_h, sys_i, arg_h = 0;
-      s_vpi_value value;
-      char *rtn;
-      int idx = n;
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_int(n, hand);
+}
 
-      sys_h = vpi_handle(vpiSysTfCall, 0);
-      sys_i = vpi_iterate(vpiArgument, sys_h);
+
+PLI_INT32 acc_fetch_itfarg_int(PLI_INT32 n, handle obj)
+{
+      vpiHandle iter, hand = 0;
+      s_vpi_value value;
+      int idx = n;
+      int rtn;
+
+      iter = vpi_iterate(vpiArgument, obj);
 
       /* scan to nth argument */
-      while (idx > 0 && (arg_h = vpi_scan(sys_i)))
-	    idx -= 1;
+      while (idx > 0 && (hand = vpi_scan(iter))) idx--;
 
-      if (arg_h) {
+      if (hand) {
+	    value.format=vpiIntVal;
+	    vpi_get_value(hand, &value);
+	    rtn = value.value.integer; 
+	    vpi_free_object(iter);
+      } else {
+	    rtn = 0;
+      }
+
+      if (pli_trace) {
+	    fprintf(pli_trace, "%s: acc_fetch_itfarg_int(%d, %p) --> %d\n",
+		    vpi_get_str(vpiName, obj), n, obj, rtn);
+      }
+
+      return rtn;
+}
+
+PLI_INT32 acc_fetch_tfarg_int(PLI_INT32 n)
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_int(n, hand);
+}
+
+
+char *acc_fetch_itfarg_str(PLI_INT32 n, handle obj)
+{
+      vpiHandle iter, hand = 0;
+      s_vpi_value value;
+      int idx = n;
+      char *rtn;
+
+      iter = vpi_iterate(vpiArgument, obj);
+
+      /* scan to nth argument */
+      while (idx > 0 && (hand = vpi_scan(iter))) idx -= 1;
+
+      if (hand) {
 	    value.format=vpiStringVal;
-	    vpi_get_value(arg_h, &value);
+	    vpi_get_value(hand, &value);
 	    rtn = __acc_newstring(value.value.str);
-	    vpi_free_object(sys_i);
+	    vpi_free_object(iter);
       } else {
 	    rtn = (char *) 0;
       }
 
       if (pli_trace) {
-	    fprintf(pli_trace, "%s: acc_fetch_tfarg_str(%d) --> \"%s\"\n",
-		    vpi_get_str(vpiName, sys_h), n, rtn? rtn : "");
-	    fflush(pli_trace);
+	    fprintf(pli_trace, "%s: acc_fetch_itfarg_str(%d, %p) --> \"%s\"\n",
+		    vpi_get_str(vpiName, obj),
+		    n, obj, rtn? rtn : "");
       }
 
       return rtn;
 }
 
+char *acc_fetch_tfarg_str(PLI_INT32 n)
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      return acc_fetch_itfarg_str(n, hand);
+}
+
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.7  2003/06/13 19:23:42  steve
+ *  Add a bunch more PLI1 routines.
+ *
  * Revision 1.6  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

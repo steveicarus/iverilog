@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.32 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: veriuser.h,v 1.33 2003/06/13 19:23:41 steve Exp $"
 #endif
 
 /*
@@ -269,6 +269,9 @@ extern PLI_INT32 tf_getlongtime(PLI_INT32*);
 extern PLI_INT32 tf_igetlongtime(PLI_INT32*, void*);
 
 extern void tf_scale_longdelay(void*,PLI_INT32,PLI_INT32,PLI_INT32*,PLI_INT32*);
+extern void tf_unscale_longdelay(void*,PLI_INT32,PLI_INT32,PLI_INT32*,PLI_INT32*);
+extern void tf_scale_realdelay(void*,double,double*);
+extern void tf_unscale_realdelay(void*,double,double*);
 
 extern PLI_INT32 tf_gettimeprecision(void);
 extern PLI_INT32 tf_igettimeprecision(void*);
@@ -284,6 +287,8 @@ extern PLI_INT32 tf_message(PLI_INT32 level, char*facility,
 
 extern void tf_multiply_long(PLI_INT32*aof_low1, PLI_INT32*aof_high1,
 			     PLI_INT32 aof_low2, PLI_INT32 aof_high2);
+extern void tf_real_to_long(double real, PLI_INT32*low, PLI_INT32*high);
+extern void tf_long_to_real(PLI_INT32 low, PLI_INT32 high, double *real);
 
 extern PLI_INT32 tf_nump(void);
 extern PLI_INT32 tf_inump(void*);
@@ -337,6 +342,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.33  2003/06/13 19:23:41  steve
+ *  Add a bunch more PLI1 routines.
+ *
  * Revision 1.32  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

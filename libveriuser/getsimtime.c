@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.9 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.10 2003/06/13 19:23:42 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -66,18 +66,6 @@ char *tf_strgettime(void)
       return buf;
 }
 
-PLI_INT32 tf_getlongtime(PLI_INT32 *high)
-{
-      s_vpi_time time;
-      ivl_u64_t scaled;
-      time.type = vpiSimTime;
-      vpi_get_time (0, &time);
-      scaled = scale(time.high, time.low, 0);
-
-      *high = (scaled >> 32) & 0xffffffff;
-      return scaled & 0xffffffff;
-}
-
 PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
 {
       s_vpi_time time;
@@ -90,18 +78,53 @@ PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
       return scaled & 0xffffffff;
 }
 
+PLI_INT32 tf_getlongtime(PLI_INT32 *high)
+{
+      return tf_igetlongtime(high, 0);
+}
+
 /* Alias for commercial simulators */
 PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) \
       __attribute__ ((weak, alias ("tf_getlongtime")));
 
-void tf_scale_longdelay(void*obj, PLI_INT32 lo, PLI_INT32 hi,
-			PLI_INT32 *low, PLI_INT32 *high)
+void tf_scale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
+			PLI_INT32 *alow, PLI_INT32 *ahigh)
 {
-      ivl_u64_t scaled = scale(hi, lo, obj);
-      *high = (scaled >> 32) & 0xffffffff;
-      *low = scaled & 0xffffffff;
+      ivl_u64_t scaled = scale(high, low, obj);
+      *ahigh = (scaled >> 32) & 0xffffffff;
+      *alow = scaled & 0xffffffff;
 }
 
+void tf_unscale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
+			  PLI_INT32 *alow, PLI_INT32 *ahigh)
+{
+      ivl_u64_t unscaled;
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+
+      unscaled = high;
+      unscaled = (unscaled << 32) | low;
+      unscaled *= pow(10, vpi_get(vpiTimeUnit, hand) -
+			  vpi_get(vpiTimePrecision, 0));
+
+      *ahigh = (unscaled >> 32) & 0xffffffff;
+      *alow = unscaled & 0xffffffff;
+}
+
+void tf_scale_realdelay(void*obj, double real, double *areal)
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+
+      *areal = real * pow(10, vpi_get(vpiTimePrecision, 0) -
+			      vpi_get(vpiTimeUnit, hand));
+}
+
+void tf_unscale_realdelay(void*obj, double real, double *areal)
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+
+      *areal = real * pow(10, vpi_get(vpiTimeUnit, hand) -
+			      vpi_get(vpiTimePrecision, 0));
+}
 
 PLI_INT32 tf_gettimeprecision(void)
 {
@@ -130,6 +153,9 @@ PLI_INT32 tf_igettimeunit(void*obj)
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.10  2003/06/13 19:23:42  steve
+ *  Add a bunch more PLI1 routines.
+ *
  * Revision 1.9  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

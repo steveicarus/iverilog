@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.17 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: acc_user.h,v 1.18 2003/06/13 19:23:41 steve Exp $"
 #endif
 
 /*
@@ -209,8 +209,12 @@ extern char* acc_fetch_defname(handle obj);
 
 extern double acc_fetch_paramval(handle obj);
 
-extern int   acc_fetch_tfarg_int(int n);
-extern char* acc_fetch_tfarg_str(int n);
+extern double    acc_fetch_tfarg(PLI_INT32);
+extern double    acc_fetch_itfarg(PLI_INT32, handle);
+extern PLI_INT32 acc_fetch_tfarg_int(PLI_INT32);
+extern PLI_INT32 acc_fetch_itfarg_int(PLI_INT32, handle);
+extern char*     acc_fetch_tfarg_str(PLI_INT32);
+extern char*     acc_fetch_itfarg_str(PLI_INT32, handle);
 
 typedef struct t_timescale_info {
       PLI_INT16 unit;
@@ -260,6 +264,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.18  2003/06/13 19:23:41  steve
+ *  Add a bunch more PLI1 routines.
+ *
  * Revision 1.17  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
