@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.23 2001/05/02 04:05:16 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.24 2001/05/03 04:55:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -334,18 +334,33 @@ static void draw_event_in_scope(ivl_event_t obj)
       unsigned nneg = ivl_event_nneg(obj);
       unsigned npos = ivl_event_npos(obj);
 
-      if ((nany + nneg + npos) == 0) {
+      unsigned cnt = 0;
+
+	/* Figure out how many probe functors are needed. */
+      if (nany > 0)
+	    cnt += (nany+3) / 4;
+
+      if (nneg > 0)
+	    cnt += (nneg+3) / 4;
+
+      if (npos > 0)
+	    cnt += (npos+3) / 4;
+
+      if (cnt == 0) {
+	      /* If none are needed, then this is a named event. The
+		 code needed is easy. */
 	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
 		    ivl_event_name(obj), ivl_event_basename(obj));
 
-      } else if ((nany > 4) && ((nneg + npos) == 0)) {
+      } else if (cnt > 1) {
 	    unsigned idx;
+	    unsigned ecnt = 0;
 
-	    for (idx = 0 ;  idx < nany ;  idx += 4) {
+	    for (idx = 0 ;  idx < nany ;  idx += 4, ecnt += 1) {
 		  unsigned sub, top;
 
 		  fprintf(vvp_out, "E_%s/%u .event edge",
-			  ivl_event_name(obj), idx/4);
+			  ivl_event_name(obj), ecnt);
 
 		  top = idx + 4;
 		  if (nany < top)
@@ -358,10 +373,46 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  fprintf(vvp_out, ";\n");
 	    }
 
+	    for (idx = 0 ;  idx < nneg ;  idx += 4, ecnt += 1) {
+		  unsigned sub, top;
+
+		  fprintf(vvp_out, "E_%s/%u .event negedge",
+			  ivl_event_name(obj), ecnt);
+
+		  top = idx + 4;
+		  if (nneg < top)
+			top = nneg;
+		  for (sub = idx ;  sub < top ;  sub += 1) {
+			ivl_nexus_t nex = ivl_event_neg(obj, sub);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
+		  fprintf(vvp_out, ";\n");
+	    }
+
+	    for (idx = 0 ;  idx < npos ;  idx += 4, ecnt += 1) {
+		  unsigned sub, top;
+
+		  fprintf(vvp_out, "E_%s/%u .event posedge",
+			  ivl_event_name(obj), ecnt);
+
+		  top = idx + 4;
+		  if (npos < top)
+			top = npos;
+		  for (sub = idx ;  sub < top ;  sub += 1) {
+			ivl_nexus_t nex = ivl_event_pos(obj, sub);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
+		  fprintf(vvp_out, ";\n");
+	    }
+
+	    assert(ecnt == cnt);
+
 	    fprintf(vvp_out, "E_%s .event/or E_%s/0",
 		    ivl_event_name(obj), ivl_event_name(obj));
 
-	    for (idx = 1 ;  idx < (nany+3)/4 ;  idx += 1)
+	    for (idx = 1 ;  idx < cnt ;  idx += 1)
 		  fprintf(vvp_out, ", E_%s/%u", ivl_event_name(obj), idx);
 
 	    fprintf(vvp_out, ";\n");
@@ -509,6 +560,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.24  2001/05/03 04:55:46  steve
+ *  Generate code for the fully general event or.
+ *
  * Revision 1.23  2001/05/02 04:05:16  steve
  *  Remove the init parameter of functors, and instead use
  *  the special C<?> symbols to initialize inputs. This is
