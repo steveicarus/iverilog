@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.1 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: sys_display.c,v 1.2 1999/09/29 01:41:18 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -148,7 +148,7 @@ static void format(s_vpi_value*fmt, vpiHandle argv)
       }
 }
 
-static int sys_display_calltf(char *xx)
+static int sys_display_calltf(char *name)
 {
       s_vpi_value value;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -198,9 +198,9 @@ static int sys_display_calltf(char *xx)
 	    }
       }
 
-      vpi_printf("\n");
+      if (strcmp(name,"$display") == 0)
+	    vpi_printf("\n");
 
-      vpi_free_object(argv);
       return 0;
 }
 
@@ -213,12 +213,25 @@ void sys_display_register()
       tf_data.calltf    = sys_display_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
+      tf_data.user_data = "$display";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$write";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$write";
       vpi_register_systf(&tf_data);
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.2  1999/09/29 01:41:18  steve
+ *  Support the $write system task, and have the
+ *  vpi_scan function free iterators as needed.
+ *
  * Revision 1.1  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *

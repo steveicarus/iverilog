@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.5 1999/09/13 03:08:10 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.6 1999/09/29 01:41:18 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -103,8 +103,10 @@ extern "C" vpiHandle vpi_iterate(int type, vpiHandle ref)
 extern "C" vpiHandle vpi_scan(vpiHandle ref)
 {
       assert(ref->type == vpiArgument);
-      if (ref->val.unum >= ref->referent->narguments)
+      if (ref->val.unum >= ref->referent->narguments) {
+	    vpi_free_object(ref);
 	    return 0;
+      }
 
       return ref->referent->arguments[ref->val.unum++];
 }
@@ -501,6 +503,10 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.6  1999/09/29 01:41:18  steve
+ *  Support the $write system task, and have the
+ *  vpi_scan function free iterators as needed.
+ *
  * Revision 1.5  1999/09/13 03:08:10  steve
  *  fix vpiHexStrVal dumping of digits to strings.
  *
