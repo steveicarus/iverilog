@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.14 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.15 2005/02/10 04:54:41 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -764,8 +764,13 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
  */
 # define UNAMBIG(v)  (((v) & 0x0f) == (((v) >> 4) & 0x0f))
 
+#if 0
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
 # define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
+#else
+# define STREN1(v) ((v)&0xf0)
+# define STREN0(v) ((v)&0x0f)
+#endif
 
 vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
 {
@@ -1062,6 +1067,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.15  2005/02/10 04:54:41  steve
+ *  Simplify vvp_scaler strength representation.
+ *
  * Revision 1.14  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *
