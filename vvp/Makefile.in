@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.19 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: Makefile.in,v 1.20 2001/05/20 15:09:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -42,7 +42,7 @@ STRIP = @STRIP@
 CPPFLAGS = -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
 rdynamic=@rdynamic@
@@ -77,7 +77,7 @@ vvp: $O
 tables.cc: draw_tt.c
 	$(CC) -o draw_tt draw_tt.c
 	./draw_tt > tables.cc
-	rm draw_tt
+	rm draw_tt@EXEEXT@
 
 lexor.o: lexor.cc parse.h
 

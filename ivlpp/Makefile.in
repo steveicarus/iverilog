@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.9 2001/01/09 03:11:28 steve Exp $"
+#ident "$Id: Makefile.in,v 1.10 2001/05/20 15:09:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -42,7 +42,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@
 CFLAGS = @CFLAGS@ -I.
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @LDFLAGS@ 
 
 all: ivlpp
 
@@ -52,7 +52,7 @@ clean:
 O = main.o lexor.o parse.o
 
 ivlpp: $O
-	$(CC) $(LDFLAGS) $O -o ivlpp
+	$(CC) $(LDFLAGS) $O -o ivlpp @EXTRALIBS@
 
 lexor.c: lexor.lex
 	flex -s -olexor.c $(srcdir)/lexor.lex

@@ -17,14 +17,48 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.41 2001/05/12 03:18:45 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.42 2001/05/20 15:09:39 steve Exp $"
 #endif
 
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  <malloc.h>
 
-#if defined(HAVE_DLFCN_H)
+#if defined(__WIN32__)
+
+inline ivl_dll_t ivl_dlopen(const char *name)
+{
+  return (ivl_dll_t) LoadLibrary(name);
+}
+
+
+inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
+{
+  FARPROC sym;
+  return GetProcAddress((HMODULE)dll, nm);
+}
+
+inline void ivl_dlclose(ivl_dll_t dll)
+{
+  FreeLibrary((HMODULE)dll);
+}
+
+const char *dlerror(void)
+{
+  static char msg[255];
+
+  FormatMessage( 
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		GetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR) &msg,
+		0,
+		NULL 
+		);
+  return msg;
+}
+#elif defined(HAVE_DLFCN_H)
 inline ivl_dll_t ivl_dlopen(const char*name)
 { return dlopen(name,RTLD_NOW); }
 
@@ -986,6 +1020,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.42  2001/05/20 15:09:39  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.41  2001/05/12 03:18:45  steve
  *  Make sure LPM devices have drives on outputs.
  *

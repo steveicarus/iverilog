@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.2 2001/05/20 15:09:40 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -118,13 +118,16 @@ const struct __vpirt *vpip_get_sysfunc_rt(void)
     return &vpip_sysfunc_rt;
 }
 
-#ifdef __CYGWIN32__
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.2  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.95 2001/03/25 05:59:46 steve Exp $"
+#ident "$Id: Makefile.in,v 1.96 2001/05/20 15:09:39 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -120,14 +120,14 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-ifeq (@CYGWIN@,yes)
+ifeq (@WIN32@,yes)
 ivl@EXEEXT@: $O ivl.def
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
 #	$(CXX) -o ivl@EXEEXT@ -Wl,--base-file,ivl.base ivl.exp $O $(dllib)
 #	dlltool --dllname ivl@EXEEXT@ --base-file ivl.base \
 #		--output-exp ivl.exp --def ivl.def
-	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib)	
+	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@	
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(CXXFLAGS) $(rdynamic) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)

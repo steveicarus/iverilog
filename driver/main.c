@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.10 2001/05/17 03:14:26 steve Exp $"
+#ident "$Id: main.c,v 1.11 2001/05/20 15:09:40 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -39,6 +39,10 @@ See man page for details.";
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
+
 #if HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -53,9 +57,15 @@ See man page for details.";
 
 # include  "globals.h"
 
+#ifdef __MINGW32__
+const char *sep = "\\";
+#else
+const char *sep = "/";
+#endif
+
 const char*base = IVL_ROOT;
 const char*mtm  = 0;
-const char*opath = "a.out";
+const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
 const char*targ  = "vvm";
 const char*start = 0;
@@ -100,6 +110,16 @@ static int t_default(char*cmd, unsigned ncmd)
       tmp[2] = ' ';
       rc = build_string(tmp+3, sizeof tmp - 3, pattern);
       cmd = realloc(cmd, ncmd+3+rc+1);
+#ifdef __MINGW32__
+      {
+	char *t;
+	for (t = tmp; *t; t++)
+	  {
+	    if (*t == '/') *t = '\\';
+	  }
+      }
+#endif
+
       strcpy(cmd+ncmd, tmp);
 
 
@@ -139,7 +159,20 @@ static int t_vvm(char*cmd, unsigned ncmd)
       tmp[2] = ' ';
       rc = build_string(tmp+3, sizeof tmp - 3, pattern);
       cmd = realloc(cmd, ncmd+3+rc+1);
+
+#ifdef __MINGW32__
+      {
+	char *t;
+	for (t = tmp; *t; t++)
+	  {
+	    if (*t == '/') *t = '\\';
+	  }
+      }
+#endif
+
+
       strcpy(cmd+ncmd, tmp);
+
 
       if (verbose_flag)
 	    printf("translate: %s\n", cmd);
@@ -183,11 +216,20 @@ static int t_xnf(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
-	      "-Fnodangle -Fxnfio", base, warning_flags, opath);
+      sprintf(tmp, " | %s%sepivl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
+	      "-Fnodangle -Fxnfio", base, sep,warning_flags, opath);
 
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
+#ifdef __MINGW32__
+      {
+	char *t;
+	for (t = tmp; *t; t++)
+	  {
+	    if (*t == '/') *t = '\\';
+	  }
+      }
+#endif
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
 
@@ -391,6 +433,19 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
+#ifdef __MINGW32__
+      {
+	char basepath[1024],*s;
+	GetModuleFileName(NULL,basepath,1024);
+	/* Get to the end.  Search back twice for backslashes */
+	s = basepath + strlen(basepath);
+	while (*s != '\\') s--; s--;
+	while (*s != '\\') s--; 
+	strcpy(s,"\\lib\\ivl");
+	base = basepath;
+      }
+#endif      
+
 	/* Load the iverilog.conf file to get our substitution
 	   strings. */
 
@@ -399,7 +454,7 @@ int main(int argc, char **argv)
 	if (config_path) {
 	      strcpy(path, config_path);
 	} else {
-	      sprintf(path, "%s/iverilog.conf", base);
+	      sprintf(path, "%s%siverilog.conf", base,sep);
 	}
 	fd = fopen(path, "r");
 	if (fd == 0) {
@@ -412,7 +467,7 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s/ivlpp %s%s", base,
+      sprintf(tmp, "%s%sivlpp %s%s", base,sep,
 	      verbose_flag?" -v":"",
 	      e_flag?"":" -L");
 
@@ -525,6 +580,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.11  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.10  2001/05/17 03:14:26  steve
  *  Update help message.
  *

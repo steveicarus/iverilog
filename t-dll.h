@@ -19,13 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.44 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: t-dll.h,v 1.45 2001/05/20 15:09:39 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
 
-#if defined(HAVE_DLFCN_H)
+#if defined(__MINGW32__)
+#include <windows.h>
+typedef void *ivl_dll_t;
+#elif defined(HAVE_DLFCN_H)
 # include  <dlfcn.h>
 typedef void* ivl_dll_t;
 #elif defined(HAVE_DL_H)
@@ -520,6 +523,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.45  2001/05/20 15:09:39  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.44  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *

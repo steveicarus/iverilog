@@ -19,11 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.4 2001/05/10 00:16:00 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.5 2001/05/20 15:09:40 steve Exp $"
 #endif
 
 
-#if defined(__CYGWIN32__)
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)
 #else
 #  define DLLEXPORT
@@ -307,6 +307,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.5  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.4  2001/05/10 00:16:00  steve
  *  Add the vpi_user strength definitions.
  *

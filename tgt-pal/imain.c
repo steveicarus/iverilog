@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.6 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: imain.c,v 1.7 2001/05/20 15:09:40 steve Exp $"
 #endif
 
 /*
@@ -143,13 +143,16 @@ int target_design(ivl_design_t des)
       return 0;
 }
 
-#ifdef __CYGWIN32__
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.7  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.6  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *

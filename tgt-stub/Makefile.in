@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.7 2001/02/07 22:22:00 steve Exp $"
+#ident "$Id: Makefile.in,v 1.8 2001/05/20 15:09:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,7 +52,7 @@ all: stub.tgt
 
 O = stub.o
 
-ifeq (@CYGWIN@,yes)
+ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
   TGTDEPLIBS=../libivl.a
 else

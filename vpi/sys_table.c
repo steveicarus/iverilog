@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.9 2001/04/26 00:01:33 steve Exp $"
+#ident "$Id: sys_table.c,v 1.10 2001/05/20 15:09:40 steve Exp $"
 #endif
 #include "vpi_user.h"
 
@@ -40,13 +40,16 @@ void (*vlog_startup_routines[])() = {
       0
 };
 
-#ifdef __CYGWIN32__
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.10  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.9  2001/04/26 00:01:33  steve
  *  Support $deposit to a wire or reg.
  *

@@ -19,10 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_dlfcn.h,v 1.1 2001/01/14 17:12:59 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.2 2001/05/20 15:09:40 steve Exp $"
 #endif
 
-#if defined(HAVE_DLFCN_H)
+#if defined(__MINGW32__)
+# include <windows.h>
+# include <stdio.h>
+typedef void * ivl_dll_t;
+#elif defined(HAVE_DLFCN_H)
 # include  <dlfcn.h>
 typedef void* ivl_dll_t;
 #elif defined(HAVE_DL_H)
@@ -30,7 +34,20 @@ typedef void* ivl_dll_t;
 typedef shl_t ivl_dll_t;
 #endif
 
-#if defined(HAVE_DLFCN_H)
+#if defined(__MINGW32__)
+inline ivl_dll_t ivl_dlopen(const char *name)
+{ return (void *)LoadLibrary(name); }
+
+inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
+{ return (void *)GetProcAddress((HINSTANCE)dll,nm);}
+
+inline void ivl_dlclose(ivl_dll_t dll)
+{ (void)FreeLibrary((HINSTANCE)dll);}
+
+inline const char *dlerror(void)
+{ static char s[30]; sprintf(s,"DLError:%l", GetLastError()); return s;}
+
+#elif defined(HAVE_DLFCN_H)
 inline ivl_dll_t ivl_dlopen(const char*name)
 { return dlopen(name,RTLD_NOW); }
 
@@ -60,6 +77,13 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.2  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
+ * Revision 1.1  2001/03/16 01:44:34  steve
+ *  Add structures for VPI support, and all the %vpi_call
+ *  instruction. Get linking of VPI modules to work.
+ *
  * Revision 1.1  2001/01/14 17:12:59  steve
  *  possible HP/UX portability support.
  *

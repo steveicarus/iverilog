@@ -37,6 +37,9 @@ case "${host}" in
 
      *-*-cygwin*)
         shared="-mdll -Wl,--enable-auto-image-base"
+	if test $ac_cv_mingw32 = yes; then
+	    shared="-shared -Wl,--enable-auto-image-base"
+	fi
 	;;
 
      *-*-hpux*)
@@ -44,10 +47,19 @@ case "${host}" in
 	;;
 
 esac
-
 AC_SUBST(shared)
-
 AC_MSG_RESULT($shared)
+
+AC_MSG_CHECKING("for Win32")
+WIN32=no
+case "${host}" in
+
+     *-*-cygwin*)
+	WIN32=yes
+	;;
+esac
+AC_SUBST(WIN32)
+AC_MSG_RESULT($WIN32)
 
 
 AC_OUTPUT(Makefile)

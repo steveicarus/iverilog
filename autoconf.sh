@@ -9,8 +9,7 @@
 echo "Autoconf in root..."
 autoconf
 
-for dir
-in vpip vvp tgt-vvp
+for dir in vpip vvp tgt-vvp
 do
     echo "Autoconf in $dir..."
     ( cd $dir ; autoconf )

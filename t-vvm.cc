@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.206 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.207 2001/05/20 15:09:39 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1134,7 +1134,7 @@ int target_vvm::end_design(const Design*mod)
 
       string vpi_module_path = mod->get_flag("VPI_MODULE_PATH");
       if (vpi_module_path.length() > 0)
-	    out << "      vvm_set_module_path(\"" << vpi_module_path <<
+	    out << "      vvm_set_module_path(\"" << stresc(vpi_module_path) <<
 		  "\");" << endl;
 
       string vpi_module_list = mod->get_flag("VPI_MODULE_LIST");
@@ -3634,6 +3634,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.207  2001/05/20 15:09:39  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.206  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

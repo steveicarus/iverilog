@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.40 2001/05/03 01:52:45 steve Exp $"
+#ident "$Id: stub.c,v 1.41 2001/05/20 15:09:40 steve Exp $"
 #endif
 
 /*
@@ -543,13 +543,16 @@ int target_design(ivl_design_t des)
       return 0;
 }
 
-#ifdef __CYGWIN32__
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.41  2001/05/20 15:09:40  steve
+ *  Mingw32 support (Venkat Iyer)
+ *
  * Revision 1.40  2001/05/03 01:52:45  steve
  *  dll build of many probes forgot to index the probe.
  *
