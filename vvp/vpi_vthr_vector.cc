@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.14 2003/03/13 04:59:21 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.15 2003/05/28 03:10:52 steve Exp $"
 #endif
 
 /*
@@ -354,7 +354,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
       struct __vpiVThrVec*obj = (struct __vpiVThrVec*)
 	    malloc(sizeof(struct __vpiVThrVec));
       obj->base.vpi_type = &vpip_vthr_const_rt;
+      assert(base < 65536);
       obj->bas = base;
+      assert(wid < 65536);
       obj->wid = wid;
       obj->signed_flag = signed_flag? 1 : 0;
       obj->name = "T<>";
@@ -470,6 +472,7 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
       obj->base.vpi_type = &vpip_vthr_const_real_rt;
       obj->name = "W<>";
       obj->subtype = vpiRealConst;
+      assert(base < 65536);
       obj->index = base;
 
       return &obj->base;
@@ -477,6 +480,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.15  2003/05/28 03:10:52  steve
+ *  Some asserts that check for thread vector overflow.
+ *
  * Revision 1.14  2003/03/13 04:59:21  steve
  *  Use rbufs instead of static buffers.
  *
