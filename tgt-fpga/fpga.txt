@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.10 2003/07/04 03:57:19 steve Exp $
+  $Id: fpga.txt,v 1.11 2003/08/07 05:17:34 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -25,14 +25,21 @@ different output file is specified with the -o flag.
 The following is a list of architecture types that this code generator
 supports.
 
-* arch=generic-edif
+* arch=lpm
+
+This is a device independent format, where the gates are device types
+as defined by the LPM 2 1 0 specification. Some backend tools may take
+this format, or users may write interface libraries to connect these
+netlists to the device in question.
+
+* arch=generic-edif (obsolete)
 
 This is generic EDIF code. It doesn't necessarily work because the
 external library is not available to the code generator. But, what it
 does is generate generic style gates that a portability library can
 map to target gates if desired.
 
-* arch=generic-xnf
+* arch=generic-xnf (obsolete)
 
 If this is selected, then the output is formatted as an XNF file,
 suitable for most any type of device. The devices that it emits
@@ -181,6 +188,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.11  2003/08/07 05:17:34  steve
+ Add arch=lpm to the documentation.
+
 Revision 1.10  2003/07/04 03:57:19  steve
  Allow attributes on Verilog 2001 port declarations.
 
