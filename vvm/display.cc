@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: display.cc,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: display.cc,v 1.3 1999/01/01 01:44:40 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -37,7 +37,9 @@ static void format_bit(ostream&os, class vvm_calltf_parm*parm)
 	    os << parm->as_string();
 	    break;
 	  case vvm_calltf_parm::BITS:
-	    os << parm->as_bits()->get_bit(0);
+	    for (unsigned idx = parm->as_bits()->get_width()
+		       ;  idx > 0  ;  idx -= 1)
+		  os << parm->as_bits()->get_bit(idx-1);
 	    break;
       }
 }
@@ -206,6 +208,9 @@ void Smonitor(vvm_simulation*sim, const string&name,
 
 /*
  * $Log: display.cc,v $
+ * Revision 1.3  1999/01/01 01:44:40  steve
+ *  Proberly print vectors in binary.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).
