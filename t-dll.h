@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.68 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: t-dll.h,v 1.69 2001/11/01 04:25:31 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -525,6 +525,8 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals;
 		  struct ivl_lval_s*lval;
+		  unsigned npins;
+		  ivl_nexus_t*pins;
 	    } cassign_;
 
 	    struct { /* IVL_ST_CONDIT */
@@ -580,6 +582,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.69  2001/11/01 04:25:31  steve
+ *  ivl_target support for cassign.
+ *
  * Revision 1.68  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *

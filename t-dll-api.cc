@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.70 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.71 2001/11/01 04:25:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1349,6 +1349,31 @@ extern "C" const char* ivl_stmt_name(ivl_statement_t net)
       return 0;
 }
 
+extern "C" ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_CASSIGN:
+	    assert(idx < net->u_.cassign_.npins);
+	    return net->u_.cassign_.pins[idx];
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
+extern "C" unsigned ivl_stmt_nexus_count(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_CASSIGN:
+	    return net->u_.cassign_.npins;
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
 extern "C" ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
@@ -1409,6 +1434,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.71  2001/11/01 04:25:31  steve
+ *  ivl_target support for cassign.
+ *
  * Revision 1.70  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *

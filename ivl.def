@@ -146,6 +146,8 @@ ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
+ivl_stmt_nexus
+ivl_stmt_nexus_count
 ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.38 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.39 2001/11/01 04:25:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -408,6 +408,16 @@ bool dll_target::proc_cassign(const NetCAssign*net)
       stmt_cur_->u_.cassign_.lval[0].idx    = 0;
       stmt_cur_->u_.cassign_.lval[0].n.sig  = find_signal(des_, lsig);
 
+      stmt_cur_->u_.cassign_.npins = net->pin_count();
+      stmt_cur_->u_.cassign_.pins = (ivl_nexus_t*)
+	    calloc(stmt_cur_->u_.cassign_.npins, sizeof(ivl_nexus_t));
+
+      ivl_nexus_t*ntmp = stmt_cur_->u_.cassign_.pins;
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    ntmp[idx] = (ivl_nexus_t)net->pin(idx).nexus()->t_cookie();
+	    assert(ntmp[idx]);
+      }
+
       return true;
 }
 
@@ -453,6 +463,8 @@ bool dll_target::proc_deassign(const NetDeassign*net)
       stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
       stmt_cur_->u_.cassign_.lval[0].idx    = 0;
       stmt_cur_->u_.cassign_.lval[0].n.sig  = find_signal(des_, lsig);
+      stmt_cur_->u_.cassign_.npins = 0;
+      stmt_cur_->u_.cassign_.pins  = 0;
 
       return true;
 }
@@ -713,6 +725,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.39  2001/11/01 04:25:31  steve
+ *  ivl_target support for cassign.
+ *
  * Revision 1.38  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.86 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.87 2001/11/01 04:25:31 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -935,6 +935,9 @@ extern unsigned ivl_stmt_lvals(ivl_statement_t net);
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
+  /* IVL_ST_CASSIGN */
+extern ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx);
+extern unsigned    ivl_stmt_nexus_count(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
@@ -971,6 +974,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.87  2001/11/01 04:25:31  steve
+ *  ivl_target support for cassign.
+ *
  * Revision 1.86  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *
