@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.124 2002/05/23 03:46:42 steve Exp $"
+#ident "$Id: Makefile.in,v 1.125 2002/05/28 05:21:30 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -38,6 +38,7 @@ VPATH = $(srcdir)
 bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
+mandir = @mandir@
 
 dllib=@DLLIB@
 rdynamic=@rdynamic@
@@ -206,13 +207,28 @@ lexor_keyword.o: lexor_keyword.cc
 lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
+iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
+	man -t $(srcdir)/iverilog-vpi.man > iverilog-vpi.ps
+
+iverilog-vpi.pdf: iverilog-vpi.ps
+	ps2pdf iverilog-vpi.ps iverilog-vpi.pdf
+
+ifeq (@WIN32@,yes)
+INSTALL_DOC = $(prefix)/iverilog-vpi.pdf
+INSTALL_DOCDIR =
+all: iverilog-vpi.pdf
+else
+INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
+INSTALL_DOCDIR = $(mandir)/man1
+endif
+
 ifeq (@WIN32@,yes)
 WIN32_INSTALL = $(prefix)/hello.vl $(prefix)/sqrt.vl $(prefix)/QUICK_START.txt
 else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(libdir)/libvpi.a $(WIN32_INSTALL)
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(libdir)/libvpi.a $(WIN32_INSTALL) $(INSTALL_DOC)
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 	cd driver ; $(MAKE) install
@@ -243,6 +259,12 @@ $(includedir)/acc_user.h: $(srcdir)/acc_user.h
 
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
 	$(INSTALL_DATA) $(srcdir)/veriuser.h $(includedir)/veriuser.h
+
+$(mandir)/man1/iverilog-vpi.1: $(srcdir)/iverilog-vpi.man
+	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(mandir)/man1/iverilog-vpi.1
+
+$(prefix)/iverilog-vpi.pdf: iverilog-vpi.pdf
+	$(INSTALL_DATA) iverilog-vpi.pdf $(prefix)/iverilog-vpi.pdf
 
 # In windows installations, put a few examples and the quick_start
 # into the destination directory.

@@ -1,0 +1,42 @@
+.TH iverilog-vpi 1 "$Date: 2002/05/28 05:21:30 $" Version "$Date: 2002/05/28 05:21:30 $"
+.SH NAME
+iverilog-vpi - Compile front end for VPI modules
+
+.SH SYNOPSIS
+.B iverilog-vpi
+\fIsourcefile\fP...
+
+.SH DESCRIPTION
+.PP
+\fIiverilog-vpi\fP is a tool to simplify the compilation of VPI
+modules for use with Icarus Verilog. It takes on the command line a
+list of C or C++ source files, and generates as output a linked VPI
+module. See the \fBvvp\fP(1) man page for a description of how the
+linked module is loaded by a simulation.
+
+The output is named after the first source file. For example, if the
+first source file is named \fIfoo.c\fP, the output becomes
+\fIfoo.vpi\fP.
+
+.SH OPTIONS
+.l
+\fIiverilog-vpi\fP accepts the following options:
+.TP 8
+.B -l\fIlibrary\fP
+Include the named library in the link of the VPI module. This allows
+VPI modules to further reference external libraries.
+
+.SH "AUTHOR"
+.nf
+Steve Williams (steve@icarus.com)
+
+.SH SEE ALSO
+iverilog(1), vvp(1),
+.BR "<http://www.icarus.com/eda/verilog/>"
+
+.SH COPYRIGHT
+.nf
+Copyright \(co  2002 Stephen Williams
+
+This document can be freely redistributed according to the terms of the 
+GNU General Public License version 2.0
