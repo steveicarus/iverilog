@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.31 2001/11/02 05:56:47 steve Exp $"
+#ident "$Id: sys_display.c,v 1.32 2002/01/11 04:48:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,6 +70,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
       s_vpi_value value;
       char buf[256];
       char*cp = fmt;
+      char format_char = ' ';
       int idx;
 
       assert(fmt);
@@ -88,7 +89,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 	    } else if (*cp == '%') {
 		  int fsize = -1, ffsize = -1;
-		  int do_num = 0;
+		  int do_arg = 0;
 
 		  cp += 1;
 		  if (isdigit(*cp))
@@ -100,61 +101,95 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		  switch (*cp) {
 		      case 0:
 			break;
+
 		      case 'b':
 		      case 'B':
-			do_num = 1;
+			format_char = 'b';
+			do_arg = 1;
 			value.format = vpiBinStrVal;
 			cp += 1;
 			break;
+
 		      case 'd':
 		      case 'D':
-			do_num = 1;
+			format_char = 'd';
+			do_arg = 1;
 			value.format = vpiDecStrVal;
 			cp += 1;
 			break;
-#if 0
-		      case 'f':
-			do_num = 1;
-			value.format = vpiDecStrVal;
-			cp += 1;
-			break;
-#endif
+
 		      case 'h':
 		      case 'H':
 		      case 'x':
 		      case 'X':
-			do_num = 1;
+			format_char = 'h';
+			do_arg = 1;
 			value.format = vpiHexStrVal;
 			cp += 1;
 			break;
-		      case 'm':
-			assert(scope);
-			vpi_mcd_printf(mcd, "%s", vpi_get_str(vpiFullName, scope));
-			cp += 1;
-			break;
-		      case 'o':
-		      case 'O':
-			do_num = 1;
-			value.format = vpiOctStrVal;
-			cp += 1;
-			break;
-		      case 's':
-		      case 'S':
-			do_num = 1;
+
+		      case 'c':
+		      case 'C':
+			format_char = 'c';
+			do_arg = 1;
 			value.format = vpiStringVal;
 			cp += 1;
 			break;
+
+		      case 'm':
+		      case 'M':
+			assert(scope);
+			vpi_mcd_printf(mcd, "%s",
+				       vpi_get_str(vpiFullName, scope));
+			cp += 1;
+			break;
+
+		      case 'o':
+		      case 'O':
+			format_char = 'o';
+			do_arg = 1;
+			value.format = vpiOctStrVal;
+			cp += 1;
+			break;
+
+		      case 's':
+		      case 'S':
+			format_char = 's';
+			do_arg = 1;
+			value.format = vpiStringVal;
+			cp += 1;
+			break;
+
 		      case 't':
 		      case 'T':
-			do_num = 1;
+			format_char = 't';
+			do_arg = 1;
 			value.format = vpiDecStrVal;
 			cp += 1;
 			break;
+
 		      case '%':
+			if (fsize != -1 && ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			     ffsize = -1;
+			}
 			vpi_mcd_printf(mcd, "%%");
 			cp += 1;
 			break;
+
+		      case 'v':
+		      case 'V':
+		      case 'e':
+		      case 'f':
+		      case 'g':
+		        vpi_printf("\nERROR: Unsupported format \"%s\"\n", fmt);
+			vpi_mcd_printf(mcd, "%c", *cp);
+			cp += 1;
+			break;
+
 		      default:
+		        vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
 			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
 			break;
@@ -163,17 +198,26 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		    /* If we encountered a numeric format string, then
 		       grab the number value from the next parameter
 		       and display it in the requested format. */
-		  if (do_num) {
+		  if (do_arg) {
 			if (idx >= argc) {
 			      vpi_printf("\ntoo few arguments for format %s\n",
 					 fmt);
 			} else {
 			      vpi_get_value(argv[idx++], &value);
-			      if (fsize>0)
-				    vpi_mcd_printf(mcd, "%*s", 
-						   fsize, value.value.str);
-			      else
-				    vpi_mcd_printf(mcd, "%s", value.value.str);
+
+			      switch(format_char){
+				  case 'c':
+				    vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
+				    break;
+
+				  default:
+				    if (fsize > 0)
+					  vpi_mcd_printf(mcd, "%*s", fsize,
+							 value.value.str);
+				    else
+					  vpi_mcd_printf(mcd, "%s",
+							 value.value.str);
+			      }
 			}
 		  }
 
@@ -758,6 +802,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.32  2002/01/11 04:48:01  steve
+ *  Add the %c format, and some warning messages.
+ *
  * Revision 1.31  2001/11/02 05:56:47  steve
  *  initialize scope for %m in $fdisplay.
  *
