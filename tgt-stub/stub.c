@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.36 2001/04/03 04:50:37 steve Exp $"
+#ident "$Id: stub.c,v 1.37 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 /*
@@ -210,10 +210,12 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	  }
 
 	  case IVL_ST_CONDIT: {
+		ivl_expr_t ex = ivl_stmt_cond_expr(net);
 		ivl_statement_t t = ivl_stmt_cond_true(net);
 		ivl_statement_t f = ivl_stmt_cond_false(net);
 
 		fprintf(out, "%*sif (...)\n", ind, "");
+		show_expression(ex, ind+4);
 		if (t)
 		      show_statement(t, ind+4);
 		else
@@ -323,6 +325,7 @@ static void show_signal(ivl_signal_t net)
       unsigned pin;
       const char*type = "?";
       const char*port = "";
+      const char*sign = ivl_signal_signed(net)? "signed" : "unsigned";
 
       switch (ivl_signal_type(net)) {
 	  case IVL_SIT_REG:
@@ -348,7 +351,7 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
-      fprintf(out, "  %s %s[%u] %s\n", type, port,
+      fprintf(out, "  %s %s %s[%u] %s\n", type, sign, port,
 	      ivl_signal_pins(net), ivl_signal_basename(net));
 
       for (pin = 0 ;  pin < ivl_signal_pins(net) ;  pin += 1) {
@@ -506,6 +509,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.37  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.36  2001/04/03 04:50:37  steve
  *  Support non-blocking assignments.
  *

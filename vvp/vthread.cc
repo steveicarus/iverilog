@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.21 2001/04/03 03:18:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.22 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -205,6 +205,56 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
       schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
+      return true;
+}
+
+bool of_CMPS(vthread_t thr, vvp_code_t cp)
+{
+      unsigned eq = 1;
+      unsigned eeq = 1;
+      unsigned lt = 0;
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      unsigned sig1 = thr_get_bit(thr, idx1 + cp->number - 1);
+      unsigned sig2 = thr_get_bit(thr, idx2 + cp->number - 1);
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lv = thr_get_bit(thr, idx1);
+	    unsigned rv = thr_get_bit(thr, idx2);
+
+	    if (lv > rv) {
+		  lt = 0;
+		  eeq = 0;
+	    } else if (lv < rv) {
+		  lt = 1;
+		  eeq = 0;
+	    }
+	    if (eq != 2) {
+		  if ((lv == 0) && (rv != 0))
+			eq = 0;
+		  if ((lv == 1) && (rv != 1))
+			eq = 0;
+		  if ((lv | rv) >= 2)
+			eq = 2;
+	    }
+
+	    if (idx1 >= 4) idx1 += 1;
+	    if (idx2 >= 4) idx2 += 1;
+      }
+
+      if (eq == 2)
+	    lt = 2;
+      else if ((sig1 == 1) && (sig2 == 0))
+	    lt = 1;
+      else if ((sig1 == 0) && (sig2 == 1))
+	    lt = 0;
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+      thr_put_bit(thr, 6, eeq);
+
       return true;
 }
 
@@ -504,6 +554,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.22  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.21  2001/04/03 03:18:34  steve
  *  support functor_set push for blocking assignment.
  *

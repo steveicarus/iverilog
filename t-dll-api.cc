@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.34 2001/04/04 04:50:35 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.35 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -579,6 +579,11 @@ extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
       return net->port_;
 }
 
+extern "C" int ivl_signal_signed(ivl_signal_t net)
+{
+      return net->signed_ != 0;
+}
+
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
 {
       return net->type_;
@@ -836,6 +841,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.35  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.34  2001/04/04 04:50:35  steve
  *  Support forever loops in the tgt-vvp target.
  *

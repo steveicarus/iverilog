@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.9 2001/04/02 00:28:35 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.10 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -49,6 +49,7 @@ void dll_target::expr_binary(const NetEBinary*net)
 
       expr_->type_ = IVL_EX_BINARY;
       expr_->width_= net->expr_width();
+      expr_->signed_ = net->has_sign()? 1 : 0;
 
       expr_->u_.binary_.op_ = net->op();
       expr_->u_.binary_.lef_ = left;
@@ -152,6 +153,7 @@ void dll_target::expr_signal(const NetESignal*net)
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->width_= net->expr_width();
+      expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.subsig_.name_ = strdup(net->name().c_str());
 }
 
@@ -173,6 +175,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.10  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.9  2001/04/02 00:28:35  steve
  *  Support the scope expression node.
  *

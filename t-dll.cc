@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.32 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.33 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -616,7 +616,7 @@ void dll_target::signal(const NetNet*net)
 	   ivl_signal_t object. */
 
       obj->width_ = net->pin_count();
-      obj->signed_= 0;
+      obj->signed_= net->get_signed()? 1 : 0;
 
       switch (net->port_type()) {
 
@@ -746,6 +746,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.33  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.32  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *

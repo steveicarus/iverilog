@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.47 2001/04/04 04:50:35 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.48 2001/04/05 01:12:27 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -612,7 +612,13 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
  *    port direction. If the signal is not a port, it returns
  *    IVL_SIP_NONE.
  *
+ * ivl_signal_signed
+ *    A signal, which is a vector, may be signed. In Verilog 2000, any
+ *    net or variable may be signed. This function returns true if the
+ *    signal is signed.
+ *
  * ivl_signal_type
+ *    Return the type of the signal, i.e. reg, wire, tri0, et al.
  *
  * ivl_signal_name
  *    This function returns the fully scoped hierarchical name for the
@@ -632,6 +638,7 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
 extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
 extern unsigned    ivl_signal_pins(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
+extern int         ivl_signal_signed(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
@@ -737,6 +744,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.48  2001/04/05 01:12:27  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.47  2001/04/04 04:50:35  steve
  *  Support forever loops in the tgt-vvp target.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.15 2001/04/01 22:25:33 steve Exp $"
+#ident "$Id: codes.h,v 1.16 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 
@@ -38,6 +38,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
@@ -105,6 +106,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.16  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.15  2001/04/01 22:25:33  steve
  *  Add the reduction nor instruction.
  *

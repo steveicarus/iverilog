@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.12 2001/04/02 03:47:49 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.13 2001/04/05 01:12:28 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -197,6 +197,8 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
+      char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
+
       unsigned owid = ivl_expr_width(le);
       if (ivl_expr_width(re) > owid)
 	    owid = ivl_expr_width(re);
@@ -205,17 +207,30 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       rv = draw_eval_expr_wid(re, owid);
 
       switch (ivl_expr_opcode(exp)) {
+	  case 'G':
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+		    rv.base, lv.base, lv.wid);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    break;
+
 	  case 'L':
 	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
-		    rv.base, lv.wid);
+	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+		    lv.base, rv.base, lv.wid);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case '<':
 	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
-		    rv.base, lv.wid);
+	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+		    lv.base, rv.base, lv.wid);
+	    break;
+
+	  case '>':
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+		    rv.base, lv.base, lv.wid);
 	    break;
 
 	  default:
@@ -303,7 +318,9 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '<':
+	  case '>':
 	  case 'L': /* <= */
+	  case 'G': /* >= */
 	    rv = draw_binary_expr_le(exp, wid);
 	    break;
 
@@ -553,6 +570,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.13  2001/04/05 01:12:28  steve
+ *  Get signed compares working correctly in vvp.
+ *
  * Revision 1.12  2001/04/02 03:47:49  steve
  *  Evaluate binary & and | operators.
  *
