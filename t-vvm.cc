@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.35 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.36 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -43,6 +43,7 @@ class target_vvm : public target_t {
       virtual void signal(ostream&os, const NetNet*);
       virtual void memory(ostream&os, const NetMemory*);
       virtual void task_def(ostream&os, const NetTaskDef*);
+      virtual void func_def(ostream&os, const NetFuncDef*);
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
@@ -119,6 +120,7 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_subsignal(const NetESubSignal*sig);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
+      virtual void expr_ufunc(const NetEUFunc*);
 };
 
 void vvm_proc_rval::expr_concat(const NetEConcat*expr)
@@ -202,6 +204,13 @@ void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
       os_ << setw(indent_) << "" << val << "[0] = " <<
 	    mangle(sig->name()) << "_bits[" << idx << "];" << endl;
       result = val;
+}
+
+void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
+{
+      string name = mangle(expr->name());
+      os_ << "        " << name << "(sim_);" << endl;
+      result = mangle(expr->result()->name()) + "_bits";
 }
 
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
@@ -513,6 +522,25 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       os << "        return false;" << endl;
       os << "      }" << endl;
       os << "};" << endl;
+}
+
+/*
+ * A function definition is emitted as a C++ function that takes no
+ * parameters and returns no result. The actual parameter passing
+ * happens in the function call, where the signals that are the inputs
+ * are assigned by the caller, the caller calls the function (which
+ * writes the result) then the caller copies the result out of the
+ * magic result register.
+ */
+void target_vvm::func_def(ostream&os, const NetFuncDef*def)
+{
+      thread_step_ = 0;
+      const string name = mangle(def->name());
+      os << "// Function " << def->name() << endl;
+      os << "static void " << name << "(vvm_simulation*sim_)" << endl;
+      os << "{" << endl;
+      def->proc()->emit_proc(os, this);
+      os << "}" << endl;
 }
 
 /*
@@ -1357,6 +1385,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.36  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.35  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *

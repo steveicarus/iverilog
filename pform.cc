@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.40 1999/08/27 15:08:37 steve Exp $"
+#ident "$Id: pform.cc,v 1.41 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -518,6 +518,11 @@ void pform_set_task(const string&name, PTask*task)
       pform_cur_module->add_task(name, task);
 }
 
+/*
+ * This function is called to fill out the definition of the function
+ * with the trappings that are discovered after the basic function
+ * name is parsed.
+ */
 void pform_set_function(const string&name, svector<PExpr*>*ra, PFunction *func)
 {
       PWire*out = new PWire(name+"."+name, NetNet::REG, NetNet::POUTPUT);
@@ -682,6 +687,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.41  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.40  1999/08/27 15:08:37  steve
  *  continuous assignment lists.
  *

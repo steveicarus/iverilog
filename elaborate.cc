@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.73 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.74 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 /*
@@ -731,6 +731,27 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    delete tmp;
 
       return osig;
+}
+
+NetEUFunc* PECallFunction::elaborate_expr(Design*des, const string&path) const
+{
+      string myname = path+"."+name_;
+      NetFuncDef*def = des->find_function(myname);
+      assert(def);
+      svector<NetExpr*> parms (parms_.count());
+
+      for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
+	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, myname);
+	    parms[idx] = tmp;
+      }
+
+      NetNet*res = des->find_signal(myname, name_);
+      assert(res);
+      NetESignal*eres = new NetESignal(res);
+      assert(eres);
+      des->add_node(eres);
+      NetEUFunc*func = new NetEUFunc(def, eres, parms);
+      return func;
 }
 
 /*
@@ -1869,12 +1890,29 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 void PFunction::elaborate(Design*des, const string&path) const
 {
       NetProc*st = statement_->elaborate(des, path);
-      NetFuncDef*def = new NetFuncDef(path, st);
-      des->add_function(path, def);
+      if (st == 0) {
+	    cerr << statement_->get_line() << ": Unable to elaborate "
+		  "statement in function " << path << " at " << get_line()
+		 << "." << endl;
+	    return;
+      }
 
-      cerr << get_line() << ": Sorry, unable to elaborate "
-	    "function definitions." << endl;
-      des->errors += 1;
+	/* Translate the wires that are ports to NetNet pointers by
+	   presuming that the name is already elaborated, and look it
+	   up in the design. Then save that pointer for later use by
+	   calls to the task. (Remember, the task itself does not need
+	   these ports.) */
+      svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
+      ports[0] = des->find_signal(path, path);
+      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
+
+	    ports[idx+1] = tmp;
+      }
+
+
+      NetFuncDef*def = new NetFuncDef(path, st, ports);
+      des->add_function(path, def);
 }
 
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
@@ -2089,6 +2127,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.74  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.73  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

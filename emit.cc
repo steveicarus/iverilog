@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.18 1999/07/17 19:50:59 steve Exp $"
+#ident "$Id: emit.cc,v 1.19 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 /*
@@ -229,6 +229,14 @@ void Design::emit(ostream&o, struct target_t*tgt) const
       }
 
 
+	// emit function definitions
+      {
+	    map<string,NetFuncDef*>::const_iterator ta;
+	    for (ta = funcs_.begin() ; ta != funcs_.end() ;  ta ++) {
+		  tgt->func_def(o, (*ta).second);
+	    }
+      }
+
 	// emit task definitions
       {
 	    map<string,NetTaskDef*>::const_iterator ta;
@@ -267,6 +275,11 @@ void NetEIdent::expr_scan(struct expr_scan_t*tgt) const
 void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_memory(this);
+}
+
+void NetEUFunc::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_ufunc(this);
 }
 
 void NetESignal::expr_scan(struct expr_scan_t*tgt) const
@@ -308,6 +321,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.19  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.18  1999/07/17 19:50:59  steve
  *  netlist support for ternary operator.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.16 1999/08/18 04:00:02 steve Exp $"
+#ident "$Id: target.cc,v 1.17 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -39,6 +39,12 @@ void target_t::memory(ostream&os, const NetMemory*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory." << endl;
+}
+
+void target_t::func_def(ostream&os, const NetFuncDef*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled function definition." << endl;
 }
 
 void target_t::task_def(ostream&os, const NetTaskDef*)
@@ -230,6 +236,12 @@ void expr_scan_t::expr_ternary(const NetETernary*)
 	    "unhandled expr_ternary." << endl;
 }
 
+void expr_scan_t::expr_ufunc(const NetEUFunc*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled function call." << endl;
+}
+
 void expr_scan_t::expr_unary(const NetEUnary*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -244,6 +256,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.17  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.16  1999/08/18 04:00:02  steve
  *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
  *

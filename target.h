@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.15 1999/07/17 19:51:00 steve Exp $"
+#ident "$Id: target.h,v 1.16 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -63,6 +63,7 @@ struct target_t {
 
 	/* Output a defined task. */
       virtual void task_def(ostream&, const NetTaskDef*);
+      virtual void func_def(ostream&, const NetFuncDef*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
@@ -109,6 +110,7 @@ struct expr_scan_t {
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*);
       virtual void expr_ternary(const NetETernary*);
+      virtual void expr_ufunc(const NetEUFunc*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
 };
@@ -130,6 +132,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.16  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.15  1999/07/17 19:51:00  steve
  *  netlist support for ternary operator.
  *

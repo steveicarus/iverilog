@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.53 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: netlist.cc,v 1.54 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -482,13 +482,23 @@ NetProc* NetCondit::else_clause()
       return else_;
 }
 
-NetFuncDef::NetFuncDef(const string&n, NetProc*st)
-: name_(n), statement_(st)
+NetFuncDef::NetFuncDef(const string&n, NetProc*st, const svector<NetNet*>&po)
+: name_(n), statement_(st), ports_(po)
 {
 }
 
 NetFuncDef::~NetFuncDef()
 {
+}
+
+const string& NetFuncDef::name() const
+{
+      return name_;
+}
+
+const NetProc* NetFuncDef::proc() const
+{
+      return statement_;
 }
 
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
@@ -545,6 +555,44 @@ NetSTask::~NetSTask()
 const NetExpr* NetSTask::parm(unsigned idx) const
 {
       return parms_[idx];
+}
+
+NetEUFunc::NetEUFunc(NetFuncDef*def, NetESignal*res, svector<NetExpr*>&p)
+: func_(def), result_(res), parms_(p)
+{
+}
+
+NetEUFunc::~NetEUFunc()
+{
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    delete parms_[idx];
+}
+
+const string& NetEUFunc::name() const
+{
+      return func_->name();
+}
+
+const NetESignal*NetEUFunc::result() const
+{
+      return result_;
+}
+
+/*
+ * XXXX FIX ME: For now, just take whatever the caller says as my
+ * width. What I really need to do is note the width of the output
+ * parameter of the function definition and take that into account.
+ */
+bool NetEUFunc::set_width(unsigned wid)
+{
+      expr_width(wid);
+      return true;
+}
+
+NetEUFunc* NetEUFunc::dup_expr() const
+{
+      assert(0);
+      return 0;
 }
 
 NetUTask::NetUTask(NetTaskDef*def)
@@ -1453,6 +1501,15 @@ void Design::add_function(const string&key, NetFuncDef*def)
       funcs_[key] = def;
 }
 
+NetFuncDef* Design::find_function(const string&key)
+{
+      map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
+      if (cur == funcs_.end())
+	    return 0;
+
+      return (*cur).second;
+}
+
 void Design::add_task(const string&key, NetTaskDef*def)
 {
       tasks_[key] = def;
@@ -1585,6 +1642,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.54  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.53  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

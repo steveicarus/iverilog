@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.35 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.36 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 /*
@@ -123,24 +123,25 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Procedural assign: " << *rval_ << endl;
+      o << setw(ind) << "" << "Procedural assign (NetAssign): " <<
+	    *rval_ << endl;
       dump_node_pins(o, ind+4);
 }
 
 void NetAssignNB::dump_node(ostream&o, unsigned ind) const
 {
       if (bmux_)
-	    o << setw(ind) << "" << "Procedural NB assign: " << name()
-	      << "[" << *bmux_ << "] <= " << *rval_ << endl;
+	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
+	      << name() << "[" << *bmux_ << "] <= " << *rval_ << endl;
       else
-	    o << setw(ind) << "" << "Procedural NB assign: " << name()
-	      << " <= " << *rval_ << endl;
+	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
+	      << name() << " <= " << *rval_ << endl;
       dump_node_pins(o, ind+4);
 }
 
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "BUFZ: " << name() << endl;
+      o << setw(ind) << "" << "NetBUFZ: " << name() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -616,7 +617,8 @@ void NetEMemory::dump(ostream&o) const
 
 void NetESignal::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Expression Node: " << name() << endl;
+      o << setw(ind) << "" << "Expression Node (NetESignal): " <<
+	    name() << endl;
 
       dump_node_pins(o, ind+4);
 }
@@ -625,6 +627,18 @@ void NetETernary::dump(ostream&o) const
 {
       o << "(" << *cond_ << ")? (" << *true_val_ << ") : (" <<
 	    false_val_ << ")";
+}
+
+void NetEUFunc::dump(ostream&o) const
+{
+      o << name() << "(";
+      assert(parms_.count() > 0);
+      parms_[0]->dump(o);
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    o << ", ";
+	    parms_[idx]->dump(o);
+      }
+      o << ")";
 }
 
 void NetEUnary::dump(ostream&o) const
@@ -666,6 +680,15 @@ void Design::dump(ostream&o) const
 	    }
       }
 
+      o << "ELABORATED FUNCTION DEFINITIONS:" << endl;
+      {
+	    map<string,NetFuncDef*>::const_iterator pp;
+	    for (pp = funcs_.begin()
+		       ; pp != funcs_.end() ; pp ++) {
+		  (*pp).second->dump(o, 0);
+	    }
+      }
+
       o << "ELABORATED TASK DEFINITIONS:" << endl;
       {
 	    map<string,NetTaskDef*>::const_iterator pp;
@@ -696,6 +719,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.36  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.35  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

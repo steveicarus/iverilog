@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.57 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.58 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 /*
@@ -40,6 +40,7 @@ class NetNode;
 class NetProc;
 class NetProcTop;
 class NetExpr;
+class NetESignal;
 class ostream;
 
 
@@ -758,17 +759,27 @@ class NetForever : public NetProc {
       NetProc*statement_;
 };
 
+/*
+ * A funciton definition is elaborated just like a task, though by now
+ * it is certain that the first parameter (a phantom parameter) is the
+ * output and all the remaining parameters are the inputs. This makes
+ * for easy code generation in targets that support behavioral descriptions.
+ */
 class NetFuncDef {
 
     public:
-      explicit NetFuncDef(const string&, NetProc*st);
+      NetFuncDef(const string&, NetProc*st, const svector<NetNet*>&po);
       ~NetFuncDef();
+
+      const string& name() const;
+      const NetProc*proc() const;
 
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
       string name_;
       NetProc*statement_;
+      svector<NetNet*>ports_;
 };
 
 class NetPDelay  : public NetProc {
@@ -923,7 +934,44 @@ class NetTaskDef {
 };
 
 /*
- * A call to a user defined task is elaborated into this object.
+ * This node represents a function call in an expression. The object
+ * contains a pointer to the function definition, which is used to
+ * locate the value register and input expressions.
+ *
+ * The NetNet parameter to the constructor is the *register* NetNet
+ * that receives the result of the function, and the NetExpr list is
+ * the paraneters passed to the function.
+ */
+class NetEUFunc  : public NetExpr {
+
+    public:
+      NetEUFunc(NetFuncDef*, NetESignal*, svector<NetExpr*>&);
+      ~NetEUFunc();
+
+      const string& name() const;
+
+      const NetESignal*result() const;
+
+      virtual bool set_width(unsigned);
+      virtual void dump(ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEUFunc*dup_expr() const;
+
+    private:
+      NetFuncDef*func_;
+      NetESignal*result_;
+      svector<NetExpr*> parms_;
+
+    private: // not implemented
+      NetEUFunc(const NetEUFunc&);
+      NetEUFunc& operator= (const NetEUFunc&);
+};
+
+/*
+ * A call to a user defined task is elaborated into this object. This
+ * contains a pointer to the elaborated task definition, but is a
+ * NetProc object so that it can be linked into statements.
  */
 class NetUTask  : public NetProc {
 
@@ -1354,6 +1402,7 @@ class Design {
 
 	// Functions
       void add_function(const string&n, NetFuncDef*);
+      NetFuncDef* find_function(const string&key);
 
 	// Tasks
       void add_task(const string&n, NetTaskDef*);
@@ -1459,6 +1508,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.58  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.57  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

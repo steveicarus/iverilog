@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.17 1999/08/01 21:18:55 steve Exp $"
+#ident "$Id: PExpr.h,v 1.18 1999/08/31 22:38:29 steve Exp $"
 #endif
 
 # include  <string>
@@ -254,6 +254,7 @@ class PECallFunction : public PExpr {
       ~PECallFunction() {}
 
       virtual void dump(ostream &) const;
+      virtual NetEUFunc*elaborate_expr(Design*des, const string&path) const;
 
  private:
       string name_;
@@ -262,6 +263,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.18  1999/08/31 22:38:29  steve
+ *  Elaborate and emit to vvm procedural functions.
+ *
  * Revision 1.17  1999/08/01 21:18:55  steve
  *  elaborate rise/fall/decay for continuous assign.
  *
