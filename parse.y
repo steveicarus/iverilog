@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.142 2001/12/30 21:32:03 steve Exp $"
+#ident "$Id: parse.y,v 1.143 2001/12/31 05:23:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2245,6 +2245,11 @@ statement
 			tmp->set_statement($2);
 			$$ = tmp;
 		  }
+		}
+	| '@' '*' statement_opt
+		{ yyerror(@2, "sorry: Combinational event control "
+			  "is not supported yet.");
+		  $$ = $3;
 		}
 	| lpvalue '=' expression ';'
 		{ PAssign*tmp = new PAssign($1,$3);
