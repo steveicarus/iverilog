@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.3 1998/12/17 23:54:58 steve Exp $"
+#ident "$Id: vvm.h,v 1.4 1999/02/08 03:55:55 steve Exp $"
 #endif
 
 # include  <vector>
 # include  <string>
+# include  <cassert>
 
 /*
  * The Verilog Virtual Machine are definitions for the virtual machine
@@ -100,6 +101,13 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 
       unsigned get_width() const { return WIDTH; }
       vvm_bit_t get_bit(unsigned idx) const { return bits_[idx]; }
+
+      bool eequal(const vvm_bitset_t<WIDTH>&that) const
+	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		  if (bits_[idx] != that.bits_[idx])
+			return false;
+	      return true;
+	    }
 
     private:
       vvm_bit_t bits_[WIDTH];
@@ -215,8 +223,29 @@ class vvm_monitor_t {
 };
 
 
+template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
+
+    public:
+      vvm_signal_t(const string&n, vvm_bitset_t<WIDTH>*b)
+      : vvm_monitor_t(n), bits_(b)
+	    { }
+
+      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+	    { (*bits_)[idx] = val;
+	      trigger(sim);
+	    }
+
+    private:
+      vvm_bitset_t<WIDTH>*bits_;
+};
+
 /*
  * $Log: vvm.h,v $
+ * Revision 1.4  1999/02/08 03:55:55  steve
+ *  Do not generate code for signals,
+ *  instead use the NetESignal node to
+ *  generate gate-like signal devices.
+ *
  * Revision 1.3  1998/12/17 23:54:58  steve
  *  VVM support for small sequential UDP objects.
  *
