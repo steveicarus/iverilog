@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.149 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.150 2005/04/08 04:52:31 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -896,7 +896,10 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * match the ivl_memory_width of the memory device.
  *
  * Read or write, the ivl_lpm_select nexus is the address. The
- * ivl_lpm_selects function returns the vector width of the address.
+ * ivl_lpm_selects function returns the vector width of the
+ * address. The range of the address is always from 0 to the memory
+ * size-1 -- the cannonical form. It is up to the compiler to generate
+ * offsets to correct for a range declaration.
  *
  * Read ports use the ivl_lpm_q as the data output, and write ports
  * use the ivl_lpm_data(0) as the input. In either case the width of
@@ -1633,6 +1636,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.150  2005/04/08 04:52:31  steve
+ *  Make clear that memory addresses are cannonical.
+ *
  * Revision 1.149  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *

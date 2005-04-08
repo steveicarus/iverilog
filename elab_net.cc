@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.159 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.160 2005/04/08 04:52:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1647,7 +1647,19 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
       const bool must_be_self_determined_save = must_be_self_determined_flag;
       must_be_self_determined_flag = false;
 
-      NetNet*adr = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetExpr*adr_expr = elab_and_eval(des, scope, msb_);
+
+	/* If an offset is needed, subtract it from the address to get
+	   an expression for the canonical address. */
+      if (mem->index_to_address(0) != 0) {
+	    adr_expr = make_add_expr(adr_expr, mem->index_to_address(0));
+	    if (NetExpr*tmp = adr_expr->eval_tree()) {
+		  delete adr_expr;
+		  adr_expr = tmp;
+	    }
+      }
+      NetNet*adr = adr_expr->synthesize(des);
+      delete adr_expr;
 
       must_be_self_determined_flag = must_be_self_determined_save;
 
@@ -2490,6 +2502,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.160  2005/04/08 04:52:31  steve
+ *  Make clear that memory addresses are cannonical.
+ *
  * Revision 1.159  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *
