@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.339 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.340 2005/04/08 04:51:16 steve Exp $"
 #endif
 
 /*
@@ -770,7 +770,7 @@ class NetMemory  {
 	// This method returns a 0 based address of a memory entry as
 	// indexed by idx. The Verilog source may give index ranges
 	// that are not zero based.
-      unsigned index_to_address(long idx) const;
+      long index_to_address(long idx) const;
 
       void dump(ostream&o, unsigned lm) const;
 
@@ -3416,6 +3416,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.340  2005/04/08 04:51:16  steve
+ *  All memory addresses are signed.
+ *
  * Revision 1.339  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *

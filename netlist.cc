@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.240 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.241 2005/04/08 04:51:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1916,7 +1916,7 @@ perm_string NetMemory::name() const
       return name_;
 }
 
-unsigned NetMemory::index_to_address(long idx) const
+long NetMemory::index_to_address(long idx) const
 {
       if (idxh_ < idxl_)
 	    return idx - idxh_;
@@ -2174,6 +2174,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.241  2005/04/08 04:51:16  steve
+ *  All memory addresses are signed.
+ *
  * Revision 1.240  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *
