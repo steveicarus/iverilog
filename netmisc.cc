@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.10 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.11 2005/04/08 04:50:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,8 +94,13 @@ NetExpr* make_add_expr(NetExpr*expr, long val)
 	    val = -val;
       }
 
-      verinum val_v (val, expr->expr_width());
+      verinum val_v (val);
       val_v.has_sign(true);
+
+      if (expr->has_width()) {
+	    val_v = verinum(val_v, expr->expr_width());
+      }
+
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
 
@@ -135,6 +140,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.11  2005/04/08 04:50:31  steve
+ *  Don not give to make_add express an unwanted width.
+ *
  * Revision 1.10  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT
