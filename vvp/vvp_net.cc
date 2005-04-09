@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.21 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.22 2005/04/09 05:30:38 steve Exp $"
 
 # include  "vvp_net.h"
 # include  "schedule.h"
@@ -584,11 +584,9 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, vvp_vector4_t,
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t, vvp_vector8_t)
+void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 {
-      fprintf(stderr, "internal error: %s: recv_vec8 not implemented\n",
-	      typeid(*this).name());
-      assert(0);
+      recv_vec4(port, reduce4(bit));
 }
 
 void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double)
@@ -1238,6 +1236,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.22  2005/04/09 05:30:38  steve
+ *  Default behavior for recv_vec8 methods.
+ *
  * Revision 1.21  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

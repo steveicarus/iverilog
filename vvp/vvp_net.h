@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.21 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.22 2005/04/09 05:30:38 steve Exp $"
 
 # include  <stdio.h>
 # include  "config.h"
@@ -383,6 +383,13 @@ extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
  * In this context, a "bit" is the thing that arrives at a single
  * input. The bit may be a single data bit, a bit vector, various
  * sorts of numbers or aggregate objects.
+ *
+ * recv_vec4 is the most common way for a datum to arrive at a
+ * port. The value is a vvp_vector4_t.
+ *
+ * Most nodes do not care about the specific strengths of bits, so the
+ * default behavior for recv_vec8 is to reduce the operand to a
+ * vvp_vector4_t and pass it on to the recv_vec4 method.
  */
 class vvp_net_fun_t {
 
@@ -425,7 +432,6 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       ~vvp_fun_concat();
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
     private:
       unsigned wid_[4];
@@ -678,6 +684,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.22  2005/04/09 05:30:38  steve
+ *  Default behavior for recv_vec8 methods.
+ *
  * Revision 1.21  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

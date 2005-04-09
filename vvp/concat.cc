@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: concat.cc,v 1.2 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: concat.cc,v 1.3 2005/04/09 05:30:38 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -59,11 +59,6 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
       }
 
       vvp_send_vec4(port.ptr()->out, val_);
-}
-
-void vvp_fun_concat::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
-{
-      recv_vec4(port, reduce4(bit));
 }
 
 void compile_concat(char*label, unsigned w0, unsigned w1,
@@ -123,6 +118,9 @@ void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
 
 /*
  * $Log: concat.cc,v $
+ * Revision 1.3  2005/04/09 05:30:38  steve
+ *  Default behavior for recv_vec8 methods.
+ *
  * Revision 1.2  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *
