@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.22 2005/04/09 05:30:38 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.23 2005/04/09 06:00:58 steve Exp $"
 
 # include  "vvp_net.h"
 # include  "schedule.h"
@@ -891,6 +891,9 @@ vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
 {
       assert(str <= 7);
 
+      if (str == 0)
+	    val = BIT4_Z;
+
       switch (val) {
 	  case BIT4_0:
 	    value_ = str | (str<<4);
@@ -911,6 +914,9 @@ vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 {
       assert(str0 <= 7);
       assert(str1 <= 7);
+
+      if (str0 == 0 && str1 == 0)
+	    val = BIT4_Z;
 
       switch (val) {
 	  case BIT4_0:
@@ -1236,6 +1242,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.23  2005/04/09 06:00:58  steve
+ *  scalars with 0-drivers are hiZ by definition.
+ *
  * Revision 1.22  2005/04/09 05:30:38  steve
  *  Default behavior for recv_vec8 methods.
  *
