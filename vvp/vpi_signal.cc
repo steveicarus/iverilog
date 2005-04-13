@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.65 2005/03/12 04:27:43 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.66 2005/04/13 06:34:20 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,7 @@
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <math.h>
+# include  <iostream>
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -847,6 +848,10 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.66  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.65  2005/03/12 04:27:43  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

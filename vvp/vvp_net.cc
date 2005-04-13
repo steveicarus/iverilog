@@ -16,11 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.23 2005/04/09 06:00:58 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.24 2005/04/13 06:34:20 steve Exp $"
 
+# include  "config.h"
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  <stdio.h>
+# include  <iostream>
 # include  <typeinfo>
 # include  <assert.h>
 
@@ -111,6 +113,28 @@ vvp_bit4_t operator ~ (vvp_bit4_t a)
 	  default:
 	    return  BIT4_X;
       }
+}
+
+ostream& operator<<(ostream&out, vvp_bit4_t bit)
+{
+      switch (bit) {
+	  case BIT4_0:
+	    out << "0";
+	    break;
+	  case BIT4_1:
+	    out << "1";
+	    break;
+	  case BIT4_X:
+	    out << "X";
+	    break;
+	  case BIT4_Z:
+	    out << "Z";
+	    break;
+	  default:
+	    out << "?";
+	    break;
+      }
+      return out;
 }
 
 void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
@@ -508,6 +532,21 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
 
 }
 
+vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
+			     unsigned str0, unsigned str1)
+: size_(that.size())
+{
+      if (size_ == 0) {
+	    bits_ = 0;
+	    return;
+      }
+
+      bits_ = new vvp_scalar_t[size_];
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+	    bits_[idx] = vvp_scalar_t (that.value(idx), str0, str1);
+
+}
+
 vvp_vector8_t::~vvp_vector8_t()
 {
       if (size_ > 0)
@@ -550,15 +589,14 @@ void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
       bits_[idx] = val;
 }
 
-void vvp_vector8_t::dump(FILE*out)
+ostream& operator<<(ostream&out, const vvp_vector8_t&that)
 {
-      fprintf(out, "C8<");
-      for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
-	    vvp_scalar_t tmp = value(size()-idx-1);
-	    tmp.dump(out);
-      }
+      out << "C8<";
+      for (unsigned idx = 0 ;  idx < that.size() ; idx += 1)
+	    out << that.value(that.size()-idx-1);
 
-      fprintf(out,">");
+      out << ">";
+      return out;
 }
 
 vvp_net_fun_t::vvp_net_fun_t()
@@ -602,6 +640,28 @@ void vvp_net_fun_t::recv_long(vvp_net_ptr_t, long)
 	      typeid(*this).name());
       assert(0);
 }
+
+/* **** vvp_fun_drive methods **** */
+
+vvp_fun_drive::vvp_fun_drive(vvp_bit4_t init, unsigned str0, unsigned str1)
+{
+      assert(str0 < 8);
+      assert(str1 < 8);
+
+      drive0_ = str0;
+      drive1_ = str1;
+}
+
+vvp_fun_drive::~vvp_fun_drive()
+{
+}
+
+void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      assert(port.port() == 0);
+      vvp_send_vec8(port.ptr()->out, vvp_vector8_t(bit, drive0_, drive1_));
+}
+
 
 /* **** vvp_fun_signal methods **** */
 
@@ -964,23 +1024,24 @@ unsigned vvp_scalar_t::strength1() const
       return STREN1(value_);
 }
 
-void vvp_scalar_t::dump(FILE*out)
+ostream& operator <<(ostream&out, vvp_scalar_t a)
 {
-      fprintf(out, "%01u%01u", STREN0(value_), STREN1(value_));
-      switch (value()) {
+      out << a.strength0() << a.strength1();
+      switch (a.value()) {
 	  case BIT4_0:
-	    fprintf(out, "0");
+	    out << "0";
 	    break;
 	  case BIT4_1:
-	    fprintf(out, "1");
+	    out << "1";
 	    break;
 	  case BIT4_X:
-	    fprintf(out, "x");
+	    out << "X";
 	    break;
 	  case BIT4_Z:
-	    fprintf(out, "z");
+	    out << "Z";
 	    break;
       }
+      return out;
 }
 
 vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
@@ -1242,6 +1303,10 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.24  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.23  2005/04/09 06:00:58  steve
  *  scalars with 0-drivers are hiZ by definition.
  *

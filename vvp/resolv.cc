@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.22 2005/03/12 04:27:43 steve Exp $"
+#ident "$Id: resolv.cc,v 1.23 2005/04/13 06:34:20 steve Exp $"
 #endif
 
 # include  "resolv.h"
 # include  "schedule.h"
 # include  "statistics.h"
-# include  <stdio.h>
+# include  <iostream>
 # include  <assert.h>
 
 
@@ -90,6 +90,10 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.23  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.22  2005/03/12 04:27:43  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

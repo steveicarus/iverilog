@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.11 2005/03/12 04:27:42 steve Exp $"
+#ident "$Id: bufif.cc,v 1.12 2005/04/13 06:34:20 steve Exp $"
 #endif
 
 # include  "bufif.h"
 # include  "schedule.h"
 # include  "statistics.h"
-# include  <stdio.h>
+# include  <iostream>
 # include  <assert.h>
 
 vvp_fun_bufif::vvp_fun_bufif(bool en_invert, bool out_invert,
@@ -87,6 +87,10 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.12  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.11  2005/03/12 04:27:42  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

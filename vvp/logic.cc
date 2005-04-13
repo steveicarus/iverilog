@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.20 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: logic.cc,v 1.21 2005/04/13 06:34:20 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -229,6 +229,7 @@ void compile_functor(char*label, char*type,
 		     unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t* obj = 0;
+      bool strength_aware = false;
 
       if (strcmp(type, "OR") == 0) {
 	    obj = new table_functor_s(ft_OR);
@@ -241,9 +242,11 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "BUFIF0") == 0) {
 	    obj = new vvp_fun_bufif(true,false, ostr0, ostr1);
+	    strength_aware = true;
 
       } else if (strcmp(type, "BUFIF1") == 0) {
 	    obj = new vvp_fun_bufif(false,false, ostr0, ostr1);
+	    strength_aware = true;
 
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
@@ -304,16 +307,37 @@ void compile_functor(char*label, char*type,
       vvp_net_t*net = new vvp_net_t;
       net->fun = obj;
 
-      define_functor_symbol(label, net);
-      free(label);
-
       inputs_connect(net, argc, argv);
       free(argv);
+
+	/* If both the strengths are the default strong drive, then
+	   there is no need for a specialized driver. Attach the label
+	   to this node and we are finished. */
+      if (strength_aware || ostr0 == 6 && ostr1 == 6) {
+	    define_functor_symbol(label, net);
+	    free(label);
+	    return;
+      }
+
+      vvp_fun_drive*obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
+
+      vvp_net_t*net_drv = new vvp_net_t;
+      net_drv->fun = obj_drv;
+
+	/* Point the gate to the drive node. */
+      net->out = vvp_net_ptr_t(net_drv, 0);
+
+      define_functor_symbol(label, net_drv);
+      free(label);
 }
 
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.21  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.20  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

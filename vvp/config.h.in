@@ -19,7 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.18 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: config.h.in,v 1.19 2005/04/13 06:34:20 steve Exp $"
+#endif
+
+#if defined(__cplusplus)
+#  if !defined(__GNUC__)
+     using namespace std;
+#  elif (__GNUC__ == 3)
+     using namespace std;
+#  endif
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -32,6 +40,7 @@
 # undef NEED_TU
 # undef WLU
 # undef WTU
+# undef HAVE_IOSFWD
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
 # undef HAVE_GETOPT_H
@@ -96,6 +105,10 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.19  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.18  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

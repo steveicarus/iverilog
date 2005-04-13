@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.13 2005/02/12 23:05:25 steve Exp $"
+#ident "$Id: logic.h,v 1.14 2005/04/13 06:34:20 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -45,6 +45,9 @@ class table_functor_s: public vvp_net_fun_t {
       vvp_vector4_t input_[4];
 };
 
+/*
+ * vvp_fun_boolean_ is just a common hook for holding operands.
+ */
 class vvp_fun_boolean_ : public vvp_net_fun_t {
 
     protected:
@@ -134,6 +137,10 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.14  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.13  2005/02/12 23:05:25  steve
  *  Cleanup unused truth tables.
  *

@@ -18,11 +18,17 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.22 2005/04/09 05:30:38 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.23 2005/04/13 06:34:20 steve Exp $"
 
-# include  <stdio.h>
 # include  "config.h"
 # include  <assert.h>
+
+#ifdef HAVE_IOSFWD
+# include  <iosfwd>
+#else
+class ostream;
+#endif
+
 
 
 /* Data types */
@@ -63,6 +69,7 @@ extern vvp_bit4_t operator ~ (vvp_bit4_t a);
 extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
 extern vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b);
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
+extern ostream& operator<< (ostream&o, vvp_bit4_t a);
 
 /*
  * This class represents scaler values collected into vectors. The
@@ -185,14 +192,12 @@ class vvp_scalar_t {
 
       bool is_hiz() const { return value_ == 0; }
 
-      void dump(FILE*fd);
-
     private:
       unsigned char value_;
 };
 
 extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
-
+extern ostream& operator<< (ostream&, vvp_scalar_t);
 
 /*
  * This class is a way to carry vectors of strength modeled
@@ -220,8 +225,6 @@ class vvp_vector8_t {
       vvp_scalar_t value(unsigned idx) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
 
-      void dump(FILE*fd);
-
       vvp_vector8_t(const vvp_vector8_t&that);
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
 
@@ -232,6 +235,7 @@ class vvp_vector8_t {
 
 extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
+extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
 /*
  * This class implements a pointer that points to an item within a
@@ -472,10 +476,14 @@ class vvp_fun_drive  : public vvp_net_fun_t {
 
     public:
       vvp_fun_drive(vvp_bit4_t init, unsigned str0 =6, unsigned str1 =6);
+      ~vvp_fun_drive();
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-      void recv_long(vvp_net_ptr_t port, long bit);
+	//void recv_long(vvp_net_ptr_t port, long bit);
 
+    private:
+      unsigned char drive0_;
+      unsigned char drive1_;
 };
 
 /* vvp_fun_part
@@ -684,6 +692,10 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.23  2005/04/13 06:34:20  steve
+ *  Add vvp driver functor for logic outputs,
+ *  Add ostream output operators for debugging.
+ *
  * Revision 1.22  2005/04/09 05:30:38  steve
  *  Default behavior for recv_vec8 methods.
  *
