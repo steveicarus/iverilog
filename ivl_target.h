@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.150 2005/04/08 04:52:31 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.151 2005/04/13 06:35:11 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -676,6 +676,10 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * array of identical gates, and the ivl_logic_width, is the width of
  * the vector into each input pin and out of the output pin.
  *
+ * The output pin is pin-0. The ivl_logic_driveX functions return the
+ * drive strengths for the output pin-0, and match the drive values
+ * stored in the ivl_nexus_ptr_t object for the pin.
+ *
  * - IVL_LO_PULLUP/IVL_LO_PULLDOWN
  * These devices are grouped as logic devices with zero inputs because
  * the outputs have the same characteristics as other logic
@@ -700,6 +704,8 @@ extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
 extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
+extern ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net);
+extern ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net);
 extern unsigned    ivl_logic_width(ivl_net_logic_t net);
 
   /* DEPRECATED */
@@ -1636,6 +1642,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.151  2005/04/13 06:35:11  steve
+ *  Make logic aware of strength.
+ *
  * Revision 1.150  2005/04/08 04:52:31  steve
  *  Make clear that memory addresses are cannonical.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.121 2005/04/06 05:29:09 steve Exp $"
+#ident "$Id: stub.c,v 1.122 2005/04/13 06:35:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1081,6 +1081,8 @@ static void show_logic(ivl_net_logic_t net)
 {
       unsigned npins, idx;
       const char*name = ivl_logic_basename(net);
+      ivl_drive_t drive0 = ivl_logic_drive0(net);
+      ivl_drive_t drive1 = ivl_logic_drive1(net);
 
       switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
@@ -1136,7 +1138,10 @@ static void show_logic(ivl_net_logic_t net)
 	    ivl_nexus_t nex = ivl_logic_pin(net, idx);
 	    const char*nexus_name =  nex? ivl_nexus_name(nex) : "";
 
-	    fprintf(out, "    %d: %s\n", idx, nexus_name);
+	    fprintf(out, "    %d: %s", idx, nexus_name);
+	    if (idx == 0)
+		  fprintf(out, " <drive0/1 = %u/%u>", drive0, drive1);
+	    fprintf(out, "\n");
 
 	    if (nex == 0) {
 		  if (idx == 0) {
@@ -1337,6 +1342,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.122  2005/04/13 06:35:11  steve
+ *  Make logic aware of strength.
+ *
  * Revision 1.121  2005/04/06 05:29:09  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *

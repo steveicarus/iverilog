@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.123 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.124 2005/04/13 06:35:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -519,6 +519,40 @@ extern "C" ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net,
 {
       assert(idx < net->nattr);
       return net->attr + idx;
+}
+
+extern "C" ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net)
+{
+      ivl_nexus_t nex = ivl_logic_pin(net, 0);
+
+      for (unsigned idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t cur = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_log(cur) != net)
+		  continue;
+	    if (ivl_nexus_ptr_pin(cur) != 0)
+		  continue;
+	    return ivl_nexus_ptr_drive0(cur);
+      }
+
+      assert(0);
+      return 0;
+}
+
+extern "C" ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net)
+{
+      ivl_nexus_t nex = ivl_logic_pin(net, 0);
+
+      for (unsigned idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t cur = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_log(cur) != net)
+		  continue;
+	    if (ivl_nexus_ptr_pin(cur) != 0)
+		  continue;
+	    return ivl_nexus_ptr_drive1(cur);
+      }
+
+      assert(0);
+      return 0;
 }
 
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
@@ -2004,6 +2038,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.124  2005/04/13 06:35:11  steve
+ *  Make logic aware of strength.
+ *
  * Revision 1.123  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *
