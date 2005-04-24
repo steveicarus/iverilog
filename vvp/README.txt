@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.62 2005/03/19 06:23:49 steve Exp $
+ *  $Id: README.txt,v 1.63 2005/04/24 20:07:26 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -150,6 +150,22 @@ Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of
 combining up to four inputs down to one output.
 
+DFF STATEMENTS:
+
+The Verilog language itself does not have a DFF primitive, but post
+synthesis readily creates DFF devices that are best simulated with a
+common device. Thus, there is the DFF statement to create DFF devices:
+
+        <label> .dff <d>, <clk>, <ce>, <async-input>;
+
+The generated functor is generally synchronous on the <clk> rising
+edge of <clk>, with the <ce> enable active high. The <clk> and <ce>
+are single bit vectors (or scalars) on ports 1 and 2. Port-0 is any
+type of datum at all. The device will transfer the input to the output
+when it is loaded by a clock. The <async-input> is a special
+asynchronous input that is immediately stored and transferred to the
+output when data arrives here. This is useful for implementing
+asynchronous set/clear functions.
 
 UDP STATEMENTS:
 
@@ -159,7 +175,7 @@ UDP functor has as many inputs as the UDP definition requires.
 
 UDPs come in sequential and combinatorial flavors.  Sequential UDPs
 carry an output state and can respond to edges at the inputs.  The
-output of a combinatorial UDPs is a function of its current inputs
+output of combinatorial UDPs is a function of its current inputs
 only.
 
 The function of a UDP is defined via a table.  The rows of the table

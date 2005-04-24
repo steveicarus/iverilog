@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.50 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: lexor.lex,v 1.51 2005/04/24 20:07:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -98,6 +98,7 @@
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
 ".concat"   { return K_CONCAT; }
+".dff"      { return K_DFF; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".functor"  { return K_FUNCTOR; }
@@ -194,6 +195,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.51  2005/04/24 20:07:26  steve
+ *  Add DFF nodes.
+ *
  * Revision 1.50  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

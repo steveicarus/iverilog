@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.196 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: compile.cc,v 1.197 2005/04/24 20:07:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1052,7 +1052,6 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
       make_arith(arith, label, wid, argc, argv);
 }
 
-
 /*
  * A .shift/l statement creates an array of functors for the
  * width. The 0 input is the data vector to be shifted and the 1 input
@@ -1567,6 +1566,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.197  2005/04/24 20:07:26  steve
+ *  Add DFF nodes.
+ *
  * Revision 1.196  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.71 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: parse.y,v 1.72 2005/04/24 20:07:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -61,7 +61,7 @@ extern FILE*yyin;
 %token K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
-%token K_CONCAT
+%token K_CONCAT K_DFF
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
 %token K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
@@ -277,6 +277,13 @@ statement
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
 		}
+
+  /* DFF nodes have an output and take exactly 4 inputs. */
+
+        | T_LABEL K_DFF symbol ',' symbol ',' symbol ',' symbol ';'
+                { compile_dff($1, $3, $5, $7, $9); }
+
+  /* The various reduction operator nodes take a single input. */
 
         | T_LABEL K_REDUCE_AND symbol ';'
                 { compile_reduce_and($1, $3); }
@@ -679,6 +686,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.72  2005/04/24 20:07:26  steve
+ *  Add DFF nodes.
+ *
  * Revision 1.71  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

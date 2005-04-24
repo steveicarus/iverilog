@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.68 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: compile.h,v 1.69 2005/04/24 20:07:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -146,6 +146,11 @@ extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
+extern void compile_dff(char*label,
+			struct symb_s arg_d,
+			struct symb_s arg_c,
+			struct symb_s arg_e,
+			struct symb_s arg_a);
 extern void compile_reduce_and(char*label, struct symb_s arg);
 extern void compile_reduce_or(char*label, struct symb_s arg);
 extern void compile_reduce_xor(char*label, struct symb_s arg);
@@ -310,6 +315,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.69  2005/04/24 20:07:26  steve
+ *  Add DFF nodes.
+ *
  * Revision 1.68  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *
