@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.340 2005/04/08 04:51:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.341 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,7 @@ class ostream;
 class Design;
 class Link;
 class Nexus;
+class NetNet;
 class NetNode;
 class NetProc;
 class NetProcTop;
@@ -253,6 +254,12 @@ class Nexus {
       Link*first_nlink();
       const Link* first_nlink()const;
 
+	/* Get the width of the Nexus, or 0 if there are no vectors
+	   (in the form of NetNet objects) linked. */
+      unsigned vector_width() const;
+
+      NetNet* pick_any_net();
+
 	/* This method returns true if all the possible drivers of
 	   this nexus are constant. It will also return true if there
 	   are no drivers at all. */
@@ -314,6 +321,22 @@ class NexusSet {
     private: // not implemented
       NexusSet(const NexusSet&);
       NexusSet& operator= (const NexusSet&);
+};
+
+/*
+ * A NetBus is a transparent device that is merely a bunch of pins
+ * used to tie some pins to. It is a convenient way to collect a
+ * bundle of pins and pass that bundle around.
+ */
+class NetBus  : public NetObj {
+
+    public:
+      NetBus(NetScope*scope, unsigned pin_count);
+      ~NetBus();
+
+    private: // not implemented
+      NetBus(const NetBus&);
+      NetBus& operator= (const NetBus&);
 };
 
 /*
@@ -699,22 +722,19 @@ class NetModulo  : public NetNode {
 class NetFF  : public NetNode {
 
     public:
-      NetFF(NetScope*s, perm_string n, unsigned width);
+      NetFF(NetScope*s, perm_string n, unsigned vector_width);
       ~NetFF();
 
       unsigned width() const;
 
       Link& pin_Clock();
       Link& pin_Enable();
-      Link& pin_Aload();
       Link& pin_Aset();
       Link& pin_Aclr();
-      Link& pin_Sload();
       Link& pin_Sset();
       Link& pin_Sclr();
-
-      Link& pin_Data(unsigned);
-      Link& pin_Q(unsigned);
+      Link& pin_Data();
+      Link& pin_Q();
 
       const Link& pin_Clock() const;
       const Link& pin_Enable() const;
@@ -722,8 +742,8 @@ class NetFF  : public NetNode {
       const Link& pin_Aclr() const;
       const Link& pin_Sset() const;
       const Link& pin_Sclr() const;
-      const Link& pin_Data(unsigned) const;
-      const Link& pin_Q(unsigned) const;
+      const Link& pin_Data() const;
+      const Link& pin_Q() const;
 
       void aset_value(const verinum&val);
       const verinum& aset_value() const;
@@ -736,6 +756,7 @@ class NetFF  : public NetNode {
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
+      unsigned width_;
       verinum aset_value_;
       verinum sset_value_;
 };
@@ -1479,10 +1500,10 @@ class NetProc : public virtual LineInfo {
 
 	// synthesize as asynchronous logic, and return true.
       virtual bool synth_async(Design*des, NetScope*scope,
-			       const NetNet*nex_map, NetNet*nex_out);
+			       const NetBus&nex_map, NetBus&nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out,
+			      const NetBus&nex_map, NetBus&nex_out,
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -1614,7 +1635,7 @@ class NetAssignBase : public NetProc {
       unsigned lwidth() const;
 
       bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
+		       const NetBus&nex_map, NetBus&nex_out);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -1681,10 +1702,10 @@ class NetBlock  : public NetProc {
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
+		       const NetBus&nex_map, NetBus&nex_out);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-		      const NetNet*nex_map, NetNet*nex_out,
+		      const NetBus&nex_map, NetBus&nex_out,
 		      const svector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
@@ -1736,7 +1757,7 @@ class NetCase  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
+		       const NetBus&nex_map, NetBus&nex_out);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -1804,10 +1825,10 @@ class NetCondit  : public NetProc {
 
       bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
+		       const NetBus&nex_map, NetBus&nex_out);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-		      const NetNet*nex_map, NetNet*nex_out,
+		      const NetBus&nex_map, NetBus&nex_out,
 		      const svector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
@@ -2024,10 +2045,10 @@ class NetEvWait  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope,
-			       const NetNet*nex_map, NetNet*nex_out);
+			       const NetBus&nex_map, NetBus&nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out,
+			      const NetBus&nex_map, NetBus&nex_out,
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -3416,6 +3437,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.341  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.340  2005/04/08 04:51:16  steve
  *  All memory addresses are signed.
  *

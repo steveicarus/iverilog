@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.122 2005/04/13 06:35:11 steve Exp $"
+#ident "$Id: stub.c,v 1.123 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -410,6 +410,50 @@ static void show_lpm_concat(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_ff(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_FF %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      nex = ivl_lpm_clk(net);
+      fprintf(out, "    clk: %s\n", ivl_nexus_name(nex));
+      if (width_of_nexus(nex) != 1) {
+	    fprintf(out, "    clk: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      if (ivl_lpm_enable(net)) {
+	    nex = ivl_lpm_enable(net);
+	    fprintf(out, "    CE: %s\n", ivl_nexus_name(nex));
+	    if (width_of_nexus(nex) != 1) {
+		  fprintf(out, "    CE: ERROR: Nexus width is %u\n",
+			  width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+
+      nex = ivl_lpm_data(net,0);
+      fprintf(out, "    D: %s\n", ivl_nexus_name(nex));
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    D: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      nex = ivl_lpm_q(net,0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+}
+
 static void show_lpm_mod(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -478,7 +522,7 @@ static void show_lpm_mux(ivl_lpm_t net)
 	      ivl_nexus_name(nex),
 	      ivl_lpm_selects(net));
       if (ivl_lpm_selects(net) != width_of_nexus(nex)) {
-	    fprintf(out, "    S: ERROR: Nexus width is %uj\n",
+	    fprintf(out, "    S: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
 	    stub_errors += 1;
       }
@@ -708,8 +752,6 @@ static void show_lpm_ufunc(ivl_lpm_t net)
 
 static void show_lpm(ivl_lpm_t net)
 {
-      unsigned idx;
-      unsigned width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
 
@@ -724,6 +766,10 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_NEE:
 	    show_lpm_cmp_eeq(net);
+	    break;
+
+	  case IVL_LPM_FF:
+	    show_lpm_ff(net);
 	    break;
 
 	  case IVL_LPM_CMP_GE:
@@ -761,41 +807,6 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_SUB:
 	    show_lpm_sub(net);
 	    break;
-
-	  case IVL_LPM_FF: {
-
-		fprintf(out, "  LPM_FF %s: <width=%u>\n",
-			ivl_lpm_basename(net), width);
-
-		if (ivl_lpm_enable(net))
-		      fprintf(out, "    clk: %s CE: %s\n",
-			      ivl_nexus_name(ivl_lpm_clk(net)),
-			      ivl_nexus_name(ivl_lpm_enable(net)));
-		else
-		      fprintf(out, "    clk: %s\n",
-			      ivl_nexus_name(ivl_lpm_clk(net)));
-
-		if (ivl_lpm_async_clr(net))
-		      fprintf(out, "    Aclr: %s\n",
-			      ivl_nexus_name(ivl_lpm_async_clr(net)));
-
-		if (ivl_lpm_async_set(net)) {
-		      fprintf(out, "    Aset: %s\n",
-			      ivl_nexus_name(ivl_lpm_async_set(net)));
-		      if (ivl_lpm_aset_value(net))
-			    show_expression(ivl_lpm_aset_value(net), 10);
-		}
-
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Data %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_data(net, idx)));
-
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-
-		break;
-	  }
 
 	  case IVL_LPM_MOD:
 	    show_lpm_mod(net);
@@ -1342,6 +1353,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.123  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.122  2005/04/13 06:35:11  steve
  *  Make logic aware of strength.
  *

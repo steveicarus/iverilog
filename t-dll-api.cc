@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.124 2005/04/13 06:35:11 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.125 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -819,11 +819,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    return net->u_.ff.d.pin;
 
 	  case IVL_LPM_FF:
-	    assert(idx < net->u_.ff.width);
-	    if (net->u_.ff.width == 1)
-		  return net->u_.ff.d.pin;
-	    else
-		  return net->u_.ff.d.pins[idx];
+	    assert(idx == 0);
+	    return net->u_.ff.d.pin;
 
 	  case IVL_LPM_CONCAT:
 	    assert(idx < net->u_.concat.inputs);
@@ -969,11 +966,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    return net->u_.ff.q.pin;
 
 	  case IVL_LPM_FF:
-	    assert(idx < net->u_.ff.width);
-	    if (net->u_.ff.width == 1)
-		  return net->u_.ff.q.pin;
-	    else
-		  return net->u_.ff.q.pins[idx];
+	    assert(idx == 0);
+	    return net->u_.ff.q.pin;
 
 	  case IVL_LPM_MUX:
 	    assert(idx == 0);
@@ -2038,6 +2032,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.125  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.124  2005/04/13 06:35:11  steve
  *  Make logic aware of strength.
  *

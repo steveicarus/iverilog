@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.15 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: net_link.cc,v 1.16 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -313,6 +313,30 @@ void* Nexus::t_cookie(void*val)const
       return tmp;
 }
 
+unsigned Nexus::vector_width() const
+{
+      for (const Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj());
+	    if (sig == 0)
+		  continue;
+
+	    return sig->vector_width();
+      }
+
+      return 0;
+}
+
+NetNet* Nexus::pick_any_net()
+{
+      for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj());
+	    if (sig != 0)
+		  return sig;
+      }
+
+      return 0;
+}
+
 const char* Nexus::name() const
 {
       if (name_)
@@ -499,6 +523,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.16  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.15  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

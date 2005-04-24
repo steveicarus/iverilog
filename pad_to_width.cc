@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.16 2005/01/12 03:17:37 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.17 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,8 +110,31 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
       return tmp;
 }
 
+NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
+{
+      NetScope*scope = net->scope();
+
+      if (net->vector_width() <= wid)
+	    return net;
+
+      NetPartSelect*ps = new NetPartSelect(net, 0, wid, NetPartSelect::VP);
+      des->add_node(ps);
+      ps->set_line(*net);
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, wid);
+      tmp->local_flag(true);
+      tmp->set_line(*tmp);
+      connect(ps->pin(0), tmp->pin(0));
+
+      return tmp;
+}
+
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.17  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.16  2005/01/12 03:17:37  steve
  *  Properly pad vector widths in pgassign.
  *

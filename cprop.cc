@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.51 2005/02/12 22:52:45 steve Exp $"
+#ident "$Id: cprop.cc,v 1.52 2005/04/24 23:44:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -201,54 +201,15 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 	// Look for and count unlinked FF outputs. Note that if the
 	// Data and Q pins are connected together, they can be removed
 	// from the circuit, since it doesn't do anything.
-      unsigned unlinked_count = 0;
-      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (connected(obj->pin_Data(idx), obj->pin_Q(idx))
-		&& (! obj->pin_Sclr().is_linked())
-		&& (! obj->pin_Sset().is_linked())
-		&& (! obj->pin_Aclr().is_linked())
-		&& (! obj->pin_Aset().is_linked())) {
-		  obj->pin_Data(idx).unlink();
-		  obj->pin_Q(idx).unlink();
-	    }
-	    if (! obj->pin_Q(idx).is_linked())
-		  unlinked_count += 1;
-      }
 
-	// If the entire FF is unlinked, remove the whole thing.
-      if (unlinked_count == obj->width()) {
+      if (connected(obj->pin_Data(), obj->pin_Q())
+	  && (! obj->pin_Sclr().is_linked())
+	  && (! obj->pin_Sset().is_linked())
+	  && (! obj->pin_Aclr().is_linked())
+	  && (! obj->pin_Aset().is_linked())) {
+	    obj->pin_Data().unlink();
+	    obj->pin_Q().unlink();
 	    delete obj;
-	    count += 1;
-	    return;
-      }
-
-	// If some of the FFs are unconnected, make a new FF array
-	// that does not include the useless FF devices.
-      if (unlinked_count > 0) {
-	    NetFF*tmp = new NetFF(obj->scope(), obj->name(),
-				  obj->width()-unlinked_count);
-	    connect(tmp->pin_Clock(), obj->pin_Clock());
-	    connect(tmp->pin_Enable(), obj->pin_Enable());
-	    connect(tmp->pin_Aload(), obj->pin_Aload());
-	    connect(tmp->pin_Aset(), obj->pin_Aset());
-	    connect(tmp->pin_Aclr(), obj->pin_Aclr());
-	    connect(tmp->pin_Sload(), obj->pin_Sload());
-	    connect(tmp->pin_Sset(), obj->pin_Sset());
-	    connect(tmp->pin_Sclr(), obj->pin_Sclr());
-
-	    unsigned tidx = 0;
-	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1)
-		  if (obj->pin_Q(idx).is_linked()) {
-			connect(tmp->pin_Data(tidx), obj->pin_Data(idx));
-			connect(tmp->pin_Q(tidx), obj->pin_Q(idx));
-			tidx += 1;
-		  }
-
-	    assert(tidx == obj->width() - unlinked_count);
-	    delete obj;
-	    des->add_node(tmp);
-	    count += 1;
-	    return;
       }
 }
 
@@ -980,6 +941,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.52  2005/04/24 23:44:01  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.51  2005/02/12 22:52:45  steve
  *  Fix copyright notice.
  *

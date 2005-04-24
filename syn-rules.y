@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.32 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.33 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -118,11 +118,8 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
 	// where lval is really a "reg [7:0]". In other words, part
 	// selects in the l-value are handled by loff and the lwidth().
 
-      int loff = a->get_loff();
-      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
-	    connect(ff->pin_Data(idx), d->bit(idx+rval_pinoffset));
-	    connect(ff->pin_Q(idx), a->sig()->pin(idx+loff));
-      }
+      connect(ff->pin_Data(), d->bit(0));
+      connect(ff->pin_Q(), a->sig()->pin(0));
 
       connect(ff->pin_Clock(), pclk->pin(0));
       if (ce) connect(ff->pin_Enable(), ce->pin(0));
@@ -207,7 +204,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 	    if (a->sig()) {
               // cerr << "new NetFF named " << a->name() << endl;
               NetFF*ff = new NetFF(top->scope(), a->name(),
-			   a->lwidth());
+				   a->sig()->vector_width());
               hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
               des->add_node(ff);
 	    } else if (a->mem()) {

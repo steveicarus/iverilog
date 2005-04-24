@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.241 2005/04/08 04:51:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.242 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -224,6 +224,15 @@ NetNode::~NetNode()
 {
       if (design_)
 	    design_->del_node(this);
+}
+
+NetBus::NetBus(NetScope*s, unsigned pin_count)
+: NetObj(s, perm_string::literal(""), pin_count)
+{
+}
+
+NetBus::~NetBus()
+{
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
@@ -588,43 +597,34 @@ unsigned NetReplicate::repeat() const
  * like so:
  *    0  -- Clock
  *    1  -- Enable
- *    2  -- Aload
- *    3  -- Aset
- *    4  -- Aclr
- *    5  -- Sload
- *    6  -- Sset
- *    7  -- Sclr
- *
- *    8  -- Data[0]
- *    9  -- Q[0]
+ *    2  -- Aset
+ *    3  -- Aclr
+ *    4  -- Sset
+ *    5  -- Sclr
+ *    6  -- Data
+ *    7  -- Q
  *     ...
  */
 
-NetFF::NetFF(NetScope*s, perm_string n, unsigned wid)
-: NetNode(s, n, 8 + 2*wid)
+NetFF::NetFF(NetScope*s, perm_string n, unsigned width)
+: NetNode(s, n, 8), width_(width)
 {
       pin_Clock().set_dir(Link::INPUT);
       pin_Clock().set_name(perm_string::literal("Clock"), 0);
       pin_Enable().set_dir(Link::INPUT);
       pin_Enable().set_name(perm_string::literal("Enable"), 0);
-      pin_Aload().set_dir(Link::INPUT);
-      pin_Aload().set_name(perm_string::literal("Aload"), 0);
       pin_Aset().set_dir(Link::INPUT);
       pin_Aset().set_name(perm_string::literal("Aset"), 0);
       pin_Aclr().set_dir(Link::INPUT);
       pin_Aclr().set_name(perm_string::literal("Aclr"), 0);
-      pin_Sload().set_dir(Link::INPUT);
-      pin_Sload().set_name(perm_string::literal("Sload"), 0);
       pin_Sset().set_dir(Link::INPUT);
       pin_Sset().set_name(perm_string::literal("Sset"), 0);
       pin_Sclr().set_dir(Link::INPUT);
       pin_Sclr().set_name(perm_string::literal("Sclr"), 0);
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    pin_Data(idx).set_dir(Link::INPUT);
-	    pin_Data(idx).set_name(perm_string::literal("Data"), idx);
-	    pin_Q(idx).set_dir(Link::OUTPUT);
-	    pin_Q(idx).set_name(perm_string::literal("Q"), idx);
-      }
+      pin_Data().set_dir(Link::INPUT);
+      pin_Data().set_name(perm_string::literal("Data"), 0);
+      pin_Q().set_dir(Link::OUTPUT);
+      pin_Q().set_name(perm_string::literal("Q"), 0);
 }
 
 NetFF::~NetFF()
@@ -633,7 +633,7 @@ NetFF::~NetFF()
 
 unsigned NetFF::width() const
 {
-      return (pin_count() - 8) / 2;
+      return width_;
 }
 
 Link& NetFF::pin_Clock()
@@ -656,82 +656,64 @@ const Link& NetFF::pin_Enable() const
       return pin(1);
 }
 
-Link& NetFF::pin_Aload()
+Link& NetFF::pin_Aset()
 {
       return pin(2);
 }
 
-Link& NetFF::pin_Aset()
-{
-      return pin(3);
-}
-
 const Link& NetFF::pin_Aset() const
 {
-      return pin(3);
+      return pin(2);
 }
 
 Link& NetFF::pin_Aclr()
 {
-      return pin(4);
+      return pin(3);
 }
 
 const Link& NetFF::pin_Aclr() const
 {
-      return pin(4);
-}
-
-Link& NetFF::pin_Sload()
-{
-      return pin(5);
+      return pin(3);
 }
 
 Link& NetFF::pin_Sset()
 {
-      return pin(6);
+      return pin(4);
 }
 
 const Link& NetFF::pin_Sset() const
 {
-      return pin(6);
+      return pin(4);
 }
 
 Link& NetFF::pin_Sclr()
 {
-      return pin(7);
+      return pin(5);
 }
 
 const Link& NetFF::pin_Sclr() const
 {
+      return pin(5);
+}
+
+Link& NetFF::pin_Data()
+{
+      return pin(6);
+}
+
+const Link& NetFF::pin_Data() const
+{
+      return pin(6);
+}
+
+Link& NetFF::pin_Q()
+{
       return pin(7);
 }
 
-Link& NetFF::pin_Data(unsigned w)
+const Link& NetFF::pin_Q() const
 {
-      unsigned pn = 8 + 2*w;
-      assert(pn < pin_count());
-      return pin(pn);
-}
-
-const Link& NetFF::pin_Data(unsigned w) const
-{
-      unsigned pn = 8 + 2*w;
-      assert(pn < pin_count());
-      return pin(pn);
-}
-
-Link& NetFF::pin_Q(unsigned w)
-{
-      unsigned pn = 9 + w*2;
-      assert(pn < pin_count());
-      return pin(pn);
-}
-
-const Link& NetFF::pin_Q(unsigned w) const
-{
-      unsigned pn = 9 + w*2;
-      assert(pn < pin_count());
-      return pin(pn);
+      return pin(7);
 }
 
 void NetFF::aset_value(const verinum&val)
@@ -2174,6 +2156,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.242  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.241  2005/04/08 04:51:16  steve
  *  All memory addresses are signed.
  *

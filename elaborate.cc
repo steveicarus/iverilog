@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.320 2005/03/05 05:38:33 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.321 2005/04/24 23:44:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1372,7 +1372,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       } else {
 	    unsigned wid = count_lval_width(lv);
-	    rv->set_width(wid);
+	    bool flag = rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
 	    assert(rv->expr_width() >= wid);
       }
@@ -2942,6 +2942,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.321  2005/04/24 23:44:01  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.320  2005/03/05 05:38:33  steve
  *  Get rval width right for arguments into task calls.
  *

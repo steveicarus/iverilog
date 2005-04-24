@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.151 2005/04/13 06:35:11 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.152 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -891,6 +891,11 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * are. All the data inputs have the same width, the width of the
  * ivl_lpm_q output.
  *
+ * - D-FlipFlop (IVL_LPM_FF)
+ * This data is an edge sensitive register. The ivl_lpm_q output and
+ * single ivl_lpm_data input are the same with, ivl_lpm_width. This
+ * device carries a vector like other LPM devices.
+ *
  * - Memory port (IVL_LPM_RAM)
  * These are structural ports into a memory device. They represent
  * address/data ports of a memory device that the context can hook to
@@ -1642,6 +1647,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.152  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.151  2005/04/13 06:35:11  steve
  *  Make logic aware of strength.
  *

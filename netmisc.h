@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.20 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: netmisc.h,v 1.21 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -49,6 +49,13 @@ extern NetScope* symbol_search(Design*des, NetScope*start, hname_t path,
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
+
+/*
+ * This function transforms an expression by cropping the high bits
+ * off with a part select. The result has the width w passed in. This
+ * function does not pad, use pad_to_width if padding is desired.
+ */
+extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
 
 /*
  * This function takes as input a NetNet signal and adds a constant
@@ -92,6 +99,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.21  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.20  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

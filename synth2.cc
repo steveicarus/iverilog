@@ -17,42 +17,28 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.41 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: synth2.cc,v 1.42 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "functor.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "compiler.h"
 # include  <assert.h>
 
-static int debug_synth2=0;
-
-#ifdef __FUNCTION__
-
-#define DEBUG_SYNTH2_ENTRY(class) if (debug_synth2) { cerr << "Enter " << class << "::" \
-       	<< __FUNCTION__ << endl; dump(cerr, 4); }
-#define DEBUG_SYNTH2_EXIT(class,val) if (debug_synth2) { cerr << "Exit " << class << "::" \
-       	<< __FUNCTION__ << ", result " << val << endl; }
-
-#else
-#define DEBUG_SYNTH2_ENTRY(class)
-#define DEBUG_SYNTH2_EXIT(class,val)
-#endif
 
 bool NetProc::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+			  const NetBus&nex_map, NetBus&nex_out)
 {
       return false;
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			 const NetNet*nex_map, NetNet*nex_out,
+			 const NetBus&nex_map, NetBus&nex_out,
 			 const svector<NetEvProbe*>&events)
 {
-      DEBUG_SYNTH2_ENTRY("NetProc")
-
       if (events.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
@@ -63,11 +49,11 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return synth_async(des, scope, nex_map, nex_out);
 }
 
-static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
+static unsigned find_nexus_in_set(const NetBus&nset, const Nexus*nex)
 {
       unsigned idx = 0;
-      for (idx = 0 ;  idx < nset->pin_count() ;  idx += 1)
-	    if (nset->pin(idx).nexus() == nex)
+      for (idx = 0 ;  idx < nset.pin_count() ;  idx += 1)
+	    if (nset.pin(idx).nexus() == nex)
 		  return idx;
 
       return idx;
@@ -84,36 +70,36 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
  * r-value.
  */
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-				const NetNet*nex_map, NetNet*nex_out)
+				const NetBus&nex_map, NetBus&nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetAssignBase")
-
       NetNet*rsig = rval_->synthesize(des);
       assert(rsig);
 
       NetNet*lsig = lval_->sig();
       if (!lsig) {
-	    cerr << get_line() << ": error: NetAssignBase::synth_async on unsupported lval ";
+	    cerr << get_line() << ": error: "
+		 << "NetAssignBase::synth_async on unsupported lval ";
 	    dump_lval(cerr);
 	    cerr << endl;
-	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
 	    return false;
       }
       assert(lval_->more == 0);
 
-      if (lval_->lwidth() != nex_map->pin_count()) {
-	    cerr << get_line() << ": error: NetAssignBase::synth_async pin count mismatch, "
-	         << lval_->lwidth() << " != " << nex_map->pin_count() << endl;
-	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
+#if 0
+	/* The l-value and r-value map must have the same width. */
+      if (lval_->lwidth() != nex_map->vector_width()) {
+	    cerr << get_line() << ": error: Assignment synthesis: "
+		 << "vector width mismatch, "
+	         << lval_->lwidth() << " bits != "
+		 << nex_map->vector_width() << " bits." << endl;
 	    return false;
       }
-      assert(nex_map->pin_count() <= rsig->pin_count());
+#else
+	/* For now, assume there is exactly one output. */
+      assert(nex_out.pin_count() == 1);
+#endif
 
-      for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
-	    unsigned off = lval_->get_loff()+idx;
-	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
-	    connect(nex_out->pin(ptr), rsig->pin(idx));
-      }
+      connect(nex_out.pin(0), rsig->pin(0));
 
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
@@ -122,7 +108,6 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	   synthesis can continue to work with it as a WIRE. */
       lval_->turn_sig_to_wire_on_release();
 
-      DEBUG_SYNTH2_EXIT("NetAssignBase",true)
       return true;
 }
 
@@ -133,14 +118,13 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
  * substatements.
  */
 bool NetBlock::synth_async(Design*des, NetScope*scope,
-			   const NetNet*nex_map, NetNet*nex_out)
+			   const NetBus&nex_map, NetBus&nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetBlock",true)
 	    return true;
       }
 
+#if 0
       const perm_string tmp1 = perm_string::literal("tmp1");
       const perm_string tmp2 = perm_string::literal("tmp2");
 
@@ -182,12 +166,16 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
       DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
+#else
+      cerr << get_line() << ": sorry: "
+	    "forgot how to implement NetBlock::synth_async" << endl;
+      return false;
+#endif
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+			  const NetBus&nex_map, NetBus&nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetCase")
 #if 0
       unsigned cur;
 
@@ -321,9 +309,9 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 }
 
 bool NetCondit::synth_async(Design*des, NetScope*scope,
-			    const NetNet*nex_map, NetNet*nex_out)
+			    const NetBus&nex_map, NetBus&nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetCondit")
+#if 0
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
 
@@ -377,23 +365,40 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       DEBUG_SYNTH2_EXIT("NetCondit",true)
       return true;
+
+#else
+      cerr << get_line() << ": sorry: "
+	   << "Forgot to implement NetCondit::synth_async" << endl;
+      return false;
+#endif
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope,
-			    const NetNet*nex_map, NetNet*nex_out)
+			    const NetBus&nex_map, NetBus&nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetEvWait")
       bool flag = statement_->synth_async(des, scope, nex_map, nex_out);
-      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
       return flag;
 }
 
+/*
+ * This method is called when the process is shown to be
+ * asynchronous. Figure out the nexus set of outputs from this
+ * process, and pass that to the synth_async method for the statement
+ * of the process. The statement will connect its output to the
+ * nex_out set, using the nex_map as a guide. Starting from the top,
+ * the nex_map is the same as the nex_map.
+ */
 bool NetProcTop::synth_async(Design*des)
 {
-      DEBUG_SYNTH2_ENTRY("NetProcTop")
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
+      if (debug_synth2) {
+	    cerr << get_line() << ": debug: Process has "
+		 << nex_set.count() << " outputs." << endl;
+      }
+
+#if 0
       const perm_string tmp1 = perm_string::literal("tmp");
       NetNet*nex_out = new NetNet(scope(), tmp1, NetNet::WIRE,
 				  nex_set.count());
@@ -403,8 +408,12 @@ bool NetProcTop::synth_async(Design*des)
       bool flag = statement_->synth_async(des, scope(), nex_out, nex_out);
 
       delete nex_out;
-      DEBUG_SYNTH2_EXIT("NetProcTop",flag)
       return flag;
+#else
+      cerr << get_line() << ": sorry: "
+	   << "forgot to implement NetProcTop::synth_async" << endl;
+      return false;
+#endif
 }
 
 /*
@@ -422,15 +431,14 @@ bool NetProcTop::synth_async(Design*des)
  * the statements may each infer different reset and enable signals.
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
+			   const NetBus&nex_map, NetBus&nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetBlock",true)
 	    return true;
       }
 
+#if 0
       bool flag = true;
 
       const perm_string tmp1 = perm_string::literal("tmp1");
@@ -572,8 +580,14 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	   taken up by the smaller NetFF devices. */
       delete ff;
 
-      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
+
+#else
+      cerr << get_line() << ": sorry: "
+	   << "Forgot to implement NetBlock::synth_sync"
+	   << endl;
+      return false;
+#endif
 }
 
 /*
@@ -583,10 +597,10 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
  * expression is connected to an event, or not.
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
+			   const NetBus&nex_map, NetBus&nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetCondit")
+#if 0
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
 	   inputs that are included in the sensitivity list, then it
@@ -788,15 +802,19 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       bool flag = if_->synth_sync(des, scope, ff, nex_map, nex_out, events_in);
 
-      DEBUG_SYNTH2_EXIT("NetCondit",flag)
       return flag;
+
+#else
+      cerr << get_line() << ": sorry: "
+	   << "Forgot to implement NetCondit::synth_sync" << endl;
+      return false;
+#endif
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
+			   const NetBus&nex_map, NetBus&nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetEvWait")
       if (events_in.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
@@ -814,7 +832,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       svector<NetEvProbe*>events (ev->nprobe() - 1);
 
 	/* Get the input set from the substatement. This will be used
-	   to figure out which of the probes in the clock. */
+	   to figure out which of the probes is the clock. */
       NexusSet*statement_input = statement_ -> nex_input();
 
 	/* Search for a clock input. The clock input is the edge event
@@ -848,62 +866,109 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 << " are valid clock inputs." << endl;
 	    cerr << get_line() << ":      : Perhaps the clock"
 		 << " is read by a statement or expression?" << endl;
-	    DEBUG_SYNTH2_EXIT("NetEvWait",false)
 	    return false;
       }
 
       connect(ff->pin_Clock(), pclk->pin(0));
-      if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
+      if (pclk->edge() == NetEvProbe::NEGEDGE) {
+	    perm_string polarity = perm_string::literal("Clock:LPM_Polarity");
+	    ff->attribute(polarity, verinum("INVERT"));
+
+	    if (debug_synth2) {
+		  cerr << get_line() << ": debug: "
+		       << "Detected a NEGEDGE clock for the synthesized ff."
+		       << endl;
+	    }
+      }
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, ff,
 					 nex_map, nex_out, events);
 
-      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
       return flag;
 }
 
+/*
+ * This method is called for a process that is determined to be
+ * synchronous. Create a NetFF device to hold the output from the
+ * statement, and synthesize that statement in place.
+ */
 bool NetProcTop::synth_sync(Design*des)
 {
-      DEBUG_SYNTH2_ENTRY("NetProcTop")
+      if (debug_synth2) {
+	    cerr << get_line() << ": debug: "
+		 << "Process is apparently synchronous. Making NetFFs."
+		 << endl;
+      }
+
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
+	/* Make a model FF that will connect to the first item in the
+	   set, and will also take the initial connection of clocks
+	   and resets. */
       NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
-			   nex_set.count());
+			   nex_set[0]->vector_width());
       des->add_node(ff);
       ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
 
-	/* The D inputs to the DFF device will receive the output from
-	   the statements of the process. */
-      NetNet*nex_d = new NetNet(scope(), scope()->local_symbol(),
-				NetNet::WIRE, nex_set.count());
-      nex_d->local_flag(true);
+      NetBus nex_d (scope(), nex_set.count());
+      NetBus nex_q (scope(), nex_set.count());
+
+	/* The Q of the NetFF devices is connected to the output that
+	   we are. The nex_q is a bundle of the outputs. We will also
+	   pass the nex_q as a map to the statement's synth_sync
+	   method to map it to the correct nex_d pin. */
       for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
-	    connect(nex_d->pin(idx), ff->pin_Data(idx));
+	    connect(nex_set[idx], nex_q.pin(idx));
       }
 
-	/* The Q outputs of the DFF will connect to the actual outputs
-	   of the process. Thus, the DFF will be between the outputs
-	   of the process and the outputs of the substatement. */
-      const perm_string tmpq = perm_string::literal("tmpq");
-      NetNet*nex_q = new NetNet(scope(), tmpq, NetNet::WIRE,
-				nex_set.count());
-      for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
-	    connect(nex_set[idx], nex_q->pin(idx));
-	    connect(nex_q->pin(idx), ff->pin_Q(idx));
-      }
+	// Connect the input later.
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope(), ff,
 					 nex_q, nex_d,
 					 svector<NetEvProbe*>());
+      if (! flag) {
+	    delete ff;
+	    return false;
+      }
 
-      delete nex_q;
 
-      DEBUG_SYNTH2_EXIT("NetProcTop",flag)
-      return flag;
+      NetNet*tmp = nex_d.pin(0).nexus()->pick_any_net();
+      assert(tmp);
+
+      tmp = crop_to_width(des, tmp, ff->width());
+      connect(tmp->pin(0), ff->pin_Data());
+      connect(nex_q.pin(0), ff->pin_Q());
+
+      for (unsigned idx = 1 ;  idx < nex_set.count() ;  idx += 1) {
+	    NetFF*ff2 = new NetFF(scope(), scope()->local_symbol(),
+				  nex_set[idx]->vector_width());
+	    des->add_node(ff2);
+
+	    tmp = nex_d.pin(idx).nexus()->pick_any_net();
+	    assert(tmp);
+
+	    tmp = crop_to_width(des, tmp, ff2->width());
+
+	    connect(nex_q.pin(idx), ff2->pin_Q());
+	    connect(tmp->pin(0),    ff2->pin_Data());
+
+	    connect(ff->pin_Clock(), ff2->pin_Clock());
+	    if (ff->pin_Enable().is_linked())
+		  connect(ff->pin_Enable(), ff2->pin_Enable());
+	    if (ff->pin_Aset().is_linked())
+		  connect(ff->pin_Aset(), ff2->pin_Aset());
+	    if (ff->pin_Aclr().is_linked())
+		  connect(ff->pin_Aclr(), ff2->pin_Aclr());
+	    if (ff->pin_Sset().is_linked())
+		  connect(ff->pin_Sset(), ff2->pin_Sset());
+	    if (ff->pin_Sclr().is_linked())
+		  connect(ff->pin_Sclr(), ff2->pin_Sclr());
+      }
+
+      return true;
 }
 
 class synth2_f  : public functor_t {
@@ -978,84 +1043,14 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 
 void synth2(Design*des)
 {
-      debug_synth2 = atoi(des->get_flag("ivl-synth2-debug"));
       synth2_f synth_obj;
       des->functor(&synth_obj);
 }
 
 /*
  * $Log: synth2.cc,v $
- * Revision 1.41  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
+ * Revision 1.42  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
  *
- * Revision 1.40  2004/12/11 02:31:27  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.39  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.38  2004/08/28 15:08:32  steve
- *  Do not change reg to wire in NetAssign_ unless synthesizing.
- *
- * Revision 1.37  2004/03/15 18:40:12  steve
- *  Only include DEBUG_SYNTH2 if __FUNCTION__ defined.
- *
- * Revision 1.36  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.35  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.34  2003/12/20 00:59:31  steve
- *  Synthesis debug messages.
- *
- * Revision 1.33  2003/12/17 16:52:39  steve
- *  Debug dumps for synth2.
- *
- * Revision 1.32  2003/10/27 02:18:04  steve
- *  Handle special case of FF with enable and constant data.
- *
- * Revision 1.31  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.30  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.29  2003/08/14 02:41:05  steve
- *  Fix dangling pointer in NexusSet handling blocks.
- *
- * Revision 1.28  2003/08/10 17:04:23  steve
- *  Detect asynchronous FF inputs that are expressions.
- *
- * Revision 1.27  2003/06/23 00:14:44  steve
- *  ivl_synthesis_cell cuts off synthesis within a module.
- *
- * Revision 1.26  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.25  2003/04/03 04:30:00  steve
- *  Prevent overrun comparing verinums to zero.
- *
- * Revision 1.24  2003/03/25 04:04:29  steve
- *  Handle defaults in synthesized case statements.
- *
- * Revision 1.23  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.22  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.21  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.20  2002/11/09 23:29:29  steve
- *  Handle nested-if chip enables.
- *
- * Revision 1.19  2002/11/09 20:22:57  steve
- *  Detect synthesis conflicts blocks statements share outputs.
  */
 

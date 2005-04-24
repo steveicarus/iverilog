@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.65 2005/03/12 06:43:35 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.66 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -788,14 +788,15 @@ NetNet* NetETernary::synthesize(Design *des)
       osig->local_flag(true);
 
 	/* Make sure both value operands are the right width. */
-      tsig = pad_to_width(des, tsig, width);
-      fsig = pad_to_width(des, fsig, width);
+      tsig = crop_to_width(des, pad_to_width(des, tsig, width), width);
+      fsig = crop_to_width(des, pad_to_width(des, fsig, width), width);
 
-      assert(width <= tsig->vector_width());
-      assert(width <= fsig->vector_width());
+      assert(width == tsig->vector_width());
+      assert(width == fsig->vector_width());
 
       perm_string oname = csig->scope()->local_symbol();
-      NetMux *mux = new NetMux(csig->scope(), oname, width, 2, width);
+      NetMux *mux = new NetMux(csig->scope(), oname, width,
+			       2, csig->vector_width());
       connect(tsig->pin(0), mux->pin_Data(1));
       connect(fsig->pin(0), mux->pin_Data(0));
       connect(osig->pin(0), mux->pin_Result());
@@ -842,6 +843,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.66  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.65  2005/03/12 06:43:35  steve
  *  Update support for LPM_MOD.
  *

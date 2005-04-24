@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.125 2005/04/06 05:29:09 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.126 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -431,7 +431,6 @@ static void draw_C8_to_string(char*result, size_t nresult,
 static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 {
       static char result[2048];
-      unsigned idx;
       unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
       ivl_net_const_t cptr;
       ivl_net_logic_t lptr;
@@ -551,15 +550,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
-	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
-		  if (ivl_lpm_q(lpm, idx) == nex) {
-		     sprintf(result, "L_%s.%s/%u",
-			     vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
-			     vvp_mangle_id(ivl_lpm_basename(lpm)), idx);
-		     return result;
-		  }
-	    break;
-
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CONCAT:
@@ -1591,26 +1581,10 @@ static void draw_lpm_ff(ivl_lpm_t net)
       ivl_expr_t aset_expr = 0;
       const char*aset_bits = 0;
 
-      unsigned width, idx;
+      ivl_nexus_t nex;
+      unsigned width;
 
       width = ivl_lpm_width(net);
-
-	/*        Q   C   CE  D   RS  --> Q+ */
-      fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
-	      " \"?" "r" "1" "0" "00"    "0\","
-	      " \"?" "r" "1" "1" "00"    "1\","
-	      " \"?" "r" "1" "x" "00"    "x\","
-	      " \"0" "r" "x" "0" "00"    "0\","
-	      " \"1" "r" "x" "1" "00"    "1\","
-	      " \"?" "*" "0" "?" "00"    "-\","
-	      " \"?" "_" "?" "?" "00"    "-\","
-	      " \"?" "?" "?" "?" "01"    "1\","
-	      " \"?" "?" "?" "?" "1?"    "0\","
-	      " \"?" "?" "1" "?" "00"    "-\","
-	      " \"?" "?" "?" "?" "00"    "-\""
-	      ";\n",
-	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)));
 
       aset_expr = ivl_lpm_aset_value(net);
       if (aset_expr) {
@@ -1618,59 +1592,30 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    aset_bits = ivl_expr_bits(aset_expr);
       }
 
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t tmp;
 
-	    fprintf(vvp_out, "L_%s.%s/%u .udp ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
+      fprintf(vvp_out, "L_%p .dff ", net);
 
-	    fprintf(vvp_out, "L_%s.%s/def, ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)));
+      nex = ivl_lpm_data(net,0);
+      assert(nex);
+      draw_input_from_net(nex);
 
-	    tmp = ivl_lpm_clk(net);
-	    draw_input_from_net(tmp);
+      nex = ivl_lpm_clk(net);
+      assert(nex);
+      fprintf(vvp_out, ", ");
+      draw_input_from_net(nex);
 
-	    tmp = ivl_lpm_enable(net);
+      nex = ivl_lpm_enable(net);
+      if (nex) {
 	    fprintf(vvp_out, ", ");
-	    if (tmp)
-		  draw_input_from_net(tmp);
-	    else
-		  fprintf(vvp_out, "C<1>");
-
-	    tmp = ivl_lpm_data(net, idx);
-	    assert(tmp);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(tmp);
-
-	      /* Connect reset input. This may be the Aclr input, or
-		 an Aset to zero. */
-	    fprintf(vvp_out, ", ");
-	    tmp = ivl_lpm_async_clr(net);
-	    if (tmp) {
-		  draw_input_from_net(tmp);
-	    } else {
-		  tmp = ivl_lpm_async_set(net);
-		  if (aset_bits && (aset_bits[idx] == '0'))
-			draw_input_from_net(tmp);
-		  else
-			fprintf(vvp_out, "C<0>");
-	    }
-
-	      /* Connect set input */
-	    fprintf(vvp_out, ", ");
-	    tmp = ivl_lpm_async_set(net);
-	    if (aset_bits && (aset_bits[idx] != '1'))
-		  tmp = 0;
-
-	    if (tmp)
-		  draw_input_from_net(tmp);
-	    else
-		  fprintf(vvp_out, "C<0>");
-
-	    fprintf(vvp_out, ";\n");
+	    draw_input_from_net(nex);
+      } else {
+	    fprintf(vvp_out, ", C4<1>");
       }
+
+	/* Stub asynchronous input for now. */
+      fprintf(vvp_out, ", C4<z>");
+
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_lpm_shiftl(ivl_lpm_t net)
@@ -1987,6 +1932,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.126  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.125  2005/04/06 05:29:09  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *

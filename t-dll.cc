@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.147 2005/04/06 05:29:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.148 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1500,36 +1500,17 @@ void dll_target::lpm_ff(const NetFF*net)
 	    obj->u_.ff.sset_value = 0;
       }
 
-      if (obj->u_.ff.width == 1) {
-	    nex = net->pin_Q(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+      nex = net->pin_Q().nexus();
+      assert(nex->t_cookie());
+      obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
+		    IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    nex = net->pin_Data(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      nex = net->pin_Data().nexus();
+      assert(nex->t_cookie());
+      obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-      } else {
-	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
-	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
-		  nex = net->pin_Q(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
-
-		  nex = net->pin_Data(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-      }
 }
 
 void dll_target::lpm_ram_dq(const NetRamDq*net)
@@ -2090,6 +2071,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.148  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.147  2005/04/06 05:29:08  steve
  *  Rework NetRamDq and IVL_LPM_RAM nodes.
  *

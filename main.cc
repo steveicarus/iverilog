@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.88 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: main.cc,v 1.89 2005/04/24 23:44:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,6 +112,7 @@ bool error_implicit = false;
 bool debug_scopes = false;
 bool debug_eval_tree = false;
 bool debug_elaborate = false;
+bool debug_synth2 = false;
 /*
  * Verbose messages enabled.
  */
@@ -318,6 +319,9 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"elaborate") == 0) {
 			debug_elaborate = true;
 			cerr << "debug: Enable elaborate debug" << endl;
+		  } else if (strcmp(cp,"synth2") == 0) {
+			debug_synth2 = true;
+			cerr << "debug: Enable synth2 debug" << endl;
 		  } else {
 		  }
 
@@ -754,6 +758,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.89  2005/04/24 23:44:02  steve
+ *  Update DFF support to new data flow.
+ *
  * Revision 1.88  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *
