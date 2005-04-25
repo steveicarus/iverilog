@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.42 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: synth2.cc,v 1.43 2005/04/25 01:35:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -49,6 +49,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return synth_async(des, scope, nex_map, nex_out);
 }
 
+#if 0
 static unsigned find_nexus_in_set(const NetBus&nset, const Nexus*nex)
 {
       unsigned idx = 0;
@@ -58,6 +59,7 @@ static unsigned find_nexus_in_set(const NetBus&nset, const Nexus*nex)
 
       return idx;
 }
+#endif
 
 /*
  * Async synthesis of assignments is done by synthesizing the rvalue
@@ -124,53 +126,47 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 	    return true;
       }
 
-#if 0
-      const perm_string tmp1 = perm_string::literal("tmp1");
-      const perm_string tmp2 = perm_string::literal("tmp2");
-
       bool flag = true;
       NetProc*cur = last_;
       do {
 	    cur = cur->next_;
 
-	      /* Create a temporary nex_map for the substatement. */
+	      /* Create a temporary map of the output only from this
+		 statement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-	    NetNet*tmp_map = new NetNet(scope, tmp1, NetNet::WIRE,
-					tmp_set.count());
-	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
-		  connect(tmp_set[idx], tmp_map->pin(idx));
+	    NetBus tmp_map (scope, tmp_set.count());
+	    for (unsigned idx = 0 ;  idx < tmp_set.count() ;  idx += 1)
+		  connect(tmp_set[idx], tmp_map.pin(idx));
 
-	      /* Create also a temporary net_out to collect the
-		 output. */
-	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
-					tmp_set.count());
+	      /* Create also a temporary NetBus to collect the
+		 output from the synthesis. */
+	    NetBus tmp_out (scope, tmp_set.count());
 
 	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out);
-	    flag = flag && ok_flag;
 
+	    flag = flag && ok_flag;
 	    if (ok_flag == false)
 		  continue;
 
-	      /* Use the nex_map to link up the output from the
-		 substatement to the output of the block as a whole. */
-	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
-		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
-	    }
+	      /* Now find the tmp_map pins in the nex_map global map,
+		 and use that to direct the connection to the nex_out
+		 output bus. Look for the nex_map pin that is linked
+		 to the tmp_map.pin(idx) pin, and link that to the
+		 tmp_out.pin(idx) output link. */
+	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
+		  unsigned ptr = 0;
+		  while (ptr < nex_map.pin_count()
+			 && ! nex_map.pin(ptr).is_linked(tmp_map.pin(idx)))
+			ptr += 1;
 
-	    delete tmp_map;
-	    delete tmp_out;
+		  assert(ptr < nex_out.pin_count());
+		  connect(nex_out.pin(ptr), tmp_out.pin(idx));
+	    }
 
       } while (cur != last_);
 
-      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
-#else
-      cerr << get_line() << ": sorry: "
-	    "forgot how to implement NetBlock::synth_async" << endl;
-      return false;
-#endif
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
@@ -398,22 +394,13 @@ bool NetProcTop::synth_async(Design*des)
 		 << nex_set.count() << " outputs." << endl;
       }
 
-#if 0
-      const perm_string tmp1 = perm_string::literal("tmp");
-      NetNet*nex_out = new NetNet(scope(), tmp1, NetNet::WIRE,
-				  nex_set.count());
-      for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
-	    connect(nex_set[idx], nex_out->pin(idx));
+      NetBus nex_q (scope(), nex_set.count());
+      for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
+	    connect(nex_set[idx], nex_q.pin(idx));
+      }
 
-      bool flag = statement_->synth_async(des, scope(), nex_out, nex_out);
-
-      delete nex_out;
+      bool flag = statement_->synth_async(des, scope(), nex_q, nex_q);
       return flag;
-#else
-      cerr << get_line() << ": sorry: "
-	   << "forgot to implement NetProcTop::synth_async" << endl;
-      return false;
-#endif
 }
 
 /*
@@ -1049,6 +1036,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.43  2005/04/25 01:35:58  steve
+ *  Reimplement basic asynchronous processes.
+ *
  * Revision 1.42  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *
