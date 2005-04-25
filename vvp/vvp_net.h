@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.23 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.24 2005/04/25 04:42:17 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -85,17 +85,20 @@ class vvp_vector4_t {
     public:
       explicit vvp_vector4_t(unsigned size =0);
 
+      vvp_vector4_t(const vvp_vector4_t&that);
+      vvp_vector4_t& operator= (const vvp_vector4_t&that);
+
       ~vvp_vector4_t();
 
       unsigned size() const { return size_; }
       vvp_bit4_t value(unsigned idx) const;
       void set_bit(unsigned idx, vvp_bit4_t val);
 
+	// Test that the vectors are exactly equal
+      bool eeq(const vvp_vector4_t&that) const;
+
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
-
-      vvp_vector4_t(const vvp_vector4_t&that);
-      vvp_vector4_t& operator= (const vvp_vector4_t&that);
 
     private:
       unsigned size_;
@@ -610,6 +613,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       vvp_vector8_t bits8_;
       bool type_is_vector8_() const;
 
+	// This is true until at least one propagation happens.
+      bool needs_init_;
+
       bool continuous_assign_active_;
 
       vvp_vector4_t force_;
@@ -692,6 +698,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.24  2005/04/25 04:42:17  steve
+ *  vvp_fun_signal eliminates duplicate propagations.
+ *
  * Revision 1.23  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.

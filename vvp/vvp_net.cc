@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.24 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.25 2005/04/25 04:42:17 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -300,6 +300,27 @@ void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 	    bits_val_ &= ~mask;
 	    bits_val_ |= val << (2*off);
       }
+}
+
+bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+
+      unsigned words = (size_+bits_per_word-1) / bits_per_word;
+      if (words == 1) {
+	    if (bits_val_ == that.bits_val_)
+		  return true;
+	    else
+		  return false;
+      }
+
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    if (bits_ptr_[idx] != that.bits_ptr_[idx])
+		  return false;
+      }
+
+      return true;
 }
 
 char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
@@ -666,7 +687,7 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 /* **** vvp_fun_signal methods **** */
 
 vvp_fun_signal::vvp_fun_signal(unsigned wid)
-: bits4_(wid)
+: bits4_(wid), needs_init_(true)
 {
       vpi_callbacks = 0;
       continuous_assign_active_ = false;
@@ -680,15 +701,27 @@ bool vvp_fun_signal::type_is_vector8_() const
 
 /*
  * Nets simply reflect their input to their output.
- */
+ *
+ * NOTE: It is a quirk of vvp_fun_signal that it has an initial value
+ * that needs to be propagated, but after that it only needs to
+ * propagate if the value changes. Elimitating duplicate propagations
+ * should improve performance, but has the quirk that an input that
+ * matches the initial value might not be propagated. The hack used
+ * herein is to keep a "needs_init_" flag that is turned false after
+ * the first propagation, and forces the first propagation to happen
+ * even if it matches the initial value.
+ */ */
 void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
-	    if (! continuous_assign_active_) {
-		  bits4_ = bit;
-		  vvp_send_vec4(ptr.ptr()->out, bit);
-		  run_vpi_callbacks();
+	    if (!continuous_assign_active_) {
+		  if (needs_init_ || !bits4_.eeq(bit)) {
+			bits4_ = bit;
+			needs_init_ = false;
+			vvp_send_vec4(ptr.ptr()->out, bit);
+			run_vpi_callbacks();
+		  }
 	    }
 	    break;
 
@@ -731,6 +764,7 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t bit,
 			      break;
 			bits4_.set_bit(base+idx, bit.value(idx));
 		  }
+		  needs_init_ = false;
 		  vvp_send_vec4(ptr.ptr()->out, bits4_);
 		  run_vpi_callbacks();
 	    }
@@ -749,6 +783,7 @@ void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 
       if (! continuous_assign_active_) {
 	    bits8_ = bit;
+	    needs_init_ = false;
 	    vvp_send_vec8(ptr.ptr()->out, bit);
 	    run_vpi_callbacks();
       }
@@ -1303,6 +1338,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.25  2005/04/25 04:42:17  steve
+ *  vvp_fun_signal eliminates duplicate propagations.
+ *
  * Revision 1.24  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.
