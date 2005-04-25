@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.66 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.67 2005/04/25 01:30:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,14 +45,14 @@ NetNet* NetEBAdd::synthesize(Design*des)
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
 
-      assert(expr_width() >= lsig->pin_count());
-      assert(expr_width() >= rsig->pin_count());
+      assert(expr_width() >= lsig->vector_width());
+      assert(expr_width() >= rsig->vector_width());
 
       lsig = pad_to_width(des, lsig, expr_width());
       rsig = pad_to_width(des, rsig, expr_width());
 
-      assert(lsig->pin_count() == rsig->pin_count());
-      unsigned width=lsig->pin_count();
+      assert(lsig->vector_width() == rsig->vector_width());
+      unsigned width=lsig->vector_width();
 
       perm_string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
@@ -644,27 +644,26 @@ NetNet* NetEUBits::synthesize(Design*des)
       NetScope*scope = isig->scope();
       assert(scope);
 
+      unsigned width = isig->vector_width();
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, isig->pin_count());
+			       NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    perm_string oname = scope->local_symbol();
-	    NetLogic*gate;
+      perm_string oname = scope->local_symbol();
+      NetLogic*gate;
 
-	    switch (op()) {
-		case '~':
-		  gate = new NetLogic(scope, oname, 2, NetLogic::NOT, 1);
-		  break;
-		default:
-		  assert(0);
-	    }
-
-	    connect(osig->pin(idx), gate->pin(0));
-	    connect(isig->pin(idx), gate->pin(1));
-
-	    des->add_node(gate);
+      switch (op()) {
+	  case '~':
+	    gate = new NetLogic(scope, oname, 2, NetLogic::NOT, width);
+	    break;
+	  default:
+	    assert(0);
       }
+
+      connect(osig->pin(0), gate->pin(0));
+      connect(isig->pin(0), gate->pin(1));
+
+      des->add_node(gate);
 
       return osig;
 }
@@ -843,6 +842,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.67  2005/04/25 01:30:31  steve
+ *  synthesis of add and unary get vector widths right.
+ *
  * Revision 1.66  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *
