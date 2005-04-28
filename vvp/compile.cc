@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.197 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.198 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -27,7 +27,6 @@
 # include  "resolv.h"
 # include  "udp.h"
 # include  "memory.h"
-# include  "force.h"
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -635,7 +634,6 @@ void compile_init(void)
       sym_vpi = new_symbol_table();
 
       sym_functors = new_symbol_table();
-      functor_init();
 
       sym_codespace = new_symbol_table();
       codespace_init();
@@ -807,21 +805,6 @@ void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
       fprintf(stderr, "              : I'm driving functor 0x%x\n", out);
       assert(0);
 }
-
-#if 0
-static vvp_ipoint_t make_const_functor(unsigned val,
-				       unsigned str0,
-				       unsigned str1)
-{
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = new const_functor_s(str0, str1);
-      functor_define(fdx, obj);
-
-      obj->put_oval(val, false);
-
-      return fdx;
-}
-#endif
 
 /* Lookup a functor[idx] and save the ipoint in *ref. */
 
@@ -1107,31 +1090,6 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       free(type);
       free(label);
       free(argv);
-}
-
-void compile_force(char*label, struct symb_s signal,
-		   unsigned argc, struct symb_s*argv)
-{
-#if 0
-      vvp_ipoint_t ifofu = functor_allocate(argc);
-      define_functor_symbol(label, ifofu);
-
-      for (unsigned i=0; i<argc; i++) {
-	    functor_t obj = new force_functor_s;
-	    vvp_ipoint_t iobj = ipoint_index(ifofu, i);
-	    functor_define(iobj, obj);
-
-	    functor_ref_lookup(&obj->out, strdup(signal.text), signal.idx + i);
-
-	    // connect the force expression, one bit.
-	    inputs_connect(iobj, 1, &argv[i]);
-      }
-#else
-      fprintf(stderr, "XXXX compile_force not implemented\n");
-#endif
-      free(argv);
-      free(signal.text);
-      free(label);
 }
 
 void compile_udp_def(int sequ, char *label, char *name,
@@ -1566,6 +1524,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.198  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.197  2005/04/24 20:07:26  steve
  *  Add DFF nodes.
  *

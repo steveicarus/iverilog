@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.9 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: npmos.cc,v 1.10 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -25,6 +25,7 @@
 
 void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
 {
+#if 0
       put(ptr, v);
 
       unsigned pp = ipoint_port(ptr);
@@ -86,10 +87,16 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
       }
 
       put_ostr(val, str, push);
+#else
+      assert(0); // not implemented.
+#endif
 }
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.10  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.9  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.63 2005/04/24 20:07:26 steve Exp $
+ *  $Id: README.txt,v 1.64 2005/04/28 04:59:53 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -553,7 +553,7 @@ that value. However, there are times when the value of a functor
 task, the %force/link instruction exists:
 
 	%force/link <dst>, <src> ;
-	%release/link <dst> ;
+	%release/link <dst>, <src> ;
 
 This causes the output of the node <src> to be linked to the force
 input of the <dst> .var/.net node. When linked, the output functor
@@ -564,7 +564,7 @@ node. The matching %release/link instruction removes the link (a
 The instructions:
 
 	%cassign/link <dst>, <src> ;
-	%deassign/link <dst> ;
+	%deassign/link <dst>, <src> ;
 
 are the same concept, but for the continuous assign port.
 

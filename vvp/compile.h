@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.69 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: compile.h,v 1.70 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -113,12 +113,6 @@ extern void compile_part_select(char*label, char*src,
 extern void compile_part_select_pv(char*label, char*src,
 				   unsigned base, unsigned wid,
 				   unsigned vec_wid);
-
-/*
- * This is called by the parser to make force functors.
- */
-extern void compile_force(char*label, struct symb_s signal,
-			  unsigned argc, struct symb_s*argv);
 
 /*
  * This is called by the parser to make the various arithmetic and
@@ -315,6 +309,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.70  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.69  2005/04/24 20:07:26  steve
  *  Add DFF nodes.
  *

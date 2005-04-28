@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.25 2005/04/25 04:42:17 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.26 2005/04/28 04:59:53 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -710,7 +710,7 @@ bool vvp_fun_signal::type_is_vector8_() const
  * herein is to keep a "needs_init_" flag that is turned false after
  * the first propagation, and forces the first propagation to happen
  * even if it matches the initial value.
- */ */
+ */
 void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       switch (ptr.port()) {
@@ -1338,6 +1338,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.26  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.25  2005/04/25 04:42:17  steve
  *  vvp_fun_signal eliminates duplicate propagations.
  *

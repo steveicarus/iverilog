@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.51 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.52 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -131,7 +131,6 @@
 ".mem" 	       { return K_MEM; }
 ".mem/p"(ort)? { return K_MEM_P; }
 ".mem/i"(nit)? { return K_MEM_I; }
-".force"     { return K_FORCE; }
 
   /* instructions start with a % character. The compiler decides what
      kind of instruction this really is. The few exceptions (that have
@@ -195,6 +194,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.52  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.51  2005/04/24 20:07:26  steve
  *  Add DFF nodes.
  *

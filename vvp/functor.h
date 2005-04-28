@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.56 2005/04/03 06:16:54 steve Exp $"
+#ident "$Id: functor.h,v 1.57 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 /* NOTE: THIS FILE IS BEOING PHASED OUT. IT'S FUNCTIONALITY IS OBSOLETE. */
@@ -99,52 +99,6 @@ enum strength_e {
 
 
 /*
- * Initialize the functors address space. This function must be called
- * exactly once before any of the other functor functions may be
- * called.
- */
-extern void functor_init(void);
-
-/*
- * This function allocates a functor and returns the vvp_ipoint_t
- * address for it. Every call to functor_allocate is guaranteed to
- * return a different vvp_ipoint_t address. The ipoint port bits are 0.
- *
- * If the wid is >1, a bunch of contiguous functors is created, and
- * the return value is the address of the first in the vector.
- */
-extern vvp_ipoint_t functor_allocate(unsigned wid);
-
-/*
-** Return the number of allocated functors
-*/
-extern unsigned functor_limit();
-
-/*
- * Given an ipoint_t pointer, return a C pointer to the functor. This
- * is like a pointer dereference. The point parameter must have been
- * returned from a previous call to functor_allocate.
- */
-
-extern functor_t **functor_list;
-static const unsigned functor_chunk_size = 0x400;
-
-inline static functor_t functor_index(vvp_ipoint_t point)
-{
-      unsigned index1 = point/4/functor_chunk_size;
-      unsigned index2 = (point/4) % functor_chunk_size;
-
-      return functor_list[index1][index2];
-}
-
-/*
- * This function defines the functor object.  After allocation an ipoint,
- * you must call this before functor_index() is called on it.
- */
-extern void functor_define(vvp_ipoint_t point, functor_t obj);
-
-
-/*
 **                   The functor object
 */
 
@@ -204,145 +158,13 @@ struct functor_s {
       void propagate(unsigned val, unsigned str, bool push);
 };
 
-/*
- *  Set the ival for input port ptr to value val.
- */
-
-inline void functor_s::put(vvp_ipoint_t ptr, unsigned val)
-{
-      static const unsigned char ival_mask[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
-      unsigned pp = ipoint_port(ptr);
-      unsigned char imask = ival_mask[pp];
-      ival = (ival & imask) | ((val & 3) << (2*pp));
-}
-
-inline void functor_s::propagate(bool push)
-{
-      propagate(get_oval(), get_ostr(), push);
-}
-
-inline void functor_s::put_oval(unsigned val, bool push, bool nba_flag)
-{
-      unsigned char str;
-      switch (val) {
-	  case 0:
-	    str = 0x00 | (odrive0<<0) | (odrive0<<4);
-	    break;
-	  case 1:
-	    str = 0x88 | (odrive1<<0) | (odrive1<<4);
-	    break;
-	  case 2:
-	    str = 0x80 | (odrive0<<0) | (odrive1<<4);
-	    break;
-	  default:
-	    str = 0x00;
-	    break;
-      }
-
-      put_ostr(val, str, push, nba_flag);
-}
-
-/*
- * functor_set sets the addressed input to the specified value, and
- * calculates a new output value. If there is any propagation to do,
- * propagation events are created. Propagation calls further
- * functor_set methods for the functors connected to the output.
- *
- * The val contains 2 bits two represent the 4-value bit. The str
- * version is also passed, and typically just stored in the
- * functor.
- */
-
-/*
- * Set the addressed bit of the functor, and recalculate the
- * output. If the output changes any, then generate the necessary
- * propagation events to pass the output on.
- */
-inline static
-void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
-{
-      functor_t fp = functor_index(ptr);
-      fp->set(ptr, push, val, str);
-}
-
-/*
- * Read the value of the functor. In fact, only the *value* is read --
- * the strength of that value is stripped off.
- */
-inline static
-unsigned functor_get(vvp_ipoint_t ptr)
-{
-      functor_t fp = functor_index(ptr);
-      return fp->get();
-}
-
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.57  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.56  2005/04/03 06:16:54  steve
  *  Remove dead fvectors class.
- *
- * Revision 1.55  2005/04/03 06:13:34  steve
- *  Remove dead fvectors class.
- *
- * Revision 1.54  2005/03/06 17:25:03  steve
- *  Remove dead code from scheduler.
- *
- * Revision 1.53  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.52  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.51  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.50  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.49  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.48  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.47  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.46  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.45  2002/03/17 03:23:10  steve
- *  Force the push flags to be explicit.
- *
- * Revision 1.44  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.43  2002/01/06 03:15:13  steve
- *  Support weak functor inputs.
- *
- * Revision 1.42  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
- *
- * Revision 1.41  2001/12/14 01:59:28  steve
- *  Better variable names for functor chunks.
- *
- * Revision 1.40  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.39  2001/11/10 18:07:12  steve
- *  Runtime support for functor delays. (Stephan Boettcher)
- *
- * Revision 1.38  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.37  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.36  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  */
 #endif

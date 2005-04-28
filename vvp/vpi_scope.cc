@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.33 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -224,16 +224,18 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 **  the same module.  But those should have the same delays anyway.
 **
 */
-
+#if 0
 struct functor_scope_s {
       vpiHandle scope;
       unsigned start;
 };
-
+#endif
+#if 0
 static struct functor_scope_s * functor_scopes = 0;
 static unsigned n_functor_scopes = 0;
 static unsigned a_functor_scopes = 0;
-
+#endif
+#if 0
 void functor_set_scope(vpiHandle scope)
 {
       unsigned nfun = functor_limit();
@@ -264,7 +266,8 @@ void functor_set_scope(vpiHandle scope)
       last->start = nfun;
       last->scope = scope;
 }
-
+#endif
+#if 0
 /*
 **  Look up the scope of a functor.
 **
@@ -294,6 +297,7 @@ vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
       functor_scope_s *cur = &functor_scopes[first];
       return cur->scope;
 }
+#endif
 
 static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
@@ -439,15 +443,18 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
 	      /* Root scopes inherit time_units from system precision. */
 	    scope->time_units = vpip_get_time_precision();
       }
-
+#if 0
       functor_set_scope(&current_scope->base);
+#endif
 }
 
 void compile_scope_recall(char*symbol)
 {
       compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
       assert(current_scope);
+#if 0
       functor_set_scope(&current_scope->base);
+#endif
 }
 
 /*
@@ -473,6 +480,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.33  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.32  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

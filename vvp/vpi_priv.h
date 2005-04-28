@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.61 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.62 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -370,13 +370,14 @@ extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 extern const char* vpip_string(const char*str);
 extern const char* vpip_name_string(const char*str);
 
+#if 0
 /*
 **  Functions defined in vpi_scope.cc, to keep track of functor scope.
 */
 
 extern vpiHandle ipoint_get_scope(vvp_ipoint_t ipt);
 extern void functor_set_scope(vpiHandle scope);
-
+#endif
 /*
  * This function is used to make decimal string versions of various
  * vectors. The input format is an array of bit values (0, 1, 2, 3)
@@ -417,6 +418,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.62  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.61  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

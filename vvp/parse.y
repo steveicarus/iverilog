@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.72 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: parse.y,v 1.73 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -68,7 +68,7 @@ extern FILE*yyin;
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
-%token K_FORCE  K_WORD
+%token K_WORD
 %token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision
@@ -197,14 +197,6 @@ statement
         | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
 	  symbols ';'
                 { compile_concat($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
-
-  /* Force statements are very much like functors. They are
-     compiled to functors of a different mode. */
-
-	| T_LABEL K_FORCE symbol ',' symbols ';'
-		{ struct symbv_s obj = $5;
-		  compile_force($1, $3, obj.cnt, obj.vect);
-		}
 
   /* Arithmetic statements generate functor arrays of a given width
      that take like size input vectors. */
@@ -686,6 +678,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.73  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.72  2005/04/24 20:07:26  steve
  *  Add DFF nodes.
  *

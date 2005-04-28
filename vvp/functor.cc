@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.47 2005/04/03 06:13:34 steve Exp $"
+#ident "$Id: functor.cc,v 1.48 2005/04/28 04:59:53 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -31,191 +31,16 @@
 
 # include  <stdio.h>
 
-/*
- * Functors are created as the source design is read in. Each is
- * assigned an ipoint_t address starting from 1. The design is
- * expected to have a create many functors, so it makes sense to
- * allocate the functors in chunks. This structure describes a chunk
- * of functors.
- *
- * The 32bit vvp_ipoint_t allows for 2**30 functors in the
- * design. (2 bits are used to select the input of the functor.) The
- * functor address is, for the purpose of lookup up addresses, divided
- * into three parts, the index within a chunk, the index of the chunk
- * within an index1 table, and the index of the index1 within the root
- * table. There is a single root table. The index1 tables and chunk
- * tables are allocated as needed.
- */
-
-functor_t **functor_list = 0x0;
-static unsigned functor_count = 0;
-static unsigned functor_chunk_count = 0;
-
-/*
- * This function initializes the functor address space by creating the
- * zero functor. This means creating a functor_index1 and a
- * functor_index0, and initializing the count to 1.
- */
-void functor_init(void)
-{
-	// allocate the ZERO functor.
-      functor_allocate(1);
-}
-
-unsigned functor_limit()
-{
-      return functor_count;
-}
-
-/*
- * Allocate normally is just a matter of incrementing the functor_count
- * and returning a pointer to the next unallocated functor. However,
- * if we overrun an allocated chunk, we need to allocate the needed
- * bits first.
- */
-vvp_ipoint_t functor_allocate(unsigned wid)
-{
-      vvp_ipoint_t idx = functor_count*4;
-      functor_count += wid;
-      count_functors += wid;
-
-      if (functor_count > functor_chunk_count*functor_chunk_size) {
-
-	      // enlarge the list of chunks
-	    unsigned fa = (functor_count + functor_chunk_size - 1)
-		  / functor_chunk_size;
-
-	    functor_list = (functor_t **)
-		  realloc(functor_list, fa*sizeof(functor_t*));
-	    assert(functor_list);
-
-	      // allocate the chunks of functor pointers.
-	    while (fa > functor_chunk_count) {
-
-		  functor_list[functor_chunk_count] = (functor_t *)
-			malloc(functor_chunk_size * sizeof(functor_t));
-		  assert(functor_list[functor_chunk_count]);
-
-		  memset(functor_list[functor_chunk_count], 0,
-			 functor_chunk_size * sizeof(functor_t));
-
-		  functor_chunk_count += 1;
-	    }
-      }
-
-      return idx;
-}
-
-void functor_define(vvp_ipoint_t point, functor_t obj)
-{
-      unsigned index1 = point/4/functor_chunk_size;
-      unsigned index2 = (point/4) % functor_chunk_size;
-      functor_list[index1][index2] = obj;
-}
-
-#if 0
-functor_s::functor_s()
-{
-      delay = 0;
-      out = 0;
-      port[0] = 0;
-      port[1] = 0;
-      port[2] = 0;
-      port[3] = 0;
-      ival = 0xaa;
-      cval = 2;
-      oval = 2;
-      odrive0 = 6;
-      odrive1 = 6;
-      ostr = StX;
-      cstr = StX;
-      inhibit = 0;
-}
-#endif
 functor_s::~functor_s()
 {
 }
 
 /*
- * This method sets the saved output value, bits and strength, then
- * propagates that value to the connected inputs.
- */
-void functor_s::propagate(unsigned val, unsigned str, bool push)
-{
-      cval = val;
-      cstr = str;
-      vvp_ipoint_t idx = out;
-      while (idx) {
-	    functor_t idxp = functor_index(idx);
-	    idxp->set(idx, push, val, str);
-	    idx = idxp->port[ipoint_port(idx)];
-      }
-
-}
-
-void functor_s::put_ostr(unsigned val, unsigned str,
-			 bool push, bool nba_flag)
-{
-#if 0
-      if (str != get_ostr() || val != get_oval()) {
-
-	    unsigned char ooval = oval;
-	    ostr = str;
-	    oval = val;
-
-	      /* If output is inhibited (by a .force functor) then
-		 this is as far as we go. */
-	    if (inhibit)
-		  return;
-
-	    unsigned del;
-	    if (delay)
-	      del = vvp_delay_get(delay, ooval, val);
-	    else
-	      del = 0;
-
-	    if (push && del == 0) {
-		  propagate(push);
-	    }
-	    else
-		  schedule(del, nba_flag);
-      }
-#endif
-}
-
-/*
  * $Log: functor.cc,v $
+ * Revision 1.48  2005/04/28 04:59:53  steve
+ *  Remove dead functor code.
+ *
  * Revision 1.47  2005/04/03 06:13:34  steve
  *  Remove dead fvectors class.
- *
- * Revision 1.46  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.45  2005/03/06 17:25:03  steve
- *  Remove dead code from scheduler.
- *
- * Revision 1.44  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.43  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.42  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.41  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.40  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.39  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.38  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.37  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
  */
 
