@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.64 2005/04/28 04:59:53 steve Exp $
+ *  $Id: README.txt,v 1.65 2005/05/01 22:05:21 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -547,24 +547,26 @@ being forced.
 FORCE STATEMENTS (new method - implement me):
 
 A %force instruction, as described in the .var section, forces a
-constant value onto a .var or .net, and the matching %release release
+constant value onto a .var or .net, and the matching %release releases
 that value. However, there are times when the value of a functor
 (i.e. another .net) needs to be forced onto a .var or .net. For this
 task, the %force/link instruction exists:
 
 	%force/link <dst>, <src> ;
-	%release/link <dst>, <src> ;
+	%release/link <dst> ;
 
 This causes the output of the node <src> to be linked to the force
 input of the <dst> .var/.net node. When linked, the output functor
 will automatically drive values to the force port of the destination
 node. The matching %release/link instruction removes the link (a
-%release is still needed) to the destination.
+%release is still needed) to the destination. The %release/link
+releases the last %force/link, no matter where the link is from. A new
+%force/link will remove a previous link.
 
 The instructions:
 
 	%cassign/link <dst>, <src> ;
-	%deassign/link <dst>, <src> ;
+	%deassign/link <dst> ;
 
 are the same concept, but for the continuous assign port.
 

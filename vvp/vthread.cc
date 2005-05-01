@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.133 2005/03/22 05:18:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.134 2005/05/01 22:05:21 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -671,6 +671,32 @@ bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * the %cassign/link instruction connects a source node to a
+ * destination node. The destination node must be a signal, as it is
+ * marked with the source of the cassign so that it may later be
+ * unlinked without specifically knowing the source that this
+ * instruction used.
+ */
+bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*dst = cp->net;
+      vvp_net_t*src = cp->net2;
+
+	/* For now, assert that the destination continuous assign
+	   input is empty. That should be so as you can have only one
+	   continuous assignment active for the destination. */
+      assert(dst->port[1].nil());
+
+	/* Link the output of the src to the port[1] (the cassign
+	   port) of the destination. */
+      vvp_net_ptr_t dst_ptr (dst, 1);
+      dst->port[1] = src->out;
+      src->out = dst_ptr;
+
+      return true;
+}
+
+/*
  * the %cassign/v instruction invokes a continuous assign of a
  * constant value to a signal. The instruction arguments are:
  *
@@ -957,6 +983,8 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
  * This implements the %deassign instruction. All we do is write a
  * long(1) to port-3 of the addressed net. This turns off an active
  * continuous assign activated by %cassign/v
+ *
+ * FIXME: This does not remove a linked %cassign/link. It should.
  */
 bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 {
@@ -3124,6 +3152,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.134  2005/05/01 22:05:21  steve
+ *  Add cassign/link instruction.
+ *
  * Revision 1.133  2005/03/22 05:18:34  steve
  *  The indexed set can write a vector, not just a bit.
  *

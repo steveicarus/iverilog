@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.198 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.199 2005/05/01 22:05:21 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -95,6 +95,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
+      { "%cassign/link",of_CASSIGN_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%cassign/v",of_CASSIGN_V,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1524,6 +1525,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.199  2005/05/01 22:05:21  steve
+ *  Add cassign/link instruction.
+ *
  * Revision 1.198  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *

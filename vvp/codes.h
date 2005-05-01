@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.70 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: codes.h,v 1.71 2005/05/01 22:05:21 steve Exp $"
 #endif
 
 
@@ -48,6 +48,7 @@ extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
+extern bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_V(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
@@ -171,6 +172,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.71  2005/05/01 22:05:21  steve
+ *  Add cassign/link instruction.
+ *
  * Revision 1.70  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
