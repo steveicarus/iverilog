@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.105 2005/03/22 05:18:34 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.106 2005/05/01 22:04:12 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -804,11 +804,25 @@ static int show_stmt_cassign(ivl_statement_t net)
 	   the expression value to the l-value. */
       force_vector_to_lval(net, rvec);
 
-	/* FIXME: The above, left as is, assumes that the expression
-	   is a constant value to be assigned to the target. If it is
-	   not, then we will need to generate a thread or netlist to
-	   deal with the expression and repetitively assign to the
-	   target. */
+	/* If the r-value expression is not a signal, then this
+	   expression is apparently just to be continuous-assigned as
+	   a constant value. */
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL)
+	    return 0;
+
+      {
+	    ivl_signal_t rsig = ivl_expr_signal(rval);
+	    ivl_lval_t lval;
+	    ivl_signal_t lsig;
+
+	    assert(ivl_stmt_lvals(net) == 1);
+	    lval = ivl_stmt_lval(net, 0);
+	    lsig = ivl_lval_sig(lval);
+
+	    fprintf(vvp_out, "  %%cassign/link");
+	    fprintf(vvp_out, " V_%s", vvp_signal_label(lsig));
+	    fprintf(vvp_out, ", V_%s;\n", vvp_signal_label(rsig));
+      }
 
       return 0;
 }
@@ -1468,6 +1482,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.106  2005/05/01 22:04:12  steve
+ *  Link signals that are source of procedural continuous assign.
+ *
  * Revision 1.105  2005/03/22 05:18:34  steve
  *  The indexed set can write a vector, not just a bit.
  *
