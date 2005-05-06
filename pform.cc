@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.130 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: pform.cc,v 1.131 2005/05/06 00:25:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1190,7 +1190,10 @@ void pform_makewire(const vlltype&li,
 		  PEIdent*lval = new PEIdent(hname_t(first->name));
 		  lval->set_file(li.text);
 		  lval->set_lineno(li.first_line);
-		  pform_make_pgassign(lval, first->expr, delay, str);
+		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
+						     delay, str);
+		  ass->set_file(li.text);
+		  ass->set_lineno(li.first_line);
 	    }
 
 	    free(first->name);
@@ -1597,6 +1600,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.131  2005/05/06 00:25:13  steve
+ *  Handle synthesis of concatenation expressions.
+ *
  * Revision 1.130  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

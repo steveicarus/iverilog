@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.67 2005/04/25 01:30:31 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.68 2005/05/06 00:25:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -588,19 +588,14 @@ NetNet* NetEConcat::synthesize(Design*des)
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
-	/* Connect the output vector to the operands. */
-      unsigned obit = 0;
-      for (unsigned idx = parms_.count() ;  idx > 0 ;  idx -= 1) {
+      NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
+				       osig->vector_width(), parms_.count());
+      concat->set_line(*this);
+      des->add_node(concat);
+      connect(concat->pin(0), osig->pin(0));
 
-	    assert(tmp[idx-1]);
-
-	    for (unsigned bit = 0;  bit < tmp[idx-1]->pin_count(); bit += 1) {
-		  connect(osig->pin(obit), tmp[idx-1]->pin(bit));
-		  obit += 1;
-	    }
-
-	    if (tmp[idx-1]->local_flag() && tmp[idx-1]->get_refs() == 0)
-		  delete tmp[idx-1];
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    connect(concat->pin(idx+1), tmp[parms_.count()-idx-1]->pin(0));
       }
 
       delete[]tmp;
@@ -842,6 +837,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.68  2005/05/06 00:25:13  steve
+ *  Handle synthesis of concatenation expressions.
+ *
  * Revision 1.67  2005/04/25 01:30:31  steve
  *  synthesis of add and unary get vector widths right.
  *

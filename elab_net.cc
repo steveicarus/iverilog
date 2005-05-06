@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.160 2005/04/08 04:52:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.161 2005/05/06 00:25:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -491,6 +491,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+
 	/* Elaborate the operands of the compare first as expressions
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
@@ -651,6 +652,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  connect(gate->pin(1), lsig->pin(0));
 		  connect(gate->pin(2), rsig->pin(0));
 		  break;
+	    }
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Elaborate net == gate."
+		       << endl;
 	    }
 
 	      /* Oh well, do the general case with a NetCompare. */
@@ -2502,6 +2508,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.161  2005/05/06 00:25:13  steve
+ *  Handle synthesis of concatenation expressions.
+ *
  * Revision 1.160  2005/04/08 04:52:31  steve
  *  Make clear that memory addresses are cannonical.
  *
