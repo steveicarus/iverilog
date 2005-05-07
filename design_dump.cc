@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.157 2005/03/09 05:52:03 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.158 2005/05/07 03:13:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -536,10 +536,10 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       dump_lval(o);
 
       o << " = ";
-#if 0
-      if (l_val(0)->rise_time())
-	    o << "#" << l_val(0)->rise_time() << " ";
-#endif
+
+      if (const NetExpr*de = get_delay())
+	    o << "#(" << *de << ") ";
+
       o << *rval() << ";" << endl;
 }
 
@@ -549,10 +549,10 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
       dump_lval(o);
 
       o << " <= ";
-#if 0
-      if (l_val(0)->rise_time())
-	    o << "#" << l_val(0)->rise_time() << " ";
-#endif
+
+      if (const NetExpr*de = get_delay())
+	    o << "#(" << *de << ") ";
+
       o << *rval() << ";" << endl;
 
 }
@@ -1143,6 +1143,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.158  2005/05/07 03:13:30  steve
+ *  Include delay expressions for assignments in dump.
+ *
  * Revision 1.157  2005/03/09 05:52:03  steve
  *  Handle case inequality in netlists.
  *
