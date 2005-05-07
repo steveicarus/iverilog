@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.24 2005/04/25 04:42:17 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.25 2005/05/07 03:14:50 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -109,6 +109,7 @@ class vvp_vector4_t {
 };
 
 extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
+extern ostream& operator << (ostream&, const vvp_vector4_t&);
 
 extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
 			       const vvp_vector4_t&b,
@@ -698,6 +699,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.25  2005/05/07 03:14:50  steve
+ *  ostream insert for vvp_vector4_t objects.
+ *
  * Revision 1.24  2005/04/25 04:42:17  steve
  *  vvp_fun_signal eliminates duplicate propagations.
  *
