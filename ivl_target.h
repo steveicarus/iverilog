@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.152 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.153 2005/05/07 03:14:00 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -1516,6 +1516,12 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * expression width of the r-values matches. It handles padding or
  * operator sizing as needed to get the width exactly right.
  *
+ * The blocking and non-blocking assignments may also have an internal
+ * delay. These are of the form "lval = #<delay> rval;" and <delay> is
+ * the internal delay expression. (It is internal because it is inside
+ * the statement.) The ivl_stmt_delay_expr function returns the
+ * expression for the delay, or nil if there is no delay expression.
+ *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The
  * l-value is the same as any other assignment (use ivl_stmt_lval).
@@ -1647,6 +1653,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.153  2005/05/07 03:14:00  steve
+ *  Clarify internal delays for assignments.
+ *
  * Revision 1.152  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *
