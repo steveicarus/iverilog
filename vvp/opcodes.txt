@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.62 2005/03/22 05:18:34 steve Exp $
+ *  $Id: opcodes.txt,v 1.63 2005/05/07 03:15:42 steve Exp $
  */
 
 
@@ -100,12 +100,18 @@ index register 0.
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.
 
+* %assign/v0x1 <var-label>, <delay>, <bit>
+
+This is similar to the %assign/v0 instruction, but adds the index-1
+index register with the canonical index of the destination where the
+vector is to be written. This allows for part writes into the vector.
+
 * %assign/wr <vpi-label>, <delay>, <index>
 
 This instruction causes a non-blocking assign of the indexed value to
 the real object addressed by the <vpi-label> label.
 
-* %assign/x0 <var-label>, <delay>, <bit>
+* %assign/x0 <var-label>, <delay>, <bit> (OBSOLETE -- See %assign/v0x)
 
 This does a non-blocking assignment to a functor, similar to the
 %assign instruction. The <var-label> identifies the base functor of

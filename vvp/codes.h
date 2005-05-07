@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.71 2005/05/01 22:05:21 steve Exp $"
+#ident "$Id: codes.h,v 1.72 2005/05/07 03:15:42 steve Exp $"
 #endif
 
 
@@ -44,6 +44,7 @@ extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
@@ -172,6 +173,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.72  2005/05/07 03:15:42  steve
+ *  Implement non-blocking part assign.
+ *
  * Revision 1.71  2005/05/01 22:05:21  steve
  *  Add cassign/link instruction.
  *

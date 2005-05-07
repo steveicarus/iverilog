@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.134 2005/05/01 22:05:21 steve Exp $"
+#ident "$Id: vthread.cc,v 1.135 2005/05/07 03:15:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -570,6 +570,33 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (cp->net, 0);
       schedule_assign_vector(ptr, value, delay);
+
+      return true;
+}
+
+/*
+ * This is %assign/v0/x1 <label>, <delay>, <bit>
+ * Index register 0 contains a vector part width.
+ * Index register 1 contains the offset into the destination vector.
+ */
+bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      unsigned off = thr->words[1].w_int;
+      unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*> (cp->net->fun);
+      assert(sig);
+      assert(wid > 0);
+
+      if (off >= sig->size())
+	    return true;
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+      schedule_assign_vector(ptr, off, sig->size(), value, delay);
 
       return true;
 }
@@ -3152,6 +3179,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.135  2005/05/07 03:15:42  steve
+ *  Implement non-blocking part assign.
+ *
  * Revision 1.134  2005/05/01 22:05:21  steve
  *  Add cassign/link instruction.
  *

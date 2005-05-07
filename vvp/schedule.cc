@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.33 2005/03/06 17:25:03 steve Exp $"
+#ident "$Id: schedule.cc,v 1.34 2005/05/07 03:15:42 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -85,15 +85,24 @@ void vthread_event_s::run_run(void)
 }
 
 struct assign_vector4_event_s  : public event_s {
+	/* Where to do the assign. */
       vvp_net_ptr_t ptr;
+	/* Value to assign. */
       vvp_vector4_t val;
+	/* Offset of the part into the destination. */
+      unsigned base;
+	/* Width of the destination vector. */
+      unsigned vwid;
       void run_run(void);
 };
 
 void assign_vector4_event_s::run_run(void)
 {
       count_assign_events += 1;
-      vvp_send_vec4(ptr, val);
+      if (vwid > 0)
+	    vvp_send_vec4_pv(ptr, val, base, val.size(), vwid);
+      else
+	    vvp_send_vec4(ptr, val);
 }
 
 struct assign_vector8_event_s  : public event_s {
@@ -413,12 +422,27 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 }
 
 void schedule_assign_vector(vvp_net_ptr_t ptr,
+			    unsigned base, unsigned vwid,
+			    vvp_vector4_t bit,
+			    vvp_time64_t delay)
+{
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      cur->ptr = ptr;
+      cur->base = base;
+      cur->vwid = vwid;
+      cur->val = bit;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    vvp_vector4_t bit,
 			    vvp_time64_t delay)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
       cur->ptr = ptr;
       cur->val = bit;
+      cur->vwid = 0;
+      cur->base = 0;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
@@ -439,6 +463,8 @@ void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
       cur->ptr = ptr;
       cur->val = bit;
+      cur->base = 0;
+      cur->vwid = 0;
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
@@ -557,6 +583,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.34  2005/05/07 03:15:42  steve
+ *  Implement non-blocking part assign.
+ *
  * Revision 1.33  2005/03/06 17:25:03  steve
  *  Remove dead code from scheduler.
  *

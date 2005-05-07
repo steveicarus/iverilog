@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.20 2005/03/06 17:07:48 steve Exp $"
+#ident "$Id: schedule.h,v 1.21 2005/05/07 03:15:42 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -45,6 +45,11 @@ extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
  * like a non-blocking assignment. This is in fact mostly used to
  * implement the non-blocking assignment.
  */
+extern void schedule_assign_vector(vvp_net_ptr_t ptr,
+				   unsigned base, unsigned vwid,
+				   vvp_vector4_t val,
+				   vvp_time64_t  delay);
+
 extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   vvp_vector4_t val,
 				   vvp_time64_t  delay);
@@ -126,6 +131,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.21  2005/05/07 03:15:42  steve
+ *  Implement non-blocking part assign.
+ *
  * Revision 1.20  2005/03/06 17:07:48  steve
  *  Non blocking assign to memory words.
  *

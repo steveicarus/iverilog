@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.199 2005/05/01 22:05:21 steve Exp $"
+#ident "$Id: compile.cc,v 1.200 2005/05/07 03:15:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -91,6 +91,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
+      { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/wr",of_ASSIGN_WR,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1525,6 +1526,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.200  2005/05/07 03:15:42  steve
+ *  Implement non-blocking part assign.
+ *
  * Revision 1.199  2005/05/01 22:05:21  steve
  *  Add cassign/link instruction.
  *
