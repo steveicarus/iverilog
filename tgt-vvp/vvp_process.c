@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.106 2005/05/01 22:04:12 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.107 2005/05/07 03:16:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -152,15 +152,21 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
-      assert(ivl_lval_mux(lval) == 0);
+      ivl_expr_t mux = ivl_lval_mux(lval);
 
       assert(part_off == 0);
       assert(idx == 0);
 
-      fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-      fprintf(vvp_out, "    %%assign/v0 V_%s, %u, %u;\n",
-	      vvp_signal_label(sig), delay, bit);
-
+      if (mux != 0) {
+	    draw_eval_expr_into_integer(mux, 1);
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), delay, bit);
+      } else {
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%assign/v0 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), delay, bit);
+      }
 }
 
 static void assign_to_memory_word(ivl_memory_t mem, unsigned bit,
@@ -446,14 +452,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
-		/* If there is a mux for the lval, calculate the
-		   value and write it into index0. */
-	      if (ivl_lval_mux(lval)) {
-		    calculate_into_x0(ivl_lval_mux(lval));
-		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		    skip_set_flag = 1;
-	      }
-
 	      mem = ivl_lval_mem(lval);
 	      if (mem) {
 		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
@@ -483,6 +481,15 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		      /* XXXX This is obsolete, the
 			 assign_to_lvariable should be removed for the
 			 vector version. */
+
+		      /* If there is a mux for the lval, calculate the
+			 value and write it into index0. */
+		    if (ivl_lval_mux(lval)) {
+			  calculate_into_x0(ivl_lval_mux(lval));
+			  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+			  skip_set_flag = 1;
+		    }
+
 		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			  unsigned bidx = res.base < 4
 				? res.base
@@ -1482,6 +1489,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.107  2005/05/07 03:16:31  steve
+ *  Better handle assignment to bit/part select.
+ *
  * Revision 1.106  2005/05/01 22:04:12  steve
  *  Link signals that are source of procedural continuous assign.
  *
