@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.124 2005/04/01 06:04:30 steve Exp $"
+#ident "$Id: t-dll.h,v 1.125 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -344,7 +344,7 @@ struct ivl_lpm_s {
 		  unsigned width;
 		  unsigned base;
 		  unsigned signed_flag :1;
-		  ivl_nexus_t q, a;
+		  ivl_nexus_t q, a, s;
 	    } part;
 
 	      // IVL_LPM_RE_* and IVL_LPM_REPEAT use this.
@@ -685,6 +685,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.125  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.124  2005/04/01 06:04:30  steve
  *  Clean up handle of UDPs.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.148 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.149 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1720,6 +1720,7 @@ bool dll_target::part_select(const NetPartSelect*net)
       obj->u_.part.width = net->width();
       obj->u_.part.base  = net->base();
       obj->u_.part.signed_flag = 0;
+      obj->u_.part.s = 0;
       const Nexus*nex;
 
       switch (obj->type) {
@@ -1735,6 +1736,14 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    assert(nex->t_cookie());
 
 	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+
+	      /* If the part select has an additional pin, that pin is
+		 a variable select base. */
+	    if (net->pin_count() >= 3) {
+		  nex = net->pin(2).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.part.s = (ivl_nexus_t) nex->t_cookie();
+	    }
 	    break;
 
 	  case IVL_LPM_PART_PV:
@@ -2071,6 +2080,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.149  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.148  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

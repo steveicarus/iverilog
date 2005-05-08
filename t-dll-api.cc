@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.125 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.126 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -828,8 +828,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	    assert(idx == 0);
-	    return net->u_.part.a;
+	    assert(idx <= 1);
+	    if (idx == 0)
+		  return net->u_.part.a;
+	    else
+		  return net->u_.part.s;
 
 	  case IVL_LPM_REPEAT:
 	    assert(idx == 0);
@@ -2032,6 +2035,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.126  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.125  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

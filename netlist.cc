@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.242 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.243 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -488,6 +488,35 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
       }
       pin(0).set_name(perm_string::literal("Part"), 0);
       pin(1).set_name(perm_string::literal("Vect"), 0);
+}
+
+NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
+			     unsigned wid)
+: NetNode(sig->scope(), sig->scope()->local_symbol(), 3),
+    off_(0), wid_(wid), dir_(VP)
+{
+      connect(pin(1), sig->pin(0));
+      connect(pin(2), sel->pin(0));
+
+      switch (dir_) {
+	  case NetPartSelect::VP:
+	    pin(0).set_dir(Link::OUTPUT);
+	    pin(1).set_dir(Link::INPUT);
+	    break;
+	  case NetPartSelect::PV:
+	    pin(0).set_dir(Link::INPUT);
+	    pin(1).set_dir(Link::OUTPUT);
+	    break;
+	  case NetPartSelect::BI:
+	    pin(0).set_dir(Link::PASSIVE);
+	    pin(1).set_dir(Link::PASSIVE);
+	    break;
+      }
+      pin(2).set_dir(Link::INPUT);
+
+      pin(0).set_name(perm_string::literal("Part"), 0);
+      pin(1).set_name(perm_string::literal("Vect"), 0);
+      pin(2).set_name(perm_string::literal("Select"), 0);
 }
 
 NetPartSelect::~NetPartSelect()
@@ -2156,6 +2185,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.243  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.242  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

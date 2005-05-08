@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.73 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: parse.y,v 1.74 2005/05/08 23:40:14 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -63,7 +63,7 @@ extern FILE*yyin;
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DFF
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
-%token K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
@@ -193,6 +193,9 @@ statement
 
 	| T_LABEL K_PART_PV T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' T_NUMBER ';'
 		{ compile_part_select_pv($1, $3, $5, $7, $9); }
+
+	| T_LABEL K_PART_V T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
+		{ compile_part_select_var($1, $3, $5, $7); }
 
         | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
 	  symbols ';'
@@ -678,6 +681,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.74  2005/05/08 23:40:14  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.73  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *

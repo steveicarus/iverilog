@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.65 2005/05/01 22:05:21 steve Exp $
+ *  $Id: README.txt,v 1.66 2005/05/08 23:40:14 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -459,6 +459,7 @@ bit number, and a width. Normally, those bits are constant values.
 
 	<label> .part <symbol>, <base>, <wid>;
 	<label> .part/pv <symbol>, <base>, <wid>, <vector_wid>;
+	<label> .part/v <symbol>, <symbol>, <wid>;
 
 The input is typically a .reg or .net, but can be any vector node in
 the netlist.
@@ -470,6 +471,8 @@ network. The <vector_wid> is the total width of the destination net
 that part is written to. Destination nodes use this value to check
 further output widths.
 
+The .part/v variation takes a vector (or long) input on port-1 as the
+base of the part select. Thus, the part select can move around.
 
 PART CONCATENATION STATEMENTS:
 

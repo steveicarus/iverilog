@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.52 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: lexor.lex,v 1.53 2005/05/08 23:40:14 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -107,6 +107,7 @@
 ".param"    { return K_PARAM; }
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
+".part/v"   { return K_PART_V; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
 ".reduce/xor" { return K_REDUCE_XOR; }
@@ -194,6 +195,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.53  2005/05/08 23:40:14  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.52  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *

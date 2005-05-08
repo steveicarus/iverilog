@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.70 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: compile.h,v 1.71 2005/05/08 23:40:14 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -113,6 +113,8 @@ extern void compile_part_select(char*label, char*src,
 extern void compile_part_select_pv(char*label, char*src,
 				   unsigned base, unsigned wid,
 				   unsigned vec_wid);
+extern void compile_part_select_var(char*label, char*src,
+				     char*var, unsigned wid);
 
 /*
  * This is called by the parser to make the various arithmetic and
@@ -309,6 +311,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.71  2005/05/08 23:40:14  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.70  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.126 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.127 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1683,19 +1683,29 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 }
 
 /*
- * Handle a PART SELECT device. This has a single input and output.
+ * Handle a PART SELECT device. This has a single input and output,
+ * plus an optional extra input that is a non-constant base.
  */
 static void draw_lpm_part(ivl_lpm_t net)
 {
       unsigned width, base;
+      ivl_nexus_t sel;
 
       width = ivl_lpm_width(net);
       base = ivl_lpm_base(net);
+      sel = ivl_lpm_data(net,1);
 
-      fprintf(vvp_out, "L_%p .part ", net);
-      draw_input_from_net(ivl_lpm_data(net, 0));
-
-      fprintf(vvp_out, ", %u, %u;\n", base, width);
+      if (sel == 0) {
+	    fprintf(vvp_out, "L_%p .part ", net);
+	    draw_input_from_net(ivl_lpm_data(net, 0));
+	    fprintf(vvp_out, ", %u, %u;\n", base, width);
+      } else {
+	    fprintf(vvp_out, "L_%p .part/v ", net);
+	    draw_input_from_net(ivl_lpm_data(net,0));
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(sel);
+	    fprintf(vvp_out, ", %u;\n", width);
+      }
 }
 
 /*
@@ -1932,6 +1942,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.127  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.126  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

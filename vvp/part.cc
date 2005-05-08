@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.3 2005/01/09 20:11:16 steve Exp $"
+#ident "$Id: part.cc,v 1.4 2005/05/08 23:40:14 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -67,6 +67,46 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
       vvp_send_vec4_pv(port.ptr()->out, bit, base_, wid_, vwid_);
 }
 
+vvp_fun_part_var::vvp_fun_part_var(unsigned w)
+: base_(0), wid_(w)
+{
+}
+
+vvp_fun_part_var::~vvp_fun_part_var()
+{
+}
+
+void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      unsigned long tmp;
+      switch (port.port()) {
+	  case 0:
+	    source_ = bit;
+	    break;
+	  case 1:
+	    vector4_to_value(bit, tmp);
+	    if (tmp == base_) return;
+	    base_ = tmp;
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      vvp_vector4_t res (wid_);
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    unsigned adr = base_+idx;
+	    if (adr >= source_.size())
+		  break;
+
+	    res.set_bit(idx, source_.value(adr));
+      }
+
+      vvp_send_vec4(port.ptr()->out, res);
+}
+
+
 /*
  * Given a node functor, create a network node and link it into the
  * netlist. This form assumes nodes with a single input.
@@ -97,8 +137,25 @@ void compile_part_select_pv(char*label, char*source,
       link_node_1(label, source, fun);
 }
 
+void compile_part_select_var(char*label, char*source, char*var,
+			     unsigned wid)
+{
+      vvp_fun_part_var*fun = new vvp_fun_part_var(wid);
+      vvp_net_t*net = new vvp_net_t;
+      net->fun = fun;
+
+      define_functor_symbol(label, net);
+      free(label);
+
+      input_connect(net, 0, source);
+      input_connect(net, 1, var);
+}
+
 /*
  * $Log: part.cc,v $
+ * Revision 1.4  2005/05/08 23:40:14  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.3  2005/01/09 20:11:16  steve
  *  Add the .part/pv node and related functionality.
  *

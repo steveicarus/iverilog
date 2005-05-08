@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.25 2005/05/07 03:14:50 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.26 2005/05/08 23:40:14 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -530,6 +530,26 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
       unsigned vwid_;
 };
 
+/*
+ * This part select is more flexible in that it takes the vector to
+ * part in port 0, and the base of the part in port 1. The width of
+ * the part to take out is fixed.
+ */
+class vvp_fun_part_var  : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_part_var(unsigned wid);
+      ~vvp_fun_part_var();
+
+    public:
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      unsigned base_;
+      unsigned wid_;
+      vvp_vector4_t source_;
+};
+
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
  * including nets of various sort. The output from a signal follows
@@ -699,6 +719,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.26  2005/05/08 23:40:14  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.25  2005/05/07 03:14:50  steve
  *  ostream insert for vvp_vector4_t objects.
  *

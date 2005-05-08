@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.153 2005/05/07 03:14:00 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.154 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -856,10 +856,15 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * model part/bin selects in r-value expressions, where the _PV from
  * is meant to model part selects in l-value nets.
  *
- * In both cases, ivl_lpm_data is the input pin, and ivl_lpm_q is the
+ * In both cases, ivl_lpm_data(0) is the input pin, and ivl_lpm_q is the
  * output. In the case of the _VP device, the vector is input and the
  * part is the output. In the case of the _PV device, the part is the
  * input and the vector is the output.
+ *
+ * If the base of the part select is non-constant, then
+ * ivl_lpm_data(1) is non-nil and is the select, or base, address of
+ * the part. If this pin is nil, then the constant base is used
+ * instead.
  *
  * Also in both cases, the width of the device is the width of the
  * part. In the _VP case, this is obvious as the output nexus has the
@@ -1653,6 +1658,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.154  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.153  2005/05/07 03:14:00  steve
  *  Clarify internal delays for assignments.
  *

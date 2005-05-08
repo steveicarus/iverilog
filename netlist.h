@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.341 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.342 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 /*
@@ -1193,6 +1193,10 @@ class NetECRealParam  : public NetECReal {
  * The part to be selected is the canonical (0-based) offset and the
  * specified number of bits (wid).
  *
+ * If the offset is non-constant, then pin(2) is the input vector for
+ * the selector. If this pin is present, then use the non-constant
+ * selector as the input.
+ *
  * The NetPartSelect can be output from the signal (i.e. reading a
  * part), input into the signal, or bi-directional. The DIR method
  * gives the type of the node.
@@ -1220,6 +1224,8 @@ class NetPartSelect  : public NetNode {
 
       explicit NetPartSelect(NetNet*sig,
 			     unsigned off, unsigned wid, dir_t dir);
+      explicit NetPartSelect(NetNet*sig, NetNet*sel,
+			     unsigned wid);
       ~NetPartSelect();
 
       unsigned base()  const;
@@ -3437,6 +3443,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.342  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.341  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

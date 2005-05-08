@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.123 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: stub.c,v 1.124 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -544,6 +544,7 @@ static void show_lpm_part(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
       unsigned base  = ivl_lpm_base(net);
+      ivl_nexus_t sel = ivl_lpm_data(net,1);
       const char*part_type_string = "";
 
       switch (ivl_lpm_type(net)) {
@@ -562,6 +563,14 @@ static void show_lpm_part(ivl_lpm_t net)
 	      width, base, ivl_lpm_signed(net));
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+
+      if (sel != 0) {
+	    fprintf(out, "    S: %s\n", ivl_nexus_name(sel));
+	    if (base != 0) {
+		  fprintf(out, "   ERROR: Part select has base AND selector\n");
+		  stub_errors += 1;
+	    }
+      }
 
 	/* The compiler must assure that the base plus the part select
 	   width fits within the input to the part select. */
@@ -1353,6 +1362,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.124  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.123  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

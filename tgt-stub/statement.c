@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.5 2005/03/05 05:47:42 steve Exp $"
+#ident "$Id: statement.c,v 1.6 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -190,6 +190,9 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
 		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
 
+	    if (ivl_stmt_delay_expr(net))
+		  show_expression(ivl_stmt_delay_expr(net), idx+4);
+
 	    if (ivl_stmt_rval(net))
 		  show_expression(ivl_stmt_rval(net), ind+4);
 	    break;
@@ -200,6 +203,11 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
 	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
 		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
+
+	    if (ivl_stmt_delay_expr(net)) {
+		  fprintf(out, "%*s<internal delay>\n", ind+4, "");
+		  show_expression(ivl_stmt_delay_expr(net), ind+6);
+	    }
 
 	    if (ivl_stmt_rval(net))
 		  show_expression(ivl_stmt_rval(net), ind+4);

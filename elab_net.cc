@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.161 2005/05/06 00:25:13 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.162 2005/05/08 23:44:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1434,54 +1434,51 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 				       Link::strength_t drive1) const
 {
 	/* Elaborate the selector. */
-      NetNet*sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*sel;
 
-      unsigned sig_width = sig->pin_count();
+      unsigned sig_width = sig->vector_width();
 
-	/* Detect the case of some bits not accessible by the given
-	   select. Figure out how many bits can be selected by the
-	   full range of the select, and limit the input of the mux to
-	   that width. */
-      { unsigned max_width_by_sel = 1 << sel->pin_count();
-        if (sig_width > max_width_by_sel)
-	      sig_width = max_width_by_sel;
-      }
-#if 0
-      NetMux*mux = new NetMux(scope, scope->local_symbol(), 1,
-			      sig_width, sel->pin_count());
+      if (sig->msb() < sig->lsb()) {
+	    NetExpr*sel_expr = msb_->elaborate_expr(des, scope);
+	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
+	    if (NetExpr*tmp = sel_expr->eval_tree()) {
+		  delete sel_expr;
+		  sel_expr = tmp;
+	    }
 
-	/* Connect the signal bits to the mux. Account for the
-	   direction of the numbering (lsb to msb vs. msb to lsb) by
-	   swapping the connection order. */
+	    sel = sel_expr->synthesize(des);
 
-      if (sig->msb() > sig->lsb()) {
+      } else if (sig->lsb() != 0) {
+	    NetExpr*sel_expr = msb_->elaborate_expr(des, scope);
+	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
+	    if (NetExpr*tmp = sel_expr->eval_tree()) {
+		  delete sel_expr;
+		  sel_expr = tmp;
+	    }
 
-	    sel = add_to_net(des, sel, -sig->lsb());
-	    for (unsigned idx = 0 ;  idx < sig_width ;  idx += 1)
-		  connect(mux->pin_Data(0, idx), sig->pin(idx));
+	    sel = sel_expr->synthesize(des);
+
       } else {
-
-	    sel = add_to_net(des, sel, -sig->msb());
-	    for (unsigned idx = 0 ;  idx < sig_width ;  idx += 1)
-		  connect(mux->pin_Data(0, idx), sig->pin(sig_width-idx-1));
+	    sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
       }
 
-      for (unsigned idx = 0 ;  idx < sel->pin_count() ;  idx += 1)
-	    connect(mux->pin_Sel(idx), sel->pin(idx));
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Create NetPartSelect "
+		 << "using signal " << sel->name() << " as selector"
+		 << endl;
+      }
+
+	/* Create a part select that takes a non-constant offset and a
+	   width of 1. */
+      NetPartSelect*mux = new NetPartSelect(sig, sel, 1);
+      des->add_node(mux);
+      mux->set_line(*this);
 
       NetNet*out = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, 1);
-      connect(mux->pin_Result(0), out->pin(0));
+			      NetNet::WIRE, 1);
 
-      des->add_node(mux);
-      out->local_flag(true);
+      connect(out->pin(0), mux->pin(0));
       return out;
-#else
-      cerr << get_line() << ": sorry: Forgot how to implement"
-	   << " NetMux in  elaborate_net_bitmux_." << endl;
-      des->errors += 1;
-      return 0;
-#endif
 }
 
 NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
@@ -2508,6 +2505,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.162  2005/05/08 23:44:08  steve
+ *  Add support for variable part select.
+ *
  * Revision 1.161  2005/05/06 00:25:13  steve
  *  Handle synthesis of concatenation expressions.
  *
