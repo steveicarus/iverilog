@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.107 2005/05/07 03:16:31 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.108 2005/05/09 00:38:12 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -158,10 +158,15 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
       assert(idx == 0);
 
       if (mux != 0) {
+	    unsigned skip_assign = transient_id++;
 	    draw_eval_expr_into_integer(mux, 1);
+	      /* If the index expression has XZ bits, skip the assign. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
 		    vvp_signal_label(sig), delay, bit);
+	    fprintf(vvp_out, "t_%u ;\n", skip_assign);
+
       } else {
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0 V_%s, %u, %u;\n",
@@ -1489,6 +1494,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.108  2005/05/09 00:38:12  steve
+ *  Skip assign if index is invalid.
+ *
  * Revision 1.107  2005/05/07 03:16:31  steve
  *  Better handle assignment to bit/part select.
  *
