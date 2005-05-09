@@ -16,11 +16,12 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.4 2005/05/08 23:40:14 steve Exp $"
+#ident "$Id: part.cc,v 1.5 2005/05/09 00:36:58 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
 # include  <stdlib.h>
+# include  <limits.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -84,6 +85,7 @@ void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 	    source_ = bit;
 	    break;
 	  case 1:
+	    tmp = ULONG_MAX;
 	    vector4_to_value(bit, tmp);
 	    if (tmp == base_) return;
 	    base_ = tmp;
@@ -103,7 +105,10 @@ void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 	    res.set_bit(idx, source_.value(adr));
       }
 
-      vvp_send_vec4(port.ptr()->out, res);
+      if (! ref_.eeq(res)) {
+	    ref_ = res;
+	    vvp_send_vec4(port.ptr()->out, res);
+      }
 }
 
 
@@ -153,6 +158,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.5  2005/05/09 00:36:58  steve
+ *  Force part base out of bounds if index is invalid.
+ *
  * Revision 1.4  2005/05/08 23:40:14  steve
  *  Add support for variable part select.
  *

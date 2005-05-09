@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.26 2005/05/08 23:40:14 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.27 2005/05/09 00:36:58 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -548,6 +548,8 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
       unsigned base_;
       unsigned wid_;
       vvp_vector4_t source_;
+	// Save the last output, for detecting change.
+      vvp_vector4_t ref_;
 };
 
 /* vvp_fun_signal
@@ -719,6 +721,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.27  2005/05/09 00:36:58  steve
+ *  Force part base out of bounds if index is invalid.
+ *
  * Revision 1.26  2005/05/08 23:40:14  steve
  *  Add support for variable part select.
  *
