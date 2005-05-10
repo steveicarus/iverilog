@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.162 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.163 2005/05/10 05:10:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -386,97 +386,52 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 		  ones += 1;
       }
 
-      if (debug_elaborate)
-	    cerr << lsig->get_line() << ": debug: "
-		 << "Replace net==" << val << " equality with "
-		 << ones << "-input AND and "
-		 << zeros << "-input NOR gates." << endl;
+	/* Handle the special case that the gate is a compare that can
+	   be replaces with a reduction AND or NOR. */
 
-	/* Now make reduction logic to test that all the 1 bits are 1,
-	   and all the 0 bits are 0. The results will be ANDed
-	   together later, if needed. NOTE that if the compare is !=,
-	   and we know that we will not need an AND later, then fold
-	   the final invert into the reduction gate to get the right
-	   sense of the output. If we do need the AND later, then we
-	   will put the invert on that instead. */
-      NetLogic*zero_gate = 0;
-      NetLogic*ones_gate = 0;
-      if (zeros > 0) {
-	    zero_gate = new NetLogic(scope,
-			   scope->local_symbol(), zeros + 1,
-			   (op_code == 'n') ? NetLogic::OR : NetLogic::NOR, 1);
-	    zero_gate->set_line(*lsig);
-      }
-      if (ones > 0) {
-	    ones_gate = new NetLogic(scope,
-			 scope->local_symbol(), ones + 1,
-			 (op_code == 'n') ? NetLogic::NAND : NetLogic::AND, 1);
-	    ones_gate->set_line(*lsig);
-      }
+      if (ones == 0 || zeros == 0) {
+	    NetUReduce::TYPE type;
 
-      unsigned zidx = 0;
-      unsigned oidx = 0;
-      for (unsigned idx = 0 ;  idx < lsig->vector_width() ;  idx += 1) {
-	    NetPartSelect*ps = new NetPartSelect(lsig, idx, 1,
-						 NetPartSelect::VP);
-	    ps->set_line(*lsig);
-	    des->add_node(ps);
+	    if (zeros > 0) {
+		  type = op_code == 'e'? NetUReduce::NOR : NetUReduce::OR;
+
+		  if (debug_elaborate) 
+			cerr << lsig->get_line() << ": debug: "
+			     << "Replace net==" << val << " equality with "
+			     << zeros << "-input reduction [N]OR gate." << endl;
+
+	    } else {
+		  type = op_code == 'e'? NetUReduce::AND : NetUReduce::NAND;
+
+		  if (debug_elaborate) 
+			cerr << lsig->get_line() << ": debug: "
+			     << "Replace net==" << val << " equality with "
+			     << ones << "-input reduction AND gate." << endl;
+	    }
+
+	    NetUReduce*red = new NetUReduce(scope, scope->local_symbol(),
+					    type, zeros+ones);
+	    des->add_node(red);
+	    red->set_line(*lsig);
+
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, 0, 0);
 	    tmp->local_flag(true);
 	    tmp->set_line(*lsig);
-	    connect(tmp->pin(0), ps->pin(0));
-	    if (val.get(idx) == verinum::V0) {
-		  zidx += 1;
-		  connect(zero_gate->pin(zidx), ps->pin(0));
-	    }
-	    if (val.get(idx) == verinum::V1) {
-		  oidx += 1;
-		  connect(ones_gate->pin(oidx), ps->pin(0));
-	    }
+
+	    connect(red->pin(1), lsig->pin(0));
+	    connect(red->pin(0), tmp->pin(0));
+	    return tmp;
       }
 
-      NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::WIRE, 1);
-      osig->set_line(*lsig);
-      osig->local_flag(true);
+      if (debug_elaborate)
+	    cerr << lsig->get_line() << ": debug: "
+		 << "Give up trying to replace net==" << val
+		 << " equality with "
+		 << ones << "-input AND and "
+		 << zeros << "-input NOR gates." << endl;
 
-      if (zero_gate && ones_gate) {
-	    if (debug_elaborate)
-		  cerr << lsig->get_line() << ": debug: "
-		       << "AND together AND and OR gate results" << endl;
-
-	    NetNet*and0_sig = new NetNet(scope, scope->local_symbol(),
-					NetNet::WIRE, 1);
-	    and0_sig->set_line(*lsig);
-	    and0_sig->local_flag(true);
-	    NetNet*and1_sig = new NetNet(scope, scope->local_symbol(),
-					NetNet::WIRE, 1);
-	    and1_sig->set_line(*lsig);
-	    and1_sig->local_flag(true);
-	    connect(and0_sig->pin(0), zero_gate->pin(0));
-	    connect(and1_sig->pin(0), ones_gate->pin(0));
-	    NetLogic*and_gate = new NetLogic(scope,
-			        scope->local_symbol(), 3,
-			        (op_code == 'n') ? NetLogic::OR : NetLogic::AND, 1);
-	    connect(and_gate->pin(0), osig->pin(0));
-	    connect(and_gate->pin(1), and0_sig->pin(0));
-	    connect(and_gate->pin(2), and1_sig->pin(0));
-
-	    des->add_node(and_gate);
-	    des->add_node(zero_gate);
-	    des->add_node(ones_gate);
-
-      } else if (zero_gate) {
-	    connect(zero_gate->pin(0), osig->pin(0));
-	    des->add_node(zero_gate);
-      } else {
-	    assert(ones_gate);
-	    connect(ones_gate->pin(0), osig->pin(0));
-	    des->add_node(ones_gate);
-      }
-
-      return osig;
+      return 0;
 }
 
 /*
@@ -2505,6 +2460,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.163  2005/05/10 05:10:40  steve
+ *  Make sig-eq-constant optimization more effective.
+ *
  * Revision 1.162  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *
