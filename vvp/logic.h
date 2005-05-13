@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.14 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: logic.h,v 1.15 2005/05/13 05:13:12 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
+# include  "delay.h"
 # include  <stddef.h>
 
 /*
@@ -71,12 +72,13 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
 class vvp_fun_buf: public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_buf();
+      explicit vvp_fun_buf(vvp_time64_t del);
       virtual ~vvp_fun_buf();
 
       void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
 
     private:
+      vvp_time64_t delay_;
 };
 
 /*
@@ -86,12 +88,13 @@ class vvp_fun_buf: public vvp_net_fun_t {
 class vvp_fun_bufz: public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_bufz();
+      explicit vvp_fun_bufz(vvp_time64_t delay);
       virtual ~vvp_fun_bufz();
 
       void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
 
     private:
+      vvp_time64_t delay_;
 };
 
 /*
@@ -137,6 +140,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.15  2005/05/13 05:13:12  steve
+ *  Give buffers support for simple delays.
+ *
  * Revision 1.14  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.
