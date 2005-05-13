@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.321 2005/04/24 23:44:01 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.322 2005/05/13 05:12:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,11 +182,26 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       for the l-value, then sign extend it or zero
 		       extend it, whichever makes sense. */
 
+		  if (debug_elaborate) {
+			cerr << get_line() << ": debug: PGAssign: "
+			     << "Connect lval directly to "
+			     << id->path() << endl;
+		  }
+
 		  connect(lval->pin(0), rid->pin(0));
 
 	    } else {
 		    /* Do need a driver. Use BUFZ objects to carry the
 		       strength and delays. */
+
+		  if (debug_elaborate) {
+			cerr << get_line() << ": debug: PGAssign: "
+			     << "Connect lval to " << id->path()
+			     << " through bufz. delay=("
+			     << rise_time << ":"
+			     << fall_time << ":"
+			     << decay_time << ")" << endl;
+		  }
 
 		  NetBUFZ*dev = new NetBUFZ(scope, scope->local_symbol(),
 					    rid->vector_width());
@@ -2942,6 +2957,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.322  2005/05/13 05:12:39  steve
+ *  Some debug messages.
+ *
  * Revision 1.321  2005/04/24 23:44:01  steve
  *  Update DFF support to new data flow.
  *
