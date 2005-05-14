@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.4 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: delay.cc,v 1.5 2005/05/14 19:43:23 steve Exp $"
 #endif
 
 #include "delay.h"
+#include "schedule.h"
 #include <string.h>
 #include <stream.h>
 #include <assert.h>
@@ -91,8 +92,42 @@ vvp_time64_t vvp_delay_t::get_delay(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
+vvp_fun_delay::vvp_fun_delay(vvp_bit4_t init, const vvp_delay_t&d)
+: delay_(d), cur_(1)
+{
+      cur_.set_bit(0, init);
+}
+
+vvp_fun_delay::~vvp_fun_delay()
+{
+}
+
+/*
+ * FIXME: This implementation currently only uses the LSB to determine
+ * the delay type for the entire vector. It needs to be upgraded to
+ * account for different delays for different bits by generating a
+ * stream of vectors that lead up to the actual value.
+ */
+void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      if (cur_.eeq(bit))
+	    return;
+
+      vvp_time64_t use_delay;
+      use_delay = delay_.get_delay(cur_.value(0), bit.value(0));
+
+      cur_ = bit;
+      if (use_delay == 0)
+	    vvp_send_vec4(port.ptr()->out, cur_);
+      else
+	    schedule_assign_vector(port.ptr()->out, cur_, use_delay);
+}
+
 /*
  * $Log: delay.cc,v $
+ * Revision 1.5  2005/05/14 19:43:23  steve
+ *  Move functor delays to vvp_delay_fun object.
+ *
  * Revision 1.4  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

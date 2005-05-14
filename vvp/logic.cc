@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.22 2005/05/13 05:13:12 steve Exp $"
+#ident "$Id: logic.cc,v 1.23 2005/05/14 19:43:23 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -110,8 +110,7 @@ void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_send_vec4(ptr.ptr()->out, result);
 }
 
-vvp_fun_buf::vvp_fun_buf(vvp_time64_t del)
-: delay_(del)
+vvp_fun_buf::vvp_fun_buf()
 {
       count_functors_table += 1;
 }
@@ -130,14 +129,10 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 		  bit.set_bit(idx, BIT4_X);
       }
 
-      if (delay_ > 0)
-	    schedule_assign_vector(ptr.ptr()->out, bit, delay_);
-      else
-	    vvp_send_vec4(ptr.ptr()->out, bit);
+      vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
-vvp_fun_bufz::vvp_fun_bufz(vvp_time64_t del)
-: delay_(del)
+vvp_fun_bufz::vvp_fun_bufz()
 {
       count_functors_table += 1;
 }
@@ -151,10 +146,7 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       if (ptr.port() != 0)
 	    return;
 
-      if (delay_ > 0)
-	    schedule_assign_vector(ptr.ptr()->out, bit, delay_);
-      else
-	    vvp_send_vec4(ptr.ptr()->out, bit);
+      vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
 vvp_fun_muxz::vvp_fun_muxz()
@@ -240,8 +232,6 @@ void compile_functor(char*label, char*type,
       vvp_net_fun_t* obj = 0;
       bool strength_aware = false;
 
-      vvp_time64_t delay64 = delay? delay->get_delay(BIT4_0,BIT4_1) : 0;
-
       if (strcmp(type, "OR") == 0) {
 	    obj = new table_functor_s(ft_OR);
 
@@ -249,7 +239,7 @@ void compile_functor(char*label, char*type,
 	    obj = new vvp_fun_and();
 
       } else if (strcmp(type, "BUF") == 0) {
-	    obj = new vvp_fun_buf(delay64);
+	    obj = new vvp_fun_buf();
 
       } else if (strcmp(type, "BUFIF0") == 0) {
 	    obj = new vvp_fun_bufif(true,false, ostr0, ostr1);
@@ -260,7 +250,7 @@ void compile_functor(char*label, char*type,
 	    strength_aware = true;
 
       } else if (strcmp(type, "BUFZ") == 0) {
-	    obj = new vvp_fun_bufz(delay64);
+	    obj = new vvp_fun_bufz();
 #if 0
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_pmos_s;
@@ -324,13 +314,19 @@ void compile_functor(char*label, char*type,
 	/* If both the strengths are the default strong drive, then
 	   there is no need for a specialized driver. Attach the label
 	   to this node and we are finished. */
-      if (strength_aware || ostr0 == 6 && ostr1 == 6) {
+      if (strength_aware || ostr0 == 6 && ostr1 == 6 && delay == 0) {
 	    define_functor_symbol(label, net);
 	    free(label);
 	    return;
       }
 
-      vvp_fun_drive*obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
+      vvp_net_fun_t*obj_drv;
+
+      if (ostr0 == 6 && ostr1 == 6 && delay != 0) {
+	    obj_drv = new vvp_fun_delay(BIT4_X, *delay);
+      } else {
+	    obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
+      }
 
       vvp_net_t*net_drv = new vvp_net_t;
       net_drv->fun = obj_drv;
@@ -348,6 +344,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.23  2005/05/14 19:43:23  steve
+ *  Move functor delays to vvp_delay_fun object.
+ *
  * Revision 1.22  2005/05/13 05:13:12  steve
  *  Give buffers support for simple delays.
  *

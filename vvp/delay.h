@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.5 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: delay.h,v 1.6 2005/05/14 19:43:23 steve Exp $"
 #endif
 
 /*
@@ -46,8 +46,31 @@ class vvp_delay_t {
       vvp_time64_t min_delay_;
 };
 
+/* vvp_fun_delay
+ * This is a lighter weight version of vvp_fun_drive, that only
+ * carries delays. The output that it propagates is vvp_vector4_t so
+ * drive strengths are lost, but then again it doesn't go through the
+ * effort of calculating strength values either.
+ */
+class vvp_fun_delay  : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_delay(vvp_bit4_t init, const vvp_delay_t&d);
+      ~vvp_fun_delay();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+	//void recv_long(vvp_net_ptr_t port, long bit);
+
+    private:
+      vvp_delay_t delay_;
+      vvp_vector4_t cur_;
+};
+
 /*
  * $Log: delay.h,v $
+ * Revision 1.6  2005/05/14 19:43:23  steve
+ *  Move functor delays to vvp_delay_fun object.
+ *
  * Revision 1.5  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *
