@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.43 2005/04/25 01:35:58 steve Exp $"
+#ident "$Id: synth2.cc,v 1.44 2005/05/15 04:45:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,6 +86,12 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    return false;
       }
       assert(lval_->more == 0);
+
+      if (debug_synth2) {
+	    cerr << get_line() << ": debug: l-value signal is "
+		 << lsig->vector_width() << " bits, r-value signal is "
+		 << rsig->vector_width() << " bits." << endl;
+      }
 
 #if 0
 	/* The l-value and r-value map must have the same width. */
@@ -894,6 +900,14 @@ bool NetProcTop::synth_sync(Design*des)
 	/* Make a model FF that will connect to the first item in the
 	   set, and will also take the initial connection of clocks
 	   and resets. */
+
+      if (debug_synth2) {
+	    cerr << get_line() << ": debug: "
+		 << "Top level making a "
+		 << nex_set[0]->vector_width() << "-wide "
+		 << "NetFF device." << endl;
+      }
+
       NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
 			   nex_set[0]->vector_width());
       des->add_node(ff);
@@ -1036,6 +1050,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.44  2005/05/15 04:45:50  steve
+ *  Debug text.
+ *
  * Revision 1.43  2005/04/25 01:35:58  steve
  *  Reimplement basic asynchronous processes.
  *
