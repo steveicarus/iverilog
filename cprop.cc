@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.52 2005/04/24 23:44:01 steve Exp $"
+#ident "$Id: cprop.cc,v 1.53 2005/05/15 04:44:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -218,7 +218,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
       NetScope*scope = obj->scope();
 
       switch (obj->type()) {
-
+#if 0
+	      /* XXXX This old code assumed that the individual bit
+		 slices could be replaced with different gates. They
+		 cannot when the device takes atomic vectors, so this
+		 needs to be rewritten. XXXX */
 	  case NetLogic::NAND:
 	  case NetLogic::AND: {
 		unsigned top = obj->pin_count();
@@ -381,7 +385,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 		break;
 	  }
-
+#endif
+#if 0
+	      /* XXXX This old code assumed that the individual bit
+		 slices could be replaced with different gates. They
+		 cannot when the device takes atomic vectors, so this
+		 needs to be rewritten. XXXX */
 
 	  case NetLogic::NOR:
 	  case NetLogic::OR: {
@@ -503,7 +512,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      delete obj;
 		      count += 1;
 		      return;
-		}
+v		}
 
 		  /* Finally, this cleans up the gate by creating a
 		     new [N]OR gate that has the right number of
@@ -528,7 +537,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 		break;
 	  }
-
+#endif
+#if 0
+	      /* XXXX This old code assumed that the individual bit
+		 slices could be replaced with different gates. They
+		 cannot when the device takes atomic vectors, so this
+		 needs to be rewritten. XXXX */
 	  case NetLogic::XNOR:
 	  case NetLogic::XOR: {
 		unsigned top = obj->pin_count();
@@ -718,7 +732,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 		break;
 	    }
-
+#endif
 	  default:
 	    break;
       }
@@ -941,6 +955,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.53  2005/05/15 04:44:30  steve
+ *  Disable obsolete logic constant fixup code.
+ *
  * Revision 1.52  2005/04/24 23:44:01  steve
  *  Update DFF support to new data flow.
  *
