@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.68 2005/05/06 00:25:13 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.69 2005/05/15 04:47:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -92,72 +92,52 @@ NetNet* NetEBBits::synthesize(Design*des)
       assert(scope);
       string path = des->local_symbol(scope->name());
 
-      if (lsig->pin_count() != rsig->pin_count()) {
+      if (lsig->vector_width() != rsig->vector_width()) {
 	    cerr << get_line() << ": internal error: bitwise (" << op_
-		 << ") widths do not match: " << lsig->pin_count()
-		 << " != " << rsig->pin_count() << endl;
+		 << ") widths do not match: " << lsig->vector_width()
+		 << " != " << rsig->vector_width() << endl;
 	    cerr << get_line() << ":               : width="
-		 << lsig->pin_count() << ": " << *left_ << endl;
+		 << lsig->vector_width() << ": " << *left_ << endl;
 	    cerr << get_line() << ":               : width="
-		 << rsig->pin_count() << ": " << *right_ << endl;
+		 << rsig->vector_width() << ": " << *right_ << endl;
 	    return 0;
       }
 
-      assert(lsig->pin_count() == rsig->pin_count());
+      assert(lsig->vector_width() == rsig->vector_width());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, lsig->pin_count());
+			       NetNet::IMPLICIT, lsig->vector_width());
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-	    perm_string oname = scope->local_symbol();
-	    NetLogic*gate;
+      perm_string oname = scope->local_symbol();
+      unsigned wid = lsig->vector_width();
+      NetLogic*gate;
 
-	      /* If the rsig bit is constant, then look for special
-		 cases that I can use to reduce the generated
-		 logic. If I find one, then handle it immediately and
-		 skip the rest of the processing of this bit. */
-	    if (rsig->pin(idx).nexus()->drivers_constant()) {
-		  verinum::V bval = rsig->pin(idx).nexus()->driven_value();
-
-		    /* (A & 0) is (0) */
-		  if ((op() == '&') && bval == verinum::V0) {
-			connect(osig->pin(idx), rsig->pin(idx));
-			continue;
-		  }
-
-		    /* (A & 1) is A */
-		  if ((op() == '&') && bval == verinum::V1) {
-			connect(osig->pin(idx), lsig->pin(idx));
-			continue;
-		  }
-	    }
-
-	    switch (op()) {
-		case '&':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::AND, 1);
-		  break;
-		case '|':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::OR, 1);
-		  break;
-		case '^':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::XOR, 1);
-		  break;
-		case 'O':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::NOR, 1);
-		  break;
-		case 'X':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, 1);
-		  break;
-		default:
-		  assert(0);
-	    }
-
-	    connect(osig->pin(idx), gate->pin(0));
-	    connect(lsig->pin(idx), gate->pin(1));
-	    connect(rsig->pin(idx), gate->pin(2));
-
-	    des->add_node(gate);
+      switch (op()) {
+	  case '&':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, wid);
+	    break;
+	  case '|':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, wid);
+	    break;
+	  case '^':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XOR, wid);
+	    break;
+	  case 'O':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NOR, wid);
+	    break;
+	  case 'X':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, wid);
+	    break;
+	  default:
+	    assert(0);
       }
+
+      connect(osig->pin(0), gate->pin(0));
+      connect(lsig->pin(0), gate->pin(1));
+      connect(rsig->pin(0), gate->pin(2));
+
+      gate->set_line(*this);
+      des->add_node(gate);
 
       return osig;
 }
@@ -518,30 +498,40 @@ NetNet* NetEBShift::synthesize(Design*des)
 				     NetNet::IMPLICIT, expr_width());
 	    osig->local_flag(true);
 
-	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
-					 verinum::V0);
-	    des->add_node(zcon);
-	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, 1);
-	    connect(zcon->pin(0), zsig->pin(0));
+	    unsigned long ushift = shift>=0? shift : -shift;
+	    if (ushift > osig->vector_width())
+		  ushift = osig->vector_width();
 
-	    if (shift > 0) {
-		  unsigned long ushift = shift;
-		  for (unsigned idx = 0; idx < osig->pin_count(); idx += 1)
-			if (idx < ushift) {
-			      connect(osig->pin(idx), zsig->pin(0));
-			} else {
-			      connect(osig->pin(idx), lsig->pin(idx-ushift));
-			}
-	    } else {
-		  unsigned long dshift = 0-shift;
-		  for (unsigned idx = 0; idx < osig->pin_count() ;  idx += 1)
-			if (idx+dshift < lsig->pin_count())
-			      connect(osig->pin(idx), lsig->pin(idx+dshift));
-			else
-			      connect(osig->pin(idx), zsig->pin(0));
+	    verinum znum (verinum::V0, ushift, true);
+	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
+					 znum);
+	    des->add_node(zcon);
+
+	      /* Detect the special case that the shift is the size of
+		 the whole expression. Simply connect the pad to the
+		 osig and escape. */
+	    if (ushift >= osig->vector_width()) {
+		  connect(zcon->pin(0), osig->pin(0));
+		  return osig;
 	    }
 
+	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, znum.len());
+	    connect(zcon->pin(0), zsig->pin(0));
+
+	    NetConcat*ccat = new NetConcat(scope, scope->local_symbol(),
+					   osig->vector_width(), 2);
+	    ccat->set_line(*this);
+	    des->add_node(ccat);
+
+	    connect(ccat->pin(0), osig->pin(0));
+	    if (shift > 0) {
+		  connect(ccat->pin(1), zsig->pin(0));
+		  connect(ccat->pin(2), lsig->pin(0));
+	    } else {
+		  connect(ccat->pin(1), lsig->pin(0));
+		  connect(ccat->pin(2), zsig->pin(0));
+	    }
 
 	    return osig;
       }
@@ -837,6 +827,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.69  2005/05/15 04:47:00  steve
+ *  synthesis of Logic and shifts using vector gates.
+ *
  * Revision 1.68  2005/05/06 00:25:13  steve
  *  Handle synthesis of concatenation expressions.
  *
