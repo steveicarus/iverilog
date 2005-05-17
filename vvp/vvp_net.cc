@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.27 2005/05/07 03:14:50 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.28 2005/05/17 20:54:56 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -353,7 +353,7 @@ char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
       return res;
 }
 
-ostream& operator<< (ostream&out, vvp_vector4_t&that)
+ostream& operator<< (ostream&out, const vvp_vector4_t&that)
 {
       out << that.size() << "'b";
       for (unsigned idx = 0 ;  idx < that.size() ;  idx += 1)
@@ -1346,6 +1346,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.28  2005/05/17 20:54:56  steve
+ *  Clean up definition of vvp_vector4_t insertion into ostream.
+ *
  * Revision 1.27  2005/05/07 03:14:50  steve
  *  ostream insert for vvp_vector4_t objects.
  *
