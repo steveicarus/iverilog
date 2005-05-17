@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.108 2005/05/09 00:38:12 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.109 2005/05/17 20:55:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -93,7 +93,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 		    vvp_signal_label(sig), bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
-      } else if (part_off > 0) {
+      } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
 	      /* There is no mux expression, but a constant part
 		 offset. Load that into index x0 and generate a
 		 single-bit set instruction. */
@@ -1494,6 +1494,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.109  2005/05/17 20:55:42  steve
+ *  Detect bit selects that need special handling.
+ *
  * Revision 1.108  2005/05/09 00:38:12  steve
  *  Skip assign if index is invalid.
  *
