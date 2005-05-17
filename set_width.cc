@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.35 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: set_width.cc,v 1.36 2005/05/17 20:56:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -313,6 +313,15 @@ bool NetEConst::set_width(unsigned w)
 }
 
 /*
+ * Parameter vectors cannot be resized because they refer to a common
+ * value.
+ */
+bool NetEConstParam::set_width(unsigned w)
+{
+      return w == expr_width();
+}
+
+/*
  * Real constants can have whatever width the environment wants,
  * because it isn't really a vector. The environment will convert this
  * to a vector at the right time.
@@ -405,6 +414,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.36  2005/05/17 20:56:55  steve
+ *  Parameters cannot have their width changed.
+ *
  * Revision 1.35  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

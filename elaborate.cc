@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.322 2005/05/13 05:12:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.323 2005/05/17 20:56:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1861,9 +1861,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  continue;
 
 	    NetESignal*sig = new NetESignal(port);
+	    NetExpr*rv = pad_to_width(sig, count_lval_width(lv));
 
 	      /* Generate the assignment statement. */
-	    NetAssign*ass = new NetAssign(lv, sig);
+	    NetAssign*ass = new NetAssign(lv, rv);
 
 	    block->append(ass);
       }
@@ -2478,8 +2479,15 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = expr1_->elaborate_expr(des, scope);
+      etmp = elab_and_eval(des, scope, expr1_);
       etmp->set_width(lv->lwidth());
+      etmp = pad_to_width(etmp, lv->lwidth());
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: FOR initial assign: "
+		 << sig->name() << " = " << *etmp << endl;
+	    assert(etmp->expr_width() >= lv->lwidth());
+      }
 
       NetAssign*init = new NetAssign(lv, etmp);
       init->set_line(*this);
@@ -2957,6 +2965,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.323  2005/05/17 20:56:55  steve
+ *  Parameters cannot have their width changed.
+ *
  * Revision 1.322  2005/05/13 05:12:39  steve
  *  Some debug messages.
  *

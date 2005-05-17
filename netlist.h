@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.342 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.343 2005/05/17 20:56:55 steve Exp $"
 #endif
 
 /*
@@ -1123,6 +1123,7 @@ class NetEConstParam  : public NetEConst {
       perm_string name() const;
       const NetScope*scope() const;
 
+      virtual bool set_width(unsigned w);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -3443,6 +3444,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.343  2005/05/17 20:56:55  steve
+ *  Parameters cannot have their width changed.
+ *
  * Revision 1.342  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *

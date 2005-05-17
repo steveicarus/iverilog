@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.158 2005/05/07 03:13:30 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.159 2005/05/17 20:56:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -999,7 +999,7 @@ void NetEConstParam::dump(ostream&o) const
 {
       o << "<" << name_ << "=";
       NetEConst::dump(o);
-      o << ">";
+      o << ", wid=" << expr_width() << ">";
 }
 
 void NetECReal::dump(ostream&o) const
@@ -1143,6 +1143,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.159  2005/05/17 20:56:55  steve
+ *  Parameters cannot have their width changed.
+ *
  * Revision 1.158  2005/05/07 03:13:30  steve
  *  Include delay expressions for assignments in dump.
  *
