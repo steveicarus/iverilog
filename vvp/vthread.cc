@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.135 2005/05/07 03:15:42 steve Exp $"
+#ident "$Id: vthread.cc,v 1.136 2005/05/17 20:51:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -37,6 +37,7 @@
 # include  <math.h>
 # include  <assert.h>
 
+# include  <iostream>
 #include  <stdio.h>
 
 /* This is the size of an unsigned long in bits. This is just a
@@ -2495,19 +2496,19 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 1;
+      vvp_bit4_t lb = BIT4_1;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 1) {
-		  lb = 0;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_1) {
+		  lb = BIT4_0;
 		  break;
 	    }
 
-	    if (rb != 0)
-		  lb = 2;
+	    if (rb != BIT4_0)
+		  lb = BIT4_X;
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
@@ -2642,17 +2643,17 @@ bool of_OR(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb == 1) || (rb == 1)) {
-		  thr_put_bit(thr, idx1, 1);
+	    if ((lb == BIT4_1) || (rb == BIT4_1)) {
+		  thr_put_bit(thr, idx1, BIT4_1);
 
-	    } else if ((lb == 0) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 0);
+	    } else if ((lb == BIT4_0) && (rb == BIT4_0)) {
+		  thr_put_bit(thr, idx1, BIT4_0);
 
 	    } else {
-		  thr_put_bit(thr, idx1, 2);
+		  thr_put_bit(thr, idx1, BIT4_X);
 	    }
 
 	    idx1 += 1;
@@ -2869,17 +2870,14 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->number;
       unsigned long shift = thr->words[0].w_int;
 
-      if (shift >= wid) {
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  thr_put_bit(thr, base+idx, 0);
-
-      } else if (shift > 0) {
-	    for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1) {
+      if (shift > 0) {
+	    unsigned idx;
+	    for (idx = 0 ;  (idx+shift) < wid ;  idx += 1) {
 		  unsigned src = base + idx + shift;
 		  unsigned dst = base + idx;
 		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
 	    }
-	    for (unsigned idx = (wid-shift) ;  idx < wid ;  idx += 1)
+	    for ( ;  idx < wid ;  idx += 1)
 		  thr_put_bit(thr, base+idx, 0);
       }
       return true;
@@ -2994,7 +2992,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
       }
 
       delete[]lva;
@@ -3095,23 +3093,23 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb == 1) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 0);
+	    if ((lb == BIT4_1) && (rb == BIT4_1)) {
+		  thr_put_bit(thr, idx1, BIT4_0);
 
-	    } else if ((lb == 0) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 0);
+	    } else if ((lb == BIT4_0) && (rb == BIT4_0)) {
+		  thr_put_bit(thr, idx1, BIT4_0);
 
-	    } else if ((lb == 1) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 1);
+	    } else if ((lb == BIT4_1) && (rb == BIT4_0)) {
+		  thr_put_bit(thr, idx1, BIT4_1);
 
-	    } else if ((lb == 0) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 1);
+	    } else if ((lb == BIT4_0) && (rb == BIT4_1)) {
+		  thr_put_bit(thr, idx1, BIT4_1);
 
 	    } else {
-		  thr_put_bit(thr, idx1, 2);
+		  thr_put_bit(thr, idx1, BIT4_X);
 	    }
 
 	    idx1 += 1;
@@ -3179,6 +3177,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.136  2005/05/17 20:51:06  steve
+ *  Clean up instruction type reverences to bits.
+ *
  * Revision 1.135  2005/05/07 03:15:42  steve
  *  Implement non-blocking part assign.
  *
