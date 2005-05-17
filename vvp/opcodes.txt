@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.63 2005/05/07 03:15:42 steve Exp $
+ *  $Id: opcodes.txt,v 1.64 2005/05/17 20:54:00 steve Exp $
  */
 
 
@@ -519,17 +519,13 @@ forced value until another value propagates through.
 
 * %set/v <var-label>, <bit>, <wid>
 
-This sets a bit of a variable, and is used to implement blocking
-assignments. The <label> identifies the variable to receive the new
-value. Once the set completes, the value is immediately available to
-be read out of the variable. The <bit> is the address of the thread
-register that contains the bit value to assign.
-
-The %set/v instruction is the same as the %set, but it adds a width
-for a vector. The bits are written out in order, starting at the
-addressed variable bit and working up. If the <bit> is one of the
-constant bits, then the value is repeated for the width. Otherwise,
-the vector is taken from increasing thread bit addresses.
+This sets a vector to a variable, and is used to implement blocking
+assignments. The <var-label> identifies the variable to receive the
+new value. Once the set completes, the vlaue is immediately available
+to be read out of the variable. The <bit> is the address of the thread
+register that contains the LSB of the vector, and the <wid> is the
+size of the vector. The width must exactly match the width of the
+signal.
 
 * %set/mv <memory-label>, <bit>, <wid>
 
