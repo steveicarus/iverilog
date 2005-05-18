@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.200 2005/05/07 03:15:42 steve Exp $"
+#ident "$Id: compile.cc,v 1.201 2005/05/18 03:46:01 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1026,8 +1026,8 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
 {
       assert( wid > 0 );
 
-      if ((long)argc != 2*wid) {
-	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/gt has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
@@ -1526,6 +1526,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.201  2005/05/18 03:46:01  steve
+ *  Fixup structural GT comparators.
+ *
  * Revision 1.200  2005/05/07 03:15:42  steve
  *  Implement non-blocking part assign.
  *

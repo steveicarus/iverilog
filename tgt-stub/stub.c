@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.124 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: stub.c,v 1.125 2005/05/18 03:46:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -351,6 +351,23 @@ static void show_lpm_cmp_ge(ivl_lpm_t net)
       unsigned width = ivl_lpm_width(net);
 
       fprintf(out, "  LPM_CMP_GE %s: <width=%u %s>\n",
+	      ivl_lpm_basename(net), width,
+	      ivl_lpm_signed(net)? "signed" : "unsigned");
+
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+      fprintf(out, "    B: %s\n", ivl_nexus_name(ivl_lpm_data(net,1)));
+      check_cmp_widths(net);
+}
+
+/* IVL_LPM_CMP_GT
+ * This LPM node supports two-input compare.
+ */
+static void show_lpm_cmp_gt(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CMP_GT %s: <width=%u %s>\n",
 	      ivl_lpm_basename(net), width,
 	      ivl_lpm_signed(net)? "signed" : "unsigned");
 
@@ -783,6 +800,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_CMP_GE:
 	    show_lpm_cmp_ge(net);
+	    break;
+
+	  case IVL_LPM_CMP_GT:
+	    show_lpm_cmp_gt(net);
 	    break;
 
 	  case IVL_LPM_CMP_NE:
@@ -1362,6 +1383,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.125  2005/05/18 03:46:01  steve
+ *  Fixup structural GT comparators.
+ *
  * Revision 1.124  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *
