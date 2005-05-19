@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.163 2005/05/10 05:10:40 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.164 2005/05/19 03:51:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -451,7 +451,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
 	   into synthesized nets. */
-      NetExpr*lexp = left_->elaborate_expr(des, scope);
+      NetExpr*lexp = elab_and_eval(des, scope, left_);
       if (lexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
@@ -459,12 +459,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (NetExpr*tmp = lexp->eval_tree()) {
-	    delete lexp;
-	    lexp = tmp;
-      }
-
-      NetExpr*rexp = right_->elaborate_expr(des, scope);
+      NetExpr*rexp = elab_and_eval(des, scope, right_);
       if (rexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
@@ -472,10 +467,16 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (NetExpr*tmp = rexp->eval_tree()) {
-	    delete rexp;
-	    rexp = tmp;
-      }
+	/* Choose the operand width to be the width of the widest
+	   self-determined operand. */
+      unsigned operand_width = lexp->expr_width();
+      if (rexp->expr_width() > operand_width)
+	    operand_width = rexp->expr_width();
+
+      lexp->set_width(operand_width);
+      lexp = pad_to_width(lexp, operand_width);
+      rexp->set_width(operand_width);
+      rexp = pad_to_width(rexp, operand_width);
 
       NetNet*lsig = 0;
       NetNet*rsig = 0;
@@ -2460,6 +2461,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.164  2005/05/19 03:51:38  steve
+ *  Make sure comparison widths match.
+ *
  * Revision 1.163  2005/05/10 05:10:40  steve
  *  Make sig-eq-constant optimization more effective.
  *
