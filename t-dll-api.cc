@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.126 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.127 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -803,6 +803,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_RE_NAND:
 	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_XNOR:
+	  case IVL_LPM_SIGN_EXT:
 	    assert(idx == 0);
 	    return net->u_.reduce.a;
 
@@ -982,6 +983,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_RE_NAND:
 	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_XNOR:
+	  case IVL_LPM_SIGN_EXT:
 	    assert(idx == 0);
 	    return net->u_.reduce.q;
 
@@ -1078,6 +1080,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.signed_flag;
+	  case IVL_LPM_SIGN_EXT: // Sign extend is always signed.
+	    return 1;
 	  case IVL_LPM_UFUNC:
 	    return 0;
 	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
@@ -1140,6 +1144,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_RE_NAND:
 	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_XNOR:
+	  case IVL_LPM_SIGN_EXT:
 	    return net->u_.reduce.width;
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
@@ -2035,6 +2040,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.127  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.126  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *

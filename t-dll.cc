@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.149 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.150 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -902,6 +902,34 @@ void dll_target::logic(const NetLogic*net)
       obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
+}
+
+bool dll_target::sign_extend(const NetSignExtend*net)
+{
+      struct ivl_lpm_s*obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_SIGN_EXT;
+      obj->u_.reduce.width = net->width();
+      obj->name = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.reduce.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.reduce.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.reduce.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
 }
 
 bool dll_target::ureduce(const NetUReduce*net)
@@ -2080,6 +2108,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.150  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.149  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *

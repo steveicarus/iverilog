@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.323 2005/05/17 20:56:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.324 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -157,9 +157,15 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 it to the desired width. */
 	    if (cnt < lval->vector_width()) {
 		  if (lval->get_signed() && rid->get_signed()) {
-			cerr << get_line() << ": internal error: "
-			     << "Forgot how to sign-extend r-value "
-			     << "to l-value." << endl;
+
+			unsigned use_width = lval->vector_width();
+
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: PGassign "
+				   << "Generate sign-extend node." << endl;
+
+			rid = pad_to_width_signed(des, rid, use_width);
+
 		  } else {
 
 			if (debug_elaborate)
@@ -2965,6 +2971,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.324  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.323  2005/05/17 20:56:55  steve
  *  Parameters cannot have their width changed.
  *

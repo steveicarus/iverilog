@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.83 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: emit.cc,v 1.84 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -129,6 +129,11 @@ bool NetRamDq::emit_node(struct target_t*tgt) const
 bool NetReplicate::emit_node(struct target_t*tgt) const
 {
       return tgt->replicate(this);
+}
+
+bool NetSignExtend::emit_node(struct target_t*tgt) const
+{
+      return tgt->sign_extend(this);
 }
 
 bool NetUReduce::emit_node(struct target_t*tgt) const
@@ -523,6 +528,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.84  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.83  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.71 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: target.h,v 1.72 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -99,6 +99,7 @@ struct target_t {
       virtual bool net_const(const NetConst*);
       virtual bool net_function(const NetUserFunc*);
       virtual void net_probe(const NetEvProbe*);
+      virtual bool sign_extend(const NetSignExtend*);
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
@@ -172,6 +173,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.72  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.71  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

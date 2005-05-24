@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.17 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.18 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,6 +110,29 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
       return tmp;
 }
 
+NetNet*pad_to_width_signed(Design*des, NetNet*net, unsigned wid)
+{
+      NetScope*scope = net->scope();
+
+      if (net->vector_width() >= wid)
+	    return net;
+
+      NetSignExtend*se
+	    = new NetSignExtend(scope, scope->local_symbol(), wid);
+      se->set_line(*net);
+      des->add_node(se);
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      tmp->set_line(*net);
+      tmp->local_flag(true);
+      tmp->set_signed(true);
+
+      connect(tmp->pin(0), se->pin(0));
+      connect(se->pin(1), net->pin(0));
+
+      return tmp;
+}
+
 NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 {
       NetScope*scope = net->scope();
@@ -132,6 +155,9 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.18  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.17  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

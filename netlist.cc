@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.243 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.244 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1474,6 +1474,24 @@ const Link& NetRamDq::pin_Q() const
       return pin(5);
 }
 
+NetSignExtend::NetSignExtend(NetScope*s, perm_string n, unsigned w)
+: NetNode(s, n, 2), width_(w)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_name(perm_string::literal("I"), 0);
+}
+
+NetSignExtend::~NetSignExtend()
+{
+}
+
+unsigned NetSignExtend::width() const
+{
+      return width_;
+}
+
 NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 2), width_(w)
 {
@@ -2185,6 +2203,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.244  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.243  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.164 2005/05/19 03:51:38 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.165 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -901,10 +901,18 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (rsig == 0) return 0;
 
+	// The mult is signed if both its operands are signed.
+      bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
+
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
-	    rwidth = lsig->pin_count() + rsig->pin_count();
+	    rwidth = lsig->vector_width() + rsig->vector_width();
 	    lwidth = rwidth;
+      }
+
+      if (arith_is_signed) {
+	    lsig = pad_to_width_signed(des, lsig, rwidth);
+	    rsig = pad_to_width_signed(des, rsig, rwidth);
       }
 
       NetMult*mult = new NetMult(scope, scope->local_symbol(), rwidth,
@@ -913,8 +921,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       mult->set_line(*this);
       des->add_node(mult);
 
-	// The mult is signed if both its operands are signed.
-      mult->set_signed( lsig->get_signed() && rsig->get_signed() );
+      mult->set_signed( arith_is_signed );
 
       connect(mult->pin_DataA(), lsig->pin(0));
       connect(mult->pin_DataB(), rsig->pin(0));
@@ -2461,6 +2468,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.165  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.164  2005/05/19 03:51:38  steve
  *  Make sure comparison widths match.
  *

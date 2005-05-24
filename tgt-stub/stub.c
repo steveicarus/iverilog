@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.125 2005/05/18 03:46:01 steve Exp $"
+#ident "$Id: stub.c,v 1.126 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -739,6 +739,26 @@ static void show_lpm_shift(ivl_lpm_t net, const char*shift_dir)
 	      ivl_nexus_name(nex), width_of_nexus(nex));
 }
 
+static void show_lpm_sign_ext(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t nex_q = ivl_lpm_q(net,0);
+      ivl_nexus_t nex_a = ivl_lpm_data(net,0);
+
+      fprintf(out, "  LPM_SIGN_EXT %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex_q));
+      fprintf(out, "    D: %s <width=%u>\n",
+	      ivl_nexus_name(nex_a), width_of_nexus(nex_a));
+
+      if (width != width_of_nexus(nex_q)) {
+	    fprintf(out, "    ERROR: Width of Q is %u, expecting %u\n",
+		    width_of_nexus(nex_q), width);
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_sub(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -828,6 +848,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_SHIFTL:
 	    show_lpm_shift(net, "L");
+	    break;
+
+	  case IVL_LPM_SIGN_EXT:
+	    show_lpm_sign_ext(net);
 	    break;
 
 	  case IVL_LPM_SHIFTR:
@@ -1383,6 +1407,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.126  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.125  2005/05/18 03:46:01  steve
  *  Fixup structural GT comparators.
  *

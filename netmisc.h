@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.21 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: netmisc.h,v 1.22 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -49,6 +49,8 @@ extern NetScope* symbol_search(Design*des, NetScope*start, hname_t path,
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
+
+extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w);
 
 /*
  * This function transforms an expression by cropping the high bits
@@ -99,6 +101,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.22  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.21  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

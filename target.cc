@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.74 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: target.cc,v 1.75 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -192,6 +192,13 @@ void target_t::net_probe(const NetEvProbe*net)
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled probe trigger node" << endl;
       net->dump_node(cerr, 4);
+}
+
+bool target_t::sign_extend(const NetSignExtend*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetSignExtend node." << endl;
+      return false;
 }
 
 bool target_t::process(const NetProcTop*top)
@@ -429,6 +436,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.75  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.74  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

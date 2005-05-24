@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.343 2005/05/17 20:56:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.344 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 /*
@@ -1361,6 +1361,29 @@ class NetLogic  : public NetNode {
 
     private:
       TYPE type_;
+      unsigned width_;
+};
+
+/*
+ * This class represents a structural sign extension. The pin-0 is a
+ * vector of the input pin-1 sign-extended. The input is taken to be
+ * signed. This generally matches a hardware implementation of
+ * replicating the top bit enough times to create the desired output
+ * width.
+ */
+class NetSignExtend  : public NetNode {
+
+    public:
+      explicit NetSignExtend(NetScope*s, perm_string n, unsigned wid);
+      ~NetSignExtend();
+
+      unsigned width() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*, functor_t*);
+
+    private:
       unsigned width_;
 };
 
@@ -3444,6 +3467,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.344  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.343  2005/05/17 20:56:55  steve
  *  Parameters cannot have their width changed.
  *

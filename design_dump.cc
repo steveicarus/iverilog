@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.159 2005/05/17 20:56:55 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.160 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -384,6 +384,14 @@ void NetReplicate::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "NetReplicate: "
 	<< name() << " wid=" << width_ << ", repeat_=" << repeat_
 	<< ", input wid=" << width_/repeat_ << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetSignExtend::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NetSignExtend: "
+	<< name() << " output width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1143,6 +1151,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.160  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.159  2005/05/17 20:56:55  steve
  *  Parameters cannot have their width changed.
  *

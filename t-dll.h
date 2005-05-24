@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.125 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: t-dll.h,v 1.126 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -90,6 +90,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
+      bool sign_extend(const NetSignExtend*);
 
       bool process(const NetProcTop*);
       void scope(const NetScope*);
@@ -347,7 +348,7 @@ struct ivl_lpm_s {
 		  ivl_nexus_t q, a, s;
 	    } part;
 
-	      // IVL_LPM_RE_* and IVL_LPM_REPEAT use this.
+	      // IVL_LPM_RE_* and IVL_LPM_SIGN_EXT use this.
 	    struct ivl_lpm_reduce_s {
 		  unsigned width;
 		  ivl_nexus_t q,  a;
@@ -685,6 +686,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.126  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.125  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *

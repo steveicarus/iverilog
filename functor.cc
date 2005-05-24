@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.33 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: functor.cc,v 1.34 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,6 +76,10 @@ void functor_t::lpm_mult(class Design*, class NetMult*)
 }
 
 void functor_t::lpm_mux(class Design*, class NetMux*)
+{
+}
+
+void functor_t::sign_extend(class Design*, class NetSignExtend*)
 {
 }
 
@@ -210,6 +214,11 @@ void NetMux::functor_node(Design*des, functor_t*fun)
       fun->lpm_mux(des, this);
 }
 
+void NetSignExtend::functor_node(Design*des, functor_t*fun)
+{
+      fun->sign_extend(des, this);
+}
+
 void NetUReduce::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_ureduce(des, this);
@@ -276,6 +285,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.34  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.33  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

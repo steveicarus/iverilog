@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.21 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: functor.h,v 1.22 2005/05/24 01:44:27 steve Exp $"
 #endif
 
 /*
@@ -80,6 +80,8 @@ struct functor_t {
 
 	/* This method is called for each unary reduction gate. */
       virtual void lpm_ureduce(class Design*des, class NetUReduce*);
+
+      virtual void sign_extend(class Design*des, class NetSignExtend*);
 };
 
 struct proc_match_t {
@@ -95,6 +97,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.22  2005/05/24 01:44:27  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.21  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

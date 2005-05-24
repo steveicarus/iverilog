@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.154 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.155 2005/05/24 01:44:28 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -247,6 +247,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_REPEAT = 26,
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
+      IVL_LPM_SIGN_EXT=27,
       IVL_LPM_SUB    =  8,
       IVL_LPM_RAM    =  9,
       IVL_LPM_UFUNC  = 14
@@ -933,6 +934,11 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * repeated to get the desired width. The ivl core assures that the
  * input vector is exactly ivl_lpm_width() / ivl_lpm_size() bits.
  *
+ * - Sign Exend (IVL_LPM_SIGN_EXT)
+ * This node takes a single input and generates a single output. The
+ * input must be signed, and the output will be a vector sign extended
+ * to the desired width. The ivl_lpm_width() value is the output
+ * width, the input will be whatever it wants to be.
  * - Shifts (IVL_LPM_SHIFTL/SHIFTR)
  * This node takes two inputs, a vector and a shift distance. The
  * ivl_lpm_data(0) nexus is the vector input, and the ivl_lpm_data(1)
@@ -1658,6 +1664,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.155  2005/05/24 01:44:28  steve
+ *  Do sign extension of structuran nets.
+ *
  * Revision 1.154  2005/05/08 23:44:08  steve
  *  Add support for variable part select.
  *
