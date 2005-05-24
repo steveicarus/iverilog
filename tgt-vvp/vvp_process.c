@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.109 2005/05/17 20:55:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.110 2005/05/24 02:31:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -154,7 +154,6 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
       unsigned part_off = ivl_lval_part_off(lval);
       ivl_expr_t mux = ivl_lval_mux(lval);
 
-      assert(part_off == 0);
       assert(idx == 0);
 
       if (mux != 0) {
@@ -166,6 +165,17 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
 	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
 		    vvp_signal_label(sig), delay, bit);
 	    fprintf(vvp_out, "t_%u ;\n", skip_assign);
+
+      } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
+	      /* There is no mux expression, but a constant part
+		 offset. Load that into index x1 and generate a
+		 single-bit set instruction. */
+	    assert(ivl_lval_width(lval) == width);
+
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), delay, bit);
 
       } else {
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
@@ -1494,6 +1504,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.110  2005/05/24 02:31:18  steve
+ *  Handle assignments to part-select l-values.
+ *
  * Revision 1.109  2005/05/17 20:55:42  steve
  *  Detect bit selects that need special handling.
  *
