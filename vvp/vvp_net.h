@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.27 2005/05/09 00:36:58 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.28 2005/05/24 01:43:27 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -490,6 +490,24 @@ class vvp_fun_drive  : public vvp_net_fun_t {
       unsigned char drive1_;
 };
 
+/*
+ * EXTEND functors expand an input vector to the desired output
+ * width. The extend_signed functor sign extends the input. If the
+ * input is already wider then the desired output, then it is passed
+ * unmodified.
+ */
+class vvp_fun_extend_signed  : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_extend_signed(unsigned wid);
+      ~vvp_fun_extend_signed();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      unsigned width_;
+};
+
 /* vvp_fun_part
  * This node takes a part select of the input vector. Input 0 is the
  * vector to be selected from, and input 1 is the location where the
@@ -721,6 +739,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.28  2005/05/24 01:43:27  steve
+ *  Add a sign-extension node.
+ *
  * Revision 1.27  2005/05/09 00:36:58  steve
  *  Force part base out of bounds if index is invalid.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.74 2005/05/08 23:40:14 steve Exp $"
+#ident "$Id: parse.y,v 1.75 2005/05/24 01:43:27 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -62,7 +62,8 @@ extern FILE*yyin;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DFF
-%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
+%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S
+%token K_PARAM K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
@@ -300,6 +301,13 @@ statement
 
         | T_LABEL K_REPEAT T_NUMBER ',' T_NUMBER ',' symbol ';'
                 { compile_repeat($1, $3, $5, $7); }
+
+  /* The extend nodes take a width and a symbol. */
+
+        | T_LABEL K_EXTEND_S T_NUMBER ',' symbol ';'
+                { compile_extend_signed($1, $3, $5); }
+
+  /* Shift nodes. */
 
 	| T_LABEL K_SHIFTL T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
@@ -681,6 +689,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.75  2005/05/24 01:43:27  steve
+ *  Add a sign-extension node.
+ *
  * Revision 1.74  2005/05/08 23:40:14  steve
  *  Add support for variable part select.
  *

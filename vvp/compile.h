@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.71 2005/05/08 23:40:14 steve Exp $"
+#ident "$Id: compile.h,v 1.72 2005/05/24 01:43:27 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -153,6 +153,8 @@ extern void compile_reduce_xor(char*label, struct symb_s arg);
 extern void compile_reduce_nand(char*label, struct symb_s arg);
 extern void compile_reduce_nor(char*label, struct symb_s arg);
 extern void compile_reduce_xnor(char*label, struct symb_s arg);
+
+extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
 extern void compile_repeat(char*label, long width, long repeat,
 			   struct symb_s arg);
@@ -311,6 +313,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.72  2005/05/24 01:43:27  steve
+ *  Add a sign-extension node.
+ *
  * Revision 1.71  2005/05/08 23:40:14  steve
  *  Add support for variable part select.
  *

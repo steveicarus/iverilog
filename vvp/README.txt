@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.66 2005/05/08 23:40:14 steve Exp $
+ *  $Id: README.txt,v 1.67 2005/05/24 01:43:27 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -524,6 +524,16 @@ the device has a single input, which is a vector of any width. The
 device performs the logic on all the bits of the vector (a la Verilog)
 and produces and propagates a single bit width vector.
 
+EXPANSION LOGIC
+
+Sign extension nodes are the opposite of reduction logic, in that they
+take a narrow vector, or single bit, and pad it out to a wider
+vector.
+
+        <label> .expand/s <wid>, <symbol> ;
+
+The .expand/s node takes an input symbol and sign-extends it to the
+given width.
 
 FORCE STATEMENTS (old method - remove me):
 

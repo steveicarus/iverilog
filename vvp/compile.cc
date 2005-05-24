@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.201 2005/05/18 03:46:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.202 2005/05/24 01:43:27 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1038,6 +1038,23 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
 }
 
 /*
+ * Extend nodes.
+ */
+void compile_extend_signed(char*label, long wid, struct symb_s arg)
+{
+      assert(wid >= 0);
+
+      vvp_fun_extend_signed*fun = new vvp_fun_extend_signed(wid);
+      vvp_net_t*ptr = new vvp_net_t;
+      ptr->fun = fun;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      input_connect(ptr, 0, arg.text);
+}
+
+/*
  * A .shift/l statement creates an array of functors for the
  * width. The 0 input is the data vector to be shifted and the 1 input
  * is the amount of the shift. An unconnected shift amount is set to 0.
@@ -1526,6 +1543,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.202  2005/05/24 01:43:27  steve
+ *  Add a sign-extension node.
+ *
  * Revision 1.201  2005/05/18 03:46:01  steve
  *  Fixup structural GT comparators.
  *
@@ -1583,32 +1603,5 @@ void compile_param_string(char*label, char*name, char*str, char*value)
  *
  * Revision 1.184  2005/01/29 17:53:25  steve
  *  Use scheduler to initialize constant functor inputs.
- *
- * Revision 1.183  2005/01/28 05:34:25  steve
- *  Add vector4 implementation of .arith/mult.
- *
- * Revision 1.182  2005/01/22 16:21:11  steve
- *  Implement vectored CMP_EQ and NE
- *
- * Revision 1.181  2005/01/22 01:06:20  steve
- *  Implement the .cmp/eeq LPM node.
- *
- * Revision 1.180  2005/01/16 04:19:08  steve
- *  Reimplement comparators as vvp_vector4_t nodes.
- *
- * Revision 1.179  2004/12/31 05:54:46  steve
- *  Fix uninitialized fun pointer for resolver nodes.
- *
- * Revision 1.178  2004/12/17 04:47:47  steve
- *  Replace single release with release/net and release/reg.
- *
- * Revision 1.177  2004/12/15 17:17:42  steve
- *  Add the force/v instruction.
- *
- * Revision 1.176  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
  */
 
