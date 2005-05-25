@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.202 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: compile.cc,v 1.203 2005/05/25 05:44:51 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -36,6 +36,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <iostream.h>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -765,6 +766,9 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv)
 {
+      if (argc > 4) {
+	    cerr << "XXXX argv[0] = " << argv[0].text << endl;
+      }
       assert(argc <= 4);
 
       for (unsigned idx = 0;  idx < argc;  idx += 1) {
@@ -1543,6 +1547,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.203  2005/05/25 05:44:51  steve
+ *  Handle event/or with specific, efficient nodes.
+ *
  * Revision 1.202  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
  *

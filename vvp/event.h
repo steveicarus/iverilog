@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.8 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: event.h,v 1.9 2005/05/25 05:44:51 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -84,6 +84,21 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 };
 
 /*
+ * This functor triggers anytime any input is set, no matter what the
+ * value. This is similar to a named event, but it has no handle.
+ */
+class vvp_fun_event_or : public vvp_net_fun_t, public waitable_hooks_s {
+
+    public:
+      explicit vvp_fun_event_or();
+      ~vvp_fun_event_or();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+};
+
+/*
  * A named event is simpler then a vvp_fun_edge in that it triggers on
  * any input at all to port-0. The idea here is that behavioral code
  * can use a %set/v instruction to trigger the event.
@@ -103,6 +118,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.9  2005/05/25 05:44:51  steve
+ *  Handle event/or with specific, efficient nodes.
+ *
  * Revision 1.8  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *

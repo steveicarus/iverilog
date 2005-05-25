@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.17 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: event.cc,v 1.18 2005/05/25 05:44:51 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -130,6 +130,21 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
       }
 }
 
+vvp_fun_event_or::vvp_fun_event_or()
+{
+}
+
+vvp_fun_event_or::~vvp_fun_event_or()
+{
+}
+
+void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      run_waiting_threads_();
+      vvp_net_t*net = port.ptr();
+      vvp_send_vec4(net->out, bit);
+}
+
 vvp_named_event::vvp_named_event(struct __vpiHandle*h)
 {
       handle_ = h;
@@ -154,12 +169,19 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 **  Named events are handled elsewhere.
 */
 
+static void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
+
 void compile_event(char*label, char*type,
 		   unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t*fun = 0;
 
-      if (type && (strcmp(type,"edge") == 0) ) {
+      if (type == 0) {
+	    compile_event_or(label, argc, argv);
+	    return;
+      }
+
+      if (strcmp(type,"edge") == 0) {
 
 	    free(type);
 	    fun = new vvp_fun_anyedge;
@@ -168,15 +190,13 @@ void compile_event(char*label, char*type,
 
 	    vvp_fun_edge::edge_t edge = vvp_edge_none;
 
-	    if (type) {
-		  if (strcmp(type,"posedge") == 0)
-			edge = vvp_edge_posedge;
-		  else if (strcmp(type,"negedge") == 0)
-			edge = vvp_edge_negedge;
+	    if (strcmp(type,"posedge") == 0)
+		  edge = vvp_edge_posedge;
+	    else if (strcmp(type,"negedge") == 0)
+		  edge = vvp_edge_negedge;
 
-		  assert(argc <= 4);
-		  free(type);
-	    }
+	    assert(argc <= 4);
+	    free(type);
 
 	    fun = new vvp_fun_edge(edge);
       }
@@ -188,6 +208,23 @@ void compile_event(char*label, char*type,
       free(label);
 
       inputs_connect(ptr, argc, argv);
+}
+
+static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
+{
+      vvp_net_fun_t*fun = new vvp_fun_event_or;
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = fun;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+	/* This is a very special case. Point all the source inputs to
+	   the same input. It doesn't matter that the streams get
+	   tangled because data values are irrelevant. */
+      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
+	    input_connect(ptr, 0, argv[idx].text);
+      }
 }
 
 /*
@@ -212,6 +249,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.18  2005/05/25 05:44:51  steve
+ *  Handle event/or with specific, efficient nodes.
+ *
  * Revision 1.17  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *
