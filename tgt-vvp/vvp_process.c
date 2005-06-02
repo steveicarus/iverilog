@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.110 2005/05/24 02:31:18 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.111 2005/06/02 16:03:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -812,6 +812,39 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
       }
 }
 
+static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
+{
+      ivl_signal_t rsig;;
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
+      const char*command_name;
+
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL)
+	    return;
+
+      switch (ivl_statement_type(net)) {
+	  case IVL_ST_CASSIGN:
+	    command_name = "%cassign";
+	    break;
+	  case IVL_ST_FORCE:
+	    command_name = "%force";
+	    break;
+	  default:
+	    command_name = "ERROR";
+	    assert(0);
+	    break;
+      }
+
+      rsig = ivl_expr_signal(rval);
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+      lsig = ivl_lval_sig(lval);
+
+      fprintf(vvp_out, "  %s/link", command_name);
+      fprintf(vvp_out, " V_%s", vvp_signal_label(lsig));
+      fprintf(vvp_out, ", V_%s;\n", vvp_signal_label(rsig));
+}
+
 static int show_stmt_cassign(ivl_statement_t net)
 {
       ivl_expr_t rval;
@@ -826,25 +859,7 @@ static int show_stmt_cassign(ivl_statement_t net)
 	   the expression value to the l-value. */
       force_vector_to_lval(net, rvec);
 
-	/* If the r-value expression is not a signal, then this
-	   expression is apparently just to be continuous-assigned as
-	   a constant value. */
-      if (ivl_expr_type(rval) != IVL_EX_SIGNAL)
-	    return 0;
-
-      {
-	    ivl_signal_t rsig = ivl_expr_signal(rval);
-	    ivl_lval_t lval;
-	    ivl_signal_t lsig;
-
-	    assert(ivl_stmt_lvals(net) == 1);
-	    lval = ivl_stmt_lval(net, 0);
-	    lsig = ivl_lval_sig(lval);
-
-	    fprintf(vvp_out, "  %%cassign/link");
-	    fprintf(vvp_out, " V_%s", vvp_signal_label(lsig));
-	    fprintf(vvp_out, ", V_%s;\n", vvp_signal_label(rsig));
-      }
+      force_link_rval(net, rval);
 
       return 0;
 }
@@ -1001,11 +1016,7 @@ static int show_stmt_force(ivl_statement_t net)
 	   the expression value to the l-value. */
       force_vector_to_lval(net, rvec);
 
-	/* FIXME: The above, left as is, assumes that the expression
-	   is a constant value to be assigned to the target. If it is
-	   not, then we will need to generate a thread or netlist to
-	   deal with the expression and repetitively assign to the
-	   target. */
+      force_link_rval(net, rval);
 
       return 0;
 }
@@ -1504,6 +1515,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.111  2005/06/02 16:03:47  steve
+ *  Support %force/link
+ *
  * Revision 1.110  2005/05/24 02:31:18  steve
  *  Handle assignments to part-select l-values.
  *
