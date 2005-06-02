@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.136 2005/05/17 20:51:06 steve Exp $"
+#ident "$Id: vthread.cc,v 1.137 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1506,6 +1506,39 @@ bool of_END(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * the %force/link instruction connects a source node to a
+ * destination node. The destination node must be a signal, as it is
+ * marked with the source of the force so that it may later be
+ * unlinked without specifically knowing the source that this
+ * instruction used.
+ */
+bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*dst = cp->net;
+      vvp_net_t*src = cp->net2;
+
+      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(dst->fun);
+      assert(sig);
+
+	/* Detect the special case that we are already forced the
+	   source onto the destination. */
+      if (sig->force_link == src)
+	    return true;
+
+	/* FIXME: Don't yet support changing the force. */
+      assert(sig->force_link == 0);
+      sig->force_link = src;
+
+	/* Link the output of the src to the port[2] (the force
+	   port) of the destination. */
+      vvp_net_ptr_t dst_ptr (dst, 2);
+      dst->port[2] = src->out;
+      src->out = dst_ptr;
+
+      return true;
+}
+
+/*
  * The %force/v instruction invokes a force assign of a constant value
  * to a signal. The instruction arguments are:
  *
@@ -2706,6 +2739,12 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
+      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(net->fun);
+      assert(sig);
+
+	/* XXXX Release for %force/link not yet implemented. */
+      assert(sig->force_link == 0);
+
       vvp_net_ptr_t ptr (net, 3);
       vvp_send_long(ptr, 2);
 
@@ -2715,6 +2754,12 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+
+      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(net->fun);
+      assert(sig);
+
+	/* XXXX Release for %force/link not yet implemented. */
+      assert(sig->force_link == 0);
 
       vvp_net_ptr_t ptr (net, 3);
       vvp_send_long(ptr, 3);
@@ -3177,6 +3222,11 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.137  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.136  2005/05/17 20:51:06  steve
  *  Clean up instruction type reverences to bits.
  *

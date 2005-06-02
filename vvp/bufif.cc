@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.12 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: bufif.cc,v 1.13 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -39,7 +39,7 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       switch (ptr.port()) {
 	  case 0:
-	    bit_ = bit;
+	    bit_ = inv_? ~bit : bit;
 	    break;
 	  case 1:
 	    en_ = pol_? ~bit : bit;
@@ -87,6 +87,11 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.13  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.12  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.

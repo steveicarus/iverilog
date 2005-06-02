@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.203 2005/05/25 05:44:51 steve Exp $"
+#ident "$Id: compile.cc,v 1.204 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -115,6 +115,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%div/wr", of_DIV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%force/link",of_FORCE_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1547,6 +1548,11 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.204  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.203  2005/05/25 05:44:51  steve
  *  Handle event/or with specific, efficient nodes.
  *

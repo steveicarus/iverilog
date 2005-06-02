@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.5 2005/05/14 19:43:23 steve Exp $"
+#ident "$Id: delay.cc,v 1.6 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -92,8 +92,8 @@ vvp_time64_t vvp_delay_t::get_delay(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
-vvp_fun_delay::vvp_fun_delay(vvp_bit4_t init, const vvp_delay_t&d)
-: delay_(d), cur_(1)
+vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
+: net_(n), delay_(d), cur_(1)
 {
       cur_.set_bit(0, init);
 }
@@ -118,13 +118,23 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 
       cur_ = bit;
       if (use_delay == 0)
-	    vvp_send_vec4(port.ptr()->out, cur_);
+	    vvp_send_vec4(net_->out, cur_);
       else
-	    schedule_assign_vector(port.ptr()->out, cur_, use_delay);
+	    schedule_generic(this, 0, use_delay, false);
+}
+
+void vvp_fun_delay::run_run()
+{
+      vvp_send_vec4(net_->out, cur_);
 }
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.6  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.5  2005/05/14 19:43:23  steve
  *  Move functor delays to vvp_delay_fun object.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.21 2005/05/07 03:15:42 steve Exp $"
+#ident "$Id: schedule.h,v 1.22 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -84,7 +84,7 @@ extern void schedule_generic(vvp_gen_event_t obj, unsigned char val,
 
 struct vvp_gen_event_s
 {
-      void (*run)(vvp_gen_event_t obj, unsigned char val);
+      virtual void run_run() =0;
 };
 
 /*
@@ -131,6 +131,11 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.22  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.21  2005/05/07 03:15:42  steve
  *  Implement non-blocking part assign.
  *

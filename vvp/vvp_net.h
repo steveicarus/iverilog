@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.28 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.29 2005/06/02 16:02:11 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -649,6 +649,11 @@ class vvp_fun_signal  : public vvp_net_fun_t {
     public:
       struct __vpiCallback*vpi_callbacks;
 
+	/* The %force/link instruction needs a place to write the
+	   source node of the force, so that subsequent %force and
+	   %release instructions can undo the link as needed. */
+      struct vvp_net_t*force_link;
+
     private:
       vvp_vector4_t bits4_;
       vvp_vector8_t bits8_;
@@ -739,6 +744,11 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.29  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.28  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
  *

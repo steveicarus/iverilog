@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.34 2005/05/07 03:15:42 steve Exp $"
+#ident "$Id: schedule.cc,v 1.35 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -139,8 +139,8 @@ struct generic_event_s : public event_s {
 void generic_event_s::run_run(void)
 {
       count_gen_events += 1;
-      if (obj && obj->run)
-	    obj->run(obj, val);
+      if (obj)
+	    obj->run_run();
 }
 
 /*
@@ -583,6 +583,11 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.35  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.34  2005/05/07 03:15:42  steve
  *  Implement non-blocking part assign.
  *

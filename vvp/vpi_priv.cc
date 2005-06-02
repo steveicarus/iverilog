@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.46 2004/05/19 03:26:24 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.47 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -394,13 +394,12 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 struct vpip_put_value_event : vvp_gen_event_s {
       vpiHandle handle;
       s_vpi_value value;
+      virtual void run_run();
 };
 
-static void vpip_put_value_callback(vvp_gen_event_t eobj, unsigned char)
+void vpip_put_value_event::run_run()
 {
-      vpip_put_value_event*put = (vpip_put_value_event*)eobj;
-
-      put->handle->vpi_type->vpi_put_value_ (put->handle, &put->value);
+      handle->vpi_type->vpi_put_value_ (handle, &value);
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
@@ -432,7 +431,6 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
-	    put->run = &vpip_put_value_callback;
 	    schedule_generic(put, 0, dly, false);
 	    return 0;
       }
@@ -687,6 +685,11 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.47  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.46  2004/05/19 03:26:24  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

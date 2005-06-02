@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.28 2005/05/17 20:54:56 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.29 2005/06/02 16:02:11 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -697,6 +697,7 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 vvp_fun_signal::vvp_fun_signal(unsigned wid)
 : bits4_(wid), needs_init_(true)
 {
+      force_link = 0;
       vpi_callbacks = 0;
       continuous_assign_active_ = false;
       force_active_ = false;
@@ -1346,6 +1347,11 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.29  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.28  2005/05/17 20:54:56  steve
  *  Clean up definition of vvp_vector4_t insertion into ostream.
  *

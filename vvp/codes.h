@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.72 2005/05/07 03:15:42 steve Exp $"
+#ident "$Id: codes.h,v 1.73 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 
@@ -68,6 +68,7 @@ extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
+extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_V(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
@@ -173,6 +174,11 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.73  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.72  2005/05/07 03:15:42  steve
  *  Implement non-blocking part assign.
  *

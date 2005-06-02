@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.35 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.36 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,8 @@ const struct __vpirt callback_rt = {
 struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
       bool sync_flag;
+
+      virtual void run_run();
 };
 
 
@@ -166,13 +168,12 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       return obj;
 }
 
-static void make_sync_run(vvp_gen_event_t obj, unsigned char)
+void sync_cb::run_run()
 {
-      struct sync_cb*cb = (struct sync_cb*)obj;
-      if (cb->handle == 0)
+      if (handle == 0)
 	    return;
 
-      struct __vpiCallback*cur = cb->handle;
+      struct __vpiCallback*cur = handle;
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
@@ -181,7 +182,7 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
 	   the usual way to cancel one-time callbacks of this sort. */
       if (cur->cb_data.cb_rtn != 0) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
-	    vpi_mode_flag = cb->sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
+	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
@@ -201,7 +202,6 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = readonly_flag? true : false;
-      cb->run = &make_sync_run;
       cb->handle = obj;
       obj->cb_sync = cb;
 
@@ -240,7 +240,6 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
 
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
-      cb->run = &make_sync_run;
       cb->handle = obj;
       obj->cb_sync = cb;
 
@@ -480,6 +479,11 @@ void vvp_fun_signal::run_vpi_callbacks()
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.36  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.35  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

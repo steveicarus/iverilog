@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.23 2005/05/14 19:43:23 steve Exp $"
+#ident "$Id: logic.cc,v 1.24 2005/06/02 16:02:11 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -249,6 +249,14 @@ void compile_functor(char*label, char*type,
 	    obj = new vvp_fun_bufif(false,false, ostr0, ostr1);
 	    strength_aware = true;
 
+      } else if (strcmp(type, "NOTIF0") == 0) {
+	    obj = new vvp_fun_bufif(true,true, ostr0, ostr1);
+	    strength_aware = true;
+
+      } else if (strcmp(type, "NOTIF1") == 0) {
+	    obj = new vvp_fun_bufif(false,true, ostr0, ostr1);
+	    strength_aware = true;
+
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
 #if 0
@@ -281,13 +289,7 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj = new table_functor_s(ft_NOT);
-#if 0
-      } else if (strcmp(type, "NOTIF0") == 0) {
-	    obj = new vvp_bufif_s(true,true, ostr0, ostr1);
 
-      } else if (strcmp(type, "NOTIF1") == 0) {
-	    obj = new vvp_bufif_s(false,true, ostr0, ostr1);
-#endif
       } else if (strcmp(type, "XNOR") == 0) {
 	    obj = new table_functor_s(ft_XNOR);
 
@@ -320,15 +322,15 @@ void compile_functor(char*label, char*type,
 	    return;
       }
 
+      vvp_net_t*net_drv = new vvp_net_t;
       vvp_net_fun_t*obj_drv;
 
       if (ostr0 == 6 && ostr1 == 6 && delay != 0) {
-	    obj_drv = new vvp_fun_delay(BIT4_X, *delay);
+	    obj_drv = new vvp_fun_delay(net_drv, BIT4_X, *delay);
       } else {
 	    obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
       }
 
-      vvp_net_t*net_drv = new vvp_net_t;
       net_drv->fun = obj_drv;
 
 	/* Point the gate to the drive node. */
@@ -344,6 +346,11 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.24  2005/06/02 16:02:11  steve
+ *  Add support for notif0/1 gates.
+ *  Make delay nodes support inertial delay.
+ *  Add the %force/link instruction.
+ *
  * Revision 1.23  2005/05/14 19:43:23  steve
  *  Move functor delays to vvp_delay_fun object.
  *
