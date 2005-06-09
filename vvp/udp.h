@@ -22,14 +22,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.16 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: udp.h,v 1.17 2005/06/09 04:12:30 steve Exp $"
 #endif
 
 # include  <vvp_net.h>
 # include  <delay.h>
 
+struct udp_levels_table;
+
+struct vvp_udp_s {
+
+    public:
+      explicit vvp_udp_s(char*label, unsigned ports);
+      virtual ~vvp_udp_s();
+
+	// Return the number of input ports for the defined UDP. This
+	// does *not* include the current output value for a
+	// sequential UDP.
+      unsigned port_count() const;
+
+      virtual vvp_bit4_t calculate_output(const udp_levels_table&cur,
+					  const udp_levels_table&prev,
+					  vvp_bit4_t cur_out) =0;
+
+    private:
+      unsigned ports_;
+};
+
 /*
- * The vvp_udp_s instance represents a *definition* of a
+ * The vvp_udp_async_s instance represents a *definition* of a
  * primitive. netlist instances refer to these definitions.
  *
  * The ports argument of the constructor is the number of input ports
@@ -50,7 +71,31 @@
  * will be set in the three masks for each bit position.
  *
  * This table structure implies that the number of inputs to the level
- * sensitive device is limited to the number of bits in an unsigned long.
+ * sensitive device is limited to the number of bits in an unsigned
+ * long.
+ *
+ * The array of strings passed to the compile_table method of a
+ * combinational UDP are strings of port_count()+1 characters. The
+ * expected inputs are in the order of the UDP inputs, and the output
+ * is the last character. For example, an AND gate has these strings
+ * passed to the compile_table function:
+ *
+ *    000   (Both inputs are 0)
+ *    010   (Second input is a 1)
+ *    100
+ *    111   (All inputs are 1, so generate a 1 output)
+ *
+ * The characters allowed in the input positions are:
+ *
+ *   0  -- Expect a 0
+ *   1  -- Expect a 1
+ *   x  -- Expect an x or z
+ *   b  -- 0 or 1
+ *   l  -- 0 or x
+ *   h  -- x or 1
+ *   ?  -- 0, x or 1
+ *
+ * Only 0, 1 and x characters are allowed in the output position.
  */
 
 struct udp_levels_table {
@@ -59,28 +104,106 @@ struct udp_levels_table {
       unsigned long maskx;
 };
 
-class vvp_udp_s {
+class vvp_udp_comb_s : public vvp_udp_s {
 
     public:
-      vvp_udp_s(char*label, char*name, unsigned ports, bool sequ);
-      ~vvp_udp_s();
+      vvp_udp_comb_s(char*label, char*name, unsigned ports);
+      ~vvp_udp_comb_s();
       void compile_table(char**tab);
-
-	// Return the number of input ports for the defined UDP.
-      unsigned port_count() const;
 
 	// Test the cur table with the compiled rows, and return the
 	// bit value that matches.
       vvp_bit4_t test_levels(const udp_levels_table&cur);
 
+      vvp_bit4_t calculate_output(const udp_levels_table&cur,
+				  const udp_levels_table&prev,
+				  vvp_bit4_t cur_out);
+
     private:
       char*name_;
-      unsigned ports_;
 
 	// Level sensitive rows of the device.
       struct udp_levels_table*levels0_;
       struct udp_levels_table*levels1_;
       unsigned nlevels0_, nlevels1_;
+};
+
+/*
+ * udp sequential devices are a little more complex in that they have
+ * an additional output type: no-change. They also have, in addition
+ * to a table of levels, a table of edges that are similar to levels
+ * but one of the positions has an edge value.
+ *
+ * The port_count() for the device is the number of inputs. Sequential
+ * devices have and additional phantom port that is the current output
+ * value. This implies that the maximim port count for sequential
+ * devices is 1 less then for combinational.
+ *
+ * The input table that is passed to the compile_table method is very
+ * similar to that for the combinational UDP. The differences are that
+ * there is one extra entry in the beginning of each input row that is
+ * the current output, and there are more characters accepted at each
+ * bit position.
+ *
+ * The current output bit may contain the same characters as a
+ * combinational UDP input position. No edges.
+ *
+ * The next output position takes the possible values 0, x, 1 and -.
+ *
+ * The input bit positions take the combinational input characters,
+ * plus edge specification characters. Only one input of a row may
+ * have an edge input.
+ *
+ * The edges_table is similar to the levels, table, with the mask?
+ * bits having the same meaning as with the levels tables. The edge_*
+ * members specify the edge for a single bit position. In this case,
+ * the edge_mask* members give the mask of source bits for that
+ * position, and the edge_position the bit that has shifted. In the
+ * edge case, the mask* members give the final position and the
+ * edge_mask* bits the initial position of the bit.
+ */
+struct udp_edges_table {
+      unsigned long edge_position : 8;
+      unsigned long edge_mask0 : 1;
+      unsigned long edge_mask1 : 1;
+      unsigned long edge_maskx : 1;
+      unsigned long mask0;
+      unsigned long mask1;
+      unsigned long maskx;
+};
+
+class vvp_udp_seq_s : public vvp_udp_s {
+
+    public:
+      vvp_udp_seq_s(char*label, char*name, unsigned ports);
+      ~vvp_udp_seq_s();
+
+      void compile_table(char**tab);
+
+      vvp_bit4_t calculate_output(const udp_levels_table&cur,
+				  const udp_levels_table&prev,
+				  vvp_bit4_t cur_out);
+
+    private:
+
+      vvp_bit4_t test_levels_(const udp_levels_table&cur);
+
+	// Level sensitive rows of the device.
+      struct udp_levels_table*levels0_;
+      struct udp_levels_table*levels1_;
+      struct udp_levels_table*levelsx_;
+      struct udp_levels_table*levelsL_;
+      unsigned nlevels0_, nlevels1_, nlevelsx_, nlevelsL_;
+
+      vvp_bit4_t test_edges_(const udp_levels_table&cur,
+			     const udp_levels_table&prev);
+
+	// Edge sensitive rows of the device
+      struct udp_edges_table*edges0_;
+      struct udp_edges_table*edges1_;
+      struct udp_edges_table*edgesL_;
+      unsigned nedges0_, nedges1_, nedgesL_;
+
 };
 
 /*
@@ -114,6 +237,9 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core {
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.17  2005/06/09 04:12:30  steve
+ *  Support sequential UDP devices.
+ *
  * Revision 1.16  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *
