@@ -22,18 +22,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.17 2005/06/09 04:12:30 steve Exp $"
+#ident "$Id: udp.h,v 1.18 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 # include  <vvp_net.h>
 # include  <delay.h>
+# include  "schedule.h"
 
 struct udp_levels_table;
 
 struct vvp_udp_s {
 
     public:
-      explicit vvp_udp_s(char*label, unsigned ports);
+      explicit vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init);
       virtual ~vvp_udp_s();
 
 	// Return the number of input ports for the defined UDP. This
@@ -41,12 +42,16 @@ struct vvp_udp_s {
 	// sequential UDP.
       unsigned port_count() const;
 
+	// Return the initial output value.
+      vvp_bit4_t get_init() const;
+
       virtual vvp_bit4_t calculate_output(const udp_levels_table&cur,
 					  const udp_levels_table&prev,
 					  vvp_bit4_t cur_out) =0;
 
     private:
       unsigned ports_;
+      vvp_bit4_t init_;
 };
 
 /*
@@ -175,7 +180,7 @@ struct udp_edges_table {
 class vvp_udp_seq_s : public vvp_udp_s {
 
     public:
-      vvp_udp_seq_s(char*label, char*name, unsigned ports);
+      vvp_udp_seq_s(char*label, char*name, unsigned ports, vvp_bit4_t init);
       ~vvp_udp_seq_s();
 
       void compile_table(char**tab);
@@ -185,6 +190,8 @@ class vvp_udp_seq_s : public vvp_udp_s {
 				  vvp_bit4_t cur_out);
 
     private:
+
+      vvp_bit4_t init_;
 
       vvp_bit4_t test_levels_(const udp_levels_table&cur);
 
@@ -218,7 +225,7 @@ struct vvp_udp_s *udp_find(const char *label);
  * the vvp_wide_fun_t objects and processes them to generate the
  * output to be sent.
  */
-class vvp_udp_fun_core  : public vvp_wide_fun_core {
+class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
 
     public:
       vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def, vvp_delay_t*del);
@@ -227,6 +234,8 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core {
       void recv_vec4_from_inputs(unsigned);
 
     private:
+      void run_run();
+
       vvp_udp_s*def_;
       vvp_delay_t*delay_;
       vvp_bit4_t cur_out_;
@@ -237,6 +246,9 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core {
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.18  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.17  2005/06/09 04:12:30  steve
  *  Support sequential UDP devices.
  *

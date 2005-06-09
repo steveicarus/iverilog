@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.22 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: schedule.h,v 1.23 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -79,8 +79,8 @@ extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 
 typedef struct vvp_gen_event_s *vvp_gen_event_t;
 
-extern void schedule_generic(vvp_gen_event_t obj, unsigned char val,
-			     vvp_time64_t delay, bool sync_flag);
+extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
+			     bool sync_flag);
 
 struct vvp_gen_event_s
 {
@@ -131,6 +131,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.23  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.22  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

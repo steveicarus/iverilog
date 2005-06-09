@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.47 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.48 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -431,7 +431,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
-	    schedule_generic(put, 0, dly, false);
+	    schedule_generic(put, dly, false);
 	    return 0;
       }
 
@@ -685,6 +685,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.48  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.47  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

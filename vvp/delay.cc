@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.6 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: delay.cc,v 1.7 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -120,7 +120,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
       if (use_delay == 0)
 	    vvp_send_vec4(net_->out, cur_);
       else
-	    schedule_generic(this, 0, use_delay, false);
+	    schedule_generic(this, use_delay, false);
 }
 
 void vvp_fun_delay::run_run()
@@ -130,6 +130,9 @@ void vvp_fun_delay::run_run()
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.7  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.6  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

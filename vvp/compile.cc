@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.205 2005/06/09 04:12:30 steve Exp $"
+#ident "$Id: compile.cc,v 1.206 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1120,7 +1120,15 @@ void compile_udp_def(int sequ, char *label, char *name,
 		     unsigned nin, unsigned init, char **table)
 {
       if (sequ) {
-	    vvp_udp_seq_s *u = new vvp_udp_seq_s(label, name, nin);
+	    vvp_bit4_t init4;
+	    if (init == 0)
+		  init4 = BIT4_0;
+	    else if (init == 1)
+		  init4 = BIT4_1;
+	    else
+		  init4 = BIT4_X;
+
+	    vvp_udp_seq_s *u = new vvp_udp_seq_s(label, name, nin, init4);
 	    u->compile_table(table);
       } else {
 	    vvp_udp_comb_s *u = new vvp_udp_comb_s(label, name, nin);
@@ -1553,6 +1561,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.206  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.205  2005/06/09 04:12:30  steve
  *  Support sequential UDP devices.
  *

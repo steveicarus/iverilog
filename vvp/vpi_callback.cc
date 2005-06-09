@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.36 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.37 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 /*
@@ -207,16 +207,16 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
       switch (obj->cb_time.type) {
 	  case vpiSuppressTime:
-	    schedule_generic(cb, 0, 0, readonly_flag);
+	    schedule_generic(cb, 0, readonly_flag);
 	    break;
 
 	  case vpiSimTime:
 	      { vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
 		vvp_time64_t tn = schedule_simtime();
 		if (tv < tn) {
-		      schedule_generic(cb, 0, 0, readonly_flag);
+		      schedule_generic(cb, 0, readonly_flag);
 		} else {
-		      schedule_generic(cb, 0, tv - tn, readonly_flag);
+		      schedule_generic(cb, tv - tn, readonly_flag);
 		}
 		break;
 	      }
@@ -246,7 +246,7 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
       switch (obj->cb_time.type) {
 	  case vpiSimTime: {
 		vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
-		schedule_generic(cb, 0, tv, false);
+		schedule_generic(cb, tv, false);
 		break;
 	  }
 
@@ -479,6 +479,9 @@ void vvp_fun_signal::run_vpi_callbacks()
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.37  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.36  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

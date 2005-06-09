@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.35 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: schedule.cc,v 1.36 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -476,13 +476,12 @@ void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_generic(vvp_gen_event_t obj, unsigned char val,
-		      vvp_time64_t delay, bool sync_flag)
+void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay, bool sync_flag)
 {
       struct generic_event_s*cur = new generic_event_s;
 
       cur->obj = obj;
-      cur->val = val;
+      cur->val = 0;
 
       schedule_event_(cur, delay, sync_flag? SEQ_ROSYNC : SEQ_ACTIVE);
 }
@@ -583,6 +582,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.36  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.35  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.30 2005/06/09 04:12:30 steve Exp $"
+#ident "$Id: udp.cc,v 1.31 2005/06/09 05:04:45 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -44,8 +44,8 @@ struct vvp_udp_s *udp_find(const char *label)
       return (struct vvp_udp_s *)v.ptr;
 }
 
-vvp_udp_s::vvp_udp_s(char*label, unsigned ports)
-: ports_(ports)
+vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init)
+: ports_(ports), init_(init)
 {
       if (!udp_table)
 	    udp_table = new_symbol_table();
@@ -66,8 +66,13 @@ unsigned vvp_udp_s::port_count() const
       return ports_;
 }
 
+vvp_bit4_t vvp_udp_s::get_init() const
+{
+      return init_;
+}
+
 vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name, unsigned ports)
-: vvp_udp_s(label, ports)
+: vvp_udp_s(label, ports, BIT4_X)
 {
       name_ = name;
       levels0_ = 0;
@@ -232,8 +237,9 @@ void vvp_udp_comb_s::compile_table(char**tab)
       assert(nrows1 == nlevels1_);
 }
 
-vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name, unsigned ports)
-: vvp_udp_s(label, ports)
+vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name,
+			     unsigned ports, vvp_bit4_t init)
+: vvp_udp_s(label, ports, init)
 {
       levels0_ = 0;
       levels1_ = 0;
@@ -674,15 +680,28 @@ vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net,
 {
       def_ = def;
       delay_ = del;
-      cur_out_ = BIT4_X;
+      cur_out_ = def_->get_init();
 	// Assume initially that all the inputs are 1'bx
       current_.mask0 = 0;
       current_.mask1 = 0;
       current_.maskx = ~ ((-1UL) << port_count());
+
+      if (cur_out_ != BIT4_X)
+	    schedule_generic(this, 0, false);
 }
 
 vvp_udp_fun_core::~vvp_udp_fun_core()
 {
+}
+
+/*
+ * This method is used to propagate the initial value on startup.
+ */
+void vvp_udp_fun_core::run_run()
+{
+      vvp_vector4_t tmp (1);
+      tmp.set_bit(0, cur_out_);
+      propagate_vec4(tmp);
 }
 
 void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
@@ -751,6 +770,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.31  2005/06/09 05:04:45  steve
+ *  Support UDP initial values.
+ *
  * Revision 1.30  2005/06/09 04:12:30  steve
  *  Support sequential UDP devices.
  *
