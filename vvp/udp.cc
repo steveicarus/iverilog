@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.31 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: udp.cc,v 1.32 2005/06/11 02:04:48 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -303,12 +303,50 @@ void edge_based_on_char(struct udp_edges_table&cur, char chr, unsigned pos)
 	    cur.mask1 |= mask_bit;
 	    break;
 
+	  case 'B': // (x?) edge
+	    cur.mask0 |= mask_bit;
+	    cur.mask1 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 1;
+	    cur.edge_mask1 = 0;
+	    break;
 	  case 'f': // (10) edge
 	    cur.mask0 |= mask_bit;
 	    cur.edge_position = pos;
 	    cur.edge_mask0 = 0;
 	    cur.edge_maskx = 0;
 	    cur.edge_mask1 = 1;
+	    break;
+	  case 'F': // (x0) edge
+	    cur.mask0 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 1;
+	    cur.edge_mask1 = 0;
+	    break;
+	  case 'M': // (1x) edge
+	    cur.maskx |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 0;
+	    cur.edge_mask1 = 1;
+	    break;
+	  case 'N': // (1x) and (10) edge
+	    cur.mask0 |= mask_bit;
+	    cur.maskx |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 0;
+	    cur.edge_mask1 = 1;
+	    break;
+	  case 'P': // (0x) and (01) edge
+	    cur.maskx |= mask_bit;
+	    cur.mask1 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 1;
+	    cur.edge_maskx = 0;
+	    cur.edge_mask1 = 0;
 	    break;
 	  case 'q': // (bx) edge
 	    cur.maskx |= mask_bit;
@@ -317,6 +355,13 @@ void edge_based_on_char(struct udp_edges_table&cur, char chr, unsigned pos)
 	    cur.edge_maskx = 0;
 	    cur.edge_mask1 = 1;
 	    break;
+	  case 'Q': // (0x) edge
+	    cur.maskx |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 1;
+	    cur.edge_maskx = 0;
+	    cur.edge_mask1 = 0;
+	    break;
 	  case 'r': // (01) edge
 	    cur.mask1 |= mask_bit;
 	    cur.edge_position = pos;
@@ -324,7 +369,36 @@ void edge_based_on_char(struct udp_edges_table&cur, char chr, unsigned pos)
 	    cur.edge_maskx = 0;
 	    cur.edge_mask1 = 0;
 	    break;
+	  case 'R': // (x1) edge
+	    cur.mask1 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 1;
+	    cur.edge_mask1 = 0;
+	    break;
+	  case '%': // (?x) edge
+	    cur.maskx |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 1;
+	    cur.edge_maskx = 0;
+	    cur.edge_mask1 = 1;
+	    break;
+	  case '+': // (?1) edge
+	    cur.mask1 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 1;
+	    cur.edge_maskx = 1;
+	    cur.edge_mask1 = 0;
+	    break;
+	  case '_': // (?0) edge
+	    cur.mask0 |= mask_bit;
+	    cur.edge_position = pos;
+	    cur.edge_mask0 = 0;
+	    cur.edge_maskx = 1;
+	    cur.edge_mask1 = 1;
+	    break;
 	  default:
+	    fprintf(stderr, "internal error: unknown edge code: %c\n", chr);
 	    assert(0);
       }
 }
@@ -357,18 +431,27 @@ void vvp_udp_seq_s::compile_table(char**tab)
 		  }
 
 	    } else {
+		    /* Rows that have n or p edges will need to be
+		       expanded into 2 rows. */
+		  unsigned extra = 0;
+		  if (strchr(row,'n'))
+			extra = 1;
+		  if (strchr(row,'p'))
+			extra = 1;
+		  if (strchr(row,'*'))
+			extra = 2;
 
 		  switch (row[port_count()+1]) {
 		      case '0':
-			nedges0_ += 1;
+			nedges0_ += 1 + extra;
 			break;
 		      case '1':
-			nedges1_ += 1;
+			nedges1_ += 1 + extra;
 			break;
 		      case 'x':
 			break;
 		      case '-':
-			nedgesL_ += 1;
+			nedgesL_ += 1 + extra;
 			break;
 		      default:
 			assert(0);
@@ -436,22 +519,79 @@ void vvp_udp_seq_s::compile_table(char**tab)
 		  cur.edge_mask1 = 0;
 		  cur.edge_maskx = 0;
 
+		  bool need_ext0_table = false;
+		  struct udp_edges_table ext0;
+		  ext0.mask0 = 0;
+		  ext0.mask1 = 0;
+		  ext0.maskx = 0;
+		  ext0.edge_position = 0;
+		  ext0.edge_mask0 = 0;
+		  ext0.edge_mask1 = 0;
+		  ext0.edge_maskx = 0;
+
+		  bool need_ext1_table = false;
+		  struct udp_edges_table ext1;
+		  ext1.mask0 = 0;
+		  ext1.mask1 = 0;
+		  ext1.maskx = 0;
+		  ext1.edge_position = 0;
+		  ext1.edge_mask0 = 0;
+		  ext1.edge_mask1 = 0;
+		  ext1.edge_maskx = 0;
+
 		  for (unsigned pp = 0 ;  pp < port_count() ; pp += 1) {
-			edge_based_on_char(cur, row[pp+1], pp);
+			switch (row[pp+1]) {
+			    case 'n':
+			      edge_based_on_char(cur, 'N', pp);
+			      edge_based_on_char(ext0, '_', pp);
+			      need_ext0_table = true;
+			      break;
+			    case 'p':
+			      edge_based_on_char(cur, 'P', pp);
+			      edge_based_on_char(ext0, '+', pp);
+			      need_ext0_table = true;
+			      break;
+			    case '*':
+			      edge_based_on_char(cur, 'P', pp);
+			      edge_based_on_char(ext0, 'N', pp);
+			      edge_based_on_char(ext1, 'B', pp);
+			      need_ext0_table = true;
+			      need_ext1_table = true;
+			      break;
+			    default:
+			      edge_based_on_char(cur, row[pp+1], pp);
+			      edge_based_on_char(ext0, row[pp+1], pp);
+			      edge_based_on_char(ext1, row[pp+1], pp);
+			      break;
+			}
 		  }
 		  edge_based_on_char(cur, row[0], port_count());
+		  edge_based_on_char(ext0, row[0], port_count());
+		  edge_based_on_char(ext1, row[0], port_count());
 
 		  switch (row[port_count()+1]) {
 		      case '0':
 			edges0_[idx_edg0++] = cur;
+			if (need_ext0_table)
+			      edges0_[idx_edg0++] = ext0;
+			if (need_ext1_table)
+			      edges0_[idx_edg0++] = ext1;
 			break;
 		      case '1':
 			edges1_[idx_edg1++] = cur;
+			if (need_ext0_table)
+			      edges1_[idx_edg1++] = ext0;
+			if (need_ext1_table)
+			      edges1_[idx_edg1++] = ext1;
 			break;
 		      case 'x':
 			break;
 		      case '-':
 			edgesL_[idx_edgL++] = cur;
+			if (need_ext0_table)
+			      edgesL_[idx_edgL++] = ext0;
+			if (need_ext1_table)
+			      edgesL_[idx_edgL++] = ext1;
 			break;
 		      default:
 			assert(0);
@@ -460,6 +600,11 @@ void vvp_udp_seq_s::compile_table(char**tab)
 
 	    }
       }
+
+      assert(idx_edg0 == nedges0_);
+      assert(idx_edg1 == nedges1_);
+      assert(idx_edgL == nedgesL_);
+
 }
 
 vvp_bit4_t vvp_udp_seq_s::calculate_output(const udp_levels_table&cur,
@@ -770,6 +915,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.32  2005/06/11 02:04:48  steve
+ *  Handle all edge types of a synchronous UDP.
+ *
  * Revision 1.31  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *
