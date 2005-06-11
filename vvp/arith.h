@@ -19,10 +19,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.29 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: arith.h,v 1.30 2005/06/11 18:11:18 steve Exp $"
 #endif
 
-# include  "functor.h"
 # include  "vvp_net.h"
 
 /*
@@ -199,6 +198,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.30  2005/06/11 18:11:18  steve
+ *  Remove unneeded references to functor.h
+ *
  * Revision 1.29  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *
