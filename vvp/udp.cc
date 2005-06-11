@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.32 2005/06/11 02:04:48 steve Exp $"
+#ident "$Id: udp.cc,v 1.33 2005/06/11 16:21:08 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -818,13 +818,10 @@ vvp_bit4_t vvp_udp_seq_s::test_edges_(const udp_levels_table&cur,
       return BIT4_X;
 }
 
-vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net,
-				   vvp_udp_s*def,
-				   vvp_delay_t*del)
+vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def)
 : vvp_wide_fun_core(net, def->port_count())
 {
       def_ = def;
-      delay_ = del;
       cur_out_ = def_->get_init();
 	// Assume initially that all the inputs are 1'bx
       current_.mask0 = 0;
@@ -878,13 +875,14 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
       }
 
       vvp_bit4_t out_bit = def_->calculate_output(current_, prev, cur_out_);
+
+      if (out_bit == cur_out_)
+	    return;
+
       vvp_vector4_t out (1);
       out.set_bit(0, out_bit);
 
-      if (delay_)
-	    propagate_vec4(out, delay_->get_delay(cur_out_, out_bit));
-      else
-	    propagate_vec4(out);
+      propagate_vec4(out);
 
       cur_out_ = out_bit;
 }
@@ -904,9 +902,20 @@ void compile_udp_functor(char*label, char*type,
       free(type);
 
       vvp_net_t*ptr = new vvp_net_t;
-      vvp_udp_fun_core*core = new vvp_udp_fun_core(ptr, def, delay);
+      vvp_udp_fun_core*core = new vvp_udp_fun_core(ptr, def);
       ptr->fun = core;
-      define_functor_symbol(label, ptr);
+
+      if (delay != 0) {
+	    vvp_net_t*net_drv = new vvp_net_t;
+	    vvp_fun_delay*obj_drv = new vvp_fun_delay(net_drv, BIT4_X, *delay);
+	    net_drv->fun = obj_drv;
+
+	    ptr->out = vvp_net_ptr_t(net_drv,0);
+	    define_functor_symbol(label, net_drv);
+
+      } else {
+	    define_functor_symbol(label, ptr);
+      }
       free(label);
 
       wide_inputs_connect(core, argc, argv);
@@ -915,6 +924,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.33  2005/06/11 16:21:08  steve
+ *  UD delays use delay node.
+ *
  * Revision 1.32  2005/06/11 02:04:48  steve
  *  Handle all edge types of a synchronous UDP.
  *

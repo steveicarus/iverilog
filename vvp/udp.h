@@ -22,7 +22,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.18 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: udp.h,v 1.19 2005/06/11 16:21:08 steve Exp $"
 #endif
 
 # include  <vvp_net.h>
@@ -228,7 +228,7 @@ struct vvp_udp_s *udp_find(const char *label);
 class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
 
     public:
-      vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def, vvp_delay_t*del);
+      vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def);
       ~vvp_udp_fun_core();
 
       void recv_vec4_from_inputs(unsigned);
@@ -237,7 +237,6 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
       void run_run();
 
       vvp_udp_s*def_;
-      vvp_delay_t*delay_;
       vvp_bit4_t cur_out_;
       udp_levels_table current_;
 };
@@ -246,6 +245,9 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.19  2005/06/11 16:21:08  steve
+ *  UD delays use delay node.
+ *
  * Revision 1.18  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *
