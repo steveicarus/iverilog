@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.29 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.30 2005/06/12 15:13:37 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1225,6 +1225,32 @@ vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
       return out;
 }
 
+vvp_vector8_t resistive_reduction(const vvp_vector8_t&that)
+{
+      static unsigned rstr[8] = {
+	    0, /* Hi-Z --> Hi-Z */
+	    1, /* Small capacitance  --> Small capacitance */
+	    1, /* Medium capacitance --> Small capacitance */
+	    2, /* Weak drive         --> Medium capacitance */
+	    2, /* Large capacitance  --> Medium capacitance */
+	    3, /* Pull drive         --> Weak drive */
+	    5, /* Strong drive       --> Pull drive */
+	    5  /* Supply drive       --> Pull drive */
+      };
+
+      vvp_vector8_t res (that.size());
+
+      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1) {
+	    vvp_scalar_t bit = that.value(idx);
+	    bit = vvp_scalar_t(bit.value(),
+			       rstr[bit.strength0()],
+			       rstr[bit.strength1()]);
+	    res.set_bit(idx, bit);
+      }
+
+      return res;
+}
+
 vvp_vector4_t reduce4(const vvp_vector8_t&that)
 {
       vvp_vector4_t out (that.size());
@@ -1347,6 +1373,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.30  2005/06/12 15:13:37  steve
+ *  Support resistive mos devices.
+ *
  * Revision 1.29  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

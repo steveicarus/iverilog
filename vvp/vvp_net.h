@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.30 2005/06/12 00:44:49 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.31 2005/06/12 15:13:37 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -239,8 +239,16 @@ class vvp_vector8_t {
       vvp_scalar_t*bits_;
 };
 
+  /* Resolve uses the default Verilog resolver algorithm to resolve
+     two drive vectors to a single output. */
 extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
+  /* This function implements the strength reduction implied by
+     Verilog standard resistive devices. */
+extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
+  /* The reduce4 function converts a vector8 to a vector4, losing
+     strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
+  /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
 /*
@@ -746,6 +754,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.31  2005/06/12 15:13:37  steve
+ *  Support resistive mos devices.
+ *
  * Revision 1.30  2005/06/12 00:44:49  steve
  *  Implement nmos and pmos devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.25 2005/06/12 00:44:49 steve Exp $"
+#ident "$Id: logic.cc,v 1.26 2005/06/12 15:13:37 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -259,13 +259,7 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
-#if 0
-      } else if (strcmp(type, "RPMOS") == 0) {
-	    obj = new vvp_rpmos_s;
 
-      } else if (strcmp(type, "RNMOS") == 0) {
-	    obj = new vvp_rnmos_s;
-#endif
       } else if (strcmp(type, "MUXX") == 0) {
 	    obj = new table_functor_s(ft_MUXX);
 
@@ -277,6 +271,12 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_fun_pmos(false);
+
+      } else if (strcmp(type, "RNMOS") == 0) {
+	    obj = new vvp_fun_rpmos(true);
+
+      } else if (strcmp(type, "RPMOS") == 0) {
+	    obj = new vvp_fun_rpmos(false);
 
       } else if (strcmp(type, "EEQ") == 0) {
 	    obj = new table_functor_s(ft_EEQ);
@@ -346,6 +346,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.26  2005/06/12 15:13:37  steve
+ *  Support resistive mos devices.
+ *
  * Revision 1.25  2005/06/12 00:44:49  steve
  *  Implement nmos and pmos devices.
  *

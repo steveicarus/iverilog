@@ -17,17 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.11 2005/06/12 00:44:49 steve Exp $"
+#ident "$Id: npmos.cc,v 1.12 2005/06/12 15:13:37 steve Exp $"
 #endif
 
 # include  "npmos.h"
 
-vvp_fun_pmos::vvp_fun_pmos(bool enable_invert)
+vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert)
 {
       inv_en_ = enable_invert;
 }
 
-void vvp_fun_pmos::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+
+void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
 	/* Data input is processed throught eh recv_vec8 method,
 	   because the strength most be preserved. */
@@ -44,21 +45,7 @@ void vvp_fun_pmos::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       generate_output_(ptr);
 }
 
-void vvp_fun_pmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
-{
-      if (ptr.port() == 1) {
-	    recv_vec4(ptr, reduce4(bit));
-	    return;
-      }
-
-      if (ptr.port() != 0)
-	    return;
-
-      bit_ = bit;
-      generate_output_(ptr);
-}
-
-void vvp_fun_pmos::generate_output_(vvp_net_ptr_t ptr)
+void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
 {
       vvp_vector8_t out (bit_.size());
 
@@ -92,8 +79,50 @@ void vvp_fun_pmos::generate_output_(vvp_net_ptr_t ptr)
       vvp_send_vec8(ptr.ptr()->out, out);
 }
 
+
+vvp_fun_pmos::vvp_fun_pmos(bool enable_invert)
+: vvp_fun_pmos_(enable_invert)
+{
+}
+
+void vvp_fun_pmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      if (ptr.port() == 1) {
+	    recv_vec4(ptr, reduce4(bit));
+	    return;
+      }
+
+      if (ptr.port() != 0)
+	    return;
+
+      bit_ = bit;
+      generate_output_(ptr);
+}
+
+vvp_fun_rpmos::vvp_fun_rpmos(bool enable_invert)
+: vvp_fun_pmos_(enable_invert)
+{
+}
+
+void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      if (ptr.port() == 1) {
+	    recv_vec4(ptr, reduce4(bit));
+	    return;
+      }
+
+      if (ptr.port() != 0)
+	    return;
+
+      bit_ = resistive_reduction(bit);
+      generate_output_(ptr);
+}
+
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.12  2005/06/12 15:13:37  steve
+ *  Support resistive mos devices.
+ *
  * Revision 1.11  2005/06/12 00:44:49  steve
  *  Implement nmos and pmos devices.
  *

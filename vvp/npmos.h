@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.h,v 1.6 2005/06/12 00:44:49 steve Exp $"
+#ident "$Id: npmos.h,v 1.7 2005/06/12 15:13:37 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -46,15 +46,14 @@
  * flag to the costructor activates this invertion.
  */
 
-class vvp_fun_pmos  : public vvp_net_fun_t {
+class vvp_fun_pmos_ : public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_pmos(bool enable_invert);
+      explicit vvp_fun_pmos_(bool enable_invert);
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
-    private:
+    protected:
       void generate_output_(vvp_net_ptr_t port);
 
       vvp_vector8_t bit_;
@@ -62,8 +61,32 @@ class vvp_fun_pmos  : public vvp_net_fun_t {
       bool inv_en_;
 };
 
+class vvp_fun_pmos  : public vvp_fun_pmos_ {
+
+    public:
+      explicit vvp_fun_pmos(bool enable_invert);
+
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+};
+
+/*
+ * The vvp_fun_rpmos is a resistive version of the vvp_fun_pmos. The
+ * only difference is that the input strength is reduced as it passes
+ * through the device.
+ */
+class vvp_fun_rpmos  : public vvp_fun_pmos_ {
+
+    public:
+      explicit vvp_fun_rpmos(bool enable_invert);
+
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+};
+
 /*
  * $Log: npmos.h,v $
+ * Revision 1.7  2005/06/12 15:13:37  steve
+ *  Support resistive mos devices.
+ *
  * Revision 1.6  2005/06/12 00:44:49  steve
  *  Implement nmos and pmos devices.
  *
