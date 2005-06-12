@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.16 2005/05/14 19:43:23 steve Exp $"
+#ident "$Id: logic.h,v 1.17 2005/06/12 21:56:16 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -122,8 +122,6 @@ class vvp_fun_muxz : public vvp_net_fun_t {
 
 // table functor types
 
-extern const unsigned char ft_PMOS[];
-extern const unsigned char ft_NMOS[];
 extern const unsigned char ft_MUXX[];
 extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
@@ -134,10 +132,12 @@ extern const unsigned char ft_TRIAND[];
 extern const unsigned char ft_TRIOR[];
 extern const unsigned char ft_XNOR[];
 extern const unsigned char ft_XOR[];
-extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.17  2005/06/12 21:56:16  steve
+ *  Remove unused ft_MOS truth tables.
+ *
  * Revision 1.16  2005/05/14 19:43:23  steve
  *  Move functor delays to vvp_delay_fun object.
  *
