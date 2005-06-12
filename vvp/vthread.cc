@@ -17,14 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.137 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: vthread.cc,v 1.138 2005/06/12 01:25:27 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "vthread.h"
 # include  "codes.h"
 # include  "schedule.h"
-# include  "functor.h"
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
@@ -2767,7 +2766,6 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
 /*
  * This implements the "%set/mv <label>, <bit>, <wid>" instruction. In
@@ -3222,6 +3220,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.138  2005/06/12 01:25:27  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.137  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.
