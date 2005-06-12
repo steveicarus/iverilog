@@ -1,7 +1,7 @@
 #ifndef __npmos_H
 #define __npmos_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,62 +19,53 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.h,v 1.5 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: npmos.h,v 1.6 2005/06/12 00:44:49 steve Exp $"
 #endif
 
-# include  "functor.h"
+# include  "vvp_net.h"
 
-class vvp_pmos_s  : public functor_s {
+/*
+ * The vvp_fun_pmos functor is similar to the vvp_fun_bufif. The
+ * principle difference is that it has no drive of its own, instead
+ * taking drive strength from its data input. In other words, it is
+ * not a buffer but a uni-directional switch.
+ *
+ * The truth table for the PMOS device is:
+ *
+ *     Q = D C  (D is port0, C is port1)
+ *     -------
+ *     0 | 0 0
+ *     Z | 0 1
+ *     L | 0 x
+ *     1 | 1 0
+ *     Z | 1 1
+ *     H | 1 x
+ *
+ * This class also implements the NMOS device, which is the same as
+ * the PMOS device, but the Control input inverted. The enable_invert
+ * flag to the costructor activates this invertion.
+ */
 
-    public:
-      vvp_pmos_s() : istr(StX), pol(0), res(0) {}
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-
-    protected:
-      unsigned char istr;
-      unsigned pol : 1;
-      unsigned res : 1;
-};
-
-class vvp_nmos_s  : public vvp_pmos_s {
-
-    public:
-      vvp_nmos_s() { pol = 1; res = 0; }
-};
-
-class vvp_rpmos_s  : public vvp_pmos_s {
-
-    public:
-      vvp_rpmos_s() { pol = 0; res = 1; }
-};
-
-class vvp_rnmos_s  : public vvp_pmos_s {
+class vvp_fun_pmos  : public vvp_net_fun_t {
 
     public:
-      vvp_rnmos_s() { pol = 1; res = 1; }
+      explicit vvp_fun_pmos(bool enable_invert);
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+
+    private:
+      void generate_output_(vvp_net_ptr_t port);
+
+      vvp_vector8_t bit_;
+      vvp_vector4_t en_;
+      bool inv_en_;
 };
 
 /*
  * $Log: npmos.h,v $
- * Revision 1.5  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.4  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.2  2001/10/18 17:30:26  steve
- *  Support rnpmos devices. (Philip Blundell)
- * Revision 1.1 2001/10/09 02:28:17 steve Add the
- * PMOS and NMOS functor types.
- *
- * Revision 1.1  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
+ * Revision 1.6  2005/06/12 00:44:49  steve
+ *  Implement nmos and pmos devices.
  *
  */
 #endif

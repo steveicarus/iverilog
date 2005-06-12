@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.29 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.30 2005/06/12 00:44:49 steve Exp $"
 
 # include  "config.h"
 # include  <assert.h>
@@ -211,14 +211,16 @@ extern ostream& operator<< (ostream&, vvp_scalar_t);
  *
  * a vvp_vector8_t object can be created from a vvp_vector4_t and a
  * strength value. The vvp_vector8_t bits have the values of the input
- * vector, all with the strength specified.
+ * vector, all with the strength specified. If no strength is
+ * specified, then the conversion from bit4 to a scalar will use the
+ * Verilog convention default of strong (6).
  */
 class vvp_vector8_t {
 
     public:
       explicit vvp_vector8_t(unsigned size =0);
 	// Make a vvp_vector8_t from a vector4 and a specified strength.
-      explicit vvp_vector8_t(const vvp_vector4_t&that, unsigned str);
+      vvp_vector8_t(const vvp_vector4_t&that, unsigned str =6);
       explicit vvp_vector8_t(const vvp_vector4_t&that,
 			     unsigned str0,
 			     unsigned str1);
@@ -744,6 +746,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.30  2005/06/12 00:44:49  steve
+ *  Implement nmos and pmos devices.
+ *
  * Revision 1.29  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

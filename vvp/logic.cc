@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.24 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: logic.cc,v 1.25 2005/06/12 00:44:49 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -260,12 +260,6 @@ void compile_functor(char*label, char*type,
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
 #if 0
-      } else if (strcmp(type, "PMOS") == 0) {
-	    obj = new vvp_pmos_s;
-
-      } else if (strcmp(type, "NMOS") == 0) {
-	    obj= new vvp_nmos_s;
-
       } else if (strcmp(type, "RPMOS") == 0) {
 	    obj = new vvp_rpmos_s;
 
@@ -277,6 +271,12 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj = new vvp_fun_muxz();
+
+      } else if (strcmp(type, "NMOS") == 0) {
+	    obj = new vvp_fun_pmos(true);
+
+      } else if (strcmp(type, "PMOS") == 0) {
+	    obj = new vvp_fun_pmos(false);
 
       } else if (strcmp(type, "EEQ") == 0) {
 	    obj = new table_functor_s(ft_EEQ);
@@ -346,6 +346,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.25  2005/06/12 00:44:49  steve
+ *  Implement nmos and pmos devices.
+ *
  * Revision 1.24  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.
