@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.66 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.67 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 /*
@@ -26,7 +26,6 @@
  */
 
 # include  "vpi_priv.h"
-# include  "functor.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <math.h>
@@ -516,7 +515,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
  */
 
 static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
-			 unsigned val, unsigned str, unsigned long dly =0)
+			 vvp_scalar_t val, unsigned long dly =0)
 {
       fprintf(stderr, "XXXX functor_poke not implemented\n");
 }
@@ -536,9 +535,9 @@ static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
 
 	    for (bit = 0 ;  bit < 8 ;  bit += 1) {
 		  if (byte & 1)
-			functor_poke(rfp, idx, 1, St1);
+			functor_poke(rfp, idx, vvp_scalar_t(BIT4_1,6,6));
 		  else
-			functor_poke(rfp, idx, 0, St0);
+			functor_poke(rfp, idx, vvp_scalar_t(BIT4_0,6,6));
 
 		  byte >>= 1;
 		  idx += 1;
@@ -546,7 +545,7 @@ static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
       }
 
       while (idx < wid) {
-	    functor_poke(rfp, idx, 0, St0);
+	    functor_poke(rfp, idx, vvp_scalar_t(BIT4_0,6,6));
 	    idx += 1;
       }
 }
@@ -848,6 +847,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.67  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.66  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.37 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.38 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 /*
@@ -30,7 +30,6 @@
 # include  <vpi_user.h>
 # include  "vpi_priv.h"
 # include  "schedule.h"
-# include  "functor.h"
 # include  "event.h"
 # include  <stdio.h>
 # include  <assert.h>
@@ -479,6 +478,9 @@ void vvp_fun_signal::run_vpi_callbacks()
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.38  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.37  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *

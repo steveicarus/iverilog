@@ -17,13 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.33 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.34 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "symbols.h"
-# include  "functor.h"
 # include  "statistics.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -480,6 +479,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.34  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.33  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *

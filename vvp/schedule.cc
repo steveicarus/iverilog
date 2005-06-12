@@ -17,11 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.36 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: schedule.cc,v 1.37 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 # include  "schedule.h"
-# include  "functor.h"
 # include  "memory.h"
 # include  "vthread.h"
 #ifdef HAVE_MALLOC_H
@@ -582,6 +581,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.37  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.36  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *

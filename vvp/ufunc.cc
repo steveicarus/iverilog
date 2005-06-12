@@ -17,13 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.7 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: ufunc.cc,v 1.8 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "symbols.h"
 # include  "codes.h"
-# include  "functor.h"
 # include  "ufunc.h"
 # include  "vthread.h"
 # include  "schedule.h"
@@ -184,6 +183,9 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
 /*
  * $Log: ufunc.cc,v $
+ * Revision 1.8  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.7  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

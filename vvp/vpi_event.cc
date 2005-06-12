@@ -17,11 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.10 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.11 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
-# include  "functor.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -142,6 +141,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.11  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.10  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

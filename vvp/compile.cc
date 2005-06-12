@@ -17,12 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.206 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: compile.cc,v 1.207 2005/06/12 01:10:26 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "compile.h"
-# include  "functor.h"
 # include  "logic.h"
 # include  "resolv.h"
 # include  "udp.h"
@@ -798,68 +797,6 @@ void wide_inputs_connect(vvp_wide_fun_core*core,
       }
 }
 
-
-struct const_functor_s: public functor_s {
-      const_functor_s(unsigned str0, unsigned str1)
-	    { odrive0 = str0; odrive1 = str1; }
-      virtual void set(vvp_ipoint_t, bool, unsigned, unsigned);
-};
-void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
-{
-      fprintf(stderr, "internal error: Set value to const_functor 0x%x\n", p);
-      fprintf(stderr, "              : Value is %u, trying to set %u\n",
-	      oval, val);
-      fprintf(stderr, "              : I'm driving functor 0x%x\n", out);
-      assert(0);
-}
-
-/* Lookup a functor[idx] and save the ipoint in *ref. */
-
-#if 0
-static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
-{
-      if (lab == 0)
-	    *ref = make_const_functor(3,6,6);
-
-      else if (strcmp(lab, "C<0>") == 0)
-	    *ref = make_const_functor(0,6,6);
-
-      else if (strcmp(lab, "C<su0>") == 0)
-	    *ref = make_const_functor(0,7,7);
-
-      else if (strcmp(lab, "C<pu0>") == 0)
-	    *ref = make_const_functor(0,5,5);
-
-      else if (strcmp(lab, "C<we0>") == 0)
-	    *ref = make_const_functor(0,3,3);
-
-      else if (strcmp(lab, "C<1>") == 0)
-	    *ref = make_const_functor(1,6,6);
-
-      else if (strcmp(lab, "C<su1>") == 0)
-	    *ref = make_const_functor(1,7,7);
-
-      else if (strcmp(lab, "C<pu1>") == 0)
-	    *ref = make_const_functor(1,5,5);
-
-      else if (strcmp(lab, "C<we1>") == 0)
-	    *ref = make_const_functor(1,3,3);
-
-      else if (strcmp(lab, "C<x>") == 0)
-	    *ref = make_const_functor(2,6,6);
-
-      else if (strcmp(lab, "C<z>") == 0)
-	    *ref = make_const_functor(3,6,6);
-
-      else {
-	    functor_ref_lookup(ref, lab, idx);
-	    return;
-      }
-      free(lab);
-}
-#endif
-
-
 static void make_arith(vvp_arith_ *arith,
 		       char*label, long wid,
 		       unsigned argc, struct symb_s*argv)
@@ -1561,6 +1498,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.207  2005/06/12 01:10:26  steve
+ *  Remove useless references to functor.h
+ *
  * Revision 1.206  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *
