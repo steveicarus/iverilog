@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.126 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: stub.c,v 1.127 2005/06/13 22:20:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1191,7 +1191,9 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
       }
 
-      fprintf(out, " <width=%u>\n", ivl_logic_width(net));
+      fprintf(out, " <width=%u, delay=%u/%u/%u>\n",
+	      ivl_logic_width(net), ivl_logic_delay(net,0),
+	      ivl_logic_delay(net,1), ivl_logic_delay(net,2));
 
       npins = ivl_logic_pins(net);
 
@@ -1407,6 +1409,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.127  2005/06/13 22:20:38  steve
+ *  Dump delays for logic devices.
+ *
  * Revision 1.126  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *
