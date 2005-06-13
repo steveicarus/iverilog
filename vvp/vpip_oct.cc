@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_oct.cc,v 1.2 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpip_oct.cc,v 1.3 2005/06/13 00:54:04 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -169,8 +169,49 @@ void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
       }
 }
 
+void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf,
+			  bool signed_flag)
+{
+      unsigned slen = (bits.size() + 2) / 3;
+      assert(slen < nbuf);
+
+      buf[slen] = 0;
+
+      unsigned val = 0;
+      for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
+	    unsigned vs = (idx%3) * 2;
+
+	    switch (bits.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  val |= 1 << vs;
+		  break;
+		case BIT4_X:
+		  val |= 2 << vs;
+		  break;
+		case BIT4_Z:
+		  val |= 3 << vs;
+	    }
+
+	    if (vs == 4) {
+		  slen -= 1;
+		  buf[slen] = oct_digits[val];
+		  val = 0;
+	    }
+      }
+
+      if (slen > 0) {
+	    slen -= 1;
+	    buf[slen] = oct_digits[val];
+      }
+}
+
 /*
  * $Log: vpip_oct.cc,v $
+ * Revision 1.3  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.2  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

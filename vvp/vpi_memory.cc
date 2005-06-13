@@ -28,7 +28,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.25 2005/03/05 05:43:03 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.26 2005/06/13 00:54:04 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -404,7 +404,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
       switch (vp->format) {
 	  default:
-	    assert("format not implemented");
+	    assert(0 && "format not implemented");
 
 	  case vpiBinStrVal:
 	    rbuf = need_result_buf(width+1, RBUF_VAL);
@@ -415,71 +415,25 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf[width] = 0;
 	    vp->value.str = rbuf;
 	    break;
-#if 0
-	      /* XXXX Needs to be converted. */
+
 	  case vpiOctStrVal: {
 		unsigned hwid = (width+2) / 3;
-		unsigned char*bits = new unsigned char[width];
-
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = memory_get(rfp->mem->mem, bidx+idx);
-		      if (bs == 0)
-			    bits[bb] = val;
-		      else
-			    bits[bb] |= val << bs;
-		}
-
 		rbuf = need_result_buf(hwid+1, RBUF_VAL);
-		vpip_bits_to_oct_str(bits, width, rbuf, hwid+1, false);
-
-		delete[]bits;
+		vpip_vec4_to_oct_str(word_val, rbuf, hwid+1, false);
 		vp->value.str = rbuf;
 		break;
 	  }
-#endif
-#if 0
-	      /* XXXX Needs to be converted. */
+
 	  case vpiHexStrVal: {
-		unsigned hval, hwid;
-		hwid = (width + 3) / 4;
+		unsigned  hwid = (width + 3) / 4;
 
 		rbuf = need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
 
-		hval = 0;
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		    unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
-		    hval = hval | (bit << 2*(idx % 4));
-
-		    if (idx%4 == 3) {
-			hwid -= 1;
-			rbuf[hwid] = hex_digits[hval];
-			hval = 0;
-		    }
-		}
-
-		if (hwid > 0) {
-		    unsigned padd = 0;
-
-		    hwid -= 1;
-		    rbuf[hwid] = hex_digits[hval];
-		    switch(rbuf[hwid]) {
-		    case 'X': padd = 2; break;
-		    case 'Z': padd = 3; break;
-		    }
-		    if (padd) {
-			for (unsigned idx = width % 4; idx < 4; idx += 1) {
-			    hval = hval | padd << 2*idx;
-			}
-			rbuf[hwid] = hex_digits[hval];
-		    }
-		}
+		vpip_vec4_to_hex_str(word_val, rbuf, hwid+1, false);
 		vp->value.str = rbuf;
 		break;
 	  }
-#endif
 #if 0
 	  case vpiDecStrVal: {
 		unsigned char*bits = new unsigned char[width];
@@ -614,6 +568,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.26  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.25  2005/03/05 05:43:03  steve
  *  Get base address from word ranges that VPI user passed.
  *

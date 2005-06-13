@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.30 2005/06/12 15:13:37 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.31 2005/06/13 00:54:04 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -384,6 +384,20 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
       return true;
 }
 
+vvp_vector4_t coerce_to_width(const vvp_vector4_t&that, unsigned width)
+{
+      if (that.size() == width)
+	    return that;
+
+      assert(that.size() > width);
+      vvp_vector4_t res (width);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    res.set_bit(idx, that.value(idx));
+
+      return res;
+}
+
+
 vvp_vector2_t::vvp_vector2_t()
 {
       vec_ = 0;
@@ -747,6 +761,12 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    break;
 
 	  case 2: // Force value
+
+	      // Force from a node may not have been sized completely
+	      // by the source, so coerce the size here.
+	    if (bit.size() != size())
+		  bit = coerce_to_width(bit, size());
+
 	    force_active_ = true;
 	    force_ = bit;
 	    vvp_send_vec4(ptr.ptr()->out, force_);
@@ -1373,6 +1393,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.31  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.30  2005/06/12 15:13:37  steve
  *  Support resistive mos devices.
  *

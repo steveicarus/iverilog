@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_hex.cc,v 1.2 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpip_hex.cc,v 1.3 2005/06/13 00:54:04 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -30,6 +30,58 @@
 # include  <malloc.h>
 #endif
 # include  <assert.h>
+
+extern const char hex_digits[256];
+
+void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
+			  unsigned nbuf, bool signed_flag)
+{
+      unsigned slen = (bits.size() + 3) / 4;
+      assert(slen < nbuf);
+
+      buf[slen] = 0;
+
+      unsigned val = 0;
+      for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
+	    unsigned vs = (idx%4) * 2;
+
+	    switch (bits.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  val |= 1 << vs;
+		  break;
+		case BIT4_X:
+		  val |= 2 << vs;
+		  break;
+		case BIT4_Z:
+		  val |= 3 << vs;
+	    }
+
+	    if (vs == 6) {
+		  slen -= 1;
+		  buf[slen] = hex_digits[val];
+		  val = 0;
+	    }
+      }
+
+      if (slen > 0) {
+	    unsigned padd = 0;
+
+	    slen -= 1;
+	    buf[slen] = hex_digits[val];
+	    switch(buf[slen]) {
+		case 'X': padd = 2; break;
+		case 'Z': padd = 3; break;
+	    }
+	    if (padd) {
+		  for (unsigned idx = bits.size() % 4; idx < 4; idx += 1) {
+			val = val | padd << 2*idx;
+		  }
+		  buf[slen] = hex_digits[val];
+	    }
+      }
+}
 
 void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
 			  const char*buf, bool signed_flag)
@@ -111,6 +163,9 @@ void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpip_hex.cc,v $
+ * Revision 1.3  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.2  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

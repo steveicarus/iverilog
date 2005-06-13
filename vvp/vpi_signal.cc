@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.67 2005/06/12 01:10:26 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.68 2005/06/13 00:54:04 steve Exp $"
 #endif
 
 /*
@@ -380,37 +380,12 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiHexStrVal: {
-		unsigned hval, hwid;
-		hwid = (wid + 3) / 4;
+		unsigned hwid = (wid + 3) / 4;
 
 		rbuf = need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
-		hval = 0;
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      hval = hval | (vsig->value(idx) << 2*(idx % 4));
 
-		      if (idx%4 == 3) {
-			    hwid -= 1;
-			    rbuf[hwid] = hex_digits[hval];
-			    hval = 0;
-		      }
-		}
-
-		if (hwid > 0) {
-		      hwid -= 1;
-		      rbuf[hwid] = hex_digits[hval];
-		      unsigned padd = 0;
-		      switch(rbuf[hwid]) {
-			  case 'X': padd = 2; break;
-			  case 'Z': padd = 3; break;
-		      }
-		      if (padd) {
-			    for (unsigned idx = wid % 4; idx < 4; idx += 1) {
-				  hval = hval | padd << 2*idx;
-			    }
-			    rbuf[hwid] = hex_digits[hval];
-		      }
-		}
+		vpip_vec4_to_hex_str(vsig->vec4_value(), rbuf, hwid+1, false);
 		vp->value.str = rbuf;
 		break;
 	  }
@@ -847,6 +822,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.68  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.67  2005/06/12 01:10:26  steve
  *  Remove useless references to functor.h
  *

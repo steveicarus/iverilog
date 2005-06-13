@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.62 2005/04/28 04:59:53 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.63 2005/06/13 00:54:04 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -395,11 +395,15 @@ extern void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 extern void vpip_bin_str_to_bits(unsigned char*bits, unsigned nbits,
 				 const char*buf, bool signed_flag);
 
+extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
+				 unsigned nbuf, bool signed_flag);
 extern void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
 				 const char*buf, bool signed_flag);
 
 extern void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
 				 char*buf, unsigned nbuf, bool signed_flag);
+extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
+				 unsigned nbuf, bool signed_flag);
 
 extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 				 const char*buf, bool signed_flag);
@@ -418,6 +422,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.63  2005/06/13 00:54:04  steve
+ *  More unified vec4 to hex string functions.
+ *
  * Revision 1.62  2005/04/28 04:59:53  steve
  *  Remove dead functor code.
  *
