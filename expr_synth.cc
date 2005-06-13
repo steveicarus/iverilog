@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.69 2005/05/15 04:47:00 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.70 2005/06/13 22:26:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -715,37 +715,84 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
 NetNet* NetESelect::synthesize(Design *des)
 {
-	// XXXX For now, only support pad form
-      assert(base_ == 0);
 
       NetNet*sub = expr_->synthesize(des);
       if (sub == 0)
 	    return 0;
 
       NetScope*scope = sub->scope();
+
+      unsigned off = 0;
+
+      if (base_ != 0) {
+	      // For now, only handle constant part selects in this
+	      // context.
+	    NetEConst*bcon = dynamic_cast<NetEConst*>(base_);
+	    assert(bcon);
+
+	    long bval = bcon->value().as_long();
+	    off = sub->sb_to_idx(bval);
+      }
+
+	/* If there is a part select, then generate a PartSelect node
+	   to actually do the part select. This does not expansion,
+	   that is handled later. */
+      if (off != 0) {
+	    unsigned wid = expr_width();
+	    if ((wid + off) > sub->vector_width())
+		  wid = sub->vector_width() - off;
+
+	    NetPartSelect*sel = new NetPartSelect(sub, off, wid,
+						  NetPartSelect::VP);
+	    sel->set_line(*this);
+	    des->add_node(sel);
+
+	    sub = new NetNet(scope, scope->local_symbol(),
+			     NetNet::IMPLICIT, expr_width());
+	    sub->local_flag(true);
+	    sub->set_line(*this);
+	    connect(sub->pin(0), sel->pin(0));
+      }
+
+	/* Done? Vector is already the right width? then stop now. */
+      if (sub->vector_width() == expr_width())
+	    return sub;
+
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, expr_width());
       if (has_sign()) {
-	    unsigned idx;
+	    NetSignExtend*pad = new NetSignExtend(scope,
+						  scope->local_symbol(),
+						  expr_width());
+	    pad->set_line(*this);
+	    des->add_node(pad);
 
-	    for (idx = 0 ;  idx < sub->pin_count() ;  idx += 1)
-		  connect(sub->pin(idx), net->pin(idx));
-
-	    for ( ;  idx < net->pin_count(); idx += 1)
-		  connect(sub->pin(sub->pin_count()-1), net->pin(idx));
+	    connect(pad->pin(1), sub->pin(0));
+	    connect(pad->pin(0), net->pin(0));
 
       } else {
-	    unsigned idx;
-	    for (idx = 0 ;  idx < sub->pin_count() ;  idx += 1)
-		  connect(sub->pin(idx), net->pin(idx));
 
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					verinum::V0);
+	    NetConcat*cat = new NetConcat(scope, scope->local_symbol(),
+					  expr_width(), 2);
+	    cat->set_line(*this);
+	    des->add_node(cat);
 
-	    for ( ;  idx < net->pin_count() ;  idx += 1)
-		  connect(net->pin(idx), tmp->pin(0));
+	    unsigned pad_width = expr_width() - sub->vector_width();
+	    verinum pad(0UL, pad_width);
+	    NetConst*con = new NetConst(scope, scope->local_symbol(),
+					pad);
+	    con->set_line(*this);
+	    des->add_node(con);
 
-	    des->add_node(tmp);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::IMPLICIT, pad_width);
+	    tmp->local_flag(true);
+	    tmp->set_line(*this);
+	    connect(tmp->pin(0), con->pin(0));
+
+	    connect(cat->pin(0), net->pin(0));
+	    connect(cat->pin(1), sub->pin(0));
+	    connect(cat->pin(2), con->pin(0));
       }
 
       return net;
@@ -827,6 +874,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.70  2005/06/13 22:26:03  steve
+ *  Make synthesized padding vector-aware.
+ *
  * Revision 1.69  2005/05/15 04:47:00  steve
  *  synthesis of Logic and shifts using vector gates.
  *
