@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.155 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.156 2005/06/13 22:25:37 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -654,6 +654,9 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *    This returns the width of the logic array. This does not affect
  *    the number of pins, but implies the width of the vector at each
  *    pin.
+ *
+ * ivl_logic_delay
+ *    Logic devices have a delay for each transition (0, 1 and Z).
  *
  * ivl_logic_attr (obsolete)
  *    Return the value of a specific attribute, given the key name as
@@ -1664,6 +1667,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.156  2005/06/13 22:25:37  steve
+ *  Document ivl_logic_delay function.
+ *
  * Revision 1.155  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *
