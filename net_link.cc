@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.16 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: net_link.cc,v 1.17 2005/06/13 23:22:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -329,7 +329,7 @@ unsigned Nexus::vector_width() const
 NetNet* Nexus::pick_any_net()
 {
       for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
-	    NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj());
+	    NetNet*sig = dynamic_cast<NetNet*>(cur->get_obj());
 	    if (sig != 0)
 		  return sig;
       }
@@ -523,6 +523,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.17  2005/06/13 23:22:37  steve
+ *  Fix compile errors.
+ *
  * Revision 1.16  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *

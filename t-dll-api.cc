@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.127 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.128 2005/06/13 23:22:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -535,7 +535,7 @@ extern "C" ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net)
       }
 
       assert(0);
-      return 0;
+      return IVL_DR_STRONG;
 }
 
 extern "C" ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net)
@@ -552,7 +552,7 @@ extern "C" ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net)
       }
 
       assert(0);
-      return 0;
+      return IVL_DR_STRONG;
 }
 
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
@@ -2040,6 +2040,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.128  2005/06/13 23:22:37  steve
+ *  Fix compile errors.
+ *
  * Revision 1.127  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *
