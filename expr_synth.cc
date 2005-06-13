@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.70 2005/06/13 22:26:03 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.71 2005/06/13 23:22:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -737,7 +737,7 @@ NetNet* NetESelect::synthesize(Design *des)
 	/* If there is a part select, then generate a PartSelect node
 	   to actually do the part select. This does not expansion,
 	   that is handled later. */
-      if (off != 0) {
+      if ((off != 0) || (off+expr_width() < sub->vector_width())) {
 	    unsigned wid = expr_width();
 	    if ((wid + off) > sub->vector_width())
 		  wid = sub->vector_width() - off;
@@ -777,6 +777,7 @@ NetNet* NetESelect::synthesize(Design *des)
 	    cat->set_line(*this);
 	    des->add_node(cat);
 
+	    assert(expr_width() > sub->vector_width());
 	    unsigned pad_width = expr_width() - sub->vector_width();
 	    verinum pad(0UL, pad_width);
 	    NetConst*con = new NetConst(scope, scope->local_symbol(),
@@ -874,6 +875,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.71  2005/06/13 23:22:14  steve
+ *  use NetPartSelect to shrink part from high bits.
+ *
  * Revision 1.70  2005/06/13 22:26:03  steve
  *  Make synthesized padding vector-aware.
  *
