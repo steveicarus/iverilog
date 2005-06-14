@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.26 2004/02/17 06:52:55 steve Exp $"
+#ident "$Id: verinum.h,v 1.27 2005/06/14 19:13:43 steve Exp $"
 #endif
 
 # include  <string>
@@ -30,6 +30,8 @@
 #else
 class ostream;
 #endif
+
+using namespace std;
 
 /*
  * Numbers in Verilog are multibit strings, where each bit has 4
@@ -147,6 +149,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.27  2005/06/14 19:13:43  steve
+ *  gcc3/4 compile errors.
+ *
  * Revision 1.26  2004/02/17 06:52:55  steve
  *  Support unsigned divide of huge numbers.
  *

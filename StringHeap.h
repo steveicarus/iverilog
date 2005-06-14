@@ -19,11 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.h,v 1.5 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: StringHeap.h,v 1.6 2005/06/14 19:13:43 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  <string>
+
+using namespace std;
 
 class perm_string {
 
@@ -120,6 +122,9 @@ class StringHeapLex  : private StringHeap {
 
 /*
  * $Log: StringHeap.h,v $
+ * Revision 1.6  2005/06/14 19:13:43  steve
+ *  gcc3/4 compile errors.
+ *
  * Revision 1.5  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *
