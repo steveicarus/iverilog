@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.138 2005/06/12 01:25:27 steve Exp $"
+#ident "$Id: vthread.cc,v 1.139 2005/06/14 01:44:10 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -542,18 +542,6 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      assert(cp->bit_idx[0] < 4);
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      schedule_assign(cp->iptr, bit_val, thr->words[cp->bit_idx[0]].w_int);
-#else
-      fprintf(stderr, "XXXX forgot how to implemented %%assign/d\n");
-#endif
-      return true;
-}
-
 /*
  * This is %assign/v0 <label>, <delay>, <bit>
  * Index register 0 contains a vector width.
@@ -564,6 +552,27 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
       assert(wid > 0);
 
       unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+      schedule_assign_vector(ptr, value, delay);
+
+      return true;
+}
+
+/*
+ * This is %assign/v0/d <label>, <delay_idx>, <bit>
+ * Index register 0 contains a vector width, and the named index
+ * register contains the delay.
+ */
+bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      assert(wid > 0);
+
+      unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
@@ -3220,6 +3229,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.139  2005/06/14 01:44:10  steve
+ *  Add the assign_v0_d instruction.
+ *
  * Revision 1.138  2005/06/12 01:25:27  steve
  *  Remove useless references to functor.h
  *

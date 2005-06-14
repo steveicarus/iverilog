@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.64 2005/05/17 20:54:00 steve Exp $
+ *  $Id: opcodes.txt,v 1.65 2005/06/14 01:44:10 steve Exp $
  */
 
 
@@ -57,19 +57,6 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
-* %assign <var-label>, <delay>, <bit> (DEPRECATED -- use %assign/v0)
-* %assign/d <var-label>, <delay>, <bit> (DEPRECATED -- need %assign/v0/d)
-
-This does a non-blocking assignment to a variable. The <label>
-identifies the affected variable, and the <delay> gives the delay when
-the assignment takes place. The delay may be 0. For blocking
-assignments, see %set. The <bit> is the address of the thread register
-that contains the bit value to assign.
-
-The %assign/d instruction is exactly the same as the %assign
-instruction, except that the <delay> specifies one of the index
-registers, that contain a calculated delay.
-
 * %assign/m <memory-label>, <delay>, <bit> (OBSOLETE)
 
 This instruction does a non-blocking assignment to a bit in a memory
@@ -90,12 +77,17 @@ The address of the word in the memory is from index register 3. The
 address is cannonical form.
 
 * %assign/v0 <var-label>, <delay>, <bit>
+* %assign/v0/d <var-label>, <delayx>, <bit>
 
 The %assign/v0 instruction is a vector version of non-blocking
 assignment. The <delay> is the number of clock ticks in the future
 where the assignment should be schedule, and the <bit> is the base of
 the vector to be assigned to the destination. The vector width is in
 index register 0.
+
+The %assign/v0/d variation puts the delay instead into an integer
+register that is given by the <delayx> value. This should not be 0, of
+course, because integer 0 is taken with the vector width.
 
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.

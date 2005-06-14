@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.73 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: codes.h,v 1.74 2005/06/14 01:44:09 steve Exp $"
 #endif
 
 
@@ -44,6 +44,7 @@ extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
@@ -174,6 +175,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.74  2005/06/14 01:44:09  steve
+ *  Add the assign_v0_d instruction.
+ *
  * Revision 1.73  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

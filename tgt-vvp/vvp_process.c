@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.111 2005/06/02 16:03:47 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.112 2005/06/14 01:45:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -123,41 +123,18 @@ static void set_to_memory_word(ivl_memory_t mem, unsigned idx,
 	      vvp_memory_label(mem), bit, wid);
 }
 
-/*
- * This generates an assign to a single bit of an lvalue variable. If
- * the bit is a part select, then index the label to set the right
- * bit. If there is an lvalue mux, then use the indexed assign to make
- * a calculated assign.
- */
-static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
-				unsigned bit, unsigned delay,
-				int delay_in_index_flag)
-{
-      ivl_signal_t sig = ivl_lval_sig(lval);
-      unsigned part_off = ivl_lval_part_off(lval);
-
-      char *delay_suffix = delay_in_index_flag? "/d" : "";
-
-      if (ivl_lval_mux(lval))
-	    fprintf(vvp_out, "    %%assign/x0%s V_%s, %u, %u;\n",
-		    delay_suffix, vvp_signal_label(sig), delay, bit);
-      else
-	    fprintf(vvp_out, "    %%assign%s V_%s[%u], %u, %u;\n",
-		    delay_suffix, vvp_signal_label(sig),
-		    idx+part_off, delay, bit);
-}
-
-static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
-			      unsigned bit, unsigned delay, unsigned width)
+static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
+			      unsigned delay, ivl_expr_t dexp,
+			      unsigned width)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
       ivl_expr_t mux = ivl_lval_mux(lval);
 
-      assert(idx == 0);
 
       if (mux != 0) {
 	    unsigned skip_assign = transient_id++;
+	    assert(dexp == 0);
 	    draw_eval_expr_into_integer(mux, 1);
 	      /* If the index expression has XZ bits, skip the assign. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
@@ -171,12 +148,18 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
 		 offset. Load that into index x1 and generate a
 		 single-bit set instruction. */
 	    assert(ivl_lval_width(lval) == width);
+	    assert(dexp == 0);
 
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
 	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
 		    vvp_signal_label(sig), delay, bit);
 
+      } else if (dexp != 0) {
+	    draw_eval_expr_into_integer(dexp, 1);
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%assign/v0/d V_%s, 1, %u;\n",
+		    vvp_signal_label(sig), bit);
       } else {
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0 V_%s, %u, %u;\n",
@@ -221,11 +204,6 @@ static void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 	  default:
 	    assert(0);
       }
-}
-
-static void calculate_into_x0(ivl_expr_t expr)
-{
-      draw_eval_expr_into_integer(expr, 0);
 }
 
 static void calculate_into_x1(ivl_expr_t expr)
@@ -463,7 +441,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned skip_set = transient_id++;
 	      unsigned skip_set_flag = 0;
-	      unsigned idx;
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
@@ -477,53 +454,20 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
 
-	      if ((mem == 0) && (del == 0)) {
+	      if (mem == 0) {
 
 		    unsigned bidx = res.base < 4
 			  ? res.base
 			  : (res.base+cur_rbit);
-		    assign_to_lvector(lval, 0, bidx, delay, bit_limit);
+		    assign_to_lvector(lval, bidx, delay, del, bit_limit);
 		    cur_rbit += bit_limit;
 
-	      } else if (mem) {
+	      } else {
+		    assert(mem);
 		      /* XXXX don't yes know what to do with a delay
 			 in an index variable. */
 		    assert(del == 0);
 		    assign_to_memory_word(mem, res.base, delay, bit_limit);
-
-	      } else {
-		    assert(!mem);
-		      /* XXXX This is obsolete, the
-			 assign_to_lvariable should be removed for the
-			 vector version. */
-
-		      /* If there is a mux for the lval, calculate the
-			 value and write it into index0. */
-		    if (ivl_lval_mux(lval)) {
-			  calculate_into_x0(ivl_lval_mux(lval));
-			  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-			  skip_set_flag = 1;
-		    }
-
-		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			  unsigned bidx = res.base < 4
-				? res.base
-				: (res.base+cur_rbit);
-			  if (del != 0)
-				assign_to_lvariable(lval, idx, bidx,
-						    1, 1);
-			  else
-				assign_to_lvariable(lval, idx, bidx,
-						    delay, 0);
-
-			  cur_rbit += 1;
-		    }
-
-		    for (idx = bit_limit; idx < ivl_lval_width(lval); idx += 1)
-			  if (del != 0)
-				assign_to_lvariable(lval, idx, 0, 1, 1);
-			  else
-				assign_to_lvariable(lval, idx, 0, delay, 0);
 
 	      }
 
@@ -1515,6 +1459,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.112  2005/06/14 01:45:05  steve
+ *  Add the assign_v0_d instruction.
+ *
  * Revision 1.111  2005/06/02 16:03:47  steve
  *  Support %force/link
  *
