@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.10 2004/06/04 23:33:51 steve Exp $"
+#ident "$Id: verireal.h,v 1.10.2.1 2005/06/14 15:33:54 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -27,6 +27,8 @@
 #else
 class ostream;
 #endif
+
+using namespace std;
 
 class verinum;
 
@@ -78,6 +80,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.10.2.1  2005/06/14 15:33:54  steve
+ *  Fix gcc4 build issues.
+ *
  * Revision 1.10  2004/06/04 23:33:51  steve
  *  Add unary minus as operator supported by verireal.
  *

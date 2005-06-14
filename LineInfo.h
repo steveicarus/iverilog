@@ -19,10 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.h,v 1.7 2003/01/17 05:49:03 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.7.2.1 2005/06/14 15:33:54 steve Exp $"
 #endif
 
 # include  <string>
+
+using namespace std;
 
 /*
  * This class holds line information for an internal object.
@@ -52,6 +54,9 @@ class LineInfo {
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.7.2.1  2005/06/14 15:33:54  steve
+ *  Fix gcc4 build issues.
+ *
  * Revision 1.7  2003/01/17 05:49:03  steve
  *  Use stringstream in place of sprintf.
  *
