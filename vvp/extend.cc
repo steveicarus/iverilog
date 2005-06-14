@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: extend.cc,v 1.1 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: extend.cc,v 1.2 2005/06/14 00:42:06 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
 # include  "compile.h"
 # include  <string.h>
-# include  <stream.h>
+# include  <iostream>
 # include  <assert.h>
 
 vvp_fun_extend_signed::vvp_fun_extend_signed(unsigned wid)

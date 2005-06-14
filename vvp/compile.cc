@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.207 2005/06/12 01:10:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.208 2005/06/14 00:42:06 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -35,7 +35,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  <iostream.h>
+# include  <iostream>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -1498,6 +1498,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.208  2005/06/14 00:42:06  steve
+ *  Accomodate fussy compilers.
+ *
  * Revision 1.207  2005/06/12 01:10:26  steve
  *  Remove useless references to functor.h
  *

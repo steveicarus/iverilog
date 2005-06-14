@@ -18,9 +18,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.32 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.33 2005/06/14 00:42:06 steve Exp $"
 
 # include  "config.h"
+# include  <stddef.h>
 # include  <assert.h>
 
 #ifdef HAVE_IOSFWD
@@ -755,6 +756,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.33  2005/06/14 00:42:06  steve
+ *  Accomodate fussy compilers.
+ *
  * Revision 1.32  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *
