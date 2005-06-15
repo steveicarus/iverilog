@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.31 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.32 2005/06/15 00:47:15 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -630,6 +630,22 @@ void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
       bits_[idx] = val;
+}
+
+bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+
+      if (size_ == 0)
+	    return true;
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
+	    if (! bits_[idx] .eeq( that.bits_[idx] ))
+		return false;
+      }
+
+      return true;
 }
 
 ostream& operator<<(ostream&out, const vvp_vector8_t&that)
@@ -1393,6 +1409,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.32  2005/06/15 00:47:15  steve
+ *  Resolv do not propogate inputs that do not change.
+ *
  * Revision 1.31  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *

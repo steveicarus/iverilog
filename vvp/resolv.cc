@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.23 2005/04/13 06:34:20 steve Exp $"
+#ident "$Id: resolv.cc,v 1.24 2005/06/15 00:47:15 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -64,6 +64,9 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
       unsigned pdx = port.port();
       vvp_net_t*ptr = port.ptr();
 
+      if (val_[pdx].eeq(bit))
+	    return;
+
       val_[pdx] = bit;
 
       vvp_vector8_t out (bit);
@@ -90,6 +93,9 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.24  2005/06/15 00:47:15  steve
+ *  Resolv do not propogate inputs that do not change.
+ *
  * Revision 1.23  2005/04/13 06:34:20  steve
  *  Add vvp driver functor for logic outputs,
  *  Add ostream output operators for debugging.

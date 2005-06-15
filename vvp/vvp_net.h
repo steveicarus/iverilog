@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.33 2005/06/14 00:42:06 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.34 2005/06/15 00:47:15 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -196,6 +196,7 @@ class vvp_scalar_t {
       unsigned strength0() const;
       unsigned strength1() const;
 
+      bool eeq(vvp_scalar_t that) const { return value_ == that.value_; }
       bool is_hiz() const { return value_ == 0; }
 
     private:
@@ -232,6 +233,9 @@ class vvp_vector8_t {
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
+
+	// Test that the vectors are exactly equal
+      bool eeq(const vvp_vector8_t&that) const;
 
       vvp_vector8_t(const vvp_vector8_t&that);
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
@@ -756,6 +760,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.34  2005/06/15 00:47:15  steve
+ *  Resolv do not propogate inputs that do not change.
+ *
  * Revision 1.33  2005/06/14 00:42:06  steve
  *  Accomodate fussy compilers.
  *
