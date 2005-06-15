@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.112 2005/06/14 01:45:05 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.113 2005/06/15 01:33:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -455,22 +455,24 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		    bit_limit = ivl_lval_width(lval);
 
 	      if (mem == 0) {
+		    unsigned bidx;
 
-		    unsigned bidx = res.base < 4
-			  ? res.base
-			  : (res.base+cur_rbit);
+		    bidx = res.base < 4? res.base : (res.base+cur_rbit);
 		    assign_to_lvector(lval, bidx, delay, del, bit_limit);
-		    cur_rbit += bit_limit;
 
 	      } else {
+		    unsigned bidx;
+
 		    assert(mem);
-		      /* XXXX don't yes know what to do with a delay
+		      /* XXXX don't yet know what to do with a delay
 			 in an index variable. */
 		    assert(del == 0);
-		    assign_to_memory_word(mem, res.base, delay, bit_limit);
 
+		    bidx = res.base < 4? res.base : (res.base+cur_rbit);
+		    assign_to_memory_word(mem, bidx, delay, bit_limit);
 	      }
 
+	      cur_rbit += bit_limit;
 
 	      if (skip_set_flag) {
 		    fprintf(vvp_out, "t_%u ;\n", skip_set);
@@ -1459,6 +1461,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.113  2005/06/15 01:33:33  steve
+ *  Fix bit offsets when processing lval concatenation.
+ *
  * Revision 1.112  2005/06/14 01:45:05  steve
  *  Add the assign_v0_d instruction.
  *
