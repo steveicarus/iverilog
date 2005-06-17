@@ -16,11 +16,12 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: concat.cc,v 1.3 2005/04/09 05:30:38 steve Exp $"
+#ident "$Id: concat.cc,v 1.4 2005/06/17 03:46:52 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
 # include  <stdlib.h>
+# include  <iostream>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -48,7 +49,12 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
       unsigned pdx = port.port();
 
-      assert(bit.size() == wid_[pdx]);
+      if (bit.size() != wid_[pdx]) {
+	    cerr << "internal error: port " << pdx
+		 << " expects wid=" << wid_[pdx]
+		 << ", got wid=" << bit.size() << endl;
+	    assert(0);
+      }
 
       unsigned off = 0;
       for (unsigned idx = 0 ;  idx < pdx ;  idx += 1)
@@ -118,6 +124,9 @@ void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
 
 /*
  * $Log: concat.cc,v $
+ * Revision 1.4  2005/06/17 03:46:52  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.3  2005/04/09 05:30:38  steve
  *  Default behavior for recv_vec8 methods.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.72 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: compile.h,v 1.73 2005/06/17 03:46:52 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -85,7 +85,7 @@ extern void compile_vpi_time_precision(long pre);
  * of the functor. The compile should match those port parameters up
  * to existing functors to manage the linking.
  */
-extern void compile_functor(char*label, char*type,
+extern void compile_functor(char*label, char*type, unsigned width,
 			    vvp_delay_t*delay, unsigned ostr0,
 			    unsigned ostr1,
 			    unsigned argc, struct symb_s*argv);
@@ -313,6 +313,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.73  2005/06/17 03:46:52  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.72  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
  *

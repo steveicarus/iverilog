@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.17 2005/06/12 21:56:16 steve Exp $"
+#ident "$Id: logic.h,v 1.18 2005/06/17 03:46:53 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -109,7 +109,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
 class vvp_fun_muxz : public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_muxz();
+      explicit vvp_fun_muxz(unsigned width);
       virtual ~vvp_fun_muxz();
 
       void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
@@ -135,6 +135,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.18  2005/06/17 03:46:53  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.17  2005/06/12 21:56:16  steve
  *  Remove unused ft_MOS truth tables.
  *

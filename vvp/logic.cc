@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.26 2005/06/12 15:13:37 steve Exp $"
+#ident "$Id: logic.cc,v 1.27 2005/06/17 03:46:52 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -149,10 +149,15 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
-vvp_fun_muxz::vvp_fun_muxz()
+vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
+: a_(wid), b_(wid)
 {
       count_functors_table += 1;
       select_ = 2;
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    a_.set_bit(idx, BIT4_X);
+	    b_.set_bit(idx, BIT4_X);
+      }
 }
 
 vvp_fun_muxz::~vvp_fun_muxz()
@@ -225,7 +230,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
  * functor. Also resolve the inputs to the functor.
  */
 
-void compile_functor(char*label, char*type,
+void compile_functor(char*label, char*type, unsigned width,
 		     vvp_delay_t*delay, unsigned ostr0, unsigned ostr1,
 		     unsigned argc, struct symb_s*argv)
 {
@@ -264,7 +269,7 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_MUXX);
 
       } else if (strcmp(type, "MUXZ") == 0) {
-	    obj = new vvp_fun_muxz();
+	    obj = new vvp_fun_muxz(width);
 
       } else if (strcmp(type, "NMOS") == 0) {
 	    obj = new vvp_fun_pmos(true);
@@ -346,6 +351,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.27  2005/06/17 03:46:52  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.26  2005/06/12 15:13:37  steve
  *  Support resistive mos devices.
  *

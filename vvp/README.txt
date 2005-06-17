@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.67 2005/05/24 01:43:27 steve Exp $
+ *  $Id: README.txt,v 1.68 2005/06/17 03:46:52 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -128,7 +128,7 @@ label is required for functors.
 
 The general syntax of a functor is:
 
-	<label> .functor <type>, symbol_list ;
+	<label> .functor <type> [ (<delay>) ], symbol_list ;
 
 The symbol list is 4 names of labels of other functors. These connect
 inputs of the functor of the statement to the output of other

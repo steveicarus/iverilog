@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.75 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: parse.y,v 1.76 2005/06/17 03:46:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -131,14 +131,15 @@ statement
      label and a type name, and may have operands. The functor may
      also have a delay specification and output strengths. */
 
-	: T_LABEL K_FUNCTOR T_SYMBOL delay ',' symbols ';'
-		{ compile_functor($1, $3, $4, 6, 6, $6.cnt, $6.vect); }
+	: T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER delay ',' symbols ';'
+		{ compile_functor($1, $3, $4, $5, 6, 6, $7.cnt, $7.vect); }
 
-	| T_LABEL K_FUNCTOR T_SYMBOL delay
+	| T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER delay
 	          '[' T_NUMBER T_NUMBER ']' ',' symbols ';'
-		{ unsigned str0 = $6;
-		  unsigned str1 = $7;
-		  compile_functor($1, $3, $4, str0, str1, $10.cnt, $10.vect);
+		{ unsigned str0 = $7;
+		  unsigned str1 = $8;
+		  compile_functor($1, $3, $4, $5, str0, str1,
+				  $11.cnt, $11.vect);
 		}
 
 
@@ -689,6 +690,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.76  2005/06/17 03:46:53  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.75  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
  *

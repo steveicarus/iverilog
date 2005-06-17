@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.128 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.129 2005/06/17 03:46:52 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1068,11 +1068,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    int inst;
 	    for (inst = 0; inst < ninp; inst += 4) {
 		  if (ninp > 4)
-			fprintf(vvp_out, "L_%p/%d/%d .functor %s",
-				lptr, level, inst, lcasc);
+			fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
+				lptr, level, inst, lcasc, vector_width);
 		  else {
-			fprintf(vvp_out, "L_%p .functor %s",
-				lptr, ltype);
+			fprintf(vvp_out, "L_%p .functor %s %u",
+				lptr, ltype, vector_width);
 
 			draw_delay(lptr);
 
@@ -1955,6 +1955,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.129  2005/06/17 03:46:52  steve
+ *  Make functors know their own width.
+ *
  * Revision 1.128  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *
