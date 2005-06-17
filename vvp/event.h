@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.9 2005/05/25 05:44:51 steve Exp $"
+#ident "$Id: event.h,v 1.10 2005/06/17 23:47:02 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -35,6 +35,8 @@
  */
 struct waitable_hooks_s {
 
+    public:
+      waitable_hooks_s() : threads(0) { }
       vthread_t threads;
 
     protected:
@@ -118,6 +120,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.10  2005/06/17 23:47:02  steve
+ *  threads member for waitable_hook_s needs initailizing.
+ *
  * Revision 1.9  2005/05/25 05:44:51  steve
  *  Handle event/or with specific, efficient nodes.
  *

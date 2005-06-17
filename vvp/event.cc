@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.18 2005/05/25 05:44:51 steve Exp $"
+#ident "$Id: event.cc,v 1.19 2005/06/17 23:47:02 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -69,7 +69,6 @@ const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 vvp_fun_edge::vvp_fun_edge(edge_t e)
 : edge_(e)
 {
-      threads = 0;
       bits_[0] = BIT4_X;
       bits_[1] = BIT4_X;
       bits_[2] = BIT4_X;
@@ -249,6 +248,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.19  2005/06/17 23:47:02  steve
+ *  threads member for waitable_hook_s needs initailizing.
+ *
  * Revision 1.18  2005/05/25 05:44:51  steve
  *  Handle event/or with specific, efficient nodes.
  *
