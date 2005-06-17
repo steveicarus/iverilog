@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.63 2005/06/17 05:05:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -224,20 +224,27 @@ NetEConst* NetEBComp::eval_less_()
 	    return new NetEConst(result);
       }
 
-	/* Detect the case where the right side is greater that or
+
+	/* Detect the case where the right side is greater than or
 	   equal to the largest value the left side can possibly
-	   have. */
-      assert(left_->expr_width() > 0);
-      verinum lv (verinum::V1, left_->expr_width());
-      if (lv < rv) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+	   have. Use the width of the left expression as all 1's to
+	   calculate the maximum possible width for the left_
+	   expression. This test only works of the compare is
+	   unsigned. */
+      if (! (rv.has_sign() || left_->has_sign())) {
+
+	    assert(left_->expr_width() > 0);
+	    verinum lv (verinum::V1, left_->expr_width());
+	    if (lv < rv) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
       }
 
 	/* Now go on to the normal test of the values. */
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
-      lv = l->value();
+      verinum lv = l->value();
       if (! lv.is_defined()) {
 	    verinum result(verinum::Vx, 1);
 	    return new NetEConst(result);
@@ -1551,6 +1558,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.63  2005/06/17 05:05:53  steve
+ *  Watch out for signed constants in magnitude compare.
+ *
  * Revision 1.62  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *
