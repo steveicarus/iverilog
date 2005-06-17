@@ -1,16 +1,12 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com>
- * Copyright (c) 1999-2000 Picture Elements, Inc.
- *    Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com>
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
  *    General Public License as published by the Free Software
  *    Foundation; either version 2 of the License, or (at your option)
- *    any later version. In order to redistribute the software in
- *    binary form, you will need a Picture Elements Binary Software
- *    License.
+ *    any later version.
  *
  *    This program is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,20 +16,15 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- *  ---
- *    You should also have received a copy of the Picture Elements
- *    Binary Software License offer along with the source. This offer
- *    allows you to obtain the right to redistribute the software in
- *    binary (compiled) form. If you have not received it, contact
- *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.26 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.27 2005/06/17 05:13:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "memory.h"
 # include  "statistics.h"
+# include  <iostream>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -276,20 +267,16 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 		  put_val.set_bit(idx, bit);
 	    }
 	    break;
-#if 0
-	  case vpiIntVal:
-	    for (unsigned widx = 0;  widx < width;  widx += 32) {
-		  int cur = val->value.integer;
-		  for (unsigned idx = widx
-			     ; idx < width && idx < widx+32
-			     ; idx += 1) {
-			unsigned char val = (cur&1)? 1 : 0;
-			memory_set(rfp->mem->mem, bidx+idx, val);
-			cur >>= 1;
-		  }
-	    }
-	    break;
-#endif
+
+	  case vpiIntVal: {
+		int cur = val->value.integer;
+		for (unsigned idx = 0;  idx < width;  idx += 1) {
+		      vvp_bit4_t bit = (cur&1)? BIT4_1 : BIT4_0;
+		      put_val.set_bit(idx, bit);
+		      cur >>= 1;
+		}
+		break;
+	  }
 #if 0
 	      /* If the caller tries to set a HexStrVal, convert it to
 		 bits and write the bits into the word. */
@@ -354,6 +341,8 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 	  }
 #endif
 	  default:
+	    cerr << "internal error: memory_word put_value format="
+		 << val->format << endl;
 	    assert(0);
       }
 
@@ -568,6 +557,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.27  2005/06/17 05:13:07  steve
+ *  Support set of IntVal to memory words.
+ *
  * Revision 1.26  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *
