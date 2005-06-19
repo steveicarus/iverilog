@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.34 2005/06/15 00:47:15 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.35 2005/06/19 18:42:00 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -102,12 +102,45 @@ class vvp_vector4_t {
       char*as_string(char*buf, size_t buf_len);
 
     private:
+      enum { BITS_PER_WORD = sizeof(unsigned long)/2 };
+
       unsigned size_;
       union {
 	    unsigned long bits_val_;
 	    unsigned long*bits_ptr_;
       };
 };
+
+inline vvp_vector4_t::~vvp_vector4_t()
+{
+      if (size_ > BITS_PER_WORD) {
+	    delete[] bits_ptr_;
+      }
+}
+
+
+inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
+{
+      if (idx >= size_)
+	    return BIT4_X;
+
+      unsigned wdx = idx / BITS_PER_WORD;
+      unsigned off = idx % BITS_PER_WORD;
+
+      unsigned long bits;
+      if (size_ > BITS_PER_WORD) {
+	    bits = bits_ptr_[wdx];
+      } else {
+	    bits = bits_val_;
+      }
+
+      bits >>= (off * 2);
+
+	/* Casting is evil, but this cast matches the un-cast done
+	   when the vvp_bit4_t value is put into the vector. */
+      return (vvp_bit4_t) (bits & 3);
+}
+
 
 extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
 extern ostream& operator << (ostream&, const vvp_vector4_t&);
@@ -673,7 +706,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
     private:
       vvp_vector4_t bits4_;
       vvp_vector8_t bits8_;
-      bool type_is_vector8_() const;
+      bool type_is_vector8_() const { return bits8_.size() > 0; }
 
 	// This is true until at least one propagation happens.
       bool needs_init_;
@@ -760,6 +793,9 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.35  2005/06/19 18:42:00  steve
+ *  Optimize the LOAD_VEC implementation.
+ *
  * Revision 1.34  2005/06/15 00:47:15  steve
  *  Resolv do not propogate inputs that do not change.
  *

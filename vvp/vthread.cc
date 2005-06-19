@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.139 2005/06/14 01:44:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.140 2005/06/19 18:42:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -121,6 +121,14 @@ struct vthread_s {
       struct vthread_s*scope_next, *scope_prev;
 };
 
+/*
+ * The bits of a thread are stored in an array of unsigned longs
+ * referenced by the bits member of the vthread_s. Two bits of the
+ * word are used to store a vvp_bit4_t. The functions below assume
+ * that the vvp_bit4_t enum values are 0-3. The actual value mapping
+ * doesn't matter as long as only the thr_put_bit and thr_get_bit
+ * functions are used to get the vvp_bit4_t out.
+ */
 #if SIZEOF_UNSIGNED_LONG == 8
 # define THR_BITS_INIT 0xaaaaaaaaaaaaaaaaUL
 #else
@@ -1894,8 +1902,10 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
       assert(sig);
 
+      vvp_vector4_t sig_value = sig->vec4_value();
+
       for (unsigned idx = 0;  idx < wid;  idx += 1, bit += 1) {
-	    vvp_bit4_t val = sig->value(idx);
+	    vvp_bit4_t val = sig_value.value(idx);
 	    thr_put_bit(thr, bit, val);
       }
 
@@ -3229,6 +3239,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.140  2005/06/19 18:42:00  steve
+ *  Optimize the LOAD_VEC implementation.
+ *
  * Revision 1.139  2005/06/14 01:44:10  steve
  *  Add the assign_v0_d instruction.
  *

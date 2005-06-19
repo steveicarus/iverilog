@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.32 2005/06/15 00:47:15 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.33 2005/06/19 18:42:00 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -236,13 +236,6 @@ vvp_vector4_t::vvp_vector4_t(unsigned size)
       }
 }
 
-vvp_vector4_t::~vvp_vector4_t()
-{
-      if (size_ > bits_per_word) {
-	    delete[] bits_ptr_;
-      }
-}
-
 vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
 {
       if (size_ > bits_per_word)
@@ -263,27 +256,6 @@ vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
       return *this;
 }
 
-vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
-{
-      if (idx >= size_)
-	    return BIT4_X;
-
-      unsigned wdx = idx / bits_per_word;
-      unsigned off = idx % bits_per_word;
-
-      unsigned long bits;
-      if (size_ > bits_per_word) {
-	    bits = bits_ptr_[wdx];
-      } else {
-	    bits = bits_val_;
-      }
-
-      bits >>= (off * 2);
-
-	/* Casting is evil, but this cast matches the un-cast done
-	   when the vvp_bit4_t value is put into the vector. */
-      return (vvp_bit4_t) (bits & 3);
-}
 
 void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 {
@@ -731,11 +703,6 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid)
       vpi_callbacks = 0;
       continuous_assign_active_ = false;
       force_active_ = false;
-}
-
-bool vvp_fun_signal::type_is_vector8_() const
-{
-      return bits8_.size() > 0;
 }
 
 /*
@@ -1409,6 +1376,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.33  2005/06/19 18:42:00  steve
+ *  Optimize the LOAD_VEC implementation.
+ *
  * Revision 1.32  2005/06/15 00:47:15  steve
  *  Resolv do not propogate inputs that do not change.
  *
