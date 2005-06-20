@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.33 2005/06/19 18:42:00 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.34 2005/06/20 01:28:14 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -137,18 +137,6 @@ ostream& operator<<(ostream&out, vvp_bit4_t bit)
       return out;
 }
 
-void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
-{
-      while (struct vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
-
-	    if (cur->fun)
-		  cur->fun->recv_vec4(ptr, val);
-
-	    ptr = next;
-      }
-}
-
 void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
 		      unsigned base, unsigned wid, unsigned vwid)
 {
@@ -198,13 +186,11 @@ void vvp_send_long(vvp_net_ptr_t ptr, long val)
       }
 }
 
-const unsigned bits_per_word = sizeof (unsigned long) / 2;
-
-vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
+void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
 {
       size_ = that.size_;
-      if (size_ > bits_per_word) {
-	    unsigned words = (size_+bits_per_word-1) / bits_per_word;
+      if (size_ > BITS_PER_WORD) {
+	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
 	    bits_ptr_ = new unsigned long[words];
 
 	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
@@ -223,8 +209,8 @@ vvp_vector4_t::vvp_vector4_t(unsigned size)
       for (unsigned idx = 0 ;  idx < sizeof (unsigned long) ;  idx += 1)
 	    initial_value_bits = (initial_value_bits << 8) | 0xaa;
 
-      if (size_ > bits_per_word) {
-	    unsigned cnt = (size_ + bits_per_word - 1) / bits_per_word;
+      if (size_ > BITS_PER_WORD) {
+	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    bits_ptr_ = new unsigned long[cnt];
 
 
@@ -236,50 +222,13 @@ vvp_vector4_t::vvp_vector4_t(unsigned size)
       }
 }
 
-vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
-{
-      if (size_ > bits_per_word)
-	    delete[] bits_ptr_;
-
-      size_ = that.size_;
-      if (size_ > bits_per_word) {
-	    unsigned cnt = (size_ + bits_per_word - 1) / bits_per_word;
-	    bits_ptr_ = new unsigned long[cnt];
-
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-		  bits_ptr_[idx] = that.bits_ptr_[idx];
-
-      } else {
-	    bits_val_ = that.bits_val_;
-      }
-
-      return *this;
-}
-
-
-void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
-{
-      assert(idx < size_);
-
-      unsigned wdx = idx / bits_per_word;
-      unsigned off = idx % bits_per_word;
-      unsigned long mask = 3UL << (2*off);
-
-      if (size_ > bits_per_word) {
-	    bits_ptr_[wdx] &= ~mask;
-	    bits_ptr_[wdx] |= val << (2*off);
-      } else {
-	    bits_val_ &= ~mask;
-	    bits_val_ |= val << (2*off);
-      }
-}
 
 bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 {
       if (size_ != that.size_)
 	    return false;
 
-      unsigned words = (size_+bits_per_word-1) / bits_per_word;
+      unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
       if (words == 1) {
 	    if (bits_val_ == that.bits_val_)
 		  return true;
@@ -1376,6 +1325,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.34  2005/06/20 01:28:14  steve
+ *  Inline some commonly called vvp_vector4_t methods.
+ *
  * Revision 1.33  2005/06/19 18:42:00  steve
  *  Optimize the LOAD_VEC implementation.
  *

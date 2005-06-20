@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.35 2005/06/19 18:42:00 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.36 2005/06/20 01:28:14 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -102,7 +102,12 @@ class vvp_vector4_t {
       char*as_string(char*buf, size_t buf_len);
 
     private:
-      enum { BITS_PER_WORD = sizeof(unsigned long)/2 };
+	// Number of vvp_bit4_t bits that can be shoved into a word.
+      enum { BITS_PER_WORD = 8*sizeof(unsigned long)/2 };
+
+	// Initialize and operator= use this private method to copy
+	// the data from that object into this object.
+      void copy_from_(const vvp_vector4_t&that);
 
       unsigned size_;
       union {
@@ -111,11 +116,29 @@ class vvp_vector4_t {
       };
 };
 
+inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
+{
+      copy_from_(that);
+}
+
 inline vvp_vector4_t::~vvp_vector4_t()
 {
       if (size_ > BITS_PER_WORD) {
 	    delete[] bits_ptr_;
       }
+}
+
+inline vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
+{
+      if (this == &that)
+	    return *this;
+
+      if (size_ > BITS_PER_WORD)
+	    delete[] bits_ptr_;
+
+      copy_from_(that);
+
+      return *this;
 }
 
 
@@ -139,6 +162,23 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 	/* Casting is evil, but this cast matches the un-cast done
 	   when the vvp_bit4_t value is put into the vector. */
       return (vvp_bit4_t) (bits & 3);
+}
+
+inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
+{
+      assert(idx < size_);
+
+      unsigned wdx = idx / BITS_PER_WORD;
+      unsigned off = idx % BITS_PER_WORD;
+      unsigned long mask = 3UL << (2*off);
+
+      if (size_ > BITS_PER_WORD) {
+	    bits_ptr_[wdx] &= ~mask;
+	    bits_ptr_[wdx] |= val << (2*off);
+      } else {
+	    bits_val_ &= ~mask;
+	    bits_val_ |= val << (2*off);
+      }
 }
 
 
@@ -398,33 +438,6 @@ struct vvp_net_t {
       vvp_net_fun_t*fun;
       long fun_flags;
 };
-
-extern void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val);
-extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
-extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
-extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
-
-/*
- * Part-vector versions of above functions. This function uses the
- * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
- * deliver parts of a vector.
- *
- * The ptr is the destination input port to write to.
- *
- * <val> is the vector to be written. The width of this vector must
- * exactly match the <wid> vector.
- *
- * The <base> is where in the receiver the bit vector is to be
- * written. This address is given in cannonical units; 0 is the LSB, 1
- * is the next bit, and so on.
- *
- * The <vwid> is the width of the destination vector that this part is
- * part of. This is used by intermediate nodes, i.e. resolvers, to
- * know how wide to pad with Z, if it needs to transform the part to a
- * mirror of the destination vector.
- */
-extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
-			     unsigned base, unsigned wid, unsigned vwid);
 
 /*
  * Instances of this class represent the functionality of a
@@ -791,8 +804,49 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
       unsigned port_base_;
 };
 
+
+inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_vec4(ptr, val);
+
+	    ptr = next;
+      }
+}
+extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
+extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
+
+/*
+ * Part-vector versions of above functions. This function uses the
+ * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
+ * deliver parts of a vector.
+ *
+ * The ptr is the destination input port to write to.
+ *
+ * <val> is the vector to be written. The width of this vector must
+ * exactly match the <wid> vector.
+ *
+ * The <base> is where in the receiver the bit vector is to be
+ * written. This address is given in cannonical units; 0 is the LSB, 1
+ * is the next bit, and so on.
+ *
+ * The <vwid> is the width of the destination vector that this part is
+ * part of. This is used by intermediate nodes, i.e. resolvers, to
+ * know how wide to pad with Z, if it needs to transform the part to a
+ * mirror of the destination vector.
+ */
+extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
+			     unsigned base, unsigned wid, unsigned vwid);
+
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.36  2005/06/20 01:28:14  steve
+ *  Inline some commonly called vvp_vector4_t methods.
+ *
  * Revision 1.35  2005/06/19 18:42:00  steve
  *  Optimize the LOAD_VEC implementation.
  *
