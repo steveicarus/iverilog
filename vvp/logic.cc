@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.27 2005/06/17 03:46:52 steve Exp $"
+#ident "$Id: logic.cc,v 1.28 2005/06/21 22:48:23 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -119,16 +119,16 @@ vvp_fun_buf::~vvp_fun_buf()
 {
 }
 
+/*
+ * The buf functor is very simple--change the z bits to x bits in the
+ * vector it passes, and propagate the result.
+ */
 void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       if (ptr.port() != 0)
 	    return;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-	    if (bit.value(idx) == BIT4_Z)
-		  bit.set_bit(idx, BIT4_X);
-      }
-
+      bit.change_z2x();
       vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
@@ -141,6 +141,10 @@ vvp_fun_bufz::~vvp_fun_bufz()
 {
 }
 
+/*
+ * The bufz is similar to the buf device, except that it does not
+ * bother translating z bits to x.
+ */
 void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       if (ptr.port() != 0)
@@ -351,6 +355,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.28  2005/06/21 22:48:23  steve
+ *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
+ *
  * Revision 1.27  2005/06/17 03:46:52  steve
  *  Make functors know their own width.
  *

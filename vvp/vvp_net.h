@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.36 2005/06/20 01:28:14 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.37 2005/06/21 22:48:23 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -98,12 +98,22 @@ class vvp_vector4_t {
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
 
+	// Change all Z bits to X bits.
+      void change_z2x();
+
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
 
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.
       enum { BITS_PER_WORD = 8*sizeof(unsigned long)/2 };
+#if SIZEOF_UNSIGNED_LONG == 8
+      enum { WORD_X_BITS = 0xaaaaaaaaaaaaaaaaUL };
+#elif SIZEOF_UNSIGNED_LONG == 4
+      enum { WORD_X_BITS = 0xaaaaaaaaUL };
+#else
+#error "WORD_X_BITS not defined for this architecture?"
+#endif
 
 	// Initialize and operator= use this private method to copy
 	// the data from that object into this object.
@@ -180,7 +190,6 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 	    bits_val_ |= val << (2*off);
       }
 }
-
 
 extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
 extern ostream& operator << (ostream&, const vvp_vector4_t&);
@@ -275,6 +284,33 @@ class vvp_scalar_t {
     private:
       unsigned char value_;
 };
+
+inline vvp_scalar_t::vvp_scalar_t()
+{
+      value_ = 0;
+}
+
+inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
+{
+      assert(str <= 7);
+
+      if (str == 0) {
+	    value_ = 0x00;
+      } else switch (val) {
+	  case BIT4_0:
+	    value_ = str | (str<<4);
+	    break;
+	  case BIT4_1:
+	    value_ = str | (str<<4) | 0x88;
+	    break;
+	  case BIT4_X:
+	    value_ = str | (str<<4) | 0x80;
+	    break;
+	  case BIT4_Z:
+	    value_ = 0x00;
+	    break;
+      }
+}
 
 extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
 extern ostream& operator<< (ostream&, vvp_scalar_t);
@@ -844,6 +880,9 @@ extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.37  2005/06/21 22:48:23  steve
+ *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
+ *
  * Revision 1.36  2005/06/20 01:28:14  steve
  *  Inline some commonly called vvp_vector4_t methods.
  *

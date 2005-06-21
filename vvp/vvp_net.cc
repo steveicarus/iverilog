@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.34 2005/06/20 01:28:14 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.35 2005/06/21 22:48:23 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -204,21 +204,14 @@ void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
 vvp_vector4_t::vvp_vector4_t(unsigned size)
 : size_(size)
 {
-	/* Make a work full of initialized bits. */
-      unsigned long initial_value_bits = 0xaa;
-      for (unsigned idx = 0 ;  idx < sizeof (unsigned long) ;  idx += 1)
-	    initial_value_bits = (initial_value_bits << 8) | 0xaa;
-
       if (size_ > BITS_PER_WORD) {
 	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    bits_ptr_ = new unsigned long[cnt];
-
-
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-		  bits_ptr_[idx] = initial_value_bits;
+		  bits_ptr_[idx] = WORD_X_BITS;
 
       } else {
-	    bits_val_ = initial_value_bits;
+	    bits_val_ = WORD_X_BITS;
       }
 }
 
@@ -242,6 +235,21 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       }
 
       return true;
+}
+
+
+void vvp_vector4_t::change_z2x()
+{
+      assert(BIT4_Z == 3 && BIT4_X == 2);
+# define Z2X(val) do { (val) = (val) & ~(((val)&WORD_X_BITS) >> 1); } while(0)
+
+      if (size_ <= BITS_PER_WORD) {
+	    Z2X(bits_val_);
+      } else {
+	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+		  Z2X(bits_ptr_[idx]);
+      }
 }
 
 char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
@@ -943,38 +951,14 @@ void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 # define STREN0(v) ((v)&0x07)
 #endif
 
-vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
-{
-      assert(str <= 7);
-
-      if (str == 0)
-	    val = BIT4_Z;
-
-      switch (val) {
-	  case BIT4_0:
-	    value_ = str | (str<<4);
-	    break;
-	  case BIT4_1:
-	    value_ = str | (str<<4) | 0x88;
-	    break;
-	  case BIT4_X:
-	    value_ = str | (str<<4) | 0x80;
-	    break;
-	  case BIT4_Z:
-	    value_ = 0;
-	    break;
-      }
-}
-
 vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 {
       assert(str0 <= 7);
       assert(str1 <= 7);
 
-      if (str0 == 0 && str1 == 0)
-	    val = BIT4_Z;
-
-      switch (val) {
+      if (str0 == 0 && str1 == 0) {
+	    value_ = 0x00;
+      } else switch (val) {
 	  case BIT4_0:
 	    value_ = str0 | (str0<<4);
 	    break;
@@ -988,11 +972,6 @@ vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 	    value_ = 0x00;
 	    break;
       }
-}
-
-vvp_scalar_t::vvp_scalar_t()
-{
-      value_ = 0;
 }
 
 vvp_bit4_t vvp_scalar_t::value() const
@@ -1325,6 +1304,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.35  2005/06/21 22:48:23  steve
+ *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
+ *
  * Revision 1.34  2005/06/20 01:28:14  steve
  *  Inline some commonly called vvp_vector4_t methods.
  *
