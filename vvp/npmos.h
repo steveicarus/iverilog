@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.h,v 1.7 2005/06/12 15:13:37 steve Exp $"
+#ident "$Id: npmos.h,v 1.8 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -51,7 +51,7 @@ class vvp_fun_pmos_ : public vvp_net_fun_t {
     public:
       explicit vvp_fun_pmos_(bool enable_invert);
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
@@ -84,6 +84,9 @@ class vvp_fun_rpmos  : public vvp_fun_pmos_ {
 
 /*
  * $Log: npmos.h,v $
+ * Revision 1.8  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.7  2005/06/12 15:13:37  steve
  *  Support resistive mos devices.
  *

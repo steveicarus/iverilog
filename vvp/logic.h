@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.18 2005/06/17 03:46:53 steve Exp $"
+#ident "$Id: logic.h,v 1.19 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -39,7 +39,7 @@ class table_functor_s: public vvp_net_fun_t {
       explicit table_functor_s(truth_t t);
       virtual ~table_functor_s();
 
-      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
       truth_t table;
@@ -60,7 +60,7 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
     public:
       explicit vvp_fun_and();
       ~vvp_fun_and();
-      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 };
 
 /*
@@ -75,7 +75,7 @@ class vvp_fun_buf: public vvp_net_fun_t {
       explicit vvp_fun_buf();
       virtual ~vvp_fun_buf();
 
-      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
 };
@@ -90,7 +90,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
       explicit vvp_fun_bufz();
       virtual ~vvp_fun_bufz();
 
-      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
 };
@@ -112,7 +112,7 @@ class vvp_fun_muxz : public vvp_net_fun_t {
       explicit vvp_fun_muxz(unsigned width);
       virtual ~vvp_fun_muxz();
 
-      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
       vvp_vector4_t a_;
@@ -135,6 +135,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.19  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.18  2005/06/17 03:46:53  steve
  *  Make functors know their own width.
  *

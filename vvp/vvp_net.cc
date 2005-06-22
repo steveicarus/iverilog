@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.35 2005/06/21 22:48:23 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.36 2005/06/22 00:04:49 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -595,7 +595,7 @@ vvp_net_fun_t::~vvp_net_fun_t()
 {
 }
 
-void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, vvp_vector4_t)
+void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&)
 {
       fprintf(stderr, "internal error: %s: recv_vec4 not implemented\n",
 	      typeid(*this).name());
@@ -644,7 +644,7 @@ vvp_fun_drive::~vvp_fun_drive()
 {
 }
 
-void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
       vvp_send_vec8(port.ptr()->out, vvp_vector8_t(bit, drive0_, drive1_));
@@ -674,7 +674,7 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid)
  * the first propagation, and forces the first propagation to happen
  * even if it matches the initial value.
  */
-void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
@@ -705,10 +705,11 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	      // Force from a node may not have been sized completely
 	      // by the source, so coerce the size here.
 	    if (bit.size() != size())
-		  bit = coerce_to_width(bit, size());
+		  force_ = coerce_to_width(bit, size());
+	    else
+		  force_ = bit;
 
 	    force_active_ = true;
-	    force_ = bit;
 	    vvp_send_vec4(ptr.ptr()->out, force_);
 	    run_vpi_callbacks();
 	    break;
@@ -896,7 +897,7 @@ vvp_wide_fun_t::~vvp_wide_fun_t()
 {
 }
 
-void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_vec4_from_input_(pidx, bit);
@@ -1304,6 +1305,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.36  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.35  2005/06/21 22:48:23  steve
  *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
  *

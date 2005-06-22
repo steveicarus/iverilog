@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.9 2005/03/09 04:52:40 steve Exp $"
+#ident "$Id: memory.h,v 1.10 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 #include "vvp_net.h"
@@ -124,7 +124,7 @@ class vvp_fun_memport  : public vvp_net_fun_t {
       explicit vvp_fun_memport(vvp_memory_t mem, vvp_net_t*net);
       ~vvp_fun_memport();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       vvp_memory_t mem_;
@@ -152,6 +152,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.10  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.9  2005/03/09 04:52:40  steve
  *  reimplement memory ports.
  *

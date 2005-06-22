@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.13 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: bufif.cc,v 1.14 2005/06/22 00:04:48 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -35,7 +35,7 @@ vvp_fun_bufif::vvp_fun_bufif(bool en_invert, bool out_invert,
       count_functors_bufif += 1;
 }
 
-void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0:
@@ -87,6 +87,9 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.14  2005/06/22 00:04:48  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.13  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

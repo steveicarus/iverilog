@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dff.cc,v 1.1 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: dff.cc,v 1.2 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -41,7 +41,7 @@ vvp_dff::~vvp_dff()
 {
 }
 
-void vvp_dff::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       vvp_bit4_t tmp;
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.7 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: delay.cc,v 1.8 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -108,7 +108,7 @@ vvp_fun_delay::~vvp_fun_delay()
  * account for different delays for different bits by generating a
  * stream of vectors that lead up to the actual value.
  */
-void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       if (cur_.eeq(bit))
 	    return;
@@ -130,6 +130,9 @@ void vvp_fun_delay::run_run()
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.8  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.7  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *

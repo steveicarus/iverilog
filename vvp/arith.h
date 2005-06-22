@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.30 2005/06/11 18:11:18 steve Exp $"
+#ident "$Id: arith.h,v 1.31 2005/06/22 00:04:48 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -57,7 +57,7 @@ class vvp_arith_div : public vvp_arith_ {
     public:
       explicit vvp_arith_div(unsigned wid, bool signed_flag);
       ~vvp_arith_div();
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
     private:
       void wide_(vvp_net_ptr_t ptr);
       bool signed_flag_;
@@ -68,7 +68,7 @@ class vvp_arith_mod : public vvp_arith_ {
     public:
       explicit vvp_arith_mod(unsigned wid, bool signed_flag);
       ~vvp_arith_mod();
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
     private:
       void wide_(vvp_net_ptr_t ptr);
       bool signed_flag_;
@@ -84,7 +84,7 @@ class vvp_cmp_eeq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eeq(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
 };
 
@@ -92,7 +92,7 @@ class vvp_cmp_nee  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_nee(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
 };
 
@@ -100,7 +100,7 @@ class vvp_cmp_eq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eq(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
 };
 
@@ -108,7 +108,7 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_ne(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
 };
 
@@ -135,7 +135,7 @@ class vvp_cmp_ge  : public vvp_cmp_gtge_base_ {
     public:
       explicit vvp_cmp_ge(unsigned wid, bool signed_flag);
 
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 
 };
 
@@ -144,7 +144,7 @@ class vvp_cmp_gt  : public vvp_cmp_gtge_base_ {
     public:
       explicit vvp_cmp_gt(unsigned wid, bool signed_flag);
 
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
 };
 
 /*
@@ -157,7 +157,7 @@ class vvp_arith_mult  : public vvp_arith_ {
     public:
       explicit vvp_arith_mult(unsigned wid);
       ~vvp_arith_mult();
-      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
     private:
       void wide_(vvp_net_ptr_t ptr);
 };
@@ -167,7 +167,7 @@ class vvp_arith_sub  : public vvp_arith_ {
     public:
       explicit vvp_arith_sub(unsigned wid);
       ~vvp_arith_sub();
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
 };
 
@@ -176,7 +176,7 @@ class vvp_arith_sum  : public vvp_arith_ {
     public:
       explicit vvp_arith_sum(unsigned wid);
       ~vvp_arith_sum();
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
 };
 
@@ -185,7 +185,7 @@ class vvp_shiftl  : public vvp_arith_ {
     public:
       explicit vvp_shiftl(unsigned wid);
       ~vvp_shiftl();
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 };
 
 class vvp_shiftr  : public vvp_arith_ {
@@ -193,11 +193,14 @@ class vvp_shiftr  : public vvp_arith_ {
     public:
       explicit vvp_shiftr(unsigned wid);
       ~vvp_shiftr();
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 };
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.31  2005/06/22 00:04:48  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.30  2005/06/11 18:11:18  steve
  *  Remove unneeded references to functor.h
  *

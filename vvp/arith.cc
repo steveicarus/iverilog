@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.43 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: arith.cc,v 1.44 2005/06/22 00:04:48 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -72,7 +72,7 @@ void vvp_arith_div::wide_(vvp_net_ptr_t ptr)
       assert(0);
 }
 
-void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -143,7 +143,7 @@ void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
       assert(0);
 }
 
-void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -236,7 +236,7 @@ void vvp_arith_mult::wide_(vvp_net_ptr_t ptr)
       vvp_send_vec4(ptr.ptr()->out, res4);
 }
 
-void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -383,7 +383,7 @@ vvp_arith_sum::~vvp_arith_sum()
 {
 }
 
-void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -427,7 +427,7 @@ vvp_arith_sub::~vvp_arith_sub()
  * further reduce the operation to adding in the inverted value and
  * adding a correction.
  */
-void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -461,7 +461,7 @@ vvp_cmp_eeq::vvp_cmp_eeq(unsigned wid)
 {
 }
 
-void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -485,7 +485,7 @@ vvp_cmp_nee::vvp_cmp_nee(unsigned wid)
 {
 }
 
-void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -515,7 +515,7 @@ vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
  * there are X/Z bits anywhere in A or B, the result is X. Finally,
  * the result is 1.
  */
-void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -558,7 +558,7 @@ vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
  * there are X/Z bits anywhere in A or B, the result is X. Finally,
  * the result is 0.
  */
-void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -618,7 +618,7 @@ vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
 {
 }
 
-void vvp_cmp_ge::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_ge::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       recv_vec4_base_(ptr, bit, BIT4_1);
 }
@@ -628,7 +628,7 @@ vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
 {
 }
 
-void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       recv_vec4_base_(ptr, bit, BIT4_0);
 }
@@ -643,7 +643,7 @@ vvp_shiftl::~vvp_shiftl()
 {
 }
 
-void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -676,7 +676,7 @@ vvp_shiftr::~vvp_shiftr()
 {
 }
 
-void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
@@ -703,6 +703,9 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.44  2005/06/22 00:04:48  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.43  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.h,v 1.7 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: bufif.h,v 1.8 2005/06/22 00:04:48 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -40,7 +40,7 @@ class vvp_fun_bufif  : public vvp_net_fun_t {
       vvp_fun_bufif(bool en_invert, bool out_invert,
 		    unsigned str0, unsigned str1);
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       vvp_vector4_t bit_;
@@ -53,6 +53,9 @@ class vvp_fun_bufif  : public vvp_net_fun_t {
 
 /*
  * $Log: bufif.h,v $
+ * Revision 1.8  2005/06/22 00:04:48  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.7  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

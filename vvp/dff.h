@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: dff.h,v 1.1 2005/04/24 20:07:26 steve Exp $"
+#ident "$Id: dff.h,v 1.2 2005/06/22 00:04:49 steve Exp $"
 
 # include  "vvp_net.h"
 
@@ -40,7 +40,7 @@ class vvp_dff  : public vvp_net_fun_t {
       explicit vvp_dff(bool invert_clk =false, bool invert_ce =false);
       ~vvp_dff();
 
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       bool iclk_, ice_;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: extend.cc,v 1.2 2005/06/14 00:42:06 steve Exp $"
+#ident "$Id: extend.cc,v 1.3 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -35,7 +35,7 @@ vvp_fun_extend_signed::~vvp_fun_extend_signed()
 {
 }
 
-void vvp_fun_extend_signed::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_extend_signed::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       if (bit.size() >= width_) {
 	    vvp_send_vec4(port.ptr()->out, bit);

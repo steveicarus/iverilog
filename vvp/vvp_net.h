@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.37 2005/06/21 22:48:23 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.38 2005/06/22 00:04:49 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -503,7 +503,7 @@ class vvp_net_fun_t {
       vvp_net_fun_t();
       virtual ~vvp_net_fun_t();
 
-      virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       virtual void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
       virtual void recv_real(vvp_net_ptr_t port, double bit);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
@@ -537,7 +537,7 @@ class vvp_fun_concat  : public vvp_net_fun_t {
 		     unsigned w2, unsigned w3);
       ~vvp_fun_concat();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned wid_[4];
@@ -556,7 +556,7 @@ class vvp_fun_repeat  : public vvp_net_fun_t {
       vvp_fun_repeat(unsigned width, unsigned repeat);
       ~vvp_fun_repeat();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned wid_;
@@ -580,7 +580,7 @@ class vvp_fun_drive  : public vvp_net_fun_t {
       vvp_fun_drive(vvp_bit4_t init, unsigned str0 =6, unsigned str1 =6);
       ~vvp_fun_drive();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
@@ -600,7 +600,7 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       explicit vvp_fun_extend_signed(unsigned wid);
       ~vvp_fun_extend_signed();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned width_;
@@ -619,7 +619,7 @@ class vvp_fun_part  : public vvp_net_fun_t {
       ~vvp_fun_part();
 
     public:
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned base_;
@@ -638,7 +638,7 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
       ~vvp_fun_part_pv();
 
     public:
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned base_;
@@ -658,7 +658,7 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
       ~vvp_fun_part_var();
 
     public:
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       unsigned base_;
@@ -726,7 +726,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
     public:
       explicit vvp_fun_signal(unsigned wid);
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
       void recv_long(vvp_net_ptr_t port, long bit);
 
@@ -833,7 +833,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
       vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base);
       ~vvp_wide_fun_t();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       vvp_wide_fun_core*core_;
@@ -880,6 +880,9 @@ extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.38  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.37  2005/06/21 22:48:23  steve
  *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
  *

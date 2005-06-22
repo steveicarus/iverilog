@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.26 2005/03/09 04:52:40 steve Exp $"
+#ident "$Id: memory.cc,v 1.27 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -213,7 +213,7 @@ vvp_fun_memport::~vvp_fun_memport()
 {
 }
 
-void vvp_fun_memport::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_memport::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       bool addr_valid_flag;
 
@@ -223,8 +223,7 @@ void vvp_fun_memport::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 	    addr_valid_flag = vector4_to_value(bit, addr_);
 	    if (! addr_valid_flag)
 		  addr_ = memory_word_count(mem_);
-	    bit = memory_get_word(mem_, addr_);
-	    vvp_send_vec4(port.ptr()->out, bit);
+	    vvp_send_vec4(port.ptr()->out, memory_get_word(mem_,addr_));
 	    break;
 
 	  default:
@@ -250,6 +249,9 @@ void vvp_fun_memport::check_word_change(unsigned long addr)
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.27  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.26  2005/03/09 04:52:40  steve
  *  reimplement memory ports.
  *

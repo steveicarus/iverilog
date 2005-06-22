@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.12 2005/06/12 15:13:37 steve Exp $"
+#ident "$Id: npmos.cc,v 1.13 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -28,7 +28,7 @@ vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert)
 }
 
 
-void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
 	/* Data input is processed throught eh recv_vec8 method,
 	   because the strength most be preserved. */
@@ -120,6 +120,9 @@ void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.13  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.12  2005/06/12 15:13:37  steve
  *  Support resistive mos devices.
  *

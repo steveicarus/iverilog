@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: reduce.cc,v 1.1 2005/02/03 04:55:13 steve Exp $"
+#ident "$Id: reduce.cc,v 1.2 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -35,7 +35,7 @@ class vvp_reduce_and  : public vvp_net_fun_t {
     public:
       vvp_reduce_and();
       ~vvp_reduce_and();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_and::vvp_reduce_and()
@@ -46,7 +46,7 @@ vvp_reduce_and::~vvp_reduce_and()
 {
 }
 
-void vvp_reduce_and::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_and::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_1;
 
@@ -63,7 +63,7 @@ class vvp_reduce_or  : public vvp_net_fun_t {
     public:
       vvp_reduce_or();
       ~vvp_reduce_or();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_or::vvp_reduce_or()
@@ -74,7 +74,7 @@ vvp_reduce_or::~vvp_reduce_or()
 {
 }
 
-void vvp_reduce_or::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_or::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_0;
 
@@ -91,7 +91,7 @@ class vvp_reduce_xor  : public vvp_net_fun_t {
     public:
       vvp_reduce_xor();
       ~vvp_reduce_xor();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_xor::vvp_reduce_xor()
@@ -102,7 +102,7 @@ vvp_reduce_xor::~vvp_reduce_xor()
 {
 }
 
-void vvp_reduce_xor::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_xor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_0;
 
@@ -119,7 +119,7 @@ class vvp_reduce_nand  : public vvp_net_fun_t {
     public:
       vvp_reduce_nand();
       ~vvp_reduce_nand();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_nand::vvp_reduce_nand()
@@ -130,7 +130,7 @@ vvp_reduce_nand::~vvp_reduce_nand()
 {
 }
 
-void vvp_reduce_nand::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_nand::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_1;
 
@@ -147,7 +147,7 @@ class vvp_reduce_nor  : public vvp_net_fun_t {
     public:
       vvp_reduce_nor();
       ~vvp_reduce_nor();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_nor::vvp_reduce_nor()
@@ -158,7 +158,7 @@ vvp_reduce_nor::~vvp_reduce_nor()
 {
 }
 
-void vvp_reduce_nor::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_nor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_0;
 
@@ -175,7 +175,7 @@ class vvp_reduce_xnor  : public vvp_net_fun_t {
     public:
       vvp_reduce_xnor();
       ~vvp_reduce_xnor();
-      void recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
 };
 
 vvp_reduce_xnor::vvp_reduce_xnor()
@@ -186,7 +186,7 @@ vvp_reduce_xnor::~vvp_reduce_xnor()
 {
 }
 
-void vvp_reduce_xnor::recv_vec4(vvp_net_ptr_t prt, vvp_vector4_t bit)
+void vvp_reduce_xnor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
 {
       vvp_bit4_t res =  BIT4_0;
 
@@ -247,6 +247,9 @@ void compile_reduce_xnor(char*label, struct symb_s arg)
 
 /*
  * $Log: reduce.cc,v $
+ * Revision 1.2  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.1  2005/02/03 04:55:13  steve
  *  Add support for reduction logic gates.
  *

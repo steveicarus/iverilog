@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.28 2005/06/21 22:48:23 steve Exp $"
+#ident "$Id: logic.cc,v 1.29 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -53,7 +53,7 @@ table_functor_s::~table_functor_s()
  * WARNING: This function assumes that the table generator encodes the
  * values 0/1/x/z the same as the vvp_bit4_t enumeration values.
  */
-void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
+void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
 {
       input_[ptr.port()] = val;
 
@@ -87,7 +87,7 @@ vvp_fun_and::~vvp_fun_and()
 {
 }
 
-void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       input_[ptr.port()] = bit;
 
@@ -123,13 +123,14 @@ vvp_fun_buf::~vvp_fun_buf()
  * The buf functor is very simple--change the z bits to x bits in the
  * vector it passes, and propagate the result.
  */
-void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       if (ptr.port() != 0)
 	    return;
 
-      bit.change_z2x();
-      vvp_send_vec4(ptr.ptr()->out, bit);
+      vvp_vector4_t tmp = bit;
+      tmp.change_z2x();
+      vvp_send_vec4(ptr.ptr()->out, tmp);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -145,7 +146,7 @@ vvp_fun_bufz::~vvp_fun_bufz()
  * The bufz is similar to the buf device, except that it does not
  * bother translating z bits to x.
  */
-void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       if (ptr.port() != 0)
 	    return;
@@ -168,7 +169,7 @@ vvp_fun_muxz::~vvp_fun_muxz()
 {
 }
 
-void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0:
@@ -355,6 +356,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.29  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.28  2005/06/21 22:48:23  steve
  *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
  *

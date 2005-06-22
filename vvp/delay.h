@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.7 2005/06/02 16:02:11 steve Exp $"
+#ident "$Id: delay.h,v 1.8 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 /*
@@ -62,7 +62,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_fun_delay(vvp_net_t*net, vvp_bit4_t init, const vvp_delay_t&d);
       ~vvp_fun_delay();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
@@ -76,6 +76,9 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.8  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.7  2005/06/02 16:02:11  steve
  *  Add support for notif0/1 gates.
  *  Make delay nodes support inertial delay.

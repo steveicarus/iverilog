@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.13 2005/03/12 04:27:43 steve Exp $"
+#ident "$Id: resolv.h,v 1.14 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -43,7 +43,7 @@ class resolv_functor : public vvp_net_fun_t {
       explicit resolv_functor(vvp_scalar_t hiz_value);
       ~resolv_functor();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
@@ -56,6 +56,9 @@ class resolv_functor : public vvp_net_fun_t {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.14  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.13  2005/03/12 04:27:43  steve
  *  Implement VPI access to signal strengths,
  *  Fix resolution of ambiguous drive pairs,

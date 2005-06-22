@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: concat.cc,v 1.4 2005/06/17 03:46:52 steve Exp $"
+#ident "$Id: concat.cc,v 1.5 2005/06/22 00:04:48 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -45,7 +45,7 @@ vvp_fun_concat::~vvp_fun_concat()
 {
 }
 
-void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned pdx = port.port();
 
@@ -91,7 +91,7 @@ vvp_fun_repeat::~vvp_fun_repeat()
 {
 }
 
-void vvp_fun_repeat::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_repeat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(bit.size() == wid_/rep_);
 
@@ -124,6 +124,9 @@ void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
 
 /*
  * $Log: concat.cc,v $
+ * Revision 1.5  2005/06/22 00:04:48  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.4  2005/06/17 03:46:52  steve
  *  Make functors know their own width.
  *

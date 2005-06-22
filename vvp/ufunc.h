@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.h,v 1.5 2005/04/01 06:02:45 steve Exp $"
+#ident "$Id: ufunc.h,v 1.6 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -86,29 +86,12 @@ class ufunc_core : public vvp_wide_fun_core {
       vvp_net_t*result_;
 };
 
-#if 0
-/*
- * The job of the input functor is only to monitor inputs to the
- * function and pass them to the ufunc_core object. Each functor takes
- * up to 4 inputs, with the base the port number for the first
- * function input that this functor represents.
- */
-class ufunc_input_functor : public vvp_net_fun_t {
-
-    public:
-      ufunc_input_functor(ufunc_core*c, unsigned base);
-      ~ufunc_input_functor();
-
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-
-    private:
-      ufunc_core*core_;
-      unsigned port_base_;
-};
-#endif
 
 /*
  * $Log: ufunc.h,v $
+ * Revision 1.6  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.5  2005/04/01 06:02:45  steve
  *  Reimplement combinational UDPs.
  *

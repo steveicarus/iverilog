@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.10 2005/06/17 23:47:02 steve Exp $"
+#ident "$Id: event.h,v 1.11 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -56,7 +56,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
 
       virtual ~vvp_fun_edge();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       vvp_bit4_t bits_[4];
@@ -79,7 +79,7 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
       explicit vvp_fun_anyedge();
       virtual ~vvp_fun_anyedge();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       vvp_vector4_t bits_[4];
@@ -95,7 +95,7 @@ class vvp_fun_event_or : public vvp_net_fun_t, public waitable_hooks_s {
       explicit vvp_fun_event_or();
       ~vvp_fun_event_or();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
 };
@@ -111,7 +111,7 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
       explicit vvp_named_event(struct __vpiHandle*eh);
       ~vvp_named_event();
 
-      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
       struct __vpiHandle*handle_;
@@ -120,6 +120,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.11  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.10  2005/06/17 23:47:02  steve
  *  threads member for waitable_hook_s needs initailizing.
  *

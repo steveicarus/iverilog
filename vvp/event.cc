@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.19 2005/06/17 23:47:02 steve Exp $"
+#ident "$Id: event.cc,v 1.20 2005/06/22 00:04:49 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -79,7 +79,7 @@ vvp_fun_edge::~vvp_fun_edge()
 {
 }
 
-void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
 	/* See what kind of edge this represents. */
       edge_t mask = VVP_EDGE(bits_[port.port()], bit.value(0));
@@ -104,7 +104,7 @@ vvp_fun_anyedge::~vvp_fun_anyedge()
 {
 }
 
-void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned pdx = port.port();
       bool flag = false;
@@ -137,7 +137,7 @@ vvp_fun_event_or::~vvp_fun_event_or()
 {
 }
 
-void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       run_waiting_threads_();
       vvp_net_t*net = port.ptr();
@@ -153,7 +153,7 @@ vvp_named_event::~vvp_named_event()
 {
 }
 
-void vvp_named_event::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       run_waiting_threads_();
       vvp_net_t*net = port.ptr();
@@ -248,6 +248,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.20  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.19  2005/06/17 23:47:02  steve
  *  threads member for waitable_hook_s needs initailizing.
  *

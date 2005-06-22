@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.5 2005/05/09 00:36:58 steve Exp $"
+#ident "$Id: part.cc,v 1.6 2005/06/22 00:04:49 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -36,7 +36,7 @@ vvp_fun_part::~vvp_fun_part()
 {
 }
 
-void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
 
@@ -61,7 +61,7 @@ vvp_fun_part_pv::~vvp_fun_part_pv()
 {
 }
 
-void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
       assert(bit.size() == wid_);
@@ -77,7 +77,7 @@ vvp_fun_part_var::~vvp_fun_part_var()
 {
 }
 
-void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned long tmp;
       switch (port.port()) {
@@ -158,6 +158,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.6  2005/06/22 00:04:49  steve
+ *  Reduce vvp_vector4 copies by using const references.
+ *
  * Revision 1.5  2005/05/09 00:36:58  steve
  *  Force part base out of bounds if index is invalid.
  *
