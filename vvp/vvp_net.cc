@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.36 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.37 2005/06/22 18:30:12 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -137,7 +137,7 @@ ostream& operator<<(ostream&out, vvp_bit4_t bit)
       return out;
 }
 
-void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
+void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 		      unsigned base, unsigned wid, unsigned vwid)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
@@ -221,14 +221,10 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       if (size_ != that.size_)
 	    return false;
 
-      unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
-      if (words == 1) {
-	    if (bits_val_ == that.bits_val_)
-		  return true;
-	    else
-		  return false;
-      }
+      if (size_ <= BITS_PER_WORD)
+	    return bits_val_ == that.bits_val_;
 
+      unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
       for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
 	    if (bits_ptr_[idx] != that.bits_ptr_[idx])
 		  return false;
@@ -519,12 +515,6 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 
 }
 
-vvp_vector8_t::~vvp_vector8_t()
-{
-      if (size_ > 0)
-	    delete[]bits_;
-}
-
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
       if (size_ != that.size_) {
@@ -547,18 +537,6 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    bits_[idx] = that.bits_[idx];
 
       return *this;
-}
-
-vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
-{
-      assert(idx < size_);
-      return bits_[idx];
-}
-
-void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
-{
-      assert(idx < size_);
-      bits_[idx] = val;
 }
 
 bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
@@ -602,7 +580,7 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&)
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, vvp_vector4_t,
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&,
 				 unsigned, unsigned, unsigned)
 {
       fprintf(stderr, "internal error: %s: recv_vec4_pv not implemented\n",
@@ -720,7 +698,7 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 }
 
-void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t bit,
+void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 				  unsigned base, unsigned wid, unsigned vwid)
 {
       assert(bit.size() == wid);
@@ -1305,6 +1283,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.37  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.36  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.23 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: schedule.h,v 1.24 2005/06/22 18:30:12 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -47,11 +47,11 @@ extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
  */
 extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   unsigned base, unsigned vwid,
-				   vvp_vector4_t val,
+				   const vvp_vector4_t&val,
 				   vvp_time64_t  delay);
 
 extern void schedule_assign_vector(vvp_net_ptr_t ptr,
-				   vvp_vector4_t val,
+				   const vvp_vector4_t&val,
 				   vvp_time64_t  delay);
 
 extern void schedule_assign_memory_word(vvp_memory_t mem,
@@ -131,6 +131,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.24  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.23  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *

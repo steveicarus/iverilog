@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.37 2005/06/12 01:10:26 steve Exp $"
+#ident "$Id: schedule.cc,v 1.38 2005/06/22 18:30:12 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -422,7 +422,7 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 
 void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    unsigned base, unsigned vwid,
-			    vvp_vector4_t bit,
+			    const vvp_vector4_t&bit,
 			    vvp_time64_t delay)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
@@ -434,7 +434,7 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 }
 
 void schedule_assign_vector(vvp_net_ptr_t ptr,
-			    vvp_vector4_t bit,
+			    const vvp_vector4_t&bit,
 			    vvp_time64_t delay)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
@@ -581,6 +581,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.38  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.37  2005/06/12 01:10:26  steve
  *  Remove useless references to functor.h
  *

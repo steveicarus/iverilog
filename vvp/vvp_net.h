@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.38 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.39 2005/06/22 18:30:12 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -366,6 +366,24 @@ extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
+inline vvp_vector8_t::~vvp_vector8_t()
+{
+      if (size_ > 0)
+	    delete[]bits_;
+}
+
+inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
+{
+      assert(idx < size_);
+      return bits_[idx];
+}
+
+inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
+{
+      assert(idx < size_);
+      bits_[idx] = val;
+}
+
 /*
  * This class implements a pointer that points to an item within a
  * target. The ptr() method returns a pointer to the vvp_net_t, and
@@ -509,7 +527,7 @@ class vvp_net_fun_t {
       virtual void recv_long(vvp_net_ptr_t port, long bit);
 
 	// Part select variants of above
-      virtual void recv_vec4_pv(vvp_net_ptr_t p, vvp_vector4_t bit,
+      virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 				unsigned base, unsigned wid, unsigned vwid);
 
     private: // not implemented
@@ -731,7 +749,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       void recv_long(vvp_net_ptr_t port, long bit);
 
 	// Part select variants of above
-      void recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
@@ -875,11 +893,14 @@ extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
  * know how wide to pad with Z, if it needs to transform the part to a
  * mirror of the destination vector.
  */
-extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
+extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 			     unsigned base, unsigned wid, unsigned vwid);
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.39  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.38  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

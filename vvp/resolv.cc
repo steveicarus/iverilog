@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.25 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: resolv.cc,v 1.26 2005/06/22 18:30:12 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -41,7 +41,7 @@ void resolv_functor::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       recv_vec8(port, vvp_vector8_t(bit, 6 /* STRONG */));
 }
 
-void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				  unsigned base, unsigned wid, unsigned vwid)
 {
       assert(bit.size() == wid);
@@ -93,6 +93,9 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.26  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.25  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.14 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: resolv.h,v 1.15 2005/06/22 18:30:12 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -46,7 +46,7 @@ class resolv_functor : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
-      void recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
 
     private:
@@ -56,6 +56,9 @@ class resolv_functor : public vvp_net_fun_t {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.15  2005/06/22 18:30:12  steve
+ *  Inline more simple stuff, and more vector4_t by const reference for performance.
+ *
  * Revision 1.14  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *
