@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.37 2005/06/22 18:30:12 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.38 2005/06/24 02:16:42 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -135,19 +135,6 @@ ostream& operator<<(ostream&out, vvp_bit4_t bit)
 	    break;
       }
       return out;
-}
-
-void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-		      unsigned base, unsigned wid, unsigned vwid)
-{
-      while (struct vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
-
-	    if (cur->fun)
-		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid);
-
-	    ptr = next;
-      }
 }
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val)
@@ -1283,6 +1270,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.38  2005/06/24 02:16:42  steve
+ *  inline the vvp_send_vec4_pv function.
+ *
  * Revision 1.37  2005/06/22 18:30:12  steve
  *  Inline more simple stuff, and more vector4_t by const reference for performance.
  *

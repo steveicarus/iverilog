@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.39 2005/06/22 18:30:12 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.40 2005/06/24 02:16:42 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -870,6 +870,7 @@ inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
 	    ptr = next;
       }
 }
+
 extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
@@ -893,11 +894,25 @@ extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
  * know how wide to pad with Z, if it needs to transform the part to a
  * mirror of the destination vector.
  */
-extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-			     unsigned base, unsigned wid, unsigned vwid);
+inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
+		      unsigned base, unsigned wid, unsigned vwid)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid);
+
+	    ptr = next;
+      }
+}
+
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.40  2005/06/24 02:16:42  steve
+ *  inline the vvp_send_vec4_pv function.
+ *
  * Revision 1.39  2005/06/22 18:30:12  steve
  *  Inline more simple stuff, and more vector4_t by const reference for performance.
  *
