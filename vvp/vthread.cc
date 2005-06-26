@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.140 2005/06/19 18:42:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.141 2005/06/26 01:57:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -149,9 +149,9 @@ static void thr_check_addr(struct vthread_s*thr, unsigned addr)
 static inline vvp_bit4_t thr_get_bit(struct vthread_s*thr, unsigned addr)
 {
       assert(addr < thr->nbits);
-      unsigned idx = addr % (CPU_WORD_BITS/2);
+      unsigned long idx = addr % (CPU_WORD_BITS/2);
       addr /= (CPU_WORD_BITS/2);
-      return  (vvp_bit4_t) ((thr->bits[addr] >> (idx*2)) & 3UL);
+      return  (vvp_bit4_t) ((thr->bits[addr] >> (idx*2UL)) & 3UL);
 }
 
 static inline void thr_put_bit(struct vthread_s*thr,
@@ -160,13 +160,13 @@ static inline void thr_put_bit(struct vthread_s*thr,
       if (addr >= thr->nbits)
 	    thr_check_addr(thr, addr);
 
-      unsigned idx = addr % (CPU_WORD_BITS/2);
+      unsigned long idx = addr % (CPU_WORD_BITS/2);
       addr /= (CPU_WORD_BITS/2);
 
-      unsigned long mask = 3UL << (idx*2);
+      unsigned long mask = 3UL << (idx*2UL);
       unsigned long tmp = val;
 
-      thr->bits[addr] = (thr->bits[addr] & ~mask) | (tmp << (idx*2));
+      thr->bits[addr] = (thr->bits[addr] & ~mask) | (tmp << (idx*2UL));
 }
 
 static inline void thr_clr_bit_(struct vthread_s*thr, unsigned addr)
@@ -243,10 +243,11 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 	    }
       } else {
 	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
-	    for (unsigned idx = 0; idx < wid; idx +=1, bit += 1) {
+	    for (unsigned idx = 0; idx < wid; idx +=1) {
 		  value.set_bit(idx, bit_val);
 	    }
       }
+
 
       return value;
 }
@@ -3239,6 +3240,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.141  2005/06/26 01:57:22  steve
+ *  Make bit masks of vector4_t 64bit aware.
+ *
  * Revision 1.140  2005/06/19 18:42:00  steve
  *  Optimize the LOAD_VEC implementation.
  *

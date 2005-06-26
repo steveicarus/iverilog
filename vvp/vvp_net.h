@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.40 2005/06/24 02:16:42 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.41 2005/06/26 01:57:22 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -158,7 +158,7 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 	    return BIT4_X;
 
       unsigned wdx = idx / BITS_PER_WORD;
-      unsigned off = idx % BITS_PER_WORD;
+      unsigned long off = idx % BITS_PER_WORD;
 
       unsigned long bits;
       if (size_ > BITS_PER_WORD) {
@@ -167,7 +167,7 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 	    bits = bits_val_;
       }
 
-      bits >>= (off * 2);
+      bits >>= (off * 2UL);
 
 	/* Casting is evil, but this cast matches the un-cast done
 	   when the vvp_bit4_t value is put into the vector. */
@@ -178,16 +178,16 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 {
       assert(idx < size_);
 
-      unsigned wdx = idx / BITS_PER_WORD;
-      unsigned off = idx % BITS_PER_WORD;
-      unsigned long mask = 3UL << (2*off);
+      unsigned long off = idx % BITS_PER_WORD;
+      unsigned long mask = 3UL << (2UL*off);
 
       if (size_ > BITS_PER_WORD) {
+	    unsigned wdx = idx / BITS_PER_WORD;
 	    bits_ptr_[wdx] &= ~mask;
-	    bits_ptr_[wdx] |= val << (2*off);
+	    bits_ptr_[wdx] |= (unsigned long)val << (2UL*off);
       } else {
 	    bits_val_ &= ~mask;
-	    bits_val_ |= val << (2*off);
+	    bits_val_ |=  (unsigned long)val << (2UL*off);
       }
 }
 
@@ -910,6 +910,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.41  2005/06/26 01:57:22  steve
+ *  Make bit masks of vector4_t 64bit aware.
+ *
  * Revision 1.40  2005/06/24 02:16:42  steve
  *  inline the vvp_send_vec4_pv function.
  *

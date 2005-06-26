@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.38 2005/06/24 02:16:42 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.39 2005/06/26 01:57:22 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -224,7 +224,7 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 void vvp_vector4_t::change_z2x()
 {
       assert(BIT4_Z == 3 && BIT4_X == 2);
-# define Z2X(val) do { (val) = (val) & ~(((val)&WORD_X_BITS) >> 1); } while(0)
+# define Z2X(val) do{ (val) = (val) & ~(((val)&WORD_X_BITS) >> 1UL); }while(0)
 
       if (size_ <= BITS_PER_WORD) {
 	    Z2X(bits_val_);
@@ -1270,6 +1270,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.39  2005/06/26 01:57:22  steve
+ *  Make bit masks of vector4_t 64bit aware.
+ *
  * Revision 1.38  2005/06/24 02:16:42  steve
  *  inline the vvp_send_vec4_pv function.
  *
