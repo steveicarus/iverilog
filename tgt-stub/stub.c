@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.127 2005/06/13 22:20:38 steve Exp $"
+#ident "$Id: stub.c,v 1.128 2005/06/26 18:09:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -591,9 +591,42 @@ static void show_lpm_part(ivl_lpm_t net)
 
 	/* The compiler must assure that the base plus the part select
 	   width fits within the input to the part select. */
-      if (width_of_nexus(ivl_lpm_data(net,0)) < (width+base)) {
-	    fprintf(out, "    ERROR: Part select is out of range.\n");
-	    stub_errors += 1;
+      switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_PART_VP:
+	    if (width_of_nexus(ivl_lpm_data(net,0)) < (width+base)) {
+		  fprintf(out, "    ERROR: Part select is out of range."
+			  " Data nexus width=%u, width+base=%u\n",
+			  width_of_nexus(ivl_lpm_data(net,0)), width+base);
+		  stub_errors += 1;
+	    }
+
+	    if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
+		  fprintf(out, "    ERROR: Part select input mistatch."
+			  " Nexus width=%u, expect width=%u\n",
+			  width_of_nexus(ivl_lpm_q(net,0)), width);
+		  stub_errors += 1;
+	    }
+	    break;
+
+	  case IVL_LPM_PART_PV:
+	    if (width_of_nexus(ivl_lpm_q(net,0)) < (width+base)) {
+		  fprintf(out, "    ERROR: Part select is out of range."
+			  " Target nexus width=%u, width+base=%u\n",
+			  width_of_nexus(ivl_lpm_q(net,0)), width+base);
+		  stub_errors += 1;
+	    }
+
+	    if (width_of_nexus(ivl_lpm_data(net,0)) != width) {
+		  fprintf(out, "    ERROR: Part select input mistatch."
+			  " Nexus width=%u, expect width=%u\n",
+			  width_of_nexus(ivl_lpm_data(net,0)), width);
+		  stub_errors += 1;
+	    }
+	    break;
+
+	  default:
+	    assert(0);
       }
 }
 
@@ -1409,6 +1442,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.128  2005/06/26 18:09:24  steve
+ *  Check width of part select based on direction.
+ *
  * Revision 1.127  2005/06/13 22:20:38  steve
  *  Dump delays for logic devices.
  *
