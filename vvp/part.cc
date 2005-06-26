@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.6 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: part.cc,v 1.7 2005/06/26 21:08:11 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -25,6 +25,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <iostream>
 # include  <assert.h>
 
 vvp_fun_part::vvp_fun_part(unsigned base, unsigned wid)
@@ -64,7 +65,14 @@ vvp_fun_part_pv::~vvp_fun_part_pv()
 void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
+
+      if (bit.size() != wid_) {
+	    cerr << "internal error: part_pv data mismatch. "
+		 << "base_=" << base_ << ", wid_=" << wid_
+		 << ", vwid_=" << vwid_ << ", bit=" << bit << endl;
+      }
       assert(bit.size() == wid_);
+
       vvp_send_vec4_pv(port.ptr()->out, bit, base_, wid_, vwid_);
 }
 
@@ -158,6 +166,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.7  2005/06/26 21:08:11  steve
+ *  More verbose debugging of part select width errors.
+ *
  * Revision 1.6  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *
