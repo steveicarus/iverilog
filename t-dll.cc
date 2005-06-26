@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.150 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.151 2005/06/26 18:08:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1146,6 +1146,9 @@ void dll_target::udp(const NetUDP*net)
       obj->delay[1] = net->fall_time();
       obj->delay[2] = net->decay_time();
 
+      obj->nattr = 0;
+      obj->attr = 0;
+
       scope_add_logic(scope, obj);
 }
 
@@ -2108,6 +2111,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.151  2005/06/26 18:08:46  steve
+ *  Fix uninitialzied attr pointers for UDP devices.
+ *
  * Revision 1.150  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *
