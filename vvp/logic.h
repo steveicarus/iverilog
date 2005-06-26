@@ -19,11 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.19 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: logic.h,v 1.20 2005/06/26 18:06:30 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
-# include  "delay.h"
+# include  "schedule.h"
 # include  <stddef.h>
 
 /*
@@ -49,10 +49,15 @@ class table_functor_s: public vvp_net_fun_t {
 /*
  * vvp_fun_boolean_ is just a common hook for holding operands.
  */
-class vvp_fun_boolean_ : public vvp_net_fun_t {
+class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
+
+    public:
+      ~vvp_fun_boolean_();
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     protected:
       vvp_vector4_t input_[4];
+      vvp_net_t*net_;
 };
 
 class vvp_fun_and  : public vvp_fun_boolean_ {
@@ -60,7 +65,9 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
     public:
       explicit vvp_fun_and();
       ~vvp_fun_and();
-      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
+
+    private:
+      void run_run();
 };
 
 /*
@@ -135,6 +142,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.20  2005/06/26 18:06:30  steve
+ *  AND gates propogate through scheduler, not directly.
+ *
  * Revision 1.19  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

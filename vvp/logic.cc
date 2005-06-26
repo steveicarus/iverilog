@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.29 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: logic.cc,v 1.30 2005/06/26 18:06:29 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -25,6 +25,7 @@
 # include  "bufif.h"
 # include  "npmos.h"
 # include  "schedule.h"
+# include  "delay.h"
 # include  "statistics.h"
 # include  <string.h>
 # include  <assert.h>
@@ -79,6 +80,21 @@ void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
       vvp_send_vec4(ptr.ptr()->out, result);
 }
 
+vvp_fun_boolean_::~vvp_fun_boolean_()
+{
+}
+
+void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+      unsigned port = ptr.port();
+      if (input_[port] .eeq( bit ))
+	    return;
+
+      input_[ptr.port()] = bit;
+      net_ = ptr.ptr();
+      schedule_generic(this, 0, false);
+}
+
 vvp_fun_and::vvp_fun_and()
 {
 }
@@ -87,15 +103,13 @@ vvp_fun_and::~vvp_fun_and()
 {
 }
 
-void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_and::run_run()
 {
-      input_[ptr.port()] = bit;
-
-      vvp_vector4_t result (bit);
+      vvp_vector4_t result (input_[0]);
 
       for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = BIT4_1;
-	    for (unsigned pdx = 0 ;  pdx < 4 ;  pdx += 1) {
+	    vvp_bit4_t bitbit = result.value(idx);
+	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
 		  if (input_[pdx].size() < idx) {
 			bitbit = BIT4_X;
 			break;
@@ -107,7 +121,7 @@ void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr.ptr()->out, result);
+      vvp_send_vec4(net_->out, result);
 }
 
 vvp_fun_buf::vvp_fun_buf()
@@ -356,6 +370,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.30  2005/06/26 18:06:29  steve
+ *  AND gates propogate through scheduler, not directly.
+ *
  * Revision 1.29  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *
