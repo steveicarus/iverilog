@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.30 2005/06/26 18:06:29 steve Exp $"
+#ident "$Id: logic.cc,v 1.31 2005/06/26 21:08:38 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -80,6 +80,12 @@ void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
       vvp_send_vec4(ptr.ptr()->out, result);
 }
 
+vvp_fun_boolean_::vvp_fun_boolean_(unsigned wid)
+{
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+	    input_[idx] = vvp_vector4_t(wid);
+}
+
 vvp_fun_boolean_::~vvp_fun_boolean_()
 {
 }
@@ -95,7 +101,8 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       schedule_generic(this, 0, false);
 }
 
-vvp_fun_and::vvp_fun_and()
+vvp_fun_and::vvp_fun_and(unsigned wid)
+: vvp_fun_boolean_(wid)
 {
 }
 
@@ -260,7 +267,7 @@ void compile_functor(char*label, char*type, unsigned width,
 	    obj = new table_functor_s(ft_OR);
 
       } else if (strcmp(type, "AND") == 0) {
-	    obj = new vvp_fun_and();
+	    obj = new vvp_fun_and(width);
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj = new vvp_fun_buf();
@@ -370,6 +377,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.31  2005/06/26 21:08:38  steve
+ *  AND functor explicitly knows its width.
+ *
  * Revision 1.30  2005/06/26 18:06:29  steve
  *  AND gates propogate through scheduler, not directly.
  *

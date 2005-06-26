@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.20 2005/06/26 18:06:30 steve Exp $"
+#ident "$Id: logic.h,v 1.21 2005/06/26 21:08:38 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -52,6 +52,7 @@ class table_functor_s: public vvp_net_fun_t {
 class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 
     public:
+      explicit vvp_fun_boolean_(unsigned wid);
       ~vvp_fun_boolean_();
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
@@ -63,7 +64,7 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 class vvp_fun_and  : public vvp_fun_boolean_ {
 
     public:
-      explicit vvp_fun_and();
+      explicit vvp_fun_and(unsigned wid);
       ~vvp_fun_and();
 
     private:
@@ -142,6 +143,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.21  2005/06/26 21:08:38  steve
+ *  AND functor explicitly knows its width.
+ *
  * Revision 1.20  2005/06/26 18:06:30  steve
  *  AND gates propogate through scheduler, not directly.
  *
