@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.39 2005/06/26 01:57:22 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.40 2005/06/27 21:13:14 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -24,6 +24,7 @@
 # include  <stdio.h>
 # include  <iostream>
 # include  <typeinfo>
+# include  <limits.h>
 # include  <assert.h>
 
 /* *** BIT operations *** */
@@ -351,7 +352,7 @@ vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
 		case BIT4_0:
 		  break;
 		case BIT4_1:
-		  vec_[addr] |= 1 << shift;
+		  vec_[addr] |= 1UL << shift;
 		  break;
 		default:
 		  delete[]vec_;
@@ -392,6 +393,63 @@ bool vvp_vector2_t::is_NaN() const
       return wid_ == 0;
 }
 
+static unsigned long add_carry(unsigned long a, unsigned long b,
+			       unsigned long&carry)
+{
+      unsigned long out = carry;
+      carry = 0;
+
+      if ((ULONG_MAX - out) < a)
+	    carry += 1;
+      out += a;
+
+      if ((ULONG_MAX - out) < b)
+	    carry += 1;
+      out += b;
+
+      return out;
+}
+
+static void multiply_long(unsigned long a, unsigned long b,
+			  unsigned long&low, unsigned long&high)
+{
+      assert(sizeof(unsigned long) %2 == 0);
+
+      const unsigned long word_mask = (1UL << 4UL*sizeof(a)) - 1UL;
+      unsigned long tmpa;
+      unsigned long tmpb;
+      unsigned long res[4];
+
+      tmpa = a & word_mask;
+      tmpb = b & word_mask;
+      res[0] = tmpa * tmpb;
+      res[1] = res[0] >> 4UL*sizeof(unsigned long);
+      res[0] &= word_mask;
+
+      tmpa = (a >> 4UL*sizeof(unsigned long)) & word_mask;
+      tmpb = b & word_mask;
+      res[1] += tmpa * tmpb;
+      res[2] = res[1] >> 4UL*sizeof(unsigned long);
+      res[1] &= word_mask;
+
+      tmpa = a & word_mask;
+      tmpb = (b >> 4UL*sizeof(unsigned long)) & word_mask;
+      res[1] += tmpa * tmpb;
+      res[2] += res[1] >> 4UL*sizeof(unsigned long);
+      res[3]  = res[2] >> 4UL*sizeof(unsigned long);
+      res[1] &= word_mask;
+      res[2] &= word_mask;
+
+      tmpa = (a >> 4UL*sizeof(unsigned long)) & word_mask;
+      tmpb = (b >> 4UL*sizeof(unsigned long)) & word_mask;
+      res[2] += tmpa * tmpb;
+      res[3] += res[2] >> 4UL*sizeof(unsigned long);
+      res[2] &= word_mask;
+
+      high = (res[3] << 4UL*sizeof(unsigned long)) | res[2];
+      low  = (res[1] << 4UL*sizeof(unsigned long)) | res[0];
+}
+
 /*
  * Multiplication of two vector2 vectors returns a product as wide as
  * the sum of the widths of the input vectors.
@@ -401,31 +459,32 @@ vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
       const unsigned bits_per_word = 8 * sizeof(a.vec_[0]);
       vvp_vector2_t r (0, a.size() + b.size());
 
-      assert(sizeof(unsigned long long) >= 2*sizeof(a.vec_[0]));
-      unsigned long long word_mask = (1ULL << bits_per_word) - 1ULL;
-
       unsigned awords = (a.wid_ + bits_per_word - 1) / bits_per_word;
       unsigned bwords = (b.wid_ + bits_per_word - 1) / bits_per_word;
       unsigned rwords = (r.wid_ + bits_per_word - 1) / bits_per_word;
 
       for (unsigned bdx = 0 ;  bdx < bwords ;  bdx += 1) {
-	    unsigned long long tmpb = b.vec_[bdx];
+	    unsigned long tmpb = b.vec_[bdx];
 	    if (tmpb == 0)
 		  continue;
 
 	    for (unsigned adx = 0 ;  adx < awords ;  adx += 1) {
-		  unsigned long long tmpa = a.vec_[adx];
-		  unsigned long long tmpr = tmpb * tmpa;
+		  unsigned long tmpa = a.vec_[adx];
+		  if (tmpa == 0)
+			continue;
 
+		  unsigned long low, hig;
+		  multiply_long(tmpa, tmpb, low, hig);
+
+		  unsigned long carry = 0;
 		  for (unsigned sdx = 0
-			     ; (adx+bdx+sdx) < rwords && tmpr > 0
+			     ; (adx+bdx+sdx) < rwords
 			     ;  sdx += 1) {
-			unsigned long long sum = r.vec_[adx+bdx+sdx];
-			sum += tmpr & word_mask;
-			r.vec_[adx+bdx+sdx] = sum & word_mask;
-			sum  >>= bits_per_word;
-			tmpr >>= bits_per_word;
-			tmpr += sum;
+
+			r.vec_[adx+bdx+sdx] = add_carry(r.vec_[adx+bdx+sdx],
+							low, carry);
+			low = hig;
+			hig = 0;
 		  }
 	    }
       }
@@ -1270,6 +1329,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.40  2005/06/27 21:13:14  steve
+ *  Make vector2 multiply more portable.
+ *
  * Revision 1.39  2005/06/26 01:57:22  steve
  *  Make bit masks of vector4_t 64bit aware.
  *
