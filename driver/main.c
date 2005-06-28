@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65 2004/06/17 14:47:22 steve Exp $"
+#ident "$Id: main.c,v 1.66 2005/06/28 04:25:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-c cmdfile] [-g1|-g2|-g3.0]\n"
+"Usage: iverilog [-ESvV] [-B base] [-c cmdfile] [-g1|-g2|-g2x]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -107,7 +107,7 @@ const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
 
-const char*generation = "3.0";
+const char*generation = "2x";
 
 char warning_flags[16] = "";
 
@@ -393,8 +393,8 @@ int process_generation(const char*name)
       else if (strcmp(name,"2") == 0)
 	    generation = "2";
 
-      else if (strcmp(name,"3.0") == 0)
-	    generation = "3.0";
+      else if (strcmp(name,"2x") == 0)
+	    generation = "2x";
 
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
@@ -402,7 +402,7 @@ int process_generation(const char*name)
 	    fprintf(stderr, "Supported generations are:\n");
 	    fprintf(stderr, "    1   -- IEEE1364-1995 (Verilog 1)\n"
 		            "    2   -- IEEE1364-2001 (Verilog 2001)\n"
-		            "    3.0 -- SystemVerilog 3.0\n");
+		            "    2x  -- Verilog with extensions\n");
 	    return 1;
       }
 
@@ -735,6 +735,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.66  2005/06/28 04:25:55  steve
+ *  Remove reference to SystemVerilog.
+ *
  * Revision 1.65  2004/06/17 14:47:22  steve
  *  Add a .sft file for the system functions.
  *

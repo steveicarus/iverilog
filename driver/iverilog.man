@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2004/10/04 01:10:56 $" Version "$Date: 2004/10/04 01:10:56 $"
+.TH iverilog 1 "$Date: 2005/06/28 04:25:55 $" Version "$Date: 2005/06/28 04:25:55 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g3.0] [-Dmacro[=defn]] [-pflag=value]
+[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g2x] [-Dmacro[=defn]] [-pflag=value]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -48,10 +48,10 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1\fI|\fP-g2\fI|\fP-g3.0
+.B -g1\fI|\fP-g2\fI|\fP-g2x
 Select the Verilog language \fIgeneration\fP to support in the
 compiler. This selects between \fIIEEE1364-1995\fP(1),
-\fIIEEE1364-2001\fP(2), or \fISystemVerilog 3.0\fP(3.0). Normally,
+\fIIEEE1364-2001\fP(2), or \fIVerilog with extension\fP(2x). Normally,
 Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with

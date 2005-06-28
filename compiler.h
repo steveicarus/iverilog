@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.27 2005/04/24 23:44:01 steve Exp $"
+#ident "$Id: compiler.h,v 1.28 2005/06/28 04:25:55 steve Exp $"
 #endif
 
 # include  <list>
@@ -98,7 +98,7 @@ extern int build_library_index(const char*path, bool key_case_sensitive);
 enum generation_t {
       GN_VER1995  = 1,
       GN_VER2001  = 2,
-      GN_SYSVER30 = 3,
+      GN_VER2001X = 3,
       GN_DEFAULT  = 3
 };
 
@@ -137,6 +137,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.28  2005/06/28 04:25:55  steve
+ *  Remove reference to SystemVerilog.
+ *
  * Revision 1.27  2005/04/24 23:44:01  steve
  *  Update DFF support to new data flow.
  *

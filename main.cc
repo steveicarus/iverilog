@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.89 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: main.cc,v 1.90 2005/06/28 04:25:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -186,8 +186,8 @@ static void process_generation_flag(const char*gen)
       else if (strcmp(gen,"2") == 0)
 	    generation_flag = GN_VER2001;
 
-      else if (strcmp(gen,"3.0") == 0)
-	    generation_flag = GN_SYSVER30;
+      else if (strcmp(gen,"2x") == 0)
+	    generation_flag = GN_VER2001X;
 
       else
 	    generation_flag = GN_DEFAULT;
@@ -548,8 +548,8 @@ int main(int argc, char*argv[])
 		case GN_VER2001:
 		  cout << "IEEE1364-2001";
 		  break;
-		case GN_SYSVER30:
-		  cout << "SystemVerilog 3.0";
+		case GN_VER2001X:
+		  cout << "IEEE1364-2001+Extensions";
 		  break;
 	    }
 
@@ -758,6 +758,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.90  2005/06/28 04:25:55  steve
+ *  Remove reference to SystemVerilog.
+ *
  * Revision 1.89  2005/04/24 23:44:02  steve
  *  Update DFF support to new data flow.
  *
