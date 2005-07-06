@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.1 2005/07/06 22:41:34 steve Exp $"
 #endif
 
 /*
@@ -753,7 +753,7 @@ class NetMemory  {
       long idxl_;
 
       friend class NetRamDq;
-      NetRamDq* ram_list_;
+      class NetRamDq* ram_list_;
 
       friend class NetScope;
       NetMemory*snext_, *sprev_;
@@ -1845,12 +1845,12 @@ class NetEvent : public LineInfo {
       NetEvProbe*probes_;
 
 	// Use these methods to list the triggers attached to me.
-      NetEvTrig* trig_;
+      class NetEvTrig* trig_;
 
 	// Use This member to count references by NetEvWait objects.
       unsigned waitref_;
       struct wcell_ {
-	    NetEvWait*obj;
+	    class NetEvWait*obj;
 	    struct wcell_*next;
       };
       struct wcell_ *wlist_;
@@ -3357,6 +3357,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.1  2005/07/06 22:41:34  steve
+ *  Fix compile errors with g++-4.
+ *
  * Revision 1.321  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
