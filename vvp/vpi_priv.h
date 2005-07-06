@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.63 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.64 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -187,6 +187,7 @@ extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*node);
 
+
 /*
  * These methods support the vpi creation of events. The name string
  * passed in will be saved, so the caller must allocate it (or not
@@ -221,7 +222,13 @@ extern vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name);
 /*
  * These are the various variable types.
  */
-extern vpiHandle vpip_make_real_var(const char*name);
+struct __vpiRealVar {
+      struct __vpiHandle base;
+      const char*name;
+      vvp_net_t*net;
+};
+
+extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -422,6 +429,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.64  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.63  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *

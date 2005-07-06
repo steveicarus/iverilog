@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.38 2005/06/12 01:10:26 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.39 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,7 @@
 
 # include  <vpi_user.h>
 # include  "vpi_priv.h"
+# include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
 # include  <stdio.h>
@@ -134,8 +135,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    assert(sig_fun);
 
 	      /* Attach the __vpiCallback object to the signal. */
-	    obj->next = sig_fun->vpi_callbacks;
-	    sig_fun->vpi_callbacks = obj;
+	    sig_fun->add_vpi_callback(obj);
 	    break;
 
 	  case vpiRealVar:
@@ -427,15 +427,31 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = save_mode;
 }
 
+vvp_vpi_callback::vvp_vpi_callback()
+{
+      vpi_callbacks_ = 0;
+}
+
+vvp_vpi_callback::~vvp_vpi_callback()
+{
+      assert(vpi_callbacks_ == 0);
+}
+
+void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
+{
+      cb->next = vpi_callbacks_;
+      vpi_callbacks_ = cb;
+}
+
 /*
  * A vvp_fun_signal uses this method to run its callbacks whenever it
  * has a value change. If the cb_rtn is non-nil, then call the
  * callback function. If the cb_rtn pointer is nil, then the object
  * has been marked for deletion. Free it.
  */
-void vvp_fun_signal::run_vpi_callbacks()
+void vvp_vpi_callback::run_vpi_callbacks()
 {
-      struct __vpiCallback *next = vpi_callbacks;
+      struct __vpiCallback *next = vpi_callbacks_;
       struct __vpiCallback *prev = 0;
 
       while (next) {
@@ -443,26 +459,15 @@ void vvp_fun_signal::run_vpi_callbacks()
 	    next = cur->next;
 
 	    if (cur->cb_data.cb_rtn != 0) {
-		  if (cur->cb_data.value) {
-			switch (cur->cb_data.value->format) {
-			    case vpiScalarVal:
-			      cur->cb_data.value->value.scalar = value(0);
-			      break;
-			    case vpiSuppressVal:
-			      break;
-			    default:
-			      fprintf(stderr, "vpi_callback: value "
-				      "format %d not supported\n",
-				      cur->cb_data.value->format);
-			}
-		  }
+		  if (cur->cb_data.value)
+			get_value(cur->cb_data.value);
 
 		  callback_execute(cur);
 		  prev = cur;
 
 	    } else if (prev == 0) {
 
-		  vpi_callbacks = next;
+		  vpi_callbacks_ = next;
 		  cur->next = 0;
 		  vpi_free_object(&cur->base);
 
@@ -475,9 +480,84 @@ void vvp_fun_signal::run_vpi_callbacks()
       }
 }
 
+void vvp_fun_signal::get_value(struct t_vpi_value*vp)
+{
+      switch (vp->format) {
+	  case vpiScalarVal:
+	    vp->value.scalar = value(0);
+	    break;
+	  case vpiSuppressVal:
+	    break;
+	  default:
+	    fprintf(stderr, "vpi_callback: value "
+		    "format %d not supported\n",
+		    vp->format);
+      }
+}
+
+void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
+{
+      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
+
+      switch (vp->format) {
+	  case vpiObjTypeVal:
+	    vp->format = vpiRealVal;
+
+	  case vpiRealVal:
+	    vp->value.real = real_value();
+	    break;
+
+	  case vpiIntVal:
+	    vp->value.integer = (int)(real_value() + 0.5);
+	    break;
+
+	  case vpiDecStrVal:
+	    sprintf(rbuf, "%0.0f", real_value());
+	    vp->value.str = rbuf;
+	    break;
+
+	  case vpiHexStrVal:
+	    sprintf(rbuf, "%lx", (long)real_value());
+	    vp->value.str = rbuf;
+	    break;
+
+	  case vpiBinStrVal: {
+		unsigned long val = (unsigned long)real_value();
+		unsigned len = 0;
+
+		while (val > 0) {
+		      len += 1;
+		      val /= 2;
+		}
+
+		val = (unsigned long)real_value();
+		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
+		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
+		      val /= 2;
+		}
+
+		rbuf[len] = 0;
+		if (len == 0) {
+		      rbuf[0] = '0';
+		      rbuf[1] = 0;
+		}
+		vp->value.str = rbuf;
+		break;
+	  }
+
+	  default:
+	    fprintf(stderr, "vpi_callback: value "
+		    "format %d not supported\n",
+		    vp->format);
+      }
+}
+
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.39  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.38  2005/06/12 01:10:26  steve
  *  Remove useless references to functor.h
  *

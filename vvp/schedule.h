@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.24 2005/06/22 18:30:12 steve Exp $"
+#ident "$Id: schedule.h,v 1.25 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -66,6 +66,7 @@ extern void schedule_assign_memory_word(vvp_memory_t mem,
  */
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
 
 
 /*
@@ -131,6 +132,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.25  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.24  2005/06/22 18:30:12  steve
  *  Inline more simple stuff, and more vector4_t by const reference for performance.
  *

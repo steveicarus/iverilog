@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.9 2004/05/19 03:26:25 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.10 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,14 +30,6 @@
 #endif
 # include  <assert.h>
 
-
-struct __vpiRealVar {
-      struct __vpiHandle base;
-      const char*name;
-      double value;
-
-      struct __vpiCallback*cb;
-};
 
 static char* real_var_get_str(int code, vpiHandle ref)
 {
@@ -63,79 +55,27 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
-      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
+      struct __vpiRealVar*rfp
+	    = (struct __vpiRealVar*)ref;
+      vvp_fun_signal_real*fun
+	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
 
-      switch (vp->format) {
-	  case vpiObjTypeVal:
-	    vp->format = vpiRealVal;
-
-	  case vpiRealVal:
-	    vp->value.real = rfp->value;
-	    break;
-
-	  case vpiIntVal:
-	    vp->value.integer = (int)(rfp->value + 0.5);
-	    break;
-
-	  case vpiDecStrVal:
-	    sprintf(rbuf, "%0.0f", rfp->value);
-	    vp->value.str = rbuf;
-	    break;
-
-	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)rfp->value);
-	    vp->value.str = rbuf;
-	    break;
-
-	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)rfp->value;
-		unsigned len = 0;
-
-		while (val > 0) {
-		      len += 1;
-		      val /= 2;
-		}
-
-		val = (unsigned long)rfp->value;
-		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
-		      val /= 2;
-		}
-
-		rbuf[len] = 0;
-		if (len == 0) {
-		      rbuf[0] = '0';
-		      rbuf[1] = 0;
-		}
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  default:
-	    fprintf(stderr, "ERROR: Unsupported format code: %d\n",
-		    vp->format);
-	    assert(0);
-      }
+      fun->get_value(vp);
 }
 
 static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp
+	    = (struct __vpiRealVar*)ref;
+      vvp_fun_signal_real*fun
+	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+
+      vvp_net_ptr_t destination (rfp->net, 0);
 
       assert(vp->format == vpiRealVal);
-      rfp->value = vp->value.real;
-
-      for (struct __vpiCallback*cur = rfp->cb ;  cur ;  cur = cur->next) {
-	    cur->cb_data.time->type = vpiSimTime;
-	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-
-	    assert(cur->cb_data.cb_rtn != 0);
-
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-      }
+      vvp_send_real(destination, vp->value.real);
 
       return 0;
 }
@@ -158,26 +98,31 @@ static const struct __vpirt vpip_real_var_rt = {
 void vpip_real_value_change(struct __vpiCallback*cbh,
 			     vpiHandle ref)
 {
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
-      cbh->next = rfp->cb;
-      rfp->cb = cbh;
+      struct __vpiRealVar*rfp
+	    = (struct __vpiRealVar*)ref;
+      vvp_fun_signal_real*fun
+	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+
+      fun->add_vpi_callback(cbh);
 }
 
-vpiHandle vpip_make_real_var(const char*name)
+vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 {
       struct __vpiRealVar*obj = (struct __vpiRealVar*)
 	    malloc(sizeof(struct __vpiRealVar));
 
       obj->base.vpi_type = &vpip_real_var_rt;
       obj->name = vpip_name_string(name);
-      obj->value = 0.0;
-      obj->cb = 0;
+      obj->net = net;
 
       return &obj->base;
 }
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.10  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.9  2004/05/19 03:26:25  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.41 2005/06/26 01:57:22 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.42 2005/07/06 04:29:25 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -739,14 +739,53 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
  *          to port-0 (or port-1 if continuous assing is active) will
  *          propagate starting at the next input change.
  */
-class vvp_fun_signal  : public vvp_net_fun_t {
+
+class vvp_vpi_callback {
+
+    public:
+      vvp_vpi_callback();
+      virtual ~vvp_vpi_callback();
+
+      void run_vpi_callbacks();
+      void add_vpi_callback(struct __vpiCallback*);
+
+      virtual void get_value(struct t_vpi_value*value) =0;
+
+    private:
+      struct __vpiCallback*vpi_callbacks_;
+};
+
+class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
+
+    public:
+      vvp_fun_signal_base();
+      void recv_long(vvp_net_ptr_t port, long bit);
+
+    public:
+
+	/* The %force/link instruction needs a place to write the
+	   source node of the force, so that subsequent %force and
+	   %release instructions can undo the link as needed. */
+      struct vvp_net_t*force_link;
+
+    protected:
+
+	// This is true until at least one propagation happens.
+      bool needs_init_;
+      bool continuous_assign_active_;
+      bool force_active_;
+
+      void deassign();
+      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
+};
+
+class vvp_fun_signal  : public vvp_fun_signal_base {
 
     public:
       explicit vvp_fun_signal(unsigned wid);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
-      void recv_long(vvp_net_ptr_t port, long bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -759,32 +798,37 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       vvp_vector4_t vec4_value() const;
 
 	// Commands
-      void deassign();
       void release(vvp_net_ptr_t port, bool net);
 
-    public:
-      struct __vpiCallback*vpi_callbacks;
-
-	/* The %force/link instruction needs a place to write the
-	   source node of the force, so that subsequent %force and
-	   %release instructions can undo the link as needed. */
-      struct vvp_net_t*force_link;
+      void get_value(struct t_vpi_value*value);
 
     private:
       vvp_vector4_t bits4_;
       vvp_vector8_t bits8_;
       bool type_is_vector8_() const { return bits8_.size() > 0; }
 
-	// This is true until at least one propagation happens.
-      bool needs_init_;
-
-      bool continuous_assign_active_;
-
       vvp_vector4_t force_;
-      bool force_active_;
+};
+
+class vvp_fun_signal_real  : public vvp_fun_signal_base {
+
+    public:
+      explicit vvp_fun_signal_real();
+
+	//void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t port, double bit);
+
+	// Get information about the vector value.
+      double real_value() const;
+
+	// Commands
+      void release(vvp_net_ptr_t port, bool net);
+
+      void get_value(struct t_vpi_value*value);
 
     private:
-      void run_vpi_callbacks();
+      double bits_;
+      double force_;
 };
 
 /*
@@ -910,6 +954,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.42  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.41  2005/06/26 01:57:22  steve
  *  Make bit masks of vector4_t 64bit aware.
  *

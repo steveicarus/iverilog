@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.8 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: delay.cc,v 1.9 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -92,10 +92,17 @@ vvp_time64_t vvp_delay_t::get_delay(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
-vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
-: net_(n), delay_(d), cur_(1)
+vvp_time64_t vvp_delay_t::get_min_delay() const
 {
-      cur_.set_bit(0, init);
+      return min_delay_;
+}
+
+vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
+: net_(n), delay_(d), cur_vec4_(1)
+{
+      cur_vec4_.set_bit(0, init);
+      flag_real_ = false;
+      flag_vec4_ = false;
 }
 
 vvp_fun_delay::~vvp_fun_delay()
@@ -110,26 +117,57 @@ vvp_fun_delay::~vvp_fun_delay()
  */
 void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      if (cur_.eeq(bit))
+      if (cur_vec4_.eeq(bit))
 	    return;
 
       vvp_time64_t use_delay;
-      use_delay = delay_.get_delay(cur_.value(0), bit.value(0));
+      use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));
 
-      cur_ = bit;
-      if (use_delay == 0)
-	    vvp_send_vec4(net_->out, cur_);
-      else
+      cur_vec4_ = bit;
+      if (use_delay == 0) {
+	    vvp_send_vec4(net_->out, cur_vec4_);
+      } else {
+	    flag_vec4_ = true;
+	    flag_real_ = false;
 	    schedule_generic(this, use_delay, false);
+      }
+}
+
+void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
+{
+      if (cur_real_ == bit)
+	    return;
+
+      vvp_time64_t use_delay;
+      use_delay = delay_.get_min_delay();
+
+      cur_real_ = bit;
+      if (use_delay == 0) {
+	    vvp_send_real(net_->out, cur_real_);
+      } else {
+	    flag_vec4_ = false;
+	    flag_real_ = true;
+	    schedule_generic(this, use_delay, false);
+      }
 }
 
 void vvp_fun_delay::run_run()
 {
-      vvp_send_vec4(net_->out, cur_);
+      if (flag_vec4_) {
+	    vvp_send_vec4(net_->out, cur_vec4_);
+	    flag_vec4_ = false;
+      }
+      if (flag_real_) {
+	    vvp_send_real(net_->out, cur_real_);
+	    flag_real_ = false;
+      }
 }
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.9  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.8  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

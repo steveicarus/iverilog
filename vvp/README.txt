@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.68 2005/06/17 03:46:52 steve Exp $
+ *  $Id: README.txt,v 1.69 2005/07/06 04:29:25 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -244,6 +244,7 @@ general syntax of a variable is:
 
 	<label> .var   "name", <msb>, <lsb>;
 	<label> .var/s "name", <msb>, <lsb>;
+	<label> .var/real "name", <msb>, <lsb>;
 
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the
@@ -280,6 +281,7 @@ exactly the same as the .var statement:
 
 	<label> .net   "name", <msb>, <lsb>, <symbol>;
 	<label> .net/s "name", <msb>, <lsb>, <symbol>;
+	<label> .net/real "name", <msb>, <lsb>, <symbol>;
 
 Like a .var statement, the .net statement creates a VPI object with
 the basename and dimensions given as parameters. The symbol is a
@@ -420,7 +422,7 @@ to trigger this event. Only one of the input events needs to trigger
 to make this one go.
 
 
-WORD STATEMENTS:
+WORD STATEMENTS (deprecated):
 
 Verilog includes some scalar word types available to the programmer,
 including real variables, and possible extension types that the code
@@ -601,6 +603,9 @@ fixed.
 
 NOTE: The .arith/mult inputs are not necessarily the width of the
 output. I have not decided how to handle this.
+
+These devices support .s and .r suffixes. The .s means the node is a
+signed vector device, the .r a real valued device.
 
 STRUCTURAL COMPARE STATEMENTS:
 

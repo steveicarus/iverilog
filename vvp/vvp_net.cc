@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.40 2005/06/27 21:13:14 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.41 2005/07/06 04:29:25 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -677,13 +677,52 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 /* **** vvp_fun_signal methods **** */
 
-vvp_fun_signal::vvp_fun_signal(unsigned wid)
-: bits4_(wid), needs_init_(true)
+vvp_fun_signal_base::vvp_fun_signal_base()
 {
-      force_link = 0;
-      vpi_callbacks = 0;
+      needs_init_ = true;
       continuous_assign_active_ = false;
       force_active_ = false;
+      force_link = 0;
+}
+
+void vvp_fun_signal_base::deassign()
+{
+      continuous_assign_active_ = false;
+}
+
+/*
+ * The signal functor takes commands as long values to port-3. This
+ * method interprets those commands.
+ */
+void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
+{
+      switch (ptr.port()) {
+	  case 3: // Command port
+	    switch (bit) {
+		case 1: // deassign command
+		  deassign();
+		  break;
+		case 2: // release/net
+		  release(ptr, true);
+		  break;
+		case 3: // release/reg
+		  release(ptr, false);
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    break;
+
+	  default: // Other ports ar errors.
+	    assert(0);
+	    break;
+      }
+}
+
+vvp_fun_signal::vvp_fun_signal(unsigned wid)
+: bits4_(wid)
+{
 }
 
 /*
@@ -783,11 +822,6 @@ void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
       }
 }
 
-void vvp_fun_signal::deassign()
-{
-      continuous_assign_active_ = false;
-}
-
 void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
 {
       force_active_ = false;
@@ -796,36 +830,6 @@ void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
 	    run_vpi_callbacks();
       } else {
 	    bits4_ = force_;
-      }
-}
-
-/*
- * The signal functor takes commands as long values to port-3. This
- * method interprets those commands.
- */
-void vvp_fun_signal::recv_long(vvp_net_ptr_t ptr, long bit)
-{
-      switch (ptr.port()) {
-	  case 3: // Command port
-	    switch (bit) {
-		case 1: // deassign command
-		  deassign();
-		  break;
-		case 2: // release/net
-		  release(ptr, true);
-		  break;
-		case 3: // release/reg
-		  release(ptr, false);
-		  break;
-		default:
-		  assert(0);
-		  break;
-	    }
-	    break;
-
-	  default: // Other ports ar errors.
-	    assert(0);
-	    break;
       }
 }
 
@@ -867,6 +871,63 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 	    return reduce4(bits8_);
       else
 	    return bits4_;
+}
+
+vvp_fun_signal_real::vvp_fun_signal_real()
+{
+}
+
+double vvp_fun_signal_real::real_value() const
+{
+      if (force_active_)
+	    return force_;
+      else
+	    return bits_;
+}
+
+void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      switch (ptr.port()) {
+	  case 0:
+	    if (!continuous_assign_active_) {
+		  if (needs_init_ || (bits_ != bit)) {
+			bits_ = bit;
+			needs_init_ = false;
+			vvp_send_real(ptr.ptr()->out, bit);
+			run_vpi_callbacks();
+		  }
+	    }
+	    break;
+
+	  case 1: // Continuous assign value
+	    continuous_assign_active_ = true;
+	    bits_ = bit;
+	    vvp_send_real(ptr.ptr()->out, bit);
+	    run_vpi_callbacks();
+	    break;
+
+	  case 2: // Force value
+	    force_active_ = true;
+	    force_ = bit;
+	    vvp_send_real(ptr.ptr()->out, bit);
+	    run_vpi_callbacks();
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
+void vvp_fun_signal_real::release(vvp_net_ptr_t ptr, bool net)
+{
+      force_active_ = false;
+      if (net) {
+	    vvp_send_real(ptr.ptr()->out, bits_);
+	    run_vpi_callbacks();
+      } else {
+	    bits_ = force_;
+      }
 }
 
 /* **** vvp_wide_fun_* methods **** */
@@ -1329,6 +1390,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.41  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.40  2005/06/27 21:13:14  steve
  *  Make vector2 multiply more portable.
  *

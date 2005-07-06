@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.31 2005/06/26 21:08:38 steve Exp $"
+#ident "$Id: logic.cc,v 1.32 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -173,6 +173,14 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    return;
 
       vvp_send_vec4(ptr.ptr()->out, bit);
+}
+
+void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
+      vvp_send_real(ptr.ptr()->out, bit);
 }
 
 vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
@@ -377,6 +385,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.32  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.31  2005/06/26 21:08:38  steve
  *  AND functor explicitly knows its width.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.209 2005/06/14 01:44:09 steve Exp $"
+#ident "$Id: compile.cc,v 1.210 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -243,6 +243,11 @@ static vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiIntegerVar: {
 		      __vpiSignal*sig = (__vpiSignal*)vpi;
 		      return sig->node;
+		}
+
+		case vpiRealVar: {
+		      __vpiRealVar*sig = (__vpiRealVar*)vpi;
+		      return sig->net;
 		}
 
 		case vpiNamedEvent: {
@@ -757,6 +762,20 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 	    return;
       }
 
+      if ((strncmp(label, "Cr<", 3) == 0)
+	  && ((tp = strchr(label,'>')))
+	  && (tp[1] == 0)
+	  && (strspn(label+3, "0123456789.-e") == tp-label-3)) {
+
+	    double tmp;
+
+	    sscanf(label+3, "%lg", &tmp);
+
+	    schedule_set_vector(ifdx, tmp);
+	    free(label);
+	    return;
+      }
+
 	/* Handle the general case that this is a label for a node in
 	   the vvp net. This arranges for the label to be preserved in
 	   a linker list, and linked when the symbol table is
@@ -797,9 +816,8 @@ void wide_inputs_connect(vvp_wide_fun_core*core,
       }
 }
 
-static void make_arith(vvp_arith_ *arith,
-		       char*label, long wid,
-		       unsigned argc, struct symb_s*argv)
+template <class T_> void make_arith(T_ *arith, char*label,
+				    unsigned argc, struct symb_s*argv)
 {
       vvp_net_t* ptr = new vvp_net_t;
       ptr->fun = arith;
@@ -825,7 +843,19 @@ void compile_arith_div(char*label, long wid, bool signed_flag,
       }
 
       vvp_arith_ *arith = new vvp_arith_div(wid, signed_flag);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_arith_div_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s; .arith/divr has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_div_real;
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_arith_mod(char*label, long wid,
@@ -841,7 +871,7 @@ void compile_arith_mod(char*label, long wid,
 
       vvp_arith_ *arith = new vvp_arith_mod(wid, false);
 
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_arith_mult(char*label, long wid,
@@ -856,7 +886,7 @@ void compile_arith_mult(char*label, long wid,
       }
 
       vvp_arith_ *arith = new vvp_arith_mult(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -870,7 +900,19 @@ void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_arith_sub(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_arith_sub_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s; .arith/sub.r has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_sub_real;
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -884,7 +926,7 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_arith_sum(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_eeq(char*label, long wid,
@@ -900,7 +942,7 @@ void compile_cmp_eeq(char*label, long wid,
 
       vvp_arith_ *arith = new vvp_cmp_eeq(wid);
 
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_nee(char*label, long wid,
@@ -916,7 +958,7 @@ void compile_cmp_nee(char*label, long wid,
 
       vvp_arith_ *arith = new vvp_cmp_nee(wid);
 
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -930,7 +972,7 @@ void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_cmp_eq(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_ne(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -944,7 +986,7 @@ void compile_cmp_ne(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_cmp_ne(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_ge(char*label, long wid, bool signed_flag,
@@ -960,7 +1002,7 @@ void compile_cmp_ge(char*label, long wid, bool signed_flag,
 
       vvp_arith_ *arith = new vvp_cmp_ge(wid, signed_flag);
 
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_cmp_gt(char*label, long wid, bool signed_flag,
@@ -976,7 +1018,7 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
 
       vvp_arith_ *arith = new vvp_cmp_gt(wid, signed_flag);
 
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 /*
@@ -1006,7 +1048,7 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
       assert( wid > 0 );
 
       vvp_arith_ *arith = new vvp_shiftl(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -1014,7 +1056,7 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
       assert( wid > 0 );
 
       vvp_arith_ *arith = new vvp_shiftr(wid);
-      make_arith(arith, label, wid, argc, argv);
+      make_arith(arith, label, argc, argv);
 }
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
@@ -1422,68 +1464,6 @@ void compile_thread(char*start_sym, char*flag)
 	    free(flag);
 }
 
-/*
- * A variable is a special functor, so we allocate that functor and
- * write the label into the symbol table.
- */
-void compile_variable(char*label, char*name, int msb, int lsb,
-		      char signed_flag)
-{
-      unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
-
-      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
-      vvp_net_t*node = new vvp_net_t;
-      node->fun = vsig;
-      define_functor_symbol(label, node);
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = (signed_flag > 1) ?
-			vpip_make_int(name, msb, lsb, node) :
-			vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      free(name);
-}
-
-/*
- * Here we handle .net records from the vvp source:
- *
- *    <label> .net   <name>, <msb>, <lsb>, <input> ;
- *    <label> .net/s <name>, <msb>, <lsb>, <input> ;
- *
- * Create a VPI handle to represent it, and fill that handle in with
- * references into the net.
- */
-void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
-		 unsigned argc, struct symb_s*argv)
-{
-      unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
-
-      vvp_net_t*node = new vvp_net_t;
-
-      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
-      node->fun = vsig;
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-      assert(argc == 1);
-
-	/* Connect the source to my input. */
-      inputs_connect(node, 1, argv);
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      free(name);
-      free(argv);
-}
-
 void compile_param_string(char*label, char*name, char*str, char*value)
 {
       assert(strcmp(str,"string") == 0);
@@ -1498,6 +1478,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.210  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.209  2005/06/14 01:44:09  steve
  *  Add the assign_v0_d instruction.
  *
@@ -1523,63 +1506,5 @@ void compile_param_string(char*label, char*name, char*str, char*value)
  *
  * Revision 1.202  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
- *
- * Revision 1.201  2005/05/18 03:46:01  steve
- *  Fixup structural GT comparators.
- *
- * Revision 1.200  2005/05/07 03:15:42  steve
- *  Implement non-blocking part assign.
- *
- * Revision 1.199  2005/05/01 22:05:21  steve
- *  Add cassign/link instruction.
- *
- * Revision 1.198  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.197  2005/04/24 20:07:26  steve
- *  Add DFF nodes.
- *
- * Revision 1.196  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- * Revision 1.195  2005/03/22 05:18:34  steve
- *  The indexed set can write a vector, not just a bit.
- *
- * Revision 1.194  2005/03/19 06:23:49  steve
- *  Handle LPM shifts.
- *
- * Revision 1.193  2005/03/12 06:42:28  steve
- *  Implement .arith/mod.
- *
- * Revision 1.192  2005/03/12 04:27:42  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.191  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.190  2005/03/09 04:52:40  steve
- *  reimplement memory ports.
- *
- * Revision 1.189  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.188  2005/02/19 01:32:53  steve
- *  Implement .arith/div.
- *
- * Revision 1.187  2005/02/14 01:50:23  steve
- *  Signals may receive part vectors from %set/x0
- *  instructions. Re-implement the %set/x0 to do
- *  just that. Remove the useless %set/x0/x instruction.
- *
- * Revision 1.186  2005/02/12 03:27:18  steve
- *  Support C8 constants.
- *
- * Revision 1.185  2005/01/30 05:06:49  steve
- *  Get .arith/sub working.
- *
- * Revision 1.184  2005/01/29 17:53:25  steve
- *  Use scheduler to initialize constant functor inputs.
  */
 

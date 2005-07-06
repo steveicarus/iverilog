@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.73 2005/06/17 03:46:52 steve Exp $"
+#ident "$Id: compile.h,v 1.74 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -142,6 +142,10 @@ extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
+
+extern void compile_arith_div_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_arith_sub_r(char*label, unsigned argc, struct symb_s*argv);
+
 extern void compile_dff(char*label,
 			struct symb_s arg_d,
 			struct symb_s arg_c,
@@ -240,10 +244,13 @@ extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
 extern void compile_named_event(char*label, char*type);
 
+#if 0
 /*
  * Word declarations include a label, a type symbol, and a vpi name.
+ * TAKEN OVER BY compile_var_real.
  */
 extern void compile_word(char*label, char*type, char*name);
+#endif
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -306,13 +313,21 @@ extern void compile_thread(char*start_sym, char*flag);
  */
 extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, char signed_flag);
+extern void compile_var_real(char*label, char*nane,
+			     int msb, int lsb);
 
 extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
 			unsigned argc, struct symb_s*argv);
+extern void compile_net_real(char*label, char*name,
+			     int msb, int lsb,
+			     unsigned argc, struct symb_s*argv);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.74  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.73  2005/06/17 03:46:52  steve
  *  Make functors know their own width.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.31 2005/06/22 00:04:48 steve Exp $"
+#ident "$Id: arith.h,v 1.32 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -197,7 +197,45 @@ class vvp_shiftr  : public vvp_arith_ {
 };
 
 /*
+ * Base class for real valued expressions. These are similar to the
+ * vector expression classes, but the inputs are collected from the
+ * recv_real method.
+ */
+class vvp_arith_real_  : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_arith_real_();
+
+    protected:
+      void dispatch_operand_(vvp_net_ptr_t ptr, double bit);
+
+    protected:
+      double op_a_;
+      double op_b_;
+};
+
+
+class vvp_arith_div_real : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_arith_div_real();
+      ~vvp_arith_div_real();
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+};
+
+class vvp_arith_sub_real : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_arith_sub_real();
+      ~vvp_arith_sub_real();
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+};
+
+/*
  * $Log: arith.h,v $
+ * Revision 1.32  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.31  2005/06/22 00:04:48  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

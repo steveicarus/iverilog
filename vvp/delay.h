@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.8 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: delay.h,v 1.9 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,7 @@ class vvp_delay_t {
       ~vvp_delay_t();
 
       vvp_time64_t get_delay(vvp_bit4_t from, vvp_bit4_t to);
+      vvp_time64_t get_min_delay() const;
 
     private:
       vvp_time64_t rise_, fall_, decay_;
@@ -55,6 +56,10 @@ class vvp_delay_t {
  *
  * The node needs a pointer to the vvp_net_t input so that it knows
  * how to find its output when propaging delayed output.
+ *
+ * NOTE: This node supports vec4 and real by repeating whatever was
+ * input. This is a bit of a hack, as it may be more efficient to
+ * create the right type of vvp_fun_delay_real.
  */
 class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
@@ -63,6 +68,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       ~vvp_fun_delay();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t port, double bit);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
@@ -71,11 +77,17 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
     private:
       vvp_net_t*net_;
       vvp_delay_t delay_;
-      vvp_vector4_t cur_;
+
+      bool flag_vec4_, flag_real_;
+      vvp_vector4_t cur_vec4_;
+      double cur_real_;
 };
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.9  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.8  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

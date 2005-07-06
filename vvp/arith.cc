@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.44 2005/06/22 00:04:48 steve Exp $"
+#ident "$Id: arith.cc,v 1.45 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -701,8 +701,62 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 }
 
 
+vvp_arith_real_::vvp_arith_real_()
+{
+}
+
+void vvp_arith_real_::dispatch_operand_(vvp_net_ptr_t ptr, double bit)
+{
+      switch (ptr.port()) {
+	  case 0:
+	    op_a_ = bit;
+	    break;
+	  case 1:
+	    op_b_ = bit;
+	    break;
+	  default:
+	    assert(0);
+      }
+}
+
+
+vvp_arith_div_real::vvp_arith_div_real()
+{
+}
+
+vvp_arith_div_real::~vvp_arith_div_real()
+{
+}
+
+void vvp_arith_div_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = op_a_ / op_b_;
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
+vvp_arith_sub_real::vvp_arith_sub_real()
+{
+}
+
+vvp_arith_sub_real::~vvp_arith_sub_real()
+{
+}
+
+void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = op_a_ - op_b_;
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
 /*
  * $Log: arith.cc,v $
+ * Revision 1.45  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.44  2005/06/22 00:04:48  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

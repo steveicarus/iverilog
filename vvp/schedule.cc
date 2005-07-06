@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.38 2005/06/22 18:30:12 steve Exp $"
+#ident "$Id: schedule.cc,v 1.39 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -114,6 +114,18 @@ void assign_vector8_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_vec8(ptr, val);
+}
+
+struct assign_real_event_s  : public event_s {
+      vvp_net_ptr_t ptr;
+      double val;
+      void run_run(void);
+};
+
+void assign_real_event_s::run_run(void)
+{
+      count_assign_events += 1;
+      vvp_send_real(ptr, val);
 }
 
 struct assign_memory_word_s  : public event_s {
@@ -475,6 +487,14 @@ void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
+void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
+{
+      struct assign_real_event_s*cur = new struct assign_real_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      schedule_event_(cur, 0, SEQ_ACTIVE);
+}
+
 void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay, bool sync_flag)
 {
       struct generic_event_s*cur = new generic_event_s;
@@ -581,6 +601,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.39  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.38  2005/06/22 18:30:12  steve
  *  Inline more simple stuff, and more vector4_t by const reference for performance.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.54 2005/05/24 01:43:27 steve Exp $"
+#ident "$Id: lexor.lex,v 1.55 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -84,10 +84,12 @@
 
   /* These are some keywords that are recognized. */
 ".arith/div"    { return K_ARITH_DIV; }
+".arith/div.r"  { return K_ARITH_DIV_R; }
 ".arith/div.s"  { return K_ARITH_DIV_S; }
 ".arith/mod"  { return K_ARITH_MOD; }
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
+".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
@@ -104,6 +106,7 @@
 ".extend/s" { return K_EXTEND_S; }
 ".functor"  { return K_FUNCTOR; }
 ".net"      { return K_NET; }
+".net/real" { return K_NET_R; }
 ".net/s"    { return K_NET_S; }
 ".param"    { return K_PARAM; }
 ".part"     { return K_PART; }
@@ -124,9 +127,9 @@
 ".timescale" { return K_TIMESCALE; }
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
+".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
 ".var/i"    { return K_VAR_I; /* integer */ }
-".word"     { return K_WORD; }
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
@@ -196,6 +199,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.55  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.54  2005/05/24 01:43:27  steve
  *  Add a sign-extension node.
  *

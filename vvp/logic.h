@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.21 2005/06/26 21:08:38 steve Exp $"
+#ident "$Id: logic.h,v 1.22 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -99,6 +99,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
       virtual ~vvp_fun_bufz();
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t p, double bit);
 
     private:
 };
@@ -143,6 +144,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.22  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.21  2005/06/26 21:08:38  steve
  *  AND functor explicitly knows its width.
  *

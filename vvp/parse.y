@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.76 2005/06/17 03:46:53 steve Exp $"
+#ident "$Id: parse.y,v 1.77 2005/07/06 04:29:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -57,20 +57,19 @@ extern FILE*yyin;
 };
 
 
-%token K_ARITH_DIV K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
-%token K_ARITH_SUB K_ARITH_SUM
+%token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
+%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DFF
-%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S
+%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S K_NET_R
 %token K_PARAM K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
-%token K_WORD
-%token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_vpi_func_r
+%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision
 
@@ -211,6 +210,11 @@ statement
 		  compile_arith_div($1, $3, false, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_ARITH_DIV_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_div_r($1, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_ARITH_DIV_S T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_div($1, $3, true, obj.cnt, obj.vect);
@@ -229,6 +233,11 @@ statement
 	| T_LABEL K_ARITH_SUB T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_sub($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_ARITH_SUB_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_sub_r($1, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_ARITH_SUM T_NUMBER ',' symbols ';'
@@ -335,11 +344,6 @@ statement
 		{ compile_event($1, 0, $3.cnt, $3.vect); }
 
 
-  /* match word statements. */
-
-	| T_LABEL K_WORD T_SYMBOL ',' T_STRING ';'
-		{ compile_word($1, $3, $5); }
-
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends
      on the specific instruction. */
@@ -441,6 +445,9 @@ statement
 	| T_LABEL K_VAR_I T_STRING ',' T_NUMBER ',' T_NUMBER ';'
 		{ compile_variable($1, $3, $5, $7, 2 /* integer */); }
 
+	| T_LABEL K_VAR_R T_STRING ',' signed_t_number ',' signed_t_number ';'
+		{ compile_var_real($1, $3, $5, $7); }
+
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
@@ -451,6 +458,10 @@ statement
         | T_LABEL K_NET_S T_STRING ',' signed_t_number ',' signed_t_number
 	  ',' symbols_net ';'
 		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
+
+        | T_LABEL K_NET_R T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_net_real($1, $3, $5, $7, $9.cnt, $9.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
@@ -690,6 +701,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.77  2005/07/06 04:29:25  steve
+ *  Implement real valued signals and arith nodes.
+ *
  * Revision 1.76  2005/06/17 03:46:53  steve
  *  Make functors know their own width.
  *
