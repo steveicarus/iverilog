@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.128 2005/06/13 23:22:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.129 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -123,19 +123,39 @@ extern "C" unsigned ivl_memory_width(ivl_memory_t net)
 }
 
 
+extern "C" ivl_variable_type_t ivl_const_type(ivl_net_const_t net)
+{
+      assert(net);
+      return net->type;
+}
+
 extern "C" const char*ivl_const_bits(ivl_net_const_t net)
 {
       assert(net);
-      if (net->width_ <= sizeof(char*))
-	    return net->b.bit_;
-      else
-	    return net->b.bits_;
+      switch (net->type) {
+
+	  case IVL_VT_LOGIC:
+	    if (net->width_ <= sizeof(net->b.bit_))
+		  return net->b.bit_;
+	    else
+		  return net->b.bits_;
+
+	  default:
+	    return 0;
+      }
 }
 
 extern "C" ivl_nexus_t ivl_const_nex(ivl_net_const_t net)
 {
       assert(net);
       return net->pin_;
+}
+
+extern "C" double ivl_const_real(ivl_net_const_t net)
+{
+      assert(net);
+      assert(net->type == IVL_VT_REAL);
+      return net->b.real_value;
 }
 
 extern "C" int ivl_const_signed(ivl_net_const_t net)
@@ -1240,7 +1260,14 @@ extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 {
       assert(net);
-      return net->n.sig;
+      switch (net->type_) {
+	  case IVL_LVAL_REG:
+	  case IVL_LVAL_NET:
+	  case IVL_LVAL_MUX:
+	    return net->n.sig;
+	  default:
+	    return 0;
+      }
 }
 
 extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
@@ -1677,6 +1704,11 @@ extern "C" int ivl_signal_integer(ivl_signal_t net)
       return net->isint_;
 }
 
+extern "C" ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net)
+{
+      return net->data_type;
+}
+
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
 {
       return net->type_;
@@ -2040,6 +2072,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.129  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.128  2005/06/13 23:22:37  steve
  *  Fix compile errors.
  *

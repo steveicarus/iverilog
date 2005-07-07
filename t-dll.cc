@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.151 2005/06/26 18:08:46 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.152 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1849,11 +1849,13 @@ bool dll_target::net_const(const NetConst*net)
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
+      obj->type = IVL_VT_LOGIC;
+
 	/* constants have a single vector output. */
       assert(net->pin_count() == 1);
 
       obj->width_ = net->width();
-      if (obj->width_ <= sizeof(char*)) {
+      if (obj->width_ <= sizeof(obj->b.bit_)) {
 	    bits = obj->b.bit_;
 
       } else {
@@ -1888,6 +1890,35 @@ bool dll_target::net_const(const NetConst*net)
       obj->pin_ = (ivl_nexus_t) nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
+
+      des_.nconsts += 1;
+      des_.consts = (ivl_net_const_t*)
+	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
+      des_.consts[des_.nconsts-1] = obj;
+
+      return true;
+}
+
+bool dll_target::net_literal(const NetLiteral*net)
+{
+
+      struct ivl_net_const_s *obj = new struct ivl_net_const_s;
+
+      obj->type = IVL_VT_REAL;
+      obj->width_  = 1;
+      obj->signed_ = 1;
+      obj->b.real_value = net->value_real().as_double();
+
+	/* Connect to all the nexus objects. Note that the one-bit
+	   case can be handled more efficiently without allocating
+	   array space. */
+
+      ivl_drive_t drv0, drv1;
+      drive_from_link(net->pin(0), drv0, drv1);
+      const Nexus*nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+      obj->pin_ = (ivl_nexus_t) nex->t_cookie();
+      nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
       des_.nconsts += 1;
       des_.consts = (ivl_net_const_t*)
@@ -2079,6 +2110,7 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
+      obj->data_type = net->data_type();
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
 
@@ -2111,6 +2143,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.152  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.151  2005/06/26 18:08:46  steve
  *  Fix uninitialzied attr pointers for UDP devices.
  *

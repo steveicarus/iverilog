@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.28 2005/06/28 04:25:55 steve Exp $"
+#ident "$Id: compiler.h,v 1.29 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  <list>
@@ -94,7 +94,8 @@ extern list<const char*>library_suff;
 extern int build_library_index(const char*path, bool key_case_sensitive);
 
 /* This is the generation of Verilog that the compiler is asked to
-   support. */
+   support. Then there are also more detailed controls for more
+   specific language features. */
 enum generation_t {
       GN_VER1995  = 1,
       GN_VER2001  = 2,
@@ -103,6 +104,11 @@ enum generation_t {
 };
 
 extern generation_t generation_flag;
+extern bool gn_cadence_types_flag;
+
+/* These functions test that specific features are enabled. */
+inline bool gn_cadence_types_enabled()
+{ return gn_cadence_types_flag && generation_flag==GN_VER2001X; }
 
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
@@ -137,6 +143,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.29  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.28  2005/06/28 04:25:55  steve
  *  Remove reference to SystemVerilog.
  *

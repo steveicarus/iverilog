@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.244 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: netlist.cc,v 1.245 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -79,6 +79,8 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	  case NetNet::WIRE:
 	    o << "wire";
 	    break;
+	  case NetNet::WONE:
+	    o << "wone";
       }
       return o;
 }
@@ -237,7 +239,8 @@ NetBus::~NetBus()
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1), sig_next_(0), sig_prev_(0),
-    type_(t), port_type_(NOT_A_PORT), signed_(false), msb_(npins-1), lsb_(0),
+    type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
+    signed_(false), msb_(npins-1), lsb_(0),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -274,7 +277,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
 : NetObj(s, n, 1),
     sig_next_(0), sig_prev_(0), type_(t),
-    port_type_(NOT_A_PORT), signed_(false), msb_(ms), lsb_(ls),
+    port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
+    msb_(ms), lsb_(ls),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -370,6 +374,16 @@ NetNet::PortType NetNet::port_type() const
 void NetNet::port_type(NetNet::PortType t)
 {
       port_type_ = t;
+}
+
+ivl_variable_type_t NetNet::data_type() const
+{
+      return data_type_;
+}
+
+void NetNet::data_type(ivl_variable_type_t t)
+{
+      data_type_ = t;
 }
 
 bool NetNet::get_signed() const
@@ -1141,6 +1155,22 @@ Link& NetDivide::pin_DataB()
 const Link& NetDivide::pin_DataB() const
 {
       return pin(2);
+}
+
+NetLiteral::NetLiteral(NetScope*sc, perm_string n, const verireal&val)
+: NetNode(sc, n, 1), real_(val)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+}
+
+NetLiteral::~NetLiteral()
+{
+}
+
+const verireal& NetLiteral::value_real() const
+{
+      return real_;
 }
 
 NetMult::NetMult(NetScope*sc, perm_string n, unsigned wr,
@@ -2203,6 +2233,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.245  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.244  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.160 2005/05/24 01:44:27 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.161 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,6 +68,28 @@ ostream& operator << (ostream&o, Link::strength_t str)
       return o;
 }
 
+ostream& operator << (ostream&o, ivl_variable_type_t val)
+{
+      switch (val) {
+	  case IVL_VT_VOID:
+	    o << "void";
+	    break;
+	  case IVL_VT_NO_TYPE:
+	    o << "<no_type>";
+	    break;
+	  case IVL_VT_REAL:
+	    o << "real";
+	    break;
+	  case IVL_VT_BOOL:
+	    o << "bool";
+	    break;
+	  case IVL_VT_LOGIC:
+	    o << "logic";
+	    break;
+      }
+      return o;
+}
+
 /* Dump a net. This can be a wire or register. */
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
@@ -75,6 +97,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
+      o << " " << data_type_;
       if (signed_)
 	    o << " signed";
       switch (port_type_) {
@@ -274,6 +297,13 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetLiteral::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "constant real " << real_
+	<< ": " << name() << endl;
+      dump_node_pins(o, ind+4);
 }
 
 void NetLogic::dump_node(ostream&o, unsigned ind) const
@@ -1151,6 +1181,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.161  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.160  2005/05/24 01:44:27  steve
  *  Do sign extension of structuran nets.
  *

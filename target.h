@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.72 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: target.h,v 1.73 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -98,6 +98,7 @@ struct target_t {
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_const(const NetConst*);
       virtual bool net_function(const NetUserFunc*);
+      virtual bool net_literal(const NetLiteral*);
       virtual void net_probe(const NetEvProbe*);
       virtual bool sign_extend(const NetSignExtend*);
 
@@ -173,6 +174,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.73  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.72  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

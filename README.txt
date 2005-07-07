@@ -470,6 +470,20 @@ language that are defined.
 	combinational always blocks to be triggered when the values in
 	the sensitivity list are initialized by initial threads.
 
+    Nets with Types
+
+	Icarus Verilog support an extension syntax that allows nets
+	and regs to be explicitly typed. The currently supported types
+	are logic, bool and real. This implies that "logic" and "bool"
+	are new keywords. Typical syntax is:
+
+	wire real foo = 1.0;
+	reg logic bar, bat;
+
+	... and so forth. The syntax can be turned off by using the
+	-g2 flag to iverilog, and turned on explicitly with the -g2x
+	flag to iverilog.
+
 6.0 CREDITS
 
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are

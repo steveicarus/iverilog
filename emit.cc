@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.84 2005/05/24 01:44:27 steve Exp $"
+#ident "$Id: emit.cc,v 1.85 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,6 +95,11 @@ bool NetFF::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ff(this);
       return true;
+}
+
+bool NetLiteral::emit_node(struct target_t*tgt) const
+{
+      return tgt->net_literal(this);
 }
 
 bool NetModulo::emit_node(struct target_t*tgt) const
@@ -528,6 +533,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.85  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.84  2005/05/24 01:44:27  steve
  *  Do sign extension of structuran nets.
  *

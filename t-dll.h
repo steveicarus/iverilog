@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.126 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: t-dll.h,v 1.127 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -89,6 +89,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void net_assign(const NetAssign_*);
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
+      bool net_literal(const NetLiteral*);
       void net_probe(const NetEvProbe*);
       bool sign_extend(const NetSignExtend*);
 
@@ -396,14 +397,16 @@ struct ivl_lval_s {
 };
 
 /*
- * This object represents a vector constant, possibly signed, in a
+ * This object represents a literal constant, possibly signed, in a
  * structural context.
  */
 struct ivl_net_const_s {
+      ivl_variable_type_t type;
       unsigned width_;
       unsigned signed_ : 1;
 
       union {
+	    double real_value;
 	    char bit_[sizeof(char*)];
 	    char *bits_;
       } b;
@@ -575,6 +578,7 @@ struct ivl_scope_s {
 struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
+      ivl_variable_type_t data_type;
 
       unsigned width_;
       unsigned signed_ : 1;
@@ -686,6 +690,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.127  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.126  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

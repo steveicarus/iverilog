@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.11 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: eval_real.c,v 1.12 2005/07/07 16:22:50 steve Exp $"
 #endif
 
 /*
@@ -227,7 +227,7 @@ static int draw_sfunc_real(ivl_expr_t exp)
  * The real value of a signal is the integer value of a signal
  * converted to real.
  */
-static int draw_signal_real(ivl_expr_t exp)
+static int draw_signal_real_logic(ivl_expr_t exp)
 {
       int res = allocate_word();
       struct vector_info sv = draw_eval_expr(exp, 0);
@@ -238,6 +238,33 @@ static int draw_signal_real(ivl_expr_t exp)
       fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
       return res;
+}
+
+static int draw_signal_real_real(ivl_expr_t exp)
+{
+      ivl_signal_t sig = ivl_expr_signal(exp);
+      int res = allocate_word();
+
+      fprintf(vvp_out, "   %%load/wr %d, V_%s;\n",
+	      res, vvp_signal_label(sig));
+
+      return res;
+}
+
+static int draw_signal_real(ivl_expr_t exp)
+{
+      ivl_signal_t sig = ivl_expr_signal(exp);
+      switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_LOGIC:
+	    return draw_signal_real_logic(exp);
+	  case IVL_VT_REAL:
+	    return draw_signal_real_real(exp);
+	  default:
+	    fprintf(stderr, "internal error: signal_data_type=%d\n",
+		    ivl_signal_data_type(sig));
+	    assert(0);
+	    return -1;
+      }
 }
 
 int draw_eval_real(ivl_expr_t exp)
@@ -298,6 +325,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.12  2005/07/07 16:22:50  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.11  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

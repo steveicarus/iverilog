@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,15 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.10 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PWire.cc,v 1.11 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
 # include  "PWire.h"
 # include  <assert.h>
 
-PWire::PWire(const hname_t&n, NetNet::Type t, NetNet::PortType pt)
-: hname_(n), type_(t), port_type_(pt), signed_(false), isint_(false),
+PWire::PWire(const hname_t&n,
+	     NetNet::Type t,
+	     NetNet::PortType pt,
+	     ivl_variable_type_t dt)
+: hname_(n), type_(t), port_type_(pt), data_type_(dt),
+  signed_(false), isint_(false),
 lidx_(0), ridx_(0)
 {
       if (t == NetNet::INTEGER) {
@@ -35,8 +39,12 @@ lidx_(0), ridx_(0)
       }
 }
 
-PWire::PWire(char*n, NetNet::Type t, NetNet::PortType pt)
-: hname_(n), type_(t), port_type_(pt), signed_(false), isint_(false),
+PWire::PWire(char*n,
+	     NetNet::Type t,
+	     NetNet::PortType pt,
+	     ivl_variable_type_t dt)
+: hname_(n), type_(t), port_type_(pt), data_type_(dt),
+  signed_(false), isint_(false),
 lidx_(0), ridx_(0)
 {
       if (t == NetNet::INTEGER) {
@@ -108,6 +116,19 @@ bool PWire::set_port_type(NetNet::PortType pt)
       }
 }
 
+bool PWire::set_data_type(ivl_variable_type_t dt)
+{
+      if (data_type_ != IVL_VT_NO_TYPE)
+	    if (data_type_ != dt)
+		  return false;
+	    else
+		  return true;
+
+      assert(data_type_ == IVL_VT_NO_TYPE);
+      data_type_ = dt;
+      return true;
+}
+
 void PWire::set_signed(bool flag)
 {
       signed_ = flag;
@@ -140,6 +161,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.11  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.10  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

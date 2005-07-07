@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.86 2004/06/13 04:56:54 steve Exp $"
+#ident "$Id: lexor.lex,v 1.87 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -198,12 +198,27 @@ W [ \t\b\f\r]+
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
-      if (rc == IDENTIFIER) {
+      switch (rc) {
+	  case IDENTIFIER:
 	    yylval.text = strdup(yytext);
 	    if (strncmp(yylval.text,"PATHPULSE$", 10) == 0)
 		  rc = PATHPULSE_IDENTIFIER;
-      } else {
+	    break;
+
+	  case K_bool:
+	  case K_logic:
+	  case K_wone:
+	    if (! gn_cadence_types_enabled()) {
+		  yylval.text = strdup(yytext);
+		  rc = IDENTIFIER;
+	    } else {
+		  yylval.text = 0;
+	    }
+	    break;
+
+	  default:
 	    yylval.text = 0;
+	    break;
       }
 
       return rc;

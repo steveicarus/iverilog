@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.344 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: netlist.h,v 1.345 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <string>
 # include  <map>
 # include  <list>
+# include  "ivl_target.h"
 # include  "verinum.h"
 # include  "verireal.h"
 # include  "StringHeap.h"
@@ -64,6 +65,8 @@ class NetFuncDef;
 
 struct target;
 struct functor_t;
+
+ostream& operator << (ostream&o, ivl_variable_type_t val);
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -391,7 +394,8 @@ class NetNet  : public NetObj {
 
     public:
       enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
-		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG };
+		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
+		  WONE };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -409,6 +413,9 @@ class NetNet  : public NetObj {
 
       PortType port_type() const;
       void port_type(PortType t);
+
+      ivl_variable_type_t data_type() const;
+      void data_type(ivl_variable_type_t t);
 
 	/* If a NetNet is signed, then its value is to be treated as
 	   signed. Otherwise, it is unsigned. */
@@ -464,6 +471,7 @@ class NetNet  : public NetObj {
     private:
       Type   type_;
       PortType port_type_;
+      ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
 
@@ -1296,7 +1304,10 @@ class NetCaseCmp  : public NetNode {
       bool eeq_;
 };
 
-/*
+/* NOTE: This class should be replaced with the NetLiteral class
+ * below, that is more general in that it supports different types of
+ * values.
+ *
  * This class represents instances of the LPM_CONSTANT device. The
  * node has only outputs and a constant value. The width is available
  * by getting the pin_count(), and the value bits are available one at
@@ -1321,6 +1332,33 @@ class NetConst  : public NetNode {
     private:
       unsigned width_;
       verinum::V*value_;
+};
+
+/*
+ * This class represents instances of the LPM_CONSTANT device. The
+ * node has only outputs and a constant value. The width is available
+ * by getting the pin_count(), and the value bits are available one at
+ * a time. There is no meaning to the aggregation of bits to form a
+ * wide NetConst object, although some targets may have an easier time
+ * detecting interesting constructs if they are combined.
+ */
+class NetLiteral  : public NetNode {
+
+    public:
+	// A read-valued literal.
+      explicit NetLiteral(NetScope*s, perm_string n, const verireal&val);
+      ~NetLiteral();
+
+      ivl_variable_type_t data_type() const;
+
+      const verireal& value_real() const;
+
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*, functor_t*);
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+    private:
+      verireal real_;
 };
 
 /*
@@ -3467,6 +3505,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.345  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.344  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

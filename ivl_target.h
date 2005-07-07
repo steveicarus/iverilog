@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.156 2005/06/13 22:25:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.157 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -325,8 +325,11 @@ typedef enum ivl_statement_type_e {
    expression. */
 typedef enum ivl_variable_type_e {
       IVL_VT_VOID = 0,  /* Not used */
+      IVL_VT_NO_TYPE,  /* Place holder for missing/unknown type. */
       IVL_VT_REAL,
-      IVL_VT_VECTOR
+      IVL_VT_BOOL,
+      IVL_VT_LOGIC,
+      IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
 /* This is the type of the function to apply to a process. */
@@ -407,11 +410,15 @@ extern int         ivl_design_time_precision(ivl_design_t des);
 extern unsigned        ivl_design_consts(ivl_design_t des);
 extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
 
-/* VECTOR CONSTANTS
- * Vector constants are nodes with no input and a single vector
- * output. The output is an array of 4-value bits, using a single char
+/* LITERAL CONSTANTS
+ * Literal constants are nodes with no input and a single constant
+ * output. The form of the output depends on the type of the node.
+ * The output is an array of 4-value bits, using a single char
  * value for each bit. The bits of the vector are in canonical (lsb
  * first) order for the width of the constant.
+ *
+ * ivl_const_type
+ *    The is the type of the node.
  *
  * ivl_const_bits
  *    This returns a pointer to an array of conststant characters,
@@ -427,14 +434,25 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  * ivl_const_width
  *    Return the width, in logical bits, of the constant.
  *
- * ivl_const_pin
- * ivl_const_pins
- *    DEPRECATED
+ * SEMANTIC NOTES
+ *
+ * The const_type of the literal constant must match the
+ * ivl_signal_data_type if the signals that share the nexus of this
+ * node. The compiler makes sure it is so, converting constant values
+ * as needed.
+ *
+ * - IVL_VT_LOGIC
+ *
+ * - IVL_VT_REAL
+ * Real valued constants have a width of 1. The value emitted to the
+ * output is ivl_const_real.
  */
+extern ivl_variable_type_t ivl_const_type(ivl_net_const_t net);
 extern const char* ivl_const_bits(ivl_net_const_t net);
 extern ivl_nexus_t ivl_const_nex(ivl_net_const_t net);
 extern int         ivl_const_signed(ivl_net_const_t net);
 extern unsigned    ivl_const_width(ivl_net_const_t net);
+extern double      ivl_const_real(ivl_net_const_t net);
 
 /* extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx); */
 /* extern unsigned    ivl_const_pins(ivl_net_const_t net); */
@@ -1398,6 +1416,11 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  * ivl_signal_type
  *    Return the type of the signal, i.e., reg, wire, tri0, etc.
  *
+ * ivl_signal_data_type
+ *    Return the data type of the signal, i.e. logic, real, bool,
+ *    etc. All the signals connected to a nexus should have the same
+ *    data type
+ *
  * ivl_signal_name (DEPRECATED)
  *    This function returns the fully scoped hierarchical name for the
  *    signal. The name refers to the entire vector that is the signal.
@@ -1430,6 +1453,7 @@ extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
 extern int         ivl_signal_local(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
+extern ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
 extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
@@ -1667,6 +1691,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.157  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.156  2005/06/13 22:25:37  steve
  *  Document ivl_logic_delay function.
  *

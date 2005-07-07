@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.22 2005/05/24 01:44:27 steve Exp $"
+#ident "$Id: functor.h,v 1.23 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 /*
@@ -63,6 +63,9 @@ struct functor_t {
 	/* This method is called for each structural constant. */
       virtual void lpm_divide(class Design*des, class NetDivide*);
 
+	/* Constant literals. */
+      virtual void lpm_literal(class Design*des, class NetLiteral*);
+
 	/* This method is called for each structural constant. */
       virtual void lpm_modulo(class Design*des, class NetModulo*);
 
@@ -97,6 +100,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.23  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.22  2005/05/24 01:44:27  steve
  *  Do sign extension of structuran nets.
  *

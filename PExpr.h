@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.68 2005/01/09 20:16:00 steve Exp $"
+#ident "$Id: PExpr.h,v 1.69 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  <string>
@@ -197,6 +197,14 @@ class PEFNumber : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+
+      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
+				    unsigned lwidth,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
 
       virtual void dump(ostream&) const;
 
@@ -506,6 +514,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.69  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.68  2005/01/09 20:16:00  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

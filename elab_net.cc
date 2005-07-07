@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.165 2005/05/24 01:44:27 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.166 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,9 +182,9 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
       NetNet*osig;
 
-      unsigned width = lsig->pin_count();
-      if (rsig->pin_count() > lsig->pin_count())
-	    width = rsig->pin_count();
+      unsigned width = lsig->vector_width();
+      if (rsig->vector_width() > lsig->vector_width())
+	    width = rsig->vector_width();
 
 
 	/* The owidth is the output width of the lpm_add_sub
@@ -212,15 +212,26 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
-      if (lsig->pin_count() < width)
+      if (lsig->vector_width() < width)
 	    lsig = pad_to_width(des, lsig, width);
 
-      if (rsig->pin_count() < width)
+      if (rsig->vector_width() < width)
 	    rsig = pad_to_width(des, rsig, width);
+
+	// Check that the argument types match.
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_line() << ": error: Arguments of add/sub "
+		 << "have different data types." << endl;
+	    cerr << get_line() << ":      : Left argument is "
+		 << lsig->data_type() << ", right argument is "
+		 << rsig->data_type() << "." << endl;
+	    des->errors += 1;
+      }
 
 	// Make the adder as wide as the widest operand
       osig = new NetNet(scope, scope->local_symbol(),
 			NetNet::WIRE, owidth);
+      osig->data_type(lsig->data_type());
       osig->local_flag(true);
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Elaborate NetAddSub "
@@ -416,6 +427,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, 0, 0);
+	    tmp->data_type(IVL_VT_LOGIC);
 	    tmp->local_flag(true);
 	    tmp->set_line(*lsig);
 
@@ -545,6 +557,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+      osig->data_type(IVL_VT_LOGIC);
       osig->set_line(*this);
       osig->local_flag(true);
 
@@ -698,6 +711,18 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 		  rwidth = rsig->vector_width();
       }
 
+	/* The arguments of a divide must have the same type. */
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_line() << ": error: Arguments of divide "
+		 << "have different data types." << endl;
+	    cerr << get_line() << ":      : Left argument is "
+		 << lsig->data_type() << ", right argument is "
+		 << rsig->data_type() << "." << endl;
+	    des->errors += 1;
+      }
+
+      ivl_variable_type_t data_type = lsig->data_type();
+
 	// Create a device with the calculated dimensions.
       NetDivide*div = new NetDivide(scope, scope->local_symbol(), rwidth,
 				    lsig->vector_width(),
@@ -721,6 +746,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
+      osig->data_type(data_type);
       osig->set_signed(div->get_signed());
 
       connect(div->pin_Result(), osig->pin(0));
@@ -743,6 +769,18 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (rsig == 0) return 0;
 
+	/* The arguments of a modulus must have the same type. */
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_line() << ": error: Arguments of modulus "
+		 << "have different data types." << endl;
+	    cerr << get_line() << ":      : Left argument is "
+		 << lsig->data_type() << ", right argument is "
+		 << rsig->data_type() << "." << endl;
+	    des->errors += 1;
+      }
+
+      ivl_variable_type_t data_type = lsig->data_type();
+
 	/* rwidth is result width. */
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
@@ -763,10 +801,8 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
+      osig->data_type(data_type);
       osig->local_flag(true);
-
-      unsigned cnt = osig->pin_count();
-      if (cnt > rwidth) cnt = rwidth;
 
       connect(mod->pin_Result(), osig->pin(0));
 
@@ -904,6 +940,18 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	// The mult is signed if both its operands are signed.
       bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
 
+	/* The arguments of a divide must have the same type. */
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_line() << ": error: Arguments of multiply "
+		 << "have different data types." << endl;
+	    cerr << get_line() << ":      : Left argument is "
+		 << lsig->data_type() << ", right argument is "
+		 << rsig->data_type() << "." << endl;
+	    des->errors += 1;
+      }
+
+      ivl_variable_type_t data_type = lsig->data_type();
+
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
 	    rwidth = lsig->vector_width() + rsig->vector_width();
@@ -929,6 +977,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	// Make a signal to carry the output from the multiply.
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
+      osig->data_type(data_type);
       osig->local_flag(true);
       connect(mult->pin_Result(), osig->pin(0));
 
@@ -949,6 +998,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
       bool right_flag  =  op_ == 'r' || op_ == 'R';
       bool signed_flag =  op_ == 'R';
+      ivl_variable_type_t data_type = lsig->data_type();
 
 	/* Handle the special case of a constant shift amount. There
 	   is no reason in this case to create a gate at all, just
@@ -975,6 +1025,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		 result that I return from this function. */
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, lwidth);
+	    osig->data_type( data_type );
 	    osig->local_flag(true);
 
 
@@ -1003,6 +1054,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
 	    NetNet*zero = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, pad_width);
+	    zero->data_type( data_type );
 	    zero->local_flag(true);
 	    zero->set_line(*this);
 
@@ -1017,6 +1069,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		  des->add_node(sign_pad);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, 1);
+		  tmp->data_type( data_type );
 		  connect(sign_bit->pin(0), tmp->pin(0));
 		  connect(sign_bit->pin(0), sign_pad->pin(1));
 
@@ -1066,6 +1119,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		 input) */
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, part_width);
+	    tmp->data_type( data_type );
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 	    connect(part->pin(0), tmp->pin(0));
@@ -1091,6 +1145,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, lwidth);
+      osig->data_type( data_type );
       osig->local_flag(true);
       osig->set_signed(signed_flag);
 
@@ -1367,6 +1422,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, vector_width * repeat);
+      osig->data_type(IVL_VT_LOGIC);
 
       connect(dev->pin(0), osig->pin(0));
 
@@ -1398,8 +1454,6 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 {
 	/* Elaborate the selector. */
       NetNet*sel;
-
-      unsigned sig_width = sig->vector_width();
 
       if (sig->msb() < sig->lsb()) {
 	    NetExpr*sel_expr = msb_->elaborate_expr(des, scope);
@@ -1439,6 +1493,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 
       NetNet*out = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, 1);
+      out->data_type(sig->data_type());
 
       connect(out->pin(0), mux->pin(0));
       return out;
@@ -1578,6 +1633,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, part_count-1, 0);
+	    tmp->data_type( sig->data_type() );
 	    tmp->local_flag(true);
 	    connect(tmp->pin(0), ps->pin(0));
 
@@ -1640,6 +1696,7 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, ram->width());
+      osig->data_type(IVL_VT_LOGIC);
       osig->local_flag(true);
 
       connect(ram->pin_Q(), osig->pin(0));
@@ -1735,6 +1792,34 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 
       osig->local_flag(true);
       return osig;
+}
+
+/*
+ * Elaborate a number as a NetConst object.
+ */
+NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay,
+				 Link::strength_t drive0,
+				 Link::strength_t drive1) const
+{
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate real literal node, "
+		 << "value=" << value() << "." << endl;
+      }
+
+      NetLiteral*obj = new NetLiteral(scope, scope->local_symbol(), value());
+      obj->set_line(*this);
+      des->add_node(obj);
+
+      NetNet*net = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
+      net->data_type(IVL_VT_REAL);
+      net->local_flag(true);
+
+      connect(net->pin(0), obj->pin(0));
+      return net;
 }
 
 /*
@@ -1995,6 +2080,8 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
 /*
  * Elaborate a number as a NetConst object.
+ *
+ * The code assumes that the result is IVL_VT_LOGIC.
  */
 NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 				unsigned lwidth,
@@ -2007,10 +2094,14 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 
 	/* If we are constrained by a l-value size, then just make a
 	   number constant with the correct size and set as many bits
-	   in that constant as make sense. Pad excess with zeros. */
+	   in that constant as make sense. Pad excess with
+	   zeros. Also, assume that numbers are meant to be logic
+	   type. */
+
       if (lwidth > 0) {
 	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, lwidth);
+	    net->data_type(IVL_VT_LOGIC);
 	    net->local_flag(true);
 	    net->set_signed(value_->has_sign());
 
@@ -2049,6 +2140,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
       if (value_->has_len()) {
 	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, value_->len());
+	    net->data_type(IVL_VT_LOGIC);
 	    net->local_flag(true);
 	    net->set_signed(value_->has_sign());
 	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
@@ -2093,6 +2185,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, width);
+      net->data_type(IVL_VT_LOGIC);
       net->local_flag(true);
       NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
       connect(net->pin(0), tmp->pin(0));
@@ -2323,6 +2416,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    assert(width > 0);
 	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, width);
+	    sig->data_type(IVL_VT_LOGIC);
 	    sig->local_flag(true);
 
 	      /* Take the 2s complement by taking the 1s complement
@@ -2360,6 +2454,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	  case '~': // Bitwise NOT
 	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
 			     sub_sig->vector_width());
+	    sig->data_type(sub_sig->data_type());
 	    sig->local_flag(true);
 	    gate = new NetLogic(scope, scope->local_symbol(),
 				2, NetLogic::NOT, sub_sig->vector_width());
@@ -2390,6 +2485,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	  case '-': // Unary 2's complement.
 	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, owidth);
+	    sig->data_type(sub_sig->data_type());
 	    sig->local_flag(true);
 
 	    if (sub_sig->vector_width() < owidth)
@@ -2468,6 +2564,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.166  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.165  2005/05/24 01:44:27  steve
  *  Do sign extension of structuran nets.
  *

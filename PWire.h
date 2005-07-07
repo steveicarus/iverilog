@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.17 2004/02/20 18:53:33 steve Exp $"
+#ident "$Id: PWire.h,v 1.18 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -49,8 +49,14 @@ class Design;
 class PWire : public LineInfo {
 
     public:
-      PWire(const hname_t&hname, NetNet::Type t, NetNet::PortType pt);
-      PWire(char*name, NetNet::Type t, NetNet::PortType pt);
+      PWire(const hname_t&hname,
+	    NetNet::Type t,
+	    NetNet::PortType pt,
+	    ivl_variable_type_t dt);
+      PWire(char*name,
+	    NetNet::Type t,
+	    NetNet::PortType pt,
+	    ivl_variable_type_t dt);
 
 	// Return a hierarchical name.
       const hname_t&path() const;
@@ -64,6 +70,9 @@ class PWire : public LineInfo {
       void set_signed(bool flag);
       bool get_signed() const;
       bool get_isint() const;
+
+      bool set_data_type(ivl_variable_type_t dt);
+      ivl_variable_type_t get_data_type() const;
 
       void set_range(PExpr*msb, PExpr*lsb);
 
@@ -80,6 +89,7 @@ class PWire : public LineInfo {
       hname_t hname_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
+      ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
 
@@ -100,6 +110,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.18  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.17  2004/02/20 18:53:33  steve
  *  Addtrbute keys are perm_strings.
  *

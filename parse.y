@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.202 2005/02/19 16:44:38 steve Exp $"
+#ident "$Id: parse.y,v 1.203 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -106,6 +106,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
+      ivl_variable_type_t datatype;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -116,7 +117,6 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
       PTaskFuncArg function_type;
 
-      struct { svector<PExpr*>*range; svector<PExpr*>*delay; } range_delay;
       net_decl_assign_t*net_decl_assign;
 
       verinum* number;
@@ -132,13 +132,13 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_PO_POS K_PO_NEG
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
-%token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
+%token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
 %token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
 %token K_initial K_inout K_input K_integer K_join K_large K_localparam
-%token K_macromodule
+%token K_logic K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
 %token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
@@ -149,7 +149,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
-%token K_wor K_xnor K_xor
+%token K_wone K_wor K_xnor K_xor
 %token K_Shold K_Speriod K_Srecovery K_Srecrem K_Ssetup K_Swidth K_Ssetuphold
 
 %token KK_attribute
@@ -202,6 +202,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype
 %type <porttype> port_type
+%type <datatype> primitive_type primitive_type_opt
 %type <parmvalue> parameter_value_opt
 
 %type <function_type> function_range_or_type_opt
@@ -210,8 +211,6 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <event_statement> event_control
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
-
-%type <range_delay> range_delay
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
@@ -307,28 +306,52 @@ attribute
      scope is entered, the source may declare new registers and
      integers. This rule matches those declarations. The containing
      rule has presumably set up the scope. */
+
 block_item_decl
-	: attribute_list_opt K_reg signed_opt range register_variable_list ';'
-		{ pform_set_net_range($5, $4, $3);
+	: attribute_list_opt K_reg
+          primitive_type_opt signed_opt range
+          register_variable_list ';'
+		{ ivl_variable_type_t dtype = $3;
+		  if (dtype == IVL_VT_NO_TYPE)
+			dtype = IVL_VT_LOGIC;
+		  pform_set_net_range($6, $5, $4, dtype);
 		  if ($1) delete $1;
 		}
-	| attribute_list_opt K_reg signed_opt register_variable_list ';'
-		{ pform_set_net_range($4, 0, $3);
+
+  /* This differs from the above pattern only in the absence of the
+     range. This is the rule for a scalar. */
+
+	| attribute_list_opt K_reg
+          primitive_type_opt signed_opt
+          register_variable_list ';'
+		{ ivl_variable_type_t dtype = $3;
+		  if (dtype == IVL_VT_NO_TYPE)
+			dtype = IVL_VT_LOGIC;
+		  pform_set_net_range($5, 0, $4, dtype);
 		  if ($1) delete $1;
 		}
+
+  /* Integer declarations are simpler in that they do not have all the
+     trappings of a general variable declaration. All of that is
+     implicit in the "integer" of the declaratin. */
+
 	| attribute_list_opt K_integer register_variable_list ';'
 		{ pform_set_reg_integer($3);
 		  if ($1) delete $1;
 		}
+
 	| K_time register_variable_list ';'
 		{ pform_set_reg_time($2);
 		}
+
 	| K_real list_of_identifiers ';'
 		{ pform_make_reals($2, @1.text, @1.first_line);
 		}
+
 	| K_realtime list_of_identifiers ';'
 		{ pform_make_reals($2, @1.text, @1.first_line);
 		}
+
 	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_decl ';'
 
@@ -1484,10 +1507,6 @@ module  : attribute_list_opt module_start IDENTIFIER
 
 module_start : K_module | K_macromodule ;
 
-range_delay : range_opt delay3_opt
-		{ $$.range = $1; $$.delay = $2; }
-	;
-
 module_port_list_opt
 	: '(' list_of_ports ')' { $$ = $2; }
 	| '(' list_of_port_declarations ')' { $$ = $2; }
@@ -1509,40 +1528,76 @@ module_parameter_port_list
 	;
 
 module_item
-	: attribute_list_opt net_type signed_opt range_delay list_of_identifiers ';'
-		{ pform_makewire(@2, $4.range, $3, $5, $2,
-				 NetNet::NOT_A_PORT, $1);
-		  if ($4.delay != 0) {
-			yyerror(@4, "sorry: net delays not supported.");
-			delete $4.delay;
+
+  /* This rule detects net declarations that possibly include a
+     primitive type, an optional vector range and signed flag. This
+     also includes an optional delay set. The values are then applied
+     to a list of names. If the primitive type is not specified, then
+     resort to the default type LOGIC. */
+
+	: attribute_list_opt net_type
+          primitive_type_opt signed_opt range_opt
+          delay3_opt
+          list_of_identifiers ';'
+
+		{ ivl_variable_type_t dtype = $3;
+		  if (dtype == IVL_VT_NO_TYPE)
+			dtype = IVL_VT_LOGIC;
+		  pform_makewire(@2, $5, $4, $7, $2,
+				 NetNet::NOT_A_PORT, dtype, $1);
+		  if ($6 != 0) {
+			yyerror(@6, "sorry: net delays not supported.");
+			delete $6;
 		  }
 		  if ($1) delete $1;
 		}
-	| attribute_list_opt net_type signed_opt range_delay net_decl_assigns ';'
-		{ pform_makewire(@2, $4.range, $3, $4.delay,
-				 str_strength, $5, $2);
+
+  /* Very similar to the rule above, but this takes a list of
+     net_decl_assigns, which are <name> = <expr> assignment
+     declarations. */
+
+	| attribute_list_opt net_type
+          primitive_type_opt signed_opt range_opt
+          delay3_opt net_decl_assigns ';'
+
+		{ ivl_variable_type_t dtype = $3;
+		  if (dtype == IVL_VT_NO_TYPE)
+			dtype = IVL_VT_LOGIC;
+		  pform_makewire(@2, $5, $4, $6,
+				 str_strength, $7, $2, dtype);
 		  if ($1) {
-			yyerror(@3, "sorry: Attributes not supported "
+			yyerror(@2, "sorry: Attributes not supported "
 				"on net declaration assignments.");
 			delete $1;
 		  }
-		}
-	| attribute_list_opt net_type signed_opt drive_strength net_decl_assigns ';'
-		{ pform_makewire(@2, 0, $3, 0, $4, $5, $2);
-		  if ($1) {
-			yyerror(@4, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-	| K_trireg charge_strength_opt range_delay list_of_identifiers ';'
-		{ yyerror(@1, "sorry: trireg nets not supported.");
-		  delete $3.range;
-		  delete $3.delay;
 		}
 
-	| port_type signed_opt range_delay list_of_identifiers ';'
-		{ pform_set_port_type(@1, $4, $3.range, $2, $1);
+  /* This form doesn't have the range, but does have strengths. This
+     gives strength to the assignment drivers. */
+
+	| attribute_list_opt net_type
+          primitive_type_opt signed_opt
+          drive_strength net_decl_assigns ';'
+
+		{ ivl_variable_type_t dtype = $3;
+		  if (dtype == IVL_VT_NO_TYPE)
+			dtype = IVL_VT_LOGIC;
+		  pform_makewire(@2, 0, $4, 0, $5, $6, $2, dtype);
+		  if ($1) {
+			yyerror(@2, "sorry: Attributes not supported "
+				"on net declaration assignments.");
+			delete $1;
+		  }
+		}
+
+	| K_trireg charge_strength_opt range_opt delay3_opt list_of_identifiers ';'
+		{ yyerror(@1, "sorry: trireg nets not supported.");
+		  delete $3;
+		  delete $4;
+		}
+
+	| port_type signed_opt range_opt delay3_opt list_of_identifiers ';'
+		{ pform_set_port_type(@1, $5, $3, $2, $1);
 		}
 
   /* The next two rules handle Verilog 2001 statements of the form:
@@ -1550,11 +1605,13 @@ module_item
      This creates the wire and sets the port type all at once. */
 
 	| port_type net_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, $1, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0);
 		}
 
 	| K_output var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::POUTPUT, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2,
+				 NetNet::POUTPUT,
+				 IVL_VT_NO_TYPE, 0);
 		}
 
   /* var_type declaration (reg variables) cannot be input or output,
@@ -1562,20 +1619,22 @@ module_item
      cannot be attached to a reg. These rules catch that error early. */
 
 	| K_input var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINPUT, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINPUT,
+				 IVL_VT_NO_TYPE, 0);
 		  yyerror(@2, "error: reg variables cannot be inputs.");
 		}
 
 	| K_inout var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINOUT, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINOUT,
+				 IVL_VT_NO_TYPE, 0);
 		  yyerror(@2, "error: reg variables cannot be inouts.");
 		}
 
-	| port_type signed_opt range_delay error ';'
+	| port_type signed_opt range_opt delay3_opt error ';'
 		{ yyerror(@3, "error: Invalid variable list"
 			  " in port declaration.");
-		  if ($3.range) delete $3.range;
-		  if ($3.delay) delete $3.delay;
+		  if ($3) delete $3;
+		  if ($4) delete $4;
 		  yyerrok;
 		}
 
@@ -1726,8 +1785,7 @@ module_item
      reasonable error message can be produced. */
 
 	| error ';'
-		{ yyerror(@1, "error: invalid module item. "
-			  "Did you forget an initial or always?");
+		{ yyerror(@2, "error: invalid module item.");
 		  yyerrok;
 		}
 
@@ -1804,6 +1862,14 @@ net_decl_assigns
 		}
 	;
 
+primitive_type
+        : K_logic { $$ = IVL_VT_LOGIC; }
+        | K_bool { $$ = IVL_VT_BOOL; }
+        | K_real { $$ = IVL_VT_REAL; }
+        ;
+
+primitive_type_opt : primitive_type { $$ = $1; } | { $$ = IVL_VT_NO_TYPE; } ;
+
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
 	| K_tri     { $$ = NetNet::TRI; }
@@ -1815,6 +1881,7 @@ net_type
 	| K_supply1 { $$ = NetNet::SUPPLY1; }
 	| K_wor     { $$ = NetNet::WOR; }
 	| K_trior   { $$ = NetNet::TRIOR; }
+	| K_wone    { $$ = NetNet::WONE; }
 	;
 
 var_type
@@ -2211,12 +2278,14 @@ function_range_or_type_opt
 register_variable
 	: IDENTIFIER
 		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT, 0);
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_NO_TYPE, 0);
 		  $$ = $1;
 		}
 	| IDENTIFIER '=' expression
 		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT, 0);
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_NO_TYPE, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: register declaration assignment"
 				" value must be a constant expression.");
@@ -2225,7 +2294,8 @@ register_variable
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
 		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT, 0);
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_NO_TYPE, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))
@@ -3021,19 +3091,28 @@ udp_port_decl
 	: K_input list_of_identifiers ';'
 		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire($2, NetNet::IMPLICIT, NetNet::POUTPUT);
+		{ PWire*pp = new PWire($2,
+				       NetNet::IMPLICIT,
+				       NetNet::POUTPUT,
+				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
 		}
 	| K_reg IDENTIFIER ';'
-		{ PWire*pp = new PWire($2, NetNet::REG, NetNet::PIMPLICIT);
+		{ PWire*pp = new PWire($2,
+				       NetNet::REG,
+				       NetNet::PIMPLICIT,
+				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
 		}
 	| K_reg K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire($3, NetNet::REG, NetNet::POUTPUT);
+		{ PWire*pp = new PWire($3,
+				       NetNet::REG,
+				       NetNet::POUTPUT,
+				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;

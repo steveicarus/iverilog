@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.90 2005/06/28 04:25:55 steve Exp $"
+#ident "$Id: main.cc,v 1.91 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,7 +81,13 @@ const char*basedir = ".";
 
 const char*target = "null";
 
+/*
+ * These are the language support control flags. These support which
+ * language features (the generation) to support. The generation_flag
+ * is a major moce, and the gn_* flags control specifc sub-features.
+ */
 generation_t generation_flag = GN_DEFAULT;
+bool gn_cadence_types_flag = true;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
@@ -758,6 +764,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.91  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.90  2005/06/28 04:25:55  steve
  *  Remove reference to SystemVerilog.
  *

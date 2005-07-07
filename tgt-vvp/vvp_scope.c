@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.129 2005/06/17 03:46:52 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.130 2005/07/07 16:22:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -214,6 +214,20 @@ unsigned width_of_nexus(ivl_nexus_t nex)
       }
 
       return 0;
+}
+
+ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig != 0)
+		  return ivl_signal_data_type(sig);
+      }
+
+	/* shouldn't happen! */
+      return IVL_VT_NO_TYPE;
 }
 
 
@@ -530,19 +544,34 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
-	      /* Constants should have exactly 1 pin, with a vector value. */
+	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);
 
-	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
-		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
+	    switch (ivl_const_type(cptr)) {
+		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
+		  if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
+		      && (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
 
-		  draw_C4_to_string(result, sizeof(result), cptr);
+			draw_C4_to_string(result, sizeof(result), cptr);
 
-	    } else {
-		  draw_C8_to_string(result, sizeof(result), cptr,
-				    ivl_nexus_ptr_drive0(nptr),
-				    ivl_nexus_ptr_drive1(nptr));
+		  } else {
+			draw_C8_to_string(result, sizeof(result), cptr,
+					  ivl_nexus_ptr_drive0(nptr),
+					  ivl_nexus_ptr_drive1(nptr));
+		  }
+		  break;
+
+		case IVL_VT_REAL:
+		  snprintf(result, sizeof(result),
+			   "Cr<%lg>", ivl_const_real(cptr));
+		  break;
+
+		default:
+		  assert(0);
+		  break;
 	    }
+
 	    return result;
       }
 
@@ -769,11 +798,19 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       int msb = ivl_signal_msb(sig);
       int lsb = ivl_signal_lsb(sig);
 
-      const char*signed_flag = ivl_signal_integer(sig) ? "/i" :
+      const char*datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
 
+      switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_LOGIC:
+	    break;
+	  case IVL_VT_REAL:
+	    datatype_flag = "/real";
+	    break;
+      }
+
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
-	      vvp_signal_label(sig), signed_flag,
+	      vvp_signal_label(sig), datatype_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
 }
 
@@ -788,7 +825,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
       typedef const char*const_charp;
       const char* arg;
 
-      const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
+      const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
 
 	/* Skip the local signal. */
       if (ivl_signal_local(sig))
@@ -800,8 +837,16 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    arg = draw_net_input(nex);
       }
 
+      switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_LOGIC:
+	    break;
+	  case IVL_VT_REAL:
+	    datatype_flag = "/real";
+	    break;
+      }
+
       fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d, %s;\n",
-	      vvp_signal_label(sig), signed_flag,
+	      vvp_signal_label(sig), datatype_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb, arg);
 
 }
@@ -1332,6 +1377,12 @@ static void draw_lpm_add(ivl_lpm_t net)
       const char*src_table[2];
       unsigned width;
       const char*type = "";
+      ivl_variable_type_t dta = data_type_of_nexus(ivl_lpm_data(net,0));
+      ivl_variable_type_t dtb = data_type_of_nexus(ivl_lpm_data(net,1));
+      ivl_variable_type_t dto = IVL_VT_LOGIC;
+
+      if (dta == IVL_VT_REAL && dtb == IVL_VT_REAL)
+	    dto = IVL_VT_REAL;
 
       width = ivl_lpm_width(net);
 
@@ -1340,13 +1391,18 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    type = "sum";
 	    break;
 	  case IVL_LPM_SUB:
-	    type = "sub";
+	    if (dto == IVL_VT_REAL)
+		  type = "sub.r";
+	    else
+		  type = "sub";
 	    break;
 	  case IVL_LPM_MULT:
 	    type = "mult";
 	    break;
 	  case IVL_LPM_DIVIDE:
-	    if (ivl_lpm_signed(net))
+	    if (dto == IVL_VT_REAL)
+		  type = "div.r";
+	    else if (ivl_lpm_signed(net))
 		  type = "div.s";
 	    else
 		  type = "div";
@@ -1905,10 +1961,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	/* Scan the scope for word variables. */
       for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1) {
 	    ivl_variable_t var = ivl_scope_var(net, idx);
-	    const char*type = "real";
 
-	    fprintf(vvp_out, "W_%s .word %s, \"%s\";\n",
-		    vvp_word_label(var), type,
+	    fprintf(vvp_out, "W_%s .var/real \"%s\", 0, 0;\n",
+		    vvp_word_label(var),
 		    ivl_variable_name(var));
       }
 
@@ -1955,6 +2010,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.130  2005/07/07 16:22:50  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.129  2005/06/17 03:46:52  steve
  *  Make functors know their own width.
  *

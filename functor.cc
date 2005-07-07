@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.34 2005/05/24 01:44:27 steve Exp $"
+#ident "$Id: functor.cc,v 1.35 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,6 +56,10 @@ void functor_t::lpm_const(class Design*, class NetConst*)
 }
 
 void functor_t::lpm_divide(class Design*, class NetDivide*)
+{
+}
+
+void functor_t::lpm_literal(class Design*, class NetLiteral*)
 {
 }
 
@@ -194,6 +198,11 @@ void NetFF::functor_node(Design*des, functor_t*fun)
       fun->lpm_ff(des, this);
 }
 
+void NetLiteral::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_literal(des, this);
+}
+
 void NetLogic::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_logic(des, this);
@@ -285,6 +294,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.35  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.34  2005/05/24 01:44:27  steve
  *  Do sign extension of structuran nets.
  *

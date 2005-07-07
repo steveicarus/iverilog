@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.82 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: pform.h,v 1.83 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -171,23 +171,31 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
  * go into a module that is currently opened.
  */
 extern void pform_makewire(const struct vlltype&li, const char*name,
-			   NetNet::Type type, NetNet::PortType pt,
+			   NetNet::Type type,
+			   NetNet::PortType pt,
+			   ivl_variable_type_t,
 			   svector<named_pexpr_t*>*attr);
 
+/* This form handles simple declarations */
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   bool signed_flag,
 			   list<perm_string>*names,
 			   NetNet::Type type,
 			   NetNet::PortType,
+			   ivl_variable_type_t,
 			   svector<named_pexpr_t*>*attr);
+
+/* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   bool signed_flag,
 			   svector<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
-			   NetNet::Type type);
+			   NetNet::Type type,
+			   ivl_variable_type_t);
+
 extern void pform_make_reginit(const struct vlltype&li,
 			       const char*name, PExpr*expr);
 
@@ -203,7 +211,9 @@ extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
 extern void pform_set_net_range(list<perm_string>*names,
-				svector<PExpr*>*, bool);
+				svector<PExpr*>*,
+				bool signed_flag,
+				ivl_variable_type_t);
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
@@ -295,6 +305,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.83  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.82  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.131 2005/05/06 00:25:13 steve Exp $"
+#ident "$Id: pform.cc,v 1.132 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -614,7 +614,8 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 	/* Make the PWire for the output port. */
       pins[0] = new PWire(hier_name(out_name),
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
-			  NetNet::POUTPUT);
+			  NetNet::POUTPUT,
+			  IVL_VT_LOGIC);
       pins[0]->set_file(file);
       pins[0]->set_lineno(lineno);
 
@@ -627,7 +628,8 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 	      assert(idx < pins.count());
 	      pins[idx] = new PWire(hier_name(*cur),
 				    NetNet::WIRE,
-				    NetNet::PINPUT);
+				    NetNet::PINPUT,
+				    IVL_VT_LOGIC);
 	      pins[idx]->set_file(file);
 	      pins[idx]->set_lineno(lineno);
 	}
@@ -691,7 +693,8 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
  */
 static void pform_set_net_range(const char* name,
 				const svector<PExpr*>*range,
-				bool signed_flag)
+				bool signed_flag,
+				ivl_variable_type_t dt)
 {
 
       PWire*cur = pform_cur_module->get_wire(hier_name(name));
@@ -712,11 +715,15 @@ static void pform_set_net_range(const char* name,
 	    cur->set_range((*range)[0], (*range)[1]);
       }
       cur->set_signed(signed_flag);
+
+      if (dt != IVL_VT_NO_TYPE)
+	    cur->set_data_type(dt);
 }
 
 void pform_set_net_range(list<perm_string>*names,
 			 svector<PExpr*>*range,
-			 bool signed_flag)
+			 bool signed_flag,
+			 ivl_variable_type_t dt)
 {
       assert((range == 0) || (range->count() == 2));
 
@@ -724,7 +731,7 @@ void pform_set_net_range(list<perm_string>*names,
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag);
+	    pform_set_net_range(txt, range, signed_flag, dt);
       }
 
       delete names;
@@ -1060,7 +1067,7 @@ void pform_module_define_port(const struct vlltype&li,
       }
 
 
-      cur = new PWire(name, type, port_type);
+      cur = new PWire(name, type, port_type, IVL_VT_LOGIC);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
 
@@ -1105,6 +1112,7 @@ void pform_module_define_port(const struct vlltype&li,
  */
 void pform_makewire(const vlltype&li, const char*nm,
 		    NetNet::Type type, NetNet::PortType pt,
+		    ivl_variable_type_t dt,
 		    svector<named_pexpr_t*>*attr)
 {
       hname_t name = hier_name(nm);
@@ -1132,7 +1140,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    return;
       }
 
-      cur = new PWire(name, type, pt);
+      cur = new PWire(name, type, pt, dt);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
 
@@ -1152,14 +1160,15 @@ void pform_makewire(const vlltype&li,
 		    list<perm_string>*names,
 		    NetNet::Type type,
 		    NetNet::PortType pt,
+		    ivl_variable_type_t dt,
 		    svector<named_pexpr_t*>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
-	    pform_makewire(li, txt, type, pt, attr);
-	    pform_set_net_range(txt, range, signed_flag);
+	    pform_makewire(li, txt, type, pt, dt, attr);
+	    pform_set_net_range(txt, range, signed_flag, dt);
       }
 
       delete names;
@@ -1173,7 +1182,8 @@ void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*delay,
 		    str_pair_t str,
 		    net_decl_assign_t*decls,
-		    NetNet::Type type)
+		    NetNet::Type type,
+		    ivl_variable_type_t dt)
 {
       net_decl_assign_t*first = decls->next;
       decls->next = 0;
@@ -1181,8 +1191,8 @@ void pform_makewire(const vlltype&li,
       while (first) {
 	    net_decl_assign_t*next = first->next;
 
-	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, 0);
-	    pform_set_net_range(first->name, range, signed_flag);
+	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, dt, 0);
+	    pform_set_net_range(first->name, range, signed_flag, dt);
 
 	    hname_t name = hier_name(first->name);
 	    PWire*cur = pform_cur_module->get_wire(name);
@@ -1208,7 +1218,7 @@ void pform_set_port_type(perm_string nm, NetNet::PortType pt,
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT);
+	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_LOGIC);
 	    cur->set_file(file);
 	    cur->set_lineno(lineno);
 	    pform_cur_module->add_wire(cur);
@@ -1297,7 +1307,8 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    if (curw) {
 		  curw->set_port_type(pt);
 	    } else {
-		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt);
+		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt,
+				   IVL_VT_LOGIC);
 		  curw->set_file(file);
 		  curw->set_lineno(lineno);
 		  pform_cur_module->add_wire(curw);
@@ -1455,7 +1466,7 @@ void pform_set_port_type(const struct vlltype&li,
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    if (range)
-		  pform_set_net_range(txt, range, signed_flag);
+		  pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE);
       }
 
       delete names;
@@ -1468,12 +1479,15 @@ static void pform_set_reg_integer(const char*nm)
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::INTEGER, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::INTEGER,
+			    NetNet::NOT_A_PORT,
+			    IVL_VT_LOGIC);
 	    cur->set_signed(true);
 	    pform_cur_module->add_wire(cur);
       } else {
 	    bool rc = cur->set_wire_type(NetNet::INTEGER);
 	    assert(rc);
+	    cur->set_data_type(IVL_VT_LOGIC);
 	    cur->set_signed(true);
       }
       assert(cur);
@@ -1499,10 +1513,12 @@ static void pform_set_reg_time(const char*nm)
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
 	    pform_cur_module->add_wire(cur);
       } else {
 	    bool rc = cur->set_wire_type(NetNet::REG);
+	    assert(rc);
+	    rc = cur->set_data_type(IVL_VT_LOGIC);
 	    assert(rc);
       }
       assert(cur);
@@ -1533,7 +1549,8 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 	    perm_string txt = *cur;
 	    PWire*pp = new PWire(hname_t(txt),
 				 NetNet::IMPLICIT,
-				 NetNet::PINPUT);
+				 NetNet::PINPUT,
+				 IVL_VT_LOGIC);
 	    (*out)[idx] = pp;
 	    idx += 1;
       }
@@ -1600,6 +1617,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.132  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.131  2005/05/06 00:25:13  steve
  *  Handle synthesis of concatenation expressions.
  *

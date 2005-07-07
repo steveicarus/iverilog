@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.128 2005/06/26 18:09:24 steve Exp $"
+#ident "$Id: stub.c,v 1.129 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1031,13 +1031,26 @@ static void signal_nexus_const(ivl_signal_t sig,
       const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
       const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
 
-      const char*bits = ivl_const_bits(con);
+      const char*bits;
       unsigned idx, width = ivl_const_width(con);
 
       fprintf(out, "      const-");
 
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    fprintf(out, "%c", bits[width-idx-1]);
+      switch (ivl_const_type(con)) {
+	  case IVL_VT_LOGIC:
+	    bits = ivl_const_bits(con);
+ 	    for (idx = 0 ;  idx < width ;  idx += 1) {
+		  fprintf(out, "%c", bits[width-idx-1]);
+	    }
+	    break;
+
+	  case IVL_VT_REAL:
+	    fprintf(out, "%lf", ivl_const_real(con));
+	    break;
+
+	  default:
+	    fprintf(out, "????");
+	    break;
       }
 
       fprintf(out, " (%s0, %s1, width=%u)\n", dr0, dr1, width);
@@ -1045,6 +1058,12 @@ static void signal_nexus_const(ivl_signal_t sig,
       if (ivl_signal_width(sig) != width) {
 	    fprintf(out, "ERROR: Width of signal does not match "
 		    "width of connected constant vector.\n");
+	    stub_errors += 1;
+      }
+
+      if (ivl_signal_data_type(sig) != ivl_const_type(con)) {
+	    fprintf(out, "ERROR: Signal data type does not match"
+		    " literal type.\n");
 	    stub_errors += 1;
       }
 }
@@ -1057,6 +1076,7 @@ static void show_signal(ivl_signal_t net)
 
       const char*type = "?";
       const char*port = "";
+      const char*data_type = "?";
       const char*sign = ivl_signal_signed(net)? "signed" : "unsigned";
 
       switch (ivl_signal_type(net)) {
@@ -1094,10 +1114,29 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
+      switch (ivl_signal_data_type(net)) {
+
+	  case IVL_VT_BOOL:
+	    data_type = "bool";
+	    break;
+
+	  case IVL_VT_LOGIC:
+	    data_type = "logic";
+	    break;
+
+	  case IVL_VT_REAL:
+	    data_type = "real";
+	    break;
+
+	  default:
+	    data_type = "?data?";
+	    break;
+      }
+
       nex = ivl_signal_nex(net);
 
-      fprintf(out, "  %s %s %s[%d:%d] %s  <width=%u> nexus=%s\n",
-	      type, sign, port,
+      fprintf(out, "  %s %s %s%s[%d:%d] %s  <width=%u> nexus=%s\n",
+	      type, sign, port, data_type,
 	      ivl_signal_msb(net), ivl_signal_lsb(net),
 	      ivl_signal_basename(net), ivl_signal_width(net),
 	      ivl_nexus_name(nex));
@@ -1130,6 +1169,12 @@ static void show_signal(ivl_signal_t net)
 				ivl_signal_width(sig));
 			stub_errors += 1;
 		  }
+
+		  if (ivl_signal_data_type(sig) != ivl_signal_data_type(net)) {
+			fprintf(out, " (ERROR: data type mismatch)");
+			stub_errors += 1;
+		  }
+
 		  fprintf(out, "\n");
 
 	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
@@ -1442,6 +1487,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.129  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.128  2005/06/26 18:09:24  steve
  *  Check width of part select based on direction.
  *

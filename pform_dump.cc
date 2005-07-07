@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.88 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.89 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -207,20 +207,22 @@ void PWire::dump(ostream&out) const
 
       switch (port_type_) {
 	  case NetNet::PIMPLICIT:
-	    out << " (implicit input)";
+	    out << " implicit input";
 	    break;
 	  case NetNet::PINPUT:
-	    out << " (input)";
+	    out << " input";
 	    break;
 	  case NetNet::POUTPUT:
-	    out << " (output)";
+	    out << " output";
 	    break;
 	  case NetNet::PINOUT:
-	    out << " (input output)";
+	    out << " inout";
 	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
       }
+
+      out << " " << data_type_;
 
       if (signed_) {
 	    out << " signed";
@@ -909,6 +911,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.89  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.88  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

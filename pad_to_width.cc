@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.18 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.19 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -97,6 +97,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 	// Make a NetNet for the NetConst to NetConcat link.
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, wid - net->vector_width());
+      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(2), tmp->pin(0));
 
@@ -104,6 +105,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 	// NetConcat node output pin.
       tmp = new NetNet(scope, scope->local_symbol(),
 		       NetNet::WIRE, wid);
+      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(0), tmp->pin(0));
 
@@ -125,6 +127,7 @@ NetNet*pad_to_width_signed(Design*des, NetNet*net, unsigned wid)
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
       tmp->set_line(*net);
       tmp->local_flag(true);
+      tmp->data_type(net->data_type());
       tmp->set_signed(true);
 
       connect(tmp->pin(0), se->pin(0));
@@ -146,6 +149,7 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, wid);
+      tmp->data_type(net->data_type());
       tmp->local_flag(true);
       tmp->set_line(*tmp);
       connect(ps->pin(0), tmp->pin(0));
@@ -155,6 +159,9 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.19  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.18  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

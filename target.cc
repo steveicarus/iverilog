@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.75 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: target.cc,v 1.76 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -184,6 +184,13 @@ bool target_t::net_function(const NetUserFunc*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetUserFunc node." << endl;
+      return false;
+}
+
+bool target_t::net_literal(const NetLiteral*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled LITERAL node." << endl;
       return false;
 }
 
@@ -436,6 +443,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.76  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.75  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

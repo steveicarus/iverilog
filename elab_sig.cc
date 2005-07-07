@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.38 2005/02/13 01:15:07 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.39 2005/07/07 16:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -651,6 +651,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    NetNet*sig = new NetNet(scope, name, wtype, msb, lsb);
+	    sig->data_type(data_type_);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_signed(get_signed());
@@ -666,6 +667,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.39  2005/07/07 16:22:49  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.38  2005/02/13 01:15:07  steve
  *  Replace supply nets with wires connected to pullup/down supply devices.
  *

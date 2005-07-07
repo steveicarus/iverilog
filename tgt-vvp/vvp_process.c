@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.113 2005/06/15 01:33:33 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.114 2005/07/07 16:22:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -312,6 +312,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
       return 0;
 }
 
+/*
+ * This function assigns a value to a real .variable. This is destined
+ * for /dev/null when typed ivl_signal_t takes over all the real
+ * variable support.
+ */
 static int show_stmt_assign_real(ivl_statement_t net)
 {
       int res;
@@ -328,6 +333,26 @@ static int show_stmt_assign_real(ivl_statement_t net)
 
       fprintf(vvp_out, "    %%set/wr W_%s, %d;\n",
 	      vvp_word_label(var), res);
+
+      return 0;
+}
+
+static int show_stmt_assign_sig_real(ivl_statement_t net)
+{
+      int res;
+      ivl_lval_t lval;
+      ivl_signal_t var;
+
+      res = draw_eval_real(ivl_stmt_rval(net));
+      clr_word(res);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+      var = ivl_lval_sig(lval);
+      assert(var != 0);
+
+      fprintf(vvp_out, "    %%set/wr V_%s, %d;\n",
+	      vvp_signal_label(var), res);
 
       return 0;
 }
@@ -356,7 +381,18 @@ static int show_stmt_assign(ivl_statement_t net)
 	    }
 
       } else {
-	    return show_stmt_assign_vector(net);
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    if (sig) switch (ivl_signal_data_type(sig)) {
+
+		case IVL_VT_REAL:
+		  return show_stmt_assign_sig_real(net);
+
+		default:
+		  return show_stmt_assign_vector(net);
+
+	    } else {
+		  return show_stmt_assign_vector(net);
+	    }
       }
 
       return 0;
@@ -1461,6 +1497,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.114  2005/07/07 16:22:50  steve
+ *  Generalize signals to carry types.
+ *
  * Revision 1.113  2005/06/15 01:33:33  steve
  *  Fix bit offsets when processing lval concatenation.
  *

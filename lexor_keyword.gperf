@@ -14,6 +14,7 @@ always,		K_always
 and,		K_and
 assign,		K_assign
 begin,		K_begin
+bool,		K_bool
 buf,		K_buf
 bufif0,		K_bufif0
 bufif1,		K_bufif1
@@ -51,6 +52,7 @@ integer,	K_integer
 join,		K_join
 large,		K_large
 localparam,	K_localparam
+logic,		K_logic
 macromodule,	K_macromodule
 medium,		K_medium
 module,		K_module
@@ -110,6 +112,7 @@ weak0,		K_weak0
 weak1,		K_weak1
 while,		K_while
 wire,		K_wire
+wone,		K_wone
 wor,		K_wor
 xnor,		K_xnor
 xor,		K_xor
