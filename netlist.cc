@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.245 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: netlist.cc,v 1.246 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1637,12 +1637,7 @@ unsigned NetConst::width() const
 }
 
 NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
-: scope_(s), statement_(0), result_sig_(result), result_var_(0), ports_(po)
-{
-}
-
-NetFuncDef::NetFuncDef(NetScope*s, NetVariable*result, const svector<NetNet*>&po)
-: scope_(s), statement_(0), result_sig_(0), result_var_(result), ports_(po)
+: scope_(s), statement_(0), result_sig_(result), ports_(po)
 {
 }
 
@@ -1688,11 +1683,6 @@ const NetNet* NetFuncDef::return_sig() const
       return result_sig_;
 }
 
-const NetVariable* NetFuncDef::return_var() const
-{
-      return result_var_;
-}
-
 NetSTask::NetSTask(const char*na, const svector<NetExpr*>&pa)
 : name_(0), parms_(pa)
 {
@@ -1724,14 +1714,9 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 }
 
 NetEUFunc::NetEUFunc(NetScope*def, NetESignal*res, svector<NetExpr*>&p)
-: func_(def), result_sig_(res), result_var_(0), parms_(p)
+: func_(def), result_sig_(res), parms_(p)
 {
       expr_width(result_sig_->expr_width());
-}
-
-NetEUFunc::NetEUFunc(NetScope*def, NetEVariable*res, svector<NetExpr*>&p)
-: func_(def), result_sig_(0), result_var_(res), parms_(p)
-{
 }
 
 NetEUFunc::~NetEUFunc()
@@ -1750,11 +1735,6 @@ const NetESignal*NetEUFunc::result_sig() const
       return result_sig_;
 }
 
-const NetEVariable*NetEUFunc::result_var() const
-{
-      return result_var_;
-}
-
 unsigned NetEUFunc::parm_count() const
 {
       return parms_.count();
@@ -1771,14 +1751,12 @@ const NetScope* NetEUFunc::func() const
       return func_;
 }
 
-NetExpr::TYPE NetEUFunc::expr_type() const
+ivl_variable_type_t NetEUFunc::expr_type() const
 {
       if (result_sig_)
 	    return result_sig_->expr_type();
-      if (result_var_)
-	    return result_var_->expr_type();
 
-      return ET_VOID;
+      return IVL_VT_VOID;
 }
 
 NetUTask::NetUTask(NetScope*def)
@@ -2077,6 +2055,11 @@ unsigned NetESignal::msi() const
       return net_->msb();
 }
 
+ivl_variable_type_t NetESignal::expr_type() const
+{
+      return net_->data_type();
+}
+
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
@@ -2233,6 +2216,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.246  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.245  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

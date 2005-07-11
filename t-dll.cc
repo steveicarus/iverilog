@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.152 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.153 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -242,22 +242,6 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
       return 0;
 }
 
-ivl_variable_t dll_target::find_variable(ivl_design_s&des,
-					 const NetVariable*net)
-{
-      ivl_scope_t scope = find_scope(des, net->scope());
-      assert(scope);
-
-      const char*nname = net->basename();
-      for (unsigned idx = 0 ;  idx < scope->nvar_ ;  idx += 1) {
-	    if (strcmp(scope->var_[idx]->name, nname) == 0)
-		  return scope->var_[idx];
-      }
-
-      assert(0);
-      return 0;
-}
-
 /*
  * This function locates an ivl_memory_t object that matches the
  * NetMemory object. The search works by looking for the parent scope,
@@ -441,14 +425,6 @@ static void scope_add_mem(ivl_scope_t scope, ivl_memory_t net)
       scope->mem_[scope->nmem_-1] = net;
 }
 
-static void scope_add_var(ivl_scope_t scope, ivl_variable_t net)
-{
-      scope->nvar_ += 1;
-      scope->var_   = (ivl_variable_t*)
-	    realloc(scope->var_, scope->nvar_*sizeof(ivl_variable_t));
-      scope->var_[scope->nvar_-1] = net;
-}
-
 ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
 					     const char*name)
 {
@@ -541,8 +517,6 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->lpm_ = 0;
       root_->nmem_ = 0;
       root_->mem_ = 0;
-      root_->nvar_ = 0;
-      root_->var_ = 0;
       make_scope_parameters(root_, s);
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
@@ -754,18 +728,6 @@ void dll_target::event(const NetEvent*net)
 	    obj->pins  = 0;
       }
 
-}
-
-void dll_target::variable(const NetVariable*net)
-{
-      struct ivl_variable_s *obj = new struct ivl_variable_s;
-
-      ivl_scope_t scope = find_scope(des_, net->scope());
-      obj->type = IVL_VT_REAL;
-      obj->name = net->basename();
-      obj->scope = scope;
-
-      scope_add_var(scope, obj);
 }
 
 void dll_target::logic(const NetLogic*net)
@@ -1962,8 +1924,6 @@ void dll_target::scope(const NetScope*net)
 	    scope->lpm_ = 0;
 	    scope->nmem_ = 0;
 	    scope->mem_ = 0;
-	    scope->nvar_ = 0;
-	    scope->var_ = 0;
 	    make_scope_parameters(scope, net);
 	    scope->time_units = net->time_unit();
 	    scope->nattr = net->attr_cnt();
@@ -2143,6 +2103,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.153  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.152  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.66 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.67 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -130,13 +130,6 @@ bool dll_target::func_def(const NetScope*net)
 	    return true;
       }
 
-      if (const NetVariable*ret_var = def->return_var()) {
-	    cerr << ret_var->get_line() << ": internal error: "
-		 << "Function " << net->name() << " has an unsupported "
-		 << "return type." << endl;
-	    return false;
-      }
-
       cerr << "?:0" << ": internal error: "
 	   << "Function " << net->name() << " has a return type"
 	   << " that I do not understand." << endl;
@@ -194,11 +187,7 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 		  cur->idx = expr_;
 		  expr_ = 0;
 	    } else {
-		  assert(asn->var());
-		  cur->type_ = IVL_LVAL_VAR;
-		  cur->idx = 0;
-		  cur->n.var = find_variable(des_, asn->var());
-
+		  assert(0);
 	    }
       }
 }
@@ -743,6 +732,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.67  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.66  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

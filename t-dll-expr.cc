@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.40 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.41 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,18 +38,7 @@
  */
 static ivl_variable_type_t get_expr_type(const NetExpr*net)
 {
-      switch (net->expr_type()) {
-	  case NetExpr::ET_VOID:
-	    return IVL_VT_VOID;
-
-	  case NetExpr::ET_REAL:
-	    return IVL_VT_REAL;
-
-	  case NetExpr::ET_VECTOR:
-	    return IVL_VT_VECTOR;
-      }
-
-      return IVL_VT_VOID;
+      return net->expr_type();
 }
 
 /*
@@ -369,18 +358,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_SFUNC;
-      switch (net->expr_type()) {
-	  case NetExpr::ET_VECTOR:
-	    expr->value_= IVL_VT_VECTOR;
-	    break;
-	  case NetExpr::ET_REAL:
-	    expr->value_= IVL_VT_REAL;
-	    break;
-	  case NetExpr::ET_VOID:
-	    assert(0);
-	    expr->value_= IVL_VT_VECTOR;
-	    break;
-      }
+      expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
 	/* system function names are lex_strings strings. */
@@ -438,7 +416,7 @@ void dll_target::expr_signal(const NetESignal*net)
       assert(expr_);
 
       expr_->type_ = IVL_EX_SIGNAL;
-      expr_->value_= IVL_VT_VECTOR;
+      expr_->value_= net->expr_type();
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.signal_.sig = find_signal(des_, net->sig());
@@ -493,20 +471,11 @@ void dll_target::expr_unary(const NetEUnary*net)
       expr_->u_.unary_.sub_ = sub;
 }
 
-void dll_target::expr_variable(const NetEVariable*net)
-{
-      assert(expr_ == 0);
-
-      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      expr_->type_  = IVL_EX_VARIABLE;
-      expr_->value_ = IVL_VT_REAL;
-      expr_->width_ = 0;
-      expr_->signed_= net->has_sign()? 1 : 0;
-      expr_->u_.variable_.var = find_variable(des_, net->variable());
-}
-
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.41  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.40  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

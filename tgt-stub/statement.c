@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.6 2005/05/08 23:44:08 steve Exp $"
+#ident "$Id: statement.c,v 1.7 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,6 @@
 static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 {
       ivl_memory_t mem;
-      ivl_variable_t var;
       unsigned wid = 0;
 
       if ( (mem = ivl_lval_mem(lval)) ) {
@@ -47,10 +46,6 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 			  ivl_memory_width(mem));
 		  stub_errors += 1;
 	    }
-
-      } else if ( (var = ivl_lval_var(lval)) ) {
-
-	    fprintf(out, "%*svariable %s\n", ind, "", ivl_variable_name(var));
 
       } else {
 	    ivl_signal_t sig = ivl_lval_sig(lval);

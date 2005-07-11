@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.19 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.20 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ unsigned count_lval_width(const NetAssign_*idx)
 }
 
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), mem_(0), var_(0), bmux_(0)
+: sig_(s), mem_(0), bmux_(0)
 {
       loff_ = 0;
       lwid_ = sig_->vector_width();
@@ -48,18 +48,10 @@ NetAssign_::NetAssign_(NetNet*s)
 }
 
 NetAssign_::NetAssign_(NetMemory*s)
-: sig_(0), mem_(s), var_(0), bmux_(0)
+: sig_(0), mem_(s), bmux_(0)
 {
       loff_ = 0;
       lwid_ = mem_->width();
-      more = 0;
-}
-
-NetAssign_::NetAssign_(NetVariable*s)
-: sig_(0), mem_(0), var_(s), bmux_(0)
-{
-      loff_ = 0;
-      lwid_ = 0;
       more = 0;
 }
 
@@ -118,12 +110,6 @@ NetMemory* NetAssign_::mem() const
 {
       return mem_;
 }
-
-NetVariable* NetAssign_::var() const
-{
-      return var_;
-}
-
 
 void NetAssign_::set_part(unsigned lo, unsigned lw)
 {
@@ -297,6 +283,9 @@ NetRelease::~NetRelease()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.20  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.19  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

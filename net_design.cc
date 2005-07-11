@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.45 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_design.cc,v 1.46 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -390,7 +390,7 @@ void NetScope::evaluate_parameters(Design*des)
 	    assert(expr);
 
 	    switch (expr->expr_type()) {
-		case NetExpr::ET_REAL:
+		case IVL_VT_REAL:
 		  if (! dynamic_cast<const NetECReal*>(expr)) {
 			cerr << (*cur).second.expr->get_line()
 			     << ": internal error: "
@@ -401,7 +401,7 @@ void NetScope::evaluate_parameters(Design*des)
 		  }
 		  break;
 
-		case NetExpr::ET_VECTOR:
+		case IVL_VT_LOGIC:
 		  if (! dynamic_cast<const NetEConst*>(expr)) {
 
 			  // Try to evaluate the expression.
@@ -618,6 +618,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.46  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.45  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *

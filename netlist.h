@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.345 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.346 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 /*
@@ -55,11 +55,9 @@ class NetProc;
 class NetProcTop;
 class NetRelease;
 class NetScope;
-class NetVariable;
 class NetEvProbe;
 class NetExpr;
 class NetESignal;
-class NetEVariable;
 class NetFuncDef;
 
 
@@ -1028,15 +1026,8 @@ class NetExpr  : public LineInfo {
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
 
-	// Expressions have type. The most common type is ET_VECTOR,
-	// which is a vector (possibly 1 bit) of 4-value bits. The
-	// ET_VOID is not generally used.
-	//
-	// ET_VOID     - No value at all.
-	// ET_VECTOR   - Vector of Verilog 4-value bits
-	// ET_REAL     - real/realtime expression
-      enum TYPE { ET_VOID=0, ET_VECTOR, ET_REAL };
-      virtual TYPE expr_type() const;
+	// Expressions have type.
+      virtual ivl_variable_type_t expr_type() const;
 
 	// How wide am I?
       unsigned expr_width() const { return width_; }
@@ -1161,7 +1152,7 @@ class NetECReal  : public NetExpr {
       virtual bool has_width() const;
 
 	// The type of this expression is ET_REAL
-      TYPE expr_type() const;
+      ivl_variable_type_t expr_type() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -1621,7 +1612,6 @@ class NetAssign_ {
     public:
       NetAssign_(NetNet*sig);
       NetAssign_(NetMemory*mem);
-      NetAssign_(NetVariable*var);
       ~NetAssign_();
 
 	// If this expression exists, then only a single bit is to be
@@ -1645,7 +1635,6 @@ class NetAssign_ {
 
       NetNet* sig() const;
       NetMemory*mem() const;
-      NetVariable*var() const;
 
 	// Mark that the synthesizer has worked with this l-value, so
 	// when it is released, the l-value signal should be turned
@@ -1666,7 +1655,6 @@ class NetAssign_ {
     private:
       NetNet *sig_;
       NetMemory*mem_;
-      NetVariable*var_;
       NetExpr*bmux_;
 
       bool turn_sig_to_wire_on_release_;
@@ -2207,7 +2195,6 @@ class NetFuncDef {
 
     public:
       NetFuncDef(NetScope*, NetNet*result, const svector<NetNet*>&po);
-      NetFuncDef(NetScope*, NetVariable*result, const svector<NetNet*>&po);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
@@ -2220,7 +2207,6 @@ class NetFuncDef {
       const NetNet*port(unsigned idx) const;
 
       const NetNet*return_sig() const;
-      const NetVariable*return_var() const;
 
       void dump(ostream&, unsigned ind) const;
 
@@ -2228,7 +2214,6 @@ class NetFuncDef {
       NetScope*scope_;
       NetProc*statement_;
       NetNet*result_sig_;
-      NetVariable*result_var_;
       svector<NetNet*>ports_;
 };
 
@@ -2377,36 +2362,6 @@ class NetTaskDef {
 };
 
 /*
- * Variable object such as real and realtime are represented by
- * instances of this class.
- */
-class NetVariable : public LineInfo {
-
-      friend class NetScope;
-
-    public:
-	// The name must be a permallocated string. This class makes
-	// no attempt to preserve it.
-      NetVariable(perm_string name);
-      ~NetVariable();
-
-      perm_string basename() const;
-
-      NetScope* scope();
-      const NetScope* scope() const;
-
-    private:
-      perm_string name_;
-
-      NetScope*scope_;
-      NetVariable*snext_;
-
-    private:
-      NetVariable(const NetVariable&);
-      NetVariable& operator= (const NetVariable&);
-};
-
-/*
  * This node represents a function call in an expression. The object
  * contains a pointer to the function definition, which is used to
  * locate the value register and input expressions.
@@ -2415,13 +2370,11 @@ class NetEUFunc  : public NetExpr {
 
     public:
       NetEUFunc(NetScope*, NetESignal*,   svector<NetExpr*>&);
-      NetEUFunc(NetScope*, NetEVariable*, svector<NetExpr*>&);
       ~NetEUFunc();
 
       const string name() const;
 
       const NetESignal*result_sig() const;
-      const NetEVariable*result_var() const;
 
       unsigned parm_count() const;
       const NetExpr* parm(unsigned idx) const;
@@ -2429,7 +2382,7 @@ class NetEUFunc  : public NetExpr {
       const NetScope* func() const;
 
       virtual bool set_width(unsigned);
-      virtual TYPE expr_type() const;
+      virtual ivl_variable_type_t expr_type() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2439,7 +2392,6 @@ class NetEUFunc  : public NetExpr {
     private:
       NetScope*func_;
       NetESignal*result_sig_;
-      NetEVariable*result_var_;
       svector<NetExpr*> parms_;
 
     private: // not implemented
@@ -2617,7 +2569,7 @@ class NetEBAdd : public NetEBinary {
       NetEBAdd(char op, NetExpr*l, NetExpr*r);
       ~NetEBAdd();
 
-      virtual TYPE expr_type() const;
+      virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w);
       virtual NetEBAdd* dup_expr() const;
@@ -2636,7 +2588,7 @@ class NetEBDiv : public NetEBinary {
       NetEBDiv(char op, NetExpr*l, NetExpr*r);
       ~NetEBDiv();
 
-      virtual TYPE expr_type() const;
+      virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w);
       virtual NetEBDiv* dup_expr() const;
@@ -2743,7 +2695,7 @@ class NetEBMult : public NetEBinary {
       NetEBMult(char op, NetExpr*l, NetExpr*r);
       ~NetEBMult();
 
-      virtual TYPE expr_type() const;
+      virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w);
       virtual NetEBMult* dup_expr() const;
@@ -2825,28 +2777,6 @@ class NetEConcat  : public NetExpr {
       bool repeat_calculated_;
 };
 
-/*
- * This node represents a reference to a variable.
- */
-class NetEVariable  : public NetExpr {
-
-    public:
-      NetEVariable(NetVariable*);
-      ~NetEVariable();
-
-      const NetVariable* variable() const;
-
-      TYPE expr_type() const;
-
-      void expr_scan(struct expr_scan_t*) const;
-      void dump(ostream&) const;
-
-      NetEVariable*dup_expr() const;
-      NexusSet* nex_input();
-
-    private:
-      NetVariable*var_;
-};
 
 /*
  * This class is a placeholder for a parameter expression. When
@@ -2968,7 +2898,7 @@ class NetEScope  : public NetExpr {
 class NetESFunc  : public NetExpr {
 
     public:
-      NetESFunc(const char*name, NetExpr::TYPE t,
+      NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms);
       ~NetESFunc();
 
@@ -2979,7 +2909,7 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
-      virtual TYPE expr_type() const;
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input();
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -2989,7 +2919,7 @@ class NetESFunc  : public NetExpr {
 
     private:
       const char* name_;
-      TYPE type_;
+      ivl_variable_type_t type_;
       unsigned nparms_;
       NetExpr**parms_;
 
@@ -3156,6 +3086,8 @@ class NetESignal  : public NetExpr {
       unsigned msi() const;
       unsigned lsi() const;
 
+      virtual ivl_variable_type_t expr_type() const;
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -3202,10 +3134,6 @@ class NetScope : public Attrib {
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
       NetEvent*find_event(const char*name);
-
-      void add_variable(NetVariable*);
-      void rem_variable(NetVariable*);
-      NetVariable*find_variable(const char*name);
 
 
 	/* These methods manage signals. The add_ and rem_signal
@@ -3325,7 +3253,6 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
-      NetVariable*vars_;
       NetNet   *signals_;
       NetMemory*memories_;
 
@@ -3505,6 +3432,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.346  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.345  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.130 2005/07/07 16:22:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.131 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -154,13 +154,6 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
  * copy it out.
  */
 const char* vvp_signal_label(ivl_signal_t sig)
-{
-      static char buf[32];
-      sprintf(buf, "$%p", sig);
-      return buf;
-}
-
-const char* vvp_word_label(ivl_variable_t sig)
 {
       static char buf[32];
       sprintf(buf, "$%p", sig);
@@ -1958,15 +1951,6 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
 
-	/* Scan the scope for word variables. */
-      for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1) {
-	    ivl_variable_t var = ivl_scope_var(net, idx);
-
-	    fprintf(vvp_out, "W_%s .var/real \"%s\", 0, 0;\n",
-		    vvp_word_label(var),
-		    ivl_variable_name(var));
-      }
-
 	/* Scan the signals (reg and net) and draw the appropriate
 	   statements to make the signal function. */
 
@@ -2010,6 +1994,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.131  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.130  2005/07/07 16:22:50  steve
  *  Generalize signals to carry types.
  *

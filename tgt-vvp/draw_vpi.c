@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.11 2005/06/18 15:55:21 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.12 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -79,7 +79,6 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_EX_STRING:
 		case IVL_EX_EVENT:
 		case IVL_EX_SCOPE:
-		case IVL_EX_VARIABLE:
 		  continue;
 
 		case IVL_EX_SFUNC:
@@ -185,12 +184,6 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  fprintf(vvp_out, ", V_%s",
 			  vvp_signal_label(ivl_expr_signal(expr)));
 		  continue;
-
-		case IVL_EX_VARIABLE: {
-		      ivl_variable_t var = ivl_expr_variable(expr);
-		      fprintf(vvp_out, ", W_%s", vvp_word_label(var));
-		      continue;
-		}
 
 		case IVL_EX_STRING:
 		  if (( par = ivl_expr_parameter(expr) )) {
@@ -299,6 +292,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.12  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.11  2005/06/18 15:55:21  steve
  *  Handle signed display of unsigned signals.
  *

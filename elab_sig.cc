@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.39 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.40 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -261,7 +261,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       NetNet*ret_sig = 0;
-      NetVariable*ret_real = 0;
 
 	/* Create the signals/variables of the return value and write
 	   them into the function scope. */
@@ -302,6 +301,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 	    ret_sig->set_line(*this);
 	    ret_sig->port_type(NetNet::POUTPUT);
+	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_INTEGER:
@@ -310,6 +310,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
+	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_TIME:
@@ -318,13 +319,17 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_signed(false);
 	    ret_sig->set_isint(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
+	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_REAL:
 	  case PTF_REALTIME:
-	    ret_real = new NetVariable(fname);
-	    ret_real->set_line(*this);
-	    scope->add_variable(ret_real);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, 1);
+	    ret_sig->set_line(*this);
+	    ret_sig->set_signed(true);
+	    ret_sig->set_isint(false);
+	    ret_sig->port_type(NetNet::POUTPUT);
+	    ret_sig->data_type(IVL_VT_REAL);
 	    break;
 
 	  default:
@@ -370,7 +375,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
       NetFuncDef*def = 0;
       if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports);
-      if (ret_real) def = new NetFuncDef(scope, ret_real, ports);
 
       assert(def);
       scope->set_func_def(def);
@@ -667,6 +671,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.40  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.39  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

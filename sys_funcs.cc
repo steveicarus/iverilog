@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_funcs.cc,v 1.6 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: sys_funcs.cc,v 1.7 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -31,14 +31,14 @@
  */
 
 static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   NetExpr::ET_REAL,    0, 0 },
-      { "$bitstoreal", NetExpr::ET_REAL,    0, 0 },
-      { "$itor",       NetExpr::ET_REAL,    0, 0 },
-      { "$realtobits", NetExpr::ET_VECTOR, 64, 0 },
-      { "$time",       NetExpr::ET_VECTOR, 64, 0 },
-      { "$stime",      NetExpr::ET_VECTOR, 32, 0 },
-      { "$simtime",    NetExpr::ET_VECTOR, 64, 0 },
-      { 0,             NetExpr::ET_VECTOR, 32, 0 }
+      { "$realtime",   IVL_VT_REAL,   0, 0 },
+      { "$bitstoreal", IVL_VT_REAL,   0, 0 },
+      { "$itor",       IVL_VT_REAL,   0, 0 },
+      { "$realtobits", IVL_VT_LOGIC, 64, 0 },
+      { "$time",       IVL_VT_LOGIC, 64, 0 },
+      { "$stime",      IVL_VT_LOGIC, 32, 0 },
+      { "$simtime",    IVL_VT_LOGIC, 64, 0 },
+      { 0,             IVL_VT_LOGIC, 32, 0 }
 };
 
 struct sfunc_return_type_cell : sfunc_return_type {
@@ -124,7 +124,7 @@ int load_sys_func_table(const char*path)
 	    if (strcmp(stype,"vpiSysFuncReal") == 0) {
 		  cell = new struct sfunc_return_type_cell;
 		  cell->name = lex_strings.add(name);
-		  cell->type = NetExpr::ET_REAL;
+		  cell->type = IVL_VT_REAL;
 		  cell->wid  = 0;
 		  cell->signed_flag = true;
 		  cell->next = sfunc_stack;
@@ -135,7 +135,7 @@ int load_sys_func_table(const char*path)
 	    if (strcmp(stype,"vpiSysFuncInt") == 0) {
 		  cell = new struct sfunc_return_type_cell;
 		  cell->name = lex_strings.add(name);
-		  cell->type = NetExpr::ET_VECTOR;
+		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = 32;
 		  cell->signed_flag = true;
 		  cell->next = sfunc_stack;
@@ -176,7 +176,7 @@ int load_sys_func_table(const char*path)
 
 		  cell = new struct sfunc_return_type_cell;
 		  cell->name = lex_strings.add(name);
-		  cell->type = NetExpr::ET_VECTOR;
+		  cell->type = IVL_VT_LOGIC;
 		  cell->wid  = width;
 		  cell->signed_flag = signed_flag;
 		  cell->next = sfunc_stack;
@@ -193,6 +193,9 @@ int load_sys_func_table(const char*path)
 
 /*
  * $Log: sys_funcs.cc,v $
+ * Revision 1.7  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.6  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.73 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: target.h,v 1.74 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -67,9 +67,6 @@ struct target_t {
 
 	/* Output a memory (called for each memory object) */
       virtual void memory(const NetMemory*);
-
-	/* Output an event object. Called for each named event in the scope. */
-      virtual void variable(const NetVariable*);
 
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
@@ -149,7 +146,6 @@ struct expr_scan_t {
       virtual void expr_ternary(const NetETernary*);
       virtual void expr_ufunc(const NetEUFunc*);
       virtual void expr_unary(const NetEUnary*);
-      virtual void expr_variable(const NetEVariable*);
       virtual void expr_binary(const NetEBinary*);
 };
 
@@ -174,6 +170,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.74  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.73  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

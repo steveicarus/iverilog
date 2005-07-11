@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.114 2005/07/07 16:22:50 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.115 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -317,26 +317,6 @@ static int show_stmt_assign_vector(ivl_statement_t net)
  * for /dev/null when typed ivl_signal_t takes over all the real
  * variable support.
  */
-static int show_stmt_assign_real(ivl_statement_t net)
-{
-      int res;
-      ivl_lval_t lval;
-      ivl_variable_t var;
-
-      res = draw_eval_real(ivl_stmt_rval(net));
-      clr_word(res);
-
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
-      var = ivl_lval_var(lval);
-      assert(var != 0);
-
-      fprintf(vvp_out, "    %%set/wr W_%s, %d;\n",
-	      vvp_word_label(var), res);
-
-      return 0;
-}
-
 static int show_stmt_assign_sig_real(ivl_statement_t net)
 {
       int res;
@@ -360,39 +340,21 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 static int show_stmt_assign(ivl_statement_t net)
 {
       ivl_lval_t lval;
-      ivl_variable_t var;
+      ivl_signal_t sig;
 
       lval = ivl_stmt_lval(net, 0);
 
-      if ( (var = ivl_lval_var(lval)) != 0 ) {
-	    switch (ivl_variable_type(var)) {
-		case IVL_VT_VOID:
-		  assert(0);
-		  return 1;
+      sig = ivl_lval_sig(lval);
+      if (sig) switch (ivl_signal_data_type(sig)) {
 
-		case IVL_VT_VECTOR:
-		    /* Can't happen. */
-		  assert(0);
-		  return 1;
+	  case IVL_VT_REAL:
+	    return show_stmt_assign_sig_real(net);
 
-		case IVL_VT_REAL:
-		  return show_stmt_assign_real(net);
-
-	    }
+	  default:
+	    return show_stmt_assign_vector(net);
 
       } else {
-	    ivl_signal_t sig = ivl_lval_sig(lval);
-	    if (sig) switch (ivl_signal_data_type(sig)) {
-
-		case IVL_VT_REAL:
-		  return show_stmt_assign_sig_real(net);
-
-		default:
-		  return show_stmt_assign_vector(net);
-
-	    } else {
-		  return show_stmt_assign_vector(net);
-	    }
+	    return show_stmt_assign_vector(net);
       }
 
       return 0;
@@ -408,10 +370,10 @@ static int show_stmt_assign(ivl_statement_t net)
  * In this case we know (by Verilog syntax) that there is only exactly
  * 1 l-value, the target identifier, so it should be relatively easy.
  */
-static int show_stmt_assign_nb_var(ivl_statement_t net)
+static int show_stmt_assign_nb_real(ivl_statement_t net)
 {
       ivl_lval_t lval;
-      ivl_variable_t var;
+      ivl_signal_t sig;
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
 
@@ -434,11 +396,10 @@ static int show_stmt_assign_nb_var(ivl_statement_t net)
       word = draw_eval_real(rval);
 
       lval = ivl_stmt_lval(net, 0);
-      var = ivl_lval_var(lval);
-      assert(var != 0);
-
-      fprintf(vvp_out, "    %%assign/wr W_%s, %lu, %u;\n",
-	      vvp_word_label(var), delay, word);
+      sig = ivl_lval_sig(lval);
+      assert(sig);
+      fprintf(vvp_out, "   %%assign/wr V_%s, %lu, %u;\n",
+	      vvp_signal_label(sig), delay, word);
 
       clr_word(word);
 
@@ -451,13 +412,19 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
       ivl_memory_t mem;
+      ivl_signal_t sig;
 
       unsigned long delay = 0;
 
-	/* Catch the case we are assigning to a real/word
-	   l-value. Handle that elsewhere. */
-      if (ivl_lval_var(ivl_stmt_lval(net, 0))) {
-	    return show_stmt_assign_nb_var(net);
+	/* Detect special cases that are handled elsewhere. */
+      lval = ivl_stmt_lval(net,0);
+      if ((sig = ivl_lval_sig(lval))) {
+	    switch (ivl_signal_data_type(sig)) {
+		case IVL_VT_REAL:
+		  return show_stmt_assign_nb_real(net);
+		default:
+		  break;
+	    }
       }
 
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
@@ -1497,6 +1464,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.115  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.114  2005/07/07 16:22:50  steve
  *  Generalize signals to carry types.
  *

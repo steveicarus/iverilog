@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.127 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: t-dll.h,v 1.128 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -69,7 +69,6 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
-      void variable(const NetVariable*);
       void logic(const NetLogic*);
       bool ureduce(const NetUReduce*);
       void net_case_cmp(const NetCaseCmp*);
@@ -145,7 +144,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
-      void expr_variable(const NetEVariable*);
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
 
@@ -158,7 +156,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
-      static ivl_variable_t find_variable(ivl_design_s &des, const NetVariable*net);
 
       static ivl_parameter_t scope_find_param(ivl_scope_t scope,
 					      const char*name);
@@ -270,9 +267,6 @@ struct ivl_expr_s {
 		  ivl_expr_t sub_;
 	    } unary_;
 
-	    struct {
-		  ivl_variable_t var;
-	    } variable_;
       } u_;
 };
 
@@ -380,8 +374,7 @@ enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
       IVL_LVAL_MUX = 1,
       IVL_LVAL_MEM = 2,
-      IVL_LVAL_NET = 3, /* Only force can have NET l-values */
-      IVL_LVAL_VAR = 4
+      IVL_LVAL_NET = 3 /* Only force can have NET l-values */
 };
 
 struct ivl_lval_s {
@@ -392,7 +385,6 @@ struct ivl_lval_s {
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;
-	    ivl_variable_t var;
       } n;
 };
 
@@ -551,9 +543,6 @@ struct ivl_scope_s {
       unsigned nmem_;
       ivl_memory_t* mem_;
 
-      unsigned nvar_;
-      ivl_variable_t* var_;
-
       unsigned nparam_;
       ivl_parameter_t param_;
 
@@ -680,16 +669,10 @@ struct ivl_statement_s {
 };
 
 /*
- * This holds the details about a variable object.
- */
-struct ivl_variable_s {
-      ivl_variable_type_t type;
-      perm_string name;
-      ivl_scope_t scope;
-};
-
-/*
  * $Log: t-dll.h,v $
+ * Revision 1.128  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.127  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

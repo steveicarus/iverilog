@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.161 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.162 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -547,8 +547,6 @@ void NetAssign_::dump_lval(ostream&o) const
 	    if (bmux_) o << *bmux_;
 	      else     o << "**oops**";
 	    o << "]";
-      } else if (var_) {
-	    o << "<real " << var_->basename() << ">";
       } else {
 	    o << "";
       }
@@ -751,10 +749,6 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (result_sig_)
 	    o << setw(ind+2) << "" << "Return signal: "
 	      << result_sig_->name() << endl;
-      if (result_var_)
-	    o << setw(ind+2) << "" << "Return variable: "
-	      << result_var_->basename() << endl;
-
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
@@ -855,11 +849,6 @@ void NetScope::dump(ostream&o) const
 		  o << "    defparam " << (*pp).first << " = " <<
 			*(*pp).second << ";" << endl;
 	    }
-      }
-
-      for (NetVariable*cur = vars_ ;  cur ;  cur = cur->snext_) {
-	    o << "    real " << cur->basename() << " // "
-	      << cur->get_line() << endl;
       }
 
 	/* Dump the events in this scope. */
@@ -1147,11 +1136,6 @@ void NetEUnary::dump(ostream&o) const
       o << ")";
 }
 
-void NetEVariable::dump(ostream&o) const
-{
-      o << var_->basename();
-}
-
 void Design::dump(ostream&o) const
 {
       o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
@@ -1181,6 +1165,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.162  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.161  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

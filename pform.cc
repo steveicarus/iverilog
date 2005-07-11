@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.132 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.133 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,7 +26,6 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"
-# include  "PData.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  <list>
@@ -757,26 +756,6 @@ void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
       for (cur = names->begin() ;  cur != names->end() ;  cur++) {
 	    perm_string txt = *cur;
 	    pform_make_event(txt, fn, ln);
-      }
-
-      delete names;
-}
-
-static void pform_make_datum(perm_string name, const char*fn, unsigned ln)
-{
-      hname_t hname = hier_name(name);
-      PData*datum = new PData(hname);
-      datum->set_file(fn);
-      datum->set_lineno(ln);
-      pform_cur_module->datum[hname] = datum;
-}
-
-void pform_make_reals(list<perm_string>*names, const char*fn, unsigned ln)
-{
-      list<perm_string>::iterator cur;
-      for (cur = names->begin() ;  cur != names->end() ;  cur++) {
-	    perm_string txt = *cur;
-	    pform_make_datum(txt, fn, ln);
       }
 
       delete names;
@@ -1617,6 +1596,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.133  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.132  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

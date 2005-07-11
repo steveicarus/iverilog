@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.157 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.158 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -152,7 +152,6 @@ typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
 typedef struct ivl_memory_s   *ivl_memory_t;
 typedef struct ivl_statement_s*ivl_statement_t;
-typedef struct ivl_variable_s *ivl_variable_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -191,7 +190,6 @@ typedef enum ivl_expr_type_e {
       IVL_EX_UFUNC = 12,
       IVL_EX_ULONG = 13,
       IVL_EX_UNARY = 14,
-      IVL_EX_VARIABLE = 15,
       IVL_EX_REALNUM  = 16
 } ivl_expr_type_t;
 
@@ -594,8 +592,6 @@ extern int         ivl_expr_signed(ivl_expr_t net);
 extern const char* ivl_expr_string(ivl_expr_t net);
   /* IVL_EX_ULONG */
 extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
-  /* IVL_EX_VARIABLE */
-extern ivl_variable_t ivl_expr_variable(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
@@ -1063,12 +1059,6 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    If the l-value is a variable, this method returns the signal
  *    object that is the target of the assign.
  *
- * ivl_lval_var
- *    If the l-value is a non-signal variable (i.e. a real) this
- *    method returns the ivl_variable_t object that represents it.
- *    If the lval is this sort of variable, then the part_off, idx and
- *    pin methods do not apply.
- *
  * ivl_lval_part_off
  *    The part select of the signal is based here. This is the
  *    canonical index of bit-0 of the part select.
@@ -1102,13 +1092,9 @@ extern unsigned    ivl_lval_width(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
-extern ivl_variable_t ivl_lval_var(ivl_lval_t net);
 extern unsigned    ivl_lval_part_off(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
-#if 0
-extern unsigned    ivl_lval_pins(ivl_lval_t net);
-extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
-#endif
+
 
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
@@ -1282,7 +1268,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *
  * ivl_scope_var
  * ivl_scope_vars
- *    Scopes have 0 or more variable objects in them.
+ *    REMOVED
  *
  * ivl_scope_log
  * ivl_scope_logs
@@ -1354,8 +1340,6 @@ extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern unsigned     ivl_scope_mems(ivl_scope_t net);
 extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
-extern unsigned     ivl_scope_vars(ivl_scope_t net);
-extern ivl_variable_t ivl_scope_var(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
@@ -1646,19 +1630,6 @@ extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
      IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
-/*
- * These functions manipulate variable objects.
- *
- * ivl_variable_name
- *   Return the base name of the variable.
- *
- * ivl_variable_type
- *   Return the type of the variable. The ivl_variable_type_t is an
- *   enumeration that is defined earlier.
- */
-extern const char*         ivl_variable_name(ivl_variable_t net);
-extern ivl_variable_type_t ivl_variable_type(ivl_variable_t net);
-
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)
@@ -1691,6 +1662,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.158  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.157  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

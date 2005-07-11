@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.10 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.11 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,11 +109,10 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
       NetNet*       sig = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+      symbol_search(des, scope, path_, sig, mem, par, eve);
 
 
       if (mem != 0) {
@@ -167,6 +166,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.11  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.10  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

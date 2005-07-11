@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.22 2005/05/24 01:44:28 steve Exp $"
+#ident "$Id: netmisc.h,v 1.23 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -37,7 +37,6 @@
 extern NetScope* symbol_search(Design*des, NetScope*start, hname_t path,
 			       NetNet*&net,       /* net/reg */
 			       NetMemory*&mem,    /* memory */
-			       NetVariable*&var,  /* real/realtime */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve       /* named event */);
 
@@ -101,6 +100,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.23  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.22  2005/05/24 01:44:28  steve
  *  Do sign extension of structuran nets.
  *

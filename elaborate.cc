@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.325 2005/06/17 05:06:47 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.326 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1384,16 +1384,14 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	/* Based on the specific type of the l-value, do cleanup
 	   processing on the r-value. */
-      if (lv->var()) {
-
-      } else if (rv->expr_type() == NetExpr::ET_REAL) {
+      if (rv->expr_type() == IVL_VT_REAL) {
 
 	      // The r-value is a real. Casting will happen in the
 	      // code generator, so leave it.
 
       } else {
 	    unsigned wid = count_lval_width(lv);
-	    bool flag = rv->set_width(wid);
+	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
 	    assert(rv->expr_width() >= wid);
       }
@@ -1431,7 +1429,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
 	   If in this case the l-val is a variable (i.e. real) then
 	   the width to pad to will be 0, so this code is harmless. */
-      if (rv->expr_type() == NetExpr::ET_VECTOR) {
+      if (rv->expr_type() == IVL_VT_LOGIC) {
 	    unsigned wid = count_lval_width(lv);
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
@@ -2142,12 +2140,11 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
 		  NetNet*       sig = 0;
 		  NetMemory*    mem = 0;
-		  NetVariable*  var = 0;
 		  const NetExpr*par = 0;
 		  NetEvent*     eve = 0;
 
 		  NetScope*found_in = symbol_search(des, scope, id->path(),
-						    sig, mem, var, par, eve);
+						    sig, mem, par, eve);
 
 		  if (found_in && eve) {
 			wa->add_event(eve);
@@ -2709,12 +2706,11 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 
       NetNet*       sig = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       NetScope*found_in = symbol_search(des, scope, event_,
-					sig, mem, var, par, eve);
+					sig, mem, par, eve);
 
       if (found_in == 0) {
 	    cerr << get_line() << ": error: event <" << event_ << ">"
@@ -2976,6 +2972,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.326  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.325  2005/06/17 05:06:47  steve
  *  Debug messages.
  *

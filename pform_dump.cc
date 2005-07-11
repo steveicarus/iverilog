@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.89 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.90 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,6 @@
  * module in question.
  */
 # include  "pform.h"
-# include  "PData.h"
 # include  "PEvent.h"
 # include  <iostream>
 # include  <iomanip>
@@ -809,13 +808,6 @@ void Module::dump(ostream&out) const
 		<< ev->get_line() << endl;
       }
 
-      for (map<hname_t,PData*>::const_iterator cur = datum.begin()
-		 ; cur != datum.end() ;  cur ++ ) {
-	    PData*tmp = (*cur).second;
-	    out << "    real " << tmp->name() << "; // "
-		<< tmp->get_line() << endl;
-      }
-
 	// Iterate through and display all the wires.
       for (map<hname_t,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
@@ -911,6 +903,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.90  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.89  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

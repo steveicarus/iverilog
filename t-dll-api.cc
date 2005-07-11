@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.129 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.130 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -281,9 +281,6 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
 
-	  case IVL_EX_VARIABLE:
-	    return net->u_.variable_.var->name;
-
 	  default:
 	    assert(0);
       }
@@ -505,12 +502,6 @@ extern "C" ivl_memory_t ivl_expr_memory(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_MEMORY);
       return net->u_.memory_.mem_;
-}
-
-extern "C" ivl_variable_t ivl_expr_variable(ivl_expr_t net)
-{
-      assert(net->type_ == IVL_EX_VARIABLE);
-      return net->u_.variable_.var;
 }
 
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
@@ -1220,14 +1211,6 @@ extern "C" ivl_memory_t ivl_lval_mem(ivl_lval_t net)
       return 0x0;
 }
 
-extern "C" ivl_variable_t ivl_lval_var(ivl_lval_t net)
-{
-      assert(net);
-      if (net->type_ == IVL_LVAL_VAR)
-	    return net->n.var;
-      return 0x0;
-}
-
 extern "C" unsigned ivl_lval_part_off(ivl_lval_t net)
 {
       assert(net);
@@ -1450,19 +1433,6 @@ extern "C" ivl_event_t ivl_scope_event(ivl_scope_t net, unsigned idx)
       assert(net);
       assert(idx < net->nevent_);
       return net->event_[idx];
-}
-
-extern "C" unsigned ivl_scope_vars(ivl_scope_t net)
-{
-      assert(net);
-      return net->nvar_;
-}
-
-extern "C" ivl_variable_t ivl_scope_var(ivl_scope_t net, unsigned idx)
-{
-      assert(net);
-      assert(idx < net->nvar_);
-      return net->var_[idx];
 }
 
 extern "C" unsigned ivl_scope_logs(ivl_scope_t net)
@@ -1975,9 +1945,6 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 		case IVL_LVAL_MEM:
 		  sum += ivl_memory_width(ivl_lval_mem(cur));
 		  break;
-		case IVL_LVAL_VAR:
-		  sum += 0;
-		  break;
 		default:
 		  assert(0);
 	    }
@@ -2058,20 +2025,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
       return 0;
 }
 
-extern "C" const char* ivl_variable_name(ivl_variable_t net)
-{
-      assert(net);
-      return net->name;
-}
-
-extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
-{
-      assert(net);
-      return net->type;
-}
-
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.130  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.129  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.13 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.14 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -166,11 +166,6 @@ NexusSet* NetEUFunc::nex_input()
 NexusSet* NetEUnary::nex_input()
 {
       return expr_->nex_input();
-}
-
-NexusSet* NetEVariable::nex_input()
-{
-      return new NexusSet;
 }
 
 NexusSet* NetAssign_::nex_input()
@@ -389,6 +384,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.14  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.13  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

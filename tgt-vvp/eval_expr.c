@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.117 2005/03/12 23:45:33 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.118 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1989,18 +1989,6 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
-static struct vector_info draw_variable_expr(ivl_expr_t exp, unsigned wid)
-{
-      struct vector_info res;
-      ivl_variable_t var = ivl_expr_variable(exp);
-      fprintf(vvp_out, "    ; XXXX Read variable %s\n",
-	      ivl_variable_name(var));
-
-      res.base = 0;
-      res.wid = wid;
-      return res;
-}
-
 /*
  * Sometimes we know ahead of time where we want the expression value
  * to go. In that case, call this function. It will check to see if
@@ -2101,10 +2089,6 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	  case IVL_EX_UNARY:
 	    res = draw_unary_expr(exp, wid);
 	    break;
-
-	  case IVL_EX_VARIABLE:
-	    res = draw_variable_expr(exp, wid);
-	    break;
       }
 
       return res;
@@ -2117,6 +2101,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.118  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.117  2005/03/12 23:45:33  steve
  *  Handle function/task port vectors.
  *

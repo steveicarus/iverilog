@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.129 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: stub.c,v 1.130 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -216,8 +216,8 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    fprintf(out, "%*s<signal=%s, width=%u, %s>\n", ind, "",
-		    ivl_expr_name(net), width, sign);
+	    fprintf(out, "%*s<signal=%s, width=%u, %s type=%s>\n", ind, "",
+		    ivl_expr_name(net), width, sign, vt);
 	    break;
 
 	  case IVL_EX_TERNARY:
@@ -228,11 +228,6 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
 		    ivl_expr_opcode(net), width, sign);
 	    show_expression(ivl_expr_oper1(net), ind+4);
-	    break;
-
-	  case IVL_EX_VARIABLE:
-	    fprintf(out, "%*s<variable %s, type=%s>\n",
-		    ind, "", ivl_expr_name(net), vt);
 	    break;
 
 	  case IVL_EX_REALNUM:
@@ -972,26 +967,6 @@ static void show_parameter(ivl_parameter_t net)
       show_expression(ivl_parameter_expr(net), 7);
 }
 
-static void show_variable(ivl_variable_t net)
-{
-      const char*type = "?";
-      const char*name = ivl_variable_name(net);
-
-      switch (ivl_variable_type(net)) {
-	  case IVL_VT_VOID:
-	    type = "void";
-	    break;
-	  case IVL_VT_REAL:
-	    type = "real";
-	    break;
-	  case IVL_VT_VECTOR:
-	    type = "vector";
-	    break;
-      }
-
-      fprintf(out, "  variable %s %s;\n", type, name);
-}
-
 static void show_event(ivl_event_t net)
 {
       unsigned idx;
@@ -1387,9 +1362,6 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
 	    show_parameter(ivl_scope_param(net, idx));
 
-      for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1)
-	    show_variable(ivl_scope_var(net, idx));
-
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
 
@@ -1487,6 +1459,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.130  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.129  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

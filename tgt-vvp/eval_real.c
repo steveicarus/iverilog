@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.12 2005/07/07 16:22:50 steve Exp $"
+#ident "$Id: eval_real.c,v 1.13 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 /*
@@ -115,19 +115,6 @@ static int draw_number_real(ivl_expr_t exp)
       }
 
       fprintf(vvp_out, "    %%loadi/wr %d, %lu, 4096;\n", res, mant);
-      return res;
-}
-
-/*
- * Evaluate a real variable expression by loading the real variable
- * into a real thread word.
- */
-static int draw_variable_real(ivl_expr_t exp)
-{
-      int res = allocate_word();
-      ivl_variable_t var = ivl_expr_variable(exp);
-
-      fprintf(vvp_out, "    %%load/wr %d, W_%s;\n", res, vvp_word_label(var));
       return res;
 }
 
@@ -285,10 +272,6 @@ int draw_eval_real(ivl_expr_t exp)
 	    res = draw_realnum_real(exp);
 	    break;
 
-	  case IVL_EX_VARIABLE:
-	    res = draw_variable_real(exp);
-	    break;
-
 	  case IVL_EX_SFUNC:
 	    res = draw_sfunc_real(exp);
 	    break;
@@ -325,6 +308,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.13  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.12  2005/07/07 16:22:50  steve
  *  Generalize signals to carry types.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.33 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.34 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,7 +41,6 @@ NetScope::NetScope(NetScope*up, perm_string n, NetScope::TYPE t)
       memories_ = 0;
       signals_ = 0;
       events_ = 0;
-      vars_ = 0;
       lcounter_ = 0;
 
       if (up) {
@@ -283,15 +282,6 @@ NetEvent* NetScope::find_event(const char*name)
       return 0;
 }
 
-NetVariable* NetScope::find_variable(const char*name)
-{
-      for (NetVariable*cur = vars_;  cur ;  cur = cur->snext_)
-	    if (strcmp(cur->basename(), name) == 0)
-		  return cur;
-
-      return 0;
-}
-
 void NetScope::add_signal(NetNet*net)
 {
       if (signals_ == 0) {
@@ -404,14 +394,6 @@ NetMemory* NetScope::find_memory(const string&key)
       return 0;
 }
 
-void NetScope::add_variable(NetVariable*var)
-{
-      assert(var->scope_ == 0);
-      var->scope_ = this;
-      var->snext_ = vars_;
-      vars_ = var;
-}
-
 /*
  * This method locates a child scope by name. The name is the simple
  * name of the child, no hierarchy is searched.
@@ -467,6 +449,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.34  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.33  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *

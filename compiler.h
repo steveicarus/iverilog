@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.29 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: compiler.h,v 1.30 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include  <list>
@@ -133,7 +133,7 @@ extern StringHeapLex lex_strings;
  */
 struct sfunc_return_type {
       const char*   name;
-      NetExpr::TYPE type;
+      ivl_variable_type_t type;
       unsigned      wid;
       int           signed_flag;
 };
@@ -143,6 +143,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.30  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.29  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

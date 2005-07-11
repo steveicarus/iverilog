@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.85 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: emit.cc,v 1.86 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -331,9 +331,6 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
-      for (NetVariable*cur = vars_ ;  cur ;  cur = cur->snext_)
-	    tgt->variable(cur);
-
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->emit_scope(tgt);
 
@@ -511,11 +508,6 @@ void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_unary(this);
 }
 
-void NetEVariable::expr_scan(struct expr_scan_t*tgt) const
-{
-      tgt->expr_variable(this);
-}
-
 int emit(const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
@@ -533,6 +525,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.86  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.85  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

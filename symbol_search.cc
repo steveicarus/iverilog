@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.1 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.2 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -30,7 +30,6 @@
 NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 		       NetNet*&net,
 		       NetMemory*&mem,
-		       NetVariable*&var,
 		       const NetExpr*&par,
 		       NetEvent*&eve)
 {
@@ -42,7 +41,6 @@ NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 	/* Initialize output argument to cleared. */
       net = 0;
       mem = 0;
-      var = 0;
       par = 0;
       eve = 0;
 
@@ -58,11 +56,6 @@ NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 	    }
 
 	    if ( (mem = scope->find_memory(key)) ) {
-		  delete key;
-		  return scope;
-	    }
-
-	    if ( (var = scope->find_variable(key)) ) {
 		  delete key;
 		  return scope;
 	    }
@@ -89,6 +82,9 @@ NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.2  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.1  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *

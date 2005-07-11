@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.93 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.94 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -264,7 +264,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       const struct sfunc_return_type*sfunc_info
 	    = lookup_sys_func(path_.peek_name(0));
 
-      NetExpr::TYPE sfunc_type = sfunc_info->type;
+      ivl_variable_type_t sfunc_type = sfunc_info->type;
       unsigned wid = sfunc_info->wid;
 
 
@@ -390,13 +390,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    return func;
       }
 
-      if (NetVariable*res = dscope->find_variable(dscope->basename())) {
-	    NetEVariable*eres = new NetEVariable(res);
-	    eres->set_line(*res);
-	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
-	    return func;
-      }
-
       cerr << get_line() << ": internal error: Unable to locate "
 	    "function return value for " << path_
 	   << " in " << def->name() << "." << endl;
@@ -490,12 +483,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       NetScope*found_in = symbol_search(des, scope, path_,
-					net, mem, var, par, eve);
+					net, mem, par, eve);
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
@@ -834,14 +826,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return node;
       }
 
-	// If the identifier names a variable of some sort, then this
-	// is a variable reference.
-      if (var != 0) {
-	    NetEVariable*node = new NetEVariable(var);
-	    node->set_line(*this);
-	    return node;
-      }
-
 	// If the identifier is a named event.
 	// is a variable reference.
       if (eve != 0) {
@@ -1035,6 +1019,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.94  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.93  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

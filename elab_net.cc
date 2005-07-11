@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.166 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.167 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1511,11 +1511,10 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*       sig = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+      symbol_search(des, scope, path_, sig, mem, par, eve);
 
 	/* If the identifier is a memory instead of a signal,
 	   then handle it elsewhere. Create a RAM. */
@@ -1552,13 +1551,6 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  connect(sig->pin(idx), cp->pin(idx));
       }
 
-      if (var != 0) {
-	    cerr << get_line() << ": sorry: " << path_
-		 << " is a real in a net/wire context." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
 	/* Check for the error case that the name is not found, and it
 	   is hierarchical. We can't just create a name in another
 	   scope, it's just not allowed. */
@@ -1585,6 +1577,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    NetNet::Type nettype = scope->default_nettype();
 	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 			     nettype, 1);
+	    sig->data_type(IVL_VT_LOGIC);
 
 	    if (error_implicit || (nettype == NetNet::NONE)) {
 		  cerr << get_line() << ": error: "
@@ -1906,11 +1899,10 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 
       NetNet*       sig = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+      symbol_search(des, scope, path_, sig, mem, par, eve);
 
       if (mem != 0) {
 	    cerr << get_line() << ": error: memories (" << path_
@@ -1935,6 +1927,8 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 
 		  sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 				   NetNet::IMPLICIT, 1);
+		    /* Implicit nets are always scalar logic. */
+		  sig->data_type(IVL_VT_LOGIC);
 
 		  if (warn_implicit) {
 			cerr << get_line() << ": warning: implicit "
@@ -2564,6 +2558,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.167  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.166  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

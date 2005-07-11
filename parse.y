@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.203 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: parse.y,v 1.204 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -344,12 +344,24 @@ block_item_decl
 		{ pform_set_reg_time($2);
 		}
 
-	| K_real list_of_identifiers ';'
-		{ pform_make_reals($2, @1.text, @1.first_line);
-		}
+  /* real declarations are fairly simple as there is no range of
+     signed flag in the declaration. Create the real as a NetNet::REG
+     with real value. Note that real and realtime are interchangable
+     in this context. */
 
+	| K_real list_of_identifiers ';'
+                { pform_makewire(@1, 0, true, $2,
+				 NetNet::REG,
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_REAL,
+				 0);
+		}
 	| K_realtime list_of_identifiers ';'
-		{ pform_make_reals($2, @1.text, @1.first_line);
+                { pform_makewire(@1, 0, true, $2,
+				 NetNet::REG,
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_REAL,
+				 0);
 		}
 
 	| K_parameter parameter_assign_decl ';'

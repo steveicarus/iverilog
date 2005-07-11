@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.37 2004/06/13 04:56:53 steve Exp $"
+#ident "$Id: Module.h,v 1.38 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include  <list>
@@ -30,7 +30,6 @@
 # include  "named.h"
 # include  "LineInfo.h"
 # include  "netlist.h"
-class PData;
 class PEvent;
 class PExpr;
 class PEIdent;
@@ -108,9 +107,6 @@ class Module : public LineInfo {
 	/* Keep a table of named events declared in the module. */
       map<perm_string,PEvent*>events;
 
-	/* Keep a table of datum variables declared in the module. */
-      map<hname_t,PData*>datum;
-
       map<perm_string,PExpr*> attributes;
 
 	/* These are the timescale for this module. The default is
@@ -167,6 +163,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.38  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.37  2004/06/13 04:56:53  steve
  *  Add support for the default_nettype directive.
  *

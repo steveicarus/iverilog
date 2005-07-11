@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.19 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.20 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -111,11 +111,7 @@ NetEUFunc* NetEUFunc::dup_expr() const
 	    tmp_parms[idx] = parms_[idx]->dup_expr();
       }
 
-      tmp = 0;
-      if (result_sig_)
-	    tmp = new NetEUFunc(func_, result_sig_->dup_expr(), tmp_parms);
-      if (result_var_)
-	    tmp = new NetEUFunc(func_, result_var_->dup_expr(), tmp_parms);
+      tmp = new NetEUFunc(func_, result_sig_->dup_expr(), tmp_parms);
 
       assert(tmp);
       return tmp;
@@ -135,14 +131,11 @@ NetEUReduce* NetEUReduce::dup_expr() const
       return tmp;
 }
 
-NetEVariable* NetEVariable::dup_expr() const
-{
-      NetEVariable*tmp = new NetEVariable(var_);
-      return tmp;
-}
-
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.20  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.19  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

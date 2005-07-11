@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.63 2005/06/17 05:05:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.64 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -273,7 +273,7 @@ NetEConst* NetEBComp::eval_leeq_real_()
       double lv, rv;
 
       switch (left_->expr_type()) {
-	  case ET_REAL:
+	  case IVL_VT_REAL:
 	    rtmp = dynamic_cast<NetECReal*> (left_);
 	    if (rtmp == 0)
 		  return 0;
@@ -281,7 +281,7 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    lv = rtmp->value().as_double();
 	    break;
 
-	  case ET_VECTOR:
+	  case IVL_VT_LOGIC:
 	    vtmp = dynamic_cast<NetEConst*> (left_);
 	    if (vtmp == 0)
 		  return 0;
@@ -295,7 +295,7 @@ NetEConst* NetEBComp::eval_leeq_real_()
 
 
       switch (right_->expr_type()) {
-	  case ET_REAL:
+	  case IVL_VT_REAL:
 	    rtmp = dynamic_cast<NetECReal*> (right_);
 	    if (rtmp == 0)
 		  return 0;
@@ -303,7 +303,7 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    rv = rtmp->value().as_double();
 	    break;
 
-	  case ET_VECTOR:
+	  case IVL_VT_LOGIC:
 	    vtmp = dynamic_cast<NetEConst*> (right_);
 	    if (vtmp == 0)
 		  return 0;
@@ -324,9 +324,9 @@ NetEConst* NetEBComp::eval_leeq_real_()
 
 NetEConst* NetEBComp::eval_leeq_()
 {
-      if (right_->expr_type() == ET_REAL)
+      if (right_->expr_type() == IVL_VT_REAL)
 	    return eval_leeq_real_();
-      if (left_->expr_type() == ET_REAL)
+      if (left_->expr_type() == IVL_VT_REAL)
 	    return eval_leeq_real_();
 
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
@@ -381,8 +381,8 @@ NetEConst* NetEBComp::eval_leeq_()
 
 NetEConst* NetEBComp::eval_gt_()
 {
-      if ((left_->expr_type() == NetExpr::ET_REAL)
-	  && (right_->expr_type() == NetExpr::ET_REAL)) {
+      if ((left_->expr_type() == IVL_VT_REAL)
+	  && (right_->expr_type() == IVL_VT_REAL)) {
 
 	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
 	    if (tmpl == 0)
@@ -420,7 +420,7 @@ NetEConst* NetEBComp::eval_gt_()
       }
 
 	/* Compare with a real value. Do it as double precision. */
-      if (right_->expr_type() == NetExpr::ET_REAL) {
+      if (right_->expr_type() == IVL_VT_REAL) {
 	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
 	    if (tmp == 0)
 		  return 0;
@@ -457,8 +457,8 @@ NetEConst* NetEBComp::eval_gt_()
 
 NetEConst* NetEBComp::eval_gteq_()
 {
-      if ((left_->expr_type() == NetExpr::ET_REAL)
-	  && (right_->expr_type() == NetExpr::ET_REAL)) {
+      if ((left_->expr_type() == IVL_VT_REAL)
+	  && (right_->expr_type() == IVL_VT_REAL)) {
 
 	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
 	    if (tmpl == 0)
@@ -486,7 +486,7 @@ NetEConst* NetEBComp::eval_gteq_()
 
 	/* Detect the case where the left side is greater than the
 	   largest value the right side can possibly have. */
-      if (right_->expr_type() == NetExpr::ET_VECTOR) {
+      if (right_->expr_type() == IVL_VT_LOGIC) {
 	    assert(right_->expr_width() > 0);
 	    verinum rv (verinum::V1, right_->expr_width());
 	    if (lv >= rv) {
@@ -496,7 +496,7 @@ NetEConst* NetEBComp::eval_gteq_()
       }
 
 	/* Compare with a real value. Do it as double precision. */
-      if (right_->expr_type() == NetExpr::ET_REAL) {
+      if (right_->expr_type() == IVL_VT_REAL) {
 	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
 	    if (tmp == 0)
 		  return 0;
@@ -706,7 +706,7 @@ NetExpr* NetEBDiv::eval_tree()
 {
       eval_sub_tree_();
 
-      if (expr_type() == NetExpr::ET_REAL) {
+      if (expr_type() == IVL_VT_REAL) {
 	    NetECReal*lc = dynamic_cast<NetECReal*>(left_);
 	    if (lc == 0) return 0;
 
@@ -751,7 +751,7 @@ NetExpr* NetEBDiv::eval_tree()
 
 
       } else {
-	    assert(expr_type() == NetExpr::ET_VECTOR);
+	    assert(expr_type() == IVL_VT_LOGIC);
 	    NetEConst*lc = dynamic_cast<NetEConst*>(left_);
 	    if (lc == 0) return 0;
 	    NetEConst*rc = dynamic_cast<NetEConst*>(right_);
@@ -844,14 +844,14 @@ NetExpr* NetEBMult::eval_tree_real_()
       verireal rval;
 
       switch (left_->expr_type()) {
-	  case ET_REAL: {
+	  case IVL_VT_REAL: {
 		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
 		if (lc == 0) return 0;
 		lval = lc->value();
 		break;
 	  }
 
-	  case ET_VECTOR: {
+	  case IVL_VT_LOGIC: {
 		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
 		if (lc == 0) return 0;
 		verinum tmp = lc->value();
@@ -864,14 +864,14 @@ NetExpr* NetEBMult::eval_tree_real_()
       }
 
       switch (right_->expr_type()) {
-	  case ET_REAL: {
+	  case IVL_VT_REAL: {
 		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
 		if (rc == 0) return 0;
 		rval = rc->value();
 		break;
 	  }
 
-	  case ET_VECTOR: {
+	  case IVL_VT_LOGIC: {
 		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 		if (rc == 0) return 0;
 		verinum tmp = rc->value();
@@ -893,10 +893,10 @@ NetExpr* NetEBMult::eval_tree()
 {
       eval_sub_tree_();
 
-      if (expr_type() == ET_REAL)
+      if (expr_type() == IVL_VT_REAL)
 	    return eval_tree_real_();
 
-      assert(expr_type() == ET_VECTOR);
+      assert(expr_type() == IVL_VT_LOGIC);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       if (lc == 0) return 0;
@@ -1182,7 +1182,7 @@ NetExpr* NetEParam::eval_tree()
 
       switch (res->expr_type()) {
 
-	  case NetExpr::ET_VECTOR:
+	  case IVL_VT_LOGIC:
 	    { NetEConst*tmp = dynamic_cast<NetEConst*>(res);
 	      if (tmp == 0) {
 		    cerr << get_line() << ": internal error: parameter "
@@ -1199,7 +1199,7 @@ NetExpr* NetEParam::eval_tree()
 	      return ptmp;
 	    }
 
-	  case NetExpr::ET_REAL:
+	  case IVL_VT_REAL:
 	    { NetECReal*tmp = dynamic_cast<NetECReal*>(res);
 	      if (tmp == 0) {
 		    cerr << get_line() << ": internal error: parameter "
@@ -1558,6 +1558,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.64  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.63  2005/06/17 05:05:53  steve
  *  Watch out for signed constants in magnitude compare.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.76 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: target.cc,v 1.77 2005/07/11 16:56:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,12 +45,6 @@ void target_t::memory(const NetMemory*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory." << endl;
-}
-
-void target_t::variable(const NetVariable*that)
-{
-      cerr << that->get_line() << ": error: target (" << typeid(*this).name()
-	   <<  "): Unhandled variable <" << that->basename() << ">." << endl;
 }
 
 bool target_t::func_def(const NetScope*)
@@ -429,12 +423,6 @@ void expr_scan_t::expr_unary(const NetEUnary*)
 	    "unhandled expr_unary." << endl;
 }
 
-void expr_scan_t::expr_variable(const NetEVariable*)
-{
-      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
-	    "unhandled expr_variable." << endl;
-}
-
 void expr_scan_t::expr_binary(const NetEBinary*ex)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -443,6 +431,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.77  2005/07/11 16:56:51  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.76  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

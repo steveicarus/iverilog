@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.35 2004/09/10 00:15:17 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.36 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -33,7 +33,6 @@
  */
 
 # include  "Module.h"
-# include  "PData.h"
 # include  "PEvent.h"
 # include  "PExpr.h"
 # include  "PGate.h"
@@ -255,12 +254,6 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    (*et).second->elaborate_scope(des, scope);
       }
 
-      for (map<hname_t,PData*>::const_iterator cur = datum.begin()
-		 ; cur != datum.end() ;  cur ++ ) {
-
-	    (*cur).second->elaborate_scope(des, scope);
-      }
-
       return des->errors == 0;
 }
 
@@ -449,34 +442,6 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 }
 
 /*
- * Elaborate the datum within the module. This variable may be
- * within a subscope (i.e., a function or task) so use the components
- * of the name to find the precise scope where this item goes.
- */
-void PData::elaborate_scope(Design*des, NetScope*scope) const
-{
-      NetScope*sub_scope = scope;
-      for (unsigned idx = 0 ;  idx < (hname_.component_count()-1); idx += 1) {
-	    sub_scope = sub_scope->child(hname_.peek_name(idx));
-
-	    if (sub_scope == 0) {
-		  cerr << get_line() << ": internal error: "
-		       << "Could not find sub-scope "
-		       << hname_.peek_name(idx) << " of "
-		       << hname_ << " in module " << scope->name()
-		       << endl;
-		  des->errors += 1;
-		  return;
-	    }
-      }
-
-      const char*basename = hname_.peek_tail_name();
-      NetVariable*tmp = new NetVariable(lex_strings.make(basename));
-      tmp->set_line(*this);
-      sub_scope->add_variable(tmp);
-}
-
-/*
  * The isn't really able to create new scopes, but it does create the
  * event name in the current scope, so can be done during the
  * elaborate_scope scan. Note that the name_ of the PEvent object has
@@ -635,6 +600,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.36  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.35  2004/09/10 00:15:17  steve
  *  Missing stdio.h header for warnings.
  *

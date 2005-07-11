@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.31 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.32 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -150,11 +150,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 {
       NetNet*       reg = 0;
       NetMemory*    mem = 0;
-      NetVariable*  var = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, reg, mem, var, par, eve);
+      symbol_search(des, scope, path_, reg, mem, par, eve);
 
       if (mem) {
 	    if (is_force) {
@@ -167,11 +166,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    }
 
 	    return elaborate_mem_lval_(des, scope, mem);
-      }
-
-      if (var) {
-	    NetAssign_*cur = new NetAssign_(var);
-	    return cur;
       }
 
       if (reg == 0) {
@@ -366,6 +360,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.32  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.31  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.23 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.24 2005/07/11 16:56:50 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -25,9 +25,12 @@
 # include  "compiler.h"
 # include  <iostream>
 
-NetExpr::TYPE NetExpr::expr_type() const
+/*
+ * the grand default data type is a logic vector.
+ */
+ivl_variable_type_t NetExpr::expr_type() const
 {
-      return ET_VECTOR;
+      return IVL_VT_LOGIC;
 }
 
 /*
@@ -96,15 +99,15 @@ NetEBAdd* NetEBAdd::dup_expr() const
       return result;
 }
 
-NetExpr::TYPE NetEBAdd::expr_type() const
+ivl_variable_type_t NetEBAdd::expr_type() const
 {
-      if (left_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      if (right_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      return ET_VECTOR;
+      return IVL_VT_LOGIC;
 }
 
 /*
@@ -183,15 +186,15 @@ NetEBDiv* NetEBDiv::dup_expr() const
       return result;
 }
 
-NetExpr::TYPE NetEBDiv::expr_type() const
+ivl_variable_type_t NetEBDiv::expr_type() const
 {
-      if (left_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      if (right_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      return ET_VECTOR;
+      return IVL_VT_LOGIC;
 }
 
 NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
@@ -219,15 +222,15 @@ NetEBMult* NetEBMult::dup_expr() const
       return result;
 }
 
-NetExpr::TYPE NetEBMult::expr_type() const
+ivl_variable_type_t NetEBMult::expr_type() const
 {
-      if (left_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      if (right_->expr_type() == ET_REAL)
-	    return ET_REAL;
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
 
-      return ET_VECTOR;
+      return IVL_VT_LOGIC;
 }
 
 NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
@@ -372,9 +375,9 @@ NetECReal* NetECReal::dup_expr() const
       return tmp;
 }
 
-NetExpr::TYPE NetECReal::expr_type() const
+ivl_variable_type_t NetECReal::expr_type() const
 {
-      return ET_REAL;
+      return IVL_VT_REAL;
 }
 
 NetECRealParam::NetECRealParam(NetScope*s, perm_string n, const verireal&v)
@@ -458,7 +461,7 @@ bool NetESelect::set_width(unsigned w)
 	    return false;
 }
 
-NetESFunc::NetESFunc(const char*n, NetExpr::TYPE t,
+NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 		     unsigned width, unsigned np)
 : name_(0), type_(t)
 {
@@ -509,13 +512,16 @@ NetExpr* NetESFunc::parm(unsigned idx)
       return parms_[idx];
 }
 
-NetExpr::TYPE NetESFunc::expr_type() const
+ivl_variable_type_t NetESFunc::expr_type() const
 {
       return type_;
 }
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.24  2005/07/11 16:56:50  steve
+ *  Remove NetVariable and ivl_variable_t structures.
+ *
  * Revision 1.23  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
