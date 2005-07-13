@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.41 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.42 2005/07/13 04:51:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -431,7 +431,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_UFUNC;
-      expr->value_= IVL_VT_VECTOR;
+      expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
 
@@ -473,6 +473,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.42  2005/07/13 04:51:36  steve
+ *  Functions get type from their output signal.
+ *
  * Revision 1.41  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
