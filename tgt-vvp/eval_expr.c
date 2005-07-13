@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.118 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.119 2005/07/13 04:52:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1752,77 +1752,6 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
-/*
- * A call to a user defined function generates a result that is the
- * result of this expression.
- *
- * The result of the function is placed by the function execution into
- * a signal within the scope of the function that also has a basename
- * the same as the function. The ivl_target API handled the result
- * mapping already, and we get the name of the result signal as
- * parameter 0 of the function definition.
- */
-
-static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
-{
-      unsigned idx;
-      unsigned swid = ivl_expr_width(exp);
-      ivl_scope_t def = ivl_expr_def(exp);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
-      struct vector_info res;
-
-	/* evaluate the expressions and send the results to the
-	   function ports. */
-
-      assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
-      for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
-	    ivl_signal_t port = ivl_scope_port(def, idx+1);
-
-	    res = draw_eval_expr_wid(ivl_expr_parm(exp, idx),
-				     ivl_signal_width(port), 0);
-	    assert(res.wid <= ivl_signal_width(port));
-	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
-		    vvp_signal_label(port), res.base, res.wid);
-
-	    clr_vector(res);
-      }
-
-
-	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
-      fprintf(vvp_out, ", S_%p;\n", def);
-      fprintf(vvp_out, "    %%join;\n");
-
-	/* Fresh basic block starts after the join. */
-      clear_expression_lookaside();
-
-	/* The return value is in a signal that has the name of the
-	   expression. Load that into the thread and return the
-	   vector result. */
-
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
-
-      { unsigned load_wid = swid;
-        if (load_wid > ivl_signal_width(retval))
-	      load_wid = ivl_signal_width(retval);
-
-	fprintf(vvp_out, "    %%load/v  %u, V_%s, %u;\n",
-		res.base, vvp_signal_label(retval), load_wid);
-
-	if (load_wid < swid)
-	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		      res.base+load_wid, swid-load_wid);
-      }
-
-	/* Pad the signal value with zeros. */
-      if (swid < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, wid-swid);
-
-      return res;
-}
-
 static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
@@ -2101,6 +2030,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.119  2005/07/13 04:52:31  steve
+ *  Handle functions with real values.
+ *
  * Revision 1.118  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

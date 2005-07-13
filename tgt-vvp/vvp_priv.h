@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.30 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.31 2005/07/13 04:52:31 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -62,6 +62,9 @@ extern int draw_func_definition(ivl_scope_t scope);
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
 extern void draw_lpm_mux(ivl_lpm_t net);
+
+extern struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid);
+extern int draw_ufunc_real(ivl_expr_t exp);
 
 /*
  * This function draws the execution of a vpi_call statement, along
@@ -191,6 +194,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.31  2005/07/13 04:52:31  steve
+ *  Handle functions with real values.
+ *
  * Revision 1.30  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

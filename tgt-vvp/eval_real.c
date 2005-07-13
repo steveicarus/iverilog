@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.13 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: eval_real.c,v 1.14 2005/07/13 04:52:31 steve Exp $"
 #endif
 
 /*
@@ -280,6 +280,10 @@ int draw_eval_real(ivl_expr_t exp)
 	    res = draw_signal_real(exp);
 	    break;
 
+	  case IVL_EX_UFUNC:
+	    res = draw_ufunc_real(exp);
+	    break;
+
 	  default:
 	    if (ivl_expr_value(exp) == IVL_VT_VECTOR) {
 		  struct vector_info sv = draw_eval_expr(exp, 0);
@@ -308,6 +312,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.14  2005/07/13 04:52:31  steve
+ *  Handle functions with real values.
+ *
  * Revision 1.13  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
