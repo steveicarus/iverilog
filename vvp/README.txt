@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.69 2005/07/06 04:29:25 steve Exp $
+ *  $Id: README.txt,v 1.70 2005/07/13 04:58:29 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -420,21 +420,6 @@ an event or expression in the Verilog) then this form can be used:
 In this case, the symbols list all the events that are to be combined
 to trigger this event. Only one of the input events needs to trigger
 to make this one go.
-
-
-WORD STATEMENTS (deprecated):
-
-Verilog includes some scalar word types available to the programmer,
-including real variables, and possible extension types that the code
-generator can transparently use. Variables of these special types are
-declared with .word statements:
-
-	<label> .word <type>, "vpi name";
-
-The <type> values supported are listed below. The vpi name is the base
-name given to the VPI object that is created.
-
-        real  - represents a double precision real variable.
 
 
 RESOLVER STATEMENTS:
