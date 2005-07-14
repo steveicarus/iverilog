@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.42 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.43 2005/07/14 23:34:19 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -30,6 +30,7 @@
 class ostream;
 #endif
 
+using namespace std;
 
 
 /* Data types */
@@ -73,7 +74,7 @@ extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 extern ostream& operator<< (ostream&o, vvp_bit4_t a);
 
 /*
- * This class represents scaler values collected into vectors. The
+ * This class represents scalar values collected into vectors. The
  * vector values can be accessed individually, or treated as a
  * unit. in any case, the elements of the vector are addressed from
  * zero(LSB) to size-1(MSB).
@@ -954,6 +955,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.43  2005/07/14 23:34:19  steve
+ *  gcc4 compile errors.
+ *
  * Revision 1.42  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

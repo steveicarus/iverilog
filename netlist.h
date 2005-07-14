@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.346 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.347 2005/07/14 23:34:19 steve Exp $"
 #endif
 
 /*
@@ -59,6 +59,9 @@ class NetEvProbe;
 class NetExpr;
 class NetESignal;
 class NetFuncDef;
+class NetRamDq;
+class NetEvTrig;
+class NetEvWait;
 
 
 struct target;
@@ -3432,6 +3435,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.347  2005/07/14 23:34:19  steve
+ *  gcc4 compile errors.
+ *
  * Revision 1.346  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

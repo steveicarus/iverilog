@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.68 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.69 2005/07/14 23:34:19 steve Exp $"
 #endif
 
 /*
@@ -107,7 +107,7 @@ static int signal_get(int code, vpiHandle ref)
 
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
-		  return (int)rfp->node;
+		  return (int) (unsigned long) rfp->node;
 	    else
 		  return 0;
 
@@ -822,6 +822,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.69  2005/07/14 23:34:19  steve
+ *  gcc4 compile errors.
+ *
  * Revision 1.68  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *

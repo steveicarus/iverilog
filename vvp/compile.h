@@ -19,13 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.74 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: compile.h,v 1.75 2005/07/14 23:34:19 steve Exp $"
 #endif
 
 # include  <stdio.h>
 # include  "parse_misc.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
+
+using namespace std;
 
 /*
  * The functions described here are the compile time support
@@ -325,6 +327,9 @@ extern void compile_net_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.75  2005/07/14 23:34:19  steve
+ *  gcc4 compile errors.
+ *
  * Revision 1.74  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *
