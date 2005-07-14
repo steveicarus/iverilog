@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.130 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: stub.c,v 1.131 2005/07/14 16:15:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,6 +81,33 @@ unsigned width_of_nexus(ivl_nexus_t nex)
 	/* ERROR: A nexus should have at least one signal to carry
 	   properties like width. */
       return 0;
+}
+
+void show_function_call(ivl_expr_t net, unsigned ind)
+{
+      ivl_scope_t def = ivl_expr_def(net);
+      const char*vt = "??";
+
+      switch (ivl_expr_value(net)) {
+	  case IVL_VT_NO_TYPE:
+	    vt = "NO_TYPE";
+	    break;
+	  case IVL_VT_VOID:
+	    vt = "void";
+	    break;
+	  case IVL_VT_BOOL:
+	    vt = "bool";
+	    break;
+	  case IVL_VT_REAL:
+	    vt = "real";
+	    break;
+	  case IVL_VT_LOGIC:
+	    vt = "logic";
+	    break;
+      }
+
+      fprintf(out, "%*s<%s function %s>\n", ind, "",
+	      vt, ivl_scope_name(def));
 }
 
 void show_memory_expression(ivl_expr_t net, unsigned ind)
@@ -228,6 +255,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
 		    ivl_expr_opcode(net), width, sign);
 	    show_expression(ivl_expr_oper1(net), ind+4);
+	    break;
+
+	  case IVL_EX_UFUNC:
+	    show_function_call(net, ind);
 	    break;
 
 	  case IVL_EX_REALNUM:
@@ -1459,6 +1490,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.131  2005/07/14 16:15:13  steve
+ *  Dump function call expression node.
+ *
  * Revision 1.130  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
