@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.91 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: main.cc,v 1.92 2005/07/14 23:38:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -764,6 +764,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.92  2005/07/14 23:38:43  steve
+ *  Display as version 0.9.devel
+ *
  * Revision 1.91  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

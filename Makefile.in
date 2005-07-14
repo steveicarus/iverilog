@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.171 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: Makefile.in,v 1.172 2005/07/14 23:38:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -25,7 +25,7 @@ SHELL = /bin/sh
 # by the compiler. It reflects the assigned version number for the
 # product as a whole. Most components also print the CVS Name: token
 # in order to get a more automatic version stamp as well.
-VERSION = 0.8
+VERSION = 0.9.devel
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
