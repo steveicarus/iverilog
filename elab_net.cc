@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.168 2005/07/15 00:42:02 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.169 2005/07/15 04:13:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1989,6 +1989,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 	    NetNet*subsig = new NetNet(sig->scope(),
 				       sig->scope()->local_symbol(),
 				       NetNet::WIRE, subnet_wid);
+	    subsig->data_type( sig->data_type() );
 
 	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
 						  NetPartSelect::PV);
@@ -2580,6 +2581,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.169  2005/07/15 04:13:25  steve
+ *  Match data type of PV select input/output.
+ *
  * Revision 1.168  2005/07/15 00:42:02  steve
  *  Get output type correct for binary mux (ternary) expression.
  *
