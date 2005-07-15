@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.326 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.327 2005/07/15 00:41:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,7 +95,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: PGassign: elaborated l-value"
-		 << " width=" << lval->vector_width() << endl;
+		 << " width=" << lval->vector_width()
+		 << ", type=" << lval->data_type() << endl;
       }
 
 	/* Handle the special case that the rval is simply an
@@ -241,7 +242,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: PGAssign: elaborated r-value"
-		 << " width="<<rval->vector_width() << endl;
+		 << " width="<<rval->vector_width()
+		 << ", type="<< rval->data_type() << endl;
       }
 
       assert(lval && rval);
@@ -2972,6 +2974,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.327  2005/07/15 00:41:09  steve
+ *  More debug information.
+ *
  * Revision 1.326  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
