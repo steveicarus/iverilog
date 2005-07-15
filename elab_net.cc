@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.167 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.168 2005/07/15 00:42:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2266,13 +2266,34 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	/* The type of the true and false expressions must
+	   match. These become the type of the resulting
+	   expression. */
+
+      ivl_variable_type_t expr_type = tru_sig->data_type();
+
+      if (tru_sig->data_type() != fal_sig->data_type()) {
+	    cerr << get_line() << ": error: True and False clauses of"
+		 << " ternary expression have differnt types." << endl;
+	    cerr << get_line() << ":      : True clause is "
+		 << tru_sig->data_type() << ", false clause is "
+		 << fal_sig->data_type() << "." << endl;
+
+	    des->errors += 1;
+	    expr_type = IVL_VT_NO_TYPE;
+
+      } else if (expr_type == IVL_VT_NO_TYPE) {
+	    cerr << get_line() << ": internal error: True and false "
+		 << "clauses of ternary both have NO TYPE." << endl;
+	    des->errors += 1;
+      }
 
 	/* The natural width of the expression is the width of the
 	   largest condition. Normally they should be the same size,
 	   but if we do not get a size from the context, or the
 	   expressions resist, we need to cope. */
       unsigned iwidth = tru_sig->vector_width();
-      if (fal_sig->pin_count() > iwidth)
+      if (fal_sig->vector_width() > iwidth)
 	    iwidth = fal_sig->vector_width();
 
 
@@ -2314,6 +2335,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*sig = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, width);
+      sig->data_type(expr_type);
       sig->local_flag(true);
 
       if (fal_sig->vector_width() < dwidth)
@@ -2558,6 +2580,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.168  2005/07/15 00:42:02  steve
+ *  Get output type correct for binary mux (ternary) expression.
+ *
  * Revision 1.167  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
