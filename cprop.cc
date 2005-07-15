@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.53 2005/05/15 04:44:30 steve Exp $"
+#ident "$Id: cprop.cc,v 1.54 2005/07/15 19:22:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -799,6 +799,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetNet*rsig = new NetNet(scope, scope->local_symbol(),
 					   NetNet::WIRE, obj->width());
 		  rsig->local_flag(true);
+		  rsig->data_type(IVL_VT_LOGIC);
 		  connect(tmp->pin(2), rsig->pin(0));
 	    }
 
@@ -955,6 +956,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.54  2005/07/15 19:22:52  steve
+ *  bufif enable is LOGIC.
+ *
  * Revision 1.53  2005/05/15 04:44:30  steve
  *  Disable obsolete logic constant fixup code.
  *
