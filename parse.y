@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.1 2005/02/19 16:38:14 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.2 2005/07/27 14:48:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2265,7 +2265,7 @@ specify_item
 		{
 		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event
-	  ',' expression spec_notifier_opt ')' ';'
+	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
 		}
 	| K_Speriod '(' spec_reference_event ',' delay_value
@@ -2273,11 +2273,11 @@ specify_item
 		{ delete $5;
 		}
 	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
-	  ',' expression spec_notifier_opt ')' ';'
+	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
 		}
 	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
-	  ',' expression spec_notifier_opt ')' ';'
+	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
 		}
 	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
@@ -2295,7 +2295,7 @@ specify_item
 		{ delete $5;
 		  delete $7;
 		}
-	| K_Swidth '(' spec_reference_event ',' expression ')' ';'
+	| K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
 		{ delete $5;
 		}
 	;
