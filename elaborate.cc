@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.327 2005/07/15 00:41:09 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.328 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -770,13 +770,77 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // even multiple of the instance count.
 	    assert(prts_vector_width % instance.count() == 0);
 
+	    unsigned desired_vector_width = prts_vector_width;
+	    if (instance.count() != 1)
+		  desired_vector_width = 0;
+
 	      // Elaborate the expression that connects to the
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.
 
 	    NetNet*sig;
-	    if ((prts.count() >= 1)
-		&& (prts[0]->port_type() != NetNet::PINPUT)) {
+	    if ((prts.count() == 0)
+		|| (prts[0]->port_type() == NetNet::PINPUT)) {
+
+		    /* Input to module. elaborate the expression to
+		       the desired width. If this in an instance
+		       array, then let the net determine it's own
+		       width. We use that, then, to decide how to hook
+		       it up.
+
+		       NOTE that this also handles the case that the
+		       port is actually empty on the inside. We assume
+		       in that case that the port is input. */
+
+		  sig = pins[idx]->elaborate_net(des, scope,
+						 desired_vector_width,
+						 0, 0, 0);
+		  if (sig == 0) {
+			cerr << pins[idx]->get_line()
+			     << ": internal error: Port expression "
+			     << "too complicated for elaboration." << endl;
+			continue;
+		  }
+
+	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
+
+		    /* Inout to/from module. This is a more
+		       complicated case, where the expression must be
+		       an lnet, but also an r-value net.
+
+		       Normally, this winds up being the same as if we
+		       just elaborated as an lnet, as passing a simple
+		       identifier elaborates to the same NetNet in
+		       both cases so the extra elaboration has no
+		       effect. But if the expression passed to the
+		       inout port is a part select, aspecial part
+		       select must be created that can paqss data in
+		       both directions.
+
+		       Use the elaborate_bi_net method to handle all
+		       the possible cases. */
+
+		  sig = pins[idx]->elaborate_bi_net(des, scope);
+		  if (sig == 0) {
+			cerr << pins[idx]->get_line() << ": error: "
+			     << "Inout port expression must support "
+			     << "continuous assignment." << endl;
+			cerr << pins[idx]->get_line() << ":      : "
+			     << "Port of " << rmod->mod_name()
+			     << " is " << rmod->ports[idx]->name << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+
+	    } else {
+
+		    /* Port type must be OUTPUT here. */
+
+		    /* Output from module. Elaborate the port
+		       expression as the l-value of a continuous
+		       assignment, as the port will continuous assign
+		       into the port. */
 
 		  sig = pins[idx]->elaborate_lnet(des, scope, true);
 		  if (sig == 0) {
@@ -790,25 +854,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			continue;
 		  }
 
-	    } else {
-		    /* Input to module. elaborate the expression to
-		       the desired width. If this in an instance
-		       array, then let the net determine it's own
-		       width. We use that, then, to decide how to hook
-		       it up. */
-		  unsigned desired_vector_width = prts_vector_width;
-		  if (instance.count() != 1)
-			desired_vector_width = 0;
-
-		  sig = pins[idx]->elaborate_net(des, scope,
-						 desired_vector_width,
-						 0, 0, 0);
-		  if (sig == 0) {
-			cerr << pins[idx]->get_line()
-			     << ": internal error: Port expression "
-			     << "too complicated for elaboration." << endl;
-			continue;
-		  }
 	    }
 
 	    assert(sig);
@@ -955,7 +1000,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  break;
 		case NetNet::PINOUT:
 		  cerr << get_line() << ": XXXX: "
-		       << "Forgot how to bind input ports!" << endl;
+		       << "Forgot how to bind inout ports!" << endl;
 		  des->errors += 1;
 		  break;
 		case NetNet::PIMPLICIT:
@@ -2974,6 +3019,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.328  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.327  2005/07/15 00:41:09  steve
  *  More debug information.
  *

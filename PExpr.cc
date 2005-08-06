@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.35 2004/10/04 01:10:51 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.36 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -49,6 +49,14 @@ bool PExpr::is_constant(Module*) const
 NetNet* PExpr::elaborate_lnet(Design*des, NetScope*, bool) const
 {
       cerr << get_line() << ": error: expression not valid in assign l-value: "
+	   << *this << endl;
+      return 0;
+}
+
+NetNet* PExpr::elaborate_bi_net(Design*des, NetScope*) const
+{
+      cerr << get_line() << ": error: "
+	   << "expression not valid as argument to inout port: "
 	   << *this << endl;
       return 0;
 }
@@ -262,6 +270,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.36  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.35  2004/10/04 01:10:51  steve
  *  Clean up spurious trailing white space.
  *

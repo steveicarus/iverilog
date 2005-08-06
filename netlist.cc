@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.246 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: netlist.cc,v 1.247 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -496,8 +496,8 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 	    pin(1).set_dir(Link::OUTPUT);
 	    break;
 	  case NetPartSelect::BI:
-	    pin(0).set_dir(Link::PASSIVE);
-	    pin(1).set_dir(Link::PASSIVE);
+	    pin(0).set_dir(Link::OUTPUT);
+	    pin(1).set_dir(Link::OUTPUT);
 	    break;
       }
       pin(0).set_name(perm_string::literal("Part"), 0);
@@ -2216,6 +2216,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.247  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.246  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

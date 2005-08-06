@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.169 2005/07/15 04:13:25 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.170 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1816,6 +1816,36 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 }
 
 /*
+ * A private method to create an implicit net.
+ */
+NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
+{
+      NetNet::Type nettype = scope->default_nettype();
+      NetNet*sig = 0;
+
+      if (!error_implicit && nettype!=NetNet::NONE) {
+	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
+			     NetNet::IMPLICIT, 1);
+	      /* Implicit nets are always scalar logic. */
+	    sig->data_type(IVL_VT_LOGIC);
+
+	    if (warn_implicit) {
+		  cerr << get_line() << ": warning: implicit "
+			"definition of wire logic " << scope->name()
+		       << "." << path_.peek_name(0) << "." << endl;
+	    }
+
+      } else {
+	    cerr << get_line() << ": error: Net " << path_
+		 << " is not defined in this context." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      return sig;
+}
+
+/*
  * This private method evaluates the part selects (if any) for the
  * signal. The sig argument is the NetNet already located for the
  * PEIdent name. The midx and lidx arguments are loaded with the
@@ -1889,11 +1919,13 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 }
 
 /*
- * Identifiers in continuous assignment l-values are limited to wires
- * and that ilk. Detect registers and memories here and report errors.
+ * This is the common code for l-value nets and bi-directional
+ * nets. There is very little that is different between the two cases,
+ * so most of the work for both is done here.
  */
-NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
-				bool implicit_net_ok) const
+NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
+					bool implicit_net_ok,
+					bool bidirectional_flag) const
 {
       assert(scope);
 
@@ -1921,26 +1953,16 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
       }
 
       if (sig == 0) {
-	    NetNet::Type nettype = scope->default_nettype();
 
-	    if (implicit_net_ok && !error_implicit && nettype!=NetNet::NONE) {
+	    if (implicit_net_ok) {
 
-		  sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
-				   NetNet::IMPLICIT, 1);
-		    /* Implicit nets are always scalar logic. */
-		  sig->data_type(IVL_VT_LOGIC);
-
-		  if (warn_implicit) {
-			cerr << get_line() << ": warning: implicit "
-			      "definition of wire " << scope->name()
-			     << "." << path_.peek_name(0) << "." << endl;
-		  }
+		  sig = make_implicit_net_(des, scope);
+		  if (sig == 0)
+			return 0;
 
 	    } else {
 		  cerr << get_line() << ": error: Net " << path_
 		       << " is not defined in this context." << endl;
-		  cerr << get_line() << ":      : Do you mean this? wire "
-		       << path_ << " = <expr>;" << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -1978,6 +2000,15 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 	   original vector. */
 
       if (subnet_wid != sig->vector_width()) {
+	      /* If we are processing a tran or inout, then the
+		 partselect is bi-directional. Otherwise, it is a
+		 Part-to-Vector select. */
+	    NetPartSelect::dir_t part_dir;
+	    if (bidirectional_flag)
+		  part_dir = NetPartSelect::BI;
+	    else
+		  part_dir = NetPartSelect::PV;
+
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: "
 		       << "Elaborate lnet part select "
@@ -1992,7 +2023,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 	    subsig->data_type( sig->data_type() );
 
 	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
-						  NetPartSelect::PV);
+						  part_dir);
 	    des->add_node(sub);
 	    connect(sub->pin(0), subsig->pin(0));
 
@@ -2000,6 +2031,21 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
       }
 
       return sig;
+}
+
+/*
+ * Identifiers in continuous assignment l-values are limited to wires
+ * and that ilk. Detect registers and memories here and report errors.
+ */
+NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
+					bool implicit_net_ok) const
+{
+      return elaborate_lnet_common_(des, scope, implicit_net_ok, false);
+}
+
+NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
+{
+      return elaborate_lnet_common_(des, scope, true, true);
 }
 
 /*
@@ -2581,6 +2627,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.170  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.169  2005/07/15 04:13:25  steve
  *  Match data type of PV select input/output.
  *

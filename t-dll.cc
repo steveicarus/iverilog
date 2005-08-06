@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.153 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.154 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1699,7 +1699,7 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->type = IVL_LPM_PART_PV;
 	    break;
 	  case NetPartSelect::BI:
-	    assert(0); // XXXX Not supported yet
+	    obj->type = IVL_LPM_PART_BI;
 	    break;
       }
       obj->name = net->name(); // NetPartSelect names are permallocated.
@@ -1707,13 +1707,14 @@ bool dll_target::part_select(const NetPartSelect*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
+	/* Part selects are always unsigned. */
       obj->u_.part.signed_flag = 0;
 
 	/* Choose the width of the part select. */
       obj->u_.part.width = net->width();
       obj->u_.part.base  = net->base();
-      obj->u_.part.signed_flag = 0;
       obj->u_.part.s = 0;
+
       const Nexus*nex;
 
       switch (obj->type) {
@@ -1753,12 +1754,39 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
 	    break;
 
+	  case IVL_LPM_PART_BI:
+	      /* For now, handle this exactly the same as a PV */
+
+	      /* NetPartSelect:pin(0) is the output pin. */
+	    nex = net->pin(0).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+
+	      /* NetPartSelect:pin(1) is the input pin. */
+	    nex = net->pin(1).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    break;
+
 	  default:
 	    assert(0);
       }
 
       nexus_lpm_add(obj->u_.part.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-      nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	/* If the device is a PART_BI, then the "input" is also a
+	   strength aware output, so attach it to the nexus with
+	   strong driver. */
+      if (obj->type == IVL_LPM_PART_BI)
+	 nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      else
+	 nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	/* The select input is optional. */
+      if (obj->u_.part.s)
+	 nexus_lpm_add(obj->u_.part.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
 
@@ -2103,6 +2131,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.154  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.153  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

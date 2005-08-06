@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.158 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.159 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -234,6 +234,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
+      IVL_LPM_PART_BI= 28, /* part select: bi-directional (part on 0) */
       IVL_LPM_PART_VP= 15, /* part select: vector to part */
       IVL_LPM_PART_PV= 17, /* part select: part written to vector */
       IVL_LPM_RE_AND = 20,
@@ -890,6 +891,13 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * still correct. The output being written to the wider vector is
  * indeed the width of the part, even though it is written to a wider
  * gate. The target will need to handle this case specially.
+ *
+ * - Bi-directional Part Select (IVL_LPM_PART_BI)
+ * This is not exactly a part select but a bi-directional partial link
+ * of two nexa with different widths. This is used to implement tran
+ * devices and inout ports in certain cases. The device width is the
+ * width of the part. The ivl_lpm_q is the part end, and the
+ * ivl_lpm_data(0) is the non-part end.
  *
  * - Comparisons (IVL_LPM_CMP_GT/GE/EQ/NE/EEQ/NEE)
  * These devices have two inputs, available by the ivl_lpm_data()
@@ -1662,6 +1670,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.159  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.158  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

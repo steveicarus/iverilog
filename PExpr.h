@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.69 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: PExpr.h,v 1.70 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include  <string>
@@ -73,14 +73,16 @@ class PExpr : public LineInfo {
 				    Link::strength_t drive1 =Link::STRONG)
 	    const;
 
-	// This method elaborates the expression as NetNet objects. It
-	// only allows regs suitable for procedural continuous assignments.
-      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
-
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
 				     bool implicit_net_ok =false) const;
+
+	// This is similar to elaborate_lnet, except that the
+	// expression is evaluated to be bi-directional. This is
+	// useful for arguments to inout ports of module instances and
+	// ports of tran primitives.
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
 
 	// Expressions that can be in the l-value of procedural
 	// assignments can be elaborated with this method. If the
@@ -121,10 +123,6 @@ class PEConcat : public PExpr {
       ~PEConcat();
 
       virtual void dump(ostream&) const;
-
-	// Concatenated Regs can be on the left of procedural
-	// continuous assignments.
-      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
 				     bool implicit_net_ok =false) const;
@@ -220,12 +218,11 @@ class PEIdent : public PExpr {
 
       virtual void dump(ostream&) const;
 
-	// Regs can be on the left of procedural continuous assignments
-      virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
-
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
 				     bool implicit_net_ok =false) const;
+
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
 
 	// Identifiers are also allowed as procedural assignment l-values.
       virtual NetAssign_* elaborate_lval(Design*des,
@@ -283,6 +280,12 @@ class PEIdent : public PExpr {
     private:
       NetAssign_* elaborate_mem_lval_(Design*des, NetScope*scope,
 				      NetMemory*mem) const;
+
+      NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
+				     bool implicit_net_ok,
+				     bool bidirectional_flag) const;
+
+      NetNet*make_implicit_net_(Design*des, NetScope*scope) const;
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     unsigned&midx, unsigned&lidx) const;
@@ -514,6 +517,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.70  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.69  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

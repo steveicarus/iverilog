@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.31 2005/07/13 04:52:31 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.32 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -82,12 +82,16 @@ extern int draw_vpi_rfunc_call(ivl_expr_t exp);
  * Given a nexus, draw a string that represents the functor output
  * that feeds the nexus. This function can be used to get the input to
  * a functor, event, or even a %load in cases where I have the
- * ivl_nexus_t object.
+ * ivl_nexus_t object. The draw_net_input function will get the string
+ * cached in the nexus, if there is one, or will generate a string and
+ * cache it.
  */
-extern void draw_nexus_input(ivl_nexus_t nex);
-
 extern const char* draw_net_input(ivl_nexus_t nex);
 
+/*
+ * This is very similar to draw_net_input, but instead of returning a
+ * pointer to the string, it writes it to the output file.
+ */
 extern void draw_input_from_net(ivl_nexus_t nex);
 
 /*
@@ -194,6 +198,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.32  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.31  2005/07/13 04:52:31  steve
  *  Handle functions with real values.
  *

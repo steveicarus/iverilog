@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.130 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.131 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -713,6 +713,7 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
+	  case IVL_LPM_PART_BI:
 	    return net->u_.part.base;
 	  default:
 	    assert(0);
@@ -840,6 +841,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
+	  case IVL_LPM_PART_BI:
 	    assert(idx <= 1);
 	    if (idx == 0)
 		  return net->u_.part.a;
@@ -1012,6 +1014,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
+	  case IVL_LPM_PART_BI:
 	    assert(idx == 0);
 	    return net->u_.part.q;
 
@@ -1099,6 +1102,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
+	  case IVL_LPM_PART_BI:
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
 	    return 0;
@@ -1166,6 +1170,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.concat.width;
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
+	    return net->u_.part.width;
+	  case IVL_LPM_PART_BI:
 	    return net->u_.part.width;
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.width;
@@ -2027,6 +2033,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.131  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.130  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

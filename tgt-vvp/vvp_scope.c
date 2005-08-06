@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.131 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.132 2005/08/06 17:58:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -603,9 +603,17 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  sprintf(result, "L_%p", lpm);
 		  return result;
 	    }
-
 	    break;
 
+	  case IVL_LPM_PART_BI:
+	    if (ivl_lpm_q(lpm, 0) == nex) {
+		  sprintf(result, "L_%p/P", lpm);
+		  return result;
+	    } else if (ivl_lpm_data(lpm,0) == nex) {
+		  sprintf(result, "L_%p/V", lpm);
+		  return result;
+	    }
+	    break;
       }
 
       fprintf(stderr, "internal error: no input to nexus %s\n",
@@ -615,16 +623,18 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 }
 
 /*
- * This function draws the input to a net. What that means is that it
- * returns a static string that can be used to represent a resolved
- * driver to a nexus. If there are multiple drivers to the nexus, then
- * it writes out the resolver declarations needed to perform strength
- * resolution.
+ * This function draws the input to a net into a string. What that
+ * means is that it returns a static string that can be used to
+ * represent a resolved driver to a nexus. If there are multiple
+ * drivers to the nexus, then it writes out the resolver declarations
+ * needed to perform strength resolution.
  *
- * The string that this returns is bound to the nexus, so the pointer
- * remains valid.
+ * The string that this returns is malloced, and that means that the
+ * caller must free the string or store it permanently. This function
+ * does *not* check for a previously calculated string. Use the
+ * draw_net_input for the general case.
  */
-const char* draw_net_input(ivl_nexus_t nex)
+char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 {
       ivl_signal_type_t res;
       char result[512];
@@ -636,11 +646,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 
       const char*resolv_type;
 
-	/* If this nexus already has a label, then its input is
-	   already figured out. Just return the existing label. */
-      char*nex_private = (char*)ivl_nexus_get_private(nex);
-      if (nex_private)
-	    return nex_private;
+      char*nex_private = 0;
 
       res = signal_type_of_nexus(nex);
       switch (res) {
@@ -669,6 +675,9 @@ const char* draw_net_input(ivl_nexus_t nex)
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
+
+	    if (nptr == omit)
+		  continue;
 
 	      /* Skip input only pins. */
 	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ)
@@ -711,7 +720,6 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    }
 	    *tmp++ = '>';
 	    *tmp = 0;
-	    ivl_nexus_set_private(nex, nex_private);
 	    return nex_private;
       }
 
@@ -721,7 +729,6 @@ const char* draw_net_input(ivl_nexus_t nex)
 	   TRI type nexus. */
       if (ndrivers == 1 && res == IVL_SIT_TRI) {
 	    nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
-	    ivl_nexus_set_private(nex, nex_private);
 	    return nex_private;
       }
 
@@ -761,22 +768,36 @@ const char* draw_net_input(ivl_nexus_t nex)
 
       sprintf(result, "RS_%p", nex);
       nex_private = strdup(result);
+      return nex_private;
+}
+
+/*
+ * Get a cached description of the nexus input, or create one if this
+ * nexus has not been cached yet. This is a wrapper for the common
+ * case call to draw_net_input_x.
+ */
+const char*draw_net_input(ivl_nexus_t nex)
+{
+	/* If this nexus already has a label, then its input is
+	   already figured out. Just return the existing label. */
+      char*nex_private = (char*)ivl_nexus_get_private(nex);
+      if (nex_private)
+	    return nex_private;
+
+      nex_private = draw_net_input_x(nex, 0);
       ivl_nexus_set_private(nex, nex_private);
       return nex_private;
 }
 
-
-
 /*
  * This function looks at the nexus in search of the net to attach
  * functor inputs to. Sort the signals in the nexus by name, and
- * choose the lexically earliest one.
+ * choose the lexically earliest one. This is different from the
+ * draw_net_input in that it also prints the result.
  */
 void draw_input_from_net(ivl_nexus_t nex)
 {
-      const char*nex_private = (const char*)ivl_nexus_get_private(nex);
-      if (nex_private == 0)
-	    nex_private = draw_net_input(nex);
+      const char*nex_private = draw_net_input(nex);
       assert(nex_private);
       fprintf(vvp_out, "%s", nex_private);
 }
@@ -1775,6 +1796,68 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
 }
 
 /*
+ * Handle the drawing of a bi-directional part select. The two ports
+ * are simultaneously input and output. A simple minded connect of the
+ * input to the output causes a functor cycle which will lock into an
+ * X value, so something special is needed.
+ *
+ * NOTE: The inputs of the tran device at this point need to be from
+ * all the drivers of the nexus *except* the tran itself.
+ */
+static void draw_lpm_part_bi(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned base  = ivl_lpm_base(net);
+      unsigned signal_width = width_of_nexus(ivl_lpm_data(net,0));
+
+      unsigned idx;
+      ivl_nexus_t nex;
+      ivl_nexus_ptr_t ptr;
+
+      char*p_str;
+      char*v_str;
+
+	/* It seems implausible that the two inputs of a tran will be
+	   connected together. So assert that this is so to simplify
+	   the code to look for the nexus_ptr_t objects. */
+      assert(ivl_lpm_q(net,0) != ivl_lpm_data(net,0));
+
+      nex = ivl_lpm_q(net,0);
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ptr = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_lpm(ptr) == net)
+		  break;
+      }
+      p_str = draw_net_input_x(nex, ptr);
+
+      nex = ivl_lpm_data(net,0);
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ptr = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_lpm(ptr) == net)
+		  break;
+      }
+      v_str = draw_net_input_x(nex, ptr);
+
+	/* Pad the part-sized input out to a common width... */
+      fprintf(vvp_out, "L_%p/i .part/pv %s, %u, %u, %u;\n",
+	      net, p_str, base, width, signal_width);
+
+	/* Resolve together the two halves of the tran... */
+      fprintf(vvp_out, "L_%p/V .resolv tri, L_%p/i, %s;\n",
+	      net, net, v_str);
+
+	/* The full-width side is created by the tran device, all we
+	   have left to to is take a part select of that for the
+	   smaller output, and this becomes the part select output of
+	   the BI device. */
+      fprintf(vvp_out, "L_%p/P .part L_%p/V, %u, %u;\n", net,
+	      net, base, width);
+
+      free(p_str);
+      free(v_str);
+}
+
+/*
  * Draw unary reduction devices.
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
@@ -1814,6 +1897,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	    draw_lpm_add(net);
+	    return;
+
+	  case IVL_LPM_PART_BI:
+	    draw_lpm_part_bi(net);
 	    return;
 
 	  case IVL_LPM_PART_VP:
@@ -1994,6 +2081,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.132  2005/08/06 17:58:16  steve
+ *  Implement bi-directional part selects.
+ *
  * Revision 1.131  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
