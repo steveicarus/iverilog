@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.15 2004/06/04 23:33:51 steve Exp $"
+#ident "$Id: verireal.cc,v 1.15.2.1 2005/08/13 00:45:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -124,7 +124,7 @@ verireal operator- (const verireal&l)
       return res;
 }
 
-ostream& operator<< (ostream&out, const verireal&v)
+std::ostream& operator<< (std::ostream&out, const verireal&v)
 {
       out << v.value_;
       return out;
@@ -132,6 +132,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.15.2.1  2005/08/13 00:45:55  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.15  2004/06/04 23:33:51  steve
  *  Add unary minus as operator supported by verireal.
  *

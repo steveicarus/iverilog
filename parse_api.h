@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_api.h,v 1.3 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: parse_api.h,v 1.3.2.1 2005/08/13 00:45:54 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -35,8 +35,8 @@ class PUdp;
  * Verilog source into pform for elaboration. The parser adds modules
  * to these maps as it compiles modules in the verilog source.
  */
-extern map<perm_string,Module*> pform_modules;
-extern map<perm_string,PUdp*>   pform_primitives;
+extern std::map<perm_string,Module*> pform_modules;
+extern std::map<perm_string,PUdp*>   pform_primitives;
 
 /*
  * This code actually invokes the parser to make modules. The first
@@ -47,10 +47,13 @@ extern map<perm_string,PUdp*>   pform_primitives;
  */
 extern int  pform_parse(const char*path, FILE*file =0);
 
-extern string vl_file;
+extern std::string vl_file;
 
 /*
  * $Log: parse_api.h,v $
+ * Revision 1.3.2.1  2005/08/13 00:45:54  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.3  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PTask.h,v 1.13 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: PTask.h,v 1.13.2.1 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -70,7 +70,7 @@ class PTask  : public LineInfo {
 	// Elaborate the statement to finish off the task definition.
       void elaborate(Design*des, NetScope*scope) const;
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
     private:
       svector<PWire*>*ports_;
@@ -106,7 +106,7 @@ class PFunction : public LineInfo {
 	/* Elaborate the behavioral statement. */
       void elaborate(Design *des, NetScope*) const;
 
-      void dump(ostream&, unsigned) const;
+      void dump(std::ostream&, unsigned) const;
 
     private:
       perm_string name_;
@@ -117,6 +117,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.13.2.1  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.13  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

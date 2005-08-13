@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: util.h,v 1.7 2004/02/20 18:53:36 steve Exp $"
+#ident "$Id: util.h,v 1.7.2.1 2005/08/13 00:45:55 steve Exp $"
 #endif
 
 # include  <map>
@@ -44,13 +44,16 @@ struct attrib_list_t {
       verinum val;
 };
 
-extern attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
+extern attrib_list_t* evaluate_attributes(const std::map<perm_string,PExpr*>&att,
 					  unsigned&natt,
 					  const Design*des,
 					  const NetScope*scope);
 
 /*
  * $Log: util.h,v $
+ * Revision 1.7.2.1  2005/08/13 00:45:55  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.7  2004/02/20 18:53:36  steve
  *  Addtrbute keys are perm_strings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.10.2.1 2005/06/14 15:33:54 steve Exp $"
+#ident "$Id: verireal.h,v 1.10.2.2 2005/08/13 00:45:55 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -41,7 +41,7 @@ class verinum;
 
 class verireal {
 
-      friend ostream& operator<< (ostream&, const verireal&);
+      friend std::ostream& operator<< (std::ostream&, const verireal&);
       friend verireal operator* (const verireal&, const verireal&);
       friend verireal operator/ (const verireal&, const verireal&);
       friend verireal operator/ (const verireal&, const verinum&);
@@ -70,7 +70,7 @@ class verireal {
       double value_;
 };
 
-extern ostream& operator<< (ostream&, const verireal&);
+extern std::ostream& operator<< (std::ostream&, const verireal&);
 extern verireal operator* (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verinum&);
@@ -80,6 +80,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.10.2.2  2005/08/13 00:45:55  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.10.2.1  2005/06/14 15:33:54  steve
  *  Fix gcc4 build issues.
  *

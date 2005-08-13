@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.6 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: StringHeap.cc,v 1.6.2.1 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -131,7 +131,7 @@ perm_string StringHeapLex::make(const char*text)
       return perm_string(add(text));
 }
 
-perm_string StringHeapLex::make(const string&text)
+perm_string StringHeapLex::make(const std::string&text)
 {
       return perm_string(add(text.c_str()));
 }
@@ -181,6 +181,9 @@ bool operator < (perm_string a, perm_string b)
 
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.6.2.1  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.6  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

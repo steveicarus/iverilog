@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.1 2005/07/06 22:41:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.2 2005/08/13 00:45:54 steve Exp $"
 #endif
 
 /*
@@ -60,6 +60,9 @@ class NetESignal;
 class NetEVariable;
 class NetFuncDef;
 
+class NetRamDq;
+class NetEvTrig;
+class NetEvWait;
 
 struct target;
 struct functor_t;
@@ -3357,6 +3360,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.2  2005/08/13 00:45:54  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.321.2.1  2005/07/06 22:41:34  steve
  *  Fix compile errors with g++-4.
  *

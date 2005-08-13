@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.43 2004/05/18 18:43:15 steve Exp $"
+#ident "$Id: verinum.cc,v 1.43.2.1 2005/08/13 00:45:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,7 +41,7 @@ verinum::verinum(const V*bits, unsigned nbits, bool has_len)
       }
 }
 
-verinum::verinum(const string&str)
+verinum::verinum(const std::string&str)
 : has_len_(true), has_sign_(false), string_flag_(true)
 {
       nbits_ = str.length() * 8;
@@ -257,7 +257,7 @@ signed long verinum::as_long() const
       return val;
 }
 
-string verinum::as_string() const
+std::string verinum::as_string() const
 {
       assert( nbits_%8 == 0 );
       if (nbits_ == 0)
@@ -283,7 +283,7 @@ string verinum::as_string() const
       }
 
       tmp[nbits_/8] = 0;
-      string result = string(tmp);
+      std::string result = std::string(tmp);
       delete[]tmp;
       return result;
 }
@@ -370,7 +370,7 @@ verinum trim_vnum(const verinum&that)
       return tmp;
 }
 
-ostream& operator<< (ostream&o, verinum::V v)
+std::ostream& operator<< (std::ostream&o, verinum::V v)
 {
       switch (v) {
 	  case verinum::V0:
@@ -393,7 +393,7 @@ ostream& operator<< (ostream&o, verinum::V v)
  * This operator is used by various dumpers to write the verilog
  * number in a Verilog format.
  */
-ostream& operator<< (ostream&o, const verinum&v)
+std::ostream& operator<< (std::ostream&o, const verinum&v)
 {
       if (v.is_string()) {
 	    o << "\"" << v.as_string() << "\"";
@@ -942,6 +942,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.43.2.1  2005/08/13 00:45:55  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.43  2004/05/18 18:43:15  steve
  *  Handle null string as a single nul character.
  *

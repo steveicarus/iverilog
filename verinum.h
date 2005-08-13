@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.26.2.1 2005/06/14 15:33:54 steve Exp $"
+#ident "$Id: verinum.h,v 1.26.2.2 2005/08/13 00:45:55 steve Exp $"
 #endif
 
 # include  <string>
@@ -45,7 +45,7 @@ class verinum {
       enum V { V0 = 0, V1, Vx, Vz };
 
       verinum();
-      verinum(const string&str);
+      verinum(const std::string&);
       verinum(const V*v, unsigned nbits, bool has_len =true);
       verinum(V, unsigned nbits =1, bool has_len =true);
       verinum(unsigned long val, unsigned bits);
@@ -92,7 +92,7 @@ class verinum {
 
       unsigned long as_ulong() const;
       signed long   as_long() const;
-      string as_string() const;
+      std::string as_string() const;
 
     private:
       V* bits_;
@@ -109,8 +109,8 @@ class verinum {
    needed to accurately represent the contained value, signed or not. */
 extern verinum trim_vnum(const verinum&);
 
-extern ostream& operator<< (ostream&, const verinum&);
-extern ostream& operator<< (ostream&, verinum::V);
+extern std::ostream& operator<< (std::ostream&, const verinum&);
+extern std::ostream& operator<< (std::ostream&, verinum::V);
 
 extern verinum::V operator | (verinum::V l, verinum::V r);
 extern verinum::V operator & (verinum::V l, verinum::V r);
@@ -149,6 +149,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.26.2.2  2005/08/13 00:45:55  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.26.2.1  2005/06/14 15:33:54  steve
  *  Fix gcc4 build issues.
  *

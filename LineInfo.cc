@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.cc,v 1.4 2003/01/17 05:49:03 steve Exp $"
+#ident "$Id: LineInfo.cc,v 1.4.2.1 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,12 +34,12 @@ LineInfo::~LineInfo()
 {
 }
 
-string LineInfo::get_line() const
+std::string LineInfo::get_line() const
 {
-      ostringstream buf;
+      std::ostringstream buf;
       buf << (file_? file_ : "") << ":" << lineno_;
 
-      string res = buf.str();
+      std::string res = buf.str();
       return res;
 }
 
@@ -61,6 +61,9 @@ void LineInfo::set_lineno(unsigned n)
 
 /*
  * $Log: LineInfo.cc,v $
+ * Revision 1.4.2.1  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.4  2003/01/17 05:49:03  steve
  *  Use stringstream in place of sprintf.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.12 2004/03/08 00:47:44 steve Exp $"
+#ident "$Id: PUdp.h,v 1.12.2.1 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include  <map>
@@ -55,20 +55,20 @@ class PUdp {
     public:
       explicit PUdp(perm_string n, unsigned nports);
 
-      svector<string>ports;
+      svector<std::string>ports;
       unsigned find_port(const char*name);
 
       bool sequential;
 
-      svector<string>tinput;
+      svector<std::string>tinput;
       svector<char>  tcurrent;
       svector<char>  toutput;
 
       verinum::V initial;
 
-      map<string,PExpr*> attributes;
+      std::map<std::string,PExpr*> attributes;
 
-      void dump(ostream&out) const;
+      void dump(std::ostream&out) const;
 
       perm_string name_;
     private:
@@ -80,6 +80,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.12.2.1  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.12  2004/03/08 00:47:44  steve
  *  primitive ports can bind bi name.
  *

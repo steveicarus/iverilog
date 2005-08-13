@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.h,v 1.7.2.1 2005/06/14 15:33:54 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.7.2.2 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include  <string>
@@ -40,7 +40,7 @@ class LineInfo {
       LineInfo();
       ~LineInfo();
 
-      string get_line() const;
+      std::string get_line() const;
 
       void set_line(const LineInfo&that);
 
@@ -54,6 +54,9 @@ class LineInfo {
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.7.2.2  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.7.2.1  2005/06/14 15:33:54  steve
  *  Fix gcc4 build issues.
  *

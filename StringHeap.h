@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.h,v 1.5.2.1 2005/06/14 15:33:54 steve Exp $"
+#ident "$Id: StringHeap.h,v 1.5.2.2 2005/08/13 00:45:53 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -103,7 +103,7 @@ class StringHeapLex  : private StringHeap {
 
       const char*add(const char*);
       perm_string make(const char*);
-      perm_string make(const string&);
+      perm_string make(const std::string&);
 
       unsigned add_count() const;
       unsigned add_hit_count() const;
@@ -122,6 +122,9 @@ class StringHeapLex  : private StringHeap {
 
 /*
  * $Log: StringHeap.h,v $
+ * Revision 1.5.2.2  2005/08/13 00:45:53  steve
+ *  Fix compilation warnings/errors with newer compilers.
+ *
  * Revision 1.5.2.1  2005/06/14 15:33:54  steve
  *  Fix gcc4 build issues.
  *
