@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.1.2.1 2005/08/17 01:17:28 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.1.2.2 2005/08/21 14:39:33 steve Exp $"
 #endif
 
 /*
@@ -558,6 +558,78 @@ static void lpm_show_dff(ivl_lpm_t net)
       }
 }
 
+static void lpm_show_cmp_eq(ivl_lpm_t net)
+{
+      edif_cell_t cell;
+      edif_cellref_t ref;
+      edif_joint_t jnt;
+      unsigned idx;
+
+      char cellname[32];
+
+      unsigned width = ivl_lpm_width(net);
+
+      sprintf(cellname, "compare%u_eq", width);
+      cell = edif_xlibrary_findcell(xlib, cellname);
+
+      if (cell == 0) {
+	    unsigned pins = 2*width + 1;
+
+	    cell = edif_xcell_create(xlib, strdup(cellname), pins);
+
+	      /* Make the output port. */
+	    sprintf(cellname, "AEB");
+	    edif_cell_portconfig(cell, 2*width, strdup(cellname),
+				 IVL_SIP_OUTPUT);
+
+	    for (idx = 0 ;  idx < width ;  idx += 1) {
+		  sprintf(cellname, "DataA%u", idx);
+		  edif_cell_portconfig(cell, idx+0, strdup(cellname),
+				       IVL_SIP_INPUT);
+	    }
+
+	    for (idx = 0 ;  idx < width ;  idx += 1) {
+		  sprintf(cellname, "DataB%u", idx);
+		  edif_cell_portconfig(cell, idx+width, strdup(cellname),
+				       IVL_SIP_INPUT);
+	    }
+
+	    edif_cell_pstring(cell,  "LPM_Type",   "LPM_COMPARE");
+	    edif_cell_pinteger(cell, "LPM_Width",  width);
+      }
+
+      ref = edif_cellref_create(edf, cell);
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    unsigned pin;
+
+	    sprintf(cellname, "DataA%u", idx);
+	    pin = edif_cell_port_byname(cell, cellname);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    unsigned pin;
+
+	    sprintf(cellname, "DataB%u", idx);
+	    pin = edif_cell_port_byname(cell, cellname);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+
+      {
+	    unsigned pin;
+
+	    pin = edif_cell_port_byname(cell, "AEB");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+}
+
 static void lpm_show_mux(ivl_lpm_t net)
 {
       edif_cell_t cell;
@@ -879,12 +951,12 @@ const struct device_s d_lpm_edif = {
       lpm_show_header,
       lpm_show_footer,
       0,
-      0,
-      lpm_logic,
+      0, /* show_pad */
+      lpm_logic, /* show_logic */
       lpm_show_dff, /* show_dff */
-      0,
-      0,
-      0,
+      lpm_show_cmp_eq, /* show_cmp_eq */
+      0, /* show_cmp_ne */
+      0, /* show_cmp_ge */
       0, /* show_cmp_gt */
       lpm_show_mux, /* show_mux */
       lpm_show_add, /* show_add */
@@ -897,6 +969,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.1.2.2  2005/08/21 14:39:33  steve
+ *  Generate LPM for the CMP_EQ device.
+ *
  * Revision 1.1.2.1  2005/08/17 01:17:28  steve
  *  Add the tgt-edif target.
  *
