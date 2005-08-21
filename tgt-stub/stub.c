@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.1 2005/08/21 22:27:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -807,6 +807,10 @@ static void show_logic(ivl_net_logic_t net)
 		    name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
+	  case IVL_LO_NOR:
+	    fprintf(out, "  nor %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
 	  case IVL_LO_OR:
 	    fprintf(out, "  or %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
@@ -822,7 +826,8 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(out, "  unsupported gate %s (%s", name,
+	    fprintf(out, "  unsupported gate(%u) %s (%s",
+		    ivl_logic_type(net), name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
       }
@@ -953,6 +958,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.1  2005/08/21 22:27:57  steve
+ *  Display NOR gates.
+ *
  * Revision 1.90  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *
