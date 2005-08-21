@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.1.2.1 2005/08/17 01:17:28 steve Exp $"
+#ident "$Id: edif.c,v 1.1.2.2 2005/08/21 22:25:51 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -497,7 +497,7 @@ void edif_print(FILE*fd, edif_t edf)
       fprintf(fd, "     (written\n");
       fprintf(fd, "        (timeStamp 0 0 0 0 0 0)\n");
       fprintf(fd, "        (author \"unknown\")\n");
-      fprintf(fd, "        (program \"Icarus Verilog/fpga.tgt\")))\n");
+      fprintf(fd, "        (program \"Icarus Verilog/edif.tgt\")))\n");
       fflush(fd);
 
       for (xlib = edf->xlibs ;  xlib ;  xlib = xlib->next) {
@@ -671,6 +671,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.1.2.2  2005/08/21 22:25:51  steve
+ *  Fix the comment in the EDIT header.
+ *
  * Revision 1.1.2.1  2005/08/17 01:17:28  steve
  *  Add the tgt-edif target.
  *
