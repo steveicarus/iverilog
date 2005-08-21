@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.1 2005/08/21 22:49:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -143,6 +143,11 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
       const perm_string tmp1 = perm_string::literal("tmp1");
       const perm_string tmp2 = perm_string::literal("tmp2");
+      const perm_string tmp3 = perm_string::literal("tmp3");
+
+      NetNet*accum_out = new NetNet(scope, tmp3, NetNet::WIRE,
+				    nex_out->pin_count());
+      accum_out->local_flag(true);
 
       bool flag = true;
       NetProc*cur = last_;
@@ -168,17 +173,41 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 	    if (ok_flag == false)
 		  continue;
 
+	    NetNet*new_accum = new NetNet(scope, tmp3, NetNet::WIRE,
+					  nex_out->pin_count());
+
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a whole. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
-		  connect(nex_out->pin(ptr), tmp_out->pin(idx));
+		  connect(new_accum->pin(ptr), tmp_out->pin(idx));
 	    }
 
 	    delete tmp_map;
 	    delete tmp_out;
 
+	      /* Anything that is not redriven by the current
+		 statement inherits the value that was driven from any
+		 previous statements. */
+	    for (unsigned idx = 0;  idx < new_accum->pin_count();  idx += 1) {
+		  if (new_accum->pin(idx).is_linked())
+			continue;
+
+		  connect(new_accum->pin(idx), accum_out->pin(idx));
+	    }
+	    delete accum_out;
+	    accum_out = new_accum;
+
       } while (cur != last_);
+
+	/* Now bind the accumulated output valies to the nex_out
+	   passed in. Note that each previous step has already did the
+	   pin mapping, so just connect. */
+      for (unsigned idx = 0 ;  idx < accum_out->pin_count() ;  idx += 1) {
+	    connect(nex_out->pin(idx), accum_out->pin(idx));
+      }
+
+      delete accum_out;
 
       DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
@@ -299,6 +328,9 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
 		  DEBUG_SYNTH2_EXIT("NetCase", false)
+			cerr << get_line()
+			     << ": error: Incomplete case statement"
+			     << " is missing a default case." << endl;
 		  return false;
 	    }
 	    statement_map[item]->synth_async(des, scope, nex_map, sig);
@@ -985,6 +1017,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.1  2005/08/21 22:49:54  steve
+ *  Handle statements in blocks overriding previous statement outputs.
+ *
  * Revision 1.39  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *
