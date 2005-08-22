@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.2 2005/08/13 00:45:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.3 2005/08/22 01:00:41 steve Exp $"
 #endif
 
 /*
@@ -1352,6 +1352,9 @@ class NetProc : public virtual LineInfo {
 	// synthesize as asynchronous logic, and return true.
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetNet*nex_map, NetNet*nex_out);
+      virtual bool synth_async(Design*des, NetScope*scope,
+			       const NetNet*nex_map, NetNet*nex_out,
+			       NetNet*accum_in);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			      const NetNet*nex_map, NetNet*nex_out,
@@ -1609,6 +1612,8 @@ class NetCase  : public NetProc {
 
       bool synth_async(Design*des, NetScope*scope,
 		       const NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -1691,6 +1696,8 @@ class NetCondit  : public NetProc {
       bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope,
 		       const NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out, NetNet*accum);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		      const NetNet*nex_map, NetNet*nex_out,
@@ -3360,6 +3367,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.3  2005/08/22 01:00:41  steve
+ *  Add support for implicit defaults in case and conditions.
+ *
  * Revision 1.321.2.2  2005/08/13 00:45:54  steve
  *  Fix compilation warnings/errors with newer compilers.
  *

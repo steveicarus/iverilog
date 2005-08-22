@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.1 2005/08/21 22:49:54 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.2 2005/08/22 01:00:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,6 +45,13 @@ bool NetProc::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
 {
       return false;
+}
+
+bool NetProc::synth_async(Design*des, NetScope*scope,
+			  const NetNet*nex_map, NetNet*nex_out,
+			  NetNet*accum_in)
+{
+      return synth_async(des, scope, nex_map, nex_out);
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
@@ -152,6 +159,8 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
       bool flag = true;
       NetProc*cur = last_;
       do {
+	    NetNet*new_accum;
+
 	    cur = cur->next_;
 
 	      /* Create a temporary nex_map for the substatement. */
@@ -167,14 +176,32 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
 					tmp_set.count());
 
-	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out);
+	      /* Make a temporary set of currently accumulated outputs
+		 that we can pass to the synth_async of the
+		 sub-statement. Some sub-statements will use this to
+		 handle default cases specially. We will delete this
+		 temporary map as soon as the synth_async is done. */
+	    new_accum = new NetNet(scope, tmp3, NetNet::WIRE, tmp_set.count());
+	    for (unsigned idx = 0 ;  idx < tmp_set.count() ;  idx += 1) {
+		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  if (accum_out->pin(ptr).is_linked())
+			connect(new_accum->pin(idx), accum_out->pin(ptr));
+	    }
+
+	    bool ok_flag = cur->synth_async(des, scope,
+					    tmp_map, tmp_out, new_accum);
 	    flag = flag && ok_flag;
+
+	    delete new_accum;
 
 	    if (ok_flag == false)
 		  continue;
 
-	    NetNet*new_accum = new NetNet(scope, tmp3, NetNet::WIRE,
-					  nex_out->pin_count());
+	      /* Now start building a new set of accumulated outputs
+		 that we will pass to the next statement of the block,
+		 or that will be the output of the block. */
+	    new_accum = new NetNet(scope, tmp3, NetNet::WIRE,
+				   nex_out->pin_count());
 
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a whole. */
@@ -215,6 +242,16 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
+{
+      const perm_string tmp = perm_string::literal("tmp");
+      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
+      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      delete stub;
+      return flag;
+}
+
+bool NetCase::synth_async(Design*des, NetScope*scope,
+			  const NetNet*nex_map, NetNet*nex_out, NetNet*accum)
 {
       DEBUG_SYNTH2_ENTRY("NetCase")
       unsigned cur;
@@ -300,10 +337,23 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    statement_map[sel_idx] = items_[item].statement;
       }
 
+	/* Set up a default default_sig that uses the accumulated
+	   input pins. This binding is suppressed by an actual default
+	   statement if one exists. */
+      NetNet*default_sig = 0;
+      if (default_statement == 0) {
+	    default_sig = accum;
+	    for (unsigned idx = 0 ;  idx < accum->pin_count() ;  idx += 1) {
+		  if (! accum->pin(idx).is_linked()) {
+			default_sig = 0;
+			break;
+		  }
+	    }
+      }
+
 	/* Now that statements match with mux inputs, synthesize the
 	   sub-statements. If I get to an input that has no statement,
 	   then use the default statement there. */
-      NetNet*default_sig = 0;
       for (unsigned item = 0 ;  item < (1U<<sel_pins) ;  item += 1) {
 
 	      /* Detect the case that this is a default input, and I
@@ -327,10 +377,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    if (statement_map[item] == 0) {
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
+		  cerr << get_line()
+		       << ": error: Incomplete case statement"
+		       << " is missing a default case." << endl;
 		  DEBUG_SYNTH2_EXIT("NetCase", false)
-			cerr << get_line()
-			     << ": error: Incomplete case statement"
-			     << " is missing a default case." << endl;
 		  return false;
 	    }
 	    statement_map[item]->synth_async(des, scope, nex_map, sig);
@@ -346,49 +396,90 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       return true;
 }
 
+/*
+ * If the synth_async method is called without an accumulated input
+ * (in other words not from within a block) then stub the input signal
+ * with an unconnected net.
+ */
 bool NetCondit::synth_async(Design*des, NetScope*scope,
-			    const NetNet*nex_map, NetNet*nex_out)
+			  const NetNet*nex_map, NetNet*nex_out)
+{
+      const perm_string tmp = perm_string::literal("tmp");
+      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
+      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      delete stub;
+      return flag;
+}
+
+bool NetCondit::synth_async(Design*des, NetScope*scope,
+			    const NetNet*nex_map, NetNet*nex_out,
+			    NetNet*accum)
 {
       DEBUG_SYNTH2_ENTRY("NetCondit")
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
 
-      if (if_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
-	    return false;
-      }
-      if (else_ == 0) {
-	    cerr << get_line() << ": error: Asynchronous if statement"
-		 << " is missing the else clause." << endl;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
-	    return false;
+	/* Use the accumulated input net as a default input for
+	   covering a missing clause, except that if I find portions
+	   are unconnected, then give up on that idea. */
+      NetNet*default_sig = accum;
+      for (unsigned idx = 0 ;  idx < default_sig->pin_count() ;  idx += 1) {
+	    if (! default_sig->pin(idx).is_linked()) {
+		  default_sig = 0;
+		  break;
+	    }
       }
 
-      assert(if_ != 0);
-      assert(else_ != 0);
+      if (default_sig == 0) {
+	    if (if_ == 0) {
+		  cerr << get_line() << ": error: Asynchronous if statement"
+		       << " is missing the if clause." << endl;
+		  return false;
+	    }
+	    if (else_ == 0) {
+		  cerr << get_line() << ": error: Asynchronous if statement"
+		       << " is missing the else clause." << endl;
+		  return false;
+	    }
+      }
+
+      assert(if_ != 0 || else_ != 0);
 
       NetNet*asig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       asig->local_flag(true);
 
-      bool flag;
-      flag = if_->synth_async(des, scope, nex_map, asig);
-      if (!flag) {
-	    delete asig;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
-	    return false;
+      if (if_ == 0) {
+	    for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+		  connect(asig->pin(idx), default_sig->pin(idx));
+
+      } else {
+	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+	    if (!flag) {
+		  delete asig;
+		  cerr << get_line() << ": error: Asynchronous if statement"
+		       << " true clause failed to synthesize." << endl;
+		  return false;
+	    }
       }
 
       NetNet*bsig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       bsig->local_flag(true);
 
-      flag = else_->synth_async(des, scope, nex_map, bsig);
-      if (!flag) {
-	    delete asig;
-	    delete bsig;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
-	    return false;
+      if (else_ == 0) {
+	    for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+		  connect(bsig->pin(idx), default_sig->pin(idx));
+
+      } else {
+	    bool flag = else_->synth_async(des, scope, nex_map, bsig);
+	    if (!flag) {
+		  delete asig;
+		  delete bsig;
+		  cerr << get_line() << ": error: Asynchronous if statement"
+		       << " else clause failed to synthesize." << endl;
+		  return false;
+	    }
       }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
@@ -407,7 +498,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       des->add_node(mux);
 
-      DEBUG_SYNTH2_EXIT("NetCondit",true)
       return true;
 }
 
@@ -1017,6 +1107,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.2  2005/08/22 01:00:42  steve
+ *  Add support for implicit defaults in case and conditions.
+ *
  * Revision 1.39.2.1  2005/08/21 22:49:54  steve
  *  Handle statements in blocks overriding previous statement outputs.
  *
