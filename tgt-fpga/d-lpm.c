@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.12 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.12.2.1 2005/08/25 18:52:32 steve Exp $"
 #endif
 
 /*
@@ -804,9 +804,19 @@ static void lpm_show_mult(ivl_lpm_t net)
 
 static void lpm_show_constant(ivl_net_const_t net)
 {
+      /* We only need one instance each of constant 0 and 1 bits. If
+	 we need either of them, then create an instance reference and
+	 save that reference here so that later needs for 0 or 1 can
+	 find that the reference already lives and can be added to the
+	 joint. */
+      static edif_cellref_t cell0_ref = 0;
+      static edif_cellref_t cell1_ref = 0;
+
+      static edif_joint_t cell0_jnt = 0;
+      static edif_joint_t cell1_jnt = 0;
+
       edif_cell_t cell0 = edif_xlibrary_findcell(xlib, "cell0");
       edif_cell_t cell1 = edif_xlibrary_findcell(xlib, "cell1");
-      edif_cellref_t ref0 = 0, ref1 = 0;
 
       const char*bits;
       unsigned idx;
@@ -832,23 +842,26 @@ static void lpm_show_constant(ivl_net_const_t net)
       bits = ivl_const_bits(net);
       for (idx = 0 ;  idx < ivl_const_pins(net) ;  idx += 1) {
 	    if (bits[idx] == '1') {
-		  if (ref1 == 0)
-			ref1 = edif_cellref_create(edf, cell1);
+		  if (cell1_ref == 0) {
+			cell1_ref = edif_cellref_create(edf, cell1);
+			cell1_jnt = edif_joint_create(edf);
+			edif_add_to_joint(cell1_jnt, cell1_ref, 0);
+		  }
 
 	    } else {
-		  if (ref0 == 0)
-			ref0 = edif_cellref_create(edf, cell0);
+		  if (cell0_ref == 0) {
+			cell0_ref = edif_cellref_create(edf, cell0);
+			cell0_jnt = edif_joint_create(edf);
+			edif_add_to_joint(cell0_jnt, cell0_ref, 0);
+		  }
 	    }
       }
 
       for (idx = 0 ;  idx < ivl_const_pins(net) ;  idx += 1) {
-	    edif_joint_t jnt;
-
-	    jnt = edif_joint_of_nexus(edf, ivl_const_pin(net,idx));
 	    if (bits[idx] == '1')
-		  edif_add_to_joint(jnt, ref1, 0);
+		  edif_nexus_to_joint(edf, cell1_jnt, ivl_const_pin(net,idx));
 	    else
-		  edif_add_to_joint(jnt, ref0, 0);
+		  edif_nexus_to_joint(edf, cell0_jnt, ivl_const_pin(net,idx));
       }
 
 }
@@ -876,6 +889,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.12.2.1  2005/08/25 18:52:32  steve
+ *  Join cell0 and cell1 instances in LPM target.
+ *
  * Revision 1.12  2004/10/04 01:10:56  steve
  *  Clean up spurious trailing white space.
  *
