@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.42 2005/08/27 02:34:43 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.43 2005/08/27 03:28:16 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -450,13 +450,21 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       if (size_ != that.size_)
 	    return false;
 
-      if (size_ <= BITS_PER_WORD)
-	    return bits_val_ == that.bits_val_;
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long mask = (1UL << 2UL * size_) - 1;
+	    return (bits_val_&mask) == (that.bits_val_&mask);
+      }
 
-      unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+      unsigned words = size_ / BITS_PER_WORD;
       for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
 	    if (bits_ptr_[idx] != that.bits_ptr_[idx])
 		  return false;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = (1UL << 2UL*mask) - 1;
+	    return (bits_ptr_[words]&mask) == (that.bits_ptr_[words]&mask);
       }
 
       return true;
@@ -1631,6 +1639,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.43  2005/08/27 03:28:16  steve
+ *  Be more cautios about accessing out-of-range bits.
+ *
  * Revision 1.42  2005/08/27 02:34:43  steve
  *  Bring threads into the vvp_vector4_t structure.
  *
