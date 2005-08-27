@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.162 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.163 2005/08/27 04:32:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -256,6 +256,7 @@ void NetMult::dump_node(ostream&o, unsigned ind) const
 void NetMux::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Multiplexer (NetMux): " << name()
+	<< " width=" << width_ << " swidth=" << swidth_ << " size=" << size_
 	<< " scope=" << scope()->name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -1165,6 +1166,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.163  2005/08/27 04:32:08  steve
+ *  Handle synthesis of fully packed case statements.
+ *
  * Revision 1.162  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

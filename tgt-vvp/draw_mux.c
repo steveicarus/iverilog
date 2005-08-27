@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.10 2005/06/17 03:46:52 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.11 2005/08/27 04:32:08 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -48,24 +48,73 @@ static void draw_lpm_mux_ab(ivl_lpm_t net)
       fprintf(vvp_out, ", C4<>;\n");
 }
 
+static void draw_lpm_mux_nest(ivl_lpm_t net)
+{
+      int idx, level;
+      unsigned width = ivl_lpm_width(net);
+      unsigned swidth = ivl_lpm_selects(net);
+      char*select_input;
+
+      assert(ivl_lpm_size(net) == (1 << swidth));
+
+      select_input = strdup(draw_net_input(ivl_lpm_select(net)));
+
+      fprintf(vvp_out, "L_%p/0s .part %s, 0, 1; Bit 0 of the select\n",
+	      net, select_input);
+
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 2) {
+	    fprintf(vvp_out, "L_%p/0/%d .functor MUXZ %u",
+		    net, idx/2, width);
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+0)));
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+1)));
+	    fprintf(vvp_out, ", L_%p/0s, C4<>;\n", net);
+      }
+
+      for (level = 1 ;  level < swidth-1 ;  level += 1) {
+	    fprintf(vvp_out, "L_%p/%ds .part %s, %d, 1;\n",
+		    net, level, select_input, level);
+
+	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
+		  fprintf(vvp_out, "L_%p/%d/%d .functor MUXZ %u",
+			  net, width, level,idx);
+		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+0);
+		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+1);
+		  fprintf(vvp_out, ", L_%p/%ds",   net, level);
+		  fprintf(vvp_out, ", C4<>;\n");
+	    }
+
+      }
+
+
+      fprintf(vvp_out, "L_%p/%ds .part %s, %d, 1; Bit %d of the select\n",
+	      net, swidth-1, select_input, swidth-1, swidth-1);
+
+
+      fprintf(vvp_out, "L_%p .functor MUXZ %u", net, width);
+      fprintf(vvp_out, ", L_%p/%d/0", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%d/1", net, swidth-2);
+      fprintf(vvp_out, ", L_%p/%ds",  net, swidth-1);
+      fprintf(vvp_out, ", C4<>;\n");
+
+      free(select_input);}
+
 void draw_lpm_mux(ivl_lpm_t net)
 {
-
       if ((ivl_lpm_size(net) == 2) && (ivl_lpm_selects(net) == 1)) {
 	    draw_lpm_mux_ab(net);
 	    return;
       }
-# if 0
-      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1)
-	    draw_lpm_mux_bitslice(net, idx);
-# else
-      fprintf(stderr, "XXXX Forgot how to implement wide muxes.\n");
-#endif
 
+	/* Here we are at the worst case, we generate a tree of MUXZ
+	   devices to handle the arbitrary size. */
+      draw_lpm_mux_nest(net);
 }
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.11  2005/08/27 04:32:08  steve
+ *  Handle synthesis of fully packed case statements.
+ *
  * Revision 1.10  2005/06/17 03:46:52  steve
  *  Make functors know their own width.
  *

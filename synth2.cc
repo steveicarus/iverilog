@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.44 2005/05/15 04:45:50 steve Exp $"
+#ident "$Id: synth2.cc,v 1.45 2005/08/27 04:32:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -178,136 +178,86 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetBus&nex_map, NetBus&nex_out)
 {
-#if 0
-      unsigned cur;
-
+	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des);
 
-	/* Scan the select vector looking for constant bits. The
-	   constant bits will be elided from the select input connect,
-	   but we still need to keep track of them. */
-      unsigned sel_pins = 0;
-      unsigned long sel_mask = 0;
-      unsigned long sel_ref = 0;
-      for (unsigned idx = 0 ;  idx < esig->pin_count() ;  idx += 1) {
+      unsigned sel_width = esig->vector_width();
+      assert(sel_width > 0);
 
-	    if (esig->pin(idx).nexus()->drivers_constant()) {
-		  verinum::V bit = esig->pin(idx).nexus()->driven_value();
-		  if (bit == verinum::V1)
-			sel_ref |= 1 << idx;
+      unsigned mux_width = 0;
+      for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1)
+	    mux_width += nex_out.pin(idx).nexus()->vector_width();
 
-	    } else {
-		  sel_pins += 1;
-		  sel_mask |= 1 << idx;
-	    }
-      }
+	/* Collect all the statements into a map of index to
+	   statement. The guard expression it evaluated to be the
+	   index of the mux value, and the statement is bound to that
+	   index. */
 
-	/* Build a map of guard values to mux select values. This
-	   helps account for constant select bits that are being
-	   elided. */
-      map<unsigned long,unsigned long>guard2sel;
-      cur = 0;
-      for (unsigned idx = 0 ;  idx < (1U<<esig->vector_width()) ;  idx += 1) {
-	    if ((idx & ~sel_mask) == sel_ref) {
-		  guard2sel[idx] = cur;
-		  cur += 1;
-	    }
-      }
-      assert(cur == (1U << sel_pins));
+      unsigned long max_guard_value = 0;
+      map<unsigned long,NetProc*>statement_map;
+      NetProc*statement_default = 0;
 
-      NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      nex_out->pin_count(),
-			      1U << sel_pins, sel_pins);
-
-	/* Connect the non-constant select bits to the select input of
-	   the mux device. */
-      cur = 0;
-      for (unsigned idx = 0 ;  idx < esig->pin_count() ;  idx += 1) {
-	      /* skip bits that are known to be constant. */
-	    if ((sel_mask & (1U << idx)) == 0)
-		  continue;
-
-	    connect(mux->pin_Sel(cur), esig->pin(idx));
-	    cur += 1;
-      }
-      assert(cur == sel_pins);
-
-	/* Hook up the output of the mux to the mapped output pins. */
-      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-	    connect(nex_out->pin(idx), mux->pin_Result(idx));
-
-      NetProc**statement_map = new NetProc*[1 << sel_pins];
-      for (unsigned item = 0 ;  item < (1U<<sel_pins) ;  item += 1)
-	    statement_map[item] = 0;
-
-	/* Assign the input statements to MUX inputs. This involves
-	   calculating the guard value, passing that through the
-	   guard2sel map, then saving the statement in the
-	   statement_map. If I find a default case, then save that for
-	   use later. */
-      NetProc*default_statement = 0;
       for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
-	      /* Skip the default case this pass. */
 	    if (items_[item].guard == 0) {
-		  default_statement = items_[item].statement;
+		  statement_default = items_[item].statement;
 		  continue;
 	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
 	    assert(ge);
 	    verinum gval = ge->value();
-	    unsigned sel_idx = guard2sel[gval.as_ulong()];
+
+	    unsigned sel_idx = gval.as_ulong();
 
 	    assert(items_[item].statement);
 	    statement_map[sel_idx] = items_[item].statement;
+
+	    if (sel_idx > max_guard_value)
+		  max_guard_value = sel_idx;
       }
 
-	/* Now that statements match with mux inputs, synthesize the
-	   sub-statements. If I get to an input that has no statement,
-	   then use the default statement there. */
-      NetNet*default_sig = 0;
-      for (unsigned item = 0 ;  item < (1U<<sel_pins) ;  item += 1) {
+      unsigned mux_size = max_guard_value + 1;
 
-	      /* Detect the case that this is a default input, and I
-		 have a precalculated default_sig. */
-	    if ((statement_map[item] == 0) && (default_sig != 0)) {
-		for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-		      connect(mux->pin_Data(idx, item), default_sig->pin(idx));
-		continue;
-	    }
-
-	    NetNet*sig = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, nex_map->pin_count());
-	    sig->local_flag(true);
-
-	    if (statement_map[item] == 0) {
-		  statement_map[item] = default_statement;
-		  default_statement = 0;
-		  default_sig = sig;
-	    }
-
-	    if (statement_map[item] == 0) {
-		  /* Missing case and no default; this could still be
-		   * synthesizable with synchronous logic, but not here. */
-		  DEBUG_SYNTH2_EXIT("NetCase", false)
-		  return false;
-	    }
-	    statement_map[item]->synth_async(des, scope, nex_map, sig);
-
-	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-		  connect(mux->pin_Data(idx, item), sig->pin(idx));
-      }
-
-      delete[]statement_map;
+      NetMux*mux = new NetMux(scope, scope->local_symbol(),
+			      mux_width, mux_size, sel_width);
       des->add_node(mux);
 
-      DEBUG_SYNTH2_EXIT("NetCase", true)
+	/* The select signal is already synthesized. Simply hook it up. */
+      connect(mux->pin_Sel(), esig->pin(0));
+
+	/* For now, assume that the output is only 1 signal. */
+      assert(nex_out.pin_count() == 1);
+      connect(mux->pin_Result(), nex_out.pin(0));
+
+	/* For now, only support logic types. */
+      ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+
+	/* Forgot to support default statements? */
+      assert(statement_default == 0);
+
+      NetNet*isig;
+      for (unsigned idx = 0 ;  idx < mux_size ;  idx += 1) {
+
+	    NetProc*stmt = statement_map[idx];
+	    if (stmt == 0) {
+		  cerr << get_line() << ": error: case " << idx
+		       << " is not accounted for in asynchronous mux." << endl;
+		  continue;
+	    }
+
+	    isig = new NetNet(scope, scope->local_symbol(),
+			      NetNet::TRI, mux_width);
+	    isig->local_flag(true);
+	    isig->data_type(mux_data_type);
+
+	    connect(mux->pin_Data(idx), isig->pin(0));
+
+	    NetBus tmp (scope, 1);
+	    connect(tmp.pin(0), isig->pin(0));
+	    stmt->synth_async(des, scope, tmp, tmp);
+      }
+
       return true;
-#else
-      cerr << get_line() << ": sorry: forgot how to implement "
-	   << "NetCase::synth_async" << endl;
-      return false;
-#endif
 }
 
 bool NetCondit::synth_async(Design*des, NetScope*scope,
@@ -1050,6 +1000,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.45  2005/08/27 04:32:08  steve
+ *  Handle synthesis of fully packed case statements.
+ *
  * Revision 1.44  2005/05/15 04:45:50  steve
  *  Debug text.
  *
