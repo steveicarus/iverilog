@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.43 2005/07/14 23:34:19 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.44 2005/08/27 02:34:43 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -63,8 +63,11 @@ enum vvp_bit4_t {
 };
 
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
-  /* Return TRUE if the bit is BIT4_X or BIT4_Z */
-extern bool bit4_is_xz(vvp_bit4_t a);
+
+  /* Return TRUE if the bit is BIT4_X or BIT4_Z. The fast
+     implementation here relies on the encoding of vvp_bit4_t values. */
+inline bool bit4_is_xz(vvp_bit4_t a) { return a >= 2; }
+
   /* Some common boolean operators. These implement the Verilog rules
      for 4-value bit operations. */
 extern vvp_bit4_t operator ~ (vvp_bit4_t a);
@@ -85,7 +88,11 @@ extern ostream& operator<< (ostream&o, vvp_bit4_t a);
 class vvp_vector4_t {
 
     public:
-      explicit vvp_vector4_t(unsigned size =0);
+      explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
+
+	// Construct a vector4 from the subvalue of another vector4.
+      explicit vvp_vector4_t(const vvp_vector4_t&that,
+			     unsigned adr, unsigned wid);
 
       vvp_vector4_t(const vvp_vector4_t&that);
       vvp_vector4_t& operator= (const vvp_vector4_t&that);
@@ -93,8 +100,19 @@ class vvp_vector4_t {
       ~vvp_vector4_t();
 
       unsigned size() const { return size_; }
+      void resize(unsigned new_size);
+
+	// Get the bit at the specified address
       vvp_bit4_t value(unsigned idx) const;
+	// Get the vector4 subvector starting at the address
+      vvp_vector4_t subvalue(unsigned idx, unsigned size) const;
+	// Get the 2-value bits for the subvector. This returns a new
+	// array of longs, or a nil pointer if an XZ bit was detected
+	// in the array.
+      unsigned long*subarray(unsigned idx, unsigned size) const;
+
       void set_bit(unsigned idx, vvp_bit4_t val);
+      void set_vec(unsigned idx, const vvp_vector4_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
@@ -109,9 +127,15 @@ class vvp_vector4_t {
 	// Number of vvp_bit4_t bits that can be shoved into a word.
       enum { BITS_PER_WORD = 8*sizeof(unsigned long)/2 };
 #if SIZEOF_UNSIGNED_LONG == 8
+      enum { WORD_0_BITS = 0x0000000000000000UL };
+      enum { WORD_1_BITS = 0x5555555555555555UL };
       enum { WORD_X_BITS = 0xaaaaaaaaaaaaaaaaUL };
+      enum { WORD_Z_BITS = 0xffffffffffffffffUL };
 #elif SIZEOF_UNSIGNED_LONG == 4
+      enum { WORD_0_BITS = 0x00000000UL };
+      enum { WORD_1_BITS = 0x55555555UL };
       enum { WORD_X_BITS = 0xaaaaaaaaUL };
+      enum { WORD_Z_BITS = 0xffffffffUL };
 #else
 #error "WORD_X_BITS not defined for this architecture?"
 #endif
@@ -119,6 +143,8 @@ class vvp_vector4_t {
 	// Initialize and operator= use this private method to copy
 	// the data from that object into this object.
       void copy_from_(const vvp_vector4_t&that);
+
+      void allocate_words_(unsigned size, unsigned long init);
 
       unsigned size_;
       union {
@@ -130,6 +156,19 @@ class vvp_vector4_t {
 inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
 {
       copy_from_(that);
+}
+
+inline vvp_vector4_t::vvp_vector4_t(unsigned size, vvp_bit4_t val)
+: size_(size)
+{
+	/* note: this relies on the bit encoding for the vvp_bit4_t. */
+      const static unsigned long init_table[4] = {
+	    WORD_0_BITS,
+	    WORD_1_BITS,
+	    WORD_X_BITS,
+	    WORD_Z_BITS };
+
+      allocate_words_(size, init_table[val]);
 }
 
 inline vvp_vector4_t::~vvp_vector4_t()
@@ -173,6 +212,11 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
 	/* Casting is evil, but this cast matches the un-cast done
 	   when the vvp_bit4_t value is put into the vector. */
       return (vvp_bit4_t) (bits & 3);
+}
+
+inline vvp_vector4_t vvp_vector4_t::subvalue(unsigned adr, unsigned wid) const
+{
+      return vvp_vector4_t(*this, adr, wid);
 }
 
 inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
@@ -955,6 +999,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.44  2005/08/27 02:34:43  steve
+ *  Bring threads into the vvp_vector4_t structure.
+ *
  * Revision 1.43  2005/07/14 23:34:19  steve
  *  gcc4 compile errors.
  *

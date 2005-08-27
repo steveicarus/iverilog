@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.41 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.42 2005/08/27 02:34:43 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -54,15 +54,6 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 	  default:
 	    assert(0);
       }
-}
-
-bool bit4_is_xz(vvp_bit4_t a)
-{
-      if (a == BIT4_X)
-	    return true;
-      if (a == BIT4_Z)
-	    return true;
-      return false;
 }
 
 vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
@@ -189,20 +180,270 @@ void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
       }
 }
 
-vvp_vector4_t::vvp_vector4_t(unsigned size)
-: size_(size)
+void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long init)
 {
       if (size_ > BITS_PER_WORD) {
 	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    bits_ptr_ = new unsigned long[cnt];
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-		  bits_ptr_[idx] = WORD_X_BITS;
+		  bits_ptr_[idx] = init;
 
       } else {
-	    bits_val_ = WORD_X_BITS;
+	    bits_val_ = init;
       }
 }
 
+vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
+			    unsigned adr, unsigned wid)
+{
+      size_ = wid;
+      assert((adr + wid) <= that.size_);
+
+      allocate_words_(wid, WORD_X_BITS);
+
+      if (wid > BITS_PER_WORD) {
+	      /* In this case, the subvector and the source vector are
+		 long. Do the transfer reasonably efficiently. */
+	    unsigned ptr = adr / BITS_PER_WORD;
+	    unsigned off = adr % BITS_PER_WORD;
+	    unsigned noff = BITS_PER_WORD - off;
+	    unsigned long lmask = (1 << 2*off) - 1;
+	    unsigned trans = 0;
+	    unsigned dst = 0;
+	    while (trans < wid) {
+		    // The low bits of the result.
+		  bits_ptr_[dst] = (that.bits_ptr_[ptr] & ~lmask) >> 2*off;
+		  trans += noff;
+
+		  if (trans >= wid)
+			break;
+
+		  ptr += 1;
+		  bits_ptr_[dst] |= (that.bits_ptr_[ptr] & lmask) << 2*noff;
+		  trans += off;
+		  dst += 1;
+	    }
+
+      } else {
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  set_bit(idx, that.value(adr+idx));
+	    }
+      }
+}
+
+/*
+ * Change the size of the vvp_vector4_t vector to the new size. Copy
+ * the old values, as many as well fit, into the new vector.
+ */
+void vvp_vector4_t::resize(unsigned newsize)
+{
+      if (size_ == newsize)
+	    return;
+
+      unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+
+      if (newsize > BITS_PER_WORD) {
+	    unsigned newcnt = (newsize + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    unsigned long*newbits = new unsigned long[newcnt];
+
+	    if (cnt > 1) {
+		  unsigned trans = cnt;
+		  if (trans > newcnt)
+			trans = newcnt;
+
+		  for (unsigned idx = 0 ;  idx < trans ;  idx += 1)
+			newbits[idx] = bits_ptr_[idx];
+
+		  delete[]bits_ptr_;
+
+	    } else {
+		  newbits[0] = bits_val_;
+	    }
+
+	    for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
+		  newbits[idx] = WORD_X_BITS;
+
+	    size_ = newsize;
+	    bits_ptr_ = newbits;
+
+      } else {
+	    unsigned long newval;
+	    if (cnt > 1) {
+		  newval = bits_ptr_[0];
+		  delete[]bits_ptr_;
+		  bits_val_ = newval;
+	    }
+      }
+}
+
+
+unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
+{
+      const unsigned BIT2_PER_WORD = 8*sizeof(unsigned long);
+      unsigned awid = (wid + BIT2_PER_WORD - 1) / (BIT2_PER_WORD);
+      unsigned long*val = new unsigned long[awid];
+
+      for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
+	    val[idx] = 0;
+
+      if (size_ <= BITS_PER_WORD) {
+	      /* Handle the special case that the array is small. The
+		 entire value of the vector4 is within the bits_val_
+		 so we know that the result is a single word, the
+		 source is a single word, and we just have to loop
+		 through that word. */
+	    unsigned long tmp = bits_val_ >> 2UL*adr;
+	    tmp &= (1UL << 2*wid) - 1;
+	    if (tmp & WORD_X_BITS)
+		  goto x_out;
+
+	    unsigned long mask1 = 1;
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  if (tmp & 1) val[0] |= mask1;
+		  mask1 <<= 1UL;
+		  tmp >>= 2UL;
+	    }
+	    return val;
+
+      } else {
+
+	      /* Get the first word we are scanning. We may in fact be
+		 somewhere in the middle of that word. */
+	    unsigned long tmp = bits_ptr_[adr/BITS_PER_WORD];
+	    tmp >>= 2UL * (adr%BITS_PER_WORD);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		    /* Starting a new word? */
+		  if (adr%BITS_PER_WORD == 0)
+			tmp = bits_ptr_[adr/BITS_PER_WORD];
+
+		  if (tmp&2)
+			goto x_out;
+		  if (tmp&1)
+			val[idx/BIT2_PER_WORD] |= 1UL << (idx % BIT2_PER_WORD);
+
+		  adr += 1;
+		  tmp >>= 2UL;
+	    }
+      }
+
+      return val;
+
+ x_out:
+      delete[]val;
+      return 0;
+}
+
+void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
+{
+      assert(adr+that.size_  <= size_);
+
+      if (size_ <= BITS_PER_WORD) {
+
+	      /* The destination vector (me!) is within a bits_val_
+		 word, so the subvector is certainly within a
+		 bits_val_ word. Therefore, the entire operation is a
+		 matter of writing the bits of that into the addressed
+		 bits of this. The mask below is calculated to be 1
+		 for all the bits that are to come from that. Do the
+		 job by some shifting, masking and OR. */
+
+	    unsigned long lmask = (1UL << 2UL*adr) - 1;
+	    unsigned long hmask = (1 << 2UL*(adr+that.size_)) - 1;
+	    unsigned long mask = hmask & ~lmask;
+
+	    bits_val_ =
+		  (bits_val_ & ~mask)
+		  | ((that.bits_val_<<2UL*adr) & mask);
+
+      } else if (that.size_ <= BITS_PER_WORD) {
+
+	    unsigned long dptr = adr / BITS_PER_WORD;
+	    unsigned long doff = adr % BITS_PER_WORD;
+
+	    unsigned long lmask = (1UL<<2UL*doff) - 1;
+	    unsigned long hmask = (1UL << 2UL*(doff+that.size_)) - 1;
+	    unsigned long mask = hmask & ~lmask;
+
+	    bits_ptr_[dptr] =
+		  (bits_ptr_[dptr] & ~mask)
+		  | ((that.bits_val_ << 2UL*doff) & mask);
+
+	    if (doff + that.size_ > BITS_PER_WORD) {
+		  unsigned tail = doff + that.size_ - BITS_PER_WORD;
+		  mask = (1UL << 2UL*tail) - 1;
+
+		  dptr += 1;
+		  bits_ptr_[dptr] =
+			(bits_ptr_[dptr] & ~mask)
+			| ((that.bits_val_ >> 2UL*(that.size_-tail)) & mask);
+	    }
+
+      } else if (adr%BITS_PER_WORD == 0) {
+
+	      /* In this case, both vectors are long, but the
+		 destination is neatly aligned. That means all but the
+		 last word can be simply copied with no masking. */
+
+	    unsigned remain = that.size_;
+	    unsigned sptr = 0;
+	    unsigned dptr = adr / BITS_PER_WORD;
+	    while (remain >= BITS_PER_WORD) {
+		  bits_ptr_[dptr++] = that.bits_ptr_[sptr++];
+		  remain -= BITS_PER_WORD;
+	    }
+
+	    if (remain > 0) {
+		  unsigned long mask = (1UL << 2UL*remain) - 1;
+		  bits_ptr_[dptr] =
+			(bits_ptr_[dptr] & ~mask)
+			| (that.bits_ptr_[sptr] & mask);
+	    }
+
+      } else {
+
+	      /* We know that there are two long vectors, and we know
+		 that the destination is definitely NOT aligned. */
+	    unsigned remain = that.size_;
+	    unsigned sptr = 0;
+	    unsigned dptr = adr / BITS_PER_WORD;
+	    unsigned doff = adr % BITS_PER_WORD;
+	    unsigned long lmask = (1UL << 2UL*doff) - 1;
+	    unsigned ndoff = BITS_PER_WORD - doff;
+	    while (remain >= BITS_PER_WORD) {
+		  bits_ptr_[dptr] =
+			(bits_ptr_[dptr] & lmask)
+			| ((that.bits_ptr_[sptr] << 2UL*doff) & ~lmask);
+		  dptr += 1;
+
+		  bits_ptr_[dptr] =
+			(bits_ptr_[dptr] & ~lmask)
+			| ((that.bits_ptr_[sptr] >> 2UL*ndoff) & lmask);
+
+		  remain -= BITS_PER_WORD;
+		  sptr += 1;
+	    }
+
+	    unsigned long hmask = (1UL << 2UL*(doff+remain)) - 1;
+	    unsigned long mask = hmask & ~lmask;
+
+	    bits_ptr_[dptr] =
+		  (bits_ptr_[dptr] & ~mask)
+		  | ((that.bits_ptr_[sptr] << 2UL*doff) & mask);
+
+	    if (doff + remain > BITS_PER_WORD) {
+		  unsigned tail = doff + remain - BITS_PER_WORD;
+		  mask = (1UL << 2UL*tail) - 1;
+
+		  dptr += 1;
+		  bits_ptr_[dptr] =
+			(bits_ptr_[dptr] & ~mask)
+			| ((that.bits_ptr_[sptr] >> 2UL*(remain-tail))&mask);
+	    }
+
+
+      }
+}
 
 bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 {
@@ -1390,6 +1631,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.42  2005/08/27 02:34:43  steve
+ *  Bring threads into the vvp_vector4_t structure.
+ *
  * Revision 1.41  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

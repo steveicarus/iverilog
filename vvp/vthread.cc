@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.141 2005/06/26 01:57:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.142 2005/08/27 02:34:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -96,7 +96,7 @@ struct vthread_s {
 	/* This is the program counter. */
       vvp_code_t pc;
 	/* These hold the private thread bits. */
-      unsigned long *bits;
+      vvp_vector4_t bits4;
 
 	/* These are the word registers. */
       union {
@@ -104,7 +104,6 @@ struct vthread_s {
 	    double w_real;
       } words[16];
 
-      unsigned nbits;
 	/* My parent sets this when it wants me to wake it up. */
       unsigned schedule_parent_on_end :1;
       unsigned i_have_ended      :1;
@@ -121,70 +120,38 @@ struct vthread_s {
       struct vthread_s*scope_next, *scope_prev;
 };
 
-/*
- * The bits of a thread are stored in an array of unsigned longs
- * referenced by the bits member of the vthread_s. Two bits of the
- * word are used to store a vvp_bit4_t. The functions below assume
- * that the vvp_bit4_t enum values are 0-3. The actual value mapping
- * doesn't matter as long as only the thr_put_bit and thr_get_bit
- * functions are used to get the vvp_bit4_t out.
- */
-#if SIZEOF_UNSIGNED_LONG == 8
-# define THR_BITS_INIT 0xaaaaaaaaaaaaaaaaUL
-#else
-# define THR_BITS_INIT 0xaaaaaaaaUL
-#endif
 
-static void thr_check_addr(struct vthread_s*thr, unsigned addr)
+static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
-      while (thr->nbits <= addr) {
-	    unsigned word_cnt = thr->nbits/(CPU_WORD_BITS/2) + 1;
-	    thr->bits = (unsigned long*)
-		  realloc(thr->bits, word_cnt*sizeof(unsigned long));
-	    thr->bits[word_cnt-1] = THR_BITS_INIT;
-	    thr->nbits = word_cnt * (CPU_WORD_BITS/2);
-      }
+      if (thr->bits4.size() <= addr)
+	    thr->bits4.resize(addr + CPU_WORD_BITS);
 }
 
 static inline vvp_bit4_t thr_get_bit(struct vthread_s*thr, unsigned addr)
 {
-      assert(addr < thr->nbits);
-      unsigned long idx = addr % (CPU_WORD_BITS/2);
-      addr /= (CPU_WORD_BITS/2);
-      return  (vvp_bit4_t) ((thr->bits[addr] >> (idx*2UL)) & 3UL);
+      assert(addr < thr->bits4.size());
+      return thr->bits4.value(addr);
 }
 
 static inline void thr_put_bit(struct vthread_s*thr,
-			       unsigned addr, unsigned val)
+			       unsigned addr, vvp_bit4_t val)
 {
-      if (addr >= thr->nbits)
-	    thr_check_addr(thr, addr);
-
-      unsigned long idx = addr % (CPU_WORD_BITS/2);
-      addr /= (CPU_WORD_BITS/2);
-
-      unsigned long mask = 3UL << (idx*2UL);
-      unsigned long tmp = val;
-
-      thr->bits[addr] = (thr->bits[addr] & ~mask) | (tmp << (idx*2UL));
+      thr_check_addr(thr, addr);
+      thr->bits4.set_bit(addr, val);
 }
 
+// REMOVE ME
 static inline void thr_clr_bit_(struct vthread_s*thr, unsigned addr)
 {
-      unsigned idx = addr % (CPU_WORD_BITS/2);
-      addr /= (CPU_WORD_BITS/2);
-
-      unsigned long mask = 3UL << (idx*2);
-
-      thr->bits[addr] &= ~mask;
+      thr->bits4.set_bit(addr, BIT4_0);
 }
 
-unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
+vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr)
 {
       return thr_get_bit(thr, addr);
 }
 
-void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
+void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
 {
       thr_put_bit(thr, addr, bit);
 }
@@ -203,27 +170,25 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
       unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
-      unsigned long*val = new unsigned long[awid];
 
-      for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
-	    val[idx] = 0;
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    unsigned long bit = thr_get_bit(thr, addr);
-
-	    if (bit & 2)
-		  goto x_out;
-
-	    val[idx/CPU_WORD_BITS] |= bit << (idx % CPU_WORD_BITS);
-	    if (addr >= 4)
-		  addr += 1;
+      if (addr == 0) {
+	    unsigned long*val = new unsigned long[awid];
+	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
+		  val[idx] = 0;
+	    return val;
+      }
+      if (addr == 1) {
+	    unsigned long*val = new unsigned long[awid];
+	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
+		  val[idx] = -1UL;
+	    return val;
       }
 
-      return val;
+      if (addr < 4)
+	    return 0;
 
- x_out:
-      delete[]val;
-      return 0;
+      return thr->bits4.subarray(addr, wid);
 }
 
 /*
@@ -234,22 +199,18 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 					    unsigned bit, unsigned wid)
 {
       	/* Make a vector of the desired width. */
-      vvp_vector4_t value (wid);
 
       if (bit >= 4) {
-	    for (unsigned idx = 0; idx < wid; idx +=1, bit += 1) {
-		  vvp_bit4_t bit_val = thr_get_bit(thr, bit);
-		  value.set_bit(idx, bit_val);
-	    }
+	    return vvp_vector4_t(thr->bits4, bit, wid);
+
       } else {
+	    vvp_vector4_t value(wid);
 	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
 	    for (unsigned idx = 0; idx < wid; idx +=1) {
 		  value.set_bit(idx, bit_val);
 	    }
+	    return value;
       }
-
-
-      return value;
 }
 
 
@@ -260,12 +221,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
-      thr->bits   = (unsigned long*)malloc(4 * sizeof(unsigned long));
-      thr->bits[0] = THR_BITS_INIT;
-      thr->bits[1] = THR_BITS_INIT;
-      thr->bits[2] = THR_BITS_INIT;
-      thr->bits[3] = THR_BITS_INIT;
-      thr->nbits  = 4 * (CPU_WORD_BITS/2);
+      thr->bits4  = vvp_vector4_t(32);
       thr->child  = 0;
       thr->parent = 0;
       thr->wait_next = 0;
@@ -276,8 +232,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       if (scope->threads == 0) {
 	    scope->threads = new struct vthread_s;
 	    scope->threads->pc = codespace_null();
-	    scope->threads->bits   = 0;
-	    scope->threads->nbits  = 0;
+	    scope->threads->bits4  = vvp_vector4_t();
 	    scope->threads->child  = 0;
 	    scope->threads->parent = 0;
 	    scope->threads->scope_prev = scope->threads;
@@ -298,10 +253,10 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->is_scheduled = 0;
       thr->fork_count   = 0;
 
-      thr_put_bit(thr, 0, 0);
-      thr_put_bit(thr, 1, 1);
-      thr_put_bit(thr, 2, 2);
-      thr_put_bit(thr, 3, 3);
+      thr_put_bit(thr, 0, BIT4_0);
+      thr_put_bit(thr, 1, BIT4_1);
+      thr_put_bit(thr, 2, BIT4_X);
+      thr_put_bit(thr, 3, BIT4_Z);
 
       return thr;
 }
@@ -312,8 +267,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
  */
 static void vthread_reap(vthread_t thr)
 {
-      free(thr->bits);
-      thr->bits = 0;
+      thr->bits4 = vvp_vector4_t();
 
       if (thr->child) {
 	    assert(thr->child->parent == thr);
@@ -417,18 +371,10 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb == 0) || (rb == 0)) {
-		  thr_put_bit(thr, idx1, 0);
-
-	    } else if ((lb == 1) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 1);
-
-	    } else {
-		  thr_put_bit(thr, idx1, 2);
-	    }
+	    thr_put_bit(thr, idx, lb & rb);
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -465,9 +411,12 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 	    lva[idx] = sum;
       }
 
+	/* We know from the vector_to_array that the address is valid
+	   in the thr->bitr4 vector, so just do the set bit. */
+
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
+	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
       }
 
       delete[]lva;
@@ -479,8 +428,8 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       delete[]lva;
       delete[]lvb;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+      vvp_vector4_t tmp(cp->number, BIT4_X);
+      thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
       return true;
 }
@@ -506,7 +455,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
 
       unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
-      unsigned long*lvb;
+      unsigned long*lvb = 0;
       if (lva == 0)
 	    goto x_out;
 
@@ -534,7 +483,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
+	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
       }
 
       delete[]lva;
@@ -545,8 +494,8 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
  x_out:
       delete[]lva;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+      vvp_vector4_t tmp (cp->number, BIT4_X);
+      thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
       return true;
 }
@@ -696,11 +645,11 @@ bool of_BLEND(vthread_t thr, vvp_code_t cp)
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
 	    if (lb != rb)
-		  thr_put_bit(thr, idx1, 2);
+		  thr_put_bit(thr, idx1, BIT4_X);
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -771,69 +720,72 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPS(vthread_t thr, vvp_code_t cp)
 {
-      unsigned eq = 1;
-      unsigned eeq = 1;
-      unsigned lt = 0;
+      vvp_bit4_t eq  = BIT4_1;
+      vvp_bit4_t eeq = BIT4_1;
+      vvp_bit4_t lt  = BIT4_0;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
-      unsigned end1 = (idx1 < 4)? idx1 : idx1 + cp->number - 1;
-      unsigned end2 = (idx2 < 4)? idx2 : idx2 + cp->number - 1;
+      const unsigned end1 = (idx1 < 4)? idx1 : idx1 + cp->number - 1;
+      const unsigned end2 = (idx2 < 4)? idx2 : idx2 + cp->number - 1;
 
-      unsigned sig1 = thr_get_bit(thr, end1);
-      unsigned sig2 = thr_get_bit(thr, end2);
+      if (end1 > end2)
+	    thr_check_addr(thr, end1);
+      else
+	    thr_check_addr(thr, end2);
+
+      const vvp_bit4_t sig1 = thr_get_bit(thr, end1);
+      const vvp_bit4_t sig2 = thr_get_bit(thr, end2);
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, idx1);
-	    unsigned rv = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
 
 	    if (lv > rv) {
-		  lt = 0;
-		  eeq = 0;
+		  lt  = BIT4_0;
+		  eeq = BIT4_0;
 	    } else if (lv < rv) {
-		  lt = 1;
-		  eeq = 0;
+		  lt  = BIT4_1;
+		  eeq = BIT4_0;
 	    }
-	    if (eq != 2) {
-		  if ((lv == 0) && (rv != 0))
-			eq = 0;
-		  if ((lv == 1) && (rv != 1))
-			eq = 0;
-		  if ((lv | rv) >= 2)
-			eq = 2;
+	    if (eq != BIT4_X) {
+		  if ((lv == BIT4_0) && (rv != BIT4_0))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv != BIT4_1))
+			eq = BIT4_0;
+		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
+			eq = BIT4_X;
 	    }
 
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
       }
 
-      if (eq == 2)
-	    lt = 2;
-      else if ((sig1 == 1) && (sig2 == 0))
-	    lt = 1;
-      else if ((sig1 == 0) && (sig2 == 1))
-	    lt = 0;
+      if (eq == BIT4_X)
+	    lt = BIT4_X;
+      else if ((sig1 == BIT4_1) && (sig2 == BIT4_0))
+	    lt = BIT4_1;
+      else if ((sig1 == BIT4_0) && (sig2 == BIT4_1))
+	    lt = BIT4_0;
 
 	/* Correct the lt bit to account for the sign of the parameters. */
-      if (lt < 2) {
-	    sig1 = thr_get_bit(thr, end1);
-	    sig2 = thr_get_bit(thr, end2);
+      if (lt != BIT4_X) {
 
 	      /* If both numbers are negative, then switch the
 		 direction of the lt. */
-	    if ((sig1 == 1) && (sig2 == 1) && (eq != 0))
-		  lt ^= 1;
+	    if ((sig1 == BIT4_1) && (sig2 == BIT4_1) && (eq != BIT4_0))
+		  lt = ~lt;
 
 	      /* If the first is negative and the last positive, then
 		 a < b for certain. */
-	    if ((sig1 == 1) && (sig2 == 0))
-		  lt = 1;
+	    if ((sig1 == BIT4_1) && (sig2 == BIT4_0))
+		  lt = BIT4_1;
 
 	      /* If the first is positive and the last negative, then
 		 a > b for certain. */
-	    if ((sig1 == 0) && (sig2 == 1))
-		  lt = 0;
+	    if ((sig1 == BIT4_0) && (sig2 == BIT4_1))
+		  lt = BIT4_0;
       }
 
       thr_put_bit(thr, 4, eq);
@@ -845,39 +797,39 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPIU(vthread_t thr, vvp_code_t cp)
 {
-      unsigned eq = 1;
-      unsigned eeq = 1;
-      unsigned lt = 0;
+      vvp_bit4_t eq  = BIT4_1;
+      vvp_bit4_t eeq = BIT4_1;
+      vvp_bit4_t lt  = BIT4_0;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned imm  = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, idx1);
-	    unsigned rv = imm & 1;
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = (imm & 1)? BIT4_1 : BIT4_0;
 	    imm >>= 1;
 
 	    if (lv > rv) {
-		  lt = 0;
-		  eeq = 0;
+		  lt = BIT4_0;
+		  eeq = BIT4_0;
 	    } else if (lv < rv) {
-		  lt = 1;
-		  eeq = 0;
+		  lt = BIT4_1;
+		  eeq = BIT4_0;
 	    }
-	    if (eq != 2) {
-		  if ((lv == 0) && (rv != 0))
-			eq = 0;
-		  if ((lv == 1) && (rv != 1))
-			eq = 0;
-		  if ((lv | rv) >= 2)
-			eq = 2;
+	    if (eq != BIT4_X) {
+		  if ((lv == BIT4_0) && (rv != BIT4_0))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv != BIT4_1))
+			eq = BIT4_0;
+		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
+			eq = BIT4_X;
 	    }
 
 	    if (idx1 >= 4) idx1 += 1;
       }
 
-      if (eq == 2)
-	    lt = 2;
+      if (eq == BIT4_X)
+	    lt = BIT4_X;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -888,39 +840,39 @@ bool of_CMPIU(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPU(vthread_t thr, vvp_code_t cp)
 {
-      unsigned eq = 1;
-      unsigned eeq = 1;
-      unsigned lt = 0;
+      vvp_bit4_t eq = BIT4_1;
+      vvp_bit4_t eeq = BIT4_1;
+      vvp_bit4_t lt = BIT4_0;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, idx1);
-	    unsigned rv = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
 
 	    if (lv > rv) {
-		  lt = 0;
-		  eeq = 0;
+		  lt  = BIT4_0;
+		  eeq = BIT4_0;
 	    } else if (lv < rv) {
-		  lt = 1;
-		  eeq = 0;
+		  lt  = BIT4_1;
+		  eeq = BIT4_0;
 	    }
-	    if (eq != 2) {
-		  if ((lv == 0) && (rv != 0))
-			eq = 0;
-		  if ((lv == 1) && (rv != 1))
-			eq = 0;
-		  if ((lv | rv) >= 2)
-			eq = 2;
+	    if (eq != BIT4_X) {
+		  if ((lv == BIT4_0) && (rv != BIT4_0))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv != BIT4_1))
+			eq = BIT4_0;
+		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
+			eq = BIT4_X;
 	    }
 
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
       }
 
-      if (eq == 2)
-	    lt = 2;
+      if (eq == BIT4_X)
+	    lt = BIT4_X;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -931,17 +883,17 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPX(vthread_t thr, vvp_code_t cp)
 {
-      unsigned eq = 1;
+      vvp_bit4_t eq = BIT4_1;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, idx1);
-	    unsigned rv = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
 
-	    if ((lv < 2) && (rv < 2) && (lv != rv)) {
-		  eq = 0;
+	    if ((lv != rv) && !bit4_is_xz(lv) && !bit4_is_xz(rv)) {
+		  eq = BIT4_0;
 		  break;
 	    }
 
@@ -959,8 +911,8 @@ bool of_CMPWR(vthread_t thr, vvp_code_t cp)
       double l = thr->words[cp->bit_idx[0]].w_real;
       double r = thr->words[cp->bit_idx[1]].w_real;
 
-      unsigned eq = (l == r)? 1 : 0;
-      unsigned lt = (l <  r)? 1 : 0;
+      vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
+      vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -970,17 +922,17 @@ bool of_CMPWR(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 {
-      unsigned eq = 1;
+      vvp_bit4_t eq = BIT4_1;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, idx1);
-	    unsigned rv = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
 
-	    if ((lv < 3) && (rv < 3) && (lv != rv)) {
-		  eq = 0;
+	    if ((lv != BIT4_Z) && (rv != BIT4_Z) && (lv != rv)) {
+		  eq = BIT4_0;
 		  break;
 	    }
 
@@ -1017,7 +969,7 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->number;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    thr_put_bit(thr, base+idx, (rl&1)? 1 : 0);
+	    thr_put_bit(thr, base+idx, (rl&1)? BIT4_1 : BIT4_0);
 	    rl >>= 1;
       }
 
@@ -1240,10 +1192,10 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    unsigned long lv = 0, rv = 0;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  unsigned lb = thr_get_bit(thr, idx1);
-		  unsigned rb = thr_get_bit(thr, idx2);
+		  vvp_bit4_t lb = thr_get_bit(thr, idx1);
+		  vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-		  if ((lb | rb) & 2)
+		  if (bit4_is_xz(lb) || bit4_is_xz(rb))
 			goto x_out;
 
 		  lv |= lb << idx;
@@ -1254,13 +1206,13 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 			idx2 += 1;
 	    }
 
-	    if (rv == 0)
+	    if (rv == BIT4_0)
 		  goto x_out;
 
 	    lv /= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
 
@@ -1303,7 +1255,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    divide_bits(cp->number, lbits, rbits);
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]?BIT4_1:BIT4_0);
 	    }
 
 	    delete[]lbits;
@@ -1313,7 +1265,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -1366,7 +1318,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    lv /= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1:BIT4_0);
 		  lv >>= 1;
 	    }
 
@@ -1420,7 +1372,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    }
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]?BIT4_1:BIT4_0);
 	    }
 
 	    delete[]lbits;
@@ -1431,7 +1383,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -1680,8 +1632,8 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
       bool unknown_flag = false;
 
       for (unsigned i = 0 ;  i<width ;  i += 1) {
-	    unsigned char vv = thr_get_bit(thr, base);
-	    if (vv&2) {
+	    vvp_bit4_t vv = thr_get_bit(thr, base);
+	    if (bit4_is_xz(vv)) {
 		  v = 0UL;
 		  unknown_flag = true;
 		  break;
@@ -1695,7 +1647,7 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
       thr->words[index].w_int = v;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, unknown_flag? 1 : 0);
+      thr_put_bit(thr, 4, unknown_flag? BIT4_1 : BIT4_0);
 
       return true;
 }
@@ -1904,11 +1856,14 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
       assert(sig);
 
       vvp_vector4_t sig_value = sig->vec4_value();
+      sig_value.resize(wid);
 
-      for (unsigned idx = 0;  idx < wid;  idx += 1, bit += 1) {
-	    vvp_bit4_t val = sig_value.value(idx);
-	    thr_put_bit(thr, bit, val);
-      }
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.set_vec(bit, sig_value);
 
       return true;
 }
@@ -2081,7 +2036,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 		  carry = (ob & ~1)? 1 : 0;
 		  ob = ob & 1;
 	    }
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, ob);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, ob?BIT4_1:BIT4_0);
       }
 
       delete []t;
@@ -2091,7 +2046,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return;
 }
@@ -2126,7 +2081,7 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
 	    lv %= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
 
@@ -2139,7 +2094,7 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -2182,7 +2137,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 	    lv %= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1:BIT4_0);
 		  lv >>= 1;
 	    }
 
@@ -2200,7 +2155,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -2214,38 +2169,28 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
  *   more directly does the job. All the of_MOV*_ functions are
  *   functions that of_MOV might use to replace itself.
  */
-static bool of_MOV0_a_(vthread_t thr, vvp_code_t cp)
-{
-      if ((cp->bit_idx[0]+cp->number) > thr->nbits)
-	    thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_clr_bit_(thr, cp->bit_idx[0]+idx);
-
-      return true;
-}
-
-static bool of_MOV0_b_(vthread_t thr, vvp_code_t cp)
-{
-      if (cp->bit_idx[1] >= thr->nbits)
-	    thr_check_addr(thr, cp->bit_idx[1]);
-
-      thr->bits[cp->bit_idx[0]] &= cp->number;
-      return true;
-}
 
 static bool of_MOV1XZ_(vthread_t thr, vvp_code_t cp)
 {
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, cp->bit_idx[1]);
+      thr_check_addr(thr, cp->bit_idx[0]+cp->number);
+      vvp_vector4_t tmp (cp->number, (vvp_bit4_t)cp->bit_idx[1]);
+      thr->bits4.set_vec(cp->bit_idx[0], tmp);
       return true;
 }
 
 static bool of_MOV_(vthread_t thr, vvp_code_t cp)
 {
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx,
-			thr_get_bit(thr, cp->bit_idx[1]+idx));
+	/* This variant implements the general case that we know
+	   neither the source nor the destination to be <4. Otherwise,
+	   we copy all the bits manually. */
+
+      thr_check_addr(thr, cp->bit_idx[0]+cp->number);
+      thr_check_addr(thr, cp->bit_idx[1]+cp->number);
+	// Read the source vector out
+      vvp_vector4_t tmp (thr->bits4, cp->bit_idx[1], cp->number);
+	// Write it in the new place.
+      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+
       return true;
 }
 
@@ -2256,40 +2201,6 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
       if (cp->bit_idx[1] >= 4) {
 	    cp->opcode = &of_MOV_;
 	    return cp->opcode(thr, cp);
-
-      } else if (cp->bit_idx[1] == 0) {
-	      /* Detect the special case where this is really just a
-		 large clear. Rewrite the instruction to skip this
-		 test next time around, and use a precoded opcode. */
-
-	    unsigned test_addr = cp->bit_idx[0] + cp->number - 1;
-
-	    unsigned addr1 = cp->bit_idx[0] / (CPU_WORD_BITS/2);
-	    unsigned addr2 = (test_addr) / (CPU_WORD_BITS/2);
-	    if (addr1 == addr2) {
-		  unsigned sh1 = cp->bit_idx[0] % (CPU_WORD_BITS/2);
-		  unsigned sh2 = (test_addr % (CPU_WORD_BITS/2)) + 1;
-
-		  unsigned long mask;
-
-		  if ( (sh2-sh1) == CPU_WORD_BITS/2)
-			mask = 0UL;
-		  else
-			mask = ULONG_MAX << ((sh2 - sh1) * 2UL);
-
-		  mask = (~mask) << sh1*2UL;
-
-		  cp->number = ~mask;
-		  cp->bit_idx[0] = addr1;
-		  cp->bit_idx[1] = test_addr;
-		  cp->opcode = &of_MOV0_b_;
-		  return cp->opcode(thr, cp);
-
-	    } else {
-
-		  cp->opcode = &of_MOV0_a_;
-		  return cp->opcode(thr, cp);
-	    }
 
       } else {
 	    cp->opcode = &of_MOV1XZ_;
@@ -2309,14 +2220,14 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       unsigned long lv = 0, rv = 0;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned long lb = thr_get_bit(thr, idx1);
-	    unsigned long rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb | rb) & 2)
+	    if (bit4_is_xz(lb) || bit4_is_xz(rb))
 		  goto x_out;
 
-	    lv |= lb << idx;
-	    rv |= rb << idx;
+	    lv |= ((unsigned long)lb) << idx;
+	    rv |= ((unsigned long)rb) << idx;
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -2326,7 +2237,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       lv *= rv;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? BIT4_1 : BIT4_0);
 	    lv >>= 1;
       }
 
@@ -2344,10 +2255,10 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       int mxb = -1;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb | rb) & 2)
+	    if (bit4_is_xz(lb) || bit4_is_xz(rb))
 		  {
                   delete[]sum;
                   delete[]b;
@@ -2383,7 +2294,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
                 }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]?BIT4_1:BIT4_0);
       }
 
       delete[]sum;
@@ -2394,7 +2305,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -2421,9 +2332,9 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 	    unsigned long lv = 0, rv = cp->bit_idx[1];
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  unsigned lb = thr_get_bit(thr, idx1);
+		  vvp_bit4_t lb = thr_get_bit(thr, idx1);
 
-		  if (lb & 2)
+		  if (bit4_is_xz(lb))
 			goto x_out;
 
 		  lv |= lb << idx;
@@ -2434,7 +2345,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 	    lv *= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)? BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
 
@@ -2456,12 +2367,12 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
       int mxb; mxb = -1;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = imm & 1;
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = (imm & 1)? BIT4_1 : BIT4_0;
 
 	    imm >>= 1;
 
-	    if (lb & 2) {
+	    if (bit4_is_xz(lb)) {
                   delete[]sum;
                   delete[]b;
                   delete[]a;
@@ -2492,7 +2403,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]?BIT4_1:BIT4_0);
       }
 
       delete[]sum;
@@ -2503,7 +2414,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -2517,17 +2428,17 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb == 0) || (rb == 0)) {
-		  thr_put_bit(thr, idx1, 1);
+	    if ((lb == BIT4_0) || (rb == BIT4_0)) {
+		  thr_put_bit(thr, idx1, BIT4_1);
 
-	    } else if ((lb == 1) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 0);
+	    } else if ((lb == BIT4_1) && (rb == BIT4_1)) {
+		  thr_put_bit(thr, idx1, BIT4_0);
 
 	    } else {
-		  thr_put_bit(thr, idx1, 2);
+		  thr_put_bit(thr, idx1, BIT4_X);
 	    }
 
 	    idx1 += 1;
@@ -2572,19 +2483,19 @@ bool of_ANDR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 1;
+      vvp_bit4_t lb = BIT4_1;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 0) {
-		  lb = 0;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_0) {
+		  lb = BIT4_0;
 		  break;
 	    }
 
-	    if (rb != 1)
-		  lb = 2;
+	    if (rb != BIT4_1)
+		  lb = BIT4_X;
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
@@ -2596,19 +2507,19 @@ bool of_NANDR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 0;
+      vvp_bit4_t lb = BIT4_0;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 0) {
-		  lb = 1;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_0) {
+		  lb = BIT4_1;
 		  break;
 	    }
 
-	    if (rb != 1)
-		  lb = 2;
+	    if (rb != BIT4_1)
+		  lb = BIT4_X;
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
@@ -2620,19 +2531,19 @@ bool of_ORR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 0;
+      vvp_bit4_t lb = BIT4_0;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 1) {
-		  lb = 1;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_1) {
+		  lb = BIT4_1;
 		  break;
 	    }
 
-	    if (rb != 0)
-		  lb = 2;
+	    if (rb != BIT4_0)
+		  lb = BIT4_X;
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
@@ -2644,16 +2555,16 @@ bool of_XORR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 0;
+      vvp_bit4_t lb = BIT4_0;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 1)
-		  lb ^= 1;
-	    else if (rb != 0) {
-		  lb = 2;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_1)
+		  lb = ~lb;
+	    else if (rb != BIT4_0) {
+		  lb = BIT4_X;
 		  break;
 	    }
       }
@@ -2667,16 +2578,16 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned lb = 1;
+      vvp_bit4_t lb = BIT4_1;
       unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2+idx);
-	    if (rb == 1)
-		  lb ^= 1;
-	    else if (rb != 0) {
-		  lb = 2;
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == BIT4_1)
+		  lb = ~lb;
+	    else if (rb != BIT4_0) {
+		  lb = BIT4_X;
 		  break;
 	    }
       }
@@ -2725,17 +2636,17 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    if ((lb == 1) || (rb == 1)) {
-		  thr_put_bit(thr, idx1, 0);
+	    if ((lb == BIT4_1) || (rb == BIT4_1)) {
+		  thr_put_bit(thr, idx1, BIT4_0);
 
-	    } else if ((lb == 0) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 1);
+	    } else if ((lb == BIT4_0) && (rb == BIT4_0)) {
+		  thr_put_bit(thr, idx1, BIT4_1);
 
 	    } else {
-		  thr_put_bit(thr, idx1, 2);
+		  thr_put_bit(thr, idx1, BIT4_X);
 	    }
 
 	    idx1 += 1;
@@ -2823,12 +2734,19 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
-	/* Make a vector of the desired width. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
-      vvp_send_vec4(ptr, value);
+
+      if (bit >= 4) {
+	    vvp_send_vec4(ptr, vvp_vector4_t(thr->bits4,bit,wid));
+
+      } else {
+	      /* Make a vector of the desired width. */
+	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
+	    vvp_vector4_t value(wid, bit_val);
+
+	    vvp_send_vec4(ptr, value);
+      }
 
       return true;
 }
@@ -2902,19 +2820,21 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
       unsigned long shift = thr->words[0].w_int;
 
       assert(base >= 4);
+      thr_check_addr(thr, base+wid-1);
 
       if (shift >= wid) {
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  thr_put_bit(thr, base+idx, 0);
+	      // Shift is so far that all value is shifted out. Write
+	      // in a constant 0 result.
+	    vvp_vector4_t tmp (wid, BIT4_0);
+	    thr->bits4.set_vec(base, tmp);
 
       } else if (shift > 0) {
-	    for (unsigned idx = wid ;  idx > shift ;  idx -= 1) {
-		  unsigned src = base+idx-shift-1;
-		  unsigned dst = base + idx - 1;
-		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
-	    }
-	    for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
-		  thr_put_bit(thr, base+idx, 0);
+	    vvp_vector4_t tmp (thr->bits4, base, wid-shift);
+	    thr->bits4.set_vec(base+shift, tmp);
+
+	      // Fill zeros on the bottom
+	    vvp_vector4_t fil (shift, BIT4_0);
+	    thr->bits4.set_vec(base, fil);
       }
       return true;
 }
@@ -2941,7 +2861,7 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
 	    }
 	    for ( ;  idx < wid ;  idx += 1)
-		  thr_put_bit(thr, base+idx, 0);
+		  thr_put_bit(thr, base+idx, BIT4_0);
       }
       return true;
 }
@@ -2951,7 +2871,7 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
       unsigned long shift = thr->words[0].w_int;
-      unsigned sign = thr_get_bit(thr, base+wid-1);
+      vvp_bit4_t sign = thr_get_bit(thr, base+wid-1);
 
       if (shift >= wid) {
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -2992,7 +2912,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 	    sum += 1 & ~(tmp >> (idx%CPU_WORD_BITS));
 
 	    carry = sum / 2;
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (sum&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (sum&1) ? BIT4_1 : BIT4_0);
       }
 
       delete[]lva;
@@ -3005,7 +2925,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       delete[]lvb;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -3067,7 +2987,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       delete[]lva;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
 
       return true;
 }
@@ -3119,24 +3039,9 @@ bool of_XNOR(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
-
-	    if ((lb == 1) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 1);
-
-	    } else if ((lb == 0) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 1);
-
-	    } else if ((lb == 1) && (rb == 0)) {
-		  thr_put_bit(thr, idx1, 0);
-
-	    } else if ((lb == 0) && (rb == 1)) {
-		  thr_put_bit(thr, idx1, 0);
-
-	    } else {
-		  thr_put_bit(thr, idx1, 2);
-	    }
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
+	    thr_put_bit(thr, idx1, ~(lb ^ rb));
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -3240,6 +3145,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.142  2005/08/27 02:34:42  steve
+ *  Bring threads into the vvp_vector4_t structure.
+ *
  * Revision 1.141  2005/06/26 01:57:22  steve
  *  Make bit masks of vector4_t 64bit aware.
  *

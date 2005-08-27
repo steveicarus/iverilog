@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.h,v 1.11 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: vthread.h,v 1.12 2005/08/27 02:34:43 steve Exp $"
 #endif
+
+# include  "vvp_net.h"
 
 /*
  * A vthread is a simulation thread that executes instructions when
@@ -69,14 +71,17 @@ extern void vthread_schedule_list(vthread_t thr);
  * example, when a VPI implementation function needs to access the bit
  * space of the thread.
  */
-extern unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr);
-extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit);
+extern vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr);
+extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit);
 
 extern double vthread_get_real(struct vthread_s*thr, unsigned addr);
 extern void vthread_put_real(struct vthread_s*thr, unsigned addr, double val);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.12  2005/08/27 02:34:43  steve
+ *  Bring threads into the vvp_vector4_t structure.
+ *
  * Revision 1.11  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *
