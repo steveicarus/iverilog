@@ -18,7 +18,7 @@ bison, flex, gperf, etc. Therefore, you still need Cygwin to compile
 Icarus Verilog, even if you don't need the Cygwin compilers. There are
 also a few precompiled library prerequisites that you need.
 
-* Some Preliminary Comments
+* Some Preliminary Comments  -- PLEASE READ ME --
 
 The Windows port of Icarus Verilog is the most difficult of all the
 ports. The Windows system off the shelf is completely stripped, devoid
@@ -26,7 +26,8 @@ of any support for software development. Everything needed to compile
 Icarus Verilog must be collected from various sources and stitched
 together by hand. Normal human beings with a basic understanding of
 software development can do this, but some patience (and access to the
-Internet) is required. You may choose to print these instructions.
+Internet) is required. You may choose to print these instructions. FOR
+BEST RESULTS, FOLLOW THESE INSTRUCTIONS CAREFULLY.
 
 I have no plans to intentionally support MSVC++ compilation. Don't ask.
 
@@ -37,7 +38,7 @@ where each can be found. In most cases, the specific version is not
 critical, but these are the versions I use.
 
      Cygwin                     <http://cygwin.com>
-     Mingw32-2.0.0              <http://www.mingw.org>
+     Mingw32-3.1.0              <http://www.mingw.org>
      readline-4.2-20010727.zip  <http://mingwrep.sourceforge.net>
      bzip2-1.0.2-bin.zip        <http://gnuwin32.sourceforge.net>
      zlib-1.1.4-bin.zip         <http://gnuwin32.sourceforge.net>
@@ -101,19 +102,23 @@ that is the usual bash prompt.
 * Install Mingw32
 
 The obvious step 2, then, is install the mingw compilers. These can be
-found at the web page <http://www.mingw.org>. The Mingw-2.x.x version
+found at the web page <http://www.mingw.org>. The Mingw-3.x.x version
 comes prepackaged in a convenient, Windows style, installer. I
 recommend you download this package instead of picking and choosing
 bits.
 
 When I install Mingw32 (using the installer) I typically set a
-destination directory of d:\mingw-2.0.0 or the like. You will be using
+destination directory of d:\mingw-3.1.0 or the like. You will be using
 that path later.
 
     NOTES:
       If you intend to compile VPI modules for Icarus Verilog, you
       need Mingw32, even if you are using a precompiled binary. VPI
       modules only require Mingw32, and none of the other libraries.
+
+Finally, as part of installing the mingw32 compilers, remember to add
+the mingw/bin directory to your path. You will need that to be able to
+find the compilers later.
 
 * Install Mingw32 Packages
 
@@ -185,25 +190,6 @@ where we will work from now on.
       The exact name of the file will vary according to the
       snapshot. The 20030303 name is only an example.
 
-* Select the mingw compilers
-
-In your cygwin window, if you type "which c++" you might get the
-response path "/usr/bin/c++" which is the cygwin compiler. This is not
-the one we want to use, however. Tell the shell where the mingw
-compilers are by setting the search path like so:
-
-	$ PATH=/cygdrive/d/mingw-2.0.0/bin:$PATH
-
-This assumes that you installed mingw in D:\mingw-2.0.0. The actual
-programs are in the bin directory under the root. After this command,
-check that you are now getting the right compilers with this "which"
-command:
-
-	$ which c++
-	/cygdrive/d/mingw-2.0.0/bin/c++
-
-Good!
-
 * Configure Icarus Verilog
 
 Now we are all set to configure and compile Icarus Verilog. Choose a
@@ -215,10 +201,12 @@ without white space.
 Now, configure the source to make the makefiles and configuration
 details. Run these commands:
 
+	$ CC=mingw32-gcc
+	$ CXX=mingw32-g++
 	$ CPPFLAGS="-Id:/gnuwin32/include -Id:/mingw-packages/include"
 	$ LDFLAGS="-Ld:/gnuwin32/lib -Ld:/mingw-packages/include"
-	$ export CPPFLAGS LDFLAGS
-	$ ./configure --prefix=d:/iverilog
+	$ export CPPFLAGS LDFLAGS CC CXX
+	$ ./configure --prefix=d:/iverilog --host=mingw32
 
     NOTES:
       The CPPFLAGS and LDFLAGS variables tell configure where
@@ -228,6 +216,11 @@ details. Run these commands:
       to work.
 
       Your PATH variable was set in the previous step.
+
+      The CC and CXX variables explicitly select the mingw32
+      compilers. This is important. Without this step, you may wind up
+      compiling with the cygwin compiler, and that is definitely *not*
+      what you want.
 
       Use forward slashes as directory characters. All the various
       tools prefer the forward slash.

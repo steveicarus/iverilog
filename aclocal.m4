@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.6 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.6.2.1 2005/08/27 22:19:37 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -91,13 +91,9 @@ AC_MSG_RESULT($WIN32)
 AC_DEFUN([AX_LD_EXTRALIBS],
 [AC_MSG_CHECKING([for extra libs needed])
 EXTRALIBS=
-case "${host}" in
-     *-*-cygwin* )
-        if test "$MINGW32" = "yes"; then
-            EXTRALIBS="-liberty"
-        fi
-        ;;
-esac
+if test "$MINGW32" = "yes"; then
+   EXTRALIBS="-liberty"
+fi
 AC_SUBST(EXTRALIBS)
 AC_MSG_RESULT($EXTRALIBS)
 ])# AX_LD_EXTRALIBS
@@ -109,7 +105,7 @@ AC_DEFUN([AX_LD_SHAREDLIB_OPTS],
 [AC_MSG_CHECKING([for shared library link flag])
 shared=-shared
 case "${host}" in
-     *-*-cygwin*)
+     *-*-cygwin* | *-*-mingw32*)
         shared="-shared -Wl,--enable-auto-image-base"
         ;;
 
@@ -138,7 +134,7 @@ AC_DEFUN([AX_C_PICFLAG],
 PICFLAG=-fPIC
 case "${host}" in
 
-     *-*-cygwin*)
+     *-*-cygwin* | *-*-mingw32*)
         PICFLAG=
         ;;
 
@@ -173,7 +169,7 @@ case "${host}" in
         rdynamic=""
         ;;
 
-    *-*-cygwin*)
+    *-*-cygwin* | *-*-mingw32*)
         rdynamic=""
         ;;
 
