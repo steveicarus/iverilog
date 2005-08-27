@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.8 2003/09/03 23:34:09 steve Exp $"
+#ident "$Id: edif.c,v 1.8.2.1 2005/08/27 22:29:30 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -393,6 +393,28 @@ edif_joint_t edif_joint_of_nexus(edif_t edf, ivl_nexus_t nex)
       return jnt;
 }
 
+void edif_nexus_to_joint(edif_t edf, edif_joint_t jnt, ivl_nexus_t nex)
+{
+      void*tmp = ivl_nexus_get_private(nex);
+
+      if (tmp != 0) {
+	      /* There is a joint already on the nexus. Move all the
+		 joint cells to the joint I'm joining to. */
+	    edif_joint_t njnt = (edif_joint_t)tmp;
+	    while (njnt->links) {
+		  struct joint_cell_*cell = njnt->links;
+		  njnt->links = cell->next;
+		  cell->next = jnt->links;
+		  jnt->links = cell;
+	    }
+
+	      /* Now njnt is dead, and should be removed from edif. */
+	      /* Or we can ignore it as harmless. */
+      }
+
+      ivl_nexus_set_private(nex, jnt);
+}
+
 void edif_joint_rename(edif_joint_t jnt, const char*name)
 {
       assert(jnt->name == 0);
@@ -617,6 +639,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.8.2.1  2005/08/27 22:29:30  steve
+ *  Back-port edif_nexus_to_joint from tgt-edif.
+ *
  * Revision 1.8  2003/09/03 23:34:09  steve
  *  Support synchronous set of LPM_FF devices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.7 2003/09/03 23:34:09 steve Exp $"
+#ident "$Id: edif.h,v 1.7.2.1 2005/08/27 22:29:31 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -223,6 +223,8 @@ extern void edif_add_to_joint(edif_joint_t jnt,
 			      edif_cellref_t cell,
 			      unsigned port);
 
+extern void edif_nexus_to_joint(edif_t edf, edif_joint_t jnt, ivl_nexus_t nex);
+
 /*
  * Print the entire design. This should only be done after the design
  * is completely assembled.
@@ -231,6 +233,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.7.2.1  2005/08/27 22:29:31  steve
+ *  Back-port edif_nexus_to_joint from tgt-edif.
+ *
  * Revision 1.7  2003/09/03 23:34:09  steve
  *  Support synchronous set of LPM_FF devices.
  *
