@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.142 2005/08/27 02:34:42 steve Exp $"
+#ident "$Id: vthread.cc,v 1.143 2005/08/27 03:28:57 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -374,7 +374,7 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
 	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
 	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
 
-	    thr_put_bit(thr, idx, lb & rb);
+	    thr_put_bit(thr, idx1, lb & rb);
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -869,6 +869,7 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
+
       }
 
       if (eq == BIT4_X)
@@ -1693,7 +1694,7 @@ bool of_JMP0(vthread_t thr, vvp_code_t cp)
 
 bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx[0]) != 1)
+      if (thr_get_bit(thr, cp->bit_idx[0]) != BIT4_1)
 	    thr->pc = cp->cptr;
 
 	/* Normally, this returns true so that the processor just
@@ -3145,6 +3146,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.143  2005/08/27 03:28:57  steve
+ *  Fix bit destination address in of_AND
+ *
  * Revision 1.142  2005/08/27 02:34:42  steve
  *  Bring threads into the vvp_vector4_t structure.
  *
