@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47 2004/02/20 18:53:34 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.1 2005/08/28 19:50:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -852,72 +852,246 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       if (obj->sel_width() != 1)
 	    return;
 
-	/* If the first input is all constant Vz, then replace the
-	   NetMux with an array of BUFIF1 devices, with the enable
-	   connected to the select input. */
+      NetScope*scope = obj->scope();
+
       bool flag = true;
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! obj->pin_Data(idx, 0).nexus()->drivers_constant()) {
-		  flag = false;
-		  break;
-	    }
+	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant())
+		  continue;
+	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant())
+		  continue;
 
-	    if (obj->pin_Data(idx, 0).nexus()->driven_value() != verinum::Vz) {
-		  flag = false;
-		  break;
-	    }
+	    flag = false;
       }
 
-      if (flag) {
-	    NetScope*scope = obj->scope();
-	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(obj->scope(),
+      if (! flag) {
+	    return;
+      }
+
+	/* We know that every slice has at least one constant. Run
+	   through the slices again, creating boolean devices to
+	   replace the MUX slice. */
+
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+
+	      /* If the Sel==0 input is constant Z, make a bufif1. */
+	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()
+		&& obj->pin_Data(idx, 0).nexus()->driven_value()==verinum::Vz) {
+
+		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::BUFIF1);
-
 		  connect(obj->pin_Result(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
+		  continue;
 	    }
 
-	    count += 1;
-	    delete obj;
-	    return;
-      }
+	      /* If the Sel==1 input is constant Z, make a bufif0. */
+	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant()
+		&& obj->pin_Data(idx, 1).nexus()->driven_value()==verinum::Vz) {
 
-	/* If instead the second input is all constant Vz, replace the
-	   NetMux with an array of BUFIF0 devices. */
-      flag = true;
-      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
-		  flag = false;
-		  break;
-	    }
-
-	    if (obj->pin_Data(idx, 1).nexus()->driven_value() != verinum::Vz) {
-		  flag = false;
-		  break;
-	    }
-      }
-
-      if (flag) {
-	    NetScope*scope = obj->scope();
-	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-		  NetLogic*tmp = new NetLogic(obj->scope(),
+		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::BUFIF0);
-
 		  connect(obj->pin_Result(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
+		  continue;
 	    }
 
-	    count += 1;
-	    delete obj;
-	    return;
+	      /* If both inputs are constant, then derive the output
+		 from the sel input. */
+	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()
+		&& obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
+
+		  verinum::V a = obj->pin_Data(idx, 0).nexus()->driven_value();
+		  verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
+
+		  if (a == b) {
+			connect(obj->pin_Result(idx), obj->pin_Data(idx,0));
+			continue;
+		  }
+
+		  if (a == verinum::V0 && b == verinum::V1) {
+			connect(obj->pin_Result(idx), obj->pin_Sel(0));
+			continue;
+		  }
+
+		  if (a == verinum::V1 && b == verinum::V0) {
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    2, NetLogic::NOT);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Sel(0), tmp->pin(1));
+			des->add_node(tmp);
+			continue;
+		  }
+
+		    /* A==0: Q = B & S */
+		  if (a == verinum::V0) {
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,1), tmp->pin(1));
+			connect(obj->pin_Sel(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+		    /* B==1: Q = A | S */
+		  if (b == verinum::V1) {
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::OR);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,0), tmp->pin(1));
+			connect(obj->pin_Sel(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+		    /* A==1: Q = B & ~S */
+		  if (a == verinum::V1) {
+			NetLogic*inv = new NetLogic(scope,
+						    scope->local_symbol(),
+						    2, NetLogic::NOT);
+			NetNet*invs = new NetNet(scope,
+						 scope->local_symbol(),
+						 NetNet::TRI, 1);
+			invs->local_flag(true);
+			connect(inv->pin(0), invs->pin(0));
+			connect(inv->pin(1), obj->pin_Sel(0));
+			des->add_node(inv);
+
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,1), tmp->pin(1));
+			connect(inv->pin(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+		    /* B==0: Q = A & ~S */
+		  if (b == verinum::V0) {
+			NetLogic*inv = new NetLogic(scope,
+						    scope->local_symbol(),
+						    2, NetLogic::NOT);
+			NetNet*invs = new NetNet(scope,
+						 scope->local_symbol(),
+						 NetNet::TRI, 1);
+			invs->local_flag(true);
+			connect(inv->pin(0), invs->pin(0));
+			connect(inv->pin(1), obj->pin_Sel(0));
+			des->add_node(inv);
+
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,0), tmp->pin(1));
+			connect(inv->pin(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+
+		  assert(0);
+		  continue;
+	    }
+
+	      /* Only the Sel==0 input is constant. The output is a
+		 logical combination of the S and B inputs. */
+
+	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()) {
+
+		  verinum::V a = obj->pin_Data(idx, 0).nexus()->driven_value();
+
+		    /* A==0: Q = B & S */
+		  if (a == verinum::V0) {
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,1), tmp->pin(1));
+			connect(obj->pin_Sel(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+
+		    /* A==1: Q = B & ~S */
+		  if (a == verinum::V1) {
+			NetLogic*inv = new NetLogic(scope,
+						    scope->local_symbol(),
+						    2, NetLogic::NOT);
+			NetNet*invs = new NetNet(scope,
+						 scope->local_symbol(),
+						 NetNet::TRI, 1);
+			invs->local_flag(true);
+			connect(inv->pin(0), invs->pin(0));
+			connect(inv->pin(1), obj->pin_Sel(0));
+			des->add_node(inv);
+
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,1), tmp->pin(1));
+			connect(inv->pin(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+		  assert(0);
+	    }
+
+	      /* Only the Sel==1 input is constant. */
+	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
+
+		  verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
+
+		    /* B==0: Q = A & ~S */
+		  if (b == verinum::V0) {
+			NetLogic*inv = new NetLogic(scope,
+						    scope->local_symbol(),
+						    2, NetLogic::NOT);
+			NetNet*invs = new NetNet(scope,
+						 scope->local_symbol(),
+						 NetNet::TRI, 1);
+			invs->local_flag(true);
+			connect(inv->pin(0), invs->pin(0));
+			connect(inv->pin(1), obj->pin_Sel(0));
+			des->add_node(inv);
+
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::AND);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,0), tmp->pin(1));
+			connect(inv->pin(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+		    /* B==1: Q = A | S */
+		  if (b == verinum::V1) {
+			NetLogic*tmp = new NetLogic(scope,
+						    scope->local_symbol(),
+						    3, NetLogic::OR);
+			connect(obj->pin_Result(idx), tmp->pin(0));
+			connect(obj->pin_Data(idx,0), tmp->pin(1));
+			connect(obj->pin_Sel(0), tmp->pin(2));
+			des->add_node(tmp);
+			continue;
+		  }
+
+		  assert(0);
+	    }
+
+	    assert(0);
       }
+
+      delete obj;
+      count += 1;
 }
 
 /*
@@ -1038,6 +1212,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.1  2005/08/28 19:50:03  steve
+ *  More thorough constant propagation through MUX devices.
+ *
  * Revision 1.47  2004/02/20 18:53:34  steve
  *  Addtrbute keys are perm_strings.
  *
