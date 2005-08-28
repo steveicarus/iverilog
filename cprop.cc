@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.2 2005/08/28 19:51:02 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.3 2005/08/28 22:00:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,7 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
+      virtual void lpm_mux_large(Design*des, NetMux*obj);
 };
 
 void cprop_functor::signal(Design*des, NetNet*obj)
@@ -847,6 +848,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
  */
 void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 {
+      if (obj->size() > 2) {
+	    lpm_mux_large(des, obj);
+	    return;
+      }
       if (obj->size() != 2)
 	    return;
       if (obj->sel_width() != 1)
@@ -1094,6 +1099,110 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       count += 1;
 }
 
+void cprop_functor::lpm_mux_large(Design*des, NetMux*obj)
+{
+      NetScope*scope = obj->scope();
+      unsigned width = obj->width();
+      unsigned size = obj->size();
+
+	/* This test looks for bit slices that are constant
+	   throughout. If we find any, we can reduce the width of the
+	   MUX to eliminate the fixed value. */
+
+	/* After the following for look, this array of bools will
+	   contain "true" for each bit slice that is constant and
+	   identical, and "false" otherwise. The reduce_width will
+	   count the number of true entries in the flags array. */
+      bool*flags = new bool[width];
+      unsigned reduce_width = 0;
+
+      for (unsigned bit = 0 ;  bit < width ;  bit += 1) {
+
+	    flags[bit] = true;
+
+	      /* If not even the first selection is constant, then the
+		 slice cannot be reduced. */
+	    if (! obj->pin_Data(bit, 0).nexus()->drivers_constant()) {
+		  flags[bit] = false;
+		  continue;
+	    }
+
+	      /* If any of the remaining selections in non-consant, or
+		 constant with a different value, then this slice
+		 cannot be reduced. */
+	    verinum::V val = obj->pin_Data(bit, 0).nexus()->driven_value();
+
+	    for (unsigned idx = 1; flags[bit] && idx < size ;  idx += 1) {
+
+		  if (!obj->pin_Data(bit,idx).nexus()->drivers_constant()) {
+			flags[bit] = false;
+			break;
+		  }
+
+		  if (val != obj->pin_Data(bit,idx).nexus()->driven_value()) {
+			flags[bit] = false;
+			break;
+		  }
+	    }
+
+	    if (! flags[bit]) {
+		    /* This bit slice is too complex. Go on. */
+		  continue;
+	    }
+
+	    reduce_width += 1;
+      }
+
+	/* If no slices can be reduced, then we are finished. */
+      if (reduce_width == 0) {
+	    delete[]flags;
+	    return;
+      }
+
+	/* Handle the very special case that all the slices can be
+	   reduced. We don't need a MUX at all! */
+      if (reduce_width == width) {
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		  connect(obj->pin_Result(idx), obj->pin_Data(idx,0));
+
+	    delete obj;
+	    count += 1;
+	    delete[]flags;
+	    return;
+      }
+
+	/* Create a reduced mux with the same name and size, but fewer
+	   slices. Connect all the slices that we are keeping. */
+      NetMux*tmp = new NetMux(scope, obj->name(),
+			      width-reduce_width, size, obj->sel_width());
+
+      for (unsigned idx = 0 ;  idx < obj->sel_width() ;  idx += 1)
+	    connect(obj->pin_Sel(idx), tmp->pin_Sel(idx));
+
+      unsigned dst_bit = 0;
+
+      for (unsigned bit = 0 ;  bit < width ;  bit += 1) {
+	    if (flags[bit]) {
+		  connect(obj->pin_Result(bit), obj->pin_Data(bit,0));
+		  continue;
+	    }
+
+	    connect(obj->pin_Result(bit), tmp->pin_Result(dst_bit));
+
+	    for (unsigned idx = 0 ;  idx < size ;  idx += 1)
+		  connect(obj->pin_Data(bit,idx), tmp->pin_Data(dst_bit,idx));
+
+	    dst_bit += 1;
+      }
+
+	/* Add the new node. Delete the old node. Signal that we
+	   change the design and may use a rescan. */
+      des->add_node(tmp);
+      delete obj;
+      delete[]flags;
+      count += 1;
+}
+
 /*
  * This functor looks to see if the constant is connected to nothing
  * but signals. If that is the case, delete the dangling constant and
@@ -1212,6 +1321,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.3  2005/08/28 22:00:39  steve
+ *  Reduce mux slices that are constant throughout range.
+ *
  * Revision 1.47.2.2  2005/08/28 19:51:02  steve
  *  More thorough constant propagation through MUX devices.
  *
