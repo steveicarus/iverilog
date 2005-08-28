@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.1 2005/08/28 19:50:03 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.2 2005/08/28 19:51:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -952,7 +952,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 			des->add_node(tmp);
 			continue;
 		  }
-		    /* A==1: Q = B & ~S */
+		    /* A==1: Q = B | ~S */
 		  if (a == verinum::V1) {
 			NetLogic*inv = new NetLogic(scope,
 						    scope->local_symbol(),
@@ -967,7 +967,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 			NetLogic*tmp = new NetLogic(scope,
 						    scope->local_symbol(),
-						    3, NetLogic::AND);
+						    3, NetLogic::OR);
 			connect(obj->pin_Result(idx), tmp->pin(0));
 			connect(obj->pin_Data(idx,1), tmp->pin(1));
 			connect(inv->pin(0), tmp->pin(2));
@@ -1020,7 +1020,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 			continue;
 		  }
 
-		    /* A==1: Q = B & ~S */
+		    /* A==1: Q = B | ~S */
 		  if (a == verinum::V1) {
 			NetLogic*inv = new NetLogic(scope,
 						    scope->local_symbol(),
@@ -1035,7 +1035,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 			NetLogic*tmp = new NetLogic(scope,
 						    scope->local_symbol(),
-						    3, NetLogic::AND);
+						    3, NetLogic::OR);
 			connect(obj->pin_Result(idx), tmp->pin(0));
 			connect(obj->pin_Data(idx,1), tmp->pin(1));
 			connect(inv->pin(0), tmp->pin(2));
@@ -1212,7 +1212,7 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
- * Revision 1.47.2.1  2005/08/28 19:50:03  steve
+ * Revision 1.47.2.2  2005/08/28 19:51:02  steve
  *  More thorough constant propagation through MUX devices.
  *
  * Revision 1.47  2004/02/20 18:53:34  steve
