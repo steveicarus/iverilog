@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.29 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.30 2005/08/29 02:38:50 steve Exp $"
 #endif
 
 /*
@@ -155,7 +155,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 		long val = vp->value.integer;
 		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
 		      vthread_put_bit(vpip_current_vthread,
-				      rfp->vbit+idx, val&1);
+				      rfp->vbit+idx, (val&1)? BIT4_1 :BIT4_0);
 		      val >>= 1;
 		}
 		break;
@@ -172,7 +172,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 		      word >>= idx % 32;
 
 		      vthread_put_bit(vpip_current_vthread,
-				      rfp->vbit+idx, word&1);
+				      rfp->vbit+idx, (word&1)? BIT4_1 :BIT4_0);
 		}
 		break;
 
@@ -180,16 +180,16 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 0);
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, BIT4_0);
 		  break;
 		case vpi1:
-		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 1);
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, BIT4_1);
 		  break;
 		case vpiX:
-		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 2);
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, BIT4_X);
 		  break;
 		case vpiZ:
-		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 3);
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, BIT4_Z);
 		  break;
 		default:
 		  assert(0);
@@ -207,23 +207,24 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 		      idx += 1)
 		  {
 			int bit = (aval&1) | ((bval<<1)&2);
+			vvp_bit4_t bit4;
 
 			switch (bit) {
 			    case 0:
-			      bit = 0;
+			      bit4 = BIT4_0;
 			      break;
 			    case 1:
-			      bit = 1;
+			      bit4 = BIT4_1;
 			      break;
 			    case 2:
-			      bit = 3;
+			      bit4 = BIT4_Z;
 			      break;
 			    case 3:
-			      bit = 2;
+			      bit4 = BIT4_X;
 			      break;
 			}
 			vthread_put_bit(vpip_current_vthread,
-					rfp->vbit+wdx+idx, bit);
+					rfp->vbit+wdx+idx, bit4);
 
 			aval >>= 1;
 			bval >>= 1;
@@ -484,6 +485,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.30  2005/08/29 02:38:50  steve
+ *  Eliminate int to vvp_bit4_t casts.
+ *
  * Revision 1.29  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

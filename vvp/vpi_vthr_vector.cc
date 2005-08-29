@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.21 2004/10/04 01:11:00 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.22 2005/08/29 02:38:50 steve Exp $"
 #endif
 
 /*
@@ -50,7 +50,7 @@ unsigned get_bit(struct __vpiVThrVec *rfp, unsigned idx)
 }
 
 inline static
-void set_bit(struct __vpiVThrVec *rfp, unsigned idx, unsigned bit)
+void set_bit(struct __vpiVThrVec *rfp, unsigned idx, vvp_bit4_t bit)
 {
       return vthread_put_bit(vpip_current_vthread, rfp->bas+idx, bit);
 }
@@ -318,7 +318,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
 
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      set_bit(rfp, idx, val&1);
+		      set_bit(rfp, idx, (val&1)? BIT4_1 : BIT4_0);
 		      val >>= 1;
 		}
 		break;
@@ -327,16 +327,16 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  set_bit(rfp, 0, 0);
+		  set_bit(rfp, 0, BIT4_0);
 		  break;
 		case vpi1:
-		  set_bit(rfp, 0, 1);
+		  set_bit(rfp, 0, BIT4_1);
 		  break;
 		case vpiX:
-		  set_bit(rfp, 0, 2);
+		  set_bit(rfp, 0, BIT4_X);
 		  break;
 		case vpiZ:
-		  set_bit(rfp, 0, 3);
+		  set_bit(rfp, 0, BIT4_Z);
 		  break;
 		default:
 		  assert(0);
@@ -350,7 +350,20 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned long bval = vp->value.vector->bval;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      int bit = (aval&1) | (((bval^aval)<<1)&2);
-		      set_bit(rfp, idx, bit);
+		      switch (bit) {
+			  case 0:
+			    set_bit(rfp, idx, BIT4_0);
+			    break;
+			  case 1:
+			    set_bit(rfp, idx, BIT4_1);
+			    break;
+			  case 2:
+			    set_bit(rfp, idx, BIT4_X);
+			    break;
+			  case 3:
+			    set_bit(rfp, idx, BIT4_Z);
+			    break;
+		      }
 		      aval >>= 1;
 		      bval >>= 1;
 		}
@@ -520,6 +533,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.22  2005/08/29 02:38:50  steve
+ *  Eliminate int to vvp_bit4_t casts.
+ *
  * Revision 1.21  2004/10/04 01:11:00  steve
  *  Clean up spurious trailing white space.
  *
