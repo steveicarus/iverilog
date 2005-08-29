@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.43 2005/08/27 03:28:16 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.44 2005/08/29 04:46:52 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -207,20 +207,25 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 	    unsigned ptr = adr / BITS_PER_WORD;
 	    unsigned off = adr % BITS_PER_WORD;
 	    unsigned noff = BITS_PER_WORD - off;
-	    unsigned long lmask = (1 << 2*off) - 1;
+	    unsigned long lmask = (1UL << 2UL*off) - 1UL;
 	    unsigned trans = 0;
 	    unsigned dst = 0;
 	    while (trans < wid) {
 		    // The low bits of the result.
-		  bits_ptr_[dst] = (that.bits_ptr_[ptr] & ~lmask) >> 2*off;
+		  bits_ptr_[dst] = (that.bits_ptr_[ptr] & ~lmask) >> 2UL*off;
 		  trans += noff;
 
 		  if (trans >= wid)
 			break;
 
-		  ptr += 1;
-		  bits_ptr_[dst] |= (that.bits_ptr_[ptr] & lmask) << 2*noff;
-		  trans += off;
+		    // The high bits of the result. Skip this if the
+		    // source and destination are perfectly aligned.
+		  if (noff != BITS_PER_WORD) {
+			ptr += 1;
+			bits_ptr_[dst] |= (that.bits_ptr_[ptr]&lmask) << 2*noff;
+			trans += off;
+		  }
+
 		  dst += 1;
 	    }
 
@@ -349,7 +354,7 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		 job by some shifting, masking and OR. */
 
 	    unsigned long lmask = (1UL << 2UL*adr) - 1;
-	    unsigned long hmask = (1 << 2UL*(adr+that.size_)) - 1;
+	    unsigned long hmask = (1UL << 2UL*(adr+that.size_)) - 1;
 	    unsigned long mask = hmask & ~lmask;
 
 	    bits_val_ =
@@ -361,15 +366,21 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 	    unsigned long dptr = adr / BITS_PER_WORD;
 	    unsigned long doff = adr % BITS_PER_WORD;
 
-	    unsigned long lmask = (1UL<<2UL*doff) - 1;
-	    unsigned long hmask = (1UL << 2UL*(doff+that.size_)) - 1;
+	    unsigned long lmask = (1UL << 2UL*doff) - 1;
+	    unsigned long hshift = doff+that.size_;
+	    unsigned long hmask;
+	    if (hshift >= BITS_PER_WORD)
+		  hmask = -1UL;
+	    else
+		  hmask = (1UL << 2*hshift) - 1UL;
+
 	    unsigned long mask = hmask & ~lmask;
 
 	    bits_ptr_[dptr] =
 		  (bits_ptr_[dptr] & ~mask)
 		  | ((that.bits_val_ << 2UL*doff) & mask);
 
-	    if (doff + that.size_ > BITS_PER_WORD) {
+	    if ((doff + that.size_) > BITS_PER_WORD) {
 		  unsigned tail = doff + that.size_ - BITS_PER_WORD;
 		  mask = (1UL << 2UL*tail) - 1;
 
@@ -450,9 +461,13 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       if (size_ != that.size_)
 	    return false;
 
-      if (size_ <= BITS_PER_WORD) {
+      if (size_ < BITS_PER_WORD) {
 	    unsigned long mask = (1UL << 2UL * size_) - 1;
 	    return (bits_val_&mask) == (that.bits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return bits_val_ == that.bits_val_;
       }
 
       unsigned words = size_ / BITS_PER_WORD;
@@ -1639,6 +1654,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.44  2005/08/29 04:46:52  steve
+ *  Safe handling of C left shift.
+ *
  * Revision 1.43  2005/08/27 03:28:16  steve
  *  Be more cautios about accessing out-of-range bits.
  *
