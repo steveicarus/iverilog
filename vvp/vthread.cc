@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.143 2005/08/27 03:28:57 steve Exp $"
+#ident "$Id: vthread.cc,v 1.144 2005/08/29 04:46:13 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -482,8 +482,8 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
+	    unsigned long bit = lva[idx/CPU_WORD_BITS] >> (idx%CPU_WORD_BITS);
+	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1UL) ? BIT4_1:BIT4_0);
       }
 
       delete[]lva;
@@ -2739,7 +2739,8 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
 
       if (bit >= 4) {
-	    vvp_send_vec4(ptr, vvp_vector4_t(thr->bits4,bit,wid));
+	    vvp_vector4_t value(thr->bits4,bit,wid);
+	    vvp_send_vec4(ptr, value);
 
       } else {
 	      /* Make a vector of the desired width. */
@@ -3146,6 +3147,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.144  2005/08/29 04:46:13  steve
+ *  Minor cleanup.
+ *
  * Revision 1.143  2005/08/27 03:28:57  steve
  *  Fix bit destination address in of_AND
  *
