@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.44 2005/08/29 04:46:52 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.45 2005/08/30 00:49:42 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -218,10 +218,11 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 		  if (trans >= wid)
 			break;
 
+		  ptr += 1;
+
 		    // The high bits of the result. Skip this if the
 		    // source and destination are perfectly aligned.
 		  if (noff != BITS_PER_WORD) {
-			ptr += 1;
 			bits_ptr_[dst] |= (that.bits_ptr_[ptr]&lmask) << 2*noff;
 			trans += off;
 		  }
@@ -339,6 +340,11 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
       return 0;
 }
 
+/*
+ * Set the bits of that vector, which must be a subset of this vector,
+ * into the addressed part of this vector. Use bit masking and word
+ * copies to go as fast as reasonably possible.
+ */
 void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 {
       assert(adr+that.size_  <= size_);
@@ -354,7 +360,12 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		 job by some shifting, masking and OR. */
 
 	    unsigned long lmask = (1UL << 2UL*adr) - 1;
-	    unsigned long hmask = (1UL << 2UL*(adr+that.size_)) - 1;
+	    unsigned long hmask;
+	    unsigned long hshift = adr+that.size_;
+	    if (hshift >= BITS_PER_WORD)
+		  hmask = -1UL;
+	    else
+		  hmask = (1UL << 2UL*(adr+that.size_)) - 1;
 	    unsigned long mask = hmask & ~lmask;
 
 	    bits_val_ =
@@ -363,6 +374,10 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 
       } else if (that.size_ <= BITS_PER_WORD) {
 
+	      /* This vector is more then a word, but that vector is
+		 still small. Write into the destination, possibly
+		 spanning two destination works, depending on whether
+		 the source vector spans a word transition. */
 	    unsigned long dptr = adr / BITS_PER_WORD;
 	    unsigned long doff = adr % BITS_PER_WORD;
 
@@ -415,6 +430,7 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 
 	      /* We know that there are two long vectors, and we know
 		 that the destination is definitely NOT aligned. */
+
 	    unsigned remain = that.size_;
 	    unsigned sptr = 0;
 	    unsigned dptr = adr / BITS_PER_WORD;
@@ -435,16 +451,25 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		  sptr += 1;
 	    }
 
-	    unsigned long hmask = (1UL << 2UL*(doff+remain)) - 1;
+	    unsigned long hshift = doff+remain;
+	    unsigned long hmask;
+	    if (hshift >= BITS_PER_WORD)
+		  hmask = -1UL;
+	    else
+		  hmask = (1UL << 2UL*(doff+remain)) - 1;
+
 	    unsigned long mask = hmask & ~lmask;
 
 	    bits_ptr_[dptr] =
 		  (bits_ptr_[dptr] & ~mask)
 		  | ((that.bits_ptr_[sptr] << 2UL*doff) & mask);
 
-	    if (doff + remain > BITS_PER_WORD) {
+	    if ((doff + remain) > BITS_PER_WORD) {
 		  unsigned tail = doff + remain - BITS_PER_WORD;
-		  mask = (1UL << 2UL*tail) - 1;
+		  if (tail >= BITS_PER_WORD)
+			mask = -1UL;
+		  else
+			mask = (1UL << 2UL*tail) - 1;
 
 		  dptr += 1;
 		  bits_ptr_[dptr] =
@@ -1654,6 +1679,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.45  2005/08/30 00:49:42  steve
+ *  Clean up a few overflowed shifts.
+ *
  * Revision 1.44  2005/08/29 04:46:52  steve
  *  Safe handling of C left shift.
  *
