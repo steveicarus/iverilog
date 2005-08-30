@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.144 2005/08/29 04:46:13 steve Exp $"
+#ident "$Id: vthread.cc,v 1.145 2005/08/30 00:49:21 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2173,7 +2173,7 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 
 static bool of_MOV1XZ_(vthread_t thr, vvp_code_t cp)
 {
-      thr_check_addr(thr, cp->bit_idx[0]+cp->number);
+      thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
       vvp_vector4_t tmp (cp->number, (vvp_bit4_t)cp->bit_idx[1]);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
       return true;
@@ -3147,6 +3147,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.145  2005/08/30 00:49:21  steve
+ *  minor correction to address check in of_MOV1XZ
+ *
  * Revision 1.144  2005/08/29 04:46:13  steve
  *  Minor cleanup.
  *
