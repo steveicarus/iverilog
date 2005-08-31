@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.347 2005/07/14 23:34:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.348 2005/08/31 05:07:31 steve Exp $"
 #endif
 
 /*
@@ -3041,6 +3041,7 @@ class NetEMemory  : public NetExpr {
       const NetExpr* index() const;
 
       virtual bool set_width(unsigned);
+      virtual NetNet* synthesize(Design*des);
 
       NetExpr* eval_tree();
       virtual NetEMemory*dup_expr() const;
@@ -3435,6 +3436,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.348  2005/08/31 05:07:31  steve
+ *  Handle memory references is continuous assignments.
+ *
  * Revision 1.347  2005/07/14 23:34:19  steve
  *  gcc4 compile errors.
  *

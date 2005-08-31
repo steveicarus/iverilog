@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.170 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.171 2005/08/31 05:07:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -503,6 +503,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    if (lsig == 0) {
 		  cerr << get_line() << ": internal error: "
 			"Cannot elaborate net for " << *lexp << endl;
+		  return 0;
 	    }
 	    assert(lsig);
 	    delete lexp;
@@ -2627,6 +2628,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.171  2005/08/31 05:07:31  steve
+ *  Handle memory references is continuous assignments.
+ *
  * Revision 1.170  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

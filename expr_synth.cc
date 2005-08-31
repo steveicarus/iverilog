@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.71 2005/06/13 23:22:14 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.72 2005/08/31 05:07:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -144,6 +144,7 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 NetNet* NetEBComp::synthesize(Design*des)
 {
+#if 0
       NetEConst*lcon = reinterpret_cast<NetEConst*>(left_);
       NetEConst*rcon = reinterpret_cast<NetEConst*>(right_);
 
@@ -151,7 +152,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   0. We can use an OR gate to do the comparison. Synthesize
 	   the non-const side as normal, then or(nor) the signals
 	   together to get result. */
-#if 0
+
 	// XXXX Need to check this for vector_width and wide logic.
       if ((rcon && (rcon->value() == verinum(0UL,rcon->expr_width())))
 	  || (lcon && (lcon->value() == verinum(0UL,lcon->expr_width())))) {
@@ -234,6 +235,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
       osig->local_flag(true);
+      osig->data_type(IVL_VT_LOGIC);
 
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
@@ -566,8 +568,15 @@ NetNet* NetEConcat::synthesize(Design*des)
 {
 	/* First, synthesize the operands. */
       NetNet**tmp = new NetNet*[parms_.count()];
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      bool flag = true;
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    tmp[idx] = parms_[idx]->synthesize(des);
+	    if (tmp[idx] == 0)
+		  flag = false;
+      }
+
+      if (flag == false)
+	    return 0;
 
       assert(tmp[0]);
       NetScope*scope = tmp[0]->scope();
@@ -577,6 +586,7 @@ NetNet* NetEConcat::synthesize(Design*des)
       perm_string path = scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
+      osig->data_type(tmp[0]->data_type());
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
 				       osig->vector_width(), parms_.count());
@@ -602,6 +612,7 @@ NetNet* NetEConst::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width-1,0);
       osig->local_flag(true);
+      osig->data_type(IVL_VT_LOGIC);
       osig->set_signed(has_sign());
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       connect(osig->pin(0), con->pin(0));
@@ -711,6 +722,33 @@ NetNet* NetEUReduce::synthesize(Design*des)
 	    connect(gate->pin(1+idx), isig->pin(idx));
 
       return osig;
+}
+
+NetNet* NetEMemory::synthesize(Design *des)
+{
+      NetNet*adr = idx_->synthesize(des);
+
+      NetScope*scope = adr->scope();
+
+      NetRamDq*ram = new NetRamDq(scope, scope->local_symbol(),
+				  mem_, adr->vector_width());
+      des->add_node(ram);
+      ram->set_line(*this);
+
+      connect(ram->pin_Address(), adr->pin(0));
+
+	/* Create an output signal to receive the data. Assume that
+	   memories return LOGIC. */
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, ram->width());
+      osig->data_type(IVL_VT_LOGIC);
+      osig->local_flag(true);
+      osig->set_line(*this);
+
+      connect(ram->pin_Q(), osig->pin(0));
+
+      return osig;
+
 }
 
 NetNet* NetESelect::synthesize(Design *des)
@@ -875,6 +913,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.72  2005/08/31 05:07:31  steve
+ *  Handle memory references is continuous assignments.
+ *
  * Revision 1.71  2005/06/13 23:22:14  steve
  *  use NetPartSelect to shrink part from high bits.
  *
