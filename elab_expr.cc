@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.94 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.95 2005/09/01 04:10:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -134,10 +134,17 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    break;
 
-	  case 'e': /* == */
 	  case 'E': /* === */
-	  case 'n': /* != */
 	  case 'N': /* !== */
+	    if (lp->expr_type() == IVL_VT_REAL
+		|| rp->expr_type() == IVL_VT_REAL) {
+		  cerr << get_line() << ": error: Case equality may not "
+		       << "have real operands." << endl;
+		  return 0;
+	    }
+	      /* Fall through... */
+	  case 'e': /* == */
+	  case 'n': /* != */
 	    if (dynamic_cast<NetEConst*>(rp)
 		&& (lp->expr_width() > rp->expr_width()))
 		  rp->set_width(lp->expr_width());
@@ -908,6 +915,15 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    return 0;
       }
 
+      if (tru->expr_type() != fal->expr_type()) {
+	    cerr << get_line() << ": error: Data types "
+		 << tru->expr_type() << " and "
+		 << fal->expr_type() << " of ternary"
+		 << " do not match." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetETernary*res = new NetETernary(con, tru, fal);
       res->set_line(*this);
       return res;
@@ -1019,6 +1035,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.95  2005/09/01 04:10:47  steve
+ *  Check operand types for compatibility.
+ *
  * Revision 1.94  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

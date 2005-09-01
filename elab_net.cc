@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.171 2005/08/31 05:07:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.172 2005/09/01 04:10:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -292,6 +292,14 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
       if (rsig->vector_width() < lsig->vector_width())
 	    rsig = pad_to_width(des, rsig, lsig->vector_width());
 
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_line() << ": error: Data types of left and "
+		 << "right operands of " << op_ << " do not match"
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (lsig->vector_width() != rsig->vector_width()) {
 	    cerr << get_line() << ": internal error: lsig width ("
 		 << lsig->vector_width() << ") != rsig pin width ("
@@ -305,6 +313,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
 			       lsig->vector_width());
       osig->local_flag(true);
+      osig->data_type( lsig->data_type() );
 
       NetLogic::TYPE gtype=NetLogic::AND;
       switch (op_) {
@@ -2628,6 +2637,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.172  2005/09/01 04:10:47  steve
+ *  Check operand types for compatibility.
+ *
  * Revision 1.171  2005/08/31 05:07:31  steve
  *  Handle memory references is continuous assignments.
  *
