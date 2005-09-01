@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.11 2005/08/27 04:32:08 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.12 2005/09/01 04:11:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -33,7 +33,7 @@
  * This draws a simple A/B mux. The mux can have any width, enough
  * MUXZ nodes are created to support the vector.
  */
-static void draw_lpm_mux_ab(ivl_lpm_t net)
+static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 {
       unsigned width = ivl_lpm_width(net);
 
@@ -41,14 +41,14 @@ static void draw_lpm_mux_ab(ivl_lpm_t net)
       assert(ivl_lpm_size(net) == 2);
       assert(ivl_lpm_selects(net) == 1);
 
-      fprintf(vvp_out, "L_%p .functor MUXZ %u", net, width);
+      fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,0)));
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,1)));
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_select(net)));
       fprintf(vvp_out, ", C4<>;\n");
 }
 
-static void draw_lpm_mux_nest(ivl_lpm_t net)
+static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 {
       int idx, level;
       unsigned width = ivl_lpm_width(net);
@@ -63,8 +63,8 @@ static void draw_lpm_mux_nest(ivl_lpm_t net)
 	      net, select_input);
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 2) {
-	    fprintf(vvp_out, "L_%p/0/%d .functor MUXZ %u",
-		    net, idx/2, width);
+	    fprintf(vvp_out, "L_%p/0/%d .functor %s %u",
+		    net, idx/2, muxz, width);
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+0)));
 	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx+1)));
 	    fprintf(vvp_out, ", L_%p/0s, C4<>;\n", net);
@@ -75,8 +75,8 @@ static void draw_lpm_mux_nest(ivl_lpm_t net)
 		    net, level, select_input, level);
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
-		  fprintf(vvp_out, "L_%p/%d/%d .functor MUXZ %u",
-			  net, width, level,idx);
+		  fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
+			  net, width, level, muxz, idx);
 		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+0);
 		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+1);
 		  fprintf(vvp_out, ", L_%p/%ds",   net, level);
@@ -90,28 +90,46 @@ static void draw_lpm_mux_nest(ivl_lpm_t net)
 	      net, swidth-1, select_input, swidth-1, swidth-1);
 
 
-      fprintf(vvp_out, "L_%p .functor MUXZ %u", net, width);
+      fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
       fprintf(vvp_out, ", L_%p/%d/0", net, swidth-2);
       fprintf(vvp_out, ", L_%p/%d/1", net, swidth-2);
       fprintf(vvp_out, ", L_%p/%ds",  net, swidth-1);
       fprintf(vvp_out, ", C4<>;\n");
 
-      free(select_input);}
+      free(select_input);
+}
 
 void draw_lpm_mux(ivl_lpm_t net)
 {
+      const char*muxz = "MUXZ";
+
+	/* The output of the mux defines the type of the mux. the
+	   ivl_target should guarantee that all the inputs are the
+	   same type as the output. */
+      switch (data_type_of_nexus(ivl_lpm_q(net,0))) {
+	  case IVL_VT_REAL:
+	    muxz = "MUXR";
+	    break;
+	  default:
+	    muxz = "MUXZ";
+	    break;
+      }
+
       if ((ivl_lpm_size(net) == 2) && (ivl_lpm_selects(net) == 1)) {
-	    draw_lpm_mux_ab(net);
+	    draw_lpm_mux_ab(net, muxz);
 	    return;
       }
 
 	/* Here we are at the worst case, we generate a tree of MUXZ
 	   devices to handle the arbitrary size. */
-      draw_lpm_mux_nest(net);
+      draw_lpm_mux_nest(net, muxz);
 }
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.12  2005/09/01 04:11:37  steve
+ *  Generate code to handle real valued muxes.
+ *
  * Revision 1.11  2005/08/27 04:32:08  steve
  *  Handle synthesis of fully packed case statements.
  *

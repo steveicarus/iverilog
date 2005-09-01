@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.159 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.160 2005/09/01 04:11:37 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -920,7 +920,8 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * The ivl_lpm_data() method returns the inputs of the MUX device. The
  * ivl_lpm_size() method returns the number of data inputs there
  * are. All the data inputs have the same width, the width of the
- * ivl_lpm_q output.
+ * ivl_lpm_q output. The type of the device is devined from the
+ * inputs and the Q. All the types must be exactly the same.
  *
  * - D-FlipFlop (IVL_LPM_FF)
  * This data is an edge sensitive register. The ivl_lpm_q output and
@@ -1670,6 +1671,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.160  2005/09/01 04:11:37  steve
+ *  Generate code to handle real valued muxes.
+ *
  * Revision 1.159  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

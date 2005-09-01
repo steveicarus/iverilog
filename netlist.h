@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.348 2005/08/31 05:07:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.349 2005/09/01 04:11:37 steve Exp $"
 #endif
 
 /*
@@ -876,6 +876,12 @@ class NetMult  : public NetNode {
  *      width  -- Width of the result and each possible Data input
  *      size   -- Number of Data input (each of width)
  *      selw   -- Width in bits of the select input
+ *
+ * All the data inputs must have the same type, and are the type of
+ * the result. The actual type does not matter, as the mux does not
+ * process data, just selects alternatives.
+ *
+ * The select input must be an integral type of some sort. Not real.
  */
 class NetMux  : public NetNode {
 
@@ -3436,6 +3442,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.349  2005/09/01 04:11:37  steve
+ *  Generate code to handle real valued muxes.
+ *
  * Revision 1.348  2005/08/31 05:07:31  steve
  *  Handle memory references is continuous assignments.
  *

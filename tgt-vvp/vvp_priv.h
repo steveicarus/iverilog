@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.32 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.33 2005/09/01 04:11:37 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -48,6 +48,9 @@ extern const char* vvp_signal_label(ivl_signal_t sig);
  * This generates a label string for a memory.
  */
 extern const char* vvp_memory_label(ivl_memory_t mem);
+
+extern unsigned width_of_nexus(ivl_nexus_t nex);
+extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);
 
 /*
  * This function draws a process (initial or always) into the output
@@ -198,6 +201,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.33  2005/09/01 04:11:37  steve
+ *  Generate code to handle real valued muxes.
+ *
  * Revision 1.32  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *
