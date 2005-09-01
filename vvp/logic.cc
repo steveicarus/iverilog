@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.32 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: logic.cc,v 1.33 2005/09/01 04:08:47 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -183,6 +183,81 @@ void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, bit);
 }
 
+vvp_fun_muxr::vvp_fun_muxr()
+: a_(0.0), b_(0.0)
+{
+      count_functors_table += 1;
+      select_ = 2;
+}
+
+vvp_fun_muxr::~vvp_fun_muxr()
+{
+}
+
+void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+	/* The real valued mux can only take in the select as a
+	   vector4_t. the muxed data is rea. */
+      if (ptr.port() != 2)
+	    return;
+
+      assert(bit.size() == 1);
+
+      switch (bit.value(0)) {
+	  case BIT4_0:
+	    select_ = 0;
+	    break;
+	  case BIT4_1:
+	    select_ = 1;
+	    break;
+	  default:
+	    select_ = 2;
+      }
+
+      switch (select_) {
+	  case 0:
+	    vvp_send_real(ptr.ptr()->out, a_);
+	    break;
+	  case 1:
+	    vvp_send_real(ptr.ptr()->out, b_);
+	    break;
+	  default:
+	    if (a_ == b_) {
+		  vvp_send_real(ptr.ptr()->out, a_);
+	    } else {
+		    // Should send NaN?
+		  vvp_send_real(ptr.ptr()->out, 0.0);
+	    }
+	    break;
+      }
+}
+
+void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      switch (ptr.port()) {
+	  case 0:
+	    if (a_ == bit)
+		  break;
+
+	    a_ = bit;
+	    if (select_ == 0)
+		  vvp_send_real(ptr.ptr()->out, a_);
+	    break;
+
+	  case 1:
+	    if (b_ == bit)
+		  break;
+
+	    b_ = bit;
+	    if (select_ == 1)
+		  vvp_send_real(ptr.ptr()->out, b_);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+}
+
 vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
 : a_(wid), b_(wid)
 {
@@ -299,6 +374,9 @@ void compile_functor(char*label, char*type, unsigned width,
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
 
+      } else if (strcmp(type, "MUXR") == 0) {
+	    obj = new vvp_fun_muxr;
+
       } else if (strcmp(type, "MUXX") == 0) {
 	    obj = new table_functor_s(ft_MUXX);
 
@@ -385,6 +463,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.33  2005/09/01 04:08:47  steve
+ *  Support MUXR functors.
+ *
  * Revision 1.32  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

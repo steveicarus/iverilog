@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.22 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: logic.h,v 1.23 2005/09/01 04:08:47 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -129,6 +129,21 @@ class vvp_fun_muxz : public vvp_net_fun_t {
       int select_;
 };
 
+class vvp_fun_muxr : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_muxr();
+      virtual ~vvp_fun_muxr();
+
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t p, double bit);
+
+    private:
+      double a_;
+      double b_;
+      int select_;
+};
+
 // table functor types
 
 extern const unsigned char ft_MUXX[];
@@ -144,6 +159,9 @@ extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.23  2005/09/01 04:08:47  steve
+ *  Support MUXR functors.
+ *
  * Revision 1.22  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *
