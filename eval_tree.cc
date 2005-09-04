@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.62.2.1 2005/09/04 15:39:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,6 +227,17 @@ NetEConst* NetEBComp::eval_less_()
 	/* Detect the case where the right side is greater that or
 	   equal to the largest value the left side can possibly
 	   have. */
+      if (left_->expr_width() == 0) {
+	    cerr << get_line() << ": internal error: "
+		 << "Having trouble evaluating left expression of < op."
+		 << endl;
+	    cerr << get_line() << ":               : "
+		 << "Expression is: "
+		 << *this << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       assert(left_->expr_width() > 0);
       verinum lv (verinum::V1, left_->expr_width());
       if (lv < rv) {
@@ -1551,6 +1562,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.62.2.1  2005/09/04 15:39:19  steve
+ *  More explicit internal error message.
+ *
  * Revision 1.62  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *
