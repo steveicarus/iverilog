@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62.2.1 2005/09/04 15:39:19 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.62.2.2 2005/09/04 15:41:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -234,7 +234,6 @@ NetEConst* NetEBComp::eval_less_()
 	    cerr << get_line() << ":               : "
 		 << "Expression is: "
 		 << *this << endl;
-	    des->errors += 1;
 	    return 0;
       }
 
@@ -1562,6 +1561,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.62.2.2  2005/09/04 15:41:54  steve
+ *  More explicit internal error message.
+ *
  * Revision 1.62.2.1  2005/09/04 15:39:19  steve
  *  More explicit internal error message.
  *
