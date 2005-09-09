@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.86.2.1 2005/09/04 15:33:19 steve Exp $"
+#ident "$Id: lexor.lex,v 1.86.2.2 2005/09/09 02:13:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,6 +180,7 @@ W [ \t\b\f\r]+
 <UDPTABLE>\(0[xX]\) { return 'Q'; }
 <UDPTABLE>\(b[xX]\) { return 'q'; }
 <UDPTABLE>\(b0\)    { return 'f'; /* b0 is 10|00, but only 10 is meaningful */}
+<UDPTABLE>\(b1\)    { return 'r'; /* b1 is 11|01, but only 01 is meaningful */}
 <UDPTABLE>\(0\?\)   { return 'P'; }
 <UDPTABLE>\(10\)    { return 'f'; }
 <UDPTABLE>\(1[xX]\) { return 'M'; }
