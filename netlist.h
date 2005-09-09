@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.3 2005/08/22 01:00:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.4 2005/09/09 02:17:08 steve Exp $"
 #endif
 
 /*
@@ -2533,7 +2533,7 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_eqeq_();
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
-      NetEConst*eval_leeq_real_();
+      NetEConst*eval_leeq_real_(bool gt_flag, bool include_eq_flag);
       NetEConst*eval_gt_();
       NetEConst*eval_gteq_();
       NetEConst*eval_neeq_();
@@ -3367,6 +3367,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.4  2005/09/09 02:17:08  steve
+ *  Evaluate  magnitude compare with real operands.
+ *
  * Revision 1.321.2.3  2005/08/22 01:00:41  steve
  *  Add support for implicit defaults in case and conditions.
  *

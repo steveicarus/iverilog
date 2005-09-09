@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62.2.2 2005/09/04 15:41:54 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.62.2.3 2005/09/09 02:17:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -215,6 +215,11 @@ NetEConst* NetEBComp::eval_eqeq_()
 
 NetEConst* NetEBComp::eval_less_()
 {
+      if (right_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(false, false);
+      if (left_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(false, false);
+
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
 
@@ -224,9 +229,6 @@ NetEConst* NetEBComp::eval_less_()
 	    return new NetEConst(result);
       }
 
-	/* Detect the case where the right side is greater that or
-	   equal to the largest value the left side can possibly
-	   have. */
       if (left_->expr_width() == 0) {
 	    cerr << get_line() << ": internal error: "
 		 << "Having trouble evaluating left expression of < op."
@@ -237,6 +239,9 @@ NetEConst* NetEBComp::eval_less_()
 	    return 0;
       }
 
+	/* Detect the case where the right side is greater that or
+	   equal to the largest value the left side can possibly
+	   have. */
       assert(left_->expr_width() > 0);
       verinum lv (verinum::V1, left_->expr_width());
       if (lv < rv) {
@@ -269,7 +274,7 @@ NetEConst* NetEBComp::eval_less_()
       return new NetEConst(result);
 }
 
-NetEConst* NetEBComp::eval_leeq_real_()
+NetEConst* NetEBComp::eval_leeq_real_(bool gt_flag, bool include_eq_flag)
 {
       NetEConst*vtmp;
       NetECReal*rtmp;
@@ -318,7 +323,16 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    assert(0);
       }
 
-      verinum result((lv <= rv)? verinum::V1 : verinum::V0, 1);
+	/* This function supports < and <=. If the eq_flag is true,
+	   then include <=. Otherwise, include only <. */
+      bool flag;
+      if (gt_flag)
+	    flag = include_eq_flag? (lv >= rv) : (lv > rv);
+      else
+	    flag = include_eq_flag? (lv <= rv) : (lv < rv);
+
+
+      verinum result(flag? verinum::V1 : verinum::V0, 1);
       vtmp = new NetEConst(result);
       vtmp->set_line(*this);
 
@@ -328,9 +342,9 @@ NetEConst* NetEBComp::eval_leeq_real_()
 NetEConst* NetEBComp::eval_leeq_()
 {
       if (right_->expr_type() == ET_REAL)
-	    return eval_leeq_real_();
+	    return eval_leeq_real_(false, true);
       if (left_->expr_type() == ET_REAL)
-	    return eval_leeq_real_();
+	    return eval_leeq_real_(false, true);
 
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
@@ -384,23 +398,10 @@ NetEConst* NetEBComp::eval_leeq_()
 
 NetEConst* NetEBComp::eval_gt_()
 {
-      if ((left_->expr_type() == NetExpr::ET_REAL)
-	  && (right_->expr_type() == NetExpr::ET_REAL)) {
-
-	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
-	    if (tmpl == 0)
-		  return 0;
-
-	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
-	    if (tmpr == 0)
-		  return 0;
-
-	    double ll = tmpl->value().as_double();
-	    double rr = tmpr->value().as_double();
-
-	    verinum result ((ll > rr)? verinum::V1 : verinum::V0, 1, true);
-	    return new NetEConst(result);
-      }
+      if (right_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(true, false);
+      if (left_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(true, false);
 
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -460,23 +461,10 @@ NetEConst* NetEBComp::eval_gt_()
 
 NetEConst* NetEBComp::eval_gteq_()
 {
-      if ((left_->expr_type() == NetExpr::ET_REAL)
-	  && (right_->expr_type() == NetExpr::ET_REAL)) {
-
-	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
-	    if (tmpl == 0)
-		  return 0;
-
-	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
-	    if (tmpr == 0)
-		  return 0;
-
-	    double ll = tmpl->value().as_double();
-	    double rr = tmpr->value().as_double();
-
-	    verinum result ((ll >= rr)? verinum::V1 : verinum::V0, 1, true);
-	    return new NetEConst(result);
-      }
+      if (right_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(true, true);
+      if (left_->expr_type() == ET_REAL)
+	    return eval_leeq_real_(true, true);
 
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -1561,6 +1549,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.62.2.3  2005/09/09 02:17:08  steve
+ *  Evaluate  magnitude compare with real operands.
+ *
  * Revision 1.62.2.2  2005/09/04 15:41:54  steve
  *  More explicit internal error message.
  *
