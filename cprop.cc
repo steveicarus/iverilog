@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.3 2005/08/28 22:00:39 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.4 2005/09/11 02:50:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -861,11 +861,34 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
       bool flag = true;
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant())
-		  continue;
-	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant())
+	    bool cflag_a = obj->pin_Data(idx, 0).nexus()->drivers_constant();
+	    bool cflag_b = obj->pin_Data(idx, 1).nexus()->drivers_constant();
+
+	      /* If both data inputs are constant, we'll be able to do
+		 a substitution. */
+	    if (cflag_a && cflag_b)
 		  continue;
 
+	    verinum::V va = cflag_a
+		  ? obj->pin_Data(idx, 0).nexus()->driven_value()
+		  : verinum::Vx;
+	    verinum::V vb = cflag_b
+		  ? obj->pin_Data(idx, 1).nexus()->driven_value()
+		  : verinum::Vx;
+
+	      /* If only one Data input is constant, but a constant
+		 HiZ, then we will be able to to a bufif
+		 substitution. */
+	    if (cflag_a && va==verinum::Vz)
+		  continue;
+
+	    if (cflag_b && vb==verinum::Vz)
+		  continue;
+
+	      /* Otherwise, we cannot accurately do a substitution. If
+		 one input is non-constant, then that input may have a
+		 HiZ value, and there is no Verilog logic other then a
+		 MUX that can pass a HiZ value. */
 	    flag = false;
       }
 
@@ -907,192 +930,107 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  continue;
 	    }
 
-	      /* If both inputs are constant, then derive the output
-		 from the sel input. */
-	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()
-		&& obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
+	      /* At this point, the only cases that are left are where
+		 the data inputs are both constant, and neither are
+		 HiZ. From this we know how to generate the output
+		 from only the S input. */
+	    assert(obj->pin_Data(idx, 0).nexus()->drivers_constant()
+		   && obj->pin_Data(idx, 1).nexus()->drivers_constant());
 
-		  verinum::V a = obj->pin_Data(idx, 0).nexus()->driven_value();
-		  verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
 
-		  if (a == b) {
-			connect(obj->pin_Result(idx), obj->pin_Data(idx,0));
-			continue;
-		  }
+	    verinum::V a = obj->pin_Data(idx, 0).nexus()->driven_value();
+	    verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
 
-		  if (a == verinum::V0 && b == verinum::V1) {
-			connect(obj->pin_Result(idx), obj->pin_Sel(0));
-			continue;
-		  }
-
-		  if (a == verinum::V1 && b == verinum::V0) {
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    2, NetLogic::NOT);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Sel(0), tmp->pin(1));
-			des->add_node(tmp);
-			continue;
-		  }
-
-		    /* A==0: Q = B & S */
-		  if (a == verinum::V0) {
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::AND);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,1), tmp->pin(1));
-			connect(obj->pin_Sel(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-		    /* B==1: Q = A | S */
-		  if (b == verinum::V1) {
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::OR);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,0), tmp->pin(1));
-			connect(obj->pin_Sel(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-		    /* A==1: Q = B | ~S */
-		  if (a == verinum::V1) {
-			NetLogic*inv = new NetLogic(scope,
-						    scope->local_symbol(),
-						    2, NetLogic::NOT);
-			NetNet*invs = new NetNet(scope,
-						 scope->local_symbol(),
-						 NetNet::TRI, 1);
-			invs->local_flag(true);
-			connect(inv->pin(0), invs->pin(0));
-			connect(inv->pin(1), obj->pin_Sel(0));
-			des->add_node(inv);
-
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::OR);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,1), tmp->pin(1));
-			connect(inv->pin(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-		    /* B==0: Q = A & ~S */
-		  if (b == verinum::V0) {
-			NetLogic*inv = new NetLogic(scope,
-						    scope->local_symbol(),
-						    2, NetLogic::NOT);
-			NetNet*invs = new NetNet(scope,
-						 scope->local_symbol(),
-						 NetNet::TRI, 1);
-			invs->local_flag(true);
-			connect(inv->pin(0), invs->pin(0));
-			connect(inv->pin(1), obj->pin_Sel(0));
-			des->add_node(inv);
-
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::AND);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,0), tmp->pin(1));
-			connect(inv->pin(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-
-		  assert(0);
+	    if (a == b) {
+		  connect(obj->pin_Result(idx), obj->pin_Data(idx,0));
 		  continue;
 	    }
 
-	      /* Only the Sel==0 input is constant. The output is a
-		 logical combination of the S and B inputs. */
-
-	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()) {
-
-		  verinum::V a = obj->pin_Data(idx, 0).nexus()->driven_value();
-
-		    /* A==0: Q = B & S */
-		  if (a == verinum::V0) {
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::AND);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,1), tmp->pin(1));
-			connect(obj->pin_Sel(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-
-		    /* A==1: Q = B | ~S */
-		  if (a == verinum::V1) {
-			NetLogic*inv = new NetLogic(scope,
-						    scope->local_symbol(),
-						    2, NetLogic::NOT);
-			NetNet*invs = new NetNet(scope,
-						 scope->local_symbol(),
-						 NetNet::TRI, 1);
-			invs->local_flag(true);
-			connect(inv->pin(0), invs->pin(0));
-			connect(inv->pin(1), obj->pin_Sel(0));
-			des->add_node(inv);
-
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::OR);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,1), tmp->pin(1));
-			connect(inv->pin(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-		  assert(0);
+	    if (a == verinum::V0 && b == verinum::V1) {
+		  connect(obj->pin_Result(idx), obj->pin_Sel(0));
+		  continue;
 	    }
 
-	      /* Only the Sel==1 input is constant. */
-	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
+	    if (a == verinum::V1 && b == verinum::V0) {
+		  NetLogic*tmp = new NetLogic(scope,
+					      scope->local_symbol(),
+					      2, NetLogic::NOT);
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Sel(0), tmp->pin(1));
+		  des->add_node(tmp);
+		  continue;
+	    }
 
-		  verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
+	      /* A==0: Q = B & S */
+	    if (a == verinum::V0) {
+		  NetLogic*tmp = new NetLogic(scope,
+					      scope->local_symbol(),
+					      3, NetLogic::AND);
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,1), tmp->pin(1));
+		  connect(obj->pin_Sel(0), tmp->pin(2));
+		  des->add_node(tmp);
+		  continue;
+	    }
 
-		    /* B==0: Q = A & ~S */
-		  if (b == verinum::V0) {
-			NetLogic*inv = new NetLogic(scope,
-						    scope->local_symbol(),
-						    2, NetLogic::NOT);
-			NetNet*invs = new NetNet(scope,
-						 scope->local_symbol(),
-						 NetNet::TRI, 1);
-			invs->local_flag(true);
-			connect(inv->pin(0), invs->pin(0));
-			connect(inv->pin(1), obj->pin_Sel(0));
-			des->add_node(inv);
+	      /* B==1: Q = A | S */
+	    if (b == verinum::V1) {
+		  NetLogic*tmp = new NetLogic(scope,
+					      scope->local_symbol(),
+					      3, NetLogic::OR);
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,0), tmp->pin(1));
+		  connect(obj->pin_Sel(0), tmp->pin(2));
+		  des->add_node(tmp);
+		  continue;
+	    }
+	      /* A==1: Q = B | ~S */
+	    if (a == verinum::V1) {
+		  NetLogic*inv = new NetLogic(scope,
+					      scope->local_symbol(),
+					      2, NetLogic::NOT);
+		  NetNet*invs = new NetNet(scope,
+					   scope->local_symbol(),
+					   NetNet::TRI, 1);
+		  invs->local_flag(true);
+		  connect(inv->pin(0), invs->pin(0));
+		  connect(inv->pin(1), obj->pin_Sel(0));
+		  des->add_node(inv);
 
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::AND);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,0), tmp->pin(1));
-			connect(inv->pin(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
-		    /* B==1: Q = A | S */
-		  if (b == verinum::V1) {
-			NetLogic*tmp = new NetLogic(scope,
-						    scope->local_symbol(),
-						    3, NetLogic::OR);
-			connect(obj->pin_Result(idx), tmp->pin(0));
-			connect(obj->pin_Data(idx,0), tmp->pin(1));
-			connect(obj->pin_Sel(0), tmp->pin(2));
-			des->add_node(tmp);
-			continue;
-		  }
+		  NetLogic*tmp = new NetLogic(scope,
+					      scope->local_symbol(),
+					      3, NetLogic::OR);
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,1), tmp->pin(1));
+		  connect(inv->pin(0), tmp->pin(2));
+		  des->add_node(tmp);
+		  continue;
+	    }
+	      /* B==0: Q = A & ~S */
+	    if (b == verinum::V0) {
+		  NetLogic*inv = new NetLogic(scope,
+					      scope->local_symbol(),
+					      2, NetLogic::NOT);
+		  NetNet*invs = new NetNet(scope,
+					   scope->local_symbol(),
+					   NetNet::TRI, 1);
+		  invs->local_flag(true);
+		  connect(inv->pin(0), invs->pin(0));
+		  connect(inv->pin(1), obj->pin_Sel(0));
+		  des->add_node(inv);
 
-		  assert(0);
+		  NetLogic*tmp = new NetLogic(scope,
+					      scope->local_symbol(),
+					      3, NetLogic::AND);
+		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(obj->pin_Data(idx,0), tmp->pin(1));
+		  connect(inv->pin(0), tmp->pin(2));
+		  des->add_node(tmp);
+		  continue;
 	    }
 
 	    assert(0);
+
       }
 
       delete obj;
@@ -1175,6 +1113,7 @@ void cprop_functor::lpm_mux_large(Design*des, NetMux*obj)
 	   slices. Connect all the slices that we are keeping. */
       NetMux*tmp = new NetMux(scope, obj->name(),
 			      width-reduce_width, size, obj->sel_width());
+      tmp->set_line(*obj);
 
       for (unsigned idx = 0 ;  idx < obj->sel_width() ;  idx += 1)
 	    connect(obj->pin_Sel(idx), tmp->pin_Sel(idx));
@@ -1321,6 +1260,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.4  2005/09/11 02:50:51  steve
+ *  Fix overly agressive constant propagation through MUX causing lost Z bits.
+ *
  * Revision 1.47.2.3  2005/08/28 22:00:39  steve
  *  Reduce mux slices that are constant throughout range.
  *
