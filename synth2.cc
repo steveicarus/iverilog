@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.2 2005/08/22 01:00:42 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.3 2005/09/11 02:56:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -293,6 +293,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(),
 			      1U << sel_pins, sel_pins);
+      mux->set_line(*this);
 
 	/* Connect the non-constant select bits to the select input of
 	   the mux device. */
@@ -484,6 +485,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(), 2, 1);
+      mux->set_line(*this);
 
       connect(mux->pin_Sel(0), ssig->pin(0));
 
@@ -1107,6 +1109,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.3  2005/09/11 02:56:38  steve
+ *  Attach line numbers to NetMux devices.
+ *
  * Revision 1.39.2.2  2005/08/22 01:00:42  steve
  *  Add support for implicit defaults in case and conditions.
  *

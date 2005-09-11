@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.1 2005/02/19 16:39:31 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.2 2005/09/11 02:56:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -811,6 +811,7 @@ NetNet* NetETernary::synthesize(Design *des)
 
       perm_string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
+      mux->set_line(*this);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(tsig->pin(idx), mux->pin_Data(idx, 1));
 	    connect(fsig->pin(idx), mux->pin_Data(idx, 0));
@@ -875,6 +876,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.2  2005/09/11 02:56:37  steve
+ *  Attach line numbers to NetMux devices.
+ *
  * Revision 1.59.2.1  2005/02/19 16:39:31  steve
  *  Spellig fixes.
  *

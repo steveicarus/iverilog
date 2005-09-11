@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.138.2.2 2005/02/19 16:39:30 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.138.2.3 2005/09/11 02:56:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1439,6 +1439,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(), 1,
 			      sig_width, sel->pin_count());
+      mux->set_line(*this);
 
 	/* Connect the signal bits to the mux. Account for the
 	   direction of the numbering (lsb to msb vs. msb to lsb) by
@@ -2272,6 +2273,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   (true) connected to tru_sig.  */
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(), dwidth, 2, 1);
+      mux->set_line(*this);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
 	/* Connect the data inputs. */
@@ -2517,6 +2519,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.138.2.3  2005/09/11 02:56:37  steve
+ *  Attach line numbers to NetMux devices.
+ *
  * Revision 1.138.2.2  2005/02/19 16:39:30  steve
  *  Spellig fixes.
  *
