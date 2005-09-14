@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.172 2005/09/01 04:10:47 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.173 2005/09/14 15:15:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -293,8 +293,9 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 	    rsig = pad_to_width(des, rsig, lsig->vector_width());
 
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Data types of left and "
-		 << "right operands of " << op_ << " do not match"
+	    cerr << get_line() << ": error: Types of "
+		 << "operands of " << op_ << " do not match: "
+		 << lsig->data_type() << " vs. " << rsig->data_type()
 		 << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2618,6 +2619,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	      // The output of a reduction operator is 1 bit
 	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
+	    sig->data_type(sub_sig->data_type());
 	    sig->local_flag(true);
 
 	    rgate = new NetUReduce(scope, scope->local_symbol(),
@@ -2637,6 +2639,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.173  2005/09/14 15:15:44  steve
+ *  fit type elaboration of logical not.
+ *
  * Revision 1.172  2005/09/01 04:10:47  steve
  *  Check operand types for compatibility.
  *
