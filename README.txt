@@ -359,7 +359,8 @@ constructs.
 Icarus Verilog includes some features that are not part of the
 IEEE1364 standard, but have well defined meaning, and also sometimes
 gives nonstandard (but extended) meanings to some features of the
-language that are defined.
+language that are defined. See the "extensions.txt" documentation for
+more details.
 
     $is_signed(<expr>)
 	This system function returns 1 if the expression contained is
@@ -492,53 +493,4 @@ file. However, I have early on received aid in the form of fixes,
 Verilog guidance, and especially testing from many people. Testers in
 particular include a larger community of people interested in a GPL
 Verilog for Linux.
-
-
-6.1 PORT MAINTAINERS
-
-This is a list of people who have created ports and precompiled
-packages for various operating systems. These folks have graciously
-taken on the task of building Icarus Verilog on their systems and
-bundled it into neat packages.(+) If you want to be added to the list (or
-removed from the list) send e-mail to me.
-
-      FreeBSD/{Intel,alpha}
-	Ying-Chieh Liao <ijliao@FreeBSD.org>
-
-      Linux/{alpha,AMD64,Intel} (RPMS)
-	Stephen Williams <steve@icarus.com>
-
-      Linux/* (.debs)
-	Hamish Moffatt <hamish@rising.com.au>
-
-      Macintosh -- MacO/S
-	Yasuhisa Kato <kato@y.email.ne.jp>
-
-      Mac O/S X
-        Timothy J. Wood <tjw@omnigroup.com>
-
-      NetBSD/*
-	Dan McMahill <mcmahill@mtl.mit.edu>
-
-      Solaris/SPARC packages (.pkg)
-	Dan McMahill <mcmahill@mtl.mit.edu>
-
-      Cygwin32/*
-        Venkat Iyer <venkat@comit.com>
-
-      Mingw32
-        Venkat Iyer <venkat@comit.com>
-
-(+) These are not the only systems where Icarus Verilog has been run,
-just the systems where precompiled binaries are publicly available.
-
-
-6.2 TEST SUITE MANAGER
-
-Steve Wilson <stevew@ka6s.com> has taken on the large task of managing
-the test suite. He has maintained the regression test scripts, the
-driver list, received submissions from myself and others, and has
-written a great many tests on his own. Any compiler writer, for any
-language, will tell you that the test suite is at least as important
-as the compiler code itself.
 
