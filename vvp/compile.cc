@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.210 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.211 2005/09/14 02:50:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -101,6 +101,8 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cmp/ws", of_CMPWS,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cmp/wu", of_CMPWU,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1478,6 +1480,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.211  2005/09/14 02:50:07  steve
+ *  Add word integer compares.
+ *
  * Revision 1.210  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.145 2005/08/30 00:49:21 steve Exp $"
+#ident "$Id: vthread.cc,v 1.146 2005/09/14 02:50:07 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -100,8 +100,9 @@ struct vthread_s {
 
 	/* These are the word registers. */
       union {
-	    long w_int;
-	    double w_real;
+	    int64_t  w_int;
+	    uint64_t w_uint;
+	    double   w_real;
       } words[16];
 
 	/* My parent sets this when it wants me to wake it up. */
@@ -508,7 +509,6 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       assert(wid > 0);
-
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
@@ -911,6 +911,34 @@ bool of_CMPWR(vthread_t thr, vvp_code_t cp)
 {
       double l = thr->words[cp->bit_idx[0]].w_real;
       double r = thr->words[cp->bit_idx[1]].w_real;
+
+      vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
+      vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+
+      return true;
+}
+
+bool of_CMPWS(vthread_t thr, vvp_code_t cp)
+{
+      int64_t l = thr->words[cp->bit_idx[0]].w_int;
+      int64_t r = thr->words[cp->bit_idx[1]].w_int;
+
+      vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
+      vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+
+      return true;
+}
+
+bool of_CMPWU(vthread_t thr, vvp_code_t cp)
+{
+      uint64_t l = thr->words[cp->bit_idx[0]].w_uint;
+      uint64_t r = thr->words[cp->bit_idx[1]].w_uint;
 
       vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
       vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
@@ -3147,6 +3175,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.146  2005/09/14 02:50:07  steve
+ *  Add word integer compares.
+ *
  * Revision 1.145  2005/08/30 00:49:21  steve
  *  minor correction to address check in of_MOV1XZ
  *

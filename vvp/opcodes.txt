@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.65 2005/06/14 01:44:10 steve Exp $
+ *  $Id: opcodes.txt,v 1.66 2005/09/14 02:50:07 steve Exp $
  */
 
 
@@ -184,6 +184,10 @@ bit gets the x value.
 
 [compare real values.]
 
+* %cmp/ws <bit-l>, <bit-r>
+* %cmp/wu <bit-l>, <bit-r>
+
+[compare signed/unsigned integer words.]
 
 * %cmp/z <bit-l>, <bit-r>, <wid>
 * %cmp/x <bit-l>, <bit-r>, <wid>

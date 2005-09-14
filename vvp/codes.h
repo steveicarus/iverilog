@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.74 2005/06/14 01:44:09 steve Exp $"
+#ident "$Id: codes.h,v 1.75 2005/09/14 02:50:07 steve Exp $"
 #endif
 
 
@@ -56,6 +56,8 @@ extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWS(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_IR(vthread_t thr, vvp_code_t code);
@@ -175,6 +177,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.75  2005/09/14 02:50:07  steve
+ *  Add word integer compares.
+ *
  * Revision 1.74  2005/06/14 01:44:09  steve
  *  Add the assign_v0_d instruction.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vthread.txt,v 1.4 2003/02/09 23:33:26 steve Exp $
+ *  $Id: vthread.txt,v 1.5 2005/09/14 02:50:07 steve Exp $
  */
 
 
@@ -40,13 +40,13 @@ The remaining 64K-8 possible <bit> values are read-write bit registers
 that can be accessed singly or as vectors. This obviously implies that
 a bit address is 16 bits.
 
-Threads also contain 4 numeric ``index'' registers. These are binary
-values (no unknowns) that can be used in certain cases where extra
-numeric parameters are needed. The thread instruction set includes
+Threads alco contait 16 numeric registers. These registers can hold a
+real value or a 64bit integer, and can be used in certain cases where
+numeric values are needed. The thread instruction set includes
 %ix/* instructions to manipulate these registers. The instructions
 that use these registers document which register is used, and what the
-numeric value is used for. For example, %assign/m uses index register
-3 to select the memory bit to target its bit.
+numeric value is used for. Registers 0-3 are often given fixed
+meanings to instructions that need an integer value.
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
