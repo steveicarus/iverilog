@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.247 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.248 2005/09/14 02:53:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1888,6 +1888,18 @@ bool NetEConst::has_width() const
       return value_.has_len();
 }
 
+ivl_variable_type_t NetEConst::expr_type() const
+{
+      if (value_.len() == 0)
+	    return IVL_VT_LOGIC;
+      if (value_.is_string())
+	    return IVL_VT_BOOL;
+      if (value_.is_defined())
+	    return IVL_VT_BOOL;
+
+      return IVL_VT_LOGIC;
+}
+
 NetEConstParam::NetEConstParam(NetScope*s, perm_string n, const verinum&v)
 : NetEConst(v), scope_(s), name_(n)
 {
@@ -2216,6 +2228,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.248  2005/09/14 02:53:14  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.247  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

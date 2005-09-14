@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.46 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: net_design.cc,v 1.47 2005/09/14 02:53:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -402,6 +402,7 @@ void NetScope::evaluate_parameters(Design*des)
 		  break;
 
 		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
 		  if (! dynamic_cast<const NetEConst*>(expr)) {
 
 			  // Try to evaluate the expression.
@@ -618,6 +619,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.47  2005/09/14 02:53:14  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.46  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.33 2005/09/01 04:11:37 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.34 2005/09/14 02:53:15 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -188,6 +188,15 @@ extern unsigned long get_number_immediate(ivl_expr_t ex);
 extern int draw_eval_real(ivl_expr_t ex);
 
 /*
+ * draw_eval_bool64 evaluates a bool expression. The return code from
+ * the function is the index of the word register that contains the
+ * result. The word is allocated widh allocate_word(), so the caller
+ * must arrange for it to be released with clr_word(). The width must
+ * be such that it fits in a 64bit word.
+ */
+extern int draw_eval_bool64(ivl_expr_t ex);
+
+/*
  * These functions manage word register allocation.
  */
 extern int allocate_word(void);
@@ -201,6 +210,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.34  2005/09/14 02:53:15  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.33  2005/09/01 04:11:37  steve
  *  Generate code to handle real valued muxes.
  *

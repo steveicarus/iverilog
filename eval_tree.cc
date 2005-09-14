@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.64 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.65 2005/09/14 02:53:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -851,6 +851,7 @@ NetExpr* NetEBMult::eval_tree_real_()
 		break;
 	  }
 
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
 		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
 		if (lc == 0) return 0;
@@ -871,6 +872,7 @@ NetExpr* NetEBMult::eval_tree_real_()
 		break;
 	  }
 
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
 		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 		if (rc == 0) return 0;
@@ -1182,6 +1184,7 @@ NetExpr* NetEParam::eval_tree()
 
       switch (res->expr_type()) {
 
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    { NetEConst*tmp = dynamic_cast<NetEConst*>(res);
 	      if (tmp == 0) {
@@ -1558,6 +1561,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.65  2005/09/14 02:53:14  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.64  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

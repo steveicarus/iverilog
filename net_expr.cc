@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.24 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.25 2005/09/14 02:53:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -162,6 +162,21 @@ NetEBComp::~NetEBComp()
 bool NetEBComp::has_width() const
 {
       return true;
+}
+
+ivl_variable_type_t NetEBComp::expr_type() const
+{
+	// Case compare always returns BOOL
+      if (op() == 'E' || op() == 'N')
+	    return IVL_VT_BOOL;
+
+      if (left()->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      if (right()->expr_type() == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      return IVL_VT_BOOL;
 }
 
 NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
@@ -519,6 +534,9 @@ ivl_variable_type_t NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.25  2005/09/14 02:53:14  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.24  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

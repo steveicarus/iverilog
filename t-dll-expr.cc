@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.42 2005/07/13 04:51:36 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.43 2005/09/14 02:53:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,7 +227,7 @@ void dll_target::expr_const(const NetEConst*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
-      expr_->value_= IVL_VT_VECTOR;
+      expr_->value_= net->expr_type();
 
       if (net->value().is_string()) {
 	    expr_->type_ = IVL_EX_STRING;
@@ -473,6 +473,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.43  2005/09/14 02:53:15  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.42  2005/07/13 04:51:36  steve
  *  Functions get type from their output signal.
  *

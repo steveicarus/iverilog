@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.95 2005/09/01 04:10:47 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.96 2005/09/14 02:53:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -887,6 +887,19 @@ NetEConst* PEString::elaborate_expr(Design*des, NetScope*, bool) const
       return tmp;
 }
 
+static bool test_ternary_operand_compat(ivl_variable_type_t l,
+					ivl_variable_type_t r)
+{
+      if (l == IVL_VT_LOGIC && r == IVL_VT_BOOL)
+	    return true;
+      if (l == IVL_VT_BOOL && r == IVL_VT_LOGIC)
+	    return true;
+      if (l == r)
+	    return true;
+
+      return false;
+}
+
 /*
  * Elaborate the Ternary operator. I know that the expressions were
  * parsed so I can presume that they exist, and call elaboration
@@ -915,7 +928,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    return 0;
       }
 
-      if (tru->expr_type() != fal->expr_type()) {
+      if (! test_ternary_operand_compat(tru->expr_type(), fal->expr_type())) {
 	    cerr << get_line() << ": error: Data types "
 		 << tru->expr_type() << " and "
 		 << fal->expr_type() << " of ternary"
@@ -1035,6 +1048,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.96  2005/09/14 02:53:13  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.95  2005/09/01 04:10:47  steve
  *  Check operand types for compatibility.
  *

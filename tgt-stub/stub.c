@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.132 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: stub.c,v 1.133 2005/09/14 02:53:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -164,8 +164,11 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_VT_REAL:
 	    vt = "real";
 	    break;
-	  case IVL_VT_VECTOR:
-	    vt = "vector";
+	  case IVL_VT_BOOL:
+	    vt = "bool";
+	    break;
+	  case IVL_VT_LOGIC:
+	    vt = "logic";
 	    break;
       }
 
@@ -197,7 +200,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 		for (idx = width ;  idx > 0 ;  idx -= 1)
 		      fprintf(out, "%c", bits[idx-1]);
 
-		fprintf(out, ", %s", sign);
+		fprintf(out, ", %s %s", sign, vt);
 		if (par != 0)
 		      fprintf(out, ", parameter=%s",
 			      ivl_parameter_basename(par));
@@ -1527,6 +1530,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.133  2005/09/14 02:53:15  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.132  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.328 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.329 2005/09/14 02:53:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1476,7 +1476,9 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
 	   If in this case the l-val is a variable (i.e. real) then
 	   the width to pad to will be 0, so this code is harmless. */
-      if (rv->expr_type() == IVL_VT_LOGIC) {
+      if (rv->expr_type() == IVL_VT_REAL) {
+
+      } else {
 	    unsigned wid = count_lval_width(lv);
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
@@ -3019,6 +3021,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.329  2005/09/14 02:53:13  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.328  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

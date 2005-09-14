@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.119 2005/07/13 04:52:31 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.120 2005/09/14 02:53:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -265,8 +265,10 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	  && number_is_immediate(re, 16))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
-      assert(ivl_expr_value(le) == IVL_VT_VECTOR);
-      assert(ivl_expr_value(re) == IVL_VT_VECTOR);
+      assert(ivl_expr_value(le) == IVL_VT_LOGIC
+	     || ivl_expr_value(le) == IVL_VT_BOOL);
+      assert(ivl_expr_value(re) == IVL_VT_LOGIC
+	     || ivl_expr_value(re) == IVL_VT_BOOL);
 
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
@@ -556,6 +558,63 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
       return res;
 }
 
+static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
+						   unsigned wid)
+{
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      int lw, rw;
+      struct vector_info tmp;
+
+      char s_flag = (ivl_expr_signed(le) && ivl_expr_signed(re)) ? 's' : 'u';
+
+      assert(ivl_expr_value(le) == IVL_VT_BOOL);
+      assert(ivl_expr_value(re) == IVL_VT_BOOL);
+
+      lw = draw_eval_bool64(le);
+      rw = draw_eval_bool64(re);
+
+      switch (ivl_expr_opcode(exp)) {
+	  case 'G':
+	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    break;
+
+	  case 'L':
+	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    break;
+
+	  case '<':
+	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    break;
+
+	  case '>':
+	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      clr_word(lw);
+      clr_word(rw);
+
+	/* Move the result out out the 4-7 bit that the compare
+	   uses. This is because that bit may be clobbered by other
+	   expressions. */
+      { unsigned base = allocate_vector(wid);
+        fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
+	tmp.base = base;
+	tmp.wid = wid;
+	if (wid > 1)
+	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+      }
+
+      return tmp;
+}
+
 static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 					      unsigned wid,
 					      int stuff_ok_flag)
@@ -578,8 +637,17 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       if (ivl_expr_value(re) == IVL_VT_REAL)
 	    return draw_binary_expr_le_real(exp);
 
-      assert(ivl_expr_value(le) == IVL_VT_VECTOR);
-      assert(ivl_expr_value(re) == IVL_VT_VECTOR);
+	/* Detect the special case that we can do this with integers. */
+      if (ivl_expr_value(le) == IVL_VT_BOOL
+	  && ivl_expr_value(re) == IVL_VT_BOOL
+	  && owid < 64) {
+	    return draw_binary_expr_le_bool(exp, wid);
+      }
+
+      assert(ivl_expr_value(le) == IVL_VT_LOGIC
+	     || ivl_expr_value(le) == IVL_VT_BOOL);
+      assert(ivl_expr_value(re) == IVL_VT_LOGIC
+	     || ivl_expr_value(re) == IVL_VT_BOOL);
 
       lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
       rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -1735,7 +1803,8 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */
       if (parm_count == 0) {
-	    assert(ivl_expr_value(exp) == IVL_VT_VECTOR);
+	    assert(ivl_expr_value(exp) == IVL_VT_LOGIC
+		   || ivl_expr_value(exp) == IVL_VT_BOOL);
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
@@ -2030,6 +2099,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.120  2005/09/14 02:53:15  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.119  2005/07/13 04:52:31  steve
  *  Handle functions with real values.
  *

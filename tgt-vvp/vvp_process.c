@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.115 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.116 2005/09/14 02:53:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -130,7 +130,6 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       ivl_signal_t sig = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
       ivl_expr_t mux = ivl_lval_mux(lval);
-
 
       if (mux != 0) {
 	    unsigned skip_assign = transient_id++;
@@ -914,7 +913,8 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 
       switch (ivl_expr_value(exp)) {
 
-	  case IVL_VT_VECTOR: {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
 		struct vector_info del = draw_eval_expr(exp, 0);
 		fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
 			del.base, del.wid);
@@ -1464,6 +1464,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.116  2005/09/14 02:53:15  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.115  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

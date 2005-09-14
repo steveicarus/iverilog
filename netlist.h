@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.349 2005/09/01 04:11:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.350 2005/09/14 02:53:14 steve Exp $"
 #endif
 
 /*
@@ -1109,6 +1109,7 @@ class NetEConst  : public NetExpr {
       virtual bool set_width(unsigned w);
 
       virtual bool has_width() const;
+      virtual ivl_variable_type_t expr_type() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2656,6 +2657,7 @@ class NetEBComp : public NetEBinary {
 
 	/* A compare expression has a definite width. */
       virtual bool has_width() const;
+      virtual ivl_variable_type_t expr_type() const;
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
 
@@ -3442,6 +3444,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.350  2005/09/14 02:53:14  steve
+ *  Support bool expressions and compares handle them optimally.
+ *
  * Revision 1.349  2005/09/01 04:11:37  steve
  *  Generate code to handle real valued muxes.
  *
