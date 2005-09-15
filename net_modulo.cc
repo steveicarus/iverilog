@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_modulo.cc,v 1.8 2005/03/12 06:43:35 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.9 2005/09/15 22:54:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,10 +42,10 @@ NetModulo::NetModulo(NetScope*s, perm_string n, unsigned wr,
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name(perm_string::literal("Result"), 0);
-      pin(0).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("DataA"), 0);
-      pin(0).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("DataB"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("DataA"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("DataB"), 0);
 }
 
 NetModulo::~NetModulo()
@@ -99,6 +99,9 @@ const Link& NetModulo::pin_DataB() const
 
 /*
  * $Log: net_modulo.cc,v $
+ * Revision 1.9  2005/09/15 22:54:47  steve
+ *  Fix bug configuring NetModulo pins.
+ *
  * Revision 1.8  2005/03/12 06:43:35  steve
  *  Update support for LPM_MOD.
  *
