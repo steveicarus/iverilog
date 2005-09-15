@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.45 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: arith.cc,v 1.46 2005/09/15 22:54:04 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "schedule.h"
 # include  <limits.h>
-# include  <stdio.h>
+# include  <iostream>
 # include  <assert.h>
 # include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
@@ -754,6 +754,9 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.46  2005/09/15 22:54:04  steve
+ *  Use iostream instead of stdio.
+ *
  * Revision 1.45  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *
