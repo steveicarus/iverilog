@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.173 2005/09/14 15:15:44 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.174 2005/09/15 23:04:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -805,6 +805,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       NetModulo*mod = new NetModulo(scope, scope->local_symbol(), rwidth,
 				    lsig->vector_width(),
 				    rsig->vector_width());
+      mod->set_line(*this);
       des->add_node(mod);
 
       connect(mod->pin_DataA(), lsig->pin(0));
@@ -812,6 +813,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
+      osig->set_line(*this);
       osig->data_type(data_type);
       osig->local_flag(true);
 
@@ -2639,6 +2641,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.174  2005/09/15 23:04:09  steve
+ *  Make sure div, mod and mult nodes have line number info.
+ *
  * Revision 1.173  2005/09/14 15:15:44  steve
  *  fit type elaboration of logical not.
  *

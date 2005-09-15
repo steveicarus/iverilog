@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.72 2005/08/31 05:07:31 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.73 2005/09/15 23:04:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -144,80 +144,6 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 NetNet* NetEBComp::synthesize(Design*des)
 {
-#if 0
-      NetEConst*lcon = reinterpret_cast<NetEConst*>(left_);
-      NetEConst*rcon = reinterpret_cast<NetEConst*>(right_);
-
-	/* Handle the special case where one of the inputs is constant
-	   0. We can use an OR gate to do the comparison. Synthesize
-	   the non-const side as normal, then or(nor) the signals
-	   together to get result. */
-
-	// XXXX Need to check this for vector_width and wide logic.
-      if ((rcon && (rcon->value() == verinum(0UL,rcon->expr_width())))
-	  || (lcon && (lcon->value() == verinum(0UL,lcon->expr_width())))) {
-
-	    NetNet*lsig = rcon
-		  ? left_->synthesize(des)
-		  : right_->synthesize(des);
-	    NetScope*scope = lsig->scope();
-	    assert(scope);
-
-	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::IMPLICIT, 1);
-	    osig->local_flag(true);
-
-	    NetLogic*gate;
-	    switch (op_) {
-		case 'e':
-		case 'E':
-		  gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR, 1);
-		  break;
-		case 'n':
-		case 'N':
-		  gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::OR, 1);
-		  break;
-
-		case '>':
-		    /* sig > 0 is true if any bit in sig is set. This
-		       is very much like sig != 0. (0 > sig) shouldn't
-		       happen. */
-		  if (rcon) {
-			gate = new NetLogic(scope, scope->local_symbol(),
-					    lsig->pin_count()+1, NetLogic::OR, 1);
-		  } else {
-			assert(0);
-			gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR, 1);
-		  }
-		  break;
-
-		case '<':
-		    /* 0 < sig is handled like sig > 0. */
-		  if (! rcon) {
-			gate = new NetLogic(scope, scope->local_symbol(),
-					    lsig->pin_count()+1, NetLogic::OR, 1);
-		  } else {
-			assert(0);
-			gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR, 1);
-		  }
-		  break;
-
-		default:
-		  assert(0);
-	    }
-
-	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), lsig->pin(idx));
-
-	    des->add_node(gate);
-	    return osig;
-      }
-#endif
 
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
@@ -234,6 +160,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(IVL_VT_LOGIC);
 
@@ -242,6 +169,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XNOR, 1);
+	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
@@ -255,6 +183,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XOR, 1);
+	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
@@ -264,6 +193,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 
 
       NetCompare*dev = new NetCompare(scope, scope->local_symbol(), width);
+      dev->set_line(*this);
       des->add_node(dev);
 
       connect(dev->pin_DataA(), lsig->pin(0));
@@ -330,6 +260,7 @@ NetNet* NetEBMult::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->set_line(*this);
       osig->local_flag(true);
 
       connect(mult->pin_Result(), osig->pin(0));
@@ -346,6 +277,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->set_line(*this);
       osig->local_flag(true);
 
       switch (op()) {
@@ -355,6 +287,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 					      expr_width(),
 					      lsig->vector_width(),
 					      rsig->vector_width());
+		div->set_line(*this);
 		des->add_node(div);
 
 		connect(div->pin_DataA(), lsig->pin(0));
@@ -368,6 +301,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 					      expr_width(),
 					      lsig->vector_width(),
 					      rsig->vector_width());
+		div->set_line(*this);
 		des->add_node(div);
 
 		connect(div->pin_DataA(), lsig->pin(0));
@@ -913,6 +847,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.73  2005/09/15 23:04:09  steve
+ *  Make sure div, mod and mult nodes have line number info.
+ *
  * Revision 1.72  2005/08/31 05:07:31  steve
  *  Handle memory references is continuous assignments.
  *
