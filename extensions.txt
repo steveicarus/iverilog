@@ -70,7 +70,7 @@ Expressions in the face of real values is covered by the baseline
 Verilog standard.
 
 The bool type supports the same operators as the logic type, with the
-obvious differences imposed by th limited domain.
+obvious differences imposed by the limited domain.
 
 Comparison operators (not case compare) return logic if either of
 their operands is logic. If both are bool or real (including mix of
@@ -81,4 +81,4 @@ Case comparison returns bool. This differs from baseline Verilog,
 which strictly speaking returns a logic, but only 0 or 1 values.
 
 All the arithmetic operators return bool if both of their operands are
-bool. Otherwise, they return logic.
+bool or real. Otherwise, they return logic.
