@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.34 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.35 2005/09/15 02:50:13 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -155,11 +155,14 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
  * already calculated, and can be reused.
  *
  *  clear_expression_lookaside
- *    Clear the lookaside tables for the current thread.
+ *    Clear the lookaside tables for the current thread. This must be
+ *    called before starting a new thread, and around basic blocks
+ *    that are entered from unknown places.
  *
  *  save_expression_lookaside
  *    Mark the given expression as available in the given register
- *    bits. This remains until the lookaside is cleared.
+ *    bits. This remains until the lookaside is cleared. This does not
+ *    clear the allocation, it is still necessary to call clr_vector.
  *
  *  allocate_vector_exp
  *    This function attempts to locate the expression in the
@@ -210,6 +213,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.35  2005/09/15 02:50:13  steve
+ *  Preserve precalculated expressions when possible.
+ *
  * Revision 1.34  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *

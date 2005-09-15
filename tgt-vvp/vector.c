@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.5 2005/01/24 05:08:02 steve Exp $"
+#ident "$Id: vector.c,v 1.6 2005/09/15 02:50:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -53,6 +53,22 @@ static inline void clr_bit(unsigned addr)
       allocation_map[addr].alloc = 0;
 }
 
+static inline ivl_expr_t peek_exp(unsigned addr)
+{
+      return allocation_map[addr].exp;
+}
+
+static inline unsigned peek_exp_bit(unsigned addr)
+{
+      return allocation_map[addr].bit;
+}
+
+static inline void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
+{
+      allocation_map[addr].exp = exp;
+      allocation_map[addr].bit = ebit;
+}
+
 /*
  * This clears a vector that was previously allocated by
  * allocate_vector. That is, it unmarks all the bits of the map that
@@ -72,19 +88,14 @@ void clr_vector(struct vector_info vec)
 	    clr_bit(vec.base + idx);
 }
 
-/*
- * This unconditionally allocates a stretch of bits from the register
- * set. It never returns a bit addressed <8 (0-3 are constant, 4-7 are
- * condition codes).
- */
-unsigned allocate_vector(unsigned wid)
+static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
 {
       unsigned base = 8;
       unsigned idx = 0;
 
       while (idx < wid) {
 	    assert((base + idx) < MAX_VEC);
-	    if (peek_bit(base+idx)) {
+	    if (peek_bit(base+idx) || (skip_lookaside && peek_exp(base+idx))) {
 		  base = base + idx + 1;
 		  idx = 0;
 
@@ -94,24 +105,43 @@ unsigned allocate_vector(unsigned wid)
       }
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    allocation_map[base+idx].alloc = 1;
-	    allocation_map[base+idx].exp = 0;
+	    set_bit(base+idx);
+	    set_exp(base+idx, 0, 0);
       }
 
       return base;
 }
 
 /*
+ * This unconditionally allocates a stretch of bits from the register
+ * set. It never returns a bit addressed <8 (0-3 are constant, 4-7 are
+ * condition codes).
+ *
+ * First try to allocate a vector without interfering with any bits
+ * cached by the lookaside buffer. If that doesn't work, then try
+ * again without worrying about trashing lookaside results. This
+ * should lead to preferentially allocating new bits instead of
+ * constantly overwriting intermediate results.
+ */
+unsigned allocate_vector(unsigned wid)
+{
+      unsigned base = allocate_vector_no_lookaside(wid, 1);
+
+      if (base == 0)
+	    base = allocate_vector_no_lookaside(wid, 0);
+      return base;
+}
+
+/*
  * This clears the expression cache of the allocation map. It is
  * called to prevent reuse of existing expressions, normally at the
- * start of a basic block.
+ * start of a basic block, but also at the end of thread processing.
  */
 void clear_expression_lookaside(void)
 {
       unsigned idx;
-      for (idx = 0 ;  idx < lookaside_top ;  idx += 1) {
-	    allocation_map[idx].exp = 0;
-      }
+      for (idx = 0 ;  idx < lookaside_top ;  idx += 1)
+	    set_exp(idx, 0, 0);
 
       lookaside_top = 0;
 }
@@ -123,10 +153,8 @@ void save_expression_lookaside(unsigned addr, ivl_expr_t exp,
       assert(addr >= 8);
       assert((addr+wid) <= MAX_VEC);
 
-      for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    allocation_map[addr+idx].exp = exp;
-	    allocation_map[addr+idx].bit = idx;
-      }
+      for (idx = 0 ;  idx < wid ;  idx += 1)
+	    set_exp(addr+idx, exp, idx);
 
       if ((addr+wid) > lookaside_top)
 	    lookaside_top = addr+wid;
@@ -143,6 +171,32 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
 	    return 0;
 
       switch (ivl_expr_type(l)) {
+
+	  case IVL_EX_NUMBER:
+	    if (ivl_expr_width(l) != ivl_expr_width(r))
+		  return 0;
+	    { const char*bitl = ivl_expr_bits(l);
+	      const char*bitr = ivl_expr_bits(r);
+	      unsigned idx;
+	      for (idx = 0 ;  idx < ivl_expr_width(l) ;  idx += 1) {
+		    if (bitl[idx] != bitr[idx])
+			  return 0;
+	      }
+	    }
+	    return 1;
+
+	  case IVL_EX_SELECT:
+	    if (! compare_exp(ivl_expr_oper1(l), ivl_expr_oper1(r)))
+		  return 0;
+
+	    if (ivl_expr_oper2(l) == 0 && ivl_expr_oper1(r) == 0)
+		  return 1;
+
+	    if (! compare_exp(ivl_expr_oper2(l), ivl_expr_oper2(r)))
+		  return 0;
+
+	    return 1;
+
 	  case IVL_EX_SIGNAL:
 	    if (ivl_expr_signal(l) != ivl_expr_signal(r))
 		  return 0;
@@ -191,6 +245,12 @@ static unsigned find_expression_lookaside(ivl_expr_t exp,
       return 0;
 }
 
+/*
+ * Look for the expression in the expression lookaside table. If it is
+ * there, then allocate it and return the base. In this case the
+ * caller will not need to evaluate the expression. If this function
+ * returns 0, then the expression is not found and nothing is allocated.
+ */
 unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
@@ -208,6 +268,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.6  2005/09/15 02:50:13  steve
+ *  Preserve precalculated expressions when possible.
+ *
  * Revision 1.5  2005/01/24 05:08:02  steve
  *  Part selects are done in the compiler, not here.
  *
