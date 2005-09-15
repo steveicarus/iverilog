@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.120 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.121 2005/09/15 02:49:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1649,8 +1649,23 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
       ivl_expr_t sube  = ivl_expr_oper1(exp);
       ivl_expr_t shift = ivl_expr_oper2(exp);
 
-      if (ivl_expr_type(sube) == IVL_EX_SIGNAL)
-	    return draw_select_signal(sube, shift, wid);
+	/* First look for the self expression in the lookaside, and
+	   allocate that if possible. If I find it, then immediatly
+	   return that. */
+      if ( (res.base = allocate_vector_exp(exp, wid)) != 0) {
+	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
+		    res.base, wid);
+	    res.wid = wid;
+	    return res;
+      }
+
+      if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
+	    res = draw_select_signal(sube, shift, wid);
+	    fprintf(vvp_out, "; Save base=%u wid=%u in lookaside.\n",
+		    res.base, wid);
+	    save_expression_lookaside(res.base, exp, wid);
+	    return res;
+      }
 
 	/* Evaluate the sub-expression. */
       subv = draw_eval_expr(sube, 0);
@@ -1703,8 +1718,11 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 	    res = subv;
       }
 
-      if (res.base >= 8)
+      if (res.base >= 8) {
+	    fprintf(vvp_out, "; Save expression base=%u wid=%u in lookaside\n",
+		    res.base, wid);
 	    save_expression_lookaside(res.base, exp, wid);
+      }
 
       return res;
 }
@@ -2099,6 +2117,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.121  2005/09/15 02:49:47  steve
+ *  Better reuse of IVL_EX_SELECT expressions.
+ *
  * Revision 1.120  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *
