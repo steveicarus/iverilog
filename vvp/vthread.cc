@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.146 2005/09/14 02:50:07 steve Exp $"
+#ident "$Id: vthread.cc,v 1.147 2005/09/17 04:01:02 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1941,6 +1941,18 @@ bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_XP(vthread_t thr, vvp_code_t cp)
+{
+	// First do the normal handling of the %load/x
+      of_LOAD_X(thr, cp);
+
+	// Now do the post-increment
+      unsigned index_idx = cp->bit_idx[1];
+      thr->words[index_idx].w_int += 1;
+
+      return true;
+}
+
 bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
@@ -3175,6 +3187,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.147  2005/09/17 04:01:02  steve
+ *  Add the load/v.p instruction.
+ *
  * Revision 1.146  2005/09/14 02:50:07  steve
  *  Add word integer compares.
  *

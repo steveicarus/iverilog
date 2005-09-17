@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.75 2005/09/14 02:50:07 steve Exp $"
+#ident "$Id: codes.h,v 1.76 2005/09/17 04:01:01 steve Exp $"
 #endif
 
 
@@ -91,6 +91,7 @@ extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_X(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_XP(vthread_t thr, vvp_code_t code);
 extern bool of_LOADI_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_S(vthread_t thr, vvp_code_t code);
@@ -177,6 +178,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.76  2005/09/17 04:01:01  steve
+ *  Add the load/v.p instruction.
+ *
  * Revision 1.75  2005/09/14 02:50:07  steve
  *  Add word integer compares.
  *

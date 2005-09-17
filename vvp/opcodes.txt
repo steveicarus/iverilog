@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.66 2005/09/14 02:50:07 steve Exp $
+ *  $Id: opcodes.txt,v 1.67 2005/09/17 04:01:02 steve Exp $
  */
 
 
@@ -390,6 +390,7 @@ This instruction reads a real value from the vpi-like object to a word
 register.
 
 * %load/x <bit>, <functor-label>, <idx>
+* %load/x.p <bit>, <functor-label>, <idx>
 
 This is an indexed load. It uses the contents of the specified index
 register to select a bit from a vectur functor at <functor-label>. The
@@ -397,6 +398,9 @@ bit is pulled from the indexed bit of the addressed functor and loaded
 into the destination thread bit. If the indexed value is beyond the
 width of the vector, then the result is X.
 
+The %load/x.p is the same, but when the operation is done, it
+increments the specified index register. This provides a basic
+auto-increment feature.
 
 * %loadi/wr <bit>, <mant>, <exp>
 

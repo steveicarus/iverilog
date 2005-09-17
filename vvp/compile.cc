@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.211 2005/09/14 02:50:07 steve Exp $"
+#ident "$Id: compile.cc,v 1.212 2005/09/17 04:01:01 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -135,6 +135,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/x.p",of_LOAD_XP, 3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1480,6 +1481,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.212  2005/09/17 04:01:01  steve
+ *  Add the load/v.p instruction.
+ *
  * Revision 1.211  2005/09/14 02:50:07  steve
  *  Add word integer compares.
  *
