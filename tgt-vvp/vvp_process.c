@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.116 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.117 2005/09/17 01:01:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -104,6 +104,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 		    vvp_signal_label(sig), bit, wid);
 
       } else {
+	    save_signal_lookaside(bit, sig, wid);
 	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
 		    vvp_signal_label(sig), bit, wid);
 
@@ -577,7 +578,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	      /* Oh well, do this case the hard way. */
 
-	    cvec = draw_eval_expr_wid(cex, cond.wid, 0);
+	    cvec = draw_eval_expr_wid(cex, cond.wid, STUFF_OK_RO);
 	    assert(cvec.wid == cond.wid);
 
 	    switch (ivl_statement_type(net)) {
@@ -840,7 +841,8 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(exp, STUFF_OK_XZ|STUFF_OK_47);
+      struct vector_info cond
+	    = draw_eval_expr(exp, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
 
       assert(cond.wid == 1);
 
@@ -1464,6 +1466,11 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.117  2005/09/17 01:01:00  steve
+ *  More robust use of precalculated expressions, and
+ *  Separate lookaside for written variables that can
+ *  also be reused.
+ *
  * Revision 1.116  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *

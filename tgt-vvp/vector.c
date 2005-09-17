@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.6 2005/09/15 02:50:13 steve Exp $"
+#ident "$Id: vector.c,v 1.7 2005/09/17 01:01:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -31,27 +31,14 @@
 
 static struct allocation_score_s {
       ivl_expr_t exp;
-      unsigned   bit;
-      unsigned   alloc : 1;
+      ivl_signal_t sig;
+      unsigned  exp_bit : 24;
+      unsigned  sig_bit : 24;
+      unsigned alloc    :  8;
 } allocation_map[MAX_VEC] = { {0} };
 
 /* This is the largest bit to have lookaside values. */
 static unsigned lookaside_top = 0;
-
-static inline int peek_bit(unsigned addr)
-{
-      return allocation_map[addr].alloc;
-}
-
-static inline void set_bit(unsigned addr)
-{
-      allocation_map[addr].alloc = 1;
-}
-
-static inline void clr_bit(unsigned addr)
-{
-      allocation_map[addr].alloc = 0;
-}
 
 static inline ivl_expr_t peek_exp(unsigned addr)
 {
@@ -60,13 +47,19 @@ static inline ivl_expr_t peek_exp(unsigned addr)
 
 static inline unsigned peek_exp_bit(unsigned addr)
 {
-      return allocation_map[addr].bit;
+      return allocation_map[addr].exp_bit;
 }
 
 static inline void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
 {
       allocation_map[addr].exp = exp;
-      allocation_map[addr].bit = ebit;
+      allocation_map[addr].exp_bit = ebit;
+}
+
+static inline void set_sig(unsigned addr, ivl_signal_t exp, unsigned ebit)
+{
+      allocation_map[addr].sig = exp;
+      allocation_map[addr].sig_bit = ebit;
 }
 
 /*
@@ -84,8 +77,10 @@ void clr_vector(struct vector_info vec)
       if (vec.base < 4)
 	    return;
       assert(vec.base >= 8);
-      for (idx = 0 ;  idx < vec.wid ;  idx += 1)
-	    clr_bit(vec.base + idx);
+      for (idx = 0 ;  idx < vec.wid ;  idx += 1) {
+	    assert( allocation_map[vec.base+idx].alloc > 0);
+	    allocation_map[vec.base+idx].alloc -= 1;
+      }
 }
 
 static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
@@ -95,7 +90,8 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
 
       while (idx < wid) {
 	    assert((base + idx) < MAX_VEC);
-	    if (peek_bit(base+idx) || (skip_lookaside && peek_exp(base+idx))) {
+	    if ((allocation_map[base+idx].alloc > 0)
+		|| (skip_lookaside && peek_exp(base+idx))) {
 		  base = base + idx + 1;
 		  idx = 0;
 
@@ -105,7 +101,7 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
       }
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    set_bit(base+idx);
+	    allocation_map[base+idx].alloc += 1;
 	    set_exp(base+idx, 0, 0);
       }
 
@@ -140,21 +136,45 @@ unsigned allocate_vector(unsigned wid)
 void clear_expression_lookaside(void)
 {
       unsigned idx;
-      for (idx = 0 ;  idx < lookaside_top ;  idx += 1)
+
+      for (idx = 0 ;  idx < lookaside_top ;  idx += 1) {
 	    set_exp(idx, 0, 0);
+	    set_sig(idx, 0, 0);
+      }
 
       lookaside_top = 0;
 }
 
-void save_expression_lookaside(unsigned addr, ivl_expr_t exp,
-			       unsigned wid)
+void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
       assert(addr >= 8);
       assert((addr+wid) <= MAX_VEC);
 
-      for (idx = 0 ;  idx < wid ;  idx += 1)
+	/* When saving an expression to the lookaside, also clear the
+	   signal saved in the lookaside for these bits. The reason is
+	   that an expression calculation will replace any signal
+	   bits. */
+      for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    set_exp(addr+idx, exp, idx);
+	    set_sig(addr+idx, 0, 0);
+      }
+
+      if ((addr+wid) > lookaside_top)
+	    lookaside_top = addr+wid;
+}
+
+void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned wid)
+{
+      unsigned idx;
+	/* Don't bind any of hte low bits to a signal. */
+      if (addr < 8)
+	    return;
+
+      assert((addr+wid) <= MAX_VEC);
+
+      for (idx = 0 ;  idx < wid ;  idx += 1)
+	    set_sig(addr+idx, sig, idx);
 
       if ((addr+wid) > lookaside_top)
 	    lookaside_top = addr+wid;
@@ -213,26 +233,56 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
       return 0;
 }
 
-static unsigned find_expression_lookaside(ivl_expr_t exp,
-						unsigned wid)
+static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 {
       unsigned top;
       unsigned idx, match;
+      ivl_signal_t sig;
 
       if (lookaside_top <= wid)
 	    return 0;
 
       top = lookaside_top - wid + 1;
 
+	/* Look in the expression lookaside for this expression. */
       assert(exp);
       match = 0;
-      for (idx = 8 ;  idx < top ;  idx += 1) {
+      for (idx = 8 ;  idx < lookaside_top ;  idx += 1) {
 	    if (! compare_exp(allocation_map[idx].exp, exp)) {
 		  match = 0;
 		  continue;
 	    }
 
-	    if (allocation_map[idx].bit != match) {
+	    if (allocation_map[idx].exp_bit != match) {
+		  match = 0;
+		  continue;
+	    }
+
+	    match += 1;
+	    if (match == wid)
+		  return idx-match+1;
+      }
+
+      if (ivl_expr_type(exp) != IVL_EX_SIGNAL)
+	    return 0;
+
+      sig = ivl_expr_signal(exp);
+
+	/* Only reg signals (variables) will be in the signal
+	   lookaside, because only blocking assigned values are in the
+	   signal lookaside. */
+      if (ivl_signal_type(sig) != IVL_SIT_REG)
+	    return 0;
+
+	/* Now look for signal value matches in the signal lookaside. */
+      match = 0;
+      for (idx = 8 ;  idx < lookaside_top ;  idx += 1) {
+	    if (sig != allocation_map[idx].sig) {
+		  match = 0;
+		  continue;
+	    }
+
+	    if (allocation_map[idx].sig_bit != match) {
 		  match = 0;
 		  continue;
 	    }
@@ -251,23 +301,31 @@ static unsigned find_expression_lookaside(ivl_expr_t exp,
  * caller will not need to evaluate the expression. If this function
  * returns 0, then the expression is not found and nothing is allocated.
  */
-unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
+unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
+			     int exclusive_flag)
 {
       unsigned idx;
       unsigned la = find_expression_lookaside(exp, wid);
 
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    if (allocation_map[la+idx].alloc)
-		  return 0;
+      if (exclusive_flag) {
+	    for (idx = 0 ;  idx < wid ;  idx += 1)
+		  if (allocation_map[la+idx].alloc)
+			return 0;
+      }
 
       for (idx = 0 ;  idx < wid ;  idx += 1)
-	    allocation_map[la+idx].alloc = 1;
+	    allocation_map[la+idx].alloc += 1;
 
       return la;
 }
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.7  2005/09/17 01:01:00  steve
+ *  More robust use of precalculated expressions, and
+ *  Separate lookaside for written variables that can
+ *  also be reused.
+ *
  * Revision 1.6  2005/09/15 02:50:13  steve
  *  Preserve precalculated expressions when possible.
  *

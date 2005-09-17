@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.35 2005/09/15 02:50:13 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.36 2005/09/17 01:01:00 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -117,6 +117,12 @@ extern void draw_input_from_net(ivl_nexus_t nex);
  *
  *   STUFF_OK_47 -- This bit is set if the node is allowed to leave a
  *        result in any of the 4-7 vthread bits.
+ *
+ *   STUFF_OK_RO -- This bit is set if the node is allowed to nest its
+ *        allocation from vector. It is only true if the client is not
+ *        planning to use this vector as an output. This matters only
+ *        if the expression might be found in the lookaside table, and
+ *        therefore might be multiply allocated if allowed.
  */
 struct vector_info {
       unsigned base;
@@ -128,6 +134,7 @@ extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
 					     int stuff_ok_flag);
 #define STUFF_OK_XZ 0x0001
 #define STUFF_OK_47 0x0002
+#define STUFF_OK_RO 0x0004
 
 /*
  * This function draws code to evaluate the index expression exp for
@@ -164,10 +171,25 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
  *    bits. This remains until the lookaside is cleared. This does not
  *    clear the allocation, it is still necessary to call clr_vector.
  *
+ *  save_signal_lookaside
+ *    Mark the given signal as available in the given register bits.
+ *    This is different from a given expression, in that the signal
+ *    lookaside is in addition to the expression lookaside. The signal
+ *    lookaside is specifically to save on unnecessary loads of a
+ *    signal recently written.
+ *
  *  allocate_vector_exp
  *    This function attempts to locate the expression in the
  *    lookaside. If it finds it, return a reallocated base for the
  *    expression. Otherwise, return 0.
+ *
+ * The allocate_vector and allocate_vector_exp calls must have
+ * matching call to clr_vector. Although the allocate_vector will
+ * never reallocate a vector already allocated, the allocate_vector_exp
+ * might, so it is possible for allocations to nest in that
+ * manner. The exclusive_flag to allocate_vector_exp will prevent
+ * nested allocations. This is needed where the expression result is
+ * expected to be overwritten.
  */
 extern unsigned allocate_vector(unsigned wid);
 extern void clr_vector(struct vector_info vec);
@@ -176,8 +198,12 @@ extern void clear_expression_lookaside(void);
 extern void save_expression_lookaside(unsigned addr,
 				      ivl_expr_t exp,
 				      unsigned wid);
+extern void save_signal_lookaside(unsigned addr,
+				  ivl_signal_t sig,
+				  unsigned wid);
 
-extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid);
+extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
+				    int exclusive_flag);
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
@@ -213,6 +239,11 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.36  2005/09/17 01:01:00  steve
+ *  More robust use of precalculated expressions, and
+ *  Separate lookaside for written variables that can
+ *  also be reused.
+ *
  * Revision 1.35  2005/09/15 02:50:13  steve
  *  Preserve precalculated expressions when possible.
  *

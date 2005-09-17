@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.121 2005/09/15 02:49:47 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.122 2005/09/17 01:01:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -274,8 +274,8 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
       if (ivl_expr_width(re) > wid)
 	    wid = ivl_expr_width(re);
 
-      lv = draw_eval_expr_wid(le, wid, stuff_ok_flag&STUFF_OK_XZ);
-      rv = draw_eval_expr_wid(re, wid, stuff_ok_flag&STUFF_OK_XZ);
+      lv = draw_eval_expr_wid(le, wid, stuff_ok_flag&~STUFF_OK_47);
+      rv = draw_eval_expr_wid(re, wid, stuff_ok_flag&~STUFF_OK_47);
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'E': /* === */
@@ -1057,7 +1057,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    return draw_mul_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
-      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
+      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ|STUFF_OK_RO);
 
       if (lv.wid != wid) {
 	    fprintf(stderr, "XXXX ivl_expr_opcode(exp) = %c,"
@@ -1198,10 +1198,13 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
  * expression, then copying it into the continguous vector of the
  * result. Do this until the result vector is filled.
  */
-static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
+					   int stuff_ok_flag)
 {
       unsigned off, rep;
       struct vector_info res;
+
+      int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
 
 	/* Allocate a vector to hold the result. */
       res.base = allocate_vector(wid);
@@ -1232,7 +1235,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 
 		    /* Try to locate the subexpression in the
 		       lookaside map. */
-		  avec.base = allocate_vector_exp(arg, awid);
+		  avec.base = allocate_vector_exp(arg, awid, alloc_exclusive);
 		  avec.wid = awid;
 
 		  trans = awid;
@@ -1517,15 +1520,21 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
       }
 }
 
-static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
+					   int stuff_ok_flag)
 {
       struct vector_info res;
 
+      int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
+
 	/* Already in the vector lookaside? */
-      res.base = allocate_vector_exp(exp, wid);
+      res.base = allocate_vector_exp(exp, wid, alloc_exclusive);
       res.wid = wid;
-      if (res.base != 0)
+      if (res.base != 0) {
+	    fprintf(vvp_out, "; Reuse signal base=%u wid=%u from lookaside.\n",
+		    res.base, res.wid);
 	    return res;
+      }
 
       res.base = allocate_vector(wid);
       res.wid  = wid;
@@ -1643,16 +1652,19 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       return res;
 }
 
-static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
+					   int stuff_ok_flag)
 {
       struct vector_info subv, shiv, res;
       ivl_expr_t sube  = ivl_expr_oper1(exp);
       ivl_expr_t shift = ivl_expr_oper2(exp);
 
+      int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO)? 0 : 1;
+
 	/* First look for the self expression in the lookaside, and
 	   allocate that if possible. If I find it, then immediatly
 	   return that. */
-      if ( (res.base = allocate_vector_exp(exp, wid)) != 0) {
+      if ( (res.base = allocate_vector_exp(exp, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
 	    res.wid = wid;
@@ -1712,6 +1724,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 	    res.wid = wid;
 
 	    subv.base += wid;
+	    subv.wid  -= wid;
 	    clr_vector(subv);
 
       } else if (subv.wid == wid) {
@@ -1742,7 +1755,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 	/* Evaluate the condition expression, and if necessary reduce
 	   it to a single bit. */
-      tst = draw_eval_expr(cond, STUFF_OK_XZ);
+      tst = draw_eval_expr(cond, STUFF_OK_XZ|STUFF_OK_RO);
       if ((tst.base >= 4) && (tst.wid > 1)) {
 	    struct vector_info tmp;
 
@@ -2064,7 +2077,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    break;
 
 	  case IVL_EX_CONCAT:
-	    res = draw_concat_expr(exp, wid);
+	    res = draw_concat_expr(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_NUMBER:
@@ -2079,11 +2092,11 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    if (ivl_expr_oper2(exp) == 0)
 		  res = draw_pad_expr(exp, wid);
 	    else
-		  res = draw_select_expr(exp, wid);
+		  res = draw_select_expr(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    res = draw_signal_expr(exp, wid);
+	    res = draw_signal_expr(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_TERNARY:
@@ -2117,6 +2130,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.122  2005/09/17 01:01:00  steve
+ *  More robust use of precalculated expressions, and
+ *  Separate lookaside for written variables that can
+ *  also be reused.
+ *
  * Revision 1.121  2005/09/15 02:49:47  steve
  *  Better reuse of IVL_EX_SELECT expressions.
  *
