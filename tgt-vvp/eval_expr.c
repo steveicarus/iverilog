@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.122 2005/09/17 01:01:00 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.123 2005/09/17 04:01:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1633,20 +1633,55 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       struct vector_info res;
       unsigned idx;
 
-      shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ);
+      shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
 
       fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       if (shiv.base >= 8)
 	    clr_vector(shiv);
 
+	/* Try the special case that the base is 0 and the width
+	   exactly matches the signal. Just load the signal in one
+	   instruction. */
+      if (shiv.base == 0 && ivl_expr_width(sube) == wid) {
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    fprintf(vvp_out, "   %%load/v %u, V_$%p, %u;\n",
+		    res.base, sig, ivl_expr_width(sube));
+
+	    return res;
+      }
+
+	/* Try the special case that hte part is at the beginning and
+	   nearly the width of the signal. In this case, just load the
+	   entire signal in one go then simply drop the excess bits. */
+      if (shiv.base == 0
+	  && (ivl_expr_width(sube) > wid)
+	  && (ivl_expr_width(sube) < (wid+wid/10))) {
+
+	    res.base = allocate_vector(ivl_expr_width(sube));
+	    res.wid = ivl_expr_width(sube);
+	    fprintf(vvp_out, "   %%load/v %u, V_$%p, %u; Only need %u bits\n",
+		    res.base, sig, ivl_expr_width(sube), wid);
+
+	    save_signal_lookaside(res.base, sig, res.wid);
+
+	    {
+		  struct vector_info tmp;
+		  tmp.base = res.base + wid;
+		  tmp.wid = res.wid - wid;
+		  clr_vector(tmp);
+		  res.wid = wid;
+	    }
+	    return res;
+      }
+
+	/* Alas, do it the hard way. */
       res.base = allocate_vector(wid);
       res.wid = wid;
 
       for (idx = 0 ;  idx < res.wid ;  idx += 1) {
-	    fprintf(vvp_out, "   %%load/x %u, V_$%p, 0;\n",
+	    fprintf(vvp_out, "   %%load/x.p %u, V_$%p, 0;\n",
 		    res.base+idx, sig);
-	    if ((idx+1) < res.wid)
-		  fprintf(vvp_out, "   %%ix/add 0, 1;\n");
       }
 
       return res;
@@ -2130,6 +2165,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.123  2005/09/17 04:01:32  steve
+ *  Improve loading of part selects when easy.
+ *
  * Revision 1.122  2005/09/17 01:01:00  steve
  *  More robust use of precalculated expressions, and
  *  Separate lookaside for written variables that can
