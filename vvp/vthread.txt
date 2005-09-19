@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vthread.txt,v 1.5 2005/09/14 02:50:07 steve Exp $
+ *  $Id: vthread.txt,v 1.6 2005/09/19 21:45:37 steve Exp $
  */
 
 
@@ -40,7 +40,7 @@ The remaining 64K-8 possible <bit> values are read-write bit registers
 that can be accessed singly or as vectors. This obviously implies that
 a bit address is 16 bits.
 
-Threads alco contait 16 numeric registers. These registers can hold a
+Threads also contain 16 numeric registers. These registers can hold a
 real value or a 64bit integer, and can be used in certain cases where
 numeric values are needed. The thread instruction set includes
 %ix/* instructions to manipulate these registers. The instructions

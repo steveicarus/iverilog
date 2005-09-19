@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.67 2005/09/17 04:01:02 steve Exp $
+ *  $Id: opcodes.txt,v 1.68 2005/09/19 21:45:37 steve Exp $
  */
 
 
@@ -71,10 +71,10 @@ labeled memory. The <delay> is the delay in simulation time to the
 assignment (0 for non-blocking assignment) and the <bit> is the base
 of the vector to write.
 
-The width of the word is retrived from index register 0.
+The width of the word is retrieved from index register 0.
 
 The address of the word in the memory is from index register 3. The
-address is cannonical form.
+address is canonical form.
 
 * %assign/v0 <var-label>, <delay>, <bit>
 * %assign/v0/d <var-label>, <delayx>, <bit>
@@ -206,7 +206,7 @@ Only bit 4 is set by these instructions.
 * %cvt/vr <bit-l>, <bit-r>, <wid>
 
 Copy a word from r to l, converting it from real to integer (ir) or
-integer to real (ri) in the process. The source and destinaition may
+integer to real (ri) in the process. The source and destination may
 be the same word address, leading to a convert in place.
 
 The %cvt/vr opcode converts a real word <bit-r> to a thread vector
@@ -365,7 +365,7 @@ instruction loads only a single bit.
 
 * %load/mv <bit>, <memory-label>, <wid>
 
-this inctruction loads a word from the specified memory. The word
+this instruction loads a word from the specified memory. The word
 address is in index register 3. The width should match the width of
 the memory word.
 
@@ -393,7 +393,7 @@ register.
 * %load/x.p <bit>, <functor-label>, <idx>
 
 This is an indexed load. It uses the contents of the specified index
-register to select a bit from a vectur functor at <functor-label>. The
+register to select a bit from a vector functor at <functor-label>. The
 bit is pulled from the indexed bit of the addressed functor and loaded
 into the destination thread bit. If the indexed value is beyond the
 width of the vector, then the result is X.
@@ -521,7 +521,7 @@ forced value until another value propagates through.
 
 This sets a vector to a variable, and is used to implement blocking
 assignments. The <var-label> identifies the variable to receive the
-new value. Once the set completes, the vlaue is immediately available
+new value. Once the set completes, the value is immediately available
 to be read out of the variable. The <bit> is the address of the thread
 register that contains the LSB of the vector, and the <wid> is the
 size of the vector. The width must exactly match the width of the
@@ -545,9 +545,9 @@ This instruction writes a real word to the specified VPI-like object.
 This sets the part of a signal vector, the address calculated by
 using the index register 0 to index the base within the vector of
 <var-label>. The destination must be a signal of some sort. Otherwise,
-the instrution will fail.
+the instruction will fail.
 
-The addressing is cannonical (0-based) so the compiler must figure out
+The addressing is canonical (0-based) so the compiler must figure out
 non-zero offsets, if any. The width is the width of the part being
 written. The other bits of the vector are not touched.
 

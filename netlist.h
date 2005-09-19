@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.350 2005/09/14 02:53:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.351 2005/09/19 21:45:36 steve Exp $"
 #endif
 
 /*
@@ -2826,9 +2826,9 @@ class NetEParam  : public NetExpr {
  * selected from it. The base is the expression that identifies the
  * lsb of the expression, and the wid is the width of the part select,
  * or 1 for a bit select. No matter what the subexpression is, the
- * base is translated in cannonical bits. It is up to the elaborator
+ * base is translated in canonical bits. It is up to the elaborator
  * to figure this out and adjust the expression if the subexpression
- * has a non-cannonical base or direction.
+ * has a non-canonical base or direction.
  *
  * If the base expression is null, then this expression node can be
  * used to express width expansion, signed or unsigned depending on
@@ -3444,6 +3444,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.351  2005/09/19 21:45:36  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.350  2005/09/14 02:53:14  steve
  *  Support bool expressions and compares handle them optimally.
  *

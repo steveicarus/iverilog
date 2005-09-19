@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.124 2005/09/19 20:18:20 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.125 2005/09/19 21:45:36 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1550,7 +1550,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
 /*
  * Draw code to evaluate a memory word index expression and write the
  * value into index register 3. This expression converts the run-time
- * calculated value to cannonical form that the %load/mv takes.
+ * calculated value to canonical form that the %load/mv takes.
  */
 void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 {
@@ -2168,6 +2168,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.125  2005/09/19 21:45:36  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.124  2005/09/19 20:18:20  steve
  *  Fix warnings about uninitialized variables.
  *

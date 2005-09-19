@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.44 2005/08/27 02:34:43 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.45 2005/09/19 21:45:37 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -975,7 +975,7 @@ extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
  * exactly match the <wid> vector.
  *
  * The <base> is where in the receiver the bit vector is to be
- * written. This address is given in cannonical units; 0 is the LSB, 1
+ * written. This address is given in canonical units; 0 is the LSB, 1
  * is the next bit, and so on.
  *
  * The <vwid> is the width of the destination vector that this part is
@@ -999,6 +999,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.45  2005/09/19 21:45:37  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.44  2005/08/27 02:34:43  steve
  *  Bring threads into the vvp_vector4_t structure.
  *

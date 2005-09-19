@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.70 2005/07/13 04:58:29 steve Exp $
+ *  $Id: README.txt,v 1.71 2005/09/19 21:45:36 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -55,7 +55,7 @@ compiler scales time values ahead of time.
 
 The value is the size of a simulation tick in seconds, and is
 expressed as a power of 10. For example, +0 is 1 second, and -9 is 1
-nano-second. If the record is left out, then the precision is taken to
+nanosecond. If the record is left out, then the precision is taken to
 be +0.
 
 LABELS AND SYMBOLS
@@ -308,7 +308,7 @@ functor pointer, though.
 MEMORY STATEMENTS:
 
 Memories are arrays of words, each word a vvp_vector4_t vector of the
-same width. The memory is cannonically addressed as a 1-dimensional
+same width. The memory is canonically addressed as a 1-dimensional
 array of words, although indices are stored with the memory for
 calculating a canonical address from a multi-dimensional address.
 
@@ -326,22 +326,22 @@ memory array and makes it available to procedural code.
 Procedural access to the memory references the memory as single array
 of words, with the base address==0, and the last address the size (in
 words) of the memory -1. It is up to the compiler to convert Verilog
-index sets to a cannonical address. The multi-dimensional index set is
+index sets to a canonical address. The multi-dimensional index set is
 available for VPI use.
 
 Structural read access is implemented in terms of address and data
 ports.  The addresses applied to the address port are expected to be
-in cannonical form.
+in canonical form.
 
 A read port is a functor that takes a single input, the read address,
-and outputs the word value at the given (cannonical) address.
+and outputs the word value at the given (canonical) address.
 
 	<label> .mem/port <memid>, <address> ;
 
 <label> identifies the vector of output functors, to allow connections
 to the data output.  <memid> is the label of the memory.
 
-Any address inputchange, or any change in the addressed memory
+Any address input change, or any change in the addressed memory
 contents, is immediately propagated to the port output.
 
 A write port is a superset of a read port.  It is a 4-input functor
@@ -364,8 +364,8 @@ To initialize a memory, use:
    .mem/init <memid> <start>, val , val ... ;
 
 <memid> is the label of the memory, and the <start> is the start
-address (cannonical) of the first word to be initialized. The start
-address allows mustliple statements be used to initialize words of a
+address (canonical) of the first word to be initialized. The start
+address allows multiple statements be used to initialize words of a
 memory.
 
 The values are one per word.
@@ -441,7 +441,7 @@ PART SELECT STATEMENTS:
 
 Part select statements are functors with three inputs. They take in at
 port-0 a vector, and output a selected (likely smaller) part of that
-vector. The other inputs specify what those parts are, as a cannonical
+vector. The other inputs specify what those parts are, as a canonical
 bit number, and a width. Normally, those bits are constant values.
 
 	<label> .part <symbol>, <base>, <wid>;
@@ -464,7 +464,7 @@ base of the part select. Thus, the part select can move around.
 PART CONCATENATION STATEMENTS:
 
 The opposite of the part select statement is the part concatenation
-statement. The .concat statment is a functor node that takes at input
+statement. The .concat statement is a functor node that takes at input
 vector values and produces a single vector output that is the
 concatenation of all the inputs.
 
@@ -572,7 +572,7 @@ are the same concept, but for the continuous assign port.
 
 STRUCTURAL ARITHMETIC STATEMENTS:
 
-The various Verilog arithmetic operators (+-*/%) ar avaiable to
+The various Verilog arithmetic operators (+-*/%) are available to
 structural contexts as two-input functors that take in vectors. All of
 these operators take two inputs and generate a fixed width output. The
 input vectors will be padded if needed to get the desired output width.

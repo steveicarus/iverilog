@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.147 2005/09/17 04:01:02 steve Exp $"
+#ident "$Id: vthread.cc,v 1.148 2005/09/19 21:45:37 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -619,7 +619,7 @@ bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 /* %assign/mv <memory>, <delay>, <bit>
  * This generates an assignment event to a memory. Index register 0
  * contains the width of the vector (and the word) and index register
- * 3 contains the cannonical address of the word in memory.
+ * 3 contains the canonical address of the word in memory.
  */
 bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
 {
@@ -3187,6 +3187,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.148  2005/09/19 21:45:37  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.147  2005/09/17 04:01:02  steve
  *  Add the load/v.p instruction.
  *

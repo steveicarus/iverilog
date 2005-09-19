@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.96 2005/09/14 02:53:13 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.97 2005/09/19 21:45:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -765,7 +765,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	      // Non-constant bit select? punt and make a subsignal
 	      // device to mux the bit in the net. This is a fairly
-	      // compilcated task because we need to generate
+	      // complicated task because we need to generate
 	      // expressions to convert calculated bit select
 	      // values to canonical values that are used internally.
 	    if (msb_) {
@@ -1048,6 +1048,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.97  2005/09/19 21:45:35  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.96  2005/09/14 02:53:13  steve
  *  Support bool expressions and compares handle them optimally.
  *

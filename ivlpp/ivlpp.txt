@@ -37,7 +37,7 @@ valid options include:
 	    Predefine the symbol ``name'' to have the specified
 	    value. If the value is not specified, then ``1'' is
 	    used. This is mostly of use for controlling conditional
-	    compilaiton.
+	    compilation.
 
 	    This option does *not* override existing `define
 	    directives in the source file.

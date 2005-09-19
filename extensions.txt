@@ -21,9 +21,9 @@ apparently been absorbed by the IEEE1800 SystemVerilog
 standard. Icarus Verilog currently only takes the new primitive types
 from the proposal.
 
-Extended data types seperates the concept of net/variable from the
+Extended data types separates the concept of net/variable from the
 data type. Both nets and variables can declared with any data
-type. The primitive types avaialable are:
+type. The primitive types available are:
 
     logic  - The familiar 0, 1, x and z, optionally with strength.
     bool   - Limited to only 0 and 1

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.160 2005/09/01 04:11:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.161 2005/09/19 21:45:35 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -613,7 +613,7 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  *    address to get to a canonical (0-based) address. This value is
  *    used when external code wishes to access a word. All the
  *    compiled references to the word within the compiled design are
- *    converted to cannonical form by the compiler.
+ *    converted to canonical form by the compiler.
  *
  * ivl_memory_size
  * ivl_memory_width
@@ -941,7 +941,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * Read or write, the ivl_lpm_select nexus is the address. The
  * ivl_lpm_selects function returns the vector width of the
  * address. The range of the address is always from 0 to the memory
- * size-1 -- the cannonical form. It is up to the compiler to generate
+ * size-1 -- the canonical form. It is up to the compiler to generate
  * offsets to correct for a range declaration.
  *
  * Read ports use the ivl_lpm_q as the data output, and write ports
@@ -1084,7 +1084,7 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  * signal (or even 1) if only a part of the l-value signal is to be
  * assigned.
  *
- * The ivl_lval_part_off is the cannonical base of a constant part or
+ * The ivl_lval_part_off is the canonical base of a constant part or
  * bit select. If the bit select base is non-constant, then the
  * ivl_lval_mux will contain an expression. If there is a mux
  * expression, then the ivl_lval_part_off result can be ignored.
@@ -1671,6 +1671,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.161  2005/09/19 21:45:35  steve
+ *  Spelling patches from Larry.
+ *
  * Revision 1.160  2005/09/01 04:11:37  steve
  *  Generate code to handle real valued muxes.
  *
