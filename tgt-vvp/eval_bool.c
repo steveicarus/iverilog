@@ -16,12 +16,12 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: eval_bool.c,v 1.1 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: eval_bool.c,v 1.2 2005/09/19 20:17:59 steve Exp $"
 
 /*
  * This file includes functions for evaluating REAL expressions.
  */
-# include  "config.h"
+# include  "vvp_config.h"
 # include  "vvp_priv.h"
 # include  <string.h>
 #ifdef HAVE_MALLOC_H
@@ -84,6 +84,9 @@ int draw_eval_bool64(ivl_expr_t exp)
 
 /*
  * $Log: eval_bool.c,v $
+ * Revision 1.2  2005/09/19 20:17:59  steve
+ *  Include vvp_config.h instead of config.h
+ *
  * Revision 1.1  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *
