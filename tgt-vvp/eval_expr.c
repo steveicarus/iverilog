@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.123 2005/09/17 04:01:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.124 2005/09/19 20:18:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1319,6 +1319,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 		case 'z':
 		  res.base = 3;
 		  break;
+		default:
+		  assert(0);
+		  res.base = 0;
 	    }
 	    return res;
       }
@@ -1696,13 +1699,14 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO)? 0 : 1;
 
+      res.wid = wid;
+
 	/* First look for the self expression in the lookaside, and
 	   allocate that if possible. If I find it, then immediatly
 	   return that. */
       if ( (res.base = allocate_vector_exp(exp, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
-	    res.wid = wid;
 	    return res;
       }
 
@@ -1734,7 +1738,6 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       if (shiv.base == 0) {
 	    assert(subv.wid >= wid);
 	    res.base = subv.base;
-	    res.wid = wid;
 	    return res;
       }
 
@@ -1753,7 +1756,6 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 
       fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
 
-      assert(subv.wid >= wid);
       if (subv.wid > wid) {
 	    res.base = subv.base;
 	    res.wid = wid;
@@ -1762,7 +1764,8 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 	    subv.wid  -= wid;
 	    clr_vector(subv);
 
-      } else if (subv.wid == wid) {
+      } else {
+	    assert(subv.wid == wid);
 	    res = subv;
       }
 
@@ -2165,6 +2168,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.124  2005/09/19 20:18:20  steve
+ *  Fix warnings about uninitialized variables.
+ *
  * Revision 1.123  2005/09/17 04:01:32  steve
  *  Improve loading of part selects when easy.
  *
