@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.174 2005/09/15 23:04:09 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.175 2005/09/19 15:21:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1557,8 +1557,11 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
 			     NetNet::IMPLICIT, pvalue.len());
+	    sig->set_line(*this);
+	    sig->data_type(IVL_VT_LOGIC);
 	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
 				       pvalue);
+	    cp->set_line(*this);
 	    des->add_node(cp);
 	    for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
 		  connect(sig->pin(idx), cp->pin(idx));
@@ -2641,6 +2644,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.175  2005/09/19 15:21:09  steve
+ *  Fix data type of parameters to logic.
+ *
  * Revision 1.174  2005/09/15 23:04:09  steve
  *  Make sure div, mod and mult nodes have line number info.
  *
