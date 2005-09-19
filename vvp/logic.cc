@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.34 2005/09/19 21:45:09 steve Exp $"
+#ident "$Id: logic.cc,v 1.35 2005/09/19 22:47:28 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -82,6 +82,7 @@ void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
 
 vvp_fun_boolean_::vvp_fun_boolean_(unsigned wid)
 {
+      net_ = 0;
       for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
 	    input_[idx] = vvp_vector4_t(wid);
 }
@@ -97,8 +98,10 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    return;
 
       input_[ptr.port()] = bit;
-      net_ = ptr.ptr();
-      schedule_generic(this, 0, false);
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
+      }
 }
 
 vvp_fun_and::vvp_fun_and(unsigned wid)
@@ -112,6 +115,9 @@ vvp_fun_and::~vvp_fun_and()
 
 void vvp_fun_and::run_run()
 {
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
       vvp_vector4_t result (input_[0]);
 
       for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
@@ -128,11 +134,12 @@ void vvp_fun_and::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(net_->out, result);
+      vvp_send_vec4(ptr->out, result);
 }
 
 vvp_fun_buf::vvp_fun_buf()
 {
+      net_ = 0;
       count_functors_table += 1;
 }
 
@@ -153,14 +160,21 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    return;
 
       input_ = bit;
-      net_ = ptr.ptr();
-      schedule_generic(this, 0, false);
+
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
+      }
 }
 
 void vvp_fun_buf::run_run()
 {
-      input_.change_z2x();
-      vvp_send_vec4(net_->out, input_);
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      vvp_vector4_t tmp (input_);
+      tmp.change_z2x();
+      vvp_send_vec4(ptr->out, tmp);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -344,6 +358,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 vvp_fun_not::vvp_fun_not()
 {
+      net_ = 0;
       count_functors_table += 1;
 }
 
@@ -364,12 +379,17 @@ void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    return;
 
       input_ = bit;
-      net_ = ptr.ptr();
-      schedule_generic(this, 0, false);
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
+      }
 }
 
 void vvp_fun_not::run_run()
 {
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
       vvp_vector4_t result (input_);
 
       for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
@@ -377,7 +397,7 @@ void vvp_fun_not::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(net_->out, result);
+      vvp_send_vec4(ptr->out, result);
 }
 
 vvp_fun_or::vvp_fun_or(unsigned wid)
@@ -391,6 +411,9 @@ vvp_fun_or::~vvp_fun_or()
 
 void vvp_fun_or::run_run()
 {
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
       vvp_vector4_t result (input_[0]);
 
       for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
@@ -407,7 +430,7 @@ void vvp_fun_or::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(net_->out, result);
+      vvp_send_vec4(ptr->out, result);
 }
 
 vvp_fun_xor::vvp_fun_xor(unsigned wid)
@@ -421,6 +444,9 @@ vvp_fun_xor::~vvp_fun_xor()
 
 void vvp_fun_xor::run_run()
 {
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
       vvp_vector4_t result (input_[0]);
 
       for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
@@ -437,7 +463,7 @@ void vvp_fun_xor::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(net_->out, result);
+      vvp_send_vec4(ptr->out, result);
 }
 
 /*
@@ -570,6 +596,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.35  2005/09/19 22:47:28  steve
+ *  Prevent some excess scheduling of logic propagation events.
+ *
  * Revision 1.34  2005/09/19 21:45:09  steve
  *  Use lazy eval of BUF/NOT/OR/XOR gates.
  *
