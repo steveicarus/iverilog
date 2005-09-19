@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.21 2005/06/12 21:56:16 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.22 2005/09/19 21:45:09 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -440,6 +440,7 @@ static void draw_NOR(void)
       printf("};\n");
 }
 
+#if 0
 static void draw_NOT(void)
 {
       unsigned i0, i1, i2, i3;
@@ -471,7 +472,8 @@ static void draw_NOT(void)
 
       printf("};\n");
 }
-
+#endif
+#if 0
 static void draw_OR(void)
 {
       unsigned i0, i1, i2, i3;
@@ -505,6 +507,7 @@ static void draw_OR(void)
 
       printf("};\n");
 }
+#endif
 
 static void draw_XNOR(void)
 {
@@ -538,6 +541,7 @@ static void draw_XNOR(void)
       printf("};\n");
 }
 
+#if 0
 static void draw_XOR(void)
 {
       unsigned i0, i1, i2, i3;
@@ -569,6 +573,7 @@ static void draw_XOR(void)
 
       printf("};\n");
 }
+#endif
 
 static void draw_TRIAND(void)
 {
@@ -748,12 +753,9 @@ main()
       draw_EEQ();
       draw_NAND();
       draw_NOR();
-      draw_NOT();
-      draw_OR();
       draw_TRIAND();
       draw_TRIOR();
       draw_XNOR();
-      draw_XOR();
       draw_hex_table();
       draw_oct_table();
       return 0;
@@ -761,6 +763,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.22  2005/09/19 21:45:09  steve
+ *  Use lazy eval of BUF/NOT/OR/XOR gates.
+ *
  * Revision 1.21  2005/06/12 21:56:16  steve
  *  Remove unused ft_MOS truth tables.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.23 2005/09/01 04:08:47 steve Exp $"
+#ident "$Id: logic.h,v 1.24 2005/09/19 21:45:09 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -77,7 +77,7 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
  * The retransmitted vector has all Z values changed to X, just like
  * the buf(Q,D) gate in Verilog.
  */
-class vvp_fun_buf: public vvp_net_fun_t {
+class vvp_fun_buf: public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit vvp_fun_buf();
@@ -86,6 +86,11 @@ class vvp_fun_buf: public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
+      void run_run();
+
+    private:
+      vvp_vector4_t input_;
+      vvp_net_t*net_;
 };
 
 /*
@@ -144,21 +149,57 @@ class vvp_fun_muxr : public vvp_net_fun_t {
       int select_;
 };
 
+class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
+
+    public:
+      explicit vvp_fun_not();
+      virtual ~vvp_fun_not();
+
+      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
+
+    private:
+      void run_run();
+
+    private:
+      vvp_vector4_t input_;
+      vvp_net_t*net_;
+};
+
+class vvp_fun_or  : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_or(unsigned wid);
+      ~vvp_fun_or();
+
+    private:
+      void run_run();
+};
+
+class vvp_fun_xor  : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_xor(unsigned wid);
+      ~vvp_fun_xor();
+
+    private:
+      void run_run();
+};
+
 // table functor types
 
 extern const unsigned char ft_MUXX[];
 extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
-extern const unsigned char ft_NOT[];
-extern const unsigned char ft_OR[];
 extern const unsigned char ft_TRIAND[];
 extern const unsigned char ft_TRIOR[];
 extern const unsigned char ft_XNOR[];
-extern const unsigned char ft_XOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.24  2005/09/19 21:45:09  steve
+ *  Use lazy eval of BUF/NOT/OR/XOR gates.
+ *
  * Revision 1.23  2005/09/01 04:08:47  steve
  *  Support MUXR functors.
  *

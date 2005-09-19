@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.33 2005/09/01 04:08:47 steve Exp $"
+#ident "$Id: logic.cc,v 1.34 2005/09/19 21:45:09 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -149,9 +149,18 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      vvp_vector4_t tmp = bit;
-      tmp.change_z2x();
-      vvp_send_vec4(ptr.ptr()->out, tmp);
+      if (input_ .eeq( bit ))
+	    return;
+
+      input_ = bit;
+      net_ = ptr.ptr();
+      schedule_generic(this, 0, false);
+}
+
+void vvp_fun_buf::run_run()
+{
+      input_.change_z2x();
+      vvp_send_vec4(net_->out, input_);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -333,6 +342,104 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 }
 
+vvp_fun_not::vvp_fun_not()
+{
+      count_functors_table += 1;
+}
+
+vvp_fun_not::~vvp_fun_not()
+{
+}
+
+/*
+ * The buf functor is very simple--change the z bits to x bits in the
+ * vector it passes, and propagate the result.
+ */
+void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
+      if (input_ .eeq( bit ))
+	    return;
+
+      input_ = bit;
+      net_ = ptr.ptr();
+      schedule_generic(this, 0, false);
+}
+
+void vvp_fun_not::run_run()
+{
+      vvp_vector4_t result (input_);
+
+      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
+	    vvp_bit4_t bitbit = ~ result.value(idx);
+	    result.set_bit(idx, bitbit);
+      }
+
+      vvp_send_vec4(net_->out, result);
+}
+
+vvp_fun_or::vvp_fun_or(unsigned wid)
+: vvp_fun_boolean_(wid)
+{
+}
+
+vvp_fun_or::~vvp_fun_or()
+{
+}
+
+void vvp_fun_or::run_run()
+{
+      vvp_vector4_t result (input_[0]);
+
+      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
+	    vvp_bit4_t bitbit = result.value(idx);
+	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
+		  if (input_[pdx].size() < idx) {
+			bitbit = BIT4_X;
+			break;
+		  }
+
+		  bitbit = bitbit | input_[pdx].value(idx);
+	    }
+
+	    result.set_bit(idx, bitbit);
+      }
+
+      vvp_send_vec4(net_->out, result);
+}
+
+vvp_fun_xor::vvp_fun_xor(unsigned wid)
+: vvp_fun_boolean_(wid)
+{
+}
+
+vvp_fun_xor::~vvp_fun_xor()
+{
+}
+
+void vvp_fun_xor::run_run()
+{
+      vvp_vector4_t result (input_[0]);
+
+      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
+	    vvp_bit4_t bitbit = result.value(idx);
+	    for (unsigned pdx = 1 ;  pdx < 4 ;  pdx += 1) {
+		  if (input_[pdx].size() < idx) {
+			bitbit = BIT4_X;
+			break;
+		  }
+
+		  bitbit = bitbit ^ input_[pdx].value(idx);
+	    }
+
+	    result.set_bit(idx, bitbit);
+      }
+
+      vvp_send_vec4(net_->out, result);
+}
+
 /*
  * The parser calls this function to create a logic functor. I allocate a
  * functor, and map the name to the vvp_ipoint_t address for the
@@ -347,7 +454,7 @@ void compile_functor(char*label, char*type, unsigned width,
       bool strength_aware = false;
 
       if (strcmp(type, "OR") == 0) {
-	    obj = new table_functor_s(ft_OR);
+	    obj = new vvp_fun_or(width);
 
       } else if (strcmp(type, "AND") == 0) {
 	    obj = new vvp_fun_and(width);
@@ -405,13 +512,13 @@ void compile_functor(char*label, char*type, unsigned width,
 	    obj = new table_functor_s(ft_NOR);
 
       } else if (strcmp(type, "NOT") == 0) {
-	    obj = new table_functor_s(ft_NOT);
+	    obj = new vvp_fun_not();
 
       } else if (strcmp(type, "XNOR") == 0) {
 	    obj = new table_functor_s(ft_XNOR);
 
       } else if (strcmp(type, "XOR") == 0) {
-	    obj = new table_functor_s(ft_XOR);
+	    obj = new vvp_fun_xor(width);
 
       } else {
 	    yyerror("invalid functor type.");
@@ -463,6 +570,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.34  2005/09/19 21:45:09  steve
+ *  Use lazy eval of BUF/NOT/OR/XOR gates.
+ *
  * Revision 1.33  2005/09/01 04:08:47  steve
  *  Support MUXR functors.
  *
