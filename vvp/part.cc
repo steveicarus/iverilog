@@ -16,10 +16,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.8 2005/07/14 23:34:19 steve Exp $"
+#ident "$Id: part.cc,v 1.9 2005/09/20 00:51:53 steve Exp $"
 
 # include  "compile.h"
-# include  "vvp_net.h"
+# include  "part.h"
 # include  <stdlib.h>
 # include  <limits.h>
 #ifdef HAVE_MALLOC_H
@@ -31,6 +31,7 @@
 vvp_fun_part::vvp_fun_part(unsigned base, unsigned wid)
 : base_(base), wid_(wid)
 {
+      net_ = 0;
 }
 
 vvp_fun_part::~vvp_fun_part()
@@ -41,16 +42,31 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
 
-      vvp_vector4_t res(wid_);
+      if (val_ .eeq( bit ))
+	    return;
 
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    if (idx + base_ < bit.size())
-		  res.set_bit(idx, bit.value(base_+idx));
-	    else
-		  res.set_bit(idx, BIT4_X);
+      val_ = bit;
+
+      if (net_ == 0) {
+	    net_ = port.ptr();
+	    schedule_generic(this, 0, false);
       }
+}
 
-      vvp_send_vec4(port.ptr()->out, res);
+void vvp_fun_part::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      vvp_vector4_t res (wid_);
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    if (idx + base_ < val_.size())
+		  res.set_bit(idx, val_.value(base_+idx));
+	    else
+	
+	  res.set_bit(idx, BIT4_X);
+      }
+      vvp_send_vec4(ptr->out, res);
 }
 
 vvp_fun_part_pv::vvp_fun_part_pv(unsigned b, unsigned w, unsigned v)
@@ -167,6 +183,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.9  2005/09/20 00:51:53  steve
+ *  Lazy processing of vvp_fun_part functor.
+ *
  * Revision 1.8  2005/07/14 23:34:19  steve
  *  gcc4 compile errors.
  *

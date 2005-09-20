@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.45 2005/09/19 21:45:37 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.46 2005/09/20 00:51:53 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -669,68 +669,6 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       unsigned width_;
 };
 
-/* vvp_fun_part
- * This node takes a part select of the input vector. Input 0 is the
- * vector to be selected from, and input 1 is the location where the
- * select starts. Input 2, which is typically constant, is the width
- * of the result.
- */
-class vvp_fun_part  : public vvp_net_fun_t {
-
-    public:
-      vvp_fun_part(unsigned base, unsigned wid);
-      ~vvp_fun_part();
-
-    public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
-    private:
-      unsigned base_;
-      unsigned wid_;
-};
-
-/* vvp_fun_part_pv
- * This node takes a vector input and turns it into the part select of
- * a wider output network. It used the recv_vec4_pv methods of the
- * destination nodes to propagate the part select.
- */
-class vvp_fun_part_pv  : public vvp_net_fun_t {
-
-    public:
-      vvp_fun_part_pv(unsigned base, unsigned wid, unsigned vec_wid);
-      ~vvp_fun_part_pv();
-
-    public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
-    private:
-      unsigned base_;
-      unsigned wid_;
-      unsigned vwid_;
-};
-
-/*
- * This part select is more flexible in that it takes the vector to
- * part in port 0, and the base of the part in port 1. The width of
- * the part to take out is fixed.
- */
-class vvp_fun_part_var  : public vvp_net_fun_t {
-
-    public:
-      explicit vvp_fun_part_var(unsigned wid);
-      ~vvp_fun_part_var();
-
-    public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
-    private:
-      unsigned base_;
-      unsigned wid_;
-      vvp_vector4_t source_;
-	// Save the last output, for detecting change.
-      vvp_vector4_t ref_;
-};
-
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
  * including nets of various sort. The output from a signal follows
@@ -999,6 +937,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.46  2005/09/20 00:51:53  steve
+ *  Lazy processing of vvp_fun_part functor.
+ *
  * Revision 1.45  2005/09/19 21:45:37  steve
  *  Spelling patches from Larry.
  *
