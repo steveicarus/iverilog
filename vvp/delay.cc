@@ -17,13 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.9 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: delay.cc,v 1.10 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 #include "delay.h"
 #include "schedule.h"
-#include <string.h>
-#include <stream.h>
 #include <assert.h>
 
 vvp_delay_t::vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall)
@@ -165,6 +163,9 @@ void vvp_fun_delay::run_run()
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.10  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.9  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

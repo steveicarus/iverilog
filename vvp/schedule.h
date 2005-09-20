@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.25 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: schedule.h,v 1.26 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -85,6 +85,7 @@ extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 
 struct vvp_gen_event_s
 {
+      virtual ~vvp_gen_event_s() =0;
       virtual void run_run() =0;
 };
 
@@ -132,6 +133,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.26  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.25  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

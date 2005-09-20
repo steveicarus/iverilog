@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.132 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.133 2005/09/20 18:34:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -816,10 +816,10 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 			       ivl_signal_signed(sig)? "/s" : "";
 
       switch (ivl_signal_data_type(sig)) {
-	  case IVL_VT_LOGIC:
-	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
+	    break;
+	  default:
 	    break;
       }
 
@@ -852,10 +852,10 @@ static void draw_net_in_scope(ivl_signal_t sig)
       }
 
       switch (ivl_signal_data_type(sig)) {
-	  case IVL_VT_LOGIC:
-	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
+	    break;
+	  default:
 	    break;
       }
 
@@ -1812,7 +1812,7 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 
       unsigned idx;
       ivl_nexus_t nex;
-      ivl_nexus_ptr_t ptr;
+      ivl_nexus_ptr_t ptr = 0;
 
       char*p_str;
       char*v_str;
@@ -1828,6 +1828,7 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 	    if (ivl_nexus_ptr_lpm(ptr) == net)
 		  break;
       }
+      assert(ptr != 0);
       p_str = draw_net_input_x(nex, ptr);
 
       nex = ivl_lpm_data(net,0);
@@ -2081,6 +2082,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.133  2005/09/20 18:34:01  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.132  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.133 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: stub.c,v 1.134 2005/09/20 18:34:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -158,6 +158,9 @@ void show_expression(ivl_expr_t net, unsigned ind)
       const char*vt = "?";
 
       switch (ivl_expr_value(net)) {
+	  case IVL_VT_NO_TYPE:
+	    vt = "no_type";
+	    break;
 	  case IVL_VT_VOID:
 	    vt = "void";
 	    break;
@@ -1530,6 +1533,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.134  2005/09/20 18:34:01  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.133  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *

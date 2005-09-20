@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getinstance.c,v 1.4 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: getinstance.c,v 1.5 2005/09/20 18:34:01 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -28,11 +28,14 @@
  */
 PLI_BYTE8* tf_getinstance(void)
 {
-      return (char *)vpi_handle(vpiSysTfCall, 0 /* NULL */);
+      return (PLI_BYTE8 *)vpi_handle(vpiSysTfCall, 0 /* NULL */);
 }
 
 /*
  * $Log: getinstance.c,v $
+ * Revision 1.5  2005/09/20 18:34:01  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.4  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

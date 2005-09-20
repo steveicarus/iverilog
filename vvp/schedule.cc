@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.39 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: schedule.cc,v 1.40 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -68,6 +68,10 @@ struct event_time_s {
       void* operator new (size_t);
       void operator delete(void*obj, size_t s);
 };
+
+vvp_gen_event_s::~vvp_gen_event_s()
+{
+}
 
 /*
  * Derived event types
@@ -601,6 +605,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.40  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.39  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

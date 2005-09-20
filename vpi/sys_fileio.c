@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.6 2005/01/09 20:12:22 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.7 2005/09/20 18:34:01 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -36,7 +36,7 @@
 static int sys_fopen_calltf(char *name)
 {
       s_vpi_value value;
-      unsigned char *mode_string = 0;
+      char *mode_string = 0;
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
@@ -479,6 +479,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.7  2005/09/20 18:34:01  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.6  2005/01/09 20:12:22  steve
  *  Merge $fopen robustness fix from 0.8
  *

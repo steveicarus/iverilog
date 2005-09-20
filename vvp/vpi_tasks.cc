@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.30 2005/08/29 02:38:50 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.31 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 /*
@@ -222,6 +222,8 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 			    case 3:
 			      bit4 = BIT4_X;
 			      break;
+			    default:
+			      assert(0);
 			}
 			vthread_put_bit(vpip_current_vthread,
 					rfp->vbit+wdx+idx, bit4);
@@ -485,6 +487,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.31  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.30  2005/08/29 02:38:50  steve
  *  Eliminate int to vvp_bit4_t casts.
  *

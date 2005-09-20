@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.13 2005/01/29 06:29:17 steve Exp $"
+#ident "$Id: stop.cc,v 1.14 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 /*
@@ -377,7 +377,7 @@ static void cmd_unknown(unsigned, char*argv[])
 	     "of available commands.\n");
 }
 
-struct {
+static struct {
       const char*name;
       void (*proc)(unsigned argc, char*argv[]);
       const char*summary;
@@ -505,6 +505,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.14  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.13  2005/01/29 06:29:17  steve
  *  Support interactive mode even without readline.
  *

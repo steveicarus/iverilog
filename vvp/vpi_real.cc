@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.10 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.11 2005/09/20 18:34:02 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -69,8 +69,6 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
 
       struct __vpiRealVar*rfp
 	    = (struct __vpiRealVar*)ref;
-      vvp_fun_signal_real*fun
-	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
 
       vvp_net_ptr_t destination (rfp->net, 0);
 
@@ -120,6 +118,9 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.11  2005/09/20 18:34:02  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.10  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

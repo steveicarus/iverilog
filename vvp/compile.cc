@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.212 2005/09/17 04:01:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.213 2005/09/20 18:34:01 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -684,7 +684,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       if ((strncmp(label, "C4<", 3) == 0)
 	  && ((tp = strchr(label,'>')))
 	  && (tp[1] == 0)
-	  && (strspn(label+3, "01xz") == (tp-label-3))) {
+	  && (strspn(label+3, "01xz")+3 == (unsigned)(tp-label))) {
 
 	    size_t v4size = tp-label-3;
 	    vvp_vector4_t tmp (v4size);
@@ -728,7 +728,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       if ((strncmp(label, "C8<", 3) == 0)
 	  && ((tp = strchr(label,'>')))
 	  && (tp[1] == 0)
-	  && (strspn(label+3, "01234567xz") == (tp-label-3))) {
+	  && (strspn(label+3, "01234567xz")+3 == (unsigned)(tp-label))) {
 
 	    size_t vsize = tp-label-3;
 	    assert(vsize%3 == 0);
@@ -768,7 +768,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       if ((strncmp(label, "Cr<", 3) == 0)
 	  && ((tp = strchr(label,'>')))
 	  && (tp[1] == 0)
-	  && (strspn(label+3, "0123456789.-e") == tp-label-3)) {
+	  && (strspn(label+3, "0123456789.-e")+3 == (unsigned)(tp-label))) {
 
 	    double tmp;
 
@@ -1481,6 +1481,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.213  2005/09/20 18:34:01  steve
+ *  Clean up compiler warnings.
+ *
  * Revision 1.212  2005/09/17 04:01:01  steve
  *  Add the load/v.p instruction.
  *
