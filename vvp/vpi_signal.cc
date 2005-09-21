@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.69 2005/07/14 23:34:19 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.70 2005/09/21 01:04:59 steve Exp $"
 #endif
 
 /*
@@ -495,8 +495,7 @@ static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
       fprintf(stderr, "XXXX functor_poke not implemented\n");
 }
 
-static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
-				 const char*str)
+static vvp_vector4_t from_stringval(const char*str, unsigned wid)
 {
       unsigned idx;
       const char*cp;
@@ -504,25 +503,22 @@ static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
       cp = str + strlen(str);
       idx = 0;
 
+      vvp_vector4_t val(wid, BIT4_0);
+
       while ((idx < wid) && (cp > str)) {
 	    unsigned byte = *--cp;
 	    int bit;
 
 	    for (bit = 0 ;  bit < 8 ;  bit += 1) {
 		  if (byte & 1)
-			functor_poke(rfp, idx, vvp_scalar_t(BIT4_1,6,6));
-		  else
-			functor_poke(rfp, idx, vvp_scalar_t(BIT4_0,6,6));
+			val.set_bit(idx, BIT4_1);
 
 		  byte >>= 1;
 		  idx += 1;
 	    }
       }
 
-      while (idx < wid) {
-	    functor_poke(rfp, idx, vvp_scalar_t(BIT4_0,6,6));
-	    idx += 1;
-      }
+      return val;
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
@@ -535,12 +531,19 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 
       rfp = (struct __vpiSignal*)ref;
 
+	/* This is the destination that I'm going to poke into. Make
+	   it from the vvp_net_t pointer, and assume a write to
+	   port-0. This is the port where signals receive input. */
       vvp_net_ptr_t destination (rfp->node, 0);
+
+	/* Make a vvp_vector4_t vector to receive the translated value
+	   that we are going to poke. This will get populated
+	   differently depending on the format. */
       wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
-      vvp_vector4_t val (wid);
+      vvp_vector4_t val (wid, BIT4_0);
 
       switch (vp->format) {
 
@@ -717,7 +720,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	  }
 #endif
 	  case vpiStringVal:
-	    signal_put_stringval(rfp, wid, vp->value.str);
+	    val = from_stringval(vp->value.str, wid);
 	    break;
 
 	  default:
@@ -822,6 +825,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.70  2005/09/21 01:04:59  steve
+ *  Support put_value of string values.
+ *
  * Revision 1.69  2005/07/14 23:34:19  steve
  *  gcc4 compile errors.
  *
