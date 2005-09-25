@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.1 2005/09/25 23:30:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -407,13 +407,14 @@ void NexusSet::add(Nexus*that)
       }
 
       unsigned ptr = bsearch_(that);
-      if ((ptr < nitems_) && (items_[ptr] == that))
+      if (ptr < nitems_) {
+	    assert(items_[ptr] == that);
 	    return;
+      }
+
+      assert(ptr == nitems_);
 
       items_ = (Nexus**)realloc(items_, (nitems_+1) * sizeof(Nexus*));
-      for (unsigned idx = nitems_ ;  idx > ptr ;  idx -= 1)
-	    items_[idx] = items_[idx-1];
-
       items_[ptr] = that;
       nitems_ += 1;
 }
@@ -430,7 +431,7 @@ void NexusSet::rem(Nexus*that)
 	    return;
 
       unsigned ptr = bsearch_(that);
-      if ((ptr >= nitems_) || (items_[ptr] != that))
+      if (ptr >= nitems_)
 	    return;
 
       if (nitems_ == 1) {
@@ -462,10 +463,8 @@ Nexus* NexusSet::operator[] (unsigned idx) const
 unsigned NexusSet::bsearch_(Nexus*that) const
 {
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx] < that)
-		  continue;
-
-	    return idx;
+	    if (items_[idx] == that)
+		  return idx;
       }
 
       return nitems_;
@@ -499,6 +498,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.1  2005/09/25 23:30:31  steve
+ *  More predictable ordering of items in NexusSet.
+ *
  * Revision 1.14  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *
@@ -523,35 +525,5 @@ bool NexusSet::intersect(const NexusSet&that) const
  * Revision 1.7  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.
- *
- * Revision 1.6  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.5  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.3  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.2  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.1  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
  */
 
