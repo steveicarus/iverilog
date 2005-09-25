@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.17 2005/06/13 23:22:37 steve Exp $"
+#ident "$Id: net_link.cc,v 1.18 2005/09/25 23:40:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -431,13 +431,14 @@ void NexusSet::add(Nexus*that)
       }
 
       unsigned ptr = bsearch_(that);
-      if ((ptr < nitems_) && (items_[ptr] == that))
+      if (ptr < nitems_) {
+	    assert(items_[ptr] == that);
 	    return;
+      }
+
+      assert(ptr == nitems_);
 
       items_ = (Nexus**)realloc(items_, (nitems_+1) * sizeof(Nexus*));
-      for (unsigned idx = nitems_ ;  idx > ptr ;  idx -= 1)
-	    items_[idx] = items_[idx-1];
-
       items_[ptr] = that;
       nitems_ += 1;
 }
@@ -454,7 +455,7 @@ void NexusSet::rem(Nexus*that)
 	    return;
 
       unsigned ptr = bsearch_(that);
-      if ((ptr >= nitems_) || (items_[ptr] != that))
+      if (ptr >= nitems_)
 	    return;
 
       if (nitems_ == 1) {
@@ -486,10 +487,8 @@ Nexus* NexusSet::operator[] (unsigned idx) const
 unsigned NexusSet::bsearch_(Nexus*that) const
 {
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx] < that)
-		  continue;
-
-	    return idx;
+	    if (items_[idx] == that)
+		  return idx;
       }
 
       return nitems_;
@@ -523,6 +522,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.18  2005/09/25 23:40:11  steve
+ *  Simplify NexusSet set handling.
+ *
  * Revision 1.17  2005/06/13 23:22:37  steve
  *  Fix compile errors.
  *
