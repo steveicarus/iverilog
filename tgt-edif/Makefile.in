@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#ident "$Id: Makefile.in,v 1.1.2.1 2005/08/17 01:17:28 steve Exp $"
+#ident "$Id: Makefile.in,v 1.1.2.2 2005/09/25 16:35:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -61,7 +61,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-D = d-lpm.o
+D = d-lpm.o d-virtex.o xilinx.o
 O = edif.o device.o target.o gates.o generic.o $D
 
 ifeq (@WIN32@,yes)

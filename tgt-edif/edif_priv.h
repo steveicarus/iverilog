@@ -27,15 +27,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif_priv.h,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
+#ident "$Id: edif_priv.h,v 1.1.2.2 2005/09/25 16:35:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
 # include  "device.h"
-
-/* This is the opened xnf file descriptor. It is the output that this
-   code generator writes to, whether the format is XNF or EDIF. */
-extern FILE*xnf;
 
 extern int show_scope_gates(ivl_scope_t net, void*x);
 
@@ -61,6 +57,9 @@ extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
 
 /*
  * $Log: edif_priv.h,v $
+ * Revision 1.1.2.2  2005/09/25 16:35:36  steve
+ *  Add Xilinx virtex as a reference EDIF device.
+ *
  * Revision 1.1.2.1  2005/08/17 01:17:29  steve
  *  Add the tgt-edif target.
  *

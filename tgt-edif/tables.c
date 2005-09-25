@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: tables.c,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
+#ident "$Id: tables.c,v 1.1.2.2 2005/09/25 16:35:37 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -39,14 +39,19 @@
  * it via the -parch=<foo> command line switch.
  */
 extern const struct device_s d_lpm_edif;
+extern const struct device_s d_virtex_edif;
 
 const struct device_table_s edif_device_table[] = {
       { "lpm",   &d_lpm_edif },
+      { "virtex",&d_virtex_edif },
       { 0, 0 }
 };
 
 /*
  * $Log: tables.c,v $
+ * Revision 1.1.2.2  2005/09/25 16:35:37  steve
+ *  Add Xilinx virtex as a reference EDIF device.
+ *
  * Revision 1.1.2.1  2005/08/17 01:17:29  steve
  *  Add the tgt-edif target.
  *

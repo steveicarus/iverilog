@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
+#ident "$Id: edif.h,v 1.1.2.2 2005/09/25 16:35:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -240,7 +240,20 @@ extern void edif_nexus_to_joint(edif_t edf, edif_joint_t jnt, ivl_nexus_t nex);
 extern void edif_print(FILE*fd, edif_t design);
 
 /*
+ * This is the fd that should be passed to the edif_print
+ * function. The name "xnf" is historical. This function is opened and
+ * closed automatically by the edif core (the target_design function)
+ * so generally there is no other use then the edif_print for this
+ * exposed fd.
+ */
+extern FILE*xnf;
+
+
+/*
  * $Log: edif.h,v $
+ * Revision 1.1.2.2  2005/09/25 16:35:36  steve
+ *  Add Xilinx virtex as a reference EDIF device.
+ *
  * Revision 1.1.2.1  2005/08/17 01:17:29  steve
  *  Add the tgt-edif target.
  *
