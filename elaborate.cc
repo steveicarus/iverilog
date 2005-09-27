@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.329 2005/09/14 02:53:13 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.330 2005/09/27 04:51:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2567,6 +2567,13 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   the for loop. This is also a very specific assignment
 	   statement. Put this into the "body" block. */
       sig = des->find_signal(scope, id2->path());
+      if (sig == 0) {
+	    cerr << get_line() << ": error: Unable to find variable "
+		 << id2->path() << " in for-loop increment expressin." << endl;
+	    des->errors += 1;
+	    return body;
+      }
+
       assert(sig);
       lv = new NetAssign_(sig);
 
@@ -3021,6 +3028,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.330  2005/09/27 04:51:37  steve
+ *  Error message for invalid for-loop index variable.
+ *
  * Revision 1.329  2005/09/14 02:53:13  steve
  *  Support bool expressions and compares handle them optimally.
  *
