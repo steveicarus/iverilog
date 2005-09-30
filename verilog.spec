@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.8
+Version: 0.8.2
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/v0.8/verilog-0.8.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/v0.8/verilog-0.8.2.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -22,7 +22,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-0.8
+%setup -n verilog-0.8.2
 
 %build
 %ifarch x86_64
@@ -59,6 +59,9 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/fpga.tgt
 %attr(-,root,root) /usr/lib/ivl/fpga.conf
 %attr(-,root,root) /usr/lib/ivl/fpga-s.conf
+%attr(-,root,root) /usr/lib/ivl/edif.tgt
+%attr(-,root,root) /usr/lib/ivl/edif.conf
+%attr(-,root,root) /usr/lib/ivl/edif-s.conf
 %attr(-,root,root) /usr/lib/ivl/xnf.conf
 %attr(-,root,root) /usr/lib/ivl/xnf-s.conf
 %ifarch x86_64
