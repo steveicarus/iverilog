@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.97 2005/09/19 21:45:35 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.98 2005/10/04 04:09:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -498,142 +498,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
-      if (par != 0) {
-	    NetExpr*tmp;
+      if (par != 0)
+	    return elaborate_expr_param(des, scope, par, found_in);
 
-	    tmp = par->dup_expr();
-
-	    if (msb_ && lsb_) {
-		    /* If the parameter has a part select, we support
-		       it by pulling the right bits out and making a
-		       sized unsigned constant. This code assumes the
-		       lsb of a parameter is 0 and the msb is the
-		       width of the parameter. */
-
-		  verinum*lsn = lsb_->eval_const(des, scope);
-		  verinum*msn = msb_->eval_const(des, scope);
-		  if ((lsn == 0) || (msn == 0)) {
-			cerr << get_line() << ": error: "
-			      "Part select expressions must be "
-			      "constant expressions." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-
-		  long lsb = lsn->as_long();
-		  long msb = msn->as_long();
-		  if ((lsb < 0) || (msb < lsb)) {
-			cerr << get_line() << ": error: invalid part "
-			     << "select: " << path_
-			     << "["<<msb<<":"<<lsb<<"]" << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  unsigned long ulsb=lsb;
-		  unsigned long umsb=msb;
-
-		  NetEConst*le = dynamic_cast<NetEConst*>(tmp);
-		  assert(le);
-
-		  verinum result (verinum::V0, msb-lsb+1, true);
-		  verinum exl = le->value();
-
-		    /* Pull the bits from the parameter, one at a
-		       time. If the bit is within the range, simply
-		       copy it to the result. If the bit is outside
-		       the range, we sign extend signed unsized
-		       numbers, zero extend unsigned unsigned numbers,
-		       and X extend sized numbers. */
-		  for (unsigned long idx = ulsb ;  idx <= umsb ;  idx += 1) {
-			if (idx < exl.len())
-			      result.set(idx-lsb, exl.get(idx));
-		        else if (exl.is_string())
-			      result.set(idx-lsb, verinum::V0);
-		        else if (exl.has_len())
-			      result.set(idx-lsb, verinum::Vx);
-		        else if (exl.has_sign())
-			      result.set(idx-lsb, exl.get(exl.len()-1));
-		        else
-			      result.set(idx-lsb, verinum::V0);
-		  }
-
-		    /* If the input is a string, and the part select
-		       is working on byte boundaries, then the result
-		       can be made into a string. */
-		  if (exl.is_string()
-		      && (lsb%8 == 0)
-		      && (result.len()%8 == 0))
-		      result = verinum(result.as_string());
-
-		  delete tmp;
-		  tmp = new NetEConst(result);
-
-	    } else if (msb_) {
-		    /* Handle the case where a parameter has a bit
-		       select attached to it. Generate a NetESelect
-		       object to select the bit as desired. */
-		  NetExpr*mtmp = msb_->elaborate_expr(des, scope);
-		  if (! dynamic_cast<NetEConst*>(mtmp)) {
-			NetExpr*re = mtmp->eval_tree();
-			if (re) {
-			      delete mtmp;
-			      mtmp = re;
-			}
-		  }
-
-		    /* Let's first try to get constant values for both
-		       the parameter and the bit select. If they are
-		       both constant, then evaluate the bit select and
-		       return instead a single-bit constant. */
-
-		  NetEConst*le = dynamic_cast<NetEConst*>(tmp);
-		  NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
-		  if (le && re) {
-
-			verinum lv = le->value();
-			verinum rv = re->value();
-			verinum::V rb = verinum::Vx;
-
-			long ridx = rv.as_long();
-			if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
-			      rb = lv[ridx];
-
-			} else if ((ridx >= 0) && (!lv.has_len())) {
-			      if (lv.has_sign())
-				    rb = lv[lv.len()-1];
-			      else
-				    rb = verinum::V0;
-			}
-
-			NetEConst*re = new NetEConst(verinum(rb, 1));
-			delete tmp;
-			delete mtmp;
-			tmp = re;
-
-		  } else {
-
-			NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
-			tmp->set_line(*this);
-			tmp = stmp;
-		  }
-
-	    } else {
-		    /* No bit or part select. Make the constant into a
-		       NetEConstParam if possible. */
-		  NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
-		  if (ctmp != 0) {
-			perm_string name
-			     = lex_strings.make(path_.peek_tail_name());
-			NetEConstParam*ptmp
-			     = new NetEConstParam(found_in, name, ctmp->value());
-			delete tmp;
-			tmp = ptmp;
-		  }
-	    }
-
-	    tmp->set_line(*this);
-	    return tmp;
-      }
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
@@ -645,6 +512,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // the foo[msb:lsb] expression in the original.
 	    if (lsb_) {
 		  assert(msb_);
+		  assert(sel_ == SEL_PART);
 		  verinum*lsn = lsb_->eval_const(des, scope);
 		  verinum*msn = msb_->eval_const(des, scope);
 		  if ((lsn == 0) || (msn == 0)) {
@@ -872,6 +740,181 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+NetExpr* PEIdent::elaborate_expr_param(Design*des,
+				       NetScope*scope,
+				       const NetExpr*par,
+				       NetScope*found_in) const
+{
+      NetExpr*tmp;
+
+      tmp = par->dup_expr();
+
+      if (sel_ == SEL_PART) {
+	    assert(msb_ && lsb_);
+
+	      /* If the parameter has a part select, we support
+		 it by pulling the right bits out and making a
+		 sized unsigned constant. This code assumes the
+		 lsb of a parameter is 0 and the msb is the
+		 width of the parameter. */
+
+	    verinum*lsn = lsb_->eval_const(des, scope);
+	    verinum*msn = msb_->eval_const(des, scope);
+	    if ((lsn == 0) || (msn == 0)) {
+		  cerr << get_line() << ": error: "
+			"Part select expressions must be "
+			"constant expressions." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    long lsb = lsn->as_long();
+	    long msb = msn->as_long();
+	    if ((lsb < 0) || (msb < lsb)) {
+		  cerr << get_line() << ": error: invalid part "
+		       << "select: " << path_
+		       << "["<<msb<<":"<<lsb<<"]" << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    unsigned long ulsb=lsb;
+	    unsigned long umsb=msb;
+
+	    NetEConst*le = dynamic_cast<NetEConst*>(tmp);
+	    assert(le);
+
+	    verinum result (verinum::V0, msb-lsb+1, true);
+	    verinum exl = le->value();
+
+	      /* Pull the bits from the parameter, one at a
+		 time. If the bit is within the range, simply
+		 copy it to the result. If the bit is outside
+		 the range, we sign extend signed unsized
+		 numbers, zero extend unsigned unsigned numbers,
+		 and X extend sized numbers. */
+	    for (unsigned long idx = ulsb ;  idx <= umsb ;  idx += 1) {
+		  if (idx < exl.len())
+			result.set(idx-lsb, exl.get(idx));
+		  else if (exl.is_string())
+			result.set(idx-lsb, verinum::V0);
+		  else if (exl.has_len())
+			result.set(idx-lsb, verinum::Vx);
+		  else if (exl.has_sign())
+			result.set(idx-lsb, exl.get(exl.len()-1));
+		  else
+			result.set(idx-lsb, verinum::V0);
+	    }
+
+	      /* If the input is a string, and the part select
+		 is working on byte boundaries, then the result
+		 can be made into a string. */
+	    if (exl.is_string()
+		&& (lsb%8 == 0)
+		&& (result.len()%8 == 0))
+		  result = verinum(result.as_string());
+
+	    delete tmp;
+	    tmp = new NetEConst(result);
+
+      } else if (sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO) {
+	    assert(msb_);
+	    assert(lsb_);
+
+	      /* Get and evaluate the width of the index
+		 select. This must be constant. */
+	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
+	    if (wid_ec == 0) {
+		  cerr << lsb_->get_line() << ": error: "
+		       << "Second expression of indexed part select "
+		       << "most be constant." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    unsigned wid = wid_ec->value().as_ulong();
+
+	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_);
+	    if (idx_ex == 0) {
+		  return 0;
+	    }
+
+	    if (sel_ == SEL_IDX_DO && wid > 1) {
+		  idx_ex = make_add_expr(idx_ex, 1-(long)wid);
+	    }
+
+
+	      /* Wrap the param expression with a part select. */
+	    tmp = new NetESelect(tmp, idx_ex, wid);
+
+
+      } else if (msb_) {
+	      /* Handle the case where a parameter has a bit
+		 select attached to it. Generate a NetESelect
+		 object to select the bit as desired. */
+	    NetExpr*mtmp = msb_->elaborate_expr(des, scope);
+	    if (! dynamic_cast<NetEConst*>(mtmp)) {
+		  NetExpr*re = mtmp->eval_tree();
+		  if (re) {
+			delete mtmp;
+			mtmp = re;
+		  }
+	    }
+
+	      /* Let's first try to get constant values for both
+		 the parameter and the bit select. If they are
+		 both constant, then evaluate the bit select and
+		 return instead a single-bit constant. */
+
+	    NetEConst*le = dynamic_cast<NetEConst*>(tmp);
+	    NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
+	    if (le && re) {
+
+		  verinum lv = le->value();
+		  verinum rv = re->value();
+		  verinum::V rb = verinum::Vx;
+
+		  long ridx = rv.as_long();
+		  if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
+			rb = lv[ridx];
+
+		  } else if ((ridx >= 0) && (!lv.has_len())) {
+			if (lv.has_sign())
+			      rb = lv[lv.len()-1];
+			else
+			      rb = verinum::V0;
+		  }
+
+		  NetEConst*re = new NetEConst(verinum(rb, 1));
+		  delete tmp;
+		  delete mtmp;
+		  tmp = re;
+
+	    } else {
+
+		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
+		  tmp->set_line(*this);
+		  tmp = stmp;
+	    }
+
+      } else {
+	      /* No bit or part select. Make the constant into a
+		 NetEConstParam if possible. */
+	    NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
+	    if (ctmp != 0) {
+		  perm_string name
+			= lex_strings.make(path_.peek_tail_name());
+		  NetEConstParam*ptmp
+			= new NetEConstParam(found_in, name, ctmp->value());
+		  delete tmp;
+		  tmp = ptmp;
+	    }
+      }
+
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, bool) const
 {
       assert(value_);
@@ -1048,6 +1091,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.98  2005/10/04 04:09:25  steve
+ *  Add support for indexed select attached to parameters.
+ *
  * Revision 1.97  2005/09/19 21:45:35  steve
  *  Spelling patches from Larry.
  *

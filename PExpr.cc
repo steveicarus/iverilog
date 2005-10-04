@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.36 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.37 2005/10/04 04:09:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -148,7 +148,7 @@ bool PEFNumber::is_constant(Module*) const
 }
 
 PEIdent::PEIdent(const hname_t&s)
-: path_(s), msb_(0), lsb_(0), idx_(0)
+: path_(s), msb_(0), lsb_(0), sel_(SEL_NONE), idx_(0)
 {
 }
 
@@ -270,6 +270,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.37  2005/10/04 04:09:25  steve
+ *  Add support for indexed select attached to parameters.
+ *
  * Revision 1.36  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

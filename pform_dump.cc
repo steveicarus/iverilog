@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.90 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.91 2005/10/04 04:09:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,8 +145,19 @@ void PEIdent::dump(ostream&out) const
       out << path_;
       if (msb_) {
 	    out << "[" << *msb_;
-	    if (lsb_) {
+	    if (lsb_) switch (sel_) {
+		case SEL_IDX_UP:
+		  out << "+:" << *lsb_;
+		  break;
+		case SEL_IDX_DO:
+		  out << "-:" << *lsb_;
+		  break;
+		case SEL_PART:
 		  out << ":" << *lsb_;
+		  break;
+		default:
+		  out << ":?:" << *lsb_;
+		  break;
 	    }
 	    out << "]";
       }
@@ -903,6 +914,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.91  2005/10/04 04:09:26  steve
+ *  Add support for indexed select attached to parameters.
+ *
  * Revision 1.90  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

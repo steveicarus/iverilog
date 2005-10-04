@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.205 2005/07/27 14:54:51 steve Exp $"
+#ident "$Id: parse.y,v 1.206 2005/10/04 04:09:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -988,15 +988,47 @@ expr_primary
 		  delete $1;
 		  $$ = tmp;
 		}
+
+  /* There are 3 kinds of part selects. The basic part select has the
+     usual [M:L] syntax. The indexed part selects use +: or -: in
+     place of the : in the basic part select, and the first expression
+     is not limited to constant values. */
+
 	| identifier '[' expression ':' expression ']'
 		{ PEIdent*tmp = new PEIdent(*$1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_PART;
 		  delete $1;
 		  $$ = tmp;
 		}
+	| identifier '[' expression K_PO_POS expression ']'
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  tmp->msb_ = $3;
+		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_IDX_UP;
+		  delete $1;
+		  $$ = tmp;
+		}
+	| identifier '[' expression K_PO_NEG expression ']'
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  tmp->msb_ = $3;
+		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_IDX_DO;
+		  delete $1;
+		  $$ = tmp;
+		}
+
+  /* An identifer followed by an expression list in parentheses is a
+     function call. If a system identifier, then a system function
+     call. */
+
 	| identifier '(' expression_list ')'
                 { PECallFunction*tmp = new PECallFunction(*$1, *$3);
 		  tmp->set_file(@1.text);
@@ -1010,8 +1042,14 @@ expr_primary
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
+
+  /* Parenthesized expressions are primaries. */
+
 	| '(' expression ')'
 		{ $$ = $2; }
+
+  /* Various kinds of concatenation expressions. */
+
 	| '{' expression_list '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
 		  tmp->set_file(@1.text);
