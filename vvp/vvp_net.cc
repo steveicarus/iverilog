@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.45 2005/08/30 00:49:42 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.46 2005/10/04 04:41:07 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -279,6 +279,8 @@ void vvp_vector4_t::resize(unsigned newsize)
 		  delete[]bits_ptr_;
 		  bits_val_ = newval;
 	    }
+
+	    size_ = newsize;
       }
 }
 
@@ -1679,6 +1681,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.46  2005/10/04 04:41:07  steve
+ *  Make sure the new size sticks in resize method.
+ *
  * Revision 1.45  2005/08/30 00:49:42  steve
  *  Clean up a few overflowed shifts.
  *
