@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.133 2005/09/20 18:34:01 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.134 2005/10/10 04:16:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -634,7 +634,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  * does *not* check for a previously calculated string. Use the
  * draw_net_input for the general case.
  */
-char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
+static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 {
       ivl_signal_type_t res;
       char result[512];
@@ -789,18 +789,6 @@ const char*draw_net_input(ivl_nexus_t nex)
       return nex_private;
 }
 
-/*
- * This function looks at the nexus in search of the net to attach
- * functor inputs to. Sort the signals in the nexus by name, and
- * choose the lexically earliest one. This is different from the
- * draw_net_input in that it also prints the result.
- */
-void draw_input_from_net(ivl_nexus_t nex)
-{
-      const char*nex_private = draw_net_input(nex);
-      assert(nex_private);
-      fprintf(vvp_out, "%s", nex_private);
-}
 
 /*
  * This function draws a reg/int/variable in the scope. This is a very
@@ -956,8 +944,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	      fprintf(vvp_out, ", C4<z>");
 
 	} else {
-	      fprintf(vvp_out, ", ");
-	      draw_input_from_net(nex);
+	      fprintf(vvp_out, ", %s", draw_net_input(nex));
 	}
   }
 
@@ -1209,8 +1196,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = nany;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, sub);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			fprintf(vvp_out, ", %s", draw_net_input(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1225,8 +1211,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = nneg;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, sub);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			fprintf(vvp_out, ", %s", draw_net_input(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1241,8 +1226,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = npos;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, sub);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			fprintf(vvp_out, ", %s", draw_net_input(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1308,66 +1292,30 @@ static void draw_lpm_ram(ivl_lpm_t net)
       ivl_nexus_t pin;
 
       if (clk) {
-	    fprintf(vvp_out, "CLK_%p .event posedge, ", net);
-	    draw_input_from_net(clk);
-	    fprintf(vvp_out, ";\n");
+	    fprintf(vvp_out, "CLK_%p .event posedge, %s;\n",
+		    net, draw_net_input(clk));
       }
 
       fprintf(vvp_out, "L_%p .mem/port M_%s, ", net, vvp_memory_label(mem));
 
       pin = ivl_lpm_select(net);
-      draw_input_from_net(pin);
+      fprintf(vvp_out, "%s", draw_net_input(pin));
 
       if (clk) {
 	    fprintf(vvp_out, ", CLK_%p, ",  net);
 	    pin = ivl_lpm_enable(net);
 	    if (pin)
-		  draw_input_from_net(pin);
+		  fprintf(vvp_out, "%s", draw_net_input(pin));
 	    else
 		  fprintf(vvp_out, "C4<1>");
 
 	    pin = ivl_lpm_data(net, 0);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(pin);
+	    fprintf(vvp_out, ", %s", draw_net_input(pin));
       }
 
       fprintf(vvp_out, ";\n");
 }
 
-static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      unsigned idx;
-
-      assert(width > 0);
-      ivl_nexus_t nex = ivl_lpm_data(net, 0);
-      ivl_signal_t sig = 0;
-
-      ivl_nexus_ptr_t np;
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    np = ivl_nexus_ptr(nex,idx);
-	    sig = ivl_nexus_ptr_sig(np);
-	    if (sig != 0)
-		  break;
-      }
-
-      assert(sig != 0);
-
-      fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
-
-      sig = 0;
-      nex = ivl_lpm_data(net, 1);
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    np = ivl_nexus_ptr(nex,idx);
-	    sig = ivl_nexus_ptr_sig(np);
-	    if (sig != 0)
-		  break;
-      }
-
-      assert(sig != 0);
-
-      fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
-}
 
 /*
  * This function draws any functors needed to calculate the input to
@@ -1668,17 +1616,15 @@ static void draw_lpm_ff(ivl_lpm_t net)
 
       nex = ivl_lpm_data(net,0);
       assert(nex);
-      draw_input_from_net(nex);
+      fprintf(vvp_out, "%s", draw_net_input(nex));
 
       nex = ivl_lpm_clk(net);
       assert(nex);
-      fprintf(vvp_out, ", ");
-      draw_input_from_net(nex);
+      fprintf(vvp_out, ", %s", draw_net_input(nex));
 
       nex = ivl_lpm_enable(net);
       if (nex) {
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(nex);
+	    fprintf(vvp_out, ", %s", draw_net_input(nex));
       } else {
 	    fprintf(vvp_out, ", C4<1>");
       }
@@ -1699,11 +1645,9 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
       else
 	    fprintf(vvp_out, "L_%p .shift/l %u", net, width);
 
-      fprintf(vvp_out, ", ");
-      draw_input_from_net(ivl_lpm_data(net, 0));
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, 0)));
 
-      fprintf(vvp_out, ", ");
-      draw_input_from_net(ivl_lpm_data(net, 1));
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, 1)));
 
       fprintf(vvp_out, ";\n");
 }
@@ -1720,8 +1664,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	/* Print all the net signals that connect to the input of the
 	   function. */
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(ivl_lpm_data(net, idx));
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, idx)));
       }
 
 
@@ -1767,14 +1710,13 @@ static void draw_lpm_part(ivl_lpm_t net)
       sel = ivl_lpm_data(net,1);
 
       if (sel == 0) {
-	    fprintf(vvp_out, "L_%p .part ", net);
-	    draw_input_from_net(ivl_lpm_data(net, 0));
+	    fprintf(vvp_out, "L_%p .part %s",
+		    net, draw_net_input(ivl_lpm_data(net, 0)));
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
-	    fprintf(vvp_out, "L_%p .part/v ", net);
-	    draw_input_from_net(ivl_lpm_data(net,0));
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(sel);
+	    fprintf(vvp_out, "L_%p .part/v %s",
+		    net, draw_net_input(ivl_lpm_data(net,0)));
+	    fprintf(vvp_out, ", %s", draw_net_input(sel));
 	    fprintf(vvp_out, ", %u;\n", width);
       }
 }
@@ -1789,8 +1731,8 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
       unsigned base  = ivl_lpm_base(net);
       unsigned signal_width = width_of_nexus(ivl_lpm_q(net,0));
 
-      fprintf(vvp_out, "L_%p .part/pv ", net);
-      draw_input_from_net(ivl_lpm_data(net, 0));
+      fprintf(vvp_out, "L_%p .part/pv %s",
+	      net, draw_net_input(ivl_lpm_data(net, 0)));
 
       fprintf(vvp_out, ", %u, %u, %u;\n", base, width, signal_width);
 }
@@ -1863,25 +1805,22 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
 {
-      fprintf(vvp_out, "L_%p .reduce/%s ", net, type);
-      draw_input_from_net(ivl_lpm_data(net,0));
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, "L_%p .reduce/%s %s;\n",
+	      net, type, draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_repeat(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .repeat %u, %u, ", net,
-	      ivl_lpm_width(net), ivl_lpm_size(net));
-      draw_input_from_net(ivl_lpm_data(net,0));
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, "L_%p .repeat %u, %u, %s;\n", net,
+	      ivl_lpm_width(net), ivl_lpm_size(net),
+	      draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_sign_ext(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .extend/s %u, ", net,
-	      ivl_lpm_width(net));
-      draw_input_from_net(ivl_lpm_data(net,0));
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, "L_%p .extend/s %u, %s;\n",
+	      net, ivl_lpm_width(net),
+	      draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_in_scope(ivl_lpm_t net)
@@ -2082,6 +2021,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.134  2005/10/10 04:16:13  steve
+ *  Remove dead dram_input_from_net and lpm_inputs_a_b
+ *
  * Revision 1.133  2005/09/20 18:34:01  steve
  *  Clean up compiler warnings.
  *

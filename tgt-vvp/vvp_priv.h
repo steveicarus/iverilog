@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.36 2005/09/17 01:01:00 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.37 2005/10/10 04:16:13 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -90,12 +90,6 @@ extern int draw_vpi_rfunc_call(ivl_expr_t exp);
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
-
-/*
- * This is very similar to draw_net_input, but instead of returning a
- * pointer to the string, it writes it to the output file.
- */
-extern void draw_input_from_net(ivl_nexus_t nex);
 
 /*
  * The draw_eval_expr function writes out the code to evaluate a
@@ -239,6 +233,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.37  2005/10/10 04:16:13  steve
+ *  Remove dead dram_input_from_net and lpm_inputs_a_b
+ *
  * Revision 1.36  2005/09/17 01:01:00  steve
  *  More robust use of precalculated expressions, and
  *  Separate lookaside for written variables that can
