@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.126 2005/10/11 18:30:50 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.127 2005/10/11 18:54:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1648,7 +1648,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       if (shiv.base == 0 && ivl_expr_width(sube) == wid) {
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "   %%load/v %u, V_$%p, %u;\n",
+	    fprintf(vvp_out, "   %%load/v %u, V_%p, %u;\n",
 		    res.base, sig, ivl_expr_width(sube));
 
 	    return res;
@@ -1663,7 +1663,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
 	    res.base = allocate_vector(ivl_expr_width(sube));
 	    res.wid = ivl_expr_width(sube);
-	    fprintf(vvp_out, "   %%load/v %u, V_$%p, %u; Only need %u bits\n",
+	    fprintf(vvp_out, "   %%load/v %u, V_%p, %u; Only need %u bits\n",
 		    res.base, sig, ivl_expr_width(sube), wid);
 
 	    save_signal_lookaside(res.base, sig, res.wid);
@@ -1683,7 +1683,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       res.wid = wid;
 
       for (idx = 0 ;  idx < res.wid ;  idx += 1) {
-	    fprintf(vvp_out, "   %%load/x.p %u, V_$%p, 0;\n",
+	    fprintf(vvp_out, "   %%load/x.p %u, V_%p, 0;\n",
 		    res.base+idx, sig);
       }
 
@@ -2168,6 +2168,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.127  2005/10/11 18:54:10  steve
+ *  Remove the $ from signal labels. They do not help.
+ *
  * Revision 1.126  2005/10/11 18:30:50  steve
  *  Remove obsolete vvp_memory_label function.
  *

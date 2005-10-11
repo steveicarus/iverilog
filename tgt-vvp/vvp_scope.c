@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.135 2005/10/11 18:30:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.136 2005/10/11 18:54:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -147,7 +147,7 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
       }
 }
 
-/*
+/* REMOVE ME: vvp_signal_label should not be used. DEAD CODE
  * Given a signal, generate a string name that is suitable for use as
  * a label. The only rule is that the same signal will always have the
  * same label. The result is stored in static memory, so remember to
@@ -156,7 +156,7 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
 const char* vvp_signal_label(ivl_signal_t sig)
 {
       static char buf[32];
-      sprintf(buf, "$%p", sig);
+      sprintf(buf, "%p", sig);
       return buf;
 }
 
@@ -2010,6 +2010,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.136  2005/10/11 18:54:10  steve
+ *  Remove the $ from signal labels. They do not help.
+ *
  * Revision 1.135  2005/10/11 18:30:50  steve
  *  Remove obsolete vvp_memory_label function.
  *
