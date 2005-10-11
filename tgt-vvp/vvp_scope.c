@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.134 2005/10/10 04:16:13 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.135 2005/10/11 18:30:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -157,16 +157,6 @@ const char* vvp_signal_label(ivl_signal_t sig)
 {
       static char buf[32];
       sprintf(buf, "$%p", sig);
-      return buf;
-}
-
-/*
- * This makes a string suitable for use as a label for memories.
- */
-const char* vvp_memory_label(ivl_memory_t mem)
-{
-      static char buf[32];
-      sprintf(buf, "$%p", mem);
       return buf;
 }
 
@@ -1296,7 +1286,7 @@ static void draw_lpm_ram(ivl_lpm_t net)
 		    net, draw_net_input(clk));
       }
 
-      fprintf(vvp_out, "L_%p .mem/port M_%s, ", net, vvp_memory_label(mem));
+      fprintf(vvp_out, "L_%p .mem/port M_%p, ", net, mem);
 
       pin = ivl_lpm_select(net);
       fprintf(vvp_out, "%s", draw_net_input(pin));
@@ -1921,8 +1911,7 @@ static void draw_mem_in_scope(ivl_memory_t net)
       int last = root + ivl_memory_size(net) - 1;
       int msb = ivl_memory_width(net) - 1;
       int lsb = 0;
-      fprintf(vvp_out, "M_%s .mem \"%s\", %u,%u, %u,%u;\n",
-	      vvp_memory_label(net),
+      fprintf(vvp_out, "M_%p .mem \"%s\", %u,%u, %u,%u;\n", net,
 	      vvp_mangle_name(ivl_memory_basename(net)),
 	      msb, lsb, root, last);
 }
@@ -2021,6 +2010,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.135  2005/10/11 18:30:50  steve
+ *  Remove obsolete vvp_memory_label function.
+ *
  * Revision 1.134  2005/10/10 04:16:13  steve
  *  Remove dead dram_input_from_net and lpm_inputs_a_b
  *

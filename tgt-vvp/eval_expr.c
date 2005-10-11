@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.125 2005/09/19 21:45:36 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.126 2005/10/11 18:30:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1613,8 +1613,8 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
-      fprintf(vvp_out, "   %%load/mv  %u, M_%s, %u;\n",
-	      res.base, vvp_memory_label(mem), swid);
+      fprintf(vvp_out, "   %%load/mv  %u, M_%p, %u;\n",
+	      res.base, mem, swid);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -2168,6 +2168,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.126  2005/10/11 18:30:50  steve
+ *  Remove obsolete vvp_memory_label function.
+ *
  * Revision 1.125  2005/09/19 21:45:36  steve
  *  Spelling patches from Larry.
  *

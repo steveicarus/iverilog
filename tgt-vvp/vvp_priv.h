@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.37 2005/10/10 04:16:13 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.38 2005/10/11 18:30:50 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -43,11 +43,6 @@ extern const char *vvp_mangle_name(const char *);
  * that signal with letters that can be used in a label.
  */
 extern const char* vvp_signal_label(ivl_signal_t sig);
-
-/*
- * This generates a label string for a memory.
- */
-extern const char* vvp_memory_label(ivl_memory_t mem);
 
 extern unsigned width_of_nexus(ivl_nexus_t nex);
 extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);
@@ -233,6 +228,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.38  2005/10/11 18:30:50  steve
+ *  Remove obsolete vvp_memory_label function.
+ *
  * Revision 1.37  2005/10/10 04:16:13  steve
  *  Remove dead dram_input_from_net and lpm_inputs_a_b
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.12 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.13 2005/10/11 18:30:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -212,8 +212,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%s",
-				vvp_memory_label(ivl_expr_memory(expr)));
+			fprintf(vvp_out, ", M_%p", ivl_expr_memory(expr)) ;
 			continue;
 		  }
 		  break;
@@ -292,6 +291,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.13  2005/10/11 18:30:50  steve
+ *  Remove obsolete vvp_memory_label function.
+ *
  * Revision 1.12  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

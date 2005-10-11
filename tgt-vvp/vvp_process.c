@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.117 2005/09/17 01:01:00 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.118 2005/10/11 18:30:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -120,8 +120,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 static void set_to_memory_word(ivl_memory_t mem, unsigned idx,
 			       unsigned bit, unsigned wid)
 {
-      fprintf(vvp_out, "   %%set/mv M_%s, %u, %u;\n",
-	      vvp_memory_label(mem), bit, wid);
+      fprintf(vvp_out, "   %%set/mv M_%p, %u, %u;\n", mem, bit, wid);
 }
 
 static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
@@ -173,8 +172,7 @@ static void assign_to_memory_word(ivl_memory_t mem, unsigned bit,
       assert(wid = ivl_memory_width(mem));
 
       fprintf(vvp_out, "   %%ix/load 0, %u;\n", wid);
-      fprintf(vvp_out, "   %%assign/mv M_%s, %u, %u;\n",
-	      vvp_memory_label(mem), delay, bit);
+      fprintf(vvp_out, "   %%assign/mv M_%p, %u, %u;\n", mem, delay, bit);
 }
 
 /*
@@ -1466,6 +1464,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.118  2005/10/11 18:30:50  steve
+ *  Remove obsolete vvp_memory_label function.
+ *
  * Revision 1.117  2005/09/17 01:01:00  steve
  *  More robust use of precalculated expressions, and
  *  Separate lookaside for written variables that can
