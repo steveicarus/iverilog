@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.175 2005/09/19 15:21:09 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.176 2005/10/11 16:15:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -905,6 +905,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 	// The output is the AND/OR of the two logic values.
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
       osig->local_flag(true);
+      osig->data_type(IVL_VT_LOGIC);
       connect(gate->pin(0), osig->pin(0));
       des->add_node(gate);
       return osig;
@@ -2644,6 +2645,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.176  2005/10/11 16:15:52  steve
+ *  Logical or/and return VT_LOGIC type.
+ *
  * Revision 1.175  2005/09/19 15:21:09  steve
  *  Fix data type of parameters to logic.
  *
