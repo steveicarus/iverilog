@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.38 2005/10/11 18:30:50 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.39 2005/10/12 17:26:17 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -41,6 +41,11 @@ extern const char *vvp_mangle_name(const char *);
 /*
  * This generates a string from a signal that uniquely identifies
  * that signal with letters that can be used in a label.
+ *
+ * NOTE: vvp_signal_label should be removed. All it does is a %p of
+ * the pointer, and return a pointer to a static. The code that wants
+ * to reference a signal needs to use the format V_%p, so the presence
+ * of this function is just plain inconsistent.
  */
 extern const char* vvp_signal_label(ivl_signal_t sig);
 
@@ -85,6 +90,18 @@ extern int draw_vpi_rfunc_call(ivl_expr_t exp);
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
+
+/*
+ * This function is different from draw_net_input in that it will
+ * return a reference to a net as its first choice. This reference
+ * will follow the net value, even if the net is assigned or
+ * forced. The draw_net_input above will return a reference to the
+ * *input* to the net and so will not follow direct assignments to
+ * the net. This function will not return references to local signals,
+ * and will in those cases resort to the net input, or a non-local
+ * signal if one exists for the nexus.
+ */
+extern const char*draw_input_from_net(ivl_nexus_t nex);
 
 /*
  * The draw_eval_expr function writes out the code to evaluate a
@@ -228,6 +245,11 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.39  2005/10/12 17:26:17  steve
+ *  MUX nodes get inputs from nets, not from net inputs,
+ *  Detect and draw alias nodes to reduce net size and
+ *  handle force confusion.
+ *
  * Revision 1.38  2005/10/11 18:30:50  steve
  *  Remove obsolete vvp_memory_label function.
  *

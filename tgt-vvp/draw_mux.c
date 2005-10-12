@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.12 2005/09/01 04:11:37 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.13 2005/10/12 17:26:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -42,9 +42,9 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
       assert(ivl_lpm_selects(net) == 1);
 
       fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,0)));
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,1)));
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_select(net)));
+      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,0)));
+      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,1)));
+      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_select(net)));
       fprintf(vvp_out, ", C4<>;\n");
 }
 
@@ -127,6 +127,11 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.13  2005/10/12 17:26:17  steve
+ *  MUX nodes get inputs from nets, not from net inputs,
+ *  Detect and draw alias nodes to reduce net size and
+ *  handle force confusion.
+ *
  * Revision 1.12  2005/09/01 04:11:37  steve
  *  Generate code to handle real valued muxes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.136 2005/10/11 18:54:10 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.137 2005/10/12 17:26:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -27,6 +27,19 @@
 #endif
 # include  <stdlib.h>
 # include  <string.h>
+
+struct vvp_nexus_data {
+	/* draw_net_input uses this */
+      const char*net_input;
+	/* draw_net_in_scope uses this */
+      ivl_signal_t net;
+};
+
+static struct vvp_nexus_data*new_nexus_data()
+{
+      struct vvp_nexus_data*data = calloc(1, sizeof(struct vvp_nexus_data));
+      return data;
+}
 
 /*
  *  Escape non-symbol chararacters in ids, and quotes in strings.
@@ -158,6 +171,24 @@ const char* vvp_signal_label(ivl_signal_t sig)
       static char buf[32];
       sprintf(buf, "%p", sig);
       return buf;
+}
+
+ivl_signal_t signal_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0)
+		  continue;
+	    if (ivl_signal_local(sig))
+		  continue;
+
+	    return sig;
+
+      }
+
+      return 0;
 }
 
 ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
@@ -768,15 +799,35 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
  */
 const char*draw_net_input(ivl_nexus_t nex)
 {
+      struct vvp_nexus_data*nex_data = (struct vvp_nexus_data*)
+	    ivl_nexus_get_private(nex);
+
 	/* If this nexus already has a label, then its input is
 	   already figured out. Just return the existing label. */
-      char*nex_private = (char*)ivl_nexus_get_private(nex);
-      if (nex_private)
-	    return nex_private;
+      if (nex_data && nex_data->net_input)
+	    return nex_data->net_input;
 
-      nex_private = draw_net_input_x(nex, 0);
-      ivl_nexus_set_private(nex, nex_private);
-      return nex_private;
+      if (nex_data == 0) {
+	    nex_data = new_nexus_data();
+	    ivl_nexus_set_private(nex, nex_data);
+      }
+
+      assert(nex_data->net_input == 0);
+      nex_data->net_input = draw_net_input_x(nex, 0);
+
+      return nex_data->net_input;
+}
+
+const char*draw_input_from_net(ivl_nexus_t nex)
+{
+      static char result[32];
+
+      ivl_signal_t sig = signal_of_nexus(nex);
+      if (sig == 0)
+	    return draw_net_input(nex);
+
+      snprintf(result, sizeof result, "V_%p", sig);
+      return result;
 }
 
 
@@ -819,6 +870,8 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
 
+      struct vvp_nexus_data*nex_data;
+
 	/* Skip the local signal. */
       if (ivl_signal_local(sig))
 	    return;
@@ -827,6 +880,9 @@ static void draw_net_in_scope(ivl_signal_t sig)
       {
 	    ivl_nexus_t nex = ivl_signal_nex(sig);
 	    arg = draw_net_input(nex);
+
+	    nex_data = (struct vvp_nexus_data*)ivl_nexus_get_private(nex);
+	    assert(nex_data);
       }
 
       switch (ivl_signal_data_type(sig)) {
@@ -837,10 +893,21 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    break;
       }
 
-      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d, %s;\n",
-	      vvp_signal_label(sig), datatype_flag,
-	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb, arg);
-
+      if (nex_data->net == 0) {
+	    fprintf(vvp_out, "V_%p .net%s \"%s\", %d, %d, %s;\n",
+		    sig, datatype_flag,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    msb, lsb, arg);
+	    nex_data->net = sig;
+      } else {
+	      /* Detect that this is an alias of nex_data->net. Create
+		 a different kind of node that refers to the alias
+		 source data instead of holding our own data. */
+	    fprintf(vvp_out, "V_%p .alias%s \"%s\", %d, %d, V_%p;\n",
+		    sig, datatype_flag,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    msb, lsb, nex_data->net);
+      }
 }
 
 static void draw_delay(ivl_net_logic_t lptr)
@@ -2010,6 +2077,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.137  2005/10/12 17:26:17  steve
+ *  MUX nodes get inputs from nets, not from net inputs,
+ *  Detect and draw alias nodes to reduce net size and
+ *  handle force confusion.
+ *
  * Revision 1.136  2005/10/11 18:54:10  steve
  *  Remove the $ from signal labels. They do not help.
  *
