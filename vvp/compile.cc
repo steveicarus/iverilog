@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.213 2005/09/20 18:34:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.214 2005/10/12 17:23:15 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -232,7 +232,7 @@ static vvp_net_t*lookup_functor_symbol(const char*label)
       return val.net;
 }
 
-static vvp_net_t* vvp_net_lookup(const char*label)
+vvp_net_t* vvp_net_lookup(const char*label)
 {
         /* First, look to see if the symbol is a vpi object of some
 	   sort. If it is, then get the vvp_ipoint_t pointer out of
@@ -1481,6 +1481,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.214  2005/10/12 17:23:15  steve
+ *  Add alias nodes.
+ *
  * Revision 1.213  2005/09/20 18:34:01  steve
  *  Clean up compiler warnings.
  *

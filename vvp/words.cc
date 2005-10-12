@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.3 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: words.cc,v 1.4 2005/10/12 17:23:16 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -25,31 +25,11 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
+# include  <iostream>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
 # include  <assert.h>
-
-#if 0
-void compile_word(char*label, char*type, char*name)
-{
-      assert(strcmp(type, "real") == 0);
-      free(type);
-
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real;
-      vvp_net_t*net = new vvp_net_t;
-      net->fun = fun;
-      define_functor_symbol(label, net);
-
-      vpiHandle obj = vpip_make_real_var(name, net);
-      free(name);
-
-      compile_vpi_symbol(label, obj);
-      free(label);
-
-      vpip_attach_to_current_scope(obj);
-}
-#endif
 
 void compile_var_real(char*label, char*name, int msb, int lsb)
 {
@@ -155,8 +135,55 @@ void compile_net_real(char*label, char*name, int msb, int lsb,
       free(argv);
 }
 
+void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
+		 unsigned argc, struct symb_s*argv)
+{
+      assert(argc == 1);
+
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+
+	/* Add the label into the functor symbol table. */
+      define_functor_symbol(label, node);
+
+
+	/* Make the vpiHandle for the reg. */
+      vpiHandle obj = vpip_make_net(name, node);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
+
+      free(label);
+      free(name);
+      free(argv[0].text);
+      free(argv);
+}
+
+void compile_alias_real(char*label, char*name, int msb, int lsb,
+		      unsigned argc, struct symb_s*argv)
+{
+      assert(argc == 1);
+
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+
+	/* Add the label into the functor symbol table. */
+      define_functor_symbol(label, node);
+
+
+	/* Make the vpiHandle for the reg. */
+      vpiHandle obj = vpip_make_real_var(name, msb, lsb, signed_flag, node);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
+
+      free(label);
+      free(name);
+      free(argv[0].text);
+      free(argv);
+}
+
 /*
  * $Log: words.cc,v $
+ * Revision 1.4  2005/10/12 17:23:16  steve
+ *  Add alias nodes.
+ *
  * Revision 1.3  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

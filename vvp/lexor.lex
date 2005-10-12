@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.55 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.56 2005/10/12 17:23:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -83,6 +83,9 @@
 
 
   /* These are some keywords that are recognized. */
+".alias"      { return K_ALIAS; }
+".alias/real" { return K_ALIAS_R; }
+".alias/s"    { return K_ALIAS_S; }
 ".arith/div"    { return K_ARITH_DIV; }
 ".arith/div.r"  { return K_ARITH_DIV_R; }
 ".arith/div.s"  { return K_ARITH_DIV_S; }
@@ -199,6 +202,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.56  2005/10/12 17:23:15  steve
+ *  Add alias nodes.
+ *
  * Revision 1.55  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

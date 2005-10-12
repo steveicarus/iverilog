@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.75 2005/07/14 23:34:19 steve Exp $"
+#ident "$Id: compile.h,v 1.76 2005/10/12 17:23:15 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -60,11 +60,13 @@ extern void input_connect(vvp_net_t*fdx, unsigned port, char*label);
 extern void wide_inputs_connect(vvp_wide_fun_core*core,
 				unsigned argc, struct symb_s*argv);
 
+extern vvp_net_t* vvp_net_lookup(const char*label);
 
 /*
  *  Add a functor to the symbol table
  */
 extern void define_functor_symbol(const char*label, vvp_net_t*ipt);
+
 
 /*
  * This is a count of errors encountered during compilation. If this
@@ -325,8 +327,18 @@ extern void compile_net_real(char*label, char*name,
 			     int msb, int lsb,
 			     unsigned argc, struct symb_s*argv);
 
+extern void compile_alias(char*label, char*name,
+			  int msb, int lsb, bool signed_flag,
+			  unsigned argc, struct symb_s*argv);
+extern void compile_alias_real(char*label, char*name,
+			       int msb, int lsb,
+			       unsigned argc, struct symb_s*argv);
+
 /*
  * $Log: compile.h,v $
+ * Revision 1.76  2005/10/12 17:23:15  steve
+ *  Add alias nodes.
+ *
  * Revision 1.75  2005/07/14 23:34:19  steve
  *  gcc4 compile errors.
  *

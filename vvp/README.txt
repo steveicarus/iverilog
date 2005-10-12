@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.71 2005/09/19 21:45:36 steve Exp $
+ *  $Id: README.txt,v 1.72 2005/10/12 17:23:15 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -279,9 +279,11 @@ it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
 exactly the same as the .var statement:
 
-	<label> .net   "name", <msb>, <lsb>, <symbol>;
-	<label> .net/s "name", <msb>, <lsb>, <symbol>;
+	<label> .net      "name", <msb>, <lsb>, <symbol>;
+	<label> .net/s    "name", <msb>, <lsb>, <symbol>;
 	<label> .net/real "name", <msb>, <lsb>, <symbol>;
+	<label> .alias    "name", <msb>, <lsb>, <symbol>;
+
 
 Like a .var statement, the .net statement creates a VPI object with
 the basename and dimensions given as parameters. The symbol is a
@@ -304,6 +306,9 @@ references to net and reg objects are done through the .net label
 instead of a general functor symbol. The instruction stores the
 functor pointer, though.
 
+The .alias statements do not create new nodes, but instead create net
+names that are aliases of an existing node. This handles special cases
+where a net has different names, possibly in different scopes.
 
 MEMORY STATEMENTS:
 

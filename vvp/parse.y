@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.77 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: parse.y,v 1.78 2005/10/12 17:23:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -56,7 +56,7 @@ extern FILE*yyin;
       vvp_delay_t*cdelay;
 };
 
-
+%token K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
 %token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
@@ -463,6 +463,18 @@ statement
 	  ',' symbols_net ';'
 		{ compile_net_real($1, $3, $5, $7, $9.cnt, $9.vect); }
 
+	| T_LABEL K_ALIAS T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_alias($1, $3, $5, $7, false, $9.cnt, $9.vect); }
+
+        | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_alias($1, $3, $5, $7, true, $9.cnt, $9.vect); }
+
+        | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_alias_real($1, $3, $5, $7, $9.cnt, $9.vect); }
+
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 
@@ -701,6 +713,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.78  2005/10/12 17:23:15  steve
+ *  Add alias nodes.
+ *
  * Revision 1.77  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *
