@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.4 2005/10/12 17:23:16 steve Exp $"
+#ident "$Id: words.cc,v 1.5 2005/10/12 17:28:07 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -147,7 +147,7 @@ void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, node);
+      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -169,7 +169,7 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_real_var(name, msb, lsb, signed_flag, node);
+      vpiHandle obj = vpip_make_real_var(name, node);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -181,6 +181,9 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 /*
  * $Log: words.cc,v $
+ * Revision 1.5  2005/10/12 17:28:07  steve
+ *  Fix compile of net/real aliases.
+ *
  * Revision 1.4  2005/10/12 17:23:16  steve
  *  Add alias nodes.
  *
