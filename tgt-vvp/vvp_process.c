@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.118 2005/10/11 18:30:50 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.119 2005/10/12 17:26:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -744,12 +744,16 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
 	    unsigned use_wid;
 
+	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
+
+	      /* Do not support bit or part selects of l-values yet. */
 	    assert(ivl_lval_mux(lval) == 0);
 	    assert(ivl_lval_part_off(lval) == 0);
+	    assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
 
 	    use_wid = ivl_signal_width(lsig);
-	    assert(roff + use_wid <= rvec.wid);
+	    assert((roff + use_wid) <= rvec.wid);
 
 	    fprintf(vvp_out, "  %s V_%s, %u, %u;\n", command_name,
 		    vvp_signal_label(lsig), rvec.base+roff, use_wid);
@@ -1464,6 +1468,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.119  2005/10/12 17:26:01  steve
+ *  force l-values do not support bit/part select.
+ *
  * Revision 1.118  2005/10/11 18:30:50  steve
  *  Remove obsolete vvp_memory_label function.
  *
