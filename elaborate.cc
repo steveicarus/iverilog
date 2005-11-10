@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.330 2005/09/27 04:51:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.331 2005/11/10 13:28:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -587,7 +587,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Instantiate module "
-		 << rmod->mod_name() << " With instance name "
+		 << rmod->mod_name() << " with instance name "
 		 << get_name() << " in scope " << scope->name() << endl;
       }
 
@@ -3028,6 +3028,13 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.331  2005/11/10 13:28:11  steve
+ *  Reorganize signal part select handling, and add support for
+ *  indexed part selects.
+ *
+ *  Expand expression constant propagation to eliminate extra
+ *  sums in certain cases.
+ *
  * Revision 1.330  2005/09/27 04:51:37  steve
  *  Error message for invalid for-loop index variable.
  *

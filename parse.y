@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.206 2005/10/04 04:09:25 steve Exp $"
+#ident "$Id: parse.y,v 1.207 2005/11/10 13:28:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -985,6 +985,7 @@ expr_primary
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
+		  tmp->sel_ = PEIdent::SEL_BIT;
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -1455,6 +1456,7 @@ lavalue
 		  } else {
 			tmp->msb_ = sel;
 		  }
+		  tmp->sel_ = PEIdent::SEL_BIT;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -1465,6 +1467,7 @@ lavalue
 		  assert($2->count() == 2);
 		  tmp->msb_ = (*$2)[0];
 		  tmp->lsb_ = (*$2)[1];
+		  tmp->sel_ = PEIdent::SEL_PART;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;

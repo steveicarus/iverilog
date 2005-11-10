@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.98 2005/10/04 04:09:25 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.99 2005/11/10 13:28:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -504,157 +504,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
-      if (net != 0) {
+      if (net != 0)
+	    return elaborate_expr_net(des, scope, net, found_in);
 
-	      // If this is a part select of a signal, then make a new
-	      // temporary signal that is connected to just the
-	      // selected bits. The lsb_ and msb_ expressions are from
-	      // the foo[msb:lsb] expression in the original.
-	    if (lsb_) {
-		  assert(msb_);
-		  assert(sel_ == SEL_PART);
-		  verinum*lsn = lsb_->eval_const(des, scope);
-		  verinum*msn = msb_->eval_const(des, scope);
-		  if ((lsn == 0) || (msn == 0)) {
-			cerr << get_line() << ": error: "
-			      "Part select expressions must be "
-			      "constant expressions." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-
-		  assert(lsn);
-		  assert(msn);
-
-		    /* The indices of part selects are signed
-		       integers, so allow negative values. However,
-		       the width that they represent is
-		       unsigned. Remember that any order is possible,
-		       i.e., [1:0], [-4,6], etc. */
-
-		  long lsv = lsn->as_long();
-		  long msv = msn->as_long();
-		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
-		  if (wid > net->vector_width()) {
-			cerr << get_line() << ": error: part select ["
-			     << msv << ":" << lsv << "] out of range."
-			     << endl;
-			des->errors += 1;
-			delete lsn;
-			delete msn;
-			return 0;
-		  }
-		  assert(wid <= net->vector_width());
-
-		  if (net->sb_to_idx(msv) < net->sb_to_idx(lsv)) {
-			cerr << get_line() << ": error: part select ["
-			     << msv << ":" << lsv << "] out of order."
-			     << endl;
-			des->errors += 1;
-			delete lsn;
-			delete msn;
-			return 0;
-		  }
-
-
-		  if (net->sb_to_idx(msv) >= net->vector_width()) {
-			cerr << get_line() << ": error: part select ["
-			     << msv << ":" << lsv << "] out of range."
-			     << endl;
-			des->errors += 1;
-			delete lsn;
-			delete msn;
-			return 0;
-		  }
-
-		  NetESignal*tmp = new NetESignal(net);
-		  tmp->set_line(*this);
-
-		    // If the part select convers exactly the entire
-		    // vector, then do not bother with it. Return the
-		    // signal itself.
-		  if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
-			return tmp;
-
-		  NetExpr*ex = new NetEConst(verinum(net->sb_to_idx(lsv)));
-		  NetESelect*ss = new NetESelect(tmp, ex, wid);
-		  ss->set_line(*this);
-
-		  return ss;
-	    }
-
-	      // If the bit select is constant, then treat it similar
-	      // to the part select, so that I save the effort of
-	      // making a mux part in the netlist.
-	    verinum*msn;
-	    if (msb_ && (msn = msb_->eval_const(des, scope))) {
-		  assert(idx_ == 0);
-		  long msv = msn->as_long();
-		  unsigned idx = net->sb_to_idx(msv);
-
-		  if (idx >= net->vector_width()) {
-			  /* The bit select is out of range of the
-			     vector. This is legal, but returns a
-			     constant 1'bx value. */
-			verinum x (verinum::Vx);
-			NetEConst*tmp = new NetEConst(x);
-			tmp->set_line(*this);
-
-			cerr << get_line() << ": warning: Bit select ["
-			     << msv << "] out of range of vector "
-			     << net->name() << "[" << net->msb()
-			     << ":" << net->lsb() << "]." << endl;
-			cerr << get_line() << ":        : Replacing "
-			     << "expression with a constant 1'bx." << endl;
-			delete msn;
-			return tmp;
-		  }
-
-		  NetESignal*tmp = new NetESignal(net);
-		  tmp->set_line(*this);
-		    // If the vector is only one bit, we are done. The
-		    // bit select will return the scaler itself.
-		  if (net->vector_width() == 1)
-			return tmp;
-
-		    // Make an expression out of the index
-		  NetEConst*idx_c = new NetEConst(verinum(idx));
-		  idx_c->set_line(*net);
-
-		    // Make a bit select with the canonical index
-		  NetESelect*res = new NetESelect(tmp, idx_c, 1);
-		  res->set_line(*net);
-
-		  return res;
-	    }
-
-	    NetESignal*node = new NetESignal(net);
-	    assert(idx_ == 0);
-
-	      // Non-constant bit select? punt and make a subsignal
-	      // device to mux the bit in the net. This is a fairly
-	      // complicated task because we need to generate
-	      // expressions to convert calculated bit select
-	      // values to canonical values that are used internally.
-	    if (msb_) {
-		  NetExpr*ex = msb_->elaborate_expr(des, scope);
-
-		  if (net->msb() < net->lsb()) {
-			ex = make_sub_expr(net->lsb(), ex);
-		  } else {
-			ex = make_add_expr(ex, - net->lsb());
-		  }
-
-		  NetESelect*ss = new NetESelect(node, ex, 1);
-		  ss->set_line(*this);
-		  return ss;
-	    }
-
-	      // All else fails, return the signal itself as the
-	      // expression.
-	    assert(msb_ == 0);
-	    return node;
-      }
 
 	// If the identifier names a memory, then this is a
 	// memory reference and I must generate a NetEMemory
@@ -915,6 +767,291 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
       return tmp;
 }
 
+/*
+ * Handle part selects of NetNet identifiers.
+ */
+NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
+					   NetNet*net, NetScope*found_in)const
+{
+      assert(lsb_ != 0);
+      assert(msb_ != 0);
+      assert(idx_ == 0);
+
+      verinum*lsn = lsb_->eval_const(des, scope);
+      verinum*msn = msb_->eval_const(des, scope);
+      if ((lsn == 0) || (msn == 0)) {
+	    cerr << get_line() << ": error: "
+		  "Part select expressions must be "
+		  "constant expressions." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(lsn);
+      assert(msn);
+
+	/* The indices of part selects are signed integers, so allow
+	   negative values. However, the width that they represent is
+	   unsigned. Remember that any order is possible,
+	   i.e., [1:0], [-4:6], etc. */
+
+      long lsv = lsn->as_long();
+      long msv = msn->as_long();
+      unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
+      if (wid > net->vector_width()) {
+	    cerr << get_line() << ": error: part select ["
+		 << msv << ":" << lsv << "] out of range." << endl;
+	    des->errors += 1;
+	    delete lsn;
+	    delete msn;
+	    return 0;
+      }
+      assert(wid <= net->vector_width());
+
+      if (net->sb_to_idx(msv) < net->sb_to_idx(lsv)) {
+	    cerr << get_line() << ": error: part select ["
+		 << msv << ":" << lsv << "] out of order." << endl;
+	    des->errors += 1;
+	    delete lsn;
+	    delete msn;
+	    return 0;
+      }
+
+
+      if (net->sb_to_idx(msv) >= net->vector_width()) {
+	    cerr << get_line() << ": error: part select ["
+		 << msv << ":" << lsv << "] out of range." << endl;
+	    des->errors += 1;
+	    delete lsn;
+	    delete msn;
+	    return 0;
+      }
+
+      NetESignal*tmp = new NetESignal(net);
+      tmp->set_line(*this);
+
+	// If the part select convers exactly the entire
+	// vector, then do not bother with it. Return the
+	// signal itself.
+      if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+	    return tmp;
+
+      NetExpr*ex = new NetEConst(verinum(net->sb_to_idx(lsv)));
+      NetESelect*ss = new NetESelect(tmp, ex, wid);
+      ss->set_line(*this);
+
+      return ss;
+}
+
+/*
+ * Part select indexed up, i.e. net[<m> +: <l>]
+ */
+NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
+					   NetNet*net, NetScope*found_in)const
+{
+      assert(lsb_ != 0);
+      assert(msb_ != 0);
+      assert(idx_ == 0);
+
+      NetESignal*sig = new NetESignal(net);
+      sig->set_line(*this);
+
+      NetExpr*base = elab_and_eval(des, scope, msb_);
+
+      NetExpr*wid_e = elab_and_eval(des, scope, lsb_);
+      NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
+      if (wid_c == 0) {
+	    cerr << get_line() << ": error: Width of indexed part select "
+		 << "must be constant." << endl;
+	    cerr << get_line() << ":      : Width expression is: "
+		 << *wid_e << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(wid_c != 0);
+      long wid = wid_c->value().as_long();
+
+	// Handle the special case that the base is constant as
+	// well. In this case it can be converted to a conventional
+	// part select.
+      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+	    long lsv = base_c->value().as_long();
+
+	      // If the part select convers exactly the entire
+	      // vector, then do not bother with it. Return the
+	      // signal itself.
+	    if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+		  return sig;
+      }
+
+      NetESelect*ss = new NetESelect(sig, base, wid);
+      ss->set_line(*this);
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate part "
+		 << "select base="<< *base << ", wid="<< wid << endl;
+      }
+
+      return ss;
+}
+
+/*
+ * Part select up, i.e. net[<m> +: <l>]
+ */
+NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
+					   NetNet*net, NetScope*found_in)const
+{
+      assert(lsb_ != 0);
+      assert(msb_ != 0);
+      assert(idx_ == 0);
+
+      NetESignal*sig = new NetESignal(net);
+      sig->set_line(*this);
+
+      NetExpr*base = elab_and_eval(des, scope, msb_);
+
+      NetExpr*wid_e = elab_and_eval(des, scope, lsb_);
+      NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
+      if (wid_c == 0) {
+	    cerr << get_line() << ": error: Width of indexed part select "
+		 << "must be constant." << endl;
+	    cerr << get_line() << ":      : Width expression is: "
+		 << *wid_e << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(wid_c != 0);
+      long wid = wid_c->value().as_long();
+
+	// Handle the special case that the base is constant as
+	// well. In this case it can be converted to a conventional
+	// part select.
+      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+	    long lsv = base_c->value().as_long();
+
+	      // If the part select convers exactly the entire
+	      // vector, then do not bother with it. Return the
+	      // signal itself.
+	    if (net->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
+		  return sig;
+      }
+
+      NetExpr*base_adjusted = wid > 1? make_add_expr(base,1-wid) : base;
+      NetESelect*ss = new NetESelect(sig, base_adjusted, wid);
+      ss->set_line(*this);
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate part "
+		 << "select base="<< *base << ", wid="<< wid << endl;
+      }
+
+      return ss;
+}
+
+NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
+					  NetNet*net, NetScope*found_in) const
+{
+      assert(msb_ != 0);
+      assert(lsb_ == 0);
+      assert(idx_ == 0);
+
+	// If the bit select is constant, then treat it similar
+	// to the part select, so that I save the effort of
+	// making a mux part in the netlist.
+      if (verinum*msn = msb_->eval_const(des, scope)) {
+	    long msv = msn->as_long();
+	    unsigned idx = net->sb_to_idx(msv);
+
+	    if (idx >= net->vector_width()) {
+		    /* The bit select is out of range of the
+		       vector. This is legal, but returns a
+		       constant 1'bx value. */
+		  verinum x (verinum::Vx);
+		  NetEConst*tmp = new NetEConst(x);
+		  tmp->set_line(*this);
+
+		  cerr << get_line() << ": warning: Bit select ["
+		       << msv << "] out of range of vector "
+		       << net->name() << "[" << net->msb()
+		       << ":" << net->lsb() << "]." << endl;
+		  cerr << get_line() << ":        : Replacing "
+		       << "expression with a constant 1'bx." << endl;
+		  delete msn;
+		  return tmp;
+	    }
+
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	      // If the vector is only one bit, we are done. The
+	      // bit select will return the scaler itself.
+	    if (net->vector_width() == 1)
+		  return tmp;
+
+	      // Make an expression out of the index
+	    NetEConst*idx_c = new NetEConst(verinum(idx));
+	    idx_c->set_line(*net);
+
+	      // Make a bit select with the canonical index
+	    NetESelect*res = new NetESelect(tmp, idx_c, 1);
+	    res->set_line(*net);
+
+	    return res;
+      }
+
+      NetESignal*node = new NetESignal(net);
+
+	// Non-constant bit select? punt and make a subsignal
+	// device to mux the bit in the net. This is a fairly
+	// complicated task because we need to generate
+	// expressions to convert calculated bit select
+	// values to canonical values that are used internally.
+      NetExpr*ex = msb_->elaborate_expr(des, scope);
+
+      if (net->msb() < net->lsb()) {
+	    ex = make_sub_expr(net->lsb(), ex);
+      } else {
+	    ex = make_add_expr(ex, - net->lsb());
+      }
+
+      NetESelect*ss = new NetESelect(node, ex, 1);
+      ss->set_line(*this);
+      return ss;
+}
+
+NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
+				     NetNet*net, NetScope*found_in) const
+{
+	// If this is a part select of a signal, then make a new
+	// temporary signal that is connected to just the
+	// selected bits. The lsb_ and msb_ expressions are from
+	// the foo[msb:lsb] expression in the original.
+      if (sel_ == SEL_PART)
+	    return elaborate_expr_net_part_(des, scope, net, found_in);
+
+      if (sel_ == SEL_BIT)
+	    return elaborate_expr_net_bit_(des, scope, net, found_in);
+
+      if (sel_ == SEL_IDX_UP)
+	    return elaborate_expr_net_idx_up_(des, scope, net, found_in);
+
+      if (sel_ == SEL_IDX_DO)
+	    return elaborate_expr_net_idx_do_(des, scope, net, found_in);
+
+	// It's not anything else, so this must be a simple identifier
+	// expression with no part or bit select. Return the signal
+	// itself as the expression.
+      assert(sel_ == SEL_NONE);
+      assert(msb_ == 0);
+      assert(lsb_ == 0);
+      assert(idx_ == 0);
+
+      NetESignal*node = new NetESignal(net);
+      node->set_line(*this);
+      return node;
+}
+
 NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, bool) const
 {
       assert(value_);
@@ -1091,6 +1228,13 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.99  2005/11/10 13:28:11  steve
+ *  Reorganize signal part select handling, and add support for
+ *  indexed part selects.
+ *
+ *  Expand expression constant propagation to eliminate extra
+ *  sums in certain cases.
+ *
  * Revision 1.98  2005/10/04 04:09:25  steve
  *  Add support for indexed select attached to parameters.
  *

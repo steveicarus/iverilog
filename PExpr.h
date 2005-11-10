@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.71 2005/10/04 04:09:25 steve Exp $"
+#ident "$Id: PExpr.h,v 1.72 2005/11/10 13:28:11 steve Exp $"
 #endif
 
 # include  <string>
@@ -255,6 +255,26 @@ class PEIdent : public PExpr {
       NetExpr*elaborate_expr_param(Design*des,
 				   NetScope*scope,
 				   const NetExpr*par,
+				   NetScope*found) const;
+      NetExpr*elaborate_expr_net(Design*des,
+				   NetScope*scope,
+				   NetNet*net,
+				   NetScope*found) const;
+      NetExpr*elaborate_expr_net_part_(Design*des,
+				   NetScope*scope,
+				   NetNet*net,
+				   NetScope*found) const;
+      NetExpr*elaborate_expr_net_idx_up_(Design*des,
+				   NetScope*scope,
+				   NetNet*net,
+				   NetScope*found) const;
+      NetExpr*elaborate_expr_net_idx_do_(Design*des,
+				   NetScope*scope,
+				   NetNet*net,
+				   NetScope*found) const;
+      NetExpr*elaborate_expr_net_bit_(Design*des,
+				   NetScope*scope,
+				   NetNet*net,
 				   NetScope*found) const;
       hname_t path_;
 
@@ -523,6 +543,13 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.72  2005/11/10 13:28:11  steve
+ *  Reorganize signal part select handling, and add support for
+ *  indexed part selects.
+ *
+ *  Expand expression constant propagation to eliminate extra
+ *  sums in certain cases.
+ *
  * Revision 1.71  2005/10/04 04:09:25  steve
  *  Add support for indexed select attached to parameters.
  *

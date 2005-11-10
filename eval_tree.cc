@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.65 2005/09/14 02:53:14 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.66 2005/11/10 13:28:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,26 +55,64 @@ NetEConst* NetEBAdd::eval_tree()
 {
       eval_sub_tree_();
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-      if (rc == 0) return 0;
 
-      verinum lval = lc->value();
-      verinum rval = rc->value();
+	/* If both operands are constant, then replace the entire
+	   expression with a constant value. */
+      if (lc != 0 && rc != 0) {
+	    verinum lval = lc->value();
+	    verinum rval = rc->value();
 
-      verinum val;
-      switch (op_) {
-	  case '+':
-	    val = lval + rval;
-	    break;
-	  case '-':
-	    val = lval - rval;
-	    break;
-	  default:
+	    verinum val;
+	    switch (op_) {
+		case '+':
+		  val = lval + rval;
+		  break;
+		case '-':
+		  val = lval - rval;
+		  break;
+		default:
+		  return 0;
+	    }
+
+	    return new NetEConst(val);
+      }
+
+	/* Try to combine a right constant value with the right
+	   constant value of a sub-expression add. For example, the
+	   expression (a + 2) - 1 can be rewritten as a + 1. */
+
+      NetEBAdd*se = dynamic_cast<NetEBAdd*>(left_);
+      lc = se? dynamic_cast<NetEConst*>(se->right_) : 0;
+
+      if (lc != 0 && rc != 0) {
+	    assert(se != 0);
+	    verinum lval = lc->value();
+	    verinum rval = rc->value();
+
+	    verinum val;
+	    if (op_ == se->op_) {
+		    /* (a + lval) + rval  --> a + (rval+lval) */
+		    /* (a - lval) - rval  --> a - (rval+lval) */
+		  val = rval + lval;
+	    } else {
+		    /* (a - lval) + rval  -->  a + (rval-lval) */
+		    /* (a + lval) - rval  -->  a - (rval-lval) */
+		  val = rval - lval;
+	    }
+
+	    NetEConst*tmp = new NetEConst(val);
+	    left_ = se->left_->dup_expr();
+	    delete se;
+	    delete right_;
+	    right_ = tmp;
+	      /* We've changed the subexpression, but the result is
+		 still not constant, so return nil here anyhow. */
 	    return 0;
       }
 
-      return new NetEConst(val);
+	/* Nothing more to be done, the value is not constant. */
+      return 0;
 }
 
 NetEConst* NetEBBits::eval_tree()
@@ -1561,6 +1599,13 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.66  2005/11/10 13:28:12  steve
+ *  Reorganize signal part select handling, and add support for
+ *  indexed part selects.
+ *
+ *  Expand expression constant propagation to eliminate extra
+ *  sums in certain cases.
+ *
  * Revision 1.65  2005/09/14 02:53:14  steve
  *  Support bool expressions and compares handle them optimally.
  *
