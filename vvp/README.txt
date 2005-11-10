@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.72 2005/10/12 17:23:15 steve Exp $
+ *  $Id: README.txt,v 1.73 2005/11/10 13:25:31 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -149,6 +149,14 @@ typically lost as it passes through functors.
 Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of
 combining up to four inputs down to one output.
+
+- MUXZ
+
+     Q | A  B  S  n/a
+     --+-------------
+     A | *  *  0
+     B | *  *  1
+
 
 DFF STATEMENTS:
 
