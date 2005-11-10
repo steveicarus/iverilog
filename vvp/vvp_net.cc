@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.46 2005/10/04 04:41:07 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.47 2005/11/10 13:27:16 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -622,8 +622,7 @@ vvp_vector2_t::vvp_vector2_t(unsigned long v, unsigned wid)
 vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
 {
       wid_ = that.size();
-      const unsigned bits_per_word = 8 * sizeof(vec_[0]);
-      const unsigned words = (that.size() + bits_per_word-1) / bits_per_word;
+      const unsigned words = (that.size() + BITS_PER_WORD-1) / BITS_PER_WORD;
 
       if (words == 0) {
 	    vec_ = 0;
@@ -636,8 +635,8 @@ vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
 	    vec_[idx] = 0;
 
       for (unsigned idx = 0 ;  idx < that.size() ;  idx += 1) {
-	    unsigned addr = idx / bits_per_word;
-	    unsigned shift = idx % bits_per_word;
+	    unsigned addr = idx / BITS_PER_WORD;
+	    unsigned shift = idx % BITS_PER_WORD;
 
 	    switch (that.value(idx)) {
 		case BIT4_0:
@@ -652,6 +651,207 @@ vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
 		  return;
 	    }
       }
+}
+
+void vvp_vector2_t::copy_from_that_(const vvp_vector2_t&that)
+{
+      wid_ = that.wid_;
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      if (words == 0) {
+	    vec_ = 0;
+	    wid_ = 0;
+	    return;
+      }
+
+      vec_ = new unsigned long[words];
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    vec_[idx] = that.vec_[idx];
+}
+
+vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that)
+{
+      copy_from_that_(that);
+}
+
+vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that, unsigned newsize)
+{
+      wid_ = newsize;
+      if (newsize == 0) {
+	    vec_ = 0;
+	    return;
+      }
+
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+      const unsigned twords = (that.wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      vec_ = new unsigned long[words];
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    if (idx < twords)
+		  vec_[idx] = that.vec_[idx];
+	    else
+		  vec_[idx] = 0;
+      }
+}
+
+vvp_vector2_t& vvp_vector2_t::operator= (const vvp_vector2_t&that)
+{
+      if (this == &that)
+	    return *this;
+
+      if (vec_) {
+	    delete[]vec_;
+	    vec_ = 0;
+      }
+
+      copy_from_that_(that);
+      return *this;
+}
+
+vvp_vector2_t& vvp_vector2_t::operator <<= (unsigned int shift)
+{
+      if (wid_ == 0)
+	    return *this;
+
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+	// Number of words to shift
+      const unsigned wshift = shift / BITS_PER_WORD;
+	// bits to shift within each word.
+      const unsigned long oshift = shift % BITS_PER_WORD;
+
+	// If shifting the entire value away, then return zeros.
+      if (wshift >= words) {
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+		  vec_[idx] = 0;
+
+	    return *this;
+      }
+
+	// Do the word shift first.
+      if (wshift > 0) {
+	    for (unsigned idx = 0 ;  idx < words-wshift ;  idx += 1) {
+		  unsigned sel = words - idx - 1;
+		  vec_[sel] = vec_[sel-wshift];
+	    }
+
+	    for (unsigned idx = 0 ;  idx < wshift ;  idx += 1)
+		  vec_[idx] = 0;
+      }
+
+	// Do the fine shift.
+      if (oshift != 0) {
+	    unsigned long pad = 0;
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+		  unsigned long next_pad = vec_[idx] >> (BITS_PER_WORD-oshift);
+		  vec_[idx] = (vec_[idx] << oshift) | pad;
+		  pad = next_pad;
+	    }
+
+	      // Cleanup the tail bits.
+	    unsigned long mask = -1UL >> (BITS_PER_WORD - wid_%BITS_PER_WORD);
+	    vec_[words-1] &= mask;
+      }
+
+      return *this;
+}
+
+vvp_vector2_t& vvp_vector2_t::operator >>= (unsigned shift)
+{
+      if (wid_ == 0)
+	    return *this;
+
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+	// Number of words to shift
+      const unsigned wshift = shift / BITS_PER_WORD;
+	// bits to shift within each word.
+      const unsigned long oshift = shift % BITS_PER_WORD;
+
+	// If shifting the entire value away, then return zeros.
+      if (wshift >= words) {
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+		  vec_[idx] = 0;
+
+	    return *this;
+      }
+
+      if (wshift > 0) {
+	    for (unsigned idx = 0 ;  idx < words-wshift ;  idx += 1)
+		  vec_[idx] = vec_[idx+wshift];
+
+	    for (unsigned idx = words-wshift ;  idx < words ;  idx += 1)
+		  vec_[idx] = 0;
+      }
+
+      if (oshift > 0) {
+	    unsigned long pad = 0;
+	    for (unsigned idx = words ;  idx > 0 ;  idx -= 1) {
+		  unsigned long new_pad = vec_[idx-1] <<(BITS_PER_WORD-oshift);
+		  vec_[idx-1] = pad | (vec_[idx-1] >> oshift);
+		  pad = new_pad;
+	    }
+
+	      // Cleanup the tail bits.
+	    unsigned long mask = -1UL >> (BITS_PER_WORD - wid_%BITS_PER_WORD);
+	    vec_[words-1] &= mask;
+      }
+
+      return *this;
+}
+
+static unsigned long add_carry(unsigned long a, unsigned long b,
+			       unsigned long&carry)
+{
+      unsigned long out = carry;
+      carry = 0;
+
+      if ((ULONG_MAX - out) < a)
+	    carry += 1;
+      out += a;
+
+      if ((ULONG_MAX - out) < b)
+	    carry += 1;
+      out += b;
+
+      return out;
+}
+
+vvp_vector2_t& vvp_vector2_t::operator += (const vvp_vector2_t&that)
+{
+      assert(wid_ == that.wid_);
+      if (wid_ == 0)
+	    return *this;
+
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      unsigned long carry = 0;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    vec_[idx] = add_carry(vec_[idx], that.vec_[idx], carry);
+      }
+
+
+	// Cleanup the tail bits.
+      unsigned long mask = -1UL >> (BITS_PER_WORD - wid_%BITS_PER_WORD);
+      vec_[words-1] &= mask;
+
+      return *this;
+}
+
+vvp_vector2_t& vvp_vector2_t::operator -= (const vvp_vector2_t&that)
+{
+      assert(wid_ == that.wid_);
+      if (wid_ == 0)
+	    return *this;
+
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      unsigned long carry = 1;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    vec_[idx] = add_carry(vec_[idx], ~that.vec_[idx], carry);
+      }
+
+      return *this;
 }
 
 vvp_vector2_t::~vvp_vector2_t()
@@ -682,23 +882,6 @@ int vvp_vector2_t::value(unsigned idx) const
 bool vvp_vector2_t::is_NaN() const
 {
       return wid_ == 0;
-}
-
-static unsigned long add_carry(unsigned long a, unsigned long b,
-			       unsigned long&carry)
-{
-      unsigned long out = carry;
-      carry = 0;
-
-      if ((ULONG_MAX - out) < a)
-	    carry += 1;
-      out += a;
-
-      if ((ULONG_MAX - out) < b)
-	    carry += 1;
-      out += b;
-
-      return out;
 }
 
 static void multiply_long(unsigned long a, unsigned long b,
@@ -784,6 +967,117 @@ vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
       return r;
 }
 
+static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
+		     vvp_vector2_t&quotient, vvp_vector2_t&remainder)
+{
+
+      quotient = vvp_vector2_t(0, dividend.size());
+
+      if (dividend < divisor) {
+	    remainder = dividend;
+	    return;
+      }
+
+      vvp_vector2_t mask (1, dividend.size());
+
+      vvp_vector2_t divtmp (divisor, dividend.size());
+
+      while (divtmp < dividend) {
+	    divtmp <<= 1;
+	    mask <<= 1;
+      }
+
+      while (dividend > divisor) {
+	    if (divtmp <= dividend) {
+		  dividend -= divtmp;
+		  quotient += mask;
+	    }
+
+	    divtmp >>= 1;
+	    mask >>= 1;
+      }
+
+      remainder = dividend;
+}
+
+vvp_vector2_t operator / (const vvp_vector2_t&dividend,
+			  const vvp_vector2_t&divisor)
+{
+      vvp_vector2_t quot, rem;
+      div_mod(dividend, divisor, quot, rem);
+      return quot;
+}
+
+vvp_vector2_t operator % (const vvp_vector2_t&dividend,
+			  const vvp_vector2_t&divisor)
+{
+      vvp_vector2_t quot, rem;
+      div_mod(dividend, divisor, quot, rem);
+      return rem;
+}
+
+bool operator > (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+      const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+      const unsigned bwords = (b.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+
+      const unsigned words = awords > bwords? awords : bwords;
+
+      for (unsigned idx = words ;  idx > 0 ;  idx -= 1) {
+	    unsigned long aw = (idx <= awords)? a.vec_[idx-1] : 0;
+	    unsigned long bw = (idx <= bwords)? b.vec_[idx-1] : 0;
+
+	    if (aw > bw)
+		  return true;
+	    if (aw < bw)
+		  return false;
+      }
+
+	// If the above loop finishes, then the vectors are equal.
+      return false;
+}
+
+bool operator < (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+      const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+      const unsigned bwords = (b.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+
+      unsigned words = awords;
+      if (bwords > words)
+	    words = bwords;
+
+      for (unsigned idx = words ;  idx > 0 ;  idx -= 1) {
+	    unsigned long aw = (idx <= awords)? a.vec_[idx-1] : 0;
+	    unsigned long bw = (idx <= bwords)? b.vec_[idx-1] : 0;
+
+	    if (aw < bw)
+		  return true;
+	    if (aw > bw)
+		  return false;
+      }
+
+	// If the above loop finishes, then the vectors are equal.
+      return false;
+}
+
+bool operator <= (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+	// XXXX For now, only support equal width vectors.
+      assert(a.wid_ == b.wid_);
+
+      const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+
+      for (unsigned idx = awords ;  idx > 0 ;  idx -= 1) {
+	    if (a.vec_[idx-1] < b.vec_[idx-1])
+		  return true;
+	    if (a.vec_[idx-1] > b.vec_[idx-1])
+		  return false;
+      }
+
+	// If the above loop finishes, then the vectors are equal.
+      return true;
+}
+
 vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
 {
       vvp_vector4_t res (wid);
@@ -798,6 +1092,17 @@ vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
       }
 
       return res;
+}
+
+ostream& operator<< (ostream&out, const vvp_vector2_t&that)
+{
+      if (that.is_NaN()) {
+	    out << "NaN";
+
+      } else {
+	    out << vector2_to_vector4(that, that.size());
+      }
+      return out;
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
@@ -1681,6 +1986,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.47  2005/11/10 13:27:16  steve
+ *  Handle very wide % and / operations using expanded vector2 support.
+ *
  * Revision 1.46  2005/10/04 04:41:07  steve
  *  Make sure the new size sticks in resize method.
  *

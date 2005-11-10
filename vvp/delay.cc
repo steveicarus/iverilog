@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.10 2005/09/20 18:34:02 steve Exp $"
+#ident "$Id: delay.cc,v 1.11 2005/11/10 13:27:16 steve Exp $"
 #endif
 
 #include "delay.h"
 #include "schedule.h"
+#include <iostream>
 #include <assert.h>
 
 vvp_delay_t::vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall)
@@ -108,19 +109,35 @@ vvp_fun_delay::~vvp_fun_delay()
 }
 
 /*
- * FIXME: This implementation currently only uses the LSB to determine
- * the delay type for the entire vector. It needs to be upgraded to
- * account for different delays for different bits by generating a
- * stream of vectors that lead up to the actual value.
+ * FIXME: this implementation currently only uses the maximum delay
+ * from all the bit changes in the vectors. If there are multiple
+ * changes with different delays, then the results would be
+ * wrong. What should happen is that if there are multiple changes,
+ * multiple vectors approaching the result should be scheduled.
  */
 void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       if (cur_vec4_.eeq(bit))
 	    return;
 
+	/* How many bits to compare? */
+      unsigned use_wid = cur_vec4_.size();
+      if (bit.size() < use_wid)
+	    use_wid = bit.size();
+
+	/* Scan the vectors looking for delays. Select the maximim
+	   delay encountered. */
       vvp_time64_t use_delay;
       use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));
 
+      for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
+	    vvp_time64_t tmp;
+	    tmp = delay_.get_delay(cur_vec4_.value(idx), bit.value(idx));
+	    if (tmp > use_delay)
+		  use_delay = tmp;
+      }
+
+	/* And propagate it. */
       cur_vec4_ = bit;
       if (use_delay == 0) {
 	    vvp_send_vec4(net_->out, cur_vec4_);
@@ -163,6 +180,9 @@ void vvp_fun_delay::run_run()
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.11  2005/11/10 13:27:16  steve
+ *  Handle very wide % and / operations using expanded vector2 support.
+ *
  * Revision 1.10  2005/09/20 18:34:02  steve
  *  Clean up compiler warnings.
  *

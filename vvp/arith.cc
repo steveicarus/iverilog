@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.46 2005/09/15 22:54:04 steve Exp $"
+#ident "$Id: arith.cc,v 1.47 2005/11/10 13:27:16 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -140,7 +140,20 @@ vvp_arith_mod::~vvp_arith_mod()
 
 void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
 {
-      assert(0);
+      vvp_vector2_t a2 (op_a_);
+      if (a2.is_NaN()) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      vvp_vector2_t b2 (op_b_);
+      if (b2.is_NaN()) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      vvp_vector2_t res = a2 % b2;
+      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res, res.size()));
 }
 
 void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
@@ -754,6 +767,9 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.47  2005/11/10 13:27:16  steve
+ *  Handle very wide % and / operations using expanded vector2 support.
+ *
  * Revision 1.46  2005/09/15 22:54:04  steve
  *  Use iostream instead of stdio.
  *

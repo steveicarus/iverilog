@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.46 2005/09/20 00:51:53 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.47 2005/11/10 13:27:16 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -263,28 +263,49 @@ class vvp_vector2_t {
 				       const vvp_vector2_t&);
       friend vvp_vector2_t operator * (const vvp_vector2_t&,
 				       const vvp_vector2_t&);
+      friend bool operator >  (const vvp_vector2_t&, const vvp_vector2_t&);
+      friend bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
+      friend bool operator <= (const vvp_vector2_t&, const vvp_vector2_t&);
 
     public:
       vvp_vector2_t();
       vvp_vector2_t(const vvp_vector2_t&);
+      vvp_vector2_t(const vvp_vector2_t&, unsigned newsize);
+	// Make a vvp_vector2_t from a vvp_vector4_t. If there are X
+	// or Z bits, then the result becomes a NaN value.
       explicit vvp_vector2_t(const vvp_vector4_t&that);
+	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
       ~vvp_vector2_t();
 
-      vvp_vector2_t operator = (const vvp_vector2_t&);
+      vvp_vector2_t&operator += (const vvp_vector2_t&that);
+      vvp_vector2_t&operator -= (const vvp_vector2_t&that);
+      vvp_vector2_t&operator <<= (unsigned shift);
+      vvp_vector2_t&operator >>= (unsigned shift);
+      vvp_vector2_t&operator = (const vvp_vector2_t&);
 
       bool is_NaN() const;
       unsigned size() const;
       int value(unsigned idx) const;
 
     private:
+      enum { BITS_PER_WORD = 8 * sizeof(unsigned long) };
       unsigned long*vec_;
       unsigned wid_;
+
+    private:
+      void copy_from_that_(const vvp_vector2_t&that);
 };
 
+extern bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
+extern bool operator >  (const vvp_vector2_t&, const vvp_vector2_t&);
+extern bool operator <= (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator + (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
+extern vvp_vector2_t operator / (const vvp_vector2_t&, const vvp_vector2_t&);
+extern vvp_vector2_t operator % (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
+extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
 /*
  * This class represents a scaler value with strength. These are
@@ -937,6 +958,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.47  2005/11/10 13:27:16  steve
+ *  Handle very wide % and / operations using expanded vector2 support.
+ *
  * Revision 1.46  2005/09/20 00:51:53  steve
  *  Lazy processing of vvp_fun_part functor.
  *
