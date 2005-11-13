@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.4 2005/09/09 02:17:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.5 2005/11/13 22:28:48 steve Exp $"
 #endif
 
 /*
@@ -1490,6 +1490,9 @@ class NetAssignBase : public NetProc {
 
       bool synth_async(Design*des, NetScope*scope,
 		       const NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out,
+		       NetNet*accum_in);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -3367,6 +3370,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.5  2005/11/13 22:28:48  steve
+ *  Allow for block output to be set throughout the statements.
+ *
  * Revision 1.321.2.4  2005/09/09 02:17:08  steve
  *  Evaluate  magnitude compare with real operands.
  *

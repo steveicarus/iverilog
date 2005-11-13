@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.3 2005/09/11 02:56:38 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.4 2005/11/13 22:28:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,8 +90,20 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
  * however, is the set of nexa that are to actually get linked to the
  * r-value.
  */
+
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-				const NetNet*nex_map, NetNet*nex_out)
+			  const NetNet*nex_map, NetNet*nex_out)
+{
+      const perm_string tmp = perm_string::literal("tmp");
+      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
+      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      delete stub;
+      return flag;
+}
+
+bool NetAssignBase::synth_async(Design*des, NetScope*scope,
+				const NetNet*nex_map, NetNet*nex_out,
+				NetNet*accum_in)
 {
       DEBUG_SYNTH2_ENTRY("NetAssignBase")
 
@@ -108,17 +120,13 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       }
       assert(lval_->more == 0);
 
-      if (lval_->lwidth() != nex_map->pin_count()) {
-	    cerr << get_line() << ": error: NetAssignBase::synth_async pin count mismatch, "
-	         << lval_->lwidth() << " != " << nex_map->pin_count() << endl;
-	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
-	    return false;
-      }
-      assert(nex_map->pin_count() <= rsig->pin_count());
-
+	/* Bind the outputs that we do make to the nex_out. Use the
+	   nex_map to map the l-value bit position to the nex_out bit
+	   position. */
       for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
 	    unsigned off = lval_->get_loff()+idx;
 	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
+	    assert(ptr <= nex_map->pin_count());
 	    connect(nex_out->pin(ptr), rsig->pin(idx));
       }
 
@@ -253,7 +261,6 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out, NetNet*accum)
 {
-      DEBUG_SYNTH2_ENTRY("NetCase")
       unsigned cur;
 
       NetNet*esig = expr_->synthesize(des);
@@ -352,6 +359,8 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
       }
 
+      bool return_flag = true;
+
 	/* Now that statements match with mux inputs, synthesize the
 	   sub-statements. If I get to an input that has no statement,
 	   then use the default statement there. */
@@ -381,20 +390,32 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  cerr << get_line()
 		       << ": error: Incomplete case statement"
 		       << " is missing a default case." << endl;
-		  DEBUG_SYNTH2_EXIT("NetCase", false)
-		  return false;
+		  return_flag = false;
+		  continue;
 	    }
-	    statement_map[item]->synth_async(des, scope, nex_map, sig);
 
-	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-		  connect(mux->pin_Data(idx, item), sig->pin(idx));
+	      /* Synthesize this case. The synth_async will connect
+		 all the output bits it knows how to the sig net. */
+	    statement_map[item]->synth_async(des, scope, nex_map, sig, accum);
+
+	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
+		  if (sig->pin(idx).is_linked())
+			connect(mux->pin_Data(idx, item), sig->pin(idx));
+		  else if (accum->pin(idx).is_linked())
+			connect(mux->pin_Data(idx, item), accum->pin(idx));
+		  else {
+			cerr << get_line()
+			     << ": error: case " << item << " statement "
+			     << " does not assign expected outputs." << endl;
+			return_flag = false;
+		  }
+	    }
       }
 
       delete[]statement_map;
       des->add_node(mux);
 
-      DEBUG_SYNTH2_EXIT("NetCase", true)
-      return true;
+      return return_flag;
 }
 
 /*
@@ -455,7 +476,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  connect(asig->pin(idx), default_sig->pin(idx));
 
       } else {
-	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+	    bool flag = if_->synth_async(des, scope, nex_map, asig, accum);
 	    if (!flag) {
 		  delete asig;
 		  cerr << get_line() << ": error: Asynchronous if statement"
@@ -473,7 +494,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  connect(bsig->pin(idx), default_sig->pin(idx));
 
       } else {
-	    bool flag = else_->synth_async(des, scope, nex_map, bsig);
+	    bool flag = else_->synth_async(des, scope, nex_map, bsig, accum);
 	    if (!flag) {
 		  delete asig;
 		  delete bsig;
@@ -1109,6 +1130,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.4  2005/11/13 22:28:48  steve
+ *  Allow for block output to be set throughout the statements.
+ *
  * Revision 1.39.2.3  2005/09/11 02:56:38  steve
  *  Attach line numbers to NetMux devices.
  *
