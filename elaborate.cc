@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308.2.1 2005/11/13 22:28:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1403,8 +1403,12 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		    /* If there are no expressions, then this is the
 		       default case. */
 		  NetProc*st = 0;
-		  if (cur->stat)
+		  if (cur->stat) {
 			st = cur->stat->elaborate(des, scope);
+		  } else {
+			st = new NetBlock(NetBlock::SEQU, scope);
+			st->set_line(*this);
+		  }
 
 		  res->set_case(inum, 0, st);
 		  inum += 1;
@@ -1413,16 +1417,19 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
 		    /* If there are one or more expressions, then
 		       iterate over the guard expressions, elaborating
-		       a separate case for each. (Yes, the statement
-		       will be elaborated again for each.) */
+		       a separate case for each. If the statement is
+		       nul, then put an appropriate stub in place. */
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
 		  gu = elab_and_eval(des, scope, cur->expr[e]);
 
-		  if (cur->stat)
+		  if (cur->stat) {
 			st = cur->stat->elaborate(des, scope);
-
+		  } else {
+			st = new NetBlock(NetBlock::SEQU, scope);
+			st->set_line(*this);
+		  }
 		  res->set_case(inum, gu, st);
 		  inum += 1;
 	    }
@@ -2769,6 +2776,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308.2.1  2005/11/13 22:28:14  steve
+ *  Do not panic if case statement is nul.
+ *
  * Revision 1.308  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *
