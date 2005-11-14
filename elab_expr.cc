@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.99 2005/11/10 13:28:11 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.100 2005/11/14 22:11:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -870,7 +870,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       }
 
       assert(wid_c != 0);
-      long wid = wid_c->value().as_long();
+      unsigned long wid = wid_c->value().as_ulong();
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
@@ -1228,6 +1228,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.100  2005/11/14 22:11:52  steve
+ *  Fix compile warning.
+ *
  * Revision 1.99  2005/11/10 13:28:11  steve
  *  Reorganize signal part select handling, and add support for
  *  indexed part selects.
