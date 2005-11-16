@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.4 2005/11/13 22:28:48 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.5 2005/11/16 00:38:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -510,11 +510,37 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       connect(mux->pin_Sel(0), ssig->pin(0));
 
-      for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
-	    connect(mux->pin_Data(idx, 1), asig->pin(idx));
+      bool return_flag = true;
 
-      for (unsigned idx = 0 ;  idx < bsig->pin_count() ;  idx += 1)
-	    connect(mux->pin_Data(idx, 0), bsig->pin(idx));
+	/* Connected the clauses to the data inputs of the
+	   condition. If there are bits unassigned by the case, then
+	   bind them from the accum bits instead. */
+
+      for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1) {
+	    if (asig->pin(idx).is_linked())
+		  connect(mux->pin_Data(idx, 1), asig->pin(idx));
+	    else if (accum->pin(idx).is_linked())
+		  connect(mux->pin_Data(idx, 1), accum->pin(idx));
+	    else {
+		  cerr << get_line()
+		       << ": error: Condition true clause "
+		       << " does not assign expected outputs." << endl;
+		  return_flag = false;
+	    }
+      }
+
+      for (unsigned idx = 0 ;  idx < bsig->pin_count() ;  idx += 1) {
+	    if (bsig->pin(idx).is_linked())
+		  connect(mux->pin_Data(idx, 0), bsig->pin(idx));
+	    else if (accum->pin(idx).is_linked())
+		  connect(mux->pin_Data(idx, 0), accum->pin(idx));
+	    else {
+		  cerr << get_line()
+		       << ": error: Condition false clause "
+		       << " does not assign expected outputs." << endl;
+		  return_flag = false;
+	    }
+      }
 
       for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
 	    connect(nex_out->pin(idx), mux->pin_Result(idx));
@@ -1130,6 +1156,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.5  2005/11/16 00:38:26  steve
+ *  Handle partial sets of conditional clauses.
+ *
  * Revision 1.39.2.4  2005/11/13 22:28:48  steve
  *  Allow for block output to be set throughout the statements.
  *
