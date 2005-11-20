@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.7 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: statement.c,v 1.8 2005/11/20 15:58:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -82,6 +82,13 @@ static void show_stmt_cassign(ivl_statement_t net, unsigned ind)
 	      ind+4, "", lwid);
 
       show_expression(ivl_stmt_rval(net), ind+4);
+}
+
+static void show_stmt_delayx(ivl_statement_t net, unsigned ind)
+{
+      fprintf(out, "%*s#(X) /* calculated delay */\n", ind, "");
+      show_expression(ivl_stmt_delay_expr(net), ind+4);
+      show_statement(ivl_stmt_sub_stmt(net), ind+2);
 }
 
 static void show_stmt_force(ivl_statement_t net, unsigned ind)
@@ -285,6 +292,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_DELAY:
 	    fprintf(out, "%*s#%lu\n", ind, "", ivl_stmt_delay_val(net));
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
+	    break;
+
+	  case IVL_ST_DELAYX:
+	    show_stmt_delayx(net, ind);
 	    break;
 
 	  case IVL_ST_FORCE:
