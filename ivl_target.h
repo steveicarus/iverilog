@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.161 2005/09/19 21:45:35 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.162 2005/11/20 15:58:25 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -1563,6 +1563,19 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * that constant value. If the expression is non-constant, the code
  * generator is supposed to know what to do about that, too.
  *
+ * - IVL_ST_DELAY, IVL_ST_DELAYX
+ * These statement types are delay statements. They are a way to
+ * attach a delay to a statement. The ivl_stmt_sub_stmt() function
+ * gets the statment to be executed after the delay. If this an
+ * ivl_ST_DELAY, then the ivl_stmt_delay_val function gets the
+ * constant delay. If this is IVL_ST_DELAYX, then the
+ * ivl_stmt_delay_expr gets the expression of the delay. In this case,
+ * the expression is not necessarily constant.
+ *
+ * Whether constant or calculated, the resulting delay is in units of
+ * simulation ticks. The compiler has already taken care of converting
+ * the delay to the time scale/precision of the scope.
+ *
  * - IVL_ST_FORCE
  * This is very much like IVL_ST_CASSIGN, but adds that l-values can
  * include nets (tri, wire, etc). Memory words are restricted from
@@ -1671,6 +1684,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.162  2005/11/20 15:58:25  steve
+ *  Document the IVL_ST_DELAY statements.
+ *
  * Revision 1.161  2005/09/19 21:45:35  steve
  *  Spelling patches from Larry.
  *
