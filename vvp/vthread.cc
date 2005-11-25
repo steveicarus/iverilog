@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.148 2005/09/19 21:45:37 steve Exp $"
+#ident "$Id: vthread.cc,v 1.149 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -553,7 +553,8 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*> (cp->net->fun);
+      vvp_fun_signal_vec*sig
+	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
       assert(wid > 0);
 
@@ -1515,7 +1516,8 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
 
-      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(dst->fun);
+      vvp_fun_signal_base*sig
+	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
       assert(sig);
 
 	/* Detect the special case that we are already forced the
@@ -1846,7 +1848,7 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
 
       unsigned idx = thr->words[cp->bit_idx[1]].w_int;
 
-      vvp_fun_signal*fun = dynamic_cast<vvp_fun_signal*>(sig->node->fun);
+      vvp_fun_signal_vec*fun = dynamic_cast<vvp_fun_signal_vec*>(sig->node->fun);
       assert(sig != 0);
 
       vvp_bit4_t val = fun->value(idx);
@@ -1881,7 +1883,7 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 
 	/* For the %load to work, the functor must actually be a
 	   signal functor. Only signals save their vector value. */
-      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
       assert(sig);
 
       vvp_vector4_t sig_value = sig->vec4_value();
@@ -1932,7 +1934,7 @@ bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 
 	// For the %load to work, the functor must actually be a
 	// signal functor. Only signals save their vector value.
-      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
       assert(sig);
 
       vvp_bit4_t val = index >= sig->size()? BIT4_X : sig->value(index);
@@ -2710,7 +2712,7 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(net->fun);
+      vvp_fun_signal_base*sig = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
       assert(sig);
 
 	/* XXXX Release for %force/link not yet implemented. */
@@ -2726,7 +2728,7 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(net->fun);
+      vvp_fun_signal_base*sig = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
       assert(sig);
 
 	/* XXXX Release for %force/link not yet implemented. */
@@ -3187,6 +3189,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.149  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.148  2005/09/19 21:45:37  steve
  *  Spelling patches from Larry.
  *

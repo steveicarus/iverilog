@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.47 2005/11/10 13:27:16 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.48 2005/11/25 17:55:26 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -245,7 +245,7 @@ extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
 extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 				      const vvp_vector4_t&b,
 				      vvp_bit4_t val_if_equal);
-extern vvp_vector4_t coerce_to_width(const vvp_vector4_t&that, unsigned width);
+template <class T> extern T coerce_to_width(const T&that, unsigned width);
 
 /*
  * These functions extract the value of the vector as a native type,
@@ -783,7 +783,21 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
 };
 
-class vvp_fun_signal  : public vvp_fun_signal_base {
+/*
+ * This abstract class is a little more specific the the signa_base
+ * class, in that in adds vector access methods.
+ */
+class vvp_fun_signal_vec : public vvp_fun_signal_base {
+
+    public:
+	// For vector signal types, this returns the vector count.
+      virtual unsigned size() const =0;
+      virtual vvp_bit4_t value(unsigned idx) const =0;
+      virtual vvp_scalar_t scalar_value(unsigned idx) const =0;
+      virtual vvp_vector4_t vec4_value() const =0;
+};
+
+class vvp_fun_signal  : public vvp_fun_signal_vec {
 
     public:
       explicit vvp_fun_signal(unsigned wid);
@@ -808,10 +822,35 @@ class vvp_fun_signal  : public vvp_fun_signal_base {
 
     private:
       vvp_vector4_t bits4_;
-      vvp_vector8_t bits8_;
-      bool type_is_vector8_() const { return bits8_.size() > 0; }
-
       vvp_vector4_t force_;
+};
+
+class vvp_fun_signal8  : public vvp_fun_signal_vec {
+
+    public:
+      explicit vvp_fun_signal8(unsigned wid);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+
+	// Part select variants of above
+	//void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+	//			unsigned base, unsigned wid, unsigned vwid);
+
+	// Get information about the vector value.
+      unsigned   size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+
+	// Commands
+      void release(vvp_net_ptr_t port, bool net);
+
+      void get_value(struct t_vpi_value*value);
+
+    private:
+      vvp_vector8_t bits8_;
+      vvp_vector8_t force_;
 };
 
 class vvp_fun_signal_real  : public vvp_fun_signal_base {
@@ -958,6 +997,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.48  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.47  2005/11/10 13:27:16  steve
  *  Handle very wide % and / operations using expanded vector2 support.
  *

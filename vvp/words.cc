@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.5 2005/10/12 17:28:07 steve Exp $"
+#ident "$Id: words.cc,v 1.6 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -77,18 +77,23 @@ void compile_variable(char*label, char*name, int msb, int lsb,
  *
  *    <label> .net   <name>, <msb>, <lsb>, <input> ;
  *    <label> .net/s <name>, <msb>, <lsb>, <input> ;
+ *    <label> .net8   <name>, <msb>, <lsb>, <input> ;
+ *    <label> .net8/s <name>, <msb>, <lsb>, <input> ;
  *
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
  */
-void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
+void compile_net(char*label, char*name, int msb, int lsb,
+		 bool signed_flag, bool net8_flag,
 		 unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
       vvp_net_t*node = new vvp_net_t;
 
-      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
+      vvp_fun_signal_base*vsig = net8_flag
+	    ? new vvp_fun_signal8(wid)
+	    : new vvp_fun_signal(wid);
       node->fun = vsig;
 
 	/* Add the label into the functor symbol table. */
@@ -181,6 +186,9 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 /*
  * $Log: words.cc,v $
+ * Revision 1.6  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.5  2005/10/12 17:28:07  steve
  *  Fix compile of net/real aliases.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.39 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.40 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 /*
@@ -130,8 +130,8 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    struct __vpiSignal*sig;
 	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	    vvp_fun_signal*sig_fun;
-	    sig_fun = dynamic_cast<vvp_fun_signal*>(sig->node->fun);
+	    vvp_fun_signal_base*sig_fun;
+	    sig_fun = dynamic_cast<vvp_fun_signal_base*>(sig->node->fun);
 	    assert(sig_fun);
 
 	      /* Attach the __vpiCallback object to the signal. */
@@ -495,6 +495,21 @@ void vvp_fun_signal::get_value(struct t_vpi_value*vp)
       }
 }
 
+void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
+{
+      switch (vp->format) {
+	  case vpiScalarVal:
+	    vp->value.scalar = value(0);
+	    break;
+	  case vpiSuppressVal:
+	    break;
+	  default:
+	    fprintf(stderr, "vpi_callback: value "
+		    "format %d not supported\n",
+		    vp->format);
+      }
+}
+
 void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 {
       char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
@@ -555,6 +570,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.40  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.39  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

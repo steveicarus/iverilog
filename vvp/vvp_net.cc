@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.47 2005/11/10 13:27:16 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.48 2005/11/25 17:55:26 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -588,6 +588,19 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
       return true;
 }
 
+template <class T> T coerce_to_width(const T&that, unsigned width)
+{
+      if (that.size() == width)
+	    return that;
+
+      assert(that.size() > width);
+      T res (width);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    res.set_bit(idx, that.value(idx));
+
+      return res;
+}
+#if 0
 vvp_vector4_t coerce_to_width(const vvp_vector4_t&that, unsigned width)
 {
       if (that.size() == width)
@@ -600,7 +613,7 @@ vvp_vector4_t coerce_to_width(const vvp_vector4_t&that, unsigned width)
 
       return res;
 }
-
+#endif
 
 vvp_vector2_t::vvp_vector2_t()
 {
@@ -1349,13 +1362,8 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
-	    if (type_is_vector8_()) {
-		  bits8_ = vvp_vector8_t(bit,6);
-		  vvp_send_vec8(ptr.ptr()->out, bits8_);
-	    } else {
-		  bits4_ = bit;
-		  vvp_send_vec4(ptr.ptr()->out, bits4_);
-	    }
+	    bits4_ = bit;
+	    vvp_send_vec4(ptr.ptr()->out, bits4_);
 	    run_vpi_callbacks();
 	    break;
 
@@ -1407,16 +1415,9 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
 void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 {
-	// Only port-0 supports vector8_t inputs.
-      assert(ptr.port() == 0);
-
-      if (! continuous_assign_active_) {
-	    bits8_ = bit;
-	    needs_init_ = false;
-	    vvp_send_vec8(ptr.ptr()->out, bit);
-	    run_vpi_callbacks();
-      }
+      recv_vec4(ptr, reduce4(bit));
 }
+
 
 void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
 {
@@ -1433,8 +1434,6 @@ unsigned vvp_fun_signal::size() const
 {
       if (force_active_)
 	    return force_.size();
-      else if (type_is_vector8_())
-	    return bits8_.size();
       else
 	    return bits4_.size();
 }
@@ -1443,8 +1442,6 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 {
       if (force_active_)
 	    return force_.value(idx);
-      else if (type_is_vector8_())
-	    return bits8_.value(idx).value();
       else
 	    return bits4_.value(idx);
 }
@@ -1453,8 +1450,6 @@ vvp_scalar_t vvp_fun_signal::scalar_value(unsigned idx) const
 {
       if (force_active_)
 	    return vvp_scalar_t(force_.value(idx), 6, 6);
-      else if (type_is_vector8_())
-	    return bits8_.value(idx);
       else
 	    return vvp_scalar_t(bits4_.value(idx), 6, 6);
 }
@@ -1463,10 +1458,102 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 {
       if (force_active_)
 	    return force_;
-      else if (type_is_vector8_())
-	    return reduce4(bits8_);
       else
 	    return bits4_;
+}
+
+vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
+: bits8_(wid)
+{
+}
+
+void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+      recv_vec8(ptr, bit);
+}
+
+void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      switch (ptr.port()) {
+	  case 0: // Normal input (feed from net, or set from process)
+	    if (!continuous_assign_active_) {
+		  if (needs_init_ || !bits8_.eeq(bit)) {
+			bits8_ = bit;
+			needs_init_ = false;
+			vvp_send_vec8(ptr.ptr()->out, bit);
+			run_vpi_callbacks();
+		  }
+	    }
+	    break;
+
+	  case 1: // Continuous assign value
+	    continuous_assign_active_ = true;
+	    bits8_ = bit;
+	    vvp_send_vec8(ptr.ptr()->out, bits8_);
+	    run_vpi_callbacks();
+	    break;
+
+	  case 2: // Force value
+
+	      // Force from a node may not have been sized completely
+	      // by the source, so coerce the size here.
+	    if (bit.size() != size())
+		  force_ = coerce_to_width(bit, size());
+	    else
+		  force_ = bit;
+
+	    force_active_ = true;
+	    vvp_send_vec8(ptr.ptr()->out, force_);
+	    run_vpi_callbacks();
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
+void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
+{
+      force_active_ = false;
+      if (net) {
+	    vvp_send_vec8(ptr.ptr()->out, bits8_);
+	    run_vpi_callbacks();
+      } else {
+	    bits8_ = force_;
+      }
+}
+
+unsigned vvp_fun_signal8::size() const
+{
+      if (force_active_)
+	    return force_.size();
+      else
+	    return bits8_.size();
+}
+
+vvp_bit4_t vvp_fun_signal8::value(unsigned idx) const
+{
+      if (force_active_)
+	    return force_.value(idx).value();
+      else
+	    return bits8_.value(idx).value();
+}
+
+vvp_vector4_t vvp_fun_signal8::vec4_value() const
+{
+      if (force_active_)
+	    return reduce4(force_);
+      else
+	    return reduce4(bits8_);
+}
+
+vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
+{
+      if (force_active_)
+	    return force_.value(idx);
+      else
+	    return bits8_.value(idx);
 }
 
 vvp_fun_signal_real::vvp_fun_signal_real()
@@ -1986,6 +2073,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.48  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.47  2005/11/10 13:27:16  steve
  *  Handle very wide % and / operations using expanded vector2 support.
  *

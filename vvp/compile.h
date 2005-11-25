@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.76 2005/10/12 17:23:15 steve Exp $"
+#ident "$Id: compile.h,v 1.77 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -322,6 +322,7 @@ extern void compile_var_real(char*label, char*nane,
 
 extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
+			bool net8_flag,
 			unsigned argc, struct symb_s*argv);
 extern void compile_net_real(char*label, char*name,
 			     int msb, int lsb,
@@ -336,6 +337,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.77  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.76  2005/10/12 17:23:15  steve
  *  Add alias nodes.
  *

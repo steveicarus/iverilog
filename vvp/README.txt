@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.73 2005/11/10 13:25:31 steve Exp $
+ *  $Id: README.txt,v 1.74 2005/11/25 17:55:26 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -289,6 +289,8 @@ exactly the same as the .var statement:
 
 	<label> .net      "name", <msb>, <lsb>, <symbol>;
 	<label> .net/s    "name", <msb>, <lsb>, <symbol>;
+	<label> .net8     "name", <msb>, <lsb>, <symbol>;
+	<label> .net8/s   "name", <msb>, <lsb>, <symbol>;
 	<label> .net/real "name", <msb>, <lsb>, <symbol>;
 	<label> .alias    "name", <msb>, <lsb>, <symbol>;
 
@@ -298,13 +300,13 @@ the basename and dimensions given as parameters. The symbol is a
 functor that feeds into the vector of the net, and the vpiHandle
 holds references to that functor.
 
-      NOTE: Nets also, unlike .vars, should also have a way of getting
-      at the strengths of each bit. I haven't worked out how that will
-      happen, yet.
-
 The input of a .net is replicated to its output. In this sense, it
 acts like a diode. The purpose of this node is to hold various VPI
-and event trappings.
+and event trappings. The .net and .net8 nodes are vector types. They
+both may represent wires, but the .net8 nodes preserve strength values
+that arrive through them, while .net nodes reduce strength values to
+4-value logic. The .net8 nodes should only be used when strength
+information really is possible.
 
 The <label> is required and is used to locate the net object that is
 represents. This label does not map to a functor, so only references

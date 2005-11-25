@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.137 2005/10/12 17:26:17 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.138 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -31,9 +31,12 @@
 struct vvp_nexus_data {
 	/* draw_net_input uses this */
       const char*net_input;
+      unsigned drivers_count;
+      int flags;
 	/* draw_net_in_scope uses this */
       ivl_signal_t net;
 };
+#define VVP_NEXUS_DATA_STR 0x0001
 
 static struct vvp_nexus_data*new_nexus_data()
 {
@@ -655,7 +658,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  * does *not* check for a previously calculated string. Use the
  * draw_net_input for the general case.
  */
-static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
+static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit,
+			      struct vvp_nexus_data*nex_data)
 {
       ivl_signal_type_t res;
       char result[512];
@@ -669,6 +673,9 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 
       char*nex_private = 0;
 
+	/* Accumulate nex_data flags. */
+      int nex_flags = 0;
+
       res = signal_type_of_nexus(nex);
       switch (res) {
 	  case IVL_SIT_TRI:
@@ -676,9 +683,11 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 	    break;
 	  case IVL_SIT_TRI0:
 	    resolv_type = "tri0";
+	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRI1:
 	    resolv_type = "tri1";
+	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRIAND:
 	    resolv_type = "triand";
@@ -705,6 +714,14 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ))
 		  continue;
 
+	      /* Mark the strength-aware flag if the driver can
+		 generate values other then the standard "6"
+		 strength. */
+	    if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
+		  nex_flags |= VVP_NEXUS_DATA_STR;
+	    if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
+		  nex_flags |= VVP_NEXUS_DATA_STR;
+
 	      /* Save this driver. */
 	    if (ndrivers >= adrivers) {
 		  adrivers += 4;
@@ -713,6 +730,13 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit)
 	    }
 	    drivers[ndrivers] = nptr;
 	    ndrivers += 1;
+      }
+
+	/* If the caller is collecting nexus information, then save
+	   the nexus driver count in the nex_data. */
+      if (nex_data) {
+	    nex_data->drivers_count = ndrivers;
+	    nex_data->flags |= nex_flags;
       }
 
 	/* If the nexus has no drivers, then send a constant HiZ into
@@ -813,7 +837,7 @@ const char*draw_net_input(ivl_nexus_t nex)
       }
 
       assert(nex_data->net_input == 0);
-      nex_data->net_input = draw_net_input_x(nex, 0);
+      nex_data->net_input = draw_net_input_x(nex, 0, nex_data);
 
       return nex_data->net_input;
 }
@@ -894,10 +918,19 @@ static void draw_net_in_scope(ivl_signal_t sig)
       }
 
       if (nex_data->net == 0) {
-	    fprintf(vvp_out, "V_%p .net%s \"%s\", %d, %d, %s;\n",
-		    sig, datatype_flag,
+	    const char*vec8 = "";
+	    if (nex_data->drivers_count > 1)
+		  vec8 = "8";
+	    if (nex_data->flags & VVP_NEXUS_DATA_STR)
+		  vec8 = "8";
+
+	    fprintf(vvp_out, "V_%p .net%s%s \"%s\", %d, %d, %s;"
+		    " %u drivers%s\n",
+		    sig, vec8, datatype_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    msb, lsb, arg);
+		    msb, lsb, arg,
+		    nex_data->drivers_count,
+		    nex_data->flags&VVP_NEXUS_DATA_STR?", strength-aware":"");
 	    nex_data->net = sig;
       } else {
 	      /* Detect that this is an alias of nex_data->net. Create
@@ -1828,7 +1861,7 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 		  break;
       }
       assert(ptr != 0);
-      p_str = draw_net_input_x(nex, ptr);
+      p_str = draw_net_input_x(nex, ptr, 0);
 
       nex = ivl_lpm_data(net,0);
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -1836,7 +1869,7 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 	    if (ivl_nexus_ptr_lpm(ptr) == net)
 		  break;
       }
-      v_str = draw_net_input_x(nex, ptr);
+      v_str = draw_net_input_x(nex, ptr, 0);
 
 	/* Pad the part-sized input out to a common width... */
       fprintf(vvp_out, "L_%p/i .part/pv %s, %u, %u, %u;\n",
@@ -2077,6 +2110,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.138  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.137  2005/10/12 17:26:17  steve
  *  MUX nodes get inputs from nets, not from net inputs,
  *  Detect and draw alias nodes to reduce net size and

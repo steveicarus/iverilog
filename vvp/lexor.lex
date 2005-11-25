@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.56 2005/10/12 17:23:15 steve Exp $"
+#ident "$Id: lexor.lex,v 1.57 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -109,6 +109,8 @@
 ".extend/s" { return K_EXTEND_S; }
 ".functor"  { return K_FUNCTOR; }
 ".net"      { return K_NET; }
+".net8"     { return K_NET8; }
+".net8/s"   { return K_NET8_S; }
 ".net/real" { return K_NET_R; }
 ".net/s"    { return K_NET_S; }
 ".param"    { return K_PARAM; }
@@ -202,6 +204,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.57  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.56  2005/10/12 17:23:15  steve
  *  Add alias nodes.
  *

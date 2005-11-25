@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.70 2005/09/21 01:04:59 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.71 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 /*
@@ -178,7 +178,9 @@ static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
-      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+      vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
+      assert(vsig);
+
 	/* FIXME: bits should be an array of vvp_bit4_t. */
       unsigned char* bits = new unsigned char[wid];
 
@@ -295,7 +297,7 @@ static void signal_get_ScalarVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 
 static void signal_get_StrengthVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
-     vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+     vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
      unsigned wid = signal_width(rfp);
      s_vpi_strengthval*op;
 
@@ -351,7 +353,8 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
       unsigned wid = signal_width(rfp);
 
-      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+      vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
+      assert(vsig);
 
       char *rbuf = 0;
 
@@ -488,12 +491,6 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
  * %assign instructions and causes all the side-effects that the
  * equivalent instruction would cause.
  */
-
-static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
-			 vvp_scalar_t val, unsigned long dly =0)
-{
-      fprintf(stderr, "XXXX functor_poke not implemented\n");
-}
 
 static vvp_vector4_t from_stringval(const char*str, unsigned wid)
 {
@@ -825,6 +822,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.71  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.70  2005/09/21 01:04:59  steve
  *  Support put_value of string values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.78 2005/10/12 17:23:15 steve Exp $"
+#ident "$Id: parse.y,v 1.79 2005/11/25 17:55:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -63,6 +63,7 @@ extern FILE*yyin;
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DFF
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S K_NET_R
+%token K_NET8 K_NET8_S
 %token K_PARAM K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
@@ -453,11 +454,19 @@ statement
 
 	| T_LABEL K_NET T_STRING ',' signed_t_number ',' signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, false, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $7, false, false, $9.cnt, $9.vect); }
 
         | T_LABEL K_NET_S T_STRING ',' signed_t_number ',' signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, true, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $7, true, false, $9.cnt, $9.vect); }
+
+	| T_LABEL K_NET8 T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_net($1, $3, $5, $7, false, true, $9.cnt, $9.vect); }
+
+        | T_LABEL K_NET8_S T_STRING ',' signed_t_number ',' signed_t_number
+	  ',' symbols_net ';'
+		{ compile_net($1, $3, $5, $7, true, true, $9.cnt, $9.vect); }
 
         | T_LABEL K_NET_R T_STRING ',' signed_t_number ',' signed_t_number
 	  ',' symbols_net ';'
@@ -713,6 +722,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.79  2005/11/25 17:55:26  steve
+ *  Put vec8 and vec4 nets into seperate net classes.
+ *
  * Revision 1.78  2005/10/12 17:23:15  steve
  *  Add alias nodes.
  *
