@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.14 2005/09/20 18:34:02 steve Exp $"
+#ident "$Id: stop.cc,v 1.15 2005/11/25 18:35:38 steve Exp $"
 #endif
 
 /*
@@ -473,9 +473,9 @@ static void invoke_command(char*txt)
 
 void stop_handler(int rc)
 {
-      printf("** VVP Stop(%d) **\n", rc);
-      printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
-      		schedule_simtime());
+      vpi_mcd_printf(1,"** VVP Stop(%d) **\n", rc);
+      vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT "u ticks.\n",
+		     schedule_simtime());
 
       interact_flag = true;
       while (interact_flag) {
@@ -499,12 +499,15 @@ void stop_handler(int rc)
 	    free(input);
       }
 
-      printf("** Continue **\n");
+      vpi_mcd_printf(1,"** Continue **\n");
 }
 
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.15  2005/11/25 18:35:38  steve
+ *  stop/continue messages go through MCD for logging.
+ *
  * Revision 1.14  2005/09/20 18:34:02  steve
  *  Clean up compiler warnings.
  *
