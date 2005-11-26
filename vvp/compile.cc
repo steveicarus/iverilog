@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.214 2005/10/12 17:23:15 steve Exp $"
+#ident "$Id: compile.cc,v 1.215 2005/11/26 17:16:05 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -118,6 +118,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%force/link",of_FORCE_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%force/x0",of_FORCE_X0,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1481,6 +1482,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.215  2005/11/26 17:16:05  steve
+ *  Force instruction that can be indexed.
+ *
  * Revision 1.214  2005/10/12 17:23:15  steve
  *  Add alias nodes.
  *

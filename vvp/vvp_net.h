@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.48 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.49 2005/11/26 17:16:05 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -276,6 +276,9 @@ class vvp_vector2_t {
       explicit vvp_vector2_t(const vvp_vector4_t&that);
 	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
+	// Make with the width, and filled with 1 or 0 bits.
+      enum fill_t {FILL0, FILL1};
+      vvp_vector2_t(fill_t fill, unsigned wid);
       ~vvp_vector2_t();
 
       vvp_vector2_t&operator += (const vvp_vector2_t&that);
@@ -287,6 +290,7 @@ class vvp_vector2_t {
       bool is_NaN() const;
       unsigned size() const;
       int value(unsigned idx) const;
+      void set_bit(unsigned idx, int bit);
 
     private:
       enum { BITS_PER_WORD = 8 * sizeof(unsigned long) };
@@ -777,7 +781,7 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
 	// This is true until at least one propagation happens.
       bool needs_init_;
       bool continuous_assign_active_;
-      bool force_active_;
+      vvp_vector2_t force_mask_;
 
       void deassign();
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
@@ -821,6 +825,8 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
       void get_value(struct t_vpi_value*value);
 
     private:
+      void calculate_output_(vvp_net_ptr_t ptr);
+
       vvp_vector4_t bits4_;
       vvp_vector4_t force_;
 };
@@ -849,6 +855,8 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       void get_value(struct t_vpi_value*value);
 
     private:
+      void calculate_output_(vvp_net_ptr_t ptr);
+
       vvp_vector8_t bits8_;
       vvp_vector8_t force_;
 };
@@ -997,6 +1005,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.49  2005/11/26 17:16:05  steve
+ *  Force instruction that can be indexed.
+ *
  * Revision 1.48  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *

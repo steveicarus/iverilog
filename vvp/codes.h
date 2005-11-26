@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.76 2005/09/17 04:01:01 steve Exp $"
+#ident "$Id: codes.h,v 1.77 2005/11/26 17:16:05 steve Exp $"
 #endif
 
 
@@ -73,6 +73,7 @@ extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_V(vthread_t thr, vvp_code_t code);
+extern bool of_FORCE_X0(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
@@ -178,6 +179,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.77  2005/11/26 17:16:05  steve
+ *  Force instruction that can be indexed.
+ *
  * Revision 1.76  2005/09/17 04:01:01  steve
  *  Add the load/v.p instruction.
  *

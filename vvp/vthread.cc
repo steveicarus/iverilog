@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.149 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.150 2005/11/26 17:16:05 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1566,6 +1566,45 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+	// Implicitly, we get the base into the target vector from the
+	// X0 register.
+      long index = thr->words[0].w_int;
+
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+
+      if (index < 0 && (wid <= (unsigned)-index))
+	    return true;
+
+      if (index >= (long)sig->size())
+	    return true;
+
+      if (index < 0) {
+	    wid -= (unsigned) -index;
+	    index = 0;
+      }
+
+      if (index+wid > sig->size())
+	    wid = sig->size() - index;
+
+      vvp_vector4_t bit_vec(wid);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t bit_val = thr_get_bit(thr, bit);
+	    bit_vec.set_bit(idx, bit_val);
+	    if (bit >= 4)
+		  bit += 1;
+      }
+
+      vvp_net_ptr_t ptr (net, 2);
+      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size());
+
+      return true;
+}
 /*
  * The %fork instruction causes a new child to be created and pushed
  * in front of any existing child. This causes the new child to be the
@@ -2827,7 +2866,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
 
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
@@ -3189,6 +3228,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.150  2005/11/26 17:16:05  steve
+ *  Force instruction that can be indexed.
+ *
  * Revision 1.149  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *

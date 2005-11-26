@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.68 2005/09/19 21:45:37 steve Exp $
+ *  $Id: opcodes.txt,v 1.69 2005/11/26 17:16:05 steve Exp $
  */
 
 
@@ -259,6 +259,14 @@ right operand is 0, then the result is NaN.
 
 Force a constant value to the target variable. This is similar to %set
 and %cassign/v, but it uses the force port (port-2) of the signal
+functor instead of the normal assign port (port-0), so the signal
+responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
+in the README.txt file.
+
+* %force/x0 <label>, <bit>, <wid>
+
+Force a constant value to part target variable. This is similar to
+%set/x instruction, but it uses the force port (port-2) of the signal
 functor instead of the normal assign port (port-0), so the signal
 responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
 in the README.txt file.
