@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.25 2005/09/14 02:53:14 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.26 2005/11/26 00:35:43 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -468,14 +468,6 @@ bool NetESelect::has_width() const
       return true;
 }
 
-bool NetESelect::set_width(unsigned w)
-{
-      if (expr_width() == 1)
-	    return true;
-      else
-	    return false;
-}
-
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 		     unsigned width, unsigned np)
 : name_(0), type_(t)
@@ -534,6 +526,9 @@ ivl_variable_type_t NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.26  2005/11/26 00:35:43  steve
+ *  More precise about r-value width of constants.
+ *
  * Revision 1.25  2005/09/14 02:53:14  steve
  *  Support bool expressions and compares handle them optimally.
  *

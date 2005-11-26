@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.331 2005/11/10 13:28:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.332 2005/11/26 00:35:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2479,7 +2479,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 
       unsigned lwid = count_lval_width(lval);
 
-      rexp->set_width(lwid);
+      rexp->set_width(lwid, true);
       rexp = pad_to_width(rexp, lwid);
 
       dev = new NetForce(lval, rexp);
@@ -3028,6 +3028,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.332  2005/11/26 00:35:42  steve
+ *  More precise about r-value width of constants.
+ *
  * Revision 1.331  2005/11/10 13:28:11  steve
  *  Reorganize signal part select handling, and add support for
  *  indexed part selects.

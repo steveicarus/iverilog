@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.119 2005/10/12 17:26:01 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.120 2005/11/26 00:35:44 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -750,9 +750,9 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	      /* Do not support bit or part selects of l-values yet. */
 	    assert(ivl_lval_mux(lval) == 0);
 	    assert(ivl_lval_part_off(lval) == 0);
-	    assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+	      //assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
 
-	    use_wid = ivl_signal_width(lsig);
+	    use_wid = ivl_lval_width(lval);
 	    assert((roff + use_wid) <= rvec.wid);
 
 	    fprintf(vvp_out, "  %s V_%s, %u, %u;\n", command_name,
@@ -1468,6 +1468,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.120  2005/11/26 00:35:44  steve
+ *  More precise about r-value width of constants.
+ *
  * Revision 1.119  2005/10/12 17:26:01  steve
  *  force l-values do not support bit/part select.
  *

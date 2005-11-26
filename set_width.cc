@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.36 2005/05/17 20:56:55 steve Exp $"
+#ident "$Id: set_width.cc,v 1.37 2005/11/26 00:35:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,7 +36,7 @@
 # include  <typeinfo>
 
 
-bool NetExpr::set_width(unsigned w)
+bool NetExpr::set_width(unsigned w, bool)
 {
       cerr << get_line() << ": internal warning:  "
 	   <<typeid(*this).name() << ": set_width(unsigned) "
@@ -45,7 +45,7 @@ bool NetExpr::set_width(unsigned w)
       return false;
 }
 
-bool NetEBinary::set_width(unsigned w)
+bool NetEBinary::set_width(unsigned w, bool)
 {
       bool flag = true;
       switch (op_) {
@@ -80,7 +80,7 @@ bool NetEBinary::set_width(unsigned w)
  * The bitwise logical operators have operands the same size as the
  * result. Anything else is a mess.
  */
-bool NetEBAdd::set_width(unsigned w)
+bool NetEBAdd::set_width(unsigned w, bool)
 {
 
       unsigned wid = w;
@@ -113,7 +113,7 @@ bool NetEBAdd::set_width(unsigned w)
  * result. Anything else is a mess. I first try to get the operands to
  * shrink to the desired size. I then expand operands that are too small.
  */
-bool NetEBBits::set_width(unsigned w)
+bool NetEBBits::set_width(unsigned w, bool)
 {
 	/* First, give the operands a chance to adjust themselves to
 	   the requested width. */
@@ -153,7 +153,7 @@ bool NetEBBits::set_width(unsigned w)
  * their own natural width, but the comparison operator result has a
  * fixed width of 1.
  */
-bool NetEBComp::set_width(unsigned w)
+bool NetEBComp::set_width(unsigned w, bool)
 {
       return (w == 1);
 }
@@ -162,12 +162,12 @@ bool NetEBComp::set_width(unsigned w)
  * There is nothing we can do to the operands of a division to make it
  * confirm to the requested width. Force the context to pad or truncate.
  */
-bool NetEBDiv::set_width(unsigned w)
+bool NetEBDiv::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }
 
-bool NetEBLogic::set_width(unsigned w)
+bool NetEBLogic::set_width(unsigned w, bool)
 {
       bool flag;
       flag = left_->set_width(right_->expr_width());
@@ -180,7 +180,7 @@ bool NetEBLogic::set_width(unsigned w)
  * There is nothing we can do to the operands of a multiply to make it
  * confirm to the requested width. Force the context to pad or truncate.
  */
-bool NetEBMult::set_width(unsigned w)
+bool NetEBMult::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }
@@ -190,7 +190,7 @@ bool NetEBMult::set_width(unsigned w)
  * natural width. The width of the operator result is the width of the
  * left operand, the value that is to be shifted.
  */
-bool NetEBShift::set_width(unsigned w)
+bool NetEBShift::set_width(unsigned w, bool)
 {
       bool flag = true;
 
@@ -228,7 +228,7 @@ bool NetEBShift::set_width(unsigned w)
  * matter because the null expression is indication of an error and
  * the compiler will not go beyond elaboration.
  */
-bool NetEConcat::set_width(unsigned w)
+bool NetEConcat::set_width(unsigned w, bool)
 {
       unsigned sum = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
@@ -241,7 +241,7 @@ bool NetEConcat::set_width(unsigned w)
       return true;
 }
 
-bool NetEConst::set_width(unsigned w)
+bool NetEConst::set_width(unsigned w, bool last_chance)
 {
       if (w == value_.len()) {
 	    expr_width(w);
@@ -289,17 +289,19 @@ bool NetEConst::set_width(unsigned w)
 		  ? value_[value_.len() - 1]
 		  : verinum::V0;
 
-	      // Don't reduce a number too small to hold all the
-	      // significant bits.
-	    for (unsigned idx = w ;  idx < value_.len() ;  idx += 1)
-		  if (value_[idx] != pad_bit)
-			use_w = idx+1;
+	    if (! last_chance) {
+		    // Don't reduce a number too small to hold all the
+		    // significant bits.
+		  for (unsigned idx = w ;  idx < value_.len() ;  idx += 1)
+			if (value_[idx] != pad_bit)
+			      use_w = idx+1;
 
-	      // Correct for the special case of signed value. We
-	      // cannot have the result change sign on us.
-	    if (value_.has_sign() && (use_w < value_.len())
-		&& (value_[use_w-1] != pad_bit))
-		use_w += 1;
+		    // Correct for the special case of signed value. We
+		    // cannot have the result change sign on us.
+		  if (value_.has_sign() && (use_w < value_.len())
+		      && (value_[use_w-1] != pad_bit))
+			use_w += 1;
+	    }
 
 	    verinum tmp (verinum::V0, use_w, has_width());
 	    for (unsigned idx = 0 ;  idx < use_w ;  idx += 1)
@@ -316,7 +318,7 @@ bool NetEConst::set_width(unsigned w)
  * Parameter vectors cannot be resized because they refer to a common
  * value.
  */
-bool NetEConstParam::set_width(unsigned w)
+bool NetEConstParam::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }
@@ -326,13 +328,13 @@ bool NetEConstParam::set_width(unsigned w)
  * because it isn't really a vector. The environment will convert this
  * to a vector at the right time.
  */
-bool NetECReal::set_width(unsigned w)
+bool NetECReal::set_width(unsigned w, bool)
 {
       expr_width(w);
       return true;
 }
 
-bool NetEMemory::set_width(unsigned w)
+bool NetEMemory::set_width(unsigned w, bool)
 {
       if (w != mem_->width())
 	    return false;
@@ -341,12 +343,20 @@ bool NetEMemory::set_width(unsigned w)
       return true;
 }
 
-bool NetEParam::set_width(unsigned)
+bool NetEParam::set_width(unsigned, bool)
 {
       return false;
 }
 
-bool NetESFunc::set_width(unsigned w)
+bool NetESelect::set_width(unsigned w, bool)
+{
+      if (expr_width() == 1)
+	    return true;
+      else
+	    return false;
+}
+
+bool NetESFunc::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }
@@ -355,7 +365,7 @@ bool NetESFunc::set_width(unsigned w)
  * The signal should automatically pad with zeros to get to the desired
  * width. Do not allow signal bits to be truncated, however.
  */
-bool NetESignal::set_width(unsigned w)
+bool NetESignal::set_width(unsigned w, bool)
 {
       if (w != bit_count())
 	    return false;
@@ -363,7 +373,7 @@ bool NetESignal::set_width(unsigned w)
       return true;
 }
 
-bool NetETernary::set_width(unsigned w)
+bool NetETernary::set_width(unsigned w, bool)
 {
       bool flag = true;
       flag = flag && true_val_->set_width(w);
@@ -377,13 +387,13 @@ bool NetETernary::set_width(unsigned w)
  * width. What I really need to do is note the width of the output
  * parameter of the function definition and take that into account.
  */
-bool NetEUFunc::set_width(unsigned wid)
+bool NetEUFunc::set_width(unsigned wid, bool)
 {
       expr_width(wid);
       return true;
 }
 
-bool NetEUnary::set_width(unsigned w)
+bool NetEUnary::set_width(unsigned w, bool)
 {
       bool flag = true;
       switch (op_) {
@@ -406,7 +416,7 @@ bool NetEUnary::set_width(unsigned w)
  * Unary reduction operators allow its operand to have any width. The
  * result is defined to be 1.
  */
-bool NetEUReduce::set_width(unsigned w)
+bool NetEUReduce::set_width(unsigned w, bool)
 {
       return w == 1;
 }
@@ -414,6 +424,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.37  2005/11/26 00:35:44  steve
+ *  More precise about r-value width of constants.
+ *
  * Revision 1.36  2005/05/17 20:56:55  steve
  *  Parameters cannot have their width changed.
  *
