@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.120 2005/11/26 00:35:44 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.121 2005/11/26 17:23:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -725,13 +725,16 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
       unsigned roff = 0;
 
       const char*command_name;
+      const char*command_name_x0;
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
 	    command_name = "%cassign/v";
+	    command_name_x0 = "ERROR";
 	    break;
 	  case IVL_ST_FORCE:
 	    command_name = "%force/v";
+	    command_name_x0 = "%force/x0";
 	    break;
 	  default:
 	    command_name = "ERROR";
@@ -742,18 +745,26 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ; lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
-	    unsigned use_wid;
+
+	    unsigned use_wid = ivl_lval_width(lval);
+	    unsigned part_off = ivl_lval_part_off(lval);
 
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
 
-	      /* Do not support bit or part selects of l-values yet. */
-	    assert(ivl_lval_mux(lval) == 0);
-	    assert(ivl_lval_part_off(lval) == 0);
-	      //assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+	    if (part_off != 0 || use_wid != ivl_signal_width(lsig)) {
 
-	    use_wid = ivl_lval_width(lval);
-	    assert((roff + use_wid) <= rvec.wid);
+		  command_name = command_name_x0;
+		  fprintf(vvp_out, "  %%ix/load 0, %u;\n", part_off);
+
+	    } else {
+		    /* Do not support bit or part selects of l-values yet. */
+		  assert(ivl_lval_mux(lval) == 0);
+		  assert(ivl_lval_part_off(lval) == 0);
+		  assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+
+		  assert((roff + use_wid) <= rvec.wid);
+	    }
 
 	    fprintf(vvp_out, "  %s V_%s, %u, %u;\n", command_name,
 		    vvp_signal_label(lsig), rvec.base+roff, use_wid);
@@ -1468,6 +1479,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.121  2005/11/26 17:23:17  steve
+ *  Handle indexed l-value to force.
+ *
  * Revision 1.120  2005/11/26 00:35:44  steve
  *  More precise about r-value width of constants.
  *
