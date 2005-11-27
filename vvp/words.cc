@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.6 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: words.cc,v 1.7 2005/11/27 16:47:14 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -92,8 +92,8 @@ void compile_net(char*label, char*name, int msb, int lsb,
       vvp_net_t*node = new vvp_net_t;
 
       vvp_fun_signal_base*vsig = net8_flag
-	    ? new vvp_fun_signal8(wid)
-	    : new vvp_fun_signal(wid);
+	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
+	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal(wid));
       node->fun = vsig;
 
 	/* Add the label into the functor symbol table. */
@@ -186,6 +186,9 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 /*
  * $Log: words.cc,v $
+ * Revision 1.7  2005/11/27 16:47:14  steve
+ *  Fix type safety warning from gcc.
+ *
  * Revision 1.6  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *
