@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.21 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.22 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -140,7 +140,9 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       perm_string perm_name = lex_strings.make(name);
       delete name;
 
-      const NetExpr*ex = pscope->get_parameter(perm_name);
+      const NetExpr*ex_msb;
+      const NetExpr*ex_lsb;
+      const NetExpr*ex = pscope->get_parameter(perm_name, ex_msb, ex_lsb);
       if (ex == 0) {
 	    cerr << get_line() << ": error: identifier ``" << path_ <<
 		  "'' is not a parameter in " << scope->name() << "." << endl;
@@ -231,6 +233,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.22  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.21  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

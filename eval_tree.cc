@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.66 2005/11/10 13:28:12 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.67 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1171,7 +1171,9 @@ NetExpr* NetEParam::eval_tree()
 	    return 0;
 
       assert(scope_);
-      const NetExpr*expr = scope_->get_parameter(name_);
+      const NetExpr*expr_msb;
+      const NetExpr*expr_lsb;
+      const NetExpr*expr = scope_->get_parameter(name_, expr_msb, expr_lsb);
       if (expr == 0) {
 	    cerr << get_line() << ": internal error: Unable to match "
 		 << "parameter " << name_ << " in scope "
@@ -1599,6 +1601,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.67  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.66  2005/11/10 13:28:12  steve
  *  Reorganize signal part select handling, and add support for
  *  indexed part selects.

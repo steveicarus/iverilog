@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.2 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.3 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -27,11 +27,12 @@
 /*
  * Search for the hierarchical name.
  */
-NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
+NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 		       NetNet*&net,
 		       NetMemory*&mem,
 		       const NetExpr*&par,
-		       NetEvent*&eve)
+		       NetEvent*&eve,
+		       const NetExpr*&ex1, const NetExpr*&ex2)
 {
       assert(scope);
 
@@ -65,7 +66,7 @@ NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 		  return scope;
 	    }
 
-	    if ( (par = scope->get_parameter(key)) ) {
+	    if ( (par = scope->get_parameter(key, ex1, ex2)) ) {
 		  delete key;
 		  return scope;
 	    }
@@ -82,6 +83,9 @@ NetScope*symbol_search(Design*des, NetScope*scope, hname_t path,
 
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.3  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.2  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

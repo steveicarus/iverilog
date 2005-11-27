@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.23 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: netmisc.h,v 1.24 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -33,12 +33,30 @@
  * If the symbol was not found, return 0. The output arguments
  * get 0 except for the pointer to the object that represents
  * the located symbol.
+ *
+ * The ex1 and ex2 output arguments are extended results. If the
+ * symbol is a parameter (par!=0) then ex1 is the msb expression and
+ * ex2 is the lsb expression for the range. If there is no range, then
+ * these values are set to 0.
  */
-extern NetScope* symbol_search(Design*des, NetScope*start, hname_t path,
+extern NetScope* symbol_search(const Design*des,
+			       NetScope*start, hname_t path,
 			       NetNet*&net,       /* net/reg */
 			       NetMemory*&mem,    /* memory */
 			       const NetExpr*&par,/* parameter */
-			       NetEvent*&eve       /* named event */);
+			       NetEvent*&eve,     /* named event */
+			       const NetExpr*&ex1, const NetExpr*&ex2);
+
+inline NetScope* symbol_search(const Design*des,
+			       NetScope*start, const hname_t&path,
+			       NetNet*&net,       /* net/reg */
+			       NetMemory*&mem,    /* memory */
+			       const NetExpr*&par,/* parameter */
+			       NetEvent*&eve      /* named event */)
+{
+      const NetExpr*ex1, *ex2;
+      return symbol_search(des, start, path, net, mem, par, eve, ex1, ex2);
+}
 
 /*
  * This function transforms an expression by padding the high bits
@@ -100,6 +118,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.24  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.23  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.36 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: eval.cc,v 1.37 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,7 @@
 
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "compiler.h"
 
 verinum* PExpr::eval_const(const Design*, const NetScope*) const
@@ -151,7 +152,13 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
 {
       assert(scope);
-      const NetExpr*expr = des->find_parameter(scope, path_);
+	//const NetExpr*expr = des->find_parameter(scope, path_);
+      NetNet*net;
+      NetMemory*mem;
+      NetEvent*eve;
+      const NetExpr*expr;
+      NetScope*found_in = symbol_search(des, scope, path_,
+					net, mem, expr, eve);
 
       if (expr == 0)
 	    return 0;
@@ -240,6 +247,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.37  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.36  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *

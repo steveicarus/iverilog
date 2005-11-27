@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.72 2005/11/10 13:28:11 steve Exp $"
+#ident "$Id: PExpr.h,v 1.73 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include  <string>
@@ -255,7 +255,9 @@ class PEIdent : public PExpr {
       NetExpr*elaborate_expr_param(Design*des,
 				   NetScope*scope,
 				   const NetExpr*par,
-				   NetScope*found) const;
+				   NetScope*found,
+				   const NetExpr*par_msb,
+				   const NetExpr*par_lsb) const;
       NetExpr*elaborate_expr_net(Design*des,
 				   NetScope*scope,
 				   NetNet*net,
@@ -543,6 +545,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.73  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.72  2005/11/10 13:28:11  steve
  *  Reorganize signal part select handling, and add support for
  *  indexed part selects.

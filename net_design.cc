@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.47 2005/09/14 02:53:14 steve Exp $"
+#ident "$Id: net_design.cc,v 1.48 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -172,71 +172,6 @@ NetScope* Design::find_scope(NetScope*scope, const hname_t&path) const
 	// Last chance. Look for the name starting at the root.
       return find_scope(path);
 }
-
-/*
- * Find a parameter from within a specified context. If the name is
- * not here, keep looking up until I run out of up to look at. The
- * method works by scanning scopes, starting with the passed scope and
- * working up towards the root, looking for the named parameter. The
- * name in this case can be hierarchical, so there is an inner loop to
- * follow the scopes of the name down to to key.
- *
- * The expression value of the parameter is returned as the result,
- * and the scope that contains the parameter is returned in the out
- * argument found_in.
- */
-const NetExpr* Design::find_parameter(NetScope*scope,
-				      const hname_t&path,
-				      NetScope*&found_in) const
-{
-      for ( ; scope ;  scope = scope->parent()) {
-	    unsigned hidx = 0;
-
-	    NetScope*cur = scope;
-	    while (path.peek_name(hidx+1)) {
-		  cur = cur->child(path.peek_name(hidx));
-		  if (cur == 0)
-			break;
-		  hidx += 1;
-	    }
-
-	    if (cur == 0)
-		  continue;
-
-	    if (const NetExpr*res = cur->get_parameter(path.peek_name(hidx))) {
-		  found_in = cur;
-		  return res;
-	    }
-      }
-
-      return 0;
-}
-
-const NetExpr* Design::find_parameter(const NetScope*scope,
-				      const hname_t&path) const
-{
-      for ( ; scope ;  scope = scope->parent()) {
-	    unsigned hidx = 0;
-
-	    const NetScope*cur = scope;
-	    while (path.peek_name(hidx+1)) {
-		  cur = cur->child(path.peek_name(hidx));
-		  if (cur == 0)
-			break;
-		  hidx += 1;
-	    }
-
-	    if (cur == 0)
-		  continue;
-
-	    if (const NetExpr*res = cur->get_parameter(path.peek_name(hidx)))
-		  return res;
-
-      }
-
-      return 0;
-}
-
 
 /*
  * This method runs through the scope, noticing the defparam
@@ -619,6 +554,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.48  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.47  2005/09/14 02:53:14  steve
  *  Support bool expressions and compares handle them optimally.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.100 2005/11/14 22:11:52 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.101 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -493,13 +493,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
+      const NetExpr*ex1, *ex2;
+
       NetScope*found_in = symbol_search(des, scope, path_,
-					net, mem, par, eve);
+					net, mem, par, eve,
+					ex1, ex2);
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
       if (par != 0)
-	    return elaborate_expr_param(des, scope, par, found_in);
+	    return elaborate_expr_param(des, scope, par, found_in, ex1, ex2);
 
 
 	// If the identifier names a signal (a register or wire)
@@ -592,10 +595,17 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+/*
+ * Handle the case that the identifier is a parameter reference. The
+ * parameter expression has already been located for us (as the par
+ * argument) so we just need to process the sub-expression.
+ */
 NetExpr* PEIdent::elaborate_expr_param(Design*des,
 				       NetScope*scope,
 				       const NetExpr*par,
-				       NetScope*found_in) const
+				       NetScope*found_in,
+				       const NetExpr*par_msb,
+				       const NetExpr*par_lsb) const
 {
       NetExpr*tmp;
 
@@ -604,7 +614,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
       if (sel_ == SEL_PART) {
 	    assert(msb_ && lsb_);
 
-	      /* If the parameter has a part select, we support
+	      /* If the identifier has a part select, we support
 		 it by pulling the right bits out and making a
 		 sized unsigned constant. This code assumes the
 		 lsb of a parameter is 0 and the msb is the
@@ -700,7 +710,10 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    tmp = new NetESelect(tmp, idx_ex, wid);
 
 
-      } else if (msb_) {
+      } else if (sel_ == SEL_BIT) {
+	    assert(msb_);
+	    assert(!lsb_);
+
 	      /* Handle the case where a parameter has a bit
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
@@ -722,6 +735,8 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
 	    if (le && re) {
 
+		    /* Argument and bit select are constant. Calculate
+		       the final result. */
 		  verinum lv = le->value();
 		  verinum rv = re->value();
 		  verinum::V rb = verinum::Vx;
@@ -743,6 +758,31 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		  tmp = re;
 
 	    } else {
+
+		  const NetEConst*par_me =dynamic_cast<const NetEConst*>(par_msb);
+		  const NetEConst*par_le =dynamic_cast<const NetEConst*>(par_lsb);
+
+		  assert(par_me || !par_msb);
+		  assert(par_le || !par_lsb);
+		  assert(par_me || !par_le);
+
+		  if (par_me) {
+			long par_mv = par_me->value().as_long();
+			long par_lv = par_le->value().as_long();
+			if (par_mv >= par_lv) {
+			      mtmp = par_lv
+				    ? make_add_expr(mtmp, 0-par_lv)
+				    : mtmp;
+			} else {
+			      if (par_lv != 0)
+				    mtmp = make_add_expr(mtmp, 0-par_mv);
+			      mtmp = make_sub_expr(par_lv-par_mv, mtmp);
+			}
+		  }
+
+		    /* The value is constant, but the bit select
+		       expression is not. Elaborate a NetESelect to
+		       evaluate the select at run-time. */
 
 		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
 		  tmp->set_line(*this);
@@ -1228,6 +1268,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.101  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.100  2005/11/14 22:11:52  steve
  *  Fix compile warning.
  *

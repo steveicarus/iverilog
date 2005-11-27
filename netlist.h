@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.352 2005/11/26 00:35:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.353 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 /*
@@ -3146,7 +3146,10 @@ class NetScope : public Attrib {
       NetExpr* set_parameter(perm_string name, NetExpr*val,
 			     NetExpr*msb, NetExpr*lsb, bool signed_flag);
       NetExpr* set_localparam(perm_string name, NetExpr*val);
-      const NetExpr*get_parameter(const char* name) const;
+
+      const NetExpr*get_parameter(const char* name,
+				  const NetExpr*&msb,
+				  const NetExpr*&lsb) const;
 
 	/* These are used by defparam elaboration to replace the
 	   expression with a new expression, without affecting the
@@ -3344,16 +3347,6 @@ class Design {
 
 	// PARAMETERS
 
-	/* This method searches for a parameter, starting in the given
-	   scope. This method handles the upward searches that the
-	   NetScope class itself does not support.
-
-	   The scope of the located expression is stored in the
-	   found_in argument. */
-      const NetExpr*find_parameter( NetScope*, const hname_t&path,
-				    NetScope*&found_in) const;
-      const NetExpr*find_parameter( const NetScope*, const hname_t&path) const;
-
       void run_defparams();
       void evaluate_parameters();
 
@@ -3458,6 +3451,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.353  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.352  2005/11/26 00:35:43  steve
  *  More precise about r-value width of constants.
  *

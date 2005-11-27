@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.34 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.35 2005/11/27 05:56:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -132,17 +132,25 @@ NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr)
  * perm_string::literal method to fake the compiler into doing the
  * compare without actually creating a perm_string.
  */
-const NetExpr* NetScope::get_parameter(const char* key) const
+const NetExpr* NetScope::get_parameter(const char* key,
+				       const NetExpr*&msb,
+				       const NetExpr*&lsb) const
 {
       map<perm_string,param_expr_t>::const_iterator idx;
 
       idx = parameters.find(perm_string::literal(key));
-      if (idx != parameters.end())
+      if (idx != parameters.end()) {
+	    msb = (*idx).second.msb;
+	    lsb = (*idx).second.lsb;
 	    return (*idx).second.expr;
+      }
 
       idx = localparams.find(perm_string::literal(key));
-      if (idx != localparams.end())
+      if (idx != localparams.end()) {
+	    msb = (*idx).second.msb;
+	    lsb = (*idx).second.lsb;
 	    return (*idx).second.expr;
+      }
 
       return 0;
 }
@@ -449,6 +457,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.35  2005/11/27 05:56:20  steve
+ *  Handle bit select of parameter with ranges.
+ *
  * Revision 1.34  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
