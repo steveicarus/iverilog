@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.73 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: PExpr.h,v 1.74 2005/11/27 17:01:56 steve Exp $"
 #endif
 
 # include  <string>
@@ -96,7 +96,7 @@ class PExpr : public LineInfo {
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -187,7 +187,7 @@ class PEFNumber : public PExpr {
 	/* The eval_const method as applied to a floating point number
 	   gets the *integer* value of the number. This accounts for
 	   any rounding that is needed to get the value. */
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
 	/* A PEFNumber is a constant, so this returns true. */
       virtual bool is_constant(Module*) const;
@@ -247,7 +247,7 @@ class PEIdent : public PExpr {
       NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
-      verinum* eval_const(const Design*des, const NetScope*sc) const;
+      verinum* eval_const(const Design*des, NetScope*sc) const;
 
       const hname_t& path() const;
 
@@ -343,7 +343,7 @@ class PENumber : public PExpr {
 					 NetScope*scope,
 					 bool is_force) const;
 
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
       virtual bool is_the_same(const PExpr*that) const;
       virtual bool is_constant(Module*) const;
@@ -377,7 +377,7 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
-      verinum* PEString::eval_const(const Design*, const NetScope*) const;
+      verinum* PEString::eval_const(const Design*, NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -402,7 +402,7 @@ class PEUnary : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -430,7 +430,7 @@ class PEBinary : public PExpr {
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
 					bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
     private:
       char op_;
@@ -504,7 +504,7 @@ class PETernary : public PExpr {
       virtual NetETernary*elaborate_expr(Design*des, NetScope*,
 					 bool sys_task_arg =false) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
     private:
       PExpr*expr_;
@@ -545,6 +545,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.74  2005/11/27 17:01:56  steve
+ *  Fix for stubborn compiler.
+ *
  * Revision 1.73  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

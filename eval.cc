@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.37 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: eval.cc,v 1.38 2005/11/27 17:01:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,12 +29,12 @@
 # include  "netmisc.h"
 # include  "compiler.h"
 
-verinum* PExpr::eval_const(const Design*, const NetScope*) const
+verinum* PExpr::eval_const(const Design*, NetScope*) const
 {
       return 0;
 }
 
-verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
+verinum* PEBinary::eval_const(const Design*des, NetScope*scope) const
 {
       verinum*l = left_->eval_const(des, scope);
       if (l == 0) return 0;
@@ -149,7 +149,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
  * Evaluate an identifier as a constant expression. This is only
  * possible if the identifier is that of a parameter.
  */
-verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
+verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
 {
       assert(scope);
 	//const NetExpr*expr = des->find_parameter(scope, path_);
@@ -180,23 +180,23 @@ verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
       return new verinum(eval->value());
 }
 
-verinum* PEFNumber::eval_const(const Design*, const NetScope*) const
+verinum* PEFNumber::eval_const(const Design*, NetScope*) const
 {
       long val = value_->as_long();
       return new verinum(val);
 }
 
-verinum* PENumber::eval_const(const Design*, const NetScope*) const
+verinum* PENumber::eval_const(const Design*, NetScope*) const
 {
       return new verinum(value());
 }
 
-verinum* PEString::eval_const(const Design*, const NetScope*) const
+verinum* PEString::eval_const(const Design*, NetScope*) const
 {
       return new verinum(string(text_));
 }
 
-verinum* PETernary::eval_const(const Design*des, const NetScope*scope) const
+verinum* PETernary::eval_const(const Design*des, NetScope*scope) const
 {
       verinum*test = expr_->eval_const(des, scope);
       if (test == 0)
@@ -216,7 +216,7 @@ verinum* PETernary::eval_const(const Design*des, const NetScope*scope) const
       }
 }
 
-verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
+verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 {
       verinum*val = expr_->eval_const(des, scope);
       if (val == 0)
@@ -247,6 +247,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.38  2005/11/27 17:01:57  steve
+ *  Fix for stubborn compiler.
+ *
  * Revision 1.37  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

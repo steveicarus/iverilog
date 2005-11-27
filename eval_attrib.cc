@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_attrib.cc,v 1.7 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.8 2005/11/27 17:01:57 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -36,7 +36,7 @@
 attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 				   unsigned&natt,
 				   const Design*des,
-				   const NetScope*scope)
+				   NetScope*scope)
 {
       natt = att.size();
       if (natt == 0)
@@ -74,6 +74,9 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.8  2005/11/27 17:01:57  steve
+ *  Fix for stubborn compiler.
+ *
  * Revision 1.7  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *
