@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.71 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.72 2005/11/30 00:42:14 steve Exp $"
 #endif
 
 /*
@@ -255,7 +255,7 @@ static unsigned signal_width(const struct __vpiSignal*rfp)
 static void signal_get_IntVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
       unsigned wid = signal_width(rfp);
-      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+      vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
 
       assert(wid <= 8 * sizeof vp->value.integer);
       vp->value.integer = 0;
@@ -822,6 +822,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.72  2005/11/30 00:42:14  steve
+ *  vpi_signal supports vvp_fun_signal_vec types.
+ *
  * Revision 1.71  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *
