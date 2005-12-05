@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.48 2005/06/09 05:04:45 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.49 2005/12/05 21:19:55 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -309,7 +309,7 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 
           case vpiScaledRealTime:
 	    units = vpip_time_units_from_handle(obj);
-            vp->real = pow(10, vpip_get_time_precision() - units);
+            vp->real = pow(10.0L, vpip_get_time_precision() - units);
             vp->real *= time;
 	    break;
 
@@ -395,6 +395,7 @@ struct vpip_put_value_event : vvp_gen_event_s {
       vpiHandle handle;
       s_vpi_value value;
       virtual void run_run();
+  ~vpip_put_value_event() { }
 };
 
 void vpip_put_value_event::run_run()
@@ -416,7 +417,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
  	    switch (when->type) {
  		case vpiScaledRealTime:
  		  dly = (vvp_time64_t)(when->real *
-				       (pow(10,
+				       (pow(10.0L,
 					    vpip_time_units_from_handle(obj) -
 					    vpip_get_time_precision())));
  		  break;
@@ -685,6 +686,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.49  2005/12/05 21:19:55  steve
+ *  Be more careful with double types.
+ *
  * Revision 1.48  2005/06/09 05:04:45  steve
  *  Support UDP initial values.
  *

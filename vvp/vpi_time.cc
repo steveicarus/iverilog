@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.16 2004/10/04 01:11:00 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.17 2005/12/05 21:19:55 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -178,7 +178,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 		 the scaling, instead of the integer scaling done
 		 everywhere else. */
 	    units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
-	    vp->value.real = pow(10, vpi_time_precision - units);
+	    vp->value.real = pow(10.0L, vpi_time_precision - units);
 	    vp->value.real *= schedule_simtime();
 	    break;
 
@@ -274,6 +274,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.17  2005/12/05 21:19:55  steve
+ *  Be more careful with double types.
+ *
  * Revision 1.16  2004/10/04 01:11:00  steve
  *  Clean up spurious trailing white space.
  *
