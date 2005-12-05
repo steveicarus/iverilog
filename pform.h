@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.83 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: pform.h,v 1.84 2005/12/05 21:21:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -77,7 +77,8 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max);
 /* This is information about port name information for named port
    connections. */
 
-typedef struct named<PExpr*> named_pexpr_t;
+//typedef struct named<PExpr*> named_pexpr_t;
+typedef named<PExpr*> named_pexpr_t;
 
 struct parmvalue_t {
       svector<PExpr*>*by_order;
@@ -305,6 +306,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.84  2005/12/05 21:21:18  steve
+ *  Fixes for stubborn compilers.
+ *
  * Revision 1.83  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

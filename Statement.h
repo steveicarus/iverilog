@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.41 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: Statement.h,v 1.42 2005/12/05 21:21:18 steve Exp $"
 #endif
 
 # include  <string>
@@ -394,6 +394,7 @@ class PNoop  : public Statement {
 
     public:
       PNoop() { }
+      ~PNoop() { }
 };
 
 class PRepeat : public Statement {
@@ -457,6 +458,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.42  2005/12/05 21:21:18  steve
+ *  Fixes for stubborn compilers.
+ *
  * Revision 1.41  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

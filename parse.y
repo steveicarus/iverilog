@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.207 2005/11/10 13:28:12 steve Exp $"
+#ident "$Id: parse.y,v 1.208 2005/12/05 21:21:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "pform.h"
+# include  "Statement.h"
 # include  <sstream>
 
 extern void lex_start_table();

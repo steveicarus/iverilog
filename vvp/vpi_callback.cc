@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.40 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.41 2005/12/05 21:21:18 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,8 @@ const struct __vpirt callback_rt = {
 struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
       bool sync_flag;
+
+  ~sync_cb () { }
 
       virtual void run_run();
 };
@@ -570,6 +572,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.41  2005/12/05 21:21:18  steve
+ *  Fixes for stubborn compilers.
+ *
  * Revision 1.40  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *
