@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: eval_bool.c,v 1.3 2005/12/05 21:20:55 steve Exp $"
+#ident "$Id: eval_bool.c,v 1.4 2005/12/07 03:43:30 steve Exp $"
 
 /*
  * This file includes functions for evaluating REAL expressions.
@@ -28,7 +28,9 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
-//# include  <stdint.h>
+#ifdef HAVE_STDINT_H
+# include  <stdint.h>
+#endif
 # include  <math.h>
 # include  <assert.h>
 
@@ -84,6 +86,9 @@ int draw_eval_bool64(ivl_expr_t exp)
 
 /*
  * $Log: eval_bool.c,v $
+ * Revision 1.4  2005/12/07 03:43:30  steve
+ *  Include stdint.h if it is present.
+ *
  * Revision 1.3  2005/12/05 21:20:55  steve
  *  Some systems donot have stding.h?
  *

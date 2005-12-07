@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_config.h.in,v 1.1 2004/01/20 21:00:47 steve Exp $"
+#ident "$Id: vvp_config.h.in,v 1.2 2005/12/07 03:43:30 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -31,12 +31,16 @@
 #endif
 
 # undef HAVE_MALLOC_H
+# undef HAVE_STDINT_H
 
 # undef _LARGEFILE_SOURCE
 # undef _LARGEFILE64_SOURCE
 
 /*
  * $Log: vvp_config.h.in,v $
+ * Revision 1.2  2005/12/07 03:43:30  steve
+ *  Include stdint.h if it is present.
+ *
  * Revision 1.1  2004/01/20 21:00:47  steve
  *  Isolate configure from containing config.h
  *

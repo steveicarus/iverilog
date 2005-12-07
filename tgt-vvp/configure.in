@@ -13,7 +13,7 @@ AC_CANONICAL_HOST
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-AC_CHECK_HEADERS(malloc.h)
+AC_CHECK_HEADERS(malloc.h stdint.h)
 
 # may modify CPPFLAGS and CFLAGS
 AX_CPP_PRECOMP
