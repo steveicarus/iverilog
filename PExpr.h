@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.74 2005/11/27 17:01:56 steve Exp $"
+#ident "$Id: PExpr.h,v 1.75 2005/12/07 04:04:23 steve Exp $"
 #endif
 
 # include  <string>
@@ -122,6 +122,7 @@ class PEConcat : public PExpr {
       PEConcat(const svector<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
+      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
@@ -545,6 +546,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.75  2005/12/07 04:04:23  steve
+ *  Allow constant concat expressions.
+ *
  * Revision 1.74  2005/11/27 17:01:56  steve
  *  Fix for stubborn compiler.
  *

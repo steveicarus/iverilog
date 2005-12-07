@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.43 2004/05/18 18:43:15 steve Exp $"
+#ident "$Id: verinum.cc,v 1.44 2005/12/07 04:04:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -902,6 +902,24 @@ verinum operator % (const verinum&left, const verinum&right)
       return result;
 }
 
+verinum concat(const verinum&left, const verinum&right)
+{
+      if (left.is_string() && right.is_string()) {
+	    std::string tmp = left.as_string() + right.as_string();
+	    verinum res (tmp);
+	    return res;
+      }
+
+      verinum res (verinum::V0, left.len() + right.len());
+      for (unsigned idx = 0 ;  idx < right.len() ;  idx += 1)
+	    res.set(idx, right.get(idx));
+
+      for (unsigned idx = 0 ;  idx < left.len() ;  idx += 1)
+	    res.set(idx+right.len(), left.get(idx));
+
+      return res;
+}
+
 verinum::V operator | (verinum::V l, verinum::V r)
 {
       if (l == verinum::V1)
@@ -942,6 +960,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.44  2005/12/07 04:04:24  steve
+ *  Allow constant concat expressions.
+ *
  * Revision 1.43  2004/05/18 18:43:15  steve
  *  Handle null string as a single nul character.
  *

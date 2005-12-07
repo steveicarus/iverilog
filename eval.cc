@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.38 2005/11/27 17:01:57 steve Exp $"
+#ident "$Id: eval.cc,v 1.39 2005/12/07 04:04:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -143,6 +143,22 @@ verinum* PEBinary::eval_const(const Design*des, NetScope*scope) const
       delete r;
       return res;
 }
+verinum* PEConcat::eval_const(const Design*des, NetScope*scope) const
+{
+      verinum*accum = parms_[0]->eval_const(des, scope);
+      if (accum == 0)
+	    return 0;
+
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    verinum*tmp = parms_[idx]->eval_const(des, scope);
+	    assert(tmp);
+
+	    *accum = concat(*accum, *tmp);
+	    delete tmp;
+      }
+
+      return accum;
+}
 
 
 /*
@@ -247,6 +263,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.39  2005/12/07 04:04:23  steve
+ *  Allow constant concat expressions.
+ *
  * Revision 1.38  2005/11/27 17:01:57  steve
  *  Fix for stubborn compiler.
  *
