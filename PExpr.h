@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.66 2004/10/04 01:10:51 steve Exp $"
+#ident "$Id: PExpr.h,v 1.66.2.1 2005/12/07 03:28:44 steve Exp $"
 #endif
 
 # include  <string>
@@ -114,6 +114,8 @@ class PEConcat : public PExpr {
     public:
       PEConcat(const svector<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
+
+      virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
       virtual void dump(ostream&) const;
 
@@ -492,6 +494,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.66.2.1  2005/12/07 03:28:44  steve
+ *  Support constant concatenation of constants.
+ *
  * Revision 1.66  2004/10/04 01:10:51  steve
  *  Clean up spurious trailing white space.
  *

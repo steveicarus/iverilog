@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.26.2.2 2005/08/13 00:45:55 steve Exp $"
+#ident "$Id: verinum.h,v 1.26.2.3 2005/12/07 03:28:45 steve Exp $"
 #endif
 
 # include  <string>
@@ -144,11 +144,16 @@ extern verinum operator % (const verinum&left, const verinum&right);
 extern verinum operator<< (const verinum&left, unsigned shift);
 extern verinum operator>> (const verinum&left, unsigned shift);
 
+extern verinum concat(const verinum&left, const verinum&right);
+
 /* Bitwise not returns the ones complement. */
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.26.2.3  2005/12/07 03:28:45  steve
+ *  Support constant concatenation of constants.
+ *
  * Revision 1.26.2.2  2005/08/13 00:45:55  steve
  *  Fix compilation warnings/errors with newer compilers.
  *
