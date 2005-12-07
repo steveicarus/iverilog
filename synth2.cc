@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.5 2005/11/16 00:38:26 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.6 2005/12/07 02:14:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -774,6 +774,26 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    if (! expr_input->contains(pin_set))
 		  continue;
 
+	      /* If we are taking this to be an asynchronous
+		 set/clear, then *all* the condition expression inputs
+		 must be asynchronous. Check that here. */
+	    if (! pin_set.contains(*expr_input)) {
+
+		  NexusSet tmp_set;
+		  tmp_set.add(ev->pin(0).nexus());
+		  for (unsigned tmp = idx+1; tmp<events_in.count(); tmp += 1) {
+			NetEvProbe*ev_tmp = events_in[tmp];
+			tmp_set.add(ev_tmp->pin(0).nexus());
+		  }
+
+		  if (! tmp_set.contains(*expr_input)) {
+			cerr << get_line() << ": error: Condition expression "
+			     << "mixes synchronous and asynchronous "
+			     << "inputs." << endl;
+			des->errors += 1;
+		  }
+	    }
+
 	      /* Ah, this edge is in the sensitivity list for the
 		 expression, so we have an asynchronous
 		 input. Synthesize the set/reset input expression. */
@@ -820,6 +840,12 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    delete asig;
 	    delete expr_input;
+
+	    if (else_ == 0) {
+		  cerr << get_line() << ": error: In this context, "
+		       << "synthesis requires an \"else\" clause." << endl;
+		  return false;
+	    }
 
 	    assert(events_in.count() == 1);
 	    assert(else_ != 0);
@@ -1156,6 +1182,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.6  2005/12/07 02:14:37  steve
+ *  Error messages for missing else clauses.
+ *
  * Revision 1.39.2.5  2005/11/16 00:38:26  steve
  *  Handle partial sets of conditional clauses.
  *
