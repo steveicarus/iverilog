@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.7 2005/12/10 03:30:51 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.8 2005/12/10 04:26:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,39 +105,50 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				const NetNet*nex_map, NetNet*nex_out,
 				NetNet*accum_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetAssignBase")
-
       NetNet*rsig = rval_->synthesize(des);
       assert(rsig);
-
-      NetNet*lsig = lval_->sig();
-      if (!lsig) {
-	    cerr << get_line() << ": error: NetAssignBase::synth_async on unsupported lval ";
+#if 0
+      if (lval_->more) {
+	    cerr << get_line() << ": internal error: I do not know how "
+		 << "to support this l-value concatenation: ";
 	    dump_lval(cerr);
 	    cerr << endl;
-	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
-	    return false;
       }
       assert(lval_->more == 0);
+#endif
+      unsigned roff = 0;
 
-	/* Bind the outputs that we do make to the nex_out. Use the
-	   nex_map to map the l-value bit position to the nex_out bit
-	   position. */
-      for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
-	    unsigned off = lval_->get_loff()+idx;
-	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
-	    assert(ptr <= nex_map->pin_count());
-	    connect(nex_out->pin(ptr), rsig->pin(idx));
+      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+
+	    NetNet*lsig = cur->sig();
+	    if (!lsig) {
+		  cerr << get_line() << ": error: NetAssignBase::synth_async "
+			"on unsupported lval ";
+		  dump_lval(cerr);
+		  cerr << endl;
+		  return false;
+	    }
+
+	      /* Bind the outputs that we do make to the nex_out. Use the
+		 nex_map to map the l-value bit position to the nex_out bit
+		 position. */
+	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
+		  unsigned off = cur->get_loff()+idx;
+		  unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
+		  assert(ptr <= nex_map->pin_count());
+		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
+	    }
+
+	    roff += cur->lwidth();
+
+	      /* This lval_ represents a reg that is a WIRE in the
+		 synthesized results. This function signals the destructor
+		 to change the REG that this l-value refers to into a
+		 WIRE. It is done then, at the last minute, so that pending
+		 synthesis can continue to work with it as a WIRE. */
+	    cur->turn_sig_to_wire_on_release();
       }
 
-	/* This lval_ represents a reg that is a WIRE in the
-	   synthesized results. This function signals the destructor
-	   to change the REG that this l-value refers to into a
-	   WIRE. It is done then, at the last minute, so that pending
-	   synthesis can continue to work with it as a WIRE. */
-      lval_->turn_sig_to_wire_on_release();
-
-      DEBUG_SYNTH2_EXIT("NetAssignBase",true)
       return true;
 }
 
@@ -913,6 +924,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
 		  }
 
+		  if (! tmp.is_defined())
+			cerr << get_line() << ": internal error: "
+			     << "Strange clr r-value=" << tmp << endl;
+
 		  assert(tmp.is_defined());
 		  if (tmp.is_zero()) {
 			connect(ff->pin_Sclr(), rst->pin(0));
@@ -1196,6 +1211,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.8  2005/12/10 04:26:32  steve
+ *  Handle concatenations in l-values.
+ *
  * Revision 1.39.2.7  2005/12/10 03:30:51  steve
  *  Fix crash on block with assignments that assign lval to self.
  *
