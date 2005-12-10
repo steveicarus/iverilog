@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.6 2005/12/07 02:14:37 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.7 2005/12/10 03:30:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -183,6 +183,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 		 output. */
 	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
 					tmp_set.count());
+	    tmp_out->set_line(*this);
 
 	      /* Make a temporary set of currently accumulated outputs
 		 that we can pass to the synth_async of the
@@ -202,6 +203,10 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
 	    delete new_accum;
 
+	      /* NOTE: tmp_set is not valid after this point, since
+		 the cur->synth_async method may change nexa that it
+		 refers to. */
+
 	    if (ok_flag == false)
 		  continue;
 
@@ -210,11 +215,20 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 		 or that will be the output of the block. */
 	    new_accum = new NetNet(scope, tmp3, NetNet::WIRE,
 				   nex_out->pin_count());
+	    new_accum->set_line(*this);
 
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a whole. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  unsigned ptr = find_nexus_in_set(nex_map, tmp_map->pin(idx).nexus());
+		  if (ptr >= nex_map->pin_count()) {
+			cerr << cur->get_line() << ": internal error: "
+			     << "Nexus isn't in nex_map?! idx=" << idx
+			     << " map width = " << nex_map->pin_count()
+			     << " tmp_map count = " << tmp_map->pin_count()
+			     << endl;
+		  }
+		  assert(ptr < new_accum->pin_count());
 		  connect(new_accum->pin(ptr), tmp_out->pin(idx));
 	    }
 
@@ -1182,6 +1196,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.7  2005/12/10 03:30:51  steve
+ *  Fix crash on block with assignments that assign lval to self.
+ *
  * Revision 1.39.2.6  2005/12/07 02:14:37  steve
  *  Error messages for missing else clauses.
  *

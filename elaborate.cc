@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308.2.1 2005/11/13 22:28:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308.2.2 2005/12/10 03:30:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1215,6 +1215,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	      /* And build up the complex statement. */
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU, 0);
+	    bl->set_line(*this);
 	    bl->append(a1);
 	    bl->append(st);
 
@@ -1318,6 +1319,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
+      cur->set_line(*this);
       bool fail_flag = false;
 
       if (nscope == 0)
@@ -1462,8 +1464,11 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 		  return if_->elaborate(des, scope);
 	    else if (else_)
 		  return else_->elaborate(des, scope);
-	    else
-		  return new NetBlock(NetBlock::SEQU, 0);
+	    else {
+		  NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
       }
 
 	// If the condition expression is more then 1 bits, then
@@ -1632,6 +1637,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
 
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
+      block->set_line(*this);
 
 
 	/* Detect the case where the definition of the task is known
@@ -2488,6 +2494,7 @@ void PTask::elaborate(Design*des, NetScope*task) const
       NetProc*st;
       if (statement_ == 0) {
 	    st = new NetBlock(NetBlock::SEQU, 0);
+	    st->set_line(*this);
 
       } else {
 
@@ -2776,6 +2783,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308.2.2  2005/12/10 03:30:50  steve
+ *  Fix crash on block with assignments that assign lval to self.
+ *
  * Revision 1.308.2.1  2005/11/13 22:28:14  steve
  *  Do not panic if case statement is nul.
  *
