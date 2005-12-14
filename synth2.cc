@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.8 2005/12/10 04:26:32 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.9 2005/12/14 00:54:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,21 +41,21 @@ static int debug_synth2=0;
 #define DEBUG_SYNTH2_EXIT(class,val)
 #endif
 
-bool NetProc::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  NetNet*nex_map, NetNet*nex_out)
 {
       return false;
 }
 
-bool NetProc::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out,
+bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  NetNet*nex_map, NetNet*nex_out,
 			  NetNet*accum_in)
 {
-      return synth_async(des, scope, nex_map, nex_out);
+      return synth_async(des, scope, sync_flag, nex_map, nex_out);
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			 const NetNet*nex_map, NetNet*nex_out,
+			 NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
       DEBUG_SYNTH2_ENTRY("NetProc")
@@ -67,7 +67,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       }
 
 	/* Synthesize the input to the DFF. */
-      return synth_async(des, scope, nex_map, nex_out);
+      return synth_async(des, scope, true, nex_map, nex_out);
 }
 
 static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
@@ -91,31 +91,23 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
  * r-value.
  */
 
-bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+				NetNet*nex_map, NetNet*nex_out)
 {
       const perm_string tmp = perm_string::literal("tmp");
       NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
       delete stub;
       return flag;
 }
 
-bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-				const NetNet*nex_map, NetNet*nex_out,
+bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+				NetNet*nex_map, NetNet*nex_out,
 				NetNet*accum_in)
 {
       NetNet*rsig = rval_->synthesize(des);
       assert(rsig);
-#if 0
-      if (lval_->more) {
-	    cerr << get_line() << ": internal error: I do not know how "
-		 << "to support this l-value concatenation: ";
-	    dump_lval(cerr);
-	    cerr << endl;
-      }
-      assert(lval_->more == 0);
-#endif
+
       unsigned roff = 0;
 
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
@@ -158,8 +150,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
  * nex_out for the block is the union of the nex_out for all the
  * substatements.
  */
-bool NetBlock::synth_async(Design*des, NetScope*scope,
-			   const NetNet*nex_map, NetNet*nex_out)
+bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			   NetNet*nex_map, NetNet*nex_out)
 {
       DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
@@ -208,7 +200,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 			connect(new_accum->pin(idx), accum_out->pin(ptr));
 	    }
 
-	    bool ok_flag = cur->synth_async(des, scope,
+	    bool ok_flag = cur->synth_async(des, scope, sync_flag,
 					    tmp_map, tmp_out, new_accum);
 	    flag = flag && ok_flag;
 
@@ -273,18 +265,18 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
       return flag;
 }
 
-bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  NetNet*nex_map, NetNet*nex_out)
 {
       const perm_string tmp = perm_string::literal("tmp");
       NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
       delete stub;
       return flag;
 }
 
-bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out, NetNet*accum)
+bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  NetNet*nex_map, NetNet*nex_out, NetNet*accum)
 {
       unsigned cur;
 
@@ -421,7 +413,8 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 	      /* Synthesize this case. The synth_async will connect
 		 all the output bits it knows how to the sig net. */
-	    statement_map[item]->synth_async(des, scope, nex_map, sig, accum);
+	    statement_map[item]->synth_async(des, scope, sync_flag,
+					     nex_map, sig, accum);
 
 	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
 		  if (sig->pin(idx).is_linked())
@@ -448,18 +441,23 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
  * (in other words not from within a block) then stub the input signal
  * with an unconnected net.
  */
-bool NetCondit::synth_async(Design*des, NetScope*scope,
-			  const NetNet*nex_map, NetNet*nex_out)
+bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			    NetNet*nex_map, NetNet*nex_out)
 {
       const perm_string tmp = perm_string::literal("tmp");
       NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, nex_map, nex_out, stub);
+      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
       delete stub;
       return flag;
 }
 
-bool NetCondit::synth_async(Design*des, NetScope*scope,
-			    const NetNet*nex_map, NetNet*nex_out,
+/*
+ * Handle synthesis for an asynchronous condition statement. If we get
+ * here, we know that the CE of a DFF has already been filled, so the
+ * condition expression goes to the select of an asynchronous mux.
+ */
+bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			    NetNet*nex_map, NetNet*nex_out,
 			    NetNet*accum)
 {
       DEBUG_SYNTH2_ENTRY("NetCondit")
@@ -477,12 +475,23 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
       }
 
-      if (default_sig == 0) {
+	// At least one of the clauses must have contents. */
+      assert(if_ != 0 || else_ != 0);
+
+	/* If there is no default_sig, and if this is a fully
+	   asynchronous process (nex_map is not a synchronous output)
+	   then both clases *must* be present. 
+
+	   If either clause is missing, and the output is synchronous,
+	   then the code below can take as the input the output from
+	   the DFF without worry for asynchronous cycles. */
+      if (default_sig == 0 && ! sync_flag) {
 	    if (if_ == 0) {
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " is missing the if clause." << endl;
 		  return false;
 	    }
+
 	    if (else_ == 0) {
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " is missing the else clause." << endl;
@@ -490,18 +499,26 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
       }
 
-      assert(if_ != 0 || else_ != 0);
-
       NetNet*asig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       asig->local_flag(true);
 
       if (if_ == 0) {
-	    for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
-		  connect(asig->pin(idx), default_sig->pin(idx));
+	      /* If the if clause is missing, then take the clause to
+		 be an assignment from the defaults input. If there is
+		 no defaults input, then take the input to be from the
+		 output. */
+	    if (default_sig) {
+		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+			connect(asig->pin(idx), default_sig->pin(idx));
+	    } else {
+		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+			connect(asig->pin(idx), nex_map->pin(idx));
+	    }
 
       } else {
-	    bool flag = if_->synth_async(des, scope, nex_map, asig, accum);
+	    bool flag = if_->synth_async(des, scope, sync_flag,
+					 nex_map, asig, accum);
 	    if (!flag) {
 		  delete asig;
 		  cerr << get_line() << ": error: Asynchronous if statement"
@@ -515,11 +532,16 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       bsig->local_flag(true);
 
       if (else_ == 0) {
-	    for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
-		  connect(bsig->pin(idx), default_sig->pin(idx));
-
+	    if (default_sig) {
+		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+			connect(bsig->pin(idx), default_sig->pin(idx));
+	    } else {
+		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
+			connect(bsig->pin(idx), nex_map->pin(idx));
+	    }
       } else {
-	    bool flag = else_->synth_async(des, scope, nex_map, bsig, accum);
+	    bool flag = else_->synth_async(des, scope, sync_flag,
+					   nex_map, bsig, accum);
 	    if (!flag) {
 		  delete asig;
 		  delete bsig;
@@ -575,18 +597,16 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       return true;
 }
 
-bool NetEvWait::synth_async(Design*des, NetScope*scope,
-			    const NetNet*nex_map, NetNet*nex_out)
+bool NetEvWait::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			    NetNet*nex_map, NetNet*nex_out)
 {
-      DEBUG_SYNTH2_ENTRY("NetEvWait")
-      bool flag = statement_->synth_async(des, scope, nex_map, nex_out);
-      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
+      bool flag = statement_->synth_async(des, scope, sync_flag,
+					  nex_map, nex_out);
       return flag;
 }
 
 bool NetProcTop::synth_async(Design*des)
 {
-      DEBUG_SYNTH2_ENTRY("NetProcTop")
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
@@ -596,10 +616,10 @@ bool NetProcTop::synth_async(Design*des)
       for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
 	    connect(nex_set[idx], nex_out->pin(idx));
 
-      bool flag = statement_->synth_async(des, scope(), nex_out, nex_out);
+      bool flag = statement_->synth_async(des, scope(), false,
+					  nex_out, nex_out);
 
       delete nex_out;
-      DEBUG_SYNTH2_EXIT("NetProcTop",flag)
       return flag;
 }
 
@@ -618,8 +638,8 @@ bool NetProcTop::synth_async(Design*des)
  * the statements may each infer different reset and enable signals.
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
-			   const svector<NetEvProbe*>&events_in)
+			  NetNet*nex_map, NetNet*nex_out,
+			  const svector<NetEvProbe*>&events_in)
 {
       DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
@@ -779,7 +799,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
  * expression is connected to an event, or not.
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
+			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
       DEBUG_SYNTH2_ENTRY("NetCondit")
@@ -839,7 +859,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    asig->local_flag(true);
 
 	    assert(if_ != 0);
-	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+	    bool flag = if_->synth_async(des, scope, true, nex_map, asig);
 
 	    assert(asig->pin_count() == ff->width());
 
@@ -905,7 +925,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, nex_map->pin_count());
 	    asig->local_flag(true);
-	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+	    bool flag = if_->synth_async(des, scope, true, nex_map, asig);
 
 	    if (!flag) {
 		  /* This path leads nowhere */
@@ -962,7 +982,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
-	    bool flag = synth_async(des, scope, nex_map, nex_out);
+	    bool flag = synth_async(des, scope, true, nex_map, nex_out);
 	    DEBUG_SYNTH2_EXIT("NetCondit",flag)
 	    return flag;
       }
@@ -1019,7 +1039,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetNet*nex_map, NetNet*nex_out,
+			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
       DEBUG_SYNTH2_ENTRY("NetEvWait")
@@ -1211,6 +1231,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.9  2005/12/14 00:54:30  steve
+ *  Account for sync vs async muxes.
+ *
  * Revision 1.39.2.8  2005/12/10 04:26:32  steve
  *  Handle concatenations in l-values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.5 2005/11/13 22:28:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.6 2005/12/14 00:54:29 steve Exp $"
 #endif
 
 /*
@@ -1349,15 +1349,18 @@ class NetProc : public virtual LineInfo {
 	// process. Most process types are not.
       virtual bool is_synchronous();
 
-	// synthesize as asynchronous logic, and return true.
-      virtual bool synth_async(Design*des, NetScope*scope,
-			       const NetNet*nex_map, NetNet*nex_out);
-      virtual bool synth_async(Design*des, NetScope*scope,
-			       const NetNet*nex_map, NetNet*nex_out,
+	// synthesize as asynchronous logic, and return true. The
+	// sync_flag is used to tell the async synthesizer that the
+	// output nex_map is ultimately connected to a DFF Q
+	// output. This can affect how cycles are handled.
+      virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+			       NetNet*nex_map, NetNet*nex_out);
+      virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+			       NetNet*nex_map, NetNet*nex_out,
 			       NetNet*accum_in);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out,
+			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -1488,10 +1491,10 @@ class NetAssignBase : public NetProc {
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
 
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out,
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out,
 		       NetNet*accum_in);
 
 	// This dumps all the lval structures.
@@ -1558,11 +1561,11 @@ class NetBlock  : public NetProc {
 
 
 	// synthesize as asynchronous logic, and return true.
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-		      const NetNet*nex_map, NetNet*nex_out,
+		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
@@ -1613,10 +1616,10 @@ class NetCase  : public NetProc {
       virtual NexusSet* nex_input();
       virtual void nex_output(NexusSet&out);
 
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -1697,13 +1700,13 @@ class NetCondit  : public NetProc {
       virtual void nex_output(NexusSet&o);
 
       bool is_asynchronous();
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope,
-		       const NetNet*nex_map, NetNet*nex_out, NetNet*accum);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out);
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out, NetNet*accum);
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-		      const NetNet*nex_map, NetNet*nex_out,
+		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
@@ -1924,11 +1927,11 @@ class NetEvWait  : public NetProc {
 
       virtual void nex_output(NexusSet&out);
 
-      virtual bool synth_async(Design*des, NetScope*scope,
-			       const NetNet*nex_map, NetNet*nex_out);
+      virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+			       NetNet*nex_map, NetNet*nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			      const NetNet*nex_map, NetNet*nex_out,
+			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -3370,6 +3373,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.6  2005/12/14 00:54:29  steve
+ *  Account for sync vs async muxes.
+ *
  * Revision 1.321.2.5  2005/11/13 22:28:48  steve
  *  Allow for block output to be set throughout the statements.
  *
