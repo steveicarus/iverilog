@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.9 2005/12/14 00:54:30 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.10 2005/12/14 01:53:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -802,7 +802,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetCondit")
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
 	   inputs that are included in the sensitivity list, then it
@@ -892,12 +891,22 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  return false;
 	    }
 
-	    assert(events_in.count() == 1);
 	    assert(else_ != 0);
-	    flag = else_->synth_sync(des, scope, ff, nex_map,
-				     nex_out, svector<NetEvProbe*>(0))
-		  && flag;
-            DEBUG_SYNTH2_EXIT("NetCondit",flag)
+
+	      /* Create a new NetEvProbe list that does not include
+		 the current probe that we've absorbed into this
+		 input. */
+	    assert(events_in.count() >= 1);
+	    svector<NetEvProbe*> events_tmp (events_in.count() - 1);
+	    unsigned count_events = 0;
+	    for (unsigned tmp = 0 ;  tmp < events_in.count() ;  tmp += 1) {
+		  if (tmp == idx) continue;
+		  events_tmp[count_events++] = events_in[tmp];
+	    }
+
+	    flag = flag && else_->synth_sync(des, scope, ff, nex_map,
+					     nex_out, events_tmp);
+
 	    return flag;
       }
 
@@ -963,7 +972,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  flag = else_->synth_sync(des, scope, ff, nex_map,
 					   nex_out, svector<NetEvProbe*>(0))
 			&& flag;
-		  DEBUG_SYNTH2_EXIT("NetCondit",flag)
 		  return flag;
 	    }
       }
@@ -1034,7 +1042,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       bool flag = if_->synth_sync(des, scope, ff, nex_map, nex_out, events_in);
 
-      DEBUG_SYNTH2_EXIT("NetCondit",flag)
       return flag;
 }
 
@@ -1231,6 +1238,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.10  2005/12/14 01:53:39  steve
+ *  Handle both asynchronous set and reset.
+ *
  * Revision 1.39.2.9  2005/12/14 00:54:30  steve
  *  Account for sync vs async muxes.
  *
