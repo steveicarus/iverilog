@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.10 2005/12/14 01:53:39 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.11 2005/12/15 02:38:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -561,17 +561,22 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 	/* Connected the clauses to the data inputs of the
 	   condition. If there are bits unassigned by the case, then
-	   bind them from the accum bits instead. */
+	   bind them from the accum bits instead. If the bit is not
+	   represented in the accum list, but this is a synchronous
+	   output, then get the bit from the nex_map, which is the
+	   output held in the DFF. */
 
       for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1) {
 	    if (asig->pin(idx).is_linked())
 		  connect(mux->pin_Data(idx, 1), asig->pin(idx));
 	    else if (accum->pin(idx).is_linked())
 		  connect(mux->pin_Data(idx, 1), accum->pin(idx));
+	    else if (sync_flag)
+		  connect(mux->pin_Data(idx, 1), nex_map->pin(idx));
 	    else {
 		  cerr << get_line()
 		       << ": error: Condition true clause "
-		       << " does not assign expected outputs." << endl;
+		       << "does not assign expected outputs." << endl;
 		  return_flag = false;
 	    }
       }
@@ -581,10 +586,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  connect(mux->pin_Data(idx, 0), bsig->pin(idx));
 	    else if (accum->pin(idx).is_linked())
 		  connect(mux->pin_Data(idx, 0), accum->pin(idx));
+	    else if (sync_flag)
+		  connect(mux->pin_Data(idx, 0), nex_map->pin(idx));
 	    else {
 		  cerr << get_line()
 		       << ": error: Condition false clause "
-		       << " does not assign expected outputs." << endl;
+		       << "does not assign expected outputs." << endl;
 		  return_flag = false;
 	    }
       }
@@ -1238,6 +1245,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.11  2005/12/15 02:38:51  steve
+ *  Fix missing outputs from synchronous conditionals to get out from in.
+ *
  * Revision 1.39.2.10  2005/12/14 01:53:39  steve
  *  Handle both asynchronous set and reset.
  *
