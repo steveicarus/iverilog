@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.36.2.1 2005/12/07 03:28:44 steve Exp $"
+#ident "$Id: eval.cc,v 1.36.2.2 2005/12/18 21:06:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -151,6 +151,11 @@ verinum* PEConcat::eval_const(const Design*des, const NetScope*scope) const
 
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
 	    verinum*tmp = parms_[idx]->eval_const(des, scope);
+	      /* Oops, found an argument that is not constant. Give up. */
+	    if (tmp == 0) {
+		  delete accum;
+		  return 0;
+	    }
 	    assert(tmp);
 
 	    *accum = concat(*accum, *tmp);
@@ -256,6 +261,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.36.2.2  2005/12/18 21:06:01  steve
+ *  Properly fail when concat is not actually constant.
+ *
  * Revision 1.36.2.1  2005/12/07 03:28:44  steve
  *  Support constant concatenation of constants.
  *
