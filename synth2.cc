@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.11 2005/12/15 02:38:51 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.12 2005/12/19 01:13:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,14 +58,13 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			 NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
-      DEBUG_SYNTH2_ENTRY("NetProc")
-
+#if 0
       if (events.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
-		 << " for in process synthesis." << endl;
+		 << " for in process synthesis. (proc)" << endl;
 	    des->errors += 1;
       }
-
+#endif
 	/* Synthesize the input to the DFF. */
       return synth_async(des, scope, true, nex_map, nex_out);
 }
@@ -630,6 +629,50 @@ bool NetProcTop::synth_async(Design*des)
       return flag;
 }
 
+static bool merge_ff_slices(NetFF*ff1, unsigned idx1,
+			    NetFF*ff2, unsigned idx2)
+{
+	/* If the Data inputs to both FFs are connected, then there
+	   are multiple descriptions of the inputs to this DFF
+	   device. That is an error. */
+      if (ff1->pin_Data(idx1).is_linked() && ff2->pin_Data(idx2).is_linked()) {
+	    cerr << ff2->get_line() << ": error: "
+		 << "Synchronous output conflicts with "
+		 << ff1->get_line() << "." << endl;
+	    return false;
+      }
+
+	/* If the Aset inputs are connected, and not to each other
+	   (possible since pre-existing Asets are carried forwards)
+	   then there is a conflict. */
+      if (ff1->pin_Aset().is_linked()
+	  && ff2->pin_Aset().is_linked()
+	  && ! ff1->pin_Aset().is_linked(ff2->pin_Aset())) {
+	    cerr << ff2->get_line() << ": error: "
+		 << "DFF Aset conflicts with "
+		 << ff1->get_line() << "." << endl;
+	    return false;
+      }
+
+      if (ff1->pin_Aclr().is_linked()
+	  && ff2->pin_Aclr().is_linked()
+	  && ! ff1->pin_Aclr().is_linked(ff2->pin_Aclr())) {
+	    cerr << ff2->get_line() << ": error: "
+		 << "DFF Aclr conflicts with "
+		 << ff1->get_line() << "." << endl;
+	    return false;
+      }
+
+      if (ff2->pin_Data(idx2).is_linked())
+	    connect(ff1->pin_Data(idx1), ff2->pin_Data(idx2));
+      if (ff2->pin_Aset().is_linked())
+	    connect(ff1->pin_Aset(), ff2->pin_Aset());
+      if (ff2->pin_Aclr().is_linked())
+	    connect(ff1->pin_Aclr(), ff2->pin_Aclr());
+
+      return true;
+}
+
 /*
  * This method is called when a block is encountered near the surface
  * of a synchronous always statement. For example, this code will be
@@ -648,11 +691,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			  NetNet*nex_map, NetNet*nex_out,
 			  const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetBlock")
-      if (last_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetBlock",true)
+	/* Do nothing for empty blocks. */
+      if (last_ == 0)
 	    return true;
-      }
 
       bool flag = true;
 
@@ -660,10 +701,19 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       const perm_string tmp2 = perm_string::literal("tmp2");
 
 	/* Keep an accounting of which statement accounts for which
-	   bit slice of the FF bank. This is used for error checking. */
-      NetProc**pin_accounting = new NetProc* [ff->pin_count()];
-      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
-	    pin_accounting[idx] = 0;
+	   bit slice of the FF bank. This is used for error
+	   checking. */
+      struct accounting_struct {
+	    NetProc*proc;
+	    NetFF*ff;
+	    unsigned pin;
+      };
+      struct accounting_struct*pin_accounting
+	    = new accounting_struct [ff->pin_count()];
+      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1) {
+	    pin_accounting[idx].proc = 0;
+	    pin_accounting[idx].ff = 0;
+      }
 
       NetProc*cur = last_;
       do {
@@ -698,6 +748,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 copy the aset_value bits for the new ff device. */
 	    NetFF*ff2 = new NetFF(scope, scope->local_symbol(),
 				  tmp_out->pin_count());
+	    ff2->set_line(*cur);
 	    des->add_node(ff2);
 
 	    verinum aset_value2 (verinum::V1, ff2->width());
@@ -705,10 +756,6 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map,
 						   tmp_map->pin(idx).nexus());
-
-		    /* Connect Data and Q bits to the new FF. */
-		  connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
-		  connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
 
 		    /* Copy the asynch set bit to the new device. */
 		  if (ptr < tmp_aset.len())
@@ -718,18 +765,21 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  if (ptr < tmp_sset.len())
 			sset_value2.set(idx, tmp_sset[ptr]);
 
-		  if (pin_accounting[ptr] != 0) {
-			cerr << cur->get_line() << ": error: "
-			     << "Synchronous output conflicts with "
-			     << pin_accounting[ptr]->get_line()
-			     << "." << endl;
-			flag = false;
+		  if (pin_accounting[ptr].proc != 0) {
 
 		  } else {
-			pin_accounting[ptr] = cur;
+			pin_accounting[ptr].proc = cur;
+			pin_accounting[ptr].ff   = ff2;
+			pin_accounting[ptr].pin  = idx;
+
+			  /* Connect Data and Q bits to the new FF. */
+			connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
+			connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
 		  }
 	    }
 
+	      /* PUll the non-sliced inputs (clock, set, reset, etc)
+		 forward to the new FF we are building. */
 	    if (ff->pin_Aclr().is_linked())
 		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
 	    if (ff->pin_Aset().is_linked())
@@ -771,6 +821,26 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    if (ok_flag == false)
 		  continue;
 
+	    unsigned ff2_pins_used = ff2->width();
+	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
+		  unsigned ptr = find_nexus_in_set(nex_map,
+						   tmp_map->pin(idx).nexus());
+		  if (pin_accounting[ptr].ff == ff2)
+			continue;
+
+		  assert(ff2_pins_used > 0);
+		  ff2_pins_used -= 1;
+		  bool tflag = merge_ff_slices(pin_accounting[ptr].ff,
+					       pin_accounting[ptr].pin,
+					       ff2, idx);
+		  if (! tflag) {
+			flag = false;
+		  }
+	    }
+
+	    if (ff2_pins_used == 0)
+		  delete ff2;
+
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a
 		 whole. It is occasionally possible to have outputs
@@ -789,13 +859,31 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       } while (cur != last_);
 
+	/* Run through the pin accounting one more time to make sure
+	   the data inputs are all connected. */
+      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1) {
+	    NetFF*ff2 = pin_accounting[idx].ff;
+	    unsigned pin = pin_accounting[idx].pin;
+	      /* Skip this output if it is not handled in this block. */
+	    if (ff2 == 0)
+		  continue;
+
+	      /* If this block mentioned it, then the data must have
+		 been set here. */
+	    if (!ff2->pin_Data(pin).is_linked()) {
+		  cerr << ff2->get_line() << ": error: "
+		       << "DFF introduced here is missing Data inputs."
+		       << endl;
+		  flag = false;
+	    }
+      }
+
       delete[]pin_accounting;
 
 	/* Done. The large NetFF is no longer needed, as it has been
 	   taken up by the smaller NetFF devices. */
       delete ff;
 
-      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
 }
 
@@ -893,9 +981,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    delete expr_input;
 
 	    if (else_ == 0) {
-		  cerr << get_line() << ": error: In this context, "
-		       << "synthesis requires an \"else\" clause." << endl;
-		  return false;
+
+		    /* The lack of an else_ clause here means that
+		       there is no data input to the DFF yet
+		       defined. This is bad, but the data input may be
+		       given later in an enclosing block, so don't
+		       report an error here quite yet. */
+		  return true;
 	    }
 
 	    assert(else_ != 0);
@@ -986,19 +1078,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       delete a_set;
 
 	/* Failed to find an asynchronous set/reset, so any events
-	   input are probably in error. */
-      if (events_in.count() > 0) {
-	    cerr << get_line() << ": error: Events are unaccounted"
-		 << " for in process synthesis." << endl;
-	    des->errors += 1;
-      }
+	   input are probably in error, or simply not in use. */
 
 
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
 	    bool flag = synth_async(des, scope, true, nex_map, nex_out);
-	    DEBUG_SYNTH2_EXIT("NetCondit",flag)
 	    return flag;
       }
 
@@ -1059,7 +1145,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       DEBUG_SYNTH2_ENTRY("NetEvWait")
       if (events_in.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
-		 << " for in process synthesis." << endl;
+		 << " for in process synthesis. (evw)" << endl;
 	    des->errors += 1;
       }
 
@@ -1245,6 +1331,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.12  2005/12/19 01:13:47  steve
+ *  Handle DFF definitions spread out within a block.
+ *
  * Revision 1.39.2.11  2005/12/15 02:38:51  steve
  *  Fix missing outputs from synchronous conditionals to get out from in.
  *
