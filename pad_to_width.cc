@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.19 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.20 2005/12/22 15:43:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,18 +56,10 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 	    return tmp;
       }
 
-	/* Do it the hard way, with a concatenation. */
-      verinum pad(verinum::V0, wid - expr->expr_width());
-      NetEConst*co = new NetEConst(pad);
-      co->set_line(*expr);
-      NetEConcat*cc = new NetEConcat(2);
-      cc->set_line(*expr);
-      cc->set(0, co);
-      cc->set(1, expr);
-      cc->set_width(wid);
-      expr = cc;
-
-      return expr;
+      NetESelect*tmp = new NetESelect(expr, 0, wid);
+      tmp->set_line(*expr);
+      tmp->cast_signed(expr->has_sign());
+      return tmp;
 }
 
 /*
@@ -159,6 +151,9 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.20  2005/12/22 15:43:47  steve
+ *  pad_to_width handles signed expressions.
+ *
  * Revision 1.19  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *
