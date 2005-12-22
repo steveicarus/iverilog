@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.162 2005/11/20 15:58:25 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.163 2005/12/22 15:44:29 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -542,8 +542,11 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *              &   -- AND
  *              A   -- NAND (~&)
  *              X   -- XNOR (~^)
+ *              *   -- Multiply
  *
  * SEMANTIC NOTES
+ *
+ * - IVL_EX_BINARY
  *
  * - IVL_EX_SELECT
  * This expression takes two operands, oper1 is the expression to
@@ -1684,6 +1687,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.163  2005/12/22 15:44:29  steve
+ *  Document binary expression use.
+ *
  * Revision 1.162  2005/11/20 15:58:25  steve
  *  Document the IVL_ST_DELAY statements.
  *
