@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.134 2005/09/20 18:34:01 steve Exp $"
+#ident "$Id: stub.c,v 1.135 2005/12/22 15:38:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -83,9 +83,8 @@ unsigned width_of_nexus(ivl_nexus_t nex)
       return 0;
 }
 
-void show_function_call(ivl_expr_t net, unsigned ind)
+const char*vt_type_string(ivl_expr_t net)
 {
-      ivl_scope_t def = ivl_expr_def(net);
       const char*vt = "??";
 
       switch (ivl_expr_value(net)) {
@@ -105,6 +104,46 @@ void show_function_call(ivl_expr_t net, unsigned ind)
 	    vt = "logic";
 	    break;
       }
+
+      return vt;
+}
+
+void show_binary_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt   = vt_type_string(net);
+
+      fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
+	      ivl_expr_opcode(net), width, sign, vt);
+      show_expression(ivl_expr_oper1(net), ind+3);
+      show_expression(ivl_expr_oper2(net), ind+3);
+
+      switch (ivl_expr_opcode(net)) {
+
+	  case '*':
+	      /* The width of multiply expressions is the sum of the
+		 widths of the operands. This is slightly different
+		 from the way the Verilog standard does it, but allows
+		 us to keep operands smaller. */
+	    width = ivl_expr_width(ivl_expr_oper1(net));
+	    width += ivl_expr_width(ivl_expr_oper2(net));
+	    if (ivl_expr_width(net) != width) {
+		  fprintf(out, "%*sERROR: Result width incorrect\n",
+			  ind+3, "");
+		  stub_errors += 1;
+	    }
+	    break;
+
+	  default:
+	    break;
+      }
+}
+
+void show_function_call(ivl_expr_t net, unsigned ind)
+{
+      ivl_scope_t def = ivl_expr_def(net);
+      const char*vt = vt_type_string(net);
 
       fprintf(out, "%*s<%s function %s>\n", ind, "",
 	      vt, ivl_scope_name(def));
@@ -155,33 +194,12 @@ void show_expression(ivl_expr_t net, unsigned ind)
       ivl_parameter_t par = ivl_expr_parameter(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
-      const char*vt = "?";
-
-      switch (ivl_expr_value(net)) {
-	  case IVL_VT_NO_TYPE:
-	    vt = "no_type";
-	    break;
-	  case IVL_VT_VOID:
-	    vt = "void";
-	    break;
-	  case IVL_VT_REAL:
-	    vt = "real";
-	    break;
-	  case IVL_VT_BOOL:
-	    vt = "bool";
-	    break;
-	  case IVL_VT_LOGIC:
-	    vt = "logic";
-	    break;
-      }
+      const char*vt = vt_type_string(net);
 
       switch (code) {
 
 	  case IVL_EX_BINARY:
-	    fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign, vt);
-	    show_expression(ivl_expr_oper1(net), ind+3);
-	    show_expression(ivl_expr_oper2(net), ind+3);
+	    show_binary_expression(net, ind);
 	    break;
 
 	  case IVL_EX_CONCAT:
@@ -1533,6 +1551,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.135  2005/12/22 15:38:33  steve
+ *  More detailed check of binary expressions.
+ *
  * Revision 1.134  2005/09/20 18:34:01  steve
  *  Clean up compiler warnings.
  *
