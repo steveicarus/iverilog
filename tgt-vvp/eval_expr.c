@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.127 2005/10/11 18:54:10 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.128 2005/12/22 15:42:22 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1629,6 +1629,7 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_select_signal(ivl_expr_t sube,
 					     ivl_expr_t bit_idx,
+					     unsigned bit_wid,
 					     unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(sube);
@@ -1665,7 +1666,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    res.wid = ivl_expr_width(sube);
 	    fprintf(vvp_out, "   %%load/v %u, V_%p, %u; Only need %u bits\n",
 		    res.base, sig, ivl_expr_width(sube), wid);
-
+ 
 	    save_signal_lookaside(res.base, sig, res.wid);
 
 	    {
@@ -1683,6 +1684,12 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       res.wid = wid;
 
       for (idx = 0 ;  idx < res.wid ;  idx += 1) {
+	    if (idx >= bit_wid) {
+		  fprintf(vvp_out, "   %%mov %u, 0, %u; Pad from %u to %u\n",
+			  res.base+idx, res.wid-idx,
+			  ivl_expr_width(sube), wid);
+		  break;
+	    }
 	    fprintf(vvp_out, "   %%load/x.p %u, V_%p, 0;\n",
 		    res.base+idx, sig);
       }
@@ -1711,7 +1718,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       }
 
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
-	    res = draw_select_signal(sube, shift, wid);
+	    res = draw_select_signal(sube, shift, ivl_expr_width(exp), wid);
 	    fprintf(vvp_out, "; Save base=%u wid=%u in lookaside.\n",
 		    res.base, wid);
 	    save_expression_lookaside(res.base, exp, wid);
@@ -2168,6 +2175,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.128  2005/12/22 15:42:22  steve
+ *  Pad part selects
+ *
  * Revision 1.127  2005/10/11 18:54:10  steve
  *  Remove the $ from signal labels. They do not help.
  *
