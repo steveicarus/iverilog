@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.6 2005/12/14 00:54:29 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.7 2005/12/31 04:28:14 steve Exp $"
 #endif
 
 /*
@@ -1359,7 +1359,13 @@ class NetProc : public virtual LineInfo {
 			       NetNet*nex_map, NetNet*nex_out,
 			       NetNet*accum_in);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+	// Synthesize synchronous logic, and return true. The nex_out
+	// is where outputs are actually connected, and the nex_map
+	// maps nexa to bit positions. The ff is the initial DFF that
+	// was created to receive the Data inputs. The method *may*
+	// delete that DFF in favor of multiple smaller devices, but
+	// in that case it will set the ff argument to nil.
+      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
@@ -1564,7 +1570,7 @@ class NetBlock  : public NetProc {
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       NetNet*nex_map, NetNet*nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
@@ -1705,7 +1711,7 @@ class NetCondit  : public NetProc {
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       NetNet*nex_map, NetNet*nex_out, NetNet*accum);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
@@ -1930,7 +1936,7 @@ class NetEvWait  : public NetProc {
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 			       NetNet*nex_map, NetNet*nex_out);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
@@ -3373,6 +3379,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.7  2005/12/31 04:28:14  steve
+ *  Fix crashes caused bu synthesis of sqrt32.v.
+ *
  * Revision 1.321.2.6  2005/12/14 00:54:29  steve
  *  Account for sync vs async muxes.
  *

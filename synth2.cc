@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.12 2005/12/19 01:13:47 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.13 2005/12/31 04:28:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,7 +54,7 @@ bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
       return synth_async(des, scope, sync_flag, nex_map, nex_out);
 }
 
-bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			 NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
@@ -687,7 +687,7 @@ static bool merge_ff_slices(NetFF*ff1, unsigned idx1,
  * This needs to be split into a DFF bank for each statement, because
  * the statements may each infer different reset and enable signals.
  */
-bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			  NetNet*nex_map, NetNet*nex_out,
 			  const svector<NetEvProbe*>&events_in)
 {
@@ -714,7 +714,6 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    pin_accounting[idx].proc = 0;
 	    pin_accounting[idx].ff = 0;
       }
-
       NetProc*cur = last_;
       do {
 	    cur = cur->next_;
@@ -811,35 +810,52 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    }
 
 	      /* Now go on with the synchronous synthesis for this
-		 subset of the statement. The tmp_map is the output
+		 statement of the block. The tmp_map is the output
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
-	    bool ok_flag = cur->synth_sync(des, scope, ff2, tmp_map,
+	    NetFF*ff2_tmp = ff2;
+	    bool ok_flag = cur->synth_sync(des, scope, ff2_tmp, tmp_map,
 					   tmp_out, events_in);
 	    flag = flag && ok_flag;
 
 	    if (ok_flag == false)
 		  continue;
 
-	    unsigned ff2_pins_used = ff2->width();
-	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map,
+	    if (ff2_tmp != 0) {
+		  unsigned ff2_pins_used = ff2->width();
+		  for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
+			unsigned ptr = find_nexus_in_set(nex_map,
 						   tmp_map->pin(idx).nexus());
-		  if (pin_accounting[ptr].ff == ff2)
-			continue;
+			if (pin_accounting[ptr].ff == ff2)
+			      continue;
 
-		  assert(ff2_pins_used > 0);
-		  ff2_pins_used -= 1;
-		  bool tflag = merge_ff_slices(pin_accounting[ptr].ff,
-					       pin_accounting[ptr].pin,
-					       ff2, idx);
-		  if (! tflag) {
-			flag = false;
+			assert(ff2_pins_used > 0);
+			ff2_pins_used -= 1;
+			bool tflag = merge_ff_slices(pin_accounting[ptr].ff,
+						     pin_accounting[ptr].pin,
+						     ff2, idx);
+			if (! tflag) {
+			      flag = false;
+			}
 		  }
-	    }
 
-	    if (ff2_pins_used == 0)
-		  delete ff2;
+		  if (ff2_pins_used == 0)
+			delete ff2;
+
+	    } else {
+		    /* Oh, the cur->synth_sync deleted my ff2 DFF, so
+		       erase any mention of it from the pin
+		       accounting. */
+		  for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
+			if (pin_accounting[idx].ff != ff2)
+			      continue;
+
+			pin_accounting[idx].ff = 0;
+			pin_accounting[idx].pin = 0;
+		  }
+
+		  ff2 = 0;
+	    }
 
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a
@@ -868,9 +884,15 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    if (ff2 == 0)
 		  continue;
 
+	    if (pin >= ff2->width()) {
+		  cerr << ff2->get_line() << ": internal error: "
+		       << "pin " << pin << " out of range of "
+		       << ff2->width() << " bit DFF." << endl;
+		  flag = false;
+
 	      /* If this block mentioned it, then the data must have
 		 been set here. */
-	    if (!ff2->pin_Data(pin).is_linked()) {
+	    } else if (!ff2->pin_Data(pin).is_linked()) {
 		  cerr << ff2->get_line() << ": error: "
 		       << "DFF introduced here is missing Data inputs."
 		       << endl;
@@ -883,6 +905,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	/* Done. The large NetFF is no longer needed, as it has been
 	   taken up by the smaller NetFF devices. */
       delete ff;
+      ff = 0;
 
       return flag;
 }
@@ -893,7 +916,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
  * asynchronous set/reset, depending on whether the pin of the
  * expression is connected to an event, or not.
  */
-bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
@@ -1138,7 +1161,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return flag;
 }
 
-bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*&ff,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
@@ -1331,6 +1354,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.13  2005/12/31 04:28:15  steve
+ *  Fix crashes caused bu synthesis of sqrt32.v.
+ *
  * Revision 1.39.2.12  2005/12/19 01:13:47  steve
  *  Handle DFF definitions spread out within a block.
  *
