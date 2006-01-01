@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.14 2006/01/01 01:30:39 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.15 2006/01/01 02:25:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -431,12 +431,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 		  for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
 			if (sig->pin(idx).is_linked())
-			      connect(mux->pin_Data(idx, item), sig->pin(idx));
+			      connect(mux->pin_Data(idx,item), sig->pin(idx));
 			else if (accum->pin(idx).is_linked())
-			      connect(mux->pin_Data(idx, item), accum->pin(idx));
+			      connect(mux->pin_Data(idx,item), accum->pin(idx));
+			else if (sync_flag)
+			      connect(mux->pin_Data(idx,item), nex_map->pin(idx));
 			else {
 			      cerr << get_line()
-				   << ": error: case " << item << " statement "
+				   << ": error: case " << item << " statement"
 				   << " does not assign expected outputs." << endl;
 			      return_flag = false;
 			}
@@ -1369,6 +1371,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.15  2006/01/01 02:25:07  steve
+ *  Case statement handles partial outputs.
+ *
  * Revision 1.39.2.14  2006/01/01 01:30:39  steve
  *  Allow for implicit case default in synchronous processes.
  *
