@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.13 2005/12/31 04:28:15 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.14 2006/01/01 01:30:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -400,31 +400,46 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  default_sig = sig;
 	    }
 
-	    if (statement_map[item] == 0) {
+	    if (statement_map[item] == 0 && !sync_flag) {
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
 		  cerr << get_line()
-		       << ": error: Incomplete case statement"
-		       << " is missing a default case." << endl;
+		       << ": error: Incomplete case"
+		       << " in asynchronous process"
+		       << " needs a default case." << endl;
 		  return_flag = false;
 		  continue;
 	    }
 
-	      /* Synthesize this case. The synth_async will connect
-		 all the output bits it knows how to the sig net. */
-	    statement_map[item]->synth_async(des, scope, sync_flag,
-					     nex_map, sig, accum);
+	    if (statement_map[item] == 0) {
 
-	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
-		  if (sig->pin(idx).is_linked())
-			connect(mux->pin_Data(idx, item), sig->pin(idx));
-		  else if (accum->pin(idx).is_linked())
-			connect(mux->pin_Data(idx, item), accum->pin(idx));
-		  else {
-			cerr << get_line()
-			     << ": error: case " << item << " statement "
-			     << " does not assign expected outputs." << endl;
-			return_flag = false;
+		    /* If this is an unspecified case, then get the
+		       input from the synchronous output. Note that we
+		       know by design that there is no relevent
+		       default or accum input to use here, as those
+		       cases are handled above. */
+
+		  for (unsigned idx=0; idx < mux->width(); idx += 1)
+			connect(mux->pin_Data(idx,item), nex_map->pin(idx));
+
+	    } else {
+		    /* Synthesize this specified case. The synth_async will
+		       connect all the output bits it knows how to the
+		       sig net. */
+		  statement_map[item]->synth_async(des, scope, sync_flag,
+						   nex_map, sig, accum);
+
+		  for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
+			if (sig->pin(idx).is_linked())
+			      connect(mux->pin_Data(idx, item), sig->pin(idx));
+			else if (accum->pin(idx).is_linked())
+			      connect(mux->pin_Data(idx, item), accum->pin(idx));
+			else {
+			      cerr << get_line()
+				   << ": error: case " << item << " statement "
+				   << " does not assign expected outputs." << endl;
+			      return_flag = false;
+			}
 		  }
 	    }
       }
@@ -1354,6 +1369,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.14  2006/01/01 01:30:39  steve
+ *  Allow for implicit case default in synchronous processes.
+ *
  * Revision 1.39.2.13  2005/12/31 04:28:15  steve
  *  Fix crashes caused bu synthesis of sqrt32.v.
  *
