@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.163 2005/12/22 15:44:29 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.164 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -702,6 +702,22 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * drive strengths for the output pin-0, and match the drive values
  * stored in the ivl_nexus_ptr_t object for the pin.
  *
+ * Logic devices have a logic propagation delay. The delay can be any
+ * expression, although the most common expression is an IVL_EX_NUMBER
+ * for a number value. The expression already includes scaling for the
+ * containing module, so the delay value is always taken to be in
+ * simulation clock ticks.
+ *
+ * If the delay is present, then ivl_logic_delay returns a non-nil
+ * object. If any of the three delays is present, then all three are
+ * present, even if they are all the same. The compiler will translate
+ * shorthands into a complete set of delay expressions.
+ *
+ * The ivl_logic_delay expression will always be an IVL_EX_NUMBER, an
+ * IVL_EX_ULONG, or an IVL_EX_SIGNAL. These expressions can easily be
+ * used in structural contexts. The compiler will take care of
+ * elaborating more complex expressions to nets.
+ *
  * - IVL_LO_PULLUP/IVL_LO_PULLDOWN
  * These devices are grouped as logic devices with zero inputs because
  * the outputs have the same characteristics as other logic
@@ -725,7 +741,7 @@ extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
-extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
+extern ivl_expr_t  ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
 extern ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net);
 extern ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net);
 extern unsigned    ivl_logic_width(ivl_net_logic_t net);
@@ -1687,6 +1703,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.164  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.163  2005/12/22 15:44:29  steve
  *  Document binary expression use.
  *

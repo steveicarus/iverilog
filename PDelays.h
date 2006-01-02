@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.h,v 1.7 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PDelays.h,v 1.8 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -34,6 +34,7 @@ using namespace std;
 
 class Design;
 class NetScope;
+class NetExpr;
 class PExpr;
 
 /*
@@ -53,9 +54,9 @@ class PDelays {
       void set_delays(const svector<PExpr*>*del, bool delete_flag=true);
 
       void eval_delays(Design*des, NetScope*scope,
-		       unsigned long&rise_time,
-		       unsigned long&fall_time,
-		       unsigned long&decay_time) const;
+		       NetExpr*&rise_time,
+		       NetExpr*&fall_time,
+		       NetExpr*&decay_time) const;
 
       void dump_delays(ostream&out) const;
 
@@ -72,6 +73,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.8  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.7  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

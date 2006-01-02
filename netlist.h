@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.353 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.354 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 /*
@@ -105,13 +105,13 @@ class NetObj  : public Attrib, public virtual LineInfo {
 
       unsigned pin_count() const { return npins_; }
 
-      unsigned rise_time() const { return delay1_; }
-      unsigned fall_time() const { return delay2_; }
-      unsigned decay_time() const { return delay3_; }
+      const NetExpr* rise_time() const { return delay1_; }
+      const NetExpr* fall_time() const { return delay2_; }
+      const NetExpr* decay_time() const { return delay3_; }
 
-      void rise_time(unsigned d) { delay1_ = d; }
-      void fall_time(unsigned d) { delay2_ = d; }
-      void decay_time(unsigned d) { delay3_ = d; }
+      void rise_time(const NetExpr* d) { delay1_ = d; }
+      void fall_time(const NetExpr* d) { delay2_ = d; }
+      void decay_time(const NetExpr* d) { delay3_ = d; }
 
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
@@ -124,9 +124,9 @@ class NetObj  : public Attrib, public virtual LineInfo {
       perm_string name_;
       Link*pins_;
       const unsigned npins_;
-      unsigned delay1_;
-      unsigned delay2_;
-      unsigned delay3_;
+      const NetExpr* delay1_;
+      const NetExpr* delay2_;
+      const NetExpr* delay3_;
 };
 
 class Link {
@@ -3451,6 +3451,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.354  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.353  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.128 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: t-dll.h,v 1.129 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -166,6 +166,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
 
+      void make_logic_delays_(struct ivl_net_logic_s*obj, const NetObj*net);
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
 
       static ivl_expr_t expr_from_value_(const verinum&that);
@@ -424,7 +425,7 @@ struct ivl_net_logic_s {
       struct ivl_attribute_s*attr;
       unsigned nattr;
 
-      unsigned delay[3];
+      ivl_expr_t delay[3];
 };
 
 
@@ -670,6 +671,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.129  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.128  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

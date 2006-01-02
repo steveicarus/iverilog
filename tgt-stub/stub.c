@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.135 2005/12/22 15:38:33 steve Exp $"
+#ident "$Id: stub.c,v 1.136 2006/01/02 05:33:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1282,6 +1282,23 @@ static void show_signal(ivl_signal_t net)
 
 }
 
+static void test_expr_is_delay(ivl_expr_t exp)
+{
+      switch (ivl_expr_type(exp)) {
+	  case IVL_EX_ULONG:
+	    return;
+	  case IVL_EX_NUMBER:
+	    return;
+	  case IVL_EX_SIGNAL:
+	    return;
+	  default:
+	    break;
+      }
+
+      fprintf(out, "      ERROR: Expression is not a suitable delay\n");
+      stub_errors += 1;
+}
+
 /*
  * All logic gates have inputs and outputs that match exactly in
  * width. For example, and AND gate with 4 bit inputs generates a 4
@@ -1308,10 +1325,10 @@ static void show_logic(ivl_net_logic_t net)
 	    fprintf(out, "  bufif1 %s", name);
 	    break;
 	  case IVL_LO_BUFZ:
-	    fprintf(out, "  bufz #(%u) %s", ivl_logic_delay(net, 0), name);
+	    fprintf(out, "  bufz %s", name);
 	    break;
 	  case IVL_LO_NOT:
-	    fprintf(out, "  not #(%u) %s", ivl_logic_delay(net, 0), name);
+	    fprintf(out, "  not %s", name);
 	    break;
 	  case IVL_LO_OR:
 	    fprintf(out, "  or %s", name);
@@ -1336,9 +1353,21 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
       }
 
-      fprintf(out, " <width=%u, delay=%u/%u/%u>\n",
-	      ivl_logic_width(net), ivl_logic_delay(net,0),
-	      ivl_logic_delay(net,1), ivl_logic_delay(net,2));
+      fprintf(out, " <width=%u>\n", ivl_logic_width(net));
+
+      fprintf(out, "    <Delays...>\n");
+      if (ivl_logic_delay(net,0)) {
+	    test_expr_is_delay(ivl_logic_delay(net,0));
+	    show_expression(ivl_logic_delay(net,0), 6);
+      }
+      if (ivl_logic_delay(net,1)) {
+	    test_expr_is_delay(ivl_logic_delay(net,1));
+	    show_expression(ivl_logic_delay(net,1), 6);
+      }
+      if (ivl_logic_delay(net,2)) {
+	    test_expr_is_delay(ivl_logic_delay(net,2));
+	    show_expression(ivl_logic_delay(net,2), 6);
+      }
 
       npins = ivl_logic_pins(net);
 
@@ -1551,6 +1580,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.136  2006/01/02 05:33:20  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.135  2005/12/22 15:38:33  steve
  *  More detailed check of binary expressions.
  *

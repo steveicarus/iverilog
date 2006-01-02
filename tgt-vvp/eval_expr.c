@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.128 2005/12/22 15:42:22 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.129 2006/01/02 05:33:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -57,7 +57,9 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
       const char*bits;
       unsigned idx;
 
-      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+      if (ivl_expr_type(ex) != IVL_EX_NUMBER
+	  && ivl_expr_type(ex) != IVL_EX_ULONG)
+	    return 0;
 
       bits = ivl_expr_bits(ex);
       for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
@@ -2175,6 +2177,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.129  2006/01/02 05:33:20  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.128  2005/12/22 15:42:22  steve
  *  Pad part selects
  *

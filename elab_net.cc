@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.176 2005/10/11 16:15:52 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.177 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,9 +39,9 @@
 static bool must_be_self_determined_flag = false;
 
 NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
-			     unsigned long,
-			     unsigned long,
-			     unsigned long,
+			     const NetExpr*,
+			     const NetExpr*,
+			     const NetExpr*,
 			     Link::strength_t,
 			     Link::strength_t) const
 {
@@ -57,9 +57,9 @@ NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
  */
 NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 				unsigned width,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay,
+				const NetExpr* rise,
+				const NetExpr* fall,
+				const NetExpr* decay,
 				Link::strength_t drive0,
 				Link::strength_t drive1) const
 {
@@ -161,9 +161,9 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 				     unsigned lwidth,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
@@ -268,9 +268,9 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
  */
 NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 				     unsigned width,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, width, 0, 0, 0);
@@ -350,9 +350,9 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 				   NetNet*lsig, NetEConst*rexp,
 				   char op_code,
-				   unsigned long rise,
-				   unsigned long fall,
-				   unsigned long decay)
+				   const NetExpr* rise,
+				   const NetExpr* fall,
+				   const NetExpr* decay)
 {
       if (op_code != 'e' && op_code != 'n')
 	    return 0;
@@ -464,9 +464,9 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
  */
 NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 				     unsigned lwidth,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
 
 	/* Elaborate the operands of the compare first as expressions
@@ -691,9 +691,9 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
  */
 NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 				     unsigned lwidth,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
@@ -771,9 +771,9 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
  */
 NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 				     unsigned lwidth,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lsig == 0) return 0;
@@ -824,9 +824,9 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 
 NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 				     unsigned lwidth,
-				     unsigned long rise,
-				     unsigned long fall,
-				     unsigned long decay) const
+				     const NetExpr* rise,
+				     const NetExpr* fall,
+				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
       NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
@@ -913,9 +913,9 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 				       unsigned lwidth,
-				       unsigned long rise,
-				       unsigned long fall,
-				       unsigned long decay) const
+				       const NetExpr* rise,
+				       const NetExpr* fall,
+				       const NetExpr* decay) const
 {
       verinum*lnum = left_->eval_const(des, scope);
       verinum*rnum = right_->eval_const(des, scope);
@@ -1000,9 +1000,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 
 NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 				       unsigned lwidth,
-				       unsigned long rise,
-				       unsigned long fall,
-				       unsigned long decay) const
+				       const NetExpr* rise,
+				       const NetExpr* fall,
+				       const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
@@ -1196,9 +1196,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
  */
 NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 				      unsigned width,
-				      unsigned long rise,
-				      unsigned long fall,
-				      unsigned long decay,
+				      const NetExpr* rise,
+				      const NetExpr* fall,
+				      const NetExpr* decay,
 				      Link::strength_t drive0,
 				      Link::strength_t drive1) const
 {
@@ -1321,9 +1321,9 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 				unsigned,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay,
+				const NetExpr* rise,
+				const NetExpr* fall,
+				const NetExpr* decay,
 				Link::strength_t drive0,
 				Link::strength_t drive1) const
 {
@@ -1460,9 +1460,9 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 				       NetNet*sig,
-				       unsigned long rise,
-				       unsigned long fall,
-				       unsigned long decay,
+				       const NetExpr* rise,
+				       const NetExpr* fall,
+				       const NetExpr* decay,
 				       Link::strength_t drive0,
 				       Link::strength_t drive1) const
 {
@@ -1515,9 +1515,9 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 
 NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 			       unsigned lwidth,
-			       unsigned long rise,
-			       unsigned long fall,
-			       unsigned long decay,
+			       const NetExpr* rise,
+			       const NetExpr* fall,
+			       const NetExpr* decay,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
@@ -1660,9 +1660,9 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 				    NetMemory*mem, unsigned lwidth,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay) const
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay) const
 {
       assert(scope);
 
@@ -1809,9 +1809,9 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
  */
 NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay,
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay,
 				 Link::strength_t drive0,
 				 Link::strength_t drive1) const
 {
@@ -2143,9 +2143,9 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
  */
 NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 				unsigned lwidth,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay,
+				const NetExpr* rise,
+				const NetExpr* fall,
+				const NetExpr* decay,
 				Link::strength_t drive0,
 				Link::strength_t drive1) const
 {
@@ -2259,9 +2259,9 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 				unsigned lwidth,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay,
+				const NetExpr* rise,
+				const NetExpr* fall,
+				const NetExpr* decay,
 				Link::strength_t drive0,
 				Link::strength_t drive1) const
 {
@@ -2316,9 +2316,9 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
  */
 NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 				 unsigned width,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay,
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay,
 				 Link::strength_t drive0,
 				 Link::strength_t drive1) const
 {
@@ -2458,9 +2458,9 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			       unsigned width,
-			       unsigned long rise,
-			       unsigned long fall,
-			       unsigned long decay,
+			       const NetExpr* rise,
+			       const NetExpr* fall,
+			       const NetExpr* decay,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
@@ -2645,6 +2645,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.177  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.176  2005/10/11 16:15:52  steve
  *  Logical or/and return VT_LOGIC type.
  *

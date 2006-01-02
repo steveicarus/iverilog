@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.138 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.139 2006/01/02 05:33:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -945,17 +945,25 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
 static void draw_delay(ivl_net_logic_t lptr)
 {
-      unsigned d0 = ivl_logic_delay(lptr, 0);
-      unsigned d1 = ivl_logic_delay(lptr, 1);
-      unsigned d2 = ivl_logic_delay(lptr, 2);
+      ivl_expr_t d0 = ivl_logic_delay(lptr, 0);
+      ivl_expr_t d1 = ivl_logic_delay(lptr, 1);
+      ivl_expr_t d2 = ivl_logic_delay(lptr, 2);
 
       if (d0 == 0 && d1 == 0 && d2 == 0)
 	    return;
 
+	/* FIXME: Assume that the expression is a constant */
+      assert(number_is_immediate(d0, 64));
+      assert(number_is_immediate(d1, 64));
+      assert(number_is_immediate(d2, 64));
+
       if (d0 == d1 && d1 == d2)
-	    fprintf(vvp_out, " (%d)", d0);
+	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
       else
-	    fprintf(vvp_out, " (%d,%d,%d)", d0, d1, d2);
+	    fprintf(vvp_out, " (%lu,%lu,%lu)",
+		    get_number_immediate(d0),
+		    get_number_immediate(d1),
+		    get_number_immediate(d2));
 }
 
 static void draw_udp_def(ivl_udp_t udp)
@@ -1045,8 +1053,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
       unsigned pdx;
       const char*ltype = "?";
-      const char*lcasc = 0x0;
+      const char*lcasc = 0;
       char identity_val = '0';
+
+      int need_delay_flag = ivl_logic_delay(lptr,0)? 1 : 0;
 
       unsigned vector_width = width_of_nexus(ivl_logic_pin(lptr, 0));
 
@@ -1207,10 +1217,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
 				lptr, level, inst, lcasc, vector_width);
 		  else {
-			fprintf(vvp_out, "L_%p .functor %s %u",
-				lptr, ltype, vector_width);
-
-			draw_delay(lptr);
+			fprintf(vvp_out, "L_%p%s .functor %s %u",
+				lptr, need_delay_flag? "/d" : "",
+				ltype, vector_width);
 
 			if (str0 != IVL_DR_STRONG || str1 != IVL_DR_STRONG)
 			      fprintf(vvp_out, " [%u %u]", str0, str1);
@@ -1244,6 +1253,40 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	/* Free the array of char*. The strings themselves are
 	   persistent, held by the ivl_nexus_t objects. */
       free(input_strings);
+
+	/* If there are delays, then draw the delay functor to carry
+	   that delay. This is the final output. */
+      if (need_delay_flag) {
+	    ivl_expr_t rise_exp  = ivl_logic_delay(lptr,0);
+	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr,1);
+	    ivl_expr_t decay_exp = ivl_logic_delay(lptr,2);
+
+	    if (number_is_immediate(rise_exp,64)
+		&& number_is_immediate(fall_exp,64)
+		&& number_is_immediate(decay_exp,64)) {
+
+		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+			  lptr, get_number_immediate(rise_exp),
+			  get_number_immediate(rise_exp),
+			  get_number_immediate(rise_exp), lptr);
+	    } else {
+		  ivl_signal_t sig;
+		  assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
+		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
+		  assert(ivl_expr_type(decay_exp) == IVL_EX_SIGNAL);
+
+		  fprintf(vvp_out, "L_%p .delay  L_%p/d", lptr, lptr);
+
+		  sig = ivl_expr_signal(rise_exp);
+		  fprintf(vvp_out, ", V_%p", sig);
+
+		  sig = ivl_expr_signal(fall_exp);
+		  fprintf(vvp_out, ", V_%p", sig);
+
+		  sig = ivl_expr_signal(decay_exp);
+		  fprintf(vvp_out, ", V_%p;\n", sig);
+	    }
+      }
 }
 
 static void draw_event_in_scope(ivl_event_t obj)
@@ -2110,6 +2153,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.139  2006/01/02 05:33:20  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.138  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *

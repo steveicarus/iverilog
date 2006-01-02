@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.11 2003/06/21 01:21:42 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.12 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -62,8 +62,7 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
       delete_flag_ = df;
 }
 
-static unsigned long calculate_val(Design*des, NetScope*scope,
-				   const PExpr*expr)
+static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
 {
 
       NetExpr*dex = expr->elaborate_expr(des, scope);
@@ -85,7 +84,9 @@ static unsigned long calculate_val(Design*des, NetScope*scope,
 		  delay = 0;
 
 	    delete tmp;
-	    return delay;
+	    NetEConst*tmp2 = new NetEConst(verinum(delay));
+	    tmp2->set_line(*expr);
+	    return tmp2;
       }
 
 
@@ -96,23 +97,19 @@ static unsigned long calculate_val(Design*des, NetScope*scope,
 		  des->scale_to_precision(fn.as_ulong(), scope);
 
 	    delete tmp;
-	    return delay;
+	    NetEConst*tmp2 = new NetEConst(verinum(delay));
+	    tmp2->set_line(*expr);
+	    return tmp2;
       }
 
-	/* Oops, cannot evaluate down to a constant. Error message. */
-      delete dex;
-
-      cerr << expr->get_line() << ": sorry: non-constant "
-	   << "delays not supported here: " << *expr << endl;
-      des->errors += 1;
-      return 0;
-
+	/* Oops, cannot evaluate down to a constant. */
+      return dex;
 }
 
 void PDelays::eval_delays(Design*des, NetScope*scope,
-			  unsigned long&rise_time,
-			  unsigned long&fall_time,
-			  unsigned long&decay_time) const
+			  NetExpr*&rise_time,
+			  NetExpr*&fall_time,
+			  NetExpr*&decay_time) const
 {
       assert(scope);
 
@@ -146,6 +143,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.12  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.11  2003/06/21 01:21:42  steve
  *  Harmless fixup of warnings.
  *

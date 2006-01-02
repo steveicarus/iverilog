@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.75 2005/12/07 04:04:23 steve Exp $"
+#ident "$Id: PExpr.h,v 1.76 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include  <string>
@@ -66,9 +66,9 @@ class PExpr : public LineInfo {
 	// continuous assign or other wholly structural context.
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0 =Link::STRONG,
 				    Link::strength_t drive1 =Link::STRONG)
 	    const;
@@ -129,9 +129,9 @@ class PEConcat : public PExpr {
 				     bool implicit_net_ok =false) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
@@ -199,9 +199,9 @@ class PEFNumber : public PExpr {
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
 
@@ -233,9 +233,9 @@ class PEIdent : public PExpr {
 	// Structural r-values are OK.
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
 
@@ -294,15 +294,15 @@ class PEIdent : public PExpr {
 
       NetNet* elaborate_net_ram_(Design*des, NetScope*scope,
 				 NetMemory*mem, unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
 
       NetNet* elaborate_net_bitmux_(Design*des, NetScope*scope,
 				    NetNet*sig,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
 
@@ -332,9 +332,9 @@ class PENumber : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
@@ -370,9 +370,9 @@ class PEString : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
@@ -395,9 +395,9 @@ class PEUnary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
@@ -423,9 +423,9 @@ class PEBinary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
@@ -442,44 +442,44 @@ class PEBinary : public PExpr {
 
       NetNet* elaborate_net_add_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_bit_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_cmp_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_div_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_mod_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_log_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_mul_(Design*des, NetScope*scope,
 				 unsigned lwidth,
-				 unsigned long rise,
-				 unsigned long fall,
-				 unsigned long decay) const;
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
       NetNet* elaborate_net_shift_(Design*des, NetScope*scope,
 				   unsigned lwidth,
-				   unsigned long rise,
-				   unsigned long fall,
-				   unsigned long decay) const;
+				   const NetExpr* rise,
+				   const NetExpr* fall,
+				   const NetExpr* decay) const;
 };
 
 /*
@@ -497,9 +497,9 @@ class PETernary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetETernary*elaborate_expr(Design*des, NetScope*,
@@ -527,9 +527,9 @@ class PECallFunction : public PExpr {
       virtual void dump(ostream &) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
-				    unsigned long rise,
-				    unsigned long fall,
-				    unsigned long decay,
+				    const NetExpr* rise,
+				    const NetExpr* fall,
+				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -546,6 +546,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.76  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.75  2005/12/07 04:04:23  steve
  *  Allow constant concat expressions.
  *

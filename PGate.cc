@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.cc,v 1.16 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: PGate.cc,v 1.17 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,12 +90,66 @@ void PGate::elaborate_scope(Design*, NetScope*) const
  * parameters. This method understands how to handle the different
  * numbers of expressions.
  */
+
+void PGate::eval_delays(Design*des, NetScope*scope,
+			NetExpr*&rise_expr,
+			NetExpr*&fall_expr,
+			NetExpr*&decay_expr) const
+{
+      delay_.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
+}
+
 void PGate::eval_delays(Design*des, NetScope*scope,
 			unsigned long&rise_time,
 			unsigned long&fall_time,
 			unsigned long&decay_time) const
 {
-      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
+      NetExpr*rise_expr, *fall_expr, *decay_expr;
+      delay_.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
+
+      if (rise_expr == 0) {
+	    rise_time = 0;
+	    fall_time = 0;
+	    decay_time = 0;
+      }
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*> (rise_expr)) {
+	    rise_time = tmp->value().as_ulong();
+
+      } else {
+	    cerr << get_line() << ": error: Delay expressions must be "
+		 << "constant here." << endl;
+	    cerr << get_line() << ":      : Cannot calculate "
+		 << *rise_expr << endl;
+	    des->errors += 1;
+	    rise_time = 0;
+      }
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*> (fall_expr)) {
+	    fall_time = tmp->value().as_ulong();
+
+      } else {
+	    if (fall_expr != rise_expr) {
+		  cerr << get_line() << ": error: Delay expressions must be "
+		       << "constant here." << endl;
+		  cerr << get_line() << ":      : Cannot calculate "
+		       << *rise_expr << endl;
+	    }
+	    des->errors += 1;
+	    fall_time = 0;
+      }
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*> (decay_expr)) {
+	    decay_time = tmp->value().as_ulong();
+
+      } else {
+	    cerr << get_line() << ": error: Delay expressions must be "
+		 << "constant here." << endl;
+	    cerr << get_line() << ":      : Cannot calculate "
+		 << *rise_expr << endl;
+	    des->errors += 1;
+	    decay_time = 0;
+      }
 }
 
 PGAssign::PGAssign(svector<PExpr*>*pins)
@@ -191,6 +245,9 @@ perm_string PGModule::get_type()
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.17  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.16  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

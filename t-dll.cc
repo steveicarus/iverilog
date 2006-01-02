@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.154 2005/08/06 17:58:16 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.155 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -602,6 +602,44 @@ void dll_target::logic_attributes(struct ivl_net_logic_s *obj,
       obj->attr  = fill_in_attributes(net);
 }
 
+void dll_target::make_logic_delays_(struct ivl_net_logic_s*obj,
+				    const NetObj*net)
+{
+      obj->delay[0] = 0;
+      obj->delay[1] = 0;
+      obj->delay[2] = 0;
+
+	/* Translate delay expressions to ivl_target form. Try to
+	   preserve pointer equality, not as a rule but to save on
+	   expression trees. */
+      if (net->rise_time()) {
+	    expr_ = 0;
+	    net->rise_time()->expr_scan(this);
+	    obj->delay[0] = expr_;
+	    expr_ = 0;
+      }
+      if (net->fall_time()) {
+	    if (net->fall_time() == net->rise_time()) {
+		  obj->delay[1] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->fall_time()->expr_scan(this);
+		  obj->delay[1] = expr_;
+		  expr_ = 0;
+	    }
+      }
+      if (net->decay_time()) {
+	    if (net->decay_time() == net->rise_time()) {
+		  obj->delay[2] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->decay_time()->expr_scan(this);
+		  obj->delay[2] = expr_;
+		  expr_ = 0;
+	    }
+      }
+}
+
 /*
  * Add a bufz object to the scope that contains it.
  *
@@ -682,10 +720,8 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->name_ = net->name();
       logic_attributes(obj, net);
 
-      obj->delay[0] = net->rise_time();
-      obj->delay[1] = net->fall_time();
-      obj->delay[2] = net->decay_time();
-
+      make_logic_delays_(obj, net);
+	    
       scope_add_logic(scope, obj);
 
       return true;
@@ -859,9 +895,7 @@ void dll_target::logic(const NetLogic*net)
 
       logic_attributes(obj, net);
 
-      obj->delay[0] = net->rise_time();
-      obj->delay[1] = net->fall_time();
-      obj->delay[2] = net->decay_time();
+      make_logic_delays_(obj, net);
 
       scope_add_logic(scope, obj);
 }
@@ -1104,9 +1138,7 @@ void dll_target::udp(const NetUDP*net)
       obj->scope_= scope;
       obj->name_ = net->name();
 
-      obj->delay[0] = net->rise_time();
-      obj->delay[1] = net->fall_time();
-      obj->delay[2] = net->decay_time();
+      make_logic_delays_(obj, net);
 
       obj->nattr = 0;
       obj->attr = 0;
@@ -2131,6 +2163,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.155  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.154  2005/08/06 17:58:16  steve
  *  Implement bi-directional part selects.
  *

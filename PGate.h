@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.29 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: PGate.h,v 1.30 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -66,10 +66,21 @@ class PGate : public LineInfo {
 
       perm_string get_name() const { return name_; }
 
+	// This method evaluates the delays all the way to an
+	// integer. If the delay is non-constant, then set the times
+	// to 0, print an error message and mark an error to the
+	// design.
       void eval_delays(Design*des, NetScope*scope,
 		       unsigned long&rise_time,
 		       unsigned long&fall_time,
 		       unsigned long&decay_time) const;
+
+	// This evaluates the delays as far as possible, but returns
+	// an expression, and do not signal errors.
+      void eval_delays(Design*des, NetScope*scope,
+		       NetExpr*&rise_time,
+		       NetExpr*&fall_time,
+		       NetExpr*&decay_time) const;
 
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
@@ -227,6 +238,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.30  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.29  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

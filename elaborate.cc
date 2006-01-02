@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.332 2005/11/26 00:35:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.333 2006/01/02 05:33:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,7 +75,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      unsigned long rise_time, fall_time, decay_time;
+      NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time);
 
       Link::strength_t drive0 = drive_type(strength0());
@@ -204,10 +204,20 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  if (debug_elaborate) {
 			cerr << get_line() << ": debug: PGAssign: "
 			     << "Connect lval to " << id->path()
-			     << " through bufz. delay=("
-			     << rise_time << ":"
-			     << fall_time << ":"
-			     << decay_time << ")" << endl;
+			     << " through bufz. delay=(";
+			if (rise_time)
+			      cerr << *rise_time << ":";
+			else
+			      cerr << "<none>:";
+			if (fall_time)
+			      cerr << *fall_time << ":";
+			else
+			      cerr << "<none>:";
+			if (decay_time)
+			      cerr << *decay_time;
+			else
+			      cerr << "<none>";
+			cerr << ")" << endl;
 		  }
 
 		  NetBUFZ*dev = new NetBUFZ(scope, scope->local_symbol(),
@@ -332,7 +342,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	/* Detect the special case that the l-value width exactly
 	   matches the gate count. In this case, we will make a single
 	   gate that has the desired vector width. */
-      if (lval_sig->vector_width() == (long)count) {
+      if (lval_sig->vector_width() == count) {
 	    instance_width = count;
 	    count = 1;
 
@@ -359,7 +369,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   of the rise and fall times. Finally, if all three
 	   values are given, they are taken as specified. */
 
-      unsigned long rise_time, fall_time, decay_time;
+      NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time);
 
       struct attrib_list_t*attrib_list = 0;
@@ -522,7 +532,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
 			connect(cur[gdx]->pin(idx), sig->pin(0));
 
-	    } else if (sig->vector_width() == (long)count) {
+	    } else if (sig->vector_width() == count) {
 
 		    /* Handle the general case that each bit of the
 		       value is connected to a different instance. In
@@ -1027,6 +1037,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 {
+      NetExpr*rise_expr =0, *fall_expr =0, *decay_expr =0;
 
       perm_string my_name = get_name();
       if (my_name == 0)
@@ -1035,19 +1046,49 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	/* When the parser notices delay expressions in front of a
 	   module or primitive, it interprets them as parameter
 	   overrides. Correct that misconception here. */
-      unsigned long rise_time = 0, fall_time = 0, decay_time = 0;
       if (overrides_) {
 	    PDelays tmp_del;
 	    tmp_del.set_delays(overrides_, false);
-	    tmp_del.eval_delays(des, scope, rise_time, fall_time, decay_time);
+	    tmp_del.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
+
+	    if (dynamic_cast<NetEConst*> (rise_expr)) {
+
+	    } else {
+		  cerr << get_line() << ": error: Delay expressions must be "
+		       << "constant for primitives." << endl;
+		  cerr << get_line() << ":      : Cannot calculate "
+		       << *rise_expr << endl;
+		  des->errors += 1;
+	    }
+
+	    if (dynamic_cast<NetEConst*> (fall_expr)) {
+
+	    } else {
+		  cerr << get_line() << ": error: Delay expressions must be "
+		       << "constant for primitives." << endl;
+		  cerr << get_line() << ":      : Cannot calculate "
+		       << *rise_expr << endl;
+		  des->errors += 1;
+	    }
+
+	    if (dynamic_cast<NetEConst*> (decay_expr)) {
+
+	    } else {
+		  cerr << get_line() << ": error: Delay expressions must be "
+		       << "constant for primitives." << endl;
+		  cerr << get_line() << ":      : Cannot calculate "
+		       << *rise_expr << endl;
+		  des->errors += 1;
+	    }
+
       }
 
 
       assert(udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
-      net->rise_time(rise_time);
-      net->fall_time(fall_time);
-      net->decay_time(decay_time);
+      net->rise_time(rise_expr);
+      net->fall_time(fall_expr);
+      net->decay_time(decay_expr);
 
       struct attrib_list_t*attrib_list = 0;
       unsigned attrib_list_n = 0;
@@ -3028,6 +3069,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.333  2006/01/02 05:33:19  steve
+ *  Node delays can be more general expressions in structural contexts.
+ *
  * Revision 1.332  2005/11/26 00:35:42  steve
  *  More precise about r-value width of constants.
  *
