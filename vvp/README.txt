@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.74 2005/11/25 17:55:26 steve Exp $
+ *  $Id: README.txt,v 1.75 2006/01/02 05:32:06 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -128,7 +128,8 @@ label is required for functors.
 
 The general syntax of a functor is:
 
-	<label> .functor <type> [ (<delay>) ], symbol_list ;
+	<label> .functor <type>, symbol_list ;
+	<label> .functor <type> [<drive0> <drive1>], symbol_list ;
 
 The symbol list is 4 names of labels of other functors. These connect
 inputs of the functor of the statement to the output of other
@@ -309,7 +310,7 @@ that arrive through them, while .net nodes reduce strength values to
 information really is possible.
 
 The <label> is required and is used to locate the net object that is
-represents. This label does not map to a functor, so only references
+vrepresents. This label does not map to a functor, so only references
 that know they want to access .nets are able to locate the symbol. In
 particular, this includes behavioral %load and %wait instructions. The
 references to net and reg objects are done through the .net label
@@ -319,6 +320,23 @@ functor pointer, though.
 The .alias statements do not create new nodes, but instead create net
 names that are aliases of an existing node. This handles special cases
 where a net has different names, possibly in different scopes.
+
+DELAY STATEMENTS:
+
+Delay nodes are structural net delay nodes that carry and manage
+propagation delays. Delay nodes can have fixed delays or variable
+delays. Fixed delay nodes have only the input that is to be
+delayed. The delay amount is given on the node line. Variable delay
+nodes have three extra inputs to receive the rise, fall and decay
+times that are used for delay.
+
+	.delay ( <rise>, <fall>, <decay> ) <input> ;
+	.delay <input>, <rise>, <fall>, <decay> ;
+
+The first form above takes three constant numbers as the initial
+delay, and takes a single input. The second form takes 4 net inputs,
+with the first being the value to delay, and the remaining to be the
+delay values to use.
 
 MEMORY STATEMENTS:
 

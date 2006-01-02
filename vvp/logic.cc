@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.35 2005/09/19 22:47:28 steve Exp $"
+#ident "$Id: logic.cc,v 1.36 2006/01/02 05:32:07 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -473,7 +473,7 @@ void vvp_fun_xor::run_run()
  */
 
 void compile_functor(char*label, char*type, unsigned width,
-		     vvp_delay_t*delay, unsigned ostr0, unsigned ostr1,
+		     unsigned ostr0, unsigned ostr1,
 		     unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t* obj = 0;
@@ -566,28 +566,18 @@ void compile_functor(char*label, char*type, unsigned width,
 	/* If both the strengths are the default strong drive, then
 	   there is no need for a specialized driver. Attach the label
 	   to this node and we are finished. */
-      if (strength_aware || ostr0 == 6 && ostr1 == 6 && delay == 0) {
+      if (strength_aware || ostr0 == 6 && ostr1 == 6) {
 	    define_functor_symbol(label, net);
 	    free(label);
 	    return;
       }
 
       vvp_net_t*net_drv = new vvp_net_t;
-      vvp_net_fun_t*obj_drv;
-
-      if (ostr0 == 6 && ostr1 == 6 && delay != 0) {
-	    obj_drv = new vvp_fun_delay(net_drv, BIT4_X, *delay);
-      } else {
-	    obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
-      }
-
+      vvp_net_fun_t*obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
       net_drv->fun = obj_drv;
 
 	/* Point the gate to the drive node. */
       net->out = vvp_net_ptr_t(net_drv, 0);
-
-      if (delay)
-	    delete delay;
 
       define_functor_symbol(label, net_drv);
       free(label);
@@ -596,6 +586,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.36  2006/01/02 05:32:07  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.35  2005/09/19 22:47:28  steve
  *  Prevent some excess scheduling of logic propagation events.
  *

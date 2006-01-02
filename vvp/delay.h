@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.9 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: delay.h,v 1.10 2006/01/02 05:32:07 steve Exp $"
 #endif
 
 /*
@@ -43,9 +43,15 @@ class vvp_delay_t {
       vvp_time64_t get_delay(vvp_bit4_t from, vvp_bit4_t to);
       vvp_time64_t get_min_delay() const;
 
+      void set_rise(vvp_time64_t val);
+      void set_fall(vvp_time64_t val);
+      void set_decay(vvp_time64_t val);
+
     private:
       vvp_time64_t rise_, fall_, decay_;
       vvp_time64_t min_delay_;
+
+      void calculate_min_delay_();
 };
 
 /* vvp_fun_delay
@@ -68,23 +74,33 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       ~vvp_fun_delay();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
       void recv_real(vvp_net_ptr_t port, double bit);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
       virtual void run_run();
 
+
+      void run_run_vec4_();
+      void run_run_vec8_();
+      void run_run_real_();
+
     private:
       vvp_net_t*net_;
       vvp_delay_t delay_;
 
-      bool flag_vec4_, flag_real_;
+      void (vvp_fun_delay::*run_run_ptr_)();
       vvp_vector4_t cur_vec4_;
+      vvp_vector8_t cur_vec8_;
       double cur_real_;
 };
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.10  2006/01/02 05:32:07  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.9  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

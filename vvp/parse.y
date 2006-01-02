@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.79 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: parse.y,v 1.80 2006/01/02 05:32:07 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -61,7 +61,7 @@ extern FILE*yyin;
 %token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
-%token K_CONCAT K_DFF
+%token K_CONCAT K_DELAY K_DFF
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM K_PART K_PART_PV
@@ -91,7 +91,7 @@ extern FILE*yyin;
 
 %type <argv> argument_opt argument_list
 %type <vpi>  argument
-%type <cdelay> delay
+%type <cdelay> delay delay_opt
 
 %%
 
@@ -131,15 +131,15 @@ statement
      label and a type name, and may have operands. The functor may
      also have a delay specification and output strengths. */
 
-	: T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER delay ',' symbols ';'
-		{ compile_functor($1, $3, $4, $5, 6, 6, $7.cnt, $7.vect); }
+	: T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER ',' symbols ';'
+		{ compile_functor($1, $3, $4, 6, 6, $6.cnt, $6.vect); }
 
-	| T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER delay
+	| T_LABEL K_FUNCTOR T_SYMBOL T_NUMBER
 	          '[' T_NUMBER T_NUMBER ']' ',' symbols ';'
-		{ unsigned str0 = $7;
-		  unsigned str1 = $8;
-		  compile_functor($1, $3, $4, $5, str0, str1,
-				  $11.cnt, $11.vect);
+		{ unsigned str0 = $6;
+		  unsigned str1 = $7;
+		  compile_functor($1, $3, $4, str0, str1,
+				  $10.cnt, $10.vect);
 		}
 
 
@@ -153,7 +153,7 @@ statement
 	| T_LABEL K_UDP_C T_STRING ',' T_NUMBER ',' udp_table ';'
 		{ compile_udp_def(0, $1, $3, $5, 0, $7); }
 
-	| T_LABEL K_UDP T_SYMBOL delay ',' symbols ';'
+	| T_LABEL K_UDP T_SYMBOL delay_opt ',' symbols ';'
 		{ compile_udp_functor($1, $3, $4, $6.cnt, $6.vect); }
 
 
@@ -283,6 +283,17 @@ statement
 	| T_LABEL K_CMP_GT_S T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
+		}
+
+  /* Delay nodes take a set of numbers or a set of inputs. The delay
+     node takes two form, one with an array of constants and a single
+     input, and another with an array of inputs. */
+
+        | T_LABEL K_DELAY delay symbol ';'
+                { compile_delay($1, $3, $4); }
+        | T_LABEL K_DELAY  symbols ';'
+                { struct symbv_s obj = $3;
+		  compile_delay($1, obj.cnt, obj.vect);
 		}
 
   /* DFF nodes have an output and take exactly 4 inputs. */
@@ -692,10 +703,10 @@ signed_t_number
 	| '-' T_NUMBER { $$ = -$2; }
 	;
 
+delay_opt : delay { $$=$1; } | /* empty */ { $$=0; } ;
+
 delay
-	: /* empty */
-		{ $$ = 0; }
-	| '(' T_NUMBER ')'
+	: '(' T_NUMBER ')'
 		{ $$ = new vvp_delay_t($2, $2); }
 	| '(' T_NUMBER ',' T_NUMBER ')'
 		{ $$ = new vvp_delay_t($2, $4); }
@@ -722,6 +733,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.80  2006/01/02 05:32:07  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.79  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *

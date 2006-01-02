@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.77 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: compile.h,v 1.78 2006/01/02 05:32:07 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -90,8 +90,7 @@ extern void compile_vpi_time_precision(long pre);
  * to existing functors to manage the linking.
  */
 extern void compile_functor(char*label, char*type, unsigned width,
-			    vvp_delay_t*delay, unsigned ostr0,
-			    unsigned ostr1,
+			    unsigned ostr0, unsigned ostr1,
 			    unsigned argc, struct symb_s*argv);
 
 
@@ -107,6 +106,12 @@ extern void compile_resolver(char*label, char*type,
 extern void compile_concat(char*label, unsigned w0, unsigned w1,
 			   unsigned w2, unsigned w3,
 			   unsigned argc, struct symb_s*argv);
+
+/*
+ * Compile delay nodes of various form.
+ */
+extern void compile_delay(char*label, vvp_delay_t*del, struct symb_s input);
+extern void compile_delay(char*label, unsigned argc, struct symb_s*argv);
 
 /*
  * This is called by the parser to create a part select node.
@@ -337,6 +342,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.78  2006/01/02 05:32:07  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.77  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *

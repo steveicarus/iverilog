@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.215 2005/11/26 17:16:05 steve Exp $"
+#ident "$Id: compile.cc,v 1.216 2006/01/02 05:32:06 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1025,6 +1025,35 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
       make_arith(arith, label, argc, argv);
 }
 
+
+void compile_delay(char*label, vvp_delay_t*delay, struct symb_s arg)
+{
+      vvp_net_t*net = new vvp_net_t;
+      vvp_fun_delay*obj = new vvp_fun_delay(net, BIT4_X, *delay);
+      net->fun = obj;
+
+      delete delay;
+
+      input_connect(net, 0, arg.text);
+
+      define_functor_symbol(label, net);
+      free(label);
+}
+
+void compile_delay(char*label, unsigned argc, struct symb_s*argv)
+{
+      vvp_delay_t stub (0, 0, 0);
+      vvp_net_t*net = new vvp_net_t;
+      vvp_fun_delay*obj = new vvp_fun_delay(net, BIT4_X, stub);
+      net->fun = obj;
+
+      inputs_connect(net, argc, argv);
+      free(argv);
+
+      define_functor_symbol(label, net);
+      free(label);
+}
+
 /*
  * Extend nodes.
  */
@@ -1482,6 +1511,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.216  2006/01/02 05:32:06  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.215  2005/11/26 17:16:05  steve
  *  Force instruction that can be indexed.
  *

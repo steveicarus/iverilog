@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.57 2005/11/25 17:55:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.58 2006/01/02 05:32:07 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -103,6 +103,7 @@
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
 ".concat"   { return K_CONCAT; }
+".delay"    { return K_DELAY; }
 ".dff"      { return K_DFF; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
@@ -204,6 +205,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.58  2006/01/02 05:32:07  steve
+ *  Require explicit delay node from source.
+ *
  * Revision 1.57  2005/11/25 17:55:26  steve
  *  Put vec8 and vec4 nets into seperate net classes.
  *
