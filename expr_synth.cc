@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.73 2005/09/15 23:04:09 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.74 2006/01/03 05:15:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -278,6 +278,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
       osig->set_line(*this);
+      osig->data_type(lsig->data_type());
       osig->local_flag(true);
 
       switch (op()) {
@@ -847,6 +848,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.74  2006/01/03 05:15:33  steve
+ *  Fix the return type of a synthesized divide.
+ *
  * Revision 1.73  2005/09/15 23:04:09  steve
  *  Make sure div, mod and mult nodes have line number info.
  *
