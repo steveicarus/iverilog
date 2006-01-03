@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.49 2005/11/26 17:16:05 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.50 2006/01/03 06:19:31 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -600,20 +600,6 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
 
       return res;
 }
-#if 0
-vvp_vector4_t coerce_to_width(const vvp_vector4_t&that, unsigned width)
-{
-      if (that.size() == width)
-	    return that;
-
-      assert(that.size() > width);
-      vvp_vector4_t res (width);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    res.set_bit(idx, that.value(idx));
-
-      return res;
-}
-#endif
 
 vvp_vector2_t::vvp_vector2_t()
 {
@@ -628,7 +614,8 @@ vvp_vector2_t::vvp_vector2_t(unsigned long v, unsigned wid)
       const unsigned words = (wid_ + bits_per_word-1) / bits_per_word;
 
       vec_ = new unsigned long[words];
-      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+      vec_[0] = v;
+      for (unsigned idx = 1 ;  idx < words ;  idx += 1)
 	    vec_[idx] = 0;
 }
 
@@ -2140,6 +2127,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.50  2006/01/03 06:19:31  steve
+ *  Support wide divide nodes.
+ *
  * Revision 1.49  2005/11/26 17:16:05  steve
  *  Force instruction that can be indexed.
  *

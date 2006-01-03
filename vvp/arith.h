@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.32 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: arith.h,v 1.33 2006/01/03 06:19:31 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -59,7 +59,7 @@ class vvp_arith_div : public vvp_arith_ {
       ~vvp_arith_div();
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
     private:
-      void wide_(vvp_net_ptr_t ptr);
+      void wide4_(vvp_net_ptr_t ptr);
       bool signed_flag_;
 };
 
@@ -233,6 +233,9 @@ class vvp_arith_sub_real : public vvp_arith_real_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.33  2006/01/03 06:19:31  steve
+ *  Support wide divide nodes.
+ *
  * Revision 1.32  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *

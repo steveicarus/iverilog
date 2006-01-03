@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.47 2005/11/10 13:27:16 steve Exp $"
+#ident "$Id: arith.cc,v 1.48 2006/01/03 06:19:31 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -67,9 +67,22 @@ vvp_arith_div::~vvp_arith_div()
 {
 }
 
-void vvp_arith_div::wide_(vvp_net_ptr_t ptr)
+void vvp_arith_div::wide4_(vvp_net_ptr_t ptr)
 {
-      assert(0);
+      vvp_vector2_t a2 (op_a_);
+      if (a2.is_NaN()) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      vvp_vector2_t b2 (op_b_);
+      if (b2.is_NaN()) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      vvp_vector2_t res2 = a2 / b2;
+      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res2, wid_));
 }
 
 void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
@@ -77,7 +90,7 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       dispatch_operand_(ptr, bit);
 
       if (wid_ > 8 * sizeof(unsigned long)) {
-	    wide_(ptr);
+	    wide4_(ptr);
 	    return ;
       }
 
@@ -767,6 +780,9 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.48  2006/01/03 06:19:31  steve
+ *  Support wide divide nodes.
+ *
  * Revision 1.47  2005/11/10 13:27:16  steve
  *  Handle very wide % and / operations using expanded vector2 support.
  *
