@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.12 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.13 2006/01/03 05:22:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -106,22 +106,42 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
       return dex;
 }
 
+static NetExpr* make_delay_nets(Design*des, NetExpr*expr)
+{
+      if (dynamic_cast<NetESignal*> (expr))
+	    return expr;
+
+      if (dynamic_cast<NetEConst*> (expr))
+	    return expr;
+
+      NetNet*sig = expr->synthesize(des);
+      expr = new NetESignal(sig);
+      return expr;
+}
+
 void PDelays::eval_delays(Design*des, NetScope*scope,
 			  NetExpr*&rise_time,
 			  NetExpr*&fall_time,
-			  NetExpr*&decay_time) const
+			  NetExpr*&decay_time,
+			  bool as_nets_flag) const
 {
       assert(scope);
 
 
       if (delay_[0]) {
 	    rise_time = calculate_val(des, scope, delay_[0]);
+	    if (as_nets_flag)
+		  rise_time = make_delay_nets(des, rise_time);
 
 	    if (delay_[1]) {
 		  fall_time = calculate_val(des, scope, delay_[1]);
+		  if (as_nets_flag)
+			fall_time = make_delay_nets(des, fall_time);
 
 		  if (delay_[2]) {
 			decay_time = calculate_val(des, scope, delay_[2]);
+		  if (as_nets_flag)
+			decay_time = make_delay_nets(des, decay_time);
 
 		  } else {
 			if (rise_time < fall_time)
@@ -143,6 +163,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.13  2006/01/03 05:22:14  steve
+ *  Handle complex net node delays.
+ *
  * Revision 1.12  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

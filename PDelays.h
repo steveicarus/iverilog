@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.h,v 1.8 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: PDelays.h,v 1.9 2006/01/03 05:22:14 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -56,7 +56,8 @@ class PDelays {
       void eval_delays(Design*des, NetScope*scope,
 		       NetExpr*&rise_time,
 		       NetExpr*&fall_time,
-		       NetExpr*&decay_time) const;
+		       NetExpr*&decay_time,
+		       bool as_nets_flag =false) const;
 
       void dump_delays(ostream&out) const;
 
@@ -73,6 +74,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.9  2006/01/03 05:22:14  steve
+ *  Handle complex net node delays.
+ *
  * Revision 1.8  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

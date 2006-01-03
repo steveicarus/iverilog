@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.cc,v 1.17 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: PGate.cc,v 1.18 2006/01/03 05:22:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,9 +94,12 @@ void PGate::elaborate_scope(Design*, NetScope*) const
 void PGate::eval_delays(Design*des, NetScope*scope,
 			NetExpr*&rise_expr,
 			NetExpr*&fall_expr,
-			NetExpr*&decay_expr) const
+			NetExpr*&decay_expr,
+			bool as_net_flag) const
 {
-      delay_.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
+      delay_.eval_delays(des, scope,
+			 rise_expr, fall_expr, decay_expr,
+			 as_net_flag);
 }
 
 void PGate::eval_delays(Design*des, NetScope*scope,
@@ -245,6 +248,9 @@ perm_string PGModule::get_type()
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.18  2006/01/03 05:22:14  steve
+ *  Handle complex net node delays.
+ *
  * Revision 1.17  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

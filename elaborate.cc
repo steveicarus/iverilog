@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.333 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.334 2006/01/03 05:22:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,7 +76,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       NetExpr* rise_time, *fall_time, *decay_time;
-      eval_delays(des, scope, rise_time, fall_time, decay_time);
+      eval_delays(des, scope, rise_time, fall_time, decay_time, true);
 
       Link::strength_t drive0 = drive_type(strength0());
       Link::strength_t drive1 = drive_type(strength1());
@@ -3069,6 +3069,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.334  2006/01/03 05:22:14  steve
+ *  Handle complex net node delays.
+ *
  * Revision 1.333  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *
