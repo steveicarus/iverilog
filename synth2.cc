@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.16 2006/01/18 01:23:25 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.17 2006/01/18 06:16:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1114,11 +1114,18 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 	   This is only synchronous set/reset if there is a true and a
 	   false clause, and no inputs. The "no inputs" requirement is
-	   met if the assignments are of all constant values. */
+	   met if the assignments are of all constant values.
+
+	   Also, we will not allow both Sset and Sclr to be used on a
+	   single LPM_FF (due to unclear priority issues) so don't try
+	   if either are already connected. */
       assert(if_ != 0);
       NexusSet*a_set = if_->nex_input();
 
-      if ((a_set->count() == 0) && if_ && else_) {
+      if ((a_set->count() == 0)
+	  && if_ && else_
+	  && !ff->pin_Sset().is_linked()
+	  && !ff->pin_Sclr().is_linked()) {
 
 	    NetNet*rst = expr_->synthesize(des);
 	    assert(rst->pin_count() == 1);
@@ -1439,6 +1446,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.17  2006/01/18 06:16:11  steve
+ *  Restrict DFF to only one of Sset and Sclr.
+ *
  * Revision 1.39.2.16  2006/01/18 01:23:25  steve
  *  Rework l-value handling to allow for more l-value type flexibility.
  *
