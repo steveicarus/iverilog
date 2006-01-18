@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.7 2005/12/31 04:28:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.8 2006/01/18 01:23:24 steve Exp $"
 #endif
 
 /*
@@ -58,6 +58,7 @@ class NetEvProbe;
 class NetExpr;
 class NetESignal;
 class NetEVariable;
+class NetFF;
 class NetFuncDef;
 
 class NetRamDq;
@@ -66,6 +67,12 @@ class NetEvWait;
 
 struct target;
 struct functor_t;
+
+struct sync_accounting_cell {
+      NetProc*proc;
+      NetFF*ff;
+      unsigned pin;
+};
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -439,6 +446,9 @@ class NetNet  : public NetObj {
 	// deleted.
       friend class NetRelease;
       NetRelease*release_list_;
+
+      friend class NetRamDq;
+      class NetRamDq*ram_;
 
     private:
       Type   type_;
@@ -876,12 +886,14 @@ class NetRamDq  : public NetNode {
 
     public:
       NetRamDq(NetScope*s, perm_string name, NetMemory*mem, unsigned awid);
+      NetRamDq(NetScope*s, perm_string name, NetNet*mem, unsigned awid);
       ~NetRamDq();
 
       unsigned width() const;
       unsigned awidth() const;
       unsigned size() const;
       const NetMemory*mem() const;
+      const NetNet*sig() const;
 
       Link& pin_InClock();
       Link& pin_OutClock();
@@ -913,9 +925,12 @@ class NetRamDq  : public NetNode {
 
     private:
       NetMemory*mem_;
+      NetNet*   sig_;
       NetRamDq*next_;
       unsigned awidth_;
 
+    private:
+      void make_pins_(unsigned wid);
 };
 
 /*
@@ -1365,7 +1380,8 @@ class NetProc : public virtual LineInfo {
 	// was created to receive the Data inputs. The method *may*
 	// delete that DFF in favor of multiple smaller devices, but
 	// in that case it will set the ff argument to nil.
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
+      virtual bool synth_sync(Design*des, NetScope*scope,
+			      struct sync_accounting_cell*nex_ff,
 			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
@@ -1570,7 +1586,8 @@ class NetBlock  : public NetProc {
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       NetNet*nex_map, NetNet*nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
+      bool synth_sync(Design*des, NetScope*scope,
+		      struct sync_accounting_cell*nex_ff,
 		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
@@ -1711,7 +1728,8 @@ class NetCondit  : public NetProc {
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       NetNet*nex_map, NetNet*nex_out, NetNet*accum);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
+      bool synth_sync(Design*des, NetScope*scope,
+		      struct sync_accounting_cell*nex_ff,
 		      NetNet*nex_map, NetNet*nex_out,
 		      const svector<NetEvProbe*>&events);
 
@@ -1936,7 +1954,8 @@ class NetEvWait  : public NetProc {
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 			       NetNet*nex_map, NetNet*nex_out);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*&ff,
+      virtual bool synth_sync(Design*des, NetScope*scope,
+			      struct sync_accounting_cell*nex_ff,
 			      NetNet*nex_map, NetNet*nex_out,
 			      const svector<NetEvProbe*>&events);
 
@@ -3379,6 +3398,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.8  2006/01/18 01:23:24  steve
+ *  Rework l-value handling to allow for more l-value type flexibility.
+ *
  * Revision 1.321.2.7  2005/12/31 04:28:14  steve
  *  Fix crashes caused bu synthesis of sqrt32.v.
  *

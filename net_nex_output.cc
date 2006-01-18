@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11 2004/09/16 03:17:33 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.1 2006/01/18 01:23:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,14 @@ void NetAssignBase::nex_output(NexusSet&out)
 {
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    if (NetNet*lsig = cur->sig()) {
+#if 0
+		  if (cur->bmux()) {
+			cerr << get_line() << ": internal error: "
+			     << "L-Value mux not supported by nex_output: ";
+			cur->dump_lval(cerr);
+			cerr << endl;
+		  }
+#endif
 		  for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 			unsigned off = cur->get_loff() + idx;
 			out.add(lsig->pin(off).nexus());
@@ -122,6 +130,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.1  2006/01/18 01:23:23  steve
+ *  Rework l-value handling to allow for more l-value type flexibility.
+ *
  * Revision 1.11  2004/09/16 03:17:33  steve
  *  net_output handles l-value concatenations.
  *

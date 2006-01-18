@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.1 2006/01/18 01:23:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -234,6 +234,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       assert(s);
 
       release_list_ = 0;
+      ram_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -275,6 +276,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
       assert(s);
 
       release_list_ = 0;
+      ram_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -1385,10 +1387,7 @@ const Link& NetMux::pin_Data(unsigned w, unsigned s) const
       return pin(2+width_+swidth_+s*width_+w);
 }
 
-
-NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
-: NetNode(s, n, 3+2*mem->width()+awid),
-  mem_(mem), awidth_(awid)
+void NetRamDq::make_pins_(unsigned wid)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name(perm_string::literal("InClock"), 0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("OutClock"), 0);
@@ -1399,39 +1398,65 @@ NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
 	    pin(3+idx).set_name(perm_string::literal("Address"), idx);
       }
 
-      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    pin(3+awidth_+idx).set_dir(Link::INPUT);
 	    pin(3+awidth_+idx).set_name(perm_string::literal("Data"), idx);
       }
 
-      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-	    pin(3+awidth_+width()+idx).set_dir(Link::OUTPUT);
-	    pin(3+awidth_+width()+idx).set_name(perm_string::literal("Q"), idx);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    pin(3+awidth_+wid+idx).set_dir(Link::OUTPUT);
+	    pin(3+awidth_+wid+idx).set_name(perm_string::literal("Q"), idx);
       }
+}
 
+
+NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
+: NetNode(s, n, 3+2*mem->width()+awid),
+  mem_(mem), sig_(0), awidth_(awid)
+{
+      make_pins_(mem->width());
       next_ = mem_->ram_list_;
       mem_->ram_list_ = this;
 }
 
+NetRamDq::NetRamDq(NetScope*s, perm_string n, NetNet*sig, unsigned awid)
+: NetNode(s, n, 3+2*1+awid),
+  mem_(0), sig_(sig), awidth_(awid)
+{
+      make_pins_(1);
+
+      assert(sig->ram_ == 0);
+      sig->ram_ = this;
+}
+
 NetRamDq::~NetRamDq()
 {
-      if (mem_->ram_list_ == this) {
-	    mem_->ram_list_ = next_;
+      if (mem_) {
+	    if (mem_->ram_list_ == this) {
+		  mem_->ram_list_ = next_;
 
-      } else {
-	    NetRamDq*cur = mem_->ram_list_;
-	    while (cur->next_ != this) {
-		  assert(cur->next_);
-		  cur = cur->next_;
+	    } else {
+		  NetRamDq*cur = mem_->ram_list_;
+		  while (cur->next_ != this) {
+			assert(cur->next_);
+			cur = cur->next_;
+		  }
+		  assert(cur->next_ == this);
+		  cur->next_ = next_;
 	    }
-	    assert(cur->next_ == this);
-	    cur->next_ = next_;
+      }
+
+      if (sig_) {
+	    assert(sig_->ram_ == this);
+	    sig_->ram_ = 0;
       }
 }
 
 unsigned NetRamDq::width() const
 {
-      return mem_->width();
+      if (mem_) return mem_->width();
+      if (sig_) return 1;
+      return 0;
 }
 
 unsigned NetRamDq::awidth() const
@@ -1441,12 +1466,19 @@ unsigned NetRamDq::awidth() const
 
 unsigned NetRamDq::size() const
 {
-      return mem_->count();
+      if (mem_) return mem_->count();
+      if (sig_) return sig_->pin_count();
+      return 0;
 }
 
 const NetMemory* NetRamDq::mem() const
 {
       return mem_;
+}
+
+const NetNet* NetRamDq::sig() const
+{
+      return sig_;
 }
 
 unsigned NetRamDq::count_partners() const
@@ -2281,6 +2313,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.1  2006/01/18 01:23:23  steve
+ *  Rework l-value handling to allow for more l-value type flexibility.
+ *
  * Revision 1.226  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
