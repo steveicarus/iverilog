@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.1 2006/01/18 06:15:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1303,8 +1303,51 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    aset_bits = ivl_expr_bits(aset_expr);
       }
 
+	/* If there is a synchronous clear or set, then draw a
+	   compound enable that includes the Sclr or Sset input. We
+	   will use this for the enable of the basic DFF. */
+
+      if (ivl_lpm_enable(net) && ivl_lpm_sync_clr(net)) {
+	    fprintf(vvp_out, "L_%s.%s/en .functor OR, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+	    draw_input_from_net(ivl_lpm_enable(net));
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(ivl_lpm_sync_clr(net));
+	    fprintf(vvp_out, ";\n");
+      }
+
+      if (ivl_lpm_enable(net) && ivl_lpm_sync_set(net)) {
+	    fprintf(vvp_out, "L_%s.%s/en .functor OR, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+	    draw_input_from_net(ivl_lpm_enable(net));
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(ivl_lpm_sync_set(net));
+	    fprintf(vvp_out, ";\n");
+      }
+
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t tmp;
+
+	    if (ivl_lpm_sync_clr(net)) {
+		  fprintf(vvp_out, "L_%s.%s/din/%u .functor MUXZ, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
+		  draw_input_from_net(ivl_lpm_data(net,idx));
+		  fprintf(vvp_out, ", C<0>, ");
+		  draw_input_from_net(ivl_lpm_sync_clr(net));
+		  fprintf(vvp_out, ", C<1>;\n");
+
+	    } else if (ivl_lpm_sync_set(net)) {
+		  fprintf(vvp_out, "L_%s.%s/din/%u .functor MUXZ, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
+		  draw_input_from_net(ivl_lpm_data(net,idx));
+		  fprintf(vvp_out, ", C<1>, ");
+		  draw_input_from_net(ivl_lpm_sync_set(net));
+		  fprintf(vvp_out, ", C<1>;\n");
+	    }
 
 	    fprintf(vvp_out, "L_%s.%s/%u .udp ",
 		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
@@ -1317,17 +1360,31 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    tmp = ivl_lpm_clk(net);
 	    draw_input_from_net(tmp);
 
+	      /* Draw the enable input. */
 	    tmp = ivl_lpm_enable(net);
 	    fprintf(vvp_out, ", ");
-	    if (tmp)
+	    if (tmp && (ivl_lpm_sync_clr(net) || ivl_lpm_sync_set(net))) {
+		  fprintf(vvp_out, "L_%s.%s/en",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)));
+	    } else if (tmp) {
 		  draw_input_from_net(tmp);
-	    else
+	    } else {
 		  fprintf(vvp_out, "C<1>");
+	    }
 
-	    tmp = ivl_lpm_data(net, idx);
-	    assert(tmp);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(tmp);
+	      /* Drat the data input. MUX it with the sync input
+		 if there is one. */
+	    if (ivl_lpm_sync_clr(net) || ivl_lpm_sync_set(net)) {
+		  fprintf(vvp_out, ", L_%s.%s/din/%u",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
+	    } else {
+		  tmp = ivl_lpm_data(net, idx);
+		  assert(tmp);
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(tmp);
+	    }
 
 	      /* Connect reset input. This may be the Aclr input, or
 		 an Aset to zero. */
@@ -1624,6 +1681,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.1  2006/01/18 06:15:45  steve
+ *  Support DFF with synchronous inputs.
+ *
  * Revision 1.103  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *
