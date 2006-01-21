@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.17 2006/01/18 06:16:11 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.18 2006/01/21 21:42:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -354,6 +354,19 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
       }
       assert(cur == (1U << sel_pins));
 
+      unsigned nondefault_items = 0;
+      for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
+	    if (items_[item].guard != 0)
+		  nondefault_items += 1;
+      }
+
+	/* Handle the special case that this can be done it a smaller
+	   1-hot MUX. */
+      if (nondefault_items < sel_pins)
+	    return synth_async_1hot_(des, scope, sync_flag,
+				    nex_map, nex_out, accum,
+				    esig, nondefault_items);
+
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(),
 			      1U << sel_pins, sel_pins);
@@ -497,6 +510,121 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
       des->add_node(mux);
 
       return return_flag;
+}
+
+bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
+				NetNet*nex_map, NetNet*nex_out, NetNet*accum,
+				NetNet*esig, unsigned hot_items)
+{
+      unsigned sel_pins = hot_items;
+
+      NetMux*mux = new NetMux(scope, scope->local_symbol(),
+			      nex_out->pin_count(),
+			      1U << sel_pins, sel_pins);
+      mux->set_line(*this);
+
+	/* Hook up the output of the mux to the mapped output pins. */
+      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
+	    connect(nex_out->pin(idx), mux->pin_Result(idx));
+
+      NetNet*tmps = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, sel_pins);
+      for (unsigned idx = 0 ;  idx < sel_pins ;  idx += 1)
+	    connect(tmps->pin(idx), mux->pin_Sel(idx));
+
+      NetProc*default_statement = 0;
+      unsigned use_item = 0;
+      for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
+	    if (items_[item].guard == 0) {
+		  default_statement = items_[item].statement;
+		  continue;
+	    }
+
+	    NetNet*tmp1 = items_[item].guard->synthesize(des);
+	    assert(tmp1);
+
+	    NetLogic*reduc = new NetLogic(scope, scope->local_symbol(),
+					  1 + esig->pin_count(),
+					  NetLogic::AND);
+	    des->add_node(reduc);
+
+	    tmps = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, esig->pin_count());
+	    for (unsigned idx = 0 ;  idx < tmps->pin_count() ;  idx += 1)
+		  connect(tmps->pin(idx), reduc->pin(idx+1));
+
+	    assert(tmp1->pin_count() == esig->pin_count());
+	    for (unsigned idx = 0 ;  idx < tmp1->pin_count() ; idx += 1) {
+		  NetCaseCmp*cmp = new NetCaseCmp(scope,scope->local_symbol());
+		  des->add_node(cmp);
+		  connect(cmp->pin(0), reduc->pin(1+idx));
+		  connect(cmp->pin(1), esig->pin(idx));
+		  connect(cmp->pin(2), tmp1->pin(idx));
+	    }
+
+	    connect(mux->pin_Sel(item), reduc->pin(0));
+
+	    NetNet*item_sig = new NetNet(scope, scope->local_symbol(),
+					 NetNet::WIRE, nex_map->pin_count());
+	    assert(items_[item].statement);
+	    items_[item].statement->synth_async(des, scope, sync_flag,
+						nex_map, item_sig, accum);
+	    for (unsigned idx = 0 ;  idx < item_sig->pin_count() ;  idx += 1)
+		  connect(mux->pin_Data(idx, 1<<use_item), item_sig->pin(idx));
+
+	    use_item += 1;
+      }
+
+      assert(use_item == hot_items);
+
+	/* Set up a default default_sig that uses the accumulated
+	   input pins. This binding is suppressed by an actual default
+	   statement if one exists. */
+      NetNet*default_sig = 0;
+      if (default_statement) {
+	    default_sig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, nex_map->pin_count());
+	    default_statement->synth_async(des, scope, sync_flag,
+					   nex_map, default_sig, accum);
+
+      }
+
+      if (default_sig == 0 && default_statement == 0) {
+	    default_sig = accum;
+	    for (unsigned idx = 0 ;  idx < accum->pin_count() ;  idx += 1) {
+		  if (! accum->pin(idx).is_linked()) {
+			default_sig = 0;
+			break;
+		  }
+	    }
+      }
+
+	/* No explicit sig, so if this is a synchronous process,
+	   connect the input to the output. */
+      if (default_sig == 0 && sync_flag) {
+	    default_sig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, nex_map->pin_count());
+	    for (unsigned idx = 0; idx < default_sig->pin_count() ;  idx += 1)
+		  connect(default_sig->pin(idx), nex_map->pin(idx));
+      }
+
+
+      for (unsigned item = 0 ;  item < (1UL<<sel_pins) ;  item += 1) {
+	    unsigned count_bits = 0;
+	    for (unsigned idx = 0 ;  idx < sel_pins ;  idx += 1) {
+		  if (item & (1<<idx))
+			count_bits += 1;
+	    }
+
+	    if (count_bits == 1)
+		  continue;
+
+	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
+		  connect(mux->pin_Data(idx,item), default_sig->pin(idx));
+      }
+
+      des->add_node(mux);
+      return true;
 }
 
 /*
@@ -1446,6 +1574,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.18  2006/01/21 21:42:32  steve
+ *  When mux has wide select but sparse choices, use 1hot translation.
+ *
  * Revision 1.39.2.17  2006/01/18 06:16:11  steve
  *  Restrict DFF to only one of Sset and Sclr.
  *

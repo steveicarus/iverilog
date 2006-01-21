@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.1 2005/02/19 16:39:31 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.2 2006/01/21 21:42:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -939,6 +939,8 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       obj->delay[0] = net->rise_time();
       obj->delay[1] = net->fall_time();
       obj->delay[2] = net->decay_time();
+
+      logic_attributes(obj,net);
 
       scope_add_logic(scope, obj);
 }
@@ -2180,6 +2182,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.2  2006/01/21 21:42:33  steve
+ *  When mux has wide select but sparse choices, use 1hot translation.
+ *
  * Revision 1.131.2.1  2005/02/19 16:39:31  steve
  *  Spellig fixes.
  *

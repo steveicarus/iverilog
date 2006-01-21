@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.3 2006/01/14 20:13:22 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.4 2006/01/21 21:42:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -844,6 +844,12 @@ static void show_logic(ivl_net_logic_t net)
 		    name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
+
+	  case IVL_LO_EEQ:
+	    fprintf(out, "  EEQ %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net,0)));
+	    break;
+
 	  case IVL_LO_NOT:
 	    fprintf(out, "  not #(%u) %s (%s",
 		    ivl_logic_delay(net, 0),
@@ -1001,6 +1007,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.4  2006/01/21 21:42:33  steve
+ *  When mux has wide select but sparse choices, use 1hot translation.
+ *
  * Revision 1.90.2.3  2006/01/14 20:13:22  steve
  *  Show synchronous set/clr of FF.
  *

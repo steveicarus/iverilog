@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.8 2006/01/18 01:23:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.9 2006/01/21 21:42:31 steve Exp $"
 #endif
 
 /*
@@ -1647,6 +1647,10 @@ class NetCase  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
+    private:
+      bool synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
+			     NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+			     NetNet*esig, unsigned hot_items);
     private:
 
       TYPE type_;
@@ -3398,6 +3402,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.9  2006/01/21 21:42:31  steve
+ *  When mux has wide select but sparse choices, use 1hot translation.
+ *
  * Revision 1.321.2.8  2006/01/18 01:23:24  steve
  *  Rework l-value handling to allow for more l-value type flexibility.
  *
