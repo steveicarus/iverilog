@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.18 2006/01/21 21:42:32 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.19 2006/01/22 00:13:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -562,7 +562,7 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 		  connect(cmp->pin(2), tmp1->pin(idx));
 	    }
 
-	    connect(mux->pin_Sel(item), reduc->pin(0));
+	    connect(mux->pin_Sel(use_item), reduc->pin(0));
 
 	    NetNet*item_sig = new NetNet(scope, scope->local_symbol(),
 					 NetNet::WIRE, nex_map->pin_count());
@@ -1574,6 +1574,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.19  2006/01/22 00:13:59  steve
+ *  Fix pin_Sel overrun.
+ *
  * Revision 1.39.2.18  2006/01/21 21:42:32  steve
  *  When mux has wide select but sparse choices, use 1hot translation.
  *
