@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.1 2005/09/25 23:30:31 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.2 2006/01/27 02:05:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,7 +58,10 @@ void connect(Nexus*l, Link&r)
 void connect(Link&l, Link&r)
 {
       assert(&l != &r);
-      connect(l.nexus_, r);
+      if (r.is_linked() && !l.is_linked())
+	    connect(r.nexus_, l);
+      else
+	    connect(l.nexus_, r);
 }
 
 Link::Link()
@@ -498,6 +501,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.2  2006/01/27 02:05:46  steve
+ *  Speed up processing of connect when one side is empty.
+ *
  * Revision 1.14.2.1  2005/09/25 23:30:31  steve
  *  More predictable ordering of items in NexusSet.
  *
