@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.19 2006/01/22 00:13:59 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.20 2006/01/27 01:58:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -454,6 +454,11 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 				    NetNet::WIRE, nex_map->pin_count());
 	    sig->local_flag(true);
 
+	      /* If this statement is missing, arrange for the default
+		 statement to be processed here. Also, make the sig be
+		 the default sig so that the next time we run into a
+		 reference to the default, we just hook up to the
+		 default again. */
 	    if (statement_map[item] == 0) {
 		  statement_map[item] = default_statement;
 		  default_statement = 0;
@@ -1574,6 +1579,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.20  2006/01/27 01:58:53  steve
+ *  Document how the default statement handling works.
+ *
  * Revision 1.39.2.19  2006/01/22 00:13:59  steve
  *  Fix pin_Sel overrun.
  *
