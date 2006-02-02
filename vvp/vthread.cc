@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.151 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.152 2006/02/02 05:48:45 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -968,7 +968,7 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 bool of_CVT_IR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_int = (long)(r);
+      thr->words[cp->bit_idx[0]].w_int = lround(r);
 
       return true;
 }
@@ -984,7 +984,7 @@ bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
-      long rl = (long)r;
+      long rl = lround(r);
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
 
@@ -3219,6 +3219,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.152  2006/02/02 05:48:45  steve
+ *  real-to-integer conversions round, not truncate.
+ *
  * Revision 1.151  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *
