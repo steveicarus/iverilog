@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.88 2005/09/14 15:01:07 steve Exp $"
+#ident "$Id: lexor.lex,v 1.89 2006/02/02 05:21:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,7 +154,7 @@ W [ \t\b\f\r]+
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
      with "*" and return that. */
-"(*"{W}*")" { return '*'; }
+"("{W}*"*"{W}*")" { return '*'; }
 
 
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
