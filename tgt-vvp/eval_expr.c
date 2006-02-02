@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.129 2006/01/02 05:33:20 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.130 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -99,6 +99,38 @@ unsigned long get_number_immediate(ivl_expr_t ex)
       }
 
       return imm;
+}
+
+/*
+ * This function, in addition to setting the value into index 0, sets
+ * bit 4 to 1 if the value is unknown.
+ */
+void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
+{
+      struct vector_info vec;
+      int word;
+
+      switch (ivl_expr_value(expr)) {
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    vec = draw_eval_expr(expr, 0);
+	    fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
+		    ix, vec.base, vec.wid);
+	    clr_vector(vec);
+	    break;
+
+	  case IVL_VT_REAL:
+	    word = draw_eval_real(expr);
+	    clr_word(word);
+	    fprintf(vvp_out, "    %%cvt/ir %u, %u;\n", ix, word);
+	    break;
+
+	  default:
+	    fprintf(stderr, "XXXX ivl_expr_value == %d\n",
+		    ivl_expr_value(expr));
+	    assert(0);
+      }
 }
 
 /*
@@ -2177,6 +2209,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.130  2006/02/02 02:43:59  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.129  2006/01/02 05:33:20  steve
  *  Node delays can be more general expressions in structural contexts.
  *

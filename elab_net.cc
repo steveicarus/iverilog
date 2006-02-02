@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.177 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.178 2006/02/02 02:43:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1466,11 +1466,15 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 				       Link::strength_t drive0,
 				       Link::strength_t drive1) const
 {
+      assert(msb_ == 0);
+      assert(lsb_ == 0);
+      assert(idx_.size() == 1);
+
 	/* Elaborate the selector. */
       NetNet*sel;
 
       if (sig->msb() < sig->lsb()) {
-	    NetExpr*sel_expr = msb_->elaborate_expr(des, scope);
+	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope);
 	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1480,7 +1484,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel = sel_expr->synthesize(des);
 
       } else if (sig->lsb() != 0) {
-	    NetExpr*sel_expr = msb_->elaborate_expr(des, scope);
+	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope);
 	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1490,7 +1494,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel = sel_expr->synthesize(des);
 
       } else {
-	    sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
+	    sel = idx_[0]->elaborate_net(des, scope, 0, 0, 0, 0);
       }
 
       if (debug_elaborate) {
@@ -1613,8 +1617,12 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	/* Catch the case of a non-constant bit select. That should be
 	   handled elsewhere. */
-      if (msb_ && !lsb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
+      if (! idx_.empty()) {
+	    assert(msb_ == 0);
+	    assert(lsb_ == 0);
+	    assert(idx_.size() == 1);
+
+	    verinum*mval = idx_[0]->eval_const(des, scope);
 	    if (mval == 0) {
 		  return elaborate_net_bitmux_(des, scope, sig, rise,
 					       fall, decay, drive0, drive1);
@@ -1666,12 +1674,16 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 {
       assert(scope);
 
-      if (msb_ == 0) {
+      if (idx_.empty()) {
 	    cerr << get_line() << ": error: memory reference without"
 		  " the required index expression." << endl;
 	    des->errors += 1;
 	    return 0;
       }
+
+      assert(msb_ == 0);
+      assert(lsb_ == 0);
+      assert(idx_.size() == 1);
 
 	/* Even if this expression must be fully self determined, the
 	   index expression does not, so make sure this flag is off
@@ -1679,7 +1691,7 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
       const bool must_be_self_determined_save = must_be_self_determined_flag;
       must_be_self_determined_flag = false;
 
-      NetExpr*adr_expr = elab_and_eval(des, scope, msb_);
+      NetExpr*adr_expr = elab_and_eval(des, scope, idx_[0]);
 
 	/* If an offset is needed, subtract it from the address to get
 	   an expression for the canonical address. */
@@ -1905,8 +1917,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  des->errors += 1;
 	    }
 
-      } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
+      } else if (!idx_.empty()) {
+	    assert(msb_ == 0);
+	    assert(lsb_ == 0);
+	    assert(idx_.size() == 1);
+	    verinum*mval = idx_[0]->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << get_line() << ": index of " << path_ <<
 			" needs to be constant in this context." <<
@@ -2645,6 +2660,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.178  2006/02/02 02:43:57  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.177  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

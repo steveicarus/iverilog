@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.26 2005/09/20 18:34:02 steve Exp $"
+#ident "$Id: schedule.h,v 1.27 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -56,6 +56,7 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 
 extern void schedule_assign_memory_word(vvp_memory_t mem,
 					unsigned word_address,
+					unsigned off,
 					vvp_vector4_t val,
 					vvp_time64_t delay);
 /*
@@ -133,6 +134,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.27  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.26  2005/09/20 18:34:02  steve
  *  Clean up compiler warnings.
  *

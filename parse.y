@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.208 2005/12/05 21:21:18 steve Exp $"
+#ident "$Id: parse.y,v 1.209 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -103,6 +103,8 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
       svector<PExpr*>*exprs;
 
       svector<PEEvent*>*event_expr;
+
+      PEIdent*indexed_identifier;
 
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
@@ -193,11 +195,12 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <gates> gate_instance_list
 
 %type <expr>  expression expr_primary
-%type <expr>  lavalue lpvalue
+%type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt
 %type <exprs> expression_list
 %type <exprs> assign assign_list
+%type <indexed_identifier> indexed_identifier
 
 %type <exprs> range range_opt
 %type <nettype>  net_type var_type net_type_opt
@@ -967,13 +970,6 @@ expr_primary
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		  delete $1;
-		}
 	| SYSTEM_IDENTIFIER
                 { PECallFunction*tmp = new PECallFunction(hname_t($1));
 		  tmp->set_file(@1.text);
@@ -981,13 +977,12 @@ expr_primary
 		  $$ = tmp;
 		  delete $1;
 		}
-	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  tmp->msb_ = $3;
-		  tmp->sel_ = PEIdent::SEL_BIT;
-		  delete $1;
+
+  /* The indexed_identifier rule matches simple identifiers as well as
+     indexed arrays. Part selects are handled below. */
+
+	| indexed_identifier
+		{ PEIdent*tmp = $1;
 		  $$ = tmp;
 		}
 
@@ -996,34 +991,25 @@ expr_primary
      place of the : in the basic part select, and the first expression
      is not limited to constant values. */
 
-	| identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+	| indexed_identifier '[' expression ':' expression ']'
+		{ PEIdent*tmp = $1;
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
 		  tmp->sel_ = PEIdent::SEL_PART;
-		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier '[' expression K_PO_POS expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+	| indexed_identifier '[' expression K_PO_POS expression ']'
+		{ PEIdent*tmp = $1;
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
 		  tmp->sel_ = PEIdent::SEL_IDX_UP;
-		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier '[' expression K_PO_NEG expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+	| indexed_identifier '[' expression K_PO_NEG expression ']'
+		{ PEIdent*tmp = $1;
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
 		  tmp->sel_ = PEIdent::SEL_IDX_DO;
-		  delete $1;
 		  $$ = tmp;
 		}
 
@@ -1074,7 +1060,6 @@ expr_primary
 		  $$ = tmp;
 		}
 	;
-
 
   /* A function_item is either a block item (i.e. a reg or integer
      declaration) or an input declaration. There are no output or
@@ -1260,6 +1245,24 @@ identifier
 		}
 	;
 
+  /* An indexed_identifier is an identifier with a bit-select
+     expression. This bit select may be an array index or bit index,
+     to be sorted out later. */
+indexed_identifier
+	: identifier
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->sel_ = PEIdent::SEL_NONE;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| indexed_identifier '[' expression ']'
+		{ PEIdent*tmp = $1;
+		  tmp->idx_.push_back($3);
+		  $$ = tmp;
+		}
+
   /* This is a list of identifiers. The result is a list of strings,
      each one of the identifiers in the list. These are simple,
      non-hierarchical names separated by ',' characters. */
@@ -1436,80 +1439,33 @@ net_type_opt
 
 signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
 
-  /* An lavalue is the expression that can go on the left side of a
-     continuous assign statement. This checks (where it can) that the
-     expression meets the constraints of continuous assignments. */
-lavalue
-	: identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  PExpr*sel = $3;
-		  if (! pform_expression_is_constant(sel)) {
-			yyerror(@2, "error: Bit select in lvalue must "
-			        "contain a constant expression.");
-			delete sel;
-		  } else {
-			tmp->msb_ = sel;
-		  }
-		  tmp->sel_ = PEIdent::SEL_BIT;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| identifier range
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  assert($2->count() == 2);
-		  tmp->msb_ = (*$2)[0];
-		  tmp->lsb_ = (*$2)[1];
-		  tmp->sel_ = PEIdent::SEL_PART;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-		  delete $2;
-		  $$ = tmp;
-		}
-	| '{' expression_list '}'
-		{ PEConcat*tmp = new PEConcat(*$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $2;
-		  $$ = tmp;
-		}
-	;
-
   /* An lpvalue is the expression that can go on the left side of a
-     procedural assignment. This rule handles only procedural assignments. */
+     procedural assignment. This rule handles only procedural
+     assignments. It is more limited then the general expr_primary
+     rule to reflect the rules for assignment l-values. */
 lpvalue
-	: identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
+	: indexed_identifier
+		{ PEIdent*tmp = $1;
 		  $$ = tmp;
 		}
-	| identifier '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->msb_ = $3;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-
-		  $$ = tmp;
-		}
-	| identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = new PEIdent(*$1);
+	| indexed_identifier '[' expression ':' expression ']'
+		{ PEIdent*tmp = $1;
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
+		  $$ = tmp;
+		}
+	| indexed_identifier '[' expression K_PO_POS expression ']'
+		{ PEIdent*tmp = $1;
+		  tmp->msb_ = $3;
+		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_IDX_UP;
+		  $$ = tmp;
+		}
+	| indexed_identifier '[' expression K_PO_NEG expression ']'
+		{ PEIdent*tmp = $1;
+		  tmp->msb_ = $3;
+		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_IDX_DO;
 		  $$ = tmp;
 		}
 	| '{' expression_list '}'
@@ -1522,7 +1478,7 @@ lpvalue
 	;
 
 assign
-	: lavalue '=' expression
+	: lpvalue '=' expression
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
 		  (*tmp)[0] = $1;
 		  (*tmp)[1] = $3;
@@ -2595,14 +2551,14 @@ statement
      off. This stronger then any other assign, but weaker then the
      force assignments. */
 
-	: K_assign lavalue '=' expression ';'
+	: K_assign lpvalue '=' expression ';'
 		{ PCAssign*tmp = new PCAssign($2, $4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 
-	| K_deassign lavalue ';'
+	| K_deassign lpvalue ';'
 		{ PDeassign*tmp = new PDeassign($2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -2613,13 +2569,13 @@ statement
   /* Force and release statements are similar to assignments,
      syntactically, but they will be elaborated differently. */
 
-	| K_force lavalue '=' expression ';'
+	| K_force lpvalue '=' expression ';'
 		{ PForce*tmp = new PForce($2, $4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_release lavalue ';'
+	| K_release lpvalue ';'
 		{ PRelease*tmp = new PRelease($2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -2843,11 +2799,21 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
+	| error '=' expression ';'
+                { yyerror(@1, "Syntax in assignment statement l-value.");
+		  yyerrok;
+		  $$ = new PNoop;
+		}
 	| lpvalue K_LE expression ';'
 		{ PAssignNB*tmp = new PAssignNB($1,$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
+		}
+	| error K_LE expression ';'
+                { yyerror(@1, "Syntax in assignment statement l-value.");
+		  yyerrok;
+		  $$ = new PNoop;
 		}
 	| lpvalue '=' delay1 expression ';'
 		{ assert($3->count() == 1);

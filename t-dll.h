@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.129 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: t-dll.h,v 1.130 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -379,10 +379,10 @@ enum ivl_lval_type_t {
 };
 
 struct ivl_lval_s {
-      unsigned width_;
-      unsigned loff_;
-      unsigned type_   : 8;
+      ivl_expr_t loff;
       ivl_expr_t idx;
+      unsigned width_;
+      unsigned type_   : 8;
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;
@@ -671,6 +671,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.130  2006/02/02 02:43:59  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.129  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

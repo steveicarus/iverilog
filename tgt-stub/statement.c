@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.8 2005/11/20 15:58:53 steve Exp $"
+#ident "$Id: statement.c,v 1.9 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,11 +32,18 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
       if ( (mem = ivl_lval_mem(lval)) ) {
 
 	    ivl_scope_t scope = ivl_memory_scope(mem);
-	    fprintf(out, "%*s{ %s . %s [\n", ind, "",
+	    fprintf(out, "%*s{ %s.%s width=%u }\n", ind, "",
 		    ivl_scope_name(scope),
-		    ivl_memory_basename(mem));
-	    show_expression(ivl_lval_idx(lval), ind+4);
-	    fprintf(out, "%*s] width=%u }\n", ind, "", ivl_lval_width(lval));
+		    ivl_memory_basename(mem),
+		    ivl_lval_width(lval));
+
+	    fprintf(out, "%*sAddress-0 expression:\n", ind+4, "");
+	    show_expression(ivl_lval_idx(lval), ind+8);
+
+	    if (ivl_lval_part_off(lval)) {
+		  fprintf(out, "%*sPart select base:\n", ind+4, "");
+		  show_expression(ivl_lval_part_off(lval), ind+8);
+	    }
 
 	      /* When the l-value is a memory word, the lval_width
 		 must exactly match the word width. */
@@ -50,16 +57,20 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
       } else {
 	    ivl_signal_t sig = ivl_lval_sig(lval);
 
-	    fprintf(out, "%*s{name=%s width=%u part_off=%u lvwidth=%u}\n",
+	    fprintf(out, "%*s{name=%s width=%u lvwidth=%u}\n",
 		    ind, "",
 		    ivl_signal_name(sig),
 		    ivl_signal_width(sig),
-		    ivl_lval_part_off(lval),
 		    ivl_lval_width(lval));
 	    if (ivl_lval_mux(lval)) {
 		  fprintf(out, "%*sBit select expression:\n", ind+4, "");
 		  show_expression(ivl_lval_mux(lval), ind+8);
 	    }
+	    if (ivl_lval_part_off(lval)) {
+		  fprintf(out, "%*sPart select base:\n", ind+4, "");
+		  show_expression(ivl_lval_part_off(lval), ind+8);
+	    }
+
 	    wid = ivl_lval_width(lval);
       }
 

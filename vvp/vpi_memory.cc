@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.27 2005/06/17 05:13:07 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.28 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -346,7 +346,7 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 	    assert(0);
       }
 
-      memory_set_word(rfp->mem->mem, word_addr, put_val);
+      memory_set_word(rfp->mem->mem, word_addr, 0, put_val);
       return 0;
 }
 
@@ -557,6 +557,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.28  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.27  2005/06/17 05:13:07  steve
  *  Support set of IntVal to memory words.
  *

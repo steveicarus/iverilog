@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.10 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: memory.h,v 1.11 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 #include "vvp_net.h"
@@ -69,6 +69,7 @@ extern void memory_init_word(vvp_memory_t mem,
 			     vvp_vector4_t val);
 extern void memory_set_word(vvp_memory_t mem,
 			    unsigned idx,
+			    unsigned off,
 			    vvp_vector4_t val);
 
 /*
@@ -129,7 +130,8 @@ class vvp_fun_memport  : public vvp_net_fun_t {
     private:
       vvp_memory_t mem_;
 
-      friend void memory_set_word(vvp_memory_t, unsigned, vvp_vector4_t);
+      friend void memory_set_word(vvp_memory_t, unsigned,
+				  unsigned, vvp_vector4_t);
       void check_word_change(unsigned long address);
       class vvp_fun_memport*next_;
 
@@ -152,6 +154,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.11  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.10  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.39 2005/10/12 17:26:17 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.40 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -151,6 +151,13 @@ extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
 extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 
 /*
+ * This evaluates an expression and leaves the result in the numbered
+ * integer index register. It also will set bit-4 to 1 if the value is
+ * not fully defined (i.e. contains x or z).
+ */
+extern void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
+
+/*
  * These functions manage vector allocation in the thread register
  * space. They presume that we work on one thread at a time, to
  * completion.
@@ -245,6 +252,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.40  2006/02/02 02:43:59  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.39  2005/10/12 17:26:17  steve
  *  MUX nodes get inputs from nets, not from net inputs,
  *  Detect and draw alias nodes to reduce net size and

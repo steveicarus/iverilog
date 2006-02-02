@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.76 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: PExpr.h,v 1.77 2006/02/02 02:43:57 steve Exp $"
 #endif
 
 # include  <string>
+# include  <vector>
 # include  "netlist.h"
 # include  "verinum.h"
 # include  "LineInfo.h"
@@ -282,15 +283,16 @@ class PEIdent : public PExpr {
       hname_t path_;
 
     public:
-	// Use these to support bit- and part-select operators.
+	// Use these to support part-select operators.
       PExpr*msb_;
       PExpr*lsb_;
 
-      enum { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO } sel_;
+      enum { SEL_NONE, SEL_PART, SEL_IDX_UP, SEL_IDX_DO } sel_;
 
-	// If this is a reference to a memory, this is the index
-	// expression.
-      PExpr*idx_;
+	// If this is a reference to a memory/array, this is the index
+	// expression. If this is a reference to a vector, this is a
+	// bit select.
+      std::vector<PExpr*> idx_;
 
       NetNet* elaborate_net_ram_(Design*des, NetScope*scope,
 				 NetMemory*mem, unsigned lwidth,
@@ -546,6 +548,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.77  2006/02/02 02:43:57  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.76  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

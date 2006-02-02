@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.27 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: memory.cc,v 1.28 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -185,9 +185,24 @@ void memory_init_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
       mem->words[addr] = val;
 }
 
-void memory_set_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
+void memory_set_word(vvp_memory_t mem, unsigned addr,
+		     unsigned off, vvp_vector4_t val)
 {
-      memory_init_word(mem, addr, val);
+      if (addr >= mem->word_count)
+	    return;
+
+      if (off >= mem->width)
+	    return;
+
+      if (off == 0 && val.size() == mem->width) {
+	    mem->words[addr] = val;
+
+      } else {
+	    if ((off + val.size()) > mem->width)
+		  val = val.subvalue(0, mem->width - off);
+
+	    mem->words[addr].set_vec(off, val);
+      }
 
       for (vvp_fun_memport*cur = mem->port_list
 		 ; cur ;  cur = cur->next_) {
@@ -249,6 +264,9 @@ void vvp_fun_memport::check_word_change(unsigned long addr)
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.28  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.27  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

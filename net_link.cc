@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.18 2005/09/25 23:40:11 steve Exp $"
+#ident "$Id: net_link.cc,v 1.19 2006/02/02 02:43:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,7 +58,10 @@ void connect(Nexus*l, Link&r)
 void connect(Link&l, Link&r)
 {
       assert(&l != &r);
-      connect(l.nexus_, r);
+      if (r.is_linked() && !l.is_linked())
+	    connect(r.nexus_, l);
+      else
+	    connect(l.nexus_, r);
 }
 
 Link::Link()
@@ -522,6 +525,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.19  2006/02/02 02:43:58  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.18  2005/09/25 23:40:11  steve
  *  Simplify NexusSet set handling.
  *

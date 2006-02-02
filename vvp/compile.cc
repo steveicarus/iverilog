@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.216 2006/01/02 05:32:06 steve Exp $"
+#ident "$Id: compile.cc,v 1.217 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -87,7 +87,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },
@@ -1511,6 +1510,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.217  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.216  2006/01/02 05:32:06  steve
  *  Require explicit delay node from source.
  *

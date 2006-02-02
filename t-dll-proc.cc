@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.67 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.68 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,9 +154,18 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
+	    const NetExpr*loff = asn->get_base();
+
+	    if (loff == 0) {
+		  cur->loff = 0;
+	    } else {
+		  loff->expr_scan(this);
+		  cur->loff = expr_;
+		  expr_ = 0;
+	    }
 
 	    cur->width_ = asn->lwidth();
-	    cur->loff_  = asn->get_loff();
+
 	    if (asn->sig()) {
 		  cur->type_ = IVL_LVAL_REG;
 		  cur->n.sig = find_signal(des_, asn->sig());
@@ -732,6 +741,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.68  2006/02/02 02:43:59  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.67  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

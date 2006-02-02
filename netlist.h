@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.354 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.355 2006/02/02 02:43:58 steve Exp $"
 #endif
 
 /*
@@ -791,7 +791,11 @@ class NetMemory  {
 	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
 
-      // NetScope*scope();
+	// This is the number of dimensions for the memory. A baseline
+	// verilog memory has always 1 dimension, but N-dimensional
+	// arrays have N.
+      unsigned dimensions() const { return 1; }
+
       const NetScope*scope() const { return scope_; };
 
 	// This is the number of memory positions.
@@ -1644,10 +1648,12 @@ class NetAssign_ {
       NetExpr*bmux();
       const NetExpr*bmux() const;
 
-      unsigned get_loff() const;
+	// Get the base index of the part select, or 0 if there is no
+	// part select.
+      const NetExpr* get_base() const;
 
       void set_bmux(NetExpr*);
-      void set_part(unsigned loff, unsigned wid);
+      void set_part(NetExpr* loff, unsigned wid);
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it not
@@ -1679,10 +1685,12 @@ class NetAssign_ {
     private:
       NetNet *sig_;
       NetMemory*mem_;
+	// Memory word index
       NetExpr*bmux_;
 
       bool turn_sig_to_wire_on_release_;
-      unsigned loff_;
+	// indexed part select base
+      NetExpr*base_;
       unsigned lwid_;
 };
 
@@ -3451,6 +3459,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.355  2006/02/02 02:43:58  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.354  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

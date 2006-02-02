@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.150 2005/11/26 17:16:05 steve Exp $"
+#ident "$Id: vthread.cc,v 1.151 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -606,17 +606,6 @@ bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      schedule_memory(cp->mem, thr->words[3].w_int, bit_val, cp->bit_idx[0]);
-#else
-      fprintf(stderr, "XXXX %%assign/m is obsolete.\n");
-#endif
-      return true;
-}
-
 /* %assign/mv <memory>, <delay>, <bit>
  * This generates an assignment event to a memory. Index register 0
  * contains the width of the vector (and the word) and index register
@@ -625,6 +614,7 @@ bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
+      unsigned off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
 
       assert(wid > 0);
@@ -634,7 +624,7 @@ bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
-      schedule_assign_memory_word(cp->mem, adr, value, delay);
+      schedule_assign_memory_word(cp->mem, adr, off, value, delay);
       return true;
 }
 
@@ -2789,12 +2779,13 @@ bool of_SET_MV(vthread_t thr, vvp_code_t cp)
 {
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
+      unsigned off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
 
 	/* Make a vector of the desired width. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
-      memory_set_word(cp->mem, adr, value);
+      memory_set_word(cp->mem, adr, off, value);
       return true;
 }
 
@@ -3228,6 +3219,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.151  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.150  2005/11/26 17:16:05  steve
  *  Force instruction that can be indexed.
  *

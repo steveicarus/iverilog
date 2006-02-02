@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.164 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.165 2006/02/02 02:43:58 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -323,11 +323,11 @@ typedef enum ivl_statement_type_e {
 /* This is the type of a variable, and also used as the type for an
    expression. */
 typedef enum ivl_variable_type_e {
-      IVL_VT_VOID = 0,  /* Not used */
-      IVL_VT_NO_TYPE,  /* Place holder for missing/unknown type. */
-      IVL_VT_REAL,
-      IVL_VT_BOOL,
-      IVL_VT_LOGIC,
+      IVL_VT_VOID    = 0,  /* Not used */
+      IVL_VT_NO_TYPE = 1,  /* Place holder for missing/unknown type. */
+      IVL_VT_REAL    = 2,
+      IVL_VT_BOOL    = 3,
+      IVL_VT_LOGIC   = 4,
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
@@ -1078,6 +1078,8 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    returns an ivl_expr_t that represents that
  *    expression.  Otherwise, it returns 0.
  *
+ *    (Should this be combined with ivl_lval_idx? -Ed)
+ *
  * ivl_lval_mem
  *    If the l-value is a memory, this method returns an
  *    ivl_memory_t that represents that memory. Otherwise, it
@@ -1089,7 +1091,9 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *
  * ivl_lval_part_off
  *    The part select of the signal is based here. This is the
- *    canonical index of bit-0 of the part select.
+ *    canonical index of bit-0 of the part select. The return value is
+ *    an ivl_expr_t. If the return value is nil, then take the offset
+ *    as zero. Otherwise, evaluate the expression to get the offset.
  *
  * ivl_lval_idx
  *    If the l-value is a memory, this method returns an
@@ -1120,7 +1124,7 @@ extern unsigned    ivl_lval_width(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
-extern unsigned    ivl_lval_part_off(ivl_lval_t net);
+extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 
@@ -1703,6 +1707,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.165  2006/02/02 02:43:58  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.164  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

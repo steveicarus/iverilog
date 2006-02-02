@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.20 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.21 2006/02/02 02:43:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,18 +39,16 @@ unsigned count_lval_width(const NetAssign_*idx)
 }
 
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), mem_(0), bmux_(0)
+: sig_(s), mem_(0), bmux_(0), base_(0)
 {
-      loff_ = 0;
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
       more = 0;
 }
 
 NetAssign_::NetAssign_(NetMemory*s)
-: sig_(0), mem_(s), bmux_(0)
+: sig_(0), mem_(s), bmux_(0), base_(0)
 {
-      loff_ = 0;
       lwid_ = mem_->width();
       more = 0;
 }
@@ -83,6 +81,11 @@ const NetExpr* NetAssign_::bmux() const
       return bmux_;
 }
 
+const NetExpr* NetAssign_::get_base() const
+{
+      return base_;
+}
+
 unsigned NetAssign_::lwidth() const
 {
       if (mem_)  return lwid_;
@@ -111,21 +114,10 @@ NetMemory* NetAssign_::mem() const
       return mem_;
 }
 
-void NetAssign_::set_part(unsigned lo, unsigned lw)
+void NetAssign_::set_part(NetExpr*base, unsigned wid)
 {
-      loff_ = lo;
-      lwid_ = lw;
-      if (sig_) {
-	    assert(sig_->vector_width() >= (lo + lw));
-      } else {
-	    assert(mem_);
-	    assert(lwid_ == mem_->width());
-      }
-}
-
-unsigned NetAssign_::get_loff() const
-{
-      return loff_;
+      base_ = base;
+      lwid_ = wid;
 }
 
 /*
@@ -283,6 +275,9 @@ NetRelease::~NetRelease()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.21  2006/02/02 02:43:58  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.20  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

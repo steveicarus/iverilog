@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.22 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.23 2006/02/02 02:43:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,17 +154,20 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       res->set_line(*this);
       assert(res);
 
-      assert(idx_ == 0);
       if (msb_ && lsb_) {
+	    assert(idx_.empty());
 	    cerr << get_line() << ": sorry: Cannot part select "
 		  "bits of parameters." << endl;
 	    des->errors += 1;
 
-      } else if (msb_) {
+      } else if (!idx_.empty()) {
+	    assert(msb_==0);
+	    assert(lsb_==0);
+	    assert(idx_.size() == 1);
 
 	      /* We have here a bit select. Insert a NetESelect node
 		 to handle it. */
-	    NetExpr*tmp = msb_->elaborate_pexpr(des, scope);
+	    NetExpr*tmp = idx_[0]->elaborate_pexpr(des, scope);
 	    if (tmp != 0) {
 		  res = new NetESelect(res, tmp, 1);
 	    }
@@ -233,6 +236,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.23  2006/02/02 02:43:58  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.22  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

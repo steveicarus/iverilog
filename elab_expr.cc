@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.101 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.102 2006/02/02 02:43:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -515,7 +515,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
       if (mem != 0) {
-	    if (msb_ == 0) {
+
+	    if (idx_.empty()) {
+
+		  if (msb_ || lsb_) {
+			cerr << get_line() << ": error: "
+			     << "Part select of a memory: "
+			     << mem->name() << endl;
+			des->errors += 1;
+		  }
 
 		    // If this memory is an argument to a system task,
 		    // then it is OK for it to not have an index.
@@ -533,27 +541,92 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
-	    assert(msb_ != 0);
-	    if (lsb_) {
-		  cerr << get_line() << ": error: part select of a memory: "
-		       << mem->name() << endl;
+	    if (idx_.size() != mem->dimensions()) {
+		  cerr << get_line() << ": error: " << idx_.size()
+		       << " indices do not properly address a "
+		       << mem->dimensions() << "-dimension memory/array."
+		       << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    assert(lsb_ == 0);
-	    assert(idx_ == 0);
-	    NetExpr*i = msb_->elaborate_expr(des, scope);
-	    if (msb_ && i == 0) {
+	      // XXXX For now, only support single word index.
+	    assert(idx_.size() == 1);
+	    PExpr*addr = idx_[0];
+	    assert(addr);
+
+	    NetExpr*i = addr->elaborate_expr(des, scope);
+	    if (i == 0) {
 		  cerr << get_line() << ": error: Unable to elaborate "
-			"index expression `" << *msb_ << "'" << endl;
+			"index expression `" << *addr << "'" << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
 	    NetEMemory*node = new NetEMemory(mem, i);
 	    node->set_line(*this);
-	    return node;
+
+	    if (msb_ == 0 && lsb_ == 0)
+		  return node;
+
+	    assert(msb_ && lsb_);
+
+	    assert(sel_ != SEL_NONE);
+
+	    if (sel_ == SEL_PART) {
+
+		  NetExpr*le = elab_and_eval(des, scope, lsb_);
+		  NetExpr*me = elab_and_eval(des, scope, msb_);
+
+		  NetEConst*lec = dynamic_cast<NetEConst*>(le);
+		  NetEConst*mec = dynamic_cast<NetEConst*>(me);
+
+		  if (lec == 0 || mec == 0) {
+			cerr << get_line() << ": error: Part select "
+			     << "expressions must be constant." << endl;
+			des->errors += 1;
+			delete le;
+			delete me;
+			return node;
+		  }
+
+		  verinum wedv = mec->value() - lec->value();
+		  unsigned wid = wedv.as_long() + 1;
+
+		  NetESelect*se = new NetESelect(node, le, wid);
+
+		  delete me;
+		  return se;
+	    }
+
+	    assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
+
+	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
+	    if (wid_ec == 0) {
+		  cerr << lsb_->get_line() << ": error: "
+		       << "Second expression of indexed part select "
+		       << "most be constant." << endl;
+		  des->errors += 1;
+		  return node;
+	    }
+
+	    unsigned wid = wid_ec->value().as_ulong();
+
+	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_);
+	    if (idx_ex == 0) {
+		  return 0;
+	    }
+
+	    if (sel_ == SEL_IDX_DO && wid > 1) {
+		  idx_ex = make_add_expr(idx_ex, 1-(long)wid);
+	    }
+
+
+	      /* Wrap the param expression with a part select. */
+	    NetESelect*se = new NetESelect(node, idx_ex, wid);
+	    se->set_line(*this);
+	    return se;
       }
 
 	// If the identifier is a named event.
@@ -613,6 +686,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 
       if (sel_ == SEL_PART) {
 	    assert(msb_ && lsb_);
+	    assert(idx_.empty());
 
 	      /* If the identifier has a part select, we support
 		 it by pulling the right bits out and making a
@@ -681,6 +755,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
       } else if (sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO) {
 	    assert(msb_);
 	    assert(lsb_);
+	    assert(idx_.empty());
 
 	      /* Get and evaluate the width of the index
 		 select. This must be constant. */
@@ -710,14 +785,16 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    tmp = new NetESelect(tmp, idx_ex, wid);
 
 
-      } else if (sel_ == SEL_BIT) {
-	    assert(msb_);
+      } else if (!idx_.empty()) {
+	    assert(!msb_);
 	    assert(!lsb_);
+	    assert(idx_.size() == 1);
+	    assert(sel_ == SEL_NONE);
 
 	      /* Handle the case where a parameter has a bit
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
-	    NetExpr*mtmp = msb_->elaborate_expr(des, scope);
+	    NetExpr*mtmp = idx_[0]->elaborate_expr(des, scope);
 	    if (! dynamic_cast<NetEConst*>(mtmp)) {
 		  NetExpr*re = mtmp->eval_tree();
 		  if (re) {
@@ -815,7 +892,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
-      assert(idx_ == 0);
+      assert(idx_.empty());
 
       verinum*lsn = lsb_->eval_const(des, scope);
       verinum*msn = msb_->eval_const(des, scope);
@@ -891,7 +968,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
-      assert(idx_ == 0);
+      assert(idx_.empty());
 
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
@@ -944,7 +1021,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
-      assert(idx_ == 0);
+      assert(idx_.empty());
 
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
@@ -993,14 +1070,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 					  NetNet*net, NetScope*found_in) const
 {
-      assert(msb_ != 0);
+      assert(msb_ == 0);
       assert(lsb_ == 0);
-      assert(idx_ == 0);
+      assert(idx_.size() == 1);
 
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
-      if (verinum*msn = msb_->eval_const(des, scope)) {
+      if (verinum*msn = idx_[0]->eval_const(des, scope)) {
 	    long msv = msn->as_long();
 	    unsigned idx = net->sb_to_idx(msv);
 
@@ -1047,7 +1124,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      NetExpr*ex = msb_->elaborate_expr(des, scope);
+      NetExpr*ex = idx_[0]->elaborate_expr(des, scope);
 
       if (net->msb() < net->lsb()) {
 	    ex = make_sub_expr(net->lsb(), ex);
@@ -1070,14 +1147,14 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (sel_ == SEL_PART)
 	    return elaborate_expr_net_part_(des, scope, net, found_in);
 
-      if (sel_ == SEL_BIT)
-	    return elaborate_expr_net_bit_(des, scope, net, found_in);
-
       if (sel_ == SEL_IDX_UP)
 	    return elaborate_expr_net_idx_up_(des, scope, net, found_in);
 
       if (sel_ == SEL_IDX_DO)
 	    return elaborate_expr_net_idx_do_(des, scope, net, found_in);
+
+      if (!idx_.empty())
+	    return elaborate_expr_net_bit_(des, scope, net, found_in);
 
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal
@@ -1085,7 +1162,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       assert(sel_ == SEL_NONE);
       assert(msb_ == 0);
       assert(lsb_ == 0);
-      assert(idx_ == 0);
+      assert(idx_.empty());
 
       NetESignal*node = new NetESignal(net);
       node->set_line(*this);
@@ -1268,6 +1345,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.102  2006/02/02 02:43:57  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.101  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.121 2005/11/26 17:23:17 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.122 2006/02/02 02:43:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -29,7 +29,6 @@
 # include  <stdlib.h>
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
-static void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix);
 
 unsigned local_count = 0;
 unsigned thread_count = 0;
@@ -76,7 +75,15 @@ static void set_to_lvariable(ivl_lval_t lval,
 			     unsigned bit, unsigned wid)
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
-      unsigned part_off = ivl_lval_part_off(lval);
+      ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+      unsigned part_off;
+
+      if (part_off_ex == 0) {
+	    part_off = 0;
+      } else {
+	    assert(number_is_immediate(part_off_ex, 64));
+	    part_off = get_number_immediate(part_off_ex);
+      }
 
       if (ivl_lval_mux(lval)) {
 	    unsigned skip_set = transient_id++;
@@ -117,10 +124,26 @@ static void set_to_lvariable(ivl_lval_t lval,
  * the memory, and bit is the base of the thread vector. The wid is
  * the width of the vector to be written to the word.
  */
-static void set_to_memory_word(ivl_memory_t mem, unsigned idx,
+static void set_to_memory_word(ivl_lval_t lval, unsigned idx,
 			       unsigned bit, unsigned wid)
 {
+      unsigned skip_set = transient_id++;
+      ivl_memory_t mem = ivl_lval_mem(lval);
+
+	/* Calculate the word part select into index-1 */
+      if (ivl_lval_part_off(lval)) {
+	    draw_eval_expr_into_integer(ivl_lval_part_off(lval), 1);
+	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+      } else {
+	    fprintf(vvp_out, "   %%ix/load 1, 0;\n");
+      }
+
+	/* Calculate the memory address into index-3 */
+      draw_memory_index_expr(mem, ivl_lval_idx(lval));
+      fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+
       fprintf(vvp_out, "   %%set/mv M_%p, %u, %u;\n", mem, bit, wid);
+      fprintf(vvp_out, "t_%u ;\n", skip_set);
 }
 
 static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
@@ -128,8 +151,16 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 			      unsigned width)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
-      unsigned part_off = ivl_lval_part_off(lval);
+      ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
       ivl_expr_t mux = ivl_lval_mux(lval);
+      unsigned part_off;
+
+      if (part_off_ex == 0) {
+	    part_off = 0;
+      } else {
+	    assert(number_is_immediate(part_off_ex, 64));
+	    part_off = get_number_immediate(part_off_ex);
+      }
 
       if (mux != 0) {
 	    unsigned skip_assign = transient_id++;
@@ -166,42 +197,31 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       }
 }
 
-static void assign_to_memory_word(ivl_memory_t mem, unsigned bit,
+static void assign_to_memory_word(ivl_lval_t lval, unsigned bit,
 				  unsigned delay, unsigned wid)
 {
-      assert(wid = ivl_memory_width(mem));
+      unsigned skip_set = transient_id++;
+      ivl_memory_t mem = ivl_lval_mem(lval);
+	//assert(wid == ivl_memory_width(mem));
 
+	/* Calculate the word part select into index-1 */
+      if (ivl_lval_part_off(lval)) {
+	    draw_eval_expr_into_integer(ivl_lval_part_off(lval), 1);
+	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+      } else {
+	    fprintf(vvp_out, "   %%ix/load 1, 0;\n");
+      }
+
+	/* Calculate the memory address into index-3 */
+      draw_memory_index_expr(mem, ivl_lval_idx(lval));
+      fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+
+	/* Load the word/part-select width into index-0 */
       fprintf(vvp_out, "   %%ix/load 0, %u;\n", wid);
       fprintf(vvp_out, "   %%assign/mv M_%p, %u, %u;\n", mem, delay, bit);
-}
+      fprintf(vvp_out, "t_%u ;\n", skip_set);
 
-/*
- * This function, in addition to setting the value into index 0, sets
- * bit 4 to 1 if the value is unknown.
- */
-static void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
-{
-      struct vector_info vec;
-      int word;
-
-      switch (ivl_expr_value(expr)) {
-
-	  case IVL_VT_VECTOR:
-	    vec = draw_eval_expr(expr, 0);
-	    fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
-		    ix, vec.base, vec.wid);
-	    clr_vector(vec);
-	    break;
-
-	  case IVL_VT_REAL:
-	    word = draw_eval_real(expr);
-	    clr_word(word);
-	    fprintf(vvp_out, "    %%cvt/ir %u, %u;\n", ix, word);
-	    break;
-
-	  default:
-	    assert(0);
-      }
+      clear_expression_lookaside();
 }
 
 static void calculate_into_x1(ivl_expr_t expr)
@@ -225,23 +245,12 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
       unsigned cur_rbit = 0;
 
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
-	    unsigned skip_set = transient_id++;
-	    unsigned skip_set_flag = 0;
 	    unsigned bidx;
 	    unsigned bit_limit = wid - cur_rbit;
+
 	    lval = ivl_stmt_lval(net, lidx);
 
-
 	    mem = ivl_lval_mem(lval);
-	    if (mem) {
-		    /* If a memory, then the idx expression is the
-		       memory index, and the ivl_lval_mux should be
-		       absent. */
-		  assert(! ivl_lval_mux(lval));
-		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		  skip_set_flag = 1;
-	    }
 
 	      /* Reduce bit_limit to the width of this l-value. */
 	    if (bit_limit > ivl_lval_width(lval))
@@ -252,7 +261,7 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 	    bidx = res.base < 4? res.base : (res.base+cur_rbit);
 
 	    if (mem) {
-		  set_to_memory_word(mem, 3, bidx, bit_limit);
+		  set_to_memory_word(lval, 3, bidx, bit_limit);
 
 	    } else {
 		  set_to_lvariable(lval, bidx, bit_limit);
@@ -261,11 +270,6 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 	      /* Now we've consumed this many r-value bits for the
 		 current l-value. */
 	    cur_rbit += bit_limit;
-
-	    if (skip_set_flag) {
-		  fprintf(vvp_out, "t_%u ;\n", skip_set);
-		  clear_expression_lookaside();
-	    }
       }
 }
 
@@ -440,17 +444,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      calculate_into_x1(del);
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
-	      unsigned skip_set = transient_id++;
-	      unsigned skip_set_flag = 0;
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
 	      mem = ivl_lval_mem(lval);
-	      if (mem) {
-		    draw_memory_index_expr(mem, ivl_lval_idx(lval));
-		    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		    skip_set_flag = 1;
-	      }
 
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
@@ -464,21 +461,16 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      } else {
 		    unsigned bidx;
 
-		    assert(mem);
-		      /* XXXX don't yet know what to do with a delay
-			 in an index variable. */
+		      /* XXXX don't yet know what to do with a
+			 non-constant delay exprssion. */
 		    assert(del == 0);
 
 		    bidx = res.base < 4? res.base : (res.base+cur_rbit);
-		    assign_to_memory_word(mem, bidx, delay, bit_limit);
+		    assign_to_memory_word(lval, bidx, delay, bit_limit);
 	      }
 
 	      cur_rbit += bit_limit;
 
-	      if (skip_set_flag) {
-		    fprintf(vvp_out, "t_%u ;\n", skip_set);
-		    clear_expression_lookaside();
-	      }
 	}
 
 	if (res.base > 3)
@@ -747,7 +739,15 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
 
 	    unsigned use_wid = ivl_lval_width(lval);
-	    unsigned part_off = ivl_lval_part_off(lval);
+	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+	    unsigned part_off;
+
+	    if (part_off_ex == 0) {
+		  part_off = 0;
+	    } else {
+		  assert(number_is_immediate(part_off_ex, 64));
+		  part_off = get_number_immediate(part_off_ex);
+	    }
 
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
@@ -1479,6 +1479,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.122  2006/02/02 02:43:59  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.121  2005/11/26 17:23:17  steve
  *  Handle indexed l-value to force.
  *

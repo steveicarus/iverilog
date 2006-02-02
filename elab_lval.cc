@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.32 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.33 2006/02/02 02:43:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -195,7 +195,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       long msb, lsb;
       NetExpr*mux;
 
-      if (msb_ && lsb_) {
+      if (msb_ || lsb_) {
+	    assert(msb_ && lsb_);
+
 	      /* This handles part selects. In this case, there are
 		 two bit select expressions, and both must be
 		 constant. Evaluate them and pass the results back to
@@ -225,17 +227,19 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    lsb = vl->as_long();
 	    mux = 0;
 
-      } else if (msb_) {
+      } else if (! idx_.empty()) {
 
 	      /* If there is only a single select expression, it is a
 		 bit select. Evaluate the constant value and treat it
 		 as a part select with a bit width of 1. If the
 		 expression it not constant, then return the
 		 expression as a mux. */
+	    assert(msb_ == 0);
 	    assert(lsb_ == 0);
-	    verinum*v = msb_->eval_const(des, scope);
+	    assert(idx_.size() == 1);
+	    verinum*v = idx_[0]->eval_const(des, scope);
 	    if (v == 0) {
-		  NetExpr*m = msb_->elaborate_expr(des, scope);
+		  NetExpr*m = idx_[0]->elaborate_expr(des, scope);
 		  assert(m);
 		  msb = 0;
 		  lsb = 0;
@@ -271,6 +275,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	    lv->set_bmux(mux);
 
+      } else if (msb == reg->msb() && lsb == reg->lsb()) {
+
+	      /* No bit select, and part select covers the entire
+		 vector. Simplest case. */
+	    lv = new NetAssign_(reg);
+
       } else {
 
 	      /* If the bit/part select is constant, then make the
@@ -302,7 +312,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    }
 
 	    lv = new NetAssign_(reg);
-	    lv->set_part(loff, wid);
+	    lv->set_part(new NetEConst(verinum(loff)), wid);
       }
 
 
@@ -312,7 +322,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 					NetMemory*mem) const
 {
-      if (msb_ == 0) {
+      if (idx_.empty()) {
 	    cerr << get_line() << ": error: Assign to memory \""
 		 << mem->name() << "\" requires a word select index."
 		 << endl;
@@ -320,33 +330,82 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (msb_ && lsb_) {
-	    cerr << get_line() << ": error: Cannot use part select on "
-		 << "memory \"" << mem->name() << ".\"" << endl;
+      if (idx_.size() != mem->dimensions()) {
+	    cerr << get_line() << ": error: " << idx_.size()
+		 << " indices do not properly address a "
+		 << mem->dimensions() << "-dimension memory/array."
+		 << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      assert(msb_ && !lsb_);
+	// XXXX For now, require exactly 1 index.
+      assert(idx_.size() == 1);
 
-      NetExpr*ix = msb_->elaborate_expr(des, scope);
+	/* Elaborate the address expression. */
+      NetExpr*ix = elab_and_eval(des, scope, idx_[0]);
       if (ix == 0)
 	    return 0;
 
-	/* Evaluate the memory index expression down as must as
-	   possible. Ideally, we can get it down to a constant. */
-      if (! dynamic_cast<NetEConst*>(ix)) {
-	    NetExpr*tmp = ix->eval_tree();
-	    if (tmp) {
-		  tmp->set_line(*ix);
-		  delete ix;
-		  ix = tmp;
-	    }
-      }
-
       NetAssign_*lv = new NetAssign_(mem);
       lv->set_bmux(ix);
-      lv->set_part(0, mem->width());
+
+	/* If there is no extra part select, then we are done. */
+      if (msb_ == 0 && lsb_ == 0) {
+	    lv->set_part(0U, mem->width());
+	    return lv;
+      }
+
+      assert(sel_ != SEL_NONE);
+      assert(msb_ && lsb_);
+
+      if (sel_ == SEL_PART) {
+	    NetExpr*le = elab_and_eval(des, scope, lsb_);
+	    NetExpr*me = elab_and_eval(des, scope, msb_);
+
+	    NetEConst*lec = dynamic_cast<NetEConst*>(le);
+	    NetEConst*mec = dynamic_cast<NetEConst*>(me);
+
+	    if (lec == 0 || mec == 0) {
+		  cerr << get_line() << ": error: Part select "
+		       << "expressions must be constant." << endl;
+		  des->errors += 1;
+		  delete le;
+		  delete me;
+		  return lv;
+	    }
+
+	    verinum wedv = mec->value() - lec->value();
+	    unsigned wid = wedv.as_long() + 1;
+
+	    lv->set_part(lec, wid);
+	    return lv;
+      }
+
+      assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
+
+      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+      NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
+      if (wid_ec == 0) {
+	    cerr << lsb_->get_line() << ": error: "
+		 << "Second expression of indexed part select "
+		 << "most be constant." << endl;
+	    des->errors += 1;
+	    return lv;
+      }
+
+      unsigned wid = wid_ec->value().as_ulong();
+
+      NetExpr*base_ex = elab_and_eval(des, scope, msb_);
+      if (base_ex == 0) {
+	    return 0;
+      }
+
+      if (sel_ == SEL_IDX_DO && wid > 1) {
+	    base_ex = make_add_expr(base_ex, 1-(long)wid);
+      }
+
+      lv->set_part(base_ex, wid);
       return lv;
 }
 
@@ -360,6 +419,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.33  2006/02/02 02:43:57  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.32  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

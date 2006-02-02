@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.40 2005/09/20 18:34:02 steve Exp $"
+#ident "$Id: schedule.cc,v 1.41 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -136,13 +136,14 @@ struct assign_memory_word_s  : public event_s {
       vvp_memory_t mem;
       unsigned adr;
       vvp_vector4_t val;
+      unsigned off;
       void run_run(void);
 };
 
 void assign_memory_word_s::run_run(void)
 {
       count_assign_events += 1;
-      memory_set_word(mem, adr, val);
+      memory_set_word(mem, adr, off, val);
 }
 
 struct generic_event_s : public event_s {
@@ -463,12 +464,14 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 
 void schedule_assign_memory_word(vvp_memory_t mem,
 				 unsigned word_addr,
+				 unsigned off,
 				 vvp_vector4_t val,
 				 vvp_time64_t delay)
 {
       struct assign_memory_word_s*cur = new struct assign_memory_word_s;
       cur->mem = mem;
       cur->adr = word_addr;
+      cur->off = off;
       cur->val = val;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
@@ -605,6 +608,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.41  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.40  2005/09/20 18:34:02  steve
  *  Clean up compiler warnings.
  *

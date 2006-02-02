@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.77 2005/11/26 17:16:05 steve Exp $"
+#ident "$Id: codes.h,v 1.78 2006/02/02 02:44:00 steve Exp $"
 #endif
 
 
@@ -41,7 +41,6 @@ extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
-extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t code);
@@ -179,6 +178,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.78  2006/02/02 02:44:00  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.77  2005/11/26 17:16:05  steve
  *  Force instruction that can be indexed.
  *

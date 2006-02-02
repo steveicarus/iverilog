@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.69 2005/11/26 17:16:05 steve Exp $
+ *  $Id: opcodes.txt,v 1.70 2006/02/02 02:44:00 steve Exp $
  */
 
 
@@ -57,13 +57,6 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
-* %assign/m <memory-label>, <delay>, <bit> (OBSOLETE)
-
-This instruction does a non-blocking assignment to a bit in a memory
-from the specified thread register <bit>.  The memory bit is addressed
-by index register 3.  Bit address zero is the LSB of the first memory
-word.
-
 * %assign/mv <memory-label>, <delay>, <bit>
 
 the %assign/mv instruction assigns a vector value to a word in the
@@ -72,6 +65,8 @@ assignment (0 for non-blocking assignment) and the <bit> is the base
 of the vector to write.
 
 The width of the word is retrieved from index register 0.
+
+The base of a part select is retrieved from index register 1.
 
 The address of the word in the memory is from index register 3. The
 address is canonical form.
@@ -540,8 +535,12 @@ signal.
 This sets a thread vector to a memory word. The <memory-label>
 addresses a memory device, and the <bit>,<wid> describe a vector to be
 written. Index register 3 contains the address of the word within the
-memory. The address (in canonical form) is precalculated and loaded
-into index register 3.
+memory.
+
+The base of a part select is retrieved from index register 1.
+
+The address (in canonical form) is precalculated and loaded into index
+register 3.
 
 
 * %set/wr <vpi-label>, <bit>

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.163 2005/08/27 04:32:08 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.164 2006/02/02 02:43:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -537,8 +537,8 @@ void NetAssign_::dump_lval(ostream&o) const
 	    if (bmux_) {
 		  o << "[" << *bmux_ << "]";
 
-	    } else {
-		  o << "[" << (loff_+lwid_-1) << ":" << loff_ << "]";
+	    } else if (base_) {
+		  o << "[" << *base_ << " +: " << lwid_ << "]";
 	    }
       } else if (mem_) {
 	    // Is there an obvious way to flag memories in the dump
@@ -548,6 +548,10 @@ void NetAssign_::dump_lval(ostream&o) const
 	    if (bmux_) o << *bmux_;
 	      else     o << "**oops**";
 	    o << "]";
+
+	    if (base_) {
+		  o << "[" << *base_ << " +: " << lwid_ << "]";
+	    }
       } else {
 	    o << "";
       }
@@ -1166,6 +1170,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.164  2006/02/02 02:43:57  steve
+ *  Allow part selects of memory words in l-values.
+ *
  * Revision 1.163  2005/08/27 04:32:08  steve
  *  Handle synthesis of fully packed case statements.
  *
