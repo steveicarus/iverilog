@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.2 2005/07/27 14:48:34 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.3 2006/02/07 22:45:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -287,7 +287,7 @@ attribute
 		}
 	| IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
+		  if (tmp && !pform_expression_is_constant(tmp)) {
 			yyerror(@3, "error: attribute value "
 			            "expression must be constant.");
 			delete tmp;
@@ -981,6 +981,14 @@ expr_primary
 		{ PEConcat*tmp = new PEConcat(*$2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
+		  for (unsigned idx = 0 ;  idx < (*$2).count() ;  idx += 1) {
+			PExpr*ex = (*$2)[idx];
+			if (ex == 0) {
+			      yyerror(@1, "error: Null arguments not allowed"
+				      " in repeat expressions.");
+			      break;
+			}
+		  }
 		  delete $2;
 		  $$ = tmp;
 		}
