@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.35 2004/10/04 01:10:51 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.35.2.1 2006/02/07 22:46:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,6 +90,8 @@ bool PEConcat::is_constant(Module *mod) const
 {
       bool constant = repeat_? repeat_->is_constant(mod) : true;
       for (unsigned i = 0; constant && i < parms_.count(); ++i) {
+	    if (parms_[i] == 0)
+		  continue;
 	    constant = constant && parms_[i]->is_constant(mod);
       }
       return constant;
@@ -262,6 +264,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.35.2.1  2006/02/07 22:46:23  steve
+ *  More robust test for concat constant-ness.
+ *
  * Revision 1.35  2004/10/04 01:10:51  steve
  *  Clean up spurious trailing white space.
  *
