@@ -142,6 +142,6 @@ AC_SUBST(vpidir2)
 AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
 # XXX disable tgt-fpga for the moment
-AC_CONFIG_SUBDIRS(vvp vpi tgt-vvp libveriuser cadpli)
+AC_CONFIG_SUBDIRS(vvp vpi tgt-stub tgt-null tgt-vvp libveriuser cadpli)
 
-AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
+AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
