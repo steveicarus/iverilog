@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.43 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: lexor.lex,v 1.43.2.1 2006/02/19 00:11:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -95,6 +95,8 @@
 ".cmp/ge.s" { return K_CMP_GE_S; }
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
+".decode/adr" { return K_DECODE_ADR; }
+".decode/en" { return K_DECODE_EN; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".functor"  { return K_FUNCTOR; }
@@ -182,6 +184,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.43.2.1  2006/02/19 00:11:36  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.43  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *

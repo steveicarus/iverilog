@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115.2.1 2006/02/19 00:11:34 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -76,6 +76,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_add_sub(const NetAddSub*);
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
+      bool lpm_decode(const NetDecode*);
       void lpm_divide(const NetDivide*);
       void lpm_ff(const NetFF*);
       void lpm_modulo(const NetModulo*);
@@ -161,6 +162,8 @@ struct dll_target  : public target_t, public expr_scan_t {
 					      const char*name);
 
       void add_root(ivl_design_s &des_, const NetScope *s);
+
+      ivl_lpm_t lpm_decode_ff_(const NetDecode*);
 
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
@@ -312,7 +315,10 @@ struct ivl_lpm_s {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
 		  } s;
-		  ivl_memory_t mem; // ram only
+		  union {
+			ivl_memory_t mem; // ram only
+			ivl_lpm_t decode; // FF only
+		  } a;
 		  ivl_expr_t aset_value;
 		  ivl_expr_t sset_value;
 	    } ff;
@@ -684,6 +690,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115.2.1  2006/02/19 00:11:34  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.115  2004/10/04 01:10:56  steve
  *  Clean up spurious trailing white space.
  *

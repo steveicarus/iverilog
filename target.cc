@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.69 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: target.cc,v 1.69.2.1 2006/02/19 00:11:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,6 +99,13 @@ void target_t::lpm_compare(const NetCompare*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetCompare." << endl;
+}
+
+bool target_t::lpm_decode(const NetDecode*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetDecode." << endl;
+      return false;
 }
 
 void target_t::lpm_divide(const NetDivide*)
@@ -420,6 +427,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.69.2.1  2006/02/19 00:11:34  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.69  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

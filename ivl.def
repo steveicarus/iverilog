@@ -68,6 +68,7 @@ ivl_lpm_data
 ivl_lpm_datab
 ivl_lpm_data2
 ivl_lpm_data2_width
+ivl_lpm_decode
 ivl_lpm_define
 ivl_lpm_enable
 ivl_lpm_memory

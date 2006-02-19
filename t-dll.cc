@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.2 2006/01/21 21:42:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.3 2006/02/19 00:11:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1491,12 +1491,55 @@ void dll_target::lpm_modulo(const NetModulo*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+bool dll_target::lpm_decode(const NetDecode*net)
+{
+      return true;
+}
+
+ivl_lpm_t dll_target::lpm_decode_ff_(const NetDecode*net)
+{
+      if (net == 0)
+	    return 0;
+
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_DECODE;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+
+      obj->u_.mux.swid  = net->awidth();
+      obj->u_.mux.size  = 0;
+      obj->u_.mux.width = 0;
+      obj->u_.mux.d = 0;
+
+      if (obj->u_.mux.swid > 1) {
+	    obj->u_.mux.s.pins = new ivl_nexus_t[obj->u_.mux.swid];
+
+	    for (unsigned idx = 0 ;  idx < obj->u_.mux.swid ; idx += 1) {
+		  const Nexus*nex = net->pin_Address(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.mux.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.mux.s.pins[idx], obj, idx,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+	    }
+      } else {
+	    assert(obj->u_.mux.swid == 1);
+	    const Nexus*nex = net->pin_Address(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.mux.s.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.mux.s.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      scope_add_lpm(obj->scope, obj);
+      return obj;
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
+      obj->u_.ff.a.decode = lpm_decode_ff_(net->get_demux());
       assert(obj->scope);
 
       obj->u_.ff.width = net->width();
@@ -1612,8 +1655,8 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
       obj->name  = net->name();
-      obj->u_.ff.mem = find_memory(des_, net->mem());
-      assert(obj->u_.ff.mem);
+      obj->u_.ff.a.mem = find_memory(des_, net->mem());
+      assert(obj->u_.ff.a.mem);
       obj->scope = find_scope(des_, net->mem()->scope());
       assert(obj->scope);
 
@@ -2182,6 +2225,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.3  2006/02/19 00:11:34  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.131.2.2  2006/01/21 21:42:33  steve
  *  When mux has wide select but sparse choices, use 1hot translation.
  *

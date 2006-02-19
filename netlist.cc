@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.1 2006/01/18 01:23:23 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.2 2006/02/19 00:11:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -234,7 +234,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       assert(s);
 
       release_list_ = 0;
-      ram_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -276,7 +275,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
       assert(s);
 
       release_list_ = 0;
-      ram_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -535,6 +533,8 @@ const NetScope* NetProcTop::scope() const
 NetFF::NetFF(NetScope*s, perm_string n, unsigned wid)
 : NetNode(s, n, 8 + 2*wid)
 {
+      demux_ = 0;
+
       pin_Clock().set_dir(Link::INPUT);
       pin_Clock().set_name(perm_string::literal("Clock"), 0);
       pin_Enable().set_dir(Link::INPUT);
@@ -686,6 +686,20 @@ const verinum& NetFF::sset_value() const
       return sset_value_;
 }
 
+unsigned NetDecode::awidth() const
+{
+      return pin_count();
+}
+
+NetDecode* NetFF::get_demux()
+{
+      return demux_;
+}
+
+const NetDecode* NetFF::get_demux() const
+{
+      return demux_;
+}
 
 /*
  * The NetAddSub class represents an LPM_ADD_SUB device. The pinout is
@@ -1062,6 +1076,36 @@ const Link& NetCompare::pin_DataB(unsigned idx) const
       return pin(8+width_+idx);
 }
 
+NetDecode::NetDecode(NetScope*s, perm_string name, NetFF*mem, unsigned awid)
+: NetNode(s, name, awid)
+{
+      ff_ = mem;
+      ff_->demux_ = this;
+      make_pins_(awid);
+}
+
+NetDecode::~NetDecode()
+{
+}
+
+void NetDecode::make_pins_(unsigned awid)
+{
+      for (unsigned idx = 0 ;  idx < awid ;  idx += 1) {
+	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name(perm_string::literal("Address"), idx);
+      }
+}
+
+Link& NetDecode::pin_Address(unsigned idx)
+{
+      return pin(idx);
+}
+
+const Link& NetDecode::pin_Address(unsigned idx) const
+{
+      return pin(idx);
+}
+
 NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
 		     unsigned wa, unsigned wb)
 : NetNode(sc, n, wr+wa+wb),
@@ -1412,21 +1456,11 @@ void NetRamDq::make_pins_(unsigned wid)
 
 NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
 : NetNode(s, n, 3+2*mem->width()+awid),
-  mem_(mem), sig_(0), awidth_(awid)
+  mem_(mem), awidth_(awid)
 {
       make_pins_(mem->width());
       next_ = mem_->ram_list_;
       mem_->ram_list_ = this;
-}
-
-NetRamDq::NetRamDq(NetScope*s, perm_string n, NetNet*sig, unsigned awid)
-: NetNode(s, n, 3+2*1+awid),
-  mem_(0), sig_(sig), awidth_(awid)
-{
-      make_pins_(1);
-
-      assert(sig->ram_ == 0);
-      sig->ram_ = this;
 }
 
 NetRamDq::~NetRamDq()
@@ -1445,17 +1479,11 @@ NetRamDq::~NetRamDq()
 		  cur->next_ = next_;
 	    }
       }
-
-      if (sig_) {
-	    assert(sig_->ram_ == this);
-	    sig_->ram_ = 0;
-      }
 }
 
 unsigned NetRamDq::width() const
 {
       if (mem_) return mem_->width();
-      if (sig_) return 1;
       return 0;
 }
 
@@ -1467,18 +1495,12 @@ unsigned NetRamDq::awidth() const
 unsigned NetRamDq::size() const
 {
       if (mem_) return mem_->count();
-      if (sig_) return sig_->pin_count();
       return 0;
 }
 
 const NetMemory* NetRamDq::mem() const
 {
       return mem_;
-}
-
-const NetNet* NetRamDq::sig() const
-{
-      return sig_;
 }
 
 unsigned NetRamDq::count_partners() const
@@ -2313,6 +2335,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.2  2006/02/19 00:11:32  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.226.2.1  2006/01/18 01:23:23  steve
  *  Rework l-value handling to allow for more l-value type flexibility.
  *

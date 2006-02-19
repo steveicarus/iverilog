@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.60 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: parse.y,v 1.60.2.1 2006/02/19 00:11:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,6 +60,7 @@ extern FILE*yyin;
 %token K_ARITH_DIV K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
 %token K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
+%token K_DECODE_ADR K_DECODE_EN
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
@@ -262,6 +263,16 @@ statement
 		  compile_shiftr($1, $3, obj.cnt, obj.vect);
 		}
 
+  /* Decoder nodes. */
+
+	| T_LABEL K_DECODE_ADR symbols ';'
+		{ struct symbv_s obj = $3;
+		  compile_decode_adr($1, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_DECODE_EN T_SYMBOL ',' T_NUMBER ',' symbol ';'
+		{ compile_decode_en($1, $3, $5, $7);
+		}
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
      list of inputs. If the type is instead a string, then we have a
@@ -635,6 +646,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.60.2.1  2006/02/19 00:11:36  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.60  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

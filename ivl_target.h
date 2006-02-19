@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.126.2.1 2006/02/19 00:11:31 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -226,6 +226,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
       IVL_LPM_CMP_NE = 11,
+      IVL_LPM_DECODE = 15,
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
       IVL_LPM_MOD    = 13,
@@ -642,13 +643,18 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    Return the input data nexus for device types that have a second
  *    input vector. For example, arithmetic devices are like this.
  *
+ * ivl_lpm_decode
+ *    Return the DECODER associated with this LPM_FF device. The
+ *    decoder for a FF takes an input address and generates an enable
+ *    input for no more then 1 bit (can be none) of the FF device.
+ *
  * ivl_lpm_q
  *    Return the output data nexus for device types that have a single
  *    output vector. This is most devices, it turns out.
  *
  * ivl_lpm_selects
- *    This is the size of the select input for a LPM_MUX device, or the
- *    address bus width of an LPM_RAM.
+ *    This is the size of the select input for a LPM_MUX or LPM_DECODE
+ *    device, or the address bus width of an LPM_RAM.
  *
  * ivl_lpm_signed
  *    Arithmetic LPM devices may be signed or unsigned if there is a
@@ -658,6 +664,14 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    In addition to a width, some devices have a size. The size is
  *    often the number of inputs per out, i.e., the number of inputs
  *    per bit for a MUX.
+ *
+ * SEMANTIC NOTES:
+ *
+ * The IVL_LPM_FF and IVL_LPM_DECODE devices are closely related. If
+ * the ivl_lpm_decode function returns a non-nil value, then the
+ * decoder represents an extra ENABLE-like input, where exactly one(1)
+ * bit of the width of the FF is enabled. The decoder inputs are and
+ * address that selects the FF to be enabled.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -676,6 +690,8 @@ extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
+  /* IVL_LPM_FF */
+extern ivl_lpm_t   ivl_lpm_decode(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
@@ -691,9 +707,9 @@ extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX IVL_LPM_RAM */
+  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
-  /* IVL_LPM_MUX IVL_LPM_RAM */
+  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
@@ -1236,6 +1252,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.126.2.1  2006/02/19 00:11:31  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.126  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

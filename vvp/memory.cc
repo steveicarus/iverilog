@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.22 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: memory.cc,v 1.22.2.1 2006/02/19 00:11:36 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -292,21 +292,6 @@ unsigned char get_bit(vvp_memory_bits_t bits, int bit)
   return (get_nibble(bits, bit) >> (2*(bit&3))) & 3;
 }
 
-inline static
-unsigned char functor_get_inputs(vvp_ipoint_t ip)
-{
-  functor_t fp = functor_index(ip);
-  assert(fp);
-  return fp->ival;
-}
-
-inline static
-unsigned char functor_get_input(vvp_ipoint_t ip)
-{
-  unsigned char bits = functor_get_inputs(ip);
-  return (bits >> (2*ipoint_port(ip))) & 3;
-}
-
 static
 bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
 {
@@ -509,6 +494,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.22.2.1  2006/02/19 00:11:36  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.22  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

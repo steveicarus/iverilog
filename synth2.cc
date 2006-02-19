@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.20 2006/01/27 01:58:53 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.21 2006/02/19 00:11:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -59,13 +59,6 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
-#if 0
-      if (events.count() > 0) {
-	    cerr << get_line() << ": error: Events are unaccounted"
-		 << " for in process synthesis. (proc)" << endl;
-	    des->errors += 1;
-      }
-#endif
 	/* Synthesize the input to the DFF. */
       return synth_async(des, scope, true, nex_map, nex_out);
 }
@@ -128,31 +121,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  return false;
 	    }
 
-	      /* Detect and handle the special case that this is a
-		 memory-like access to a vector. */
-	    if (cur->bmux()) {
-		  NetNet*adr = cur->bmux()->synthesize(des);
-		  NetRamDq*dq = new NetRamDq(scope, scope->local_symbol(),
-					     lsig, adr->pin_count());
-		  des->add_node(dq);
-		  dq->set_line(*this);
-
-		  for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
-			connect(dq->pin_Address(idx), adr->pin(idx));
-#if 0
-		    /* Connect the Q bit to all the bits of the
-		       output. This is a signal to a later stage that
-		       the DFF should be replaced with a RAM to
-		       support this port. */
-		  for (unsigned idx = 0;  idx < lsig->pin_count();  idx += 1){
-			unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(idx).nexus());
-			connect(dq->pin_Q(0), nex_out->pin(ptr));
-		  }
-#endif
-		  connect(dq->pin_Data(0), rsig->pin(roff));
-		  roff += cur->lwidth();
-		  continue;
-	    }
+	    assert(! cur->bmux());
 
 	      /* Bind the outputs that we do make to the nex_out. Use the
 		 nex_map to map the l-value bit position to the nex_out bit
@@ -871,6 +840,55 @@ static bool merge_ff_slices(NetFF*ff1, unsigned idx1,
       return true;
 }
 
+bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
+			       struct sync_accounting_cell*nex_ff,
+			       NetNet*nex_map, NetNet*nex_out,
+			       const svector<NetEvProbe*>&events)
+{
+      unsigned count_lval = 0;
+      NetAssign_*demux = 0;
+
+      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+	    if (cur->bmux())
+		  demux = cur;
+
+	    count_lval += 1;
+      }
+
+      if (demux != 0 && count_lval != 1) {
+	    cerr << get_line() << ": error: Cannot synthesize assignmnents"
+		 << "that mix memory and vector assignments." << endl;
+	    return false;
+      }
+
+	/* There is no memory address, so resort to async
+	   assignments. */
+      if (demux == 0) {
+	      /* Synthesize the input to the DFF. */
+	    return synth_async(des, scope, true, nex_map, nex_out);
+      }
+
+      assert(demux->bmux() != 0);
+
+      NetNet*adr = demux->bmux()->synthesize(des);
+      NetDecode*dq = new NetDecode(scope, scope->local_symbol(),
+				 nex_ff[0].ff, adr->pin_count());
+      des->add_node(dq);
+      dq->set_line(*this);
+
+      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
+	    connect(dq->pin_Address(idx), adr->pin(idx));
+
+      NetNet*rsig = rval_->synthesize(des);
+      assert(rsig->pin_count() == 1);
+
+      for (unsigned idx = 0 ;  idx < nex_ff[0].ff->width() ;  idx += 1)
+	    connect(nex_ff[0].ff->pin_Data(idx), rsig->pin(0));
+
+      lval_->turn_sig_to_wire_on_release();
+      return true;
+}
+
 /*
  * This method is called when a block is encountered near the surface
  * of a synchronous always statement. For example, this code will be
@@ -1459,10 +1477,11 @@ bool NetProcTop::synth_sync(Design*des)
 			   nex_set.count());
       des->add_node(ff);
       ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
+      unsigned process_pin_count = ff->width();
 
       struct sync_accounting_cell*nex_ff
 	    = new struct sync_accounting_cell[ff->pin_count()];
-      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < process_pin_count ;  idx += 1) {
 	    nex_ff[idx].ff = ff;
 	    nex_ff[idx].pin = idx;
 	    nex_ff[idx].proc = statement_;
@@ -1493,6 +1512,47 @@ bool NetProcTop::synth_sync(Design*des)
 					 nex_ff,
 					 nex_q, nex_d,
 					 svector<NetEvProbe*>());
+
+#if 0
+	/* Now look for FFs that have been attached to a
+	   decoder. These need to be handled specially. */
+      for (unsigned idx = 0; idx < process_pin_count ;  idx += 1) {
+	    NetFF*ff = nex_ff[idx].ff;
+	    unsigned pin = nex_ff[idx].pin;
+	    if (ff == 0)
+		  continue;
+		  
+	    NetDecode*demux = ff->get_demux();
+
+	    nex_ff[idx].ff = 0;
+
+	    if (demux == 0)
+		  continue;
+
+	    cerr << "XXXX Demux bit " << idx << "["<<pin<<"]"
+		 << " of " << ff
+		 << " with demux=" << demux << endl;
+	    ff->pin_Data(pin).unlink();
+
+	    for (unsigned idx2 = idx+1 ;  idx2 < process_pin_count; idx2+=1) {
+		  NetFF*ff2 = nex_ff[idx2].ff;
+		  unsigned pin2 = nex_ff[idx2].pin;
+
+		  if (ff2->get_demux() != demux)
+			continue;
+
+		  nex_ff[idx2].ff = 0;
+		  assert(ff2 == ff);
+
+		  cerr << "XXXX Demux bit " << idx2
+		       << "["<<pin2<<"]"
+		       << " also attached to demux=" << demux << endl;
+
+		  ff2->pin_Data(pin2).unlink();
+	    }
+
+      }
+#endif
 
       delete nex_q;
       delete[]nex_ff;
@@ -1579,6 +1639,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.21  2006/02/19 00:11:33  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.39.2.20  2006/01/27 01:58:53  steve
  *  Document how the default statement handling works.
  *
@@ -1638,68 +1701,5 @@ void synth2(Design*des)
  *
  * Revision 1.39.2.1  2005/08/21 22:49:54  steve
  *  Handle statements in blocks overriding previous statement outputs.
- *
- * Revision 1.39  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.38  2004/08/28 15:08:32  steve
- *  Do not change reg to wire in NetAssign_ unless synthesizing.
- *
- * Revision 1.37  2004/03/15 18:40:12  steve
- *  Only include DEBUG_SYNTH2 if __FUNCTION__ defined.
- *
- * Revision 1.36  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.35  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.34  2003/12/20 00:59:31  steve
- *  Synthesis debug messages.
- *
- * Revision 1.33  2003/12/17 16:52:39  steve
- *  Debug dumps for synth2.
- *
- * Revision 1.32  2003/10/27 02:18:04  steve
- *  Handle special case of FF with enable and constant data.
- *
- * Revision 1.31  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.30  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.29  2003/08/14 02:41:05  steve
- *  Fix dangling pointer in NexusSet handling blocks.
- *
- * Revision 1.28  2003/08/10 17:04:23  steve
- *  Detect asynchronous FF inputs that are expressions.
- *
- * Revision 1.27  2003/06/23 00:14:44  steve
- *  ivl_synthesis_cell cuts off synthesis within a module.
- *
- * Revision 1.26  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.25  2003/04/03 04:30:00  steve
- *  Prevent overrun comparing verinums to zero.
- *
- * Revision 1.24  2003/03/25 04:04:29  steve
- *  Handle defaults in synthesized case statements.
- *
- * Revision 1.23  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.22  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.21  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.20  2002/11/09 23:29:29  steve
- *  Handle nested-if chip enables.
- *
- * Revision 1.19  2002/11/09 20:22:57  steve
- *  Detect synthesis conflicts blocks statements share outputs.
  */
 

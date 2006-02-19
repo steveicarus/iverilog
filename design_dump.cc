@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.1 2006/01/18 01:23:23 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.2 2006/02/19 00:11:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -216,6 +216,14 @@ void NetCompare::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetDecode::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_DECODE (NetDecode): " << name()
+	<< " ff=" << ff_->name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetDivide::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NET_DIVIDE (NetDivide): " << name() << endl;
@@ -272,7 +280,11 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_FF: " << name()
 	<< " scope=" << (scope()? scope()->name() : "")
-	<< " aset_value=" << aset_value_ << endl;
+	<< " aset_value=" << aset_value_;
+
+      if (demux_) o << " demux=" << demux_->name();
+
+      o << endl;
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -358,7 +370,6 @@ void NetRamDq::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "LPM_RAM_DQ (";
 
       if (mem_) o << "mem=" << mem_->name();
-      if (sig_) o << "sig=" << sig_->name();
 
       o << "): " << name() << endl;
 
@@ -1094,6 +1105,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.2  2006/02/19 00:11:31  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.149.2.1  2006/01/18 01:23:23  steve
  *  Rework l-value handling to allow for more l-value type flexibility.
  *

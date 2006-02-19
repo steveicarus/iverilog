@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.4 2006/01/21 21:42:33 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.5 2006/02/19 00:11:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -278,6 +278,16 @@ static void show_lpm(ivl_lpm_t net)
 		break;
 	  }
 
+	  case IVL_LPM_DECODE: {
+		fprintf(out, "  LPM_DECODE %s\n", ivl_lpm_basename(net));
+		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_select(net, idx);
+		      fprintf(out, "    Address %u: %s\n", idx,
+			      nex? ivl_nexus_name(nex) : "");
+		}
+		break;
+	  }
+
 	  case IVL_LPM_SHIFTL: {
 		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u %s>\n",
 			ivl_lpm_basename(net), width, ivl_lpm_selects(net),
@@ -329,6 +339,12 @@ static void show_lpm(ivl_lpm_t net)
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
 			ivl_lpm_basename(net), width);
+
+		if (ivl_lpm_decode(net)) {
+		      ivl_lpm_t dec = ivl_lpm_decode(net);
+		      fprintf(out, "    decoder: %s\n",
+			      ivl_lpm_basename(dec));
+		}
 
 		if (ivl_lpm_enable(net))
 		      fprintf(out, "    clk: %s CE: %s\n",
@@ -1007,6 +1023,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.5  2006/02/19 00:11:34  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.90.2.4  2006/01/21 21:42:33  steve
  *  When mux has wide select but sparse choices, use 1hot translation.
  *

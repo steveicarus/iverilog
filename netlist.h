@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.9 2006/01/21 21:42:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.10 2006/02/19 00:11:32 steve Exp $"
 #endif
 
 /*
@@ -447,9 +447,6 @@ class NetNet  : public NetObj {
       friend class NetRelease;
       NetRelease*release_list_;
 
-      friend class NetRamDq;
-      class NetRamDq*ram_;
-
     private:
       Type   type_;
       PortType port_type_;
@@ -595,6 +592,36 @@ class NetCompare  : public NetNode {
 };
 
 /*
+ * A decoder takes an address input and activates (high) the single
+ * Q bit that is addressed. This can be used, for example, to
+ * generate an enable for a FF from an array of FFs.
+ */
+class NetDecode  : public NetNode {
+
+    public:
+      NetDecode(NetScope*s, perm_string name, NetFF*mem, unsigned awid);
+      ~NetDecode();
+
+      unsigned awidth() const;
+
+      const NetFF*ff() const;
+
+      Link& pin_Address(unsigned idx);
+
+      const Link& pin_Address(unsigned idx) const;
+      const Link& pin_Q(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      NetFF* ff_;
+
+    private:
+      void make_pins_(unsigned awid);
+};
+
+/*
  * This class represents a theoretical (though not necessarily
  * practical) integer divider gate. This is not to represent any real
  * hardware, but to support the / operator in Verilog, when it shows
@@ -716,9 +743,18 @@ class NetFF  : public NetNode {
       void sset_value(const verinum&val);
       const verinum& sset_value() const;
 
+      NetDecode* get_demux();
+      const NetDecode* get_demux() const;
+
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+	// If there is a demux associated with this gate, the demux_
+	// member will point to the decoder.
+      friend class NetDecode;
+      NetDecode*demux_;
 
     private:
       verinum aset_value_;
@@ -886,14 +922,12 @@ class NetRamDq  : public NetNode {
 
     public:
       NetRamDq(NetScope*s, perm_string name, NetMemory*mem, unsigned awid);
-      NetRamDq(NetScope*s, perm_string name, NetNet*mem, unsigned awid);
       ~NetRamDq();
 
       unsigned width() const;
       unsigned awidth() const;
       unsigned size() const;
       const NetMemory*mem() const;
-      const NetNet*sig() const;
 
       Link& pin_InClock();
       Link& pin_OutClock();
@@ -925,7 +959,6 @@ class NetRamDq  : public NetNode {
 
     private:
       NetMemory*mem_;
-      NetNet*   sig_;
       NetRamDq*next_;
       unsigned awidth_;
 
@@ -1518,6 +1551,10 @@ class NetAssignBase : public NetProc {
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       NetNet*nex_map, NetNet*nex_out,
 		       NetNet*accum_in);
+      bool synth_sync(Design*des, NetScope*scope,
+		      struct sync_accounting_cell*nex_ff,
+		      NetNet*nex_map, NetNet*nex_out,
+		      const svector<NetEvProbe*>&events);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -3402,6 +3439,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.10  2006/02/19 00:11:32  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.321.2.9  2006/01/21 21:42:31  steve
  *  When mux has wide select but sparse choices, use 1hot translation.
  *

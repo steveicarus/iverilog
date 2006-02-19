@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108.2.1 2006/02/19 00:11:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -833,6 +833,18 @@ extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
       }
 }
 
+extern "C" ivl_lpm_t ivl_lpm_decode(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.a.decode;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 /*
  * This function returns the hierarchical name for the LPM device. The
  * name needs to be built up from the scope name and the lpm base
@@ -929,6 +941,7 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.ff.s.pins[idx];
 
+	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    assert(idx < net->u_.mux.swid);
 	    if (net->u_.mux.swid == 1)
@@ -952,6 +965,7 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.swid;
+	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
 	  case IVL_LPM_SHIFTL:
@@ -984,7 +998,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.signed_flag;
-	    return 0;
+	  case IVL_LPM_DECODE:
 	  case IVL_LPM_UFUNC:
 	    return 0;
 	  default:
@@ -1035,6 +1049,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.shift.width;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.port_wid[0];
+	  case IVL_LPM_DECODE:
+	    return 1;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1046,7 +1062,7 @@ extern "C" ivl_memory_t ivl_lpm_memory(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_RAM:
-	    return net->u_.ff.mem;
+	    return net->u_.ff.a.mem;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1935,6 +1951,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108.2.1  2006/02/19 00:11:33  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.108  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

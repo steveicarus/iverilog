@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.52 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: functor.h,v 1.52.2.1 2006/02/19 00:11:36 steve Exp $"
 #endif
 
 # include  "pointers.h"
 # include  "delay.h"
+# include  <assert.h>
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -340,9 +341,27 @@ extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
 extern vvp_fvector_t vvp_fvector_new(unsigned size);
 extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
+inline static
+unsigned char functor_get_inputs(vvp_ipoint_t ip)
+{
+  functor_t fp = functor_index(ip);
+  assert(fp);
+  return fp->ival;
+}
+
+inline static
+unsigned char functor_get_input(vvp_ipoint_t ip)
+{
+  unsigned char bits = functor_get_inputs(ip);
+  return (bits >> (2*ipoint_port(ip))) & 3;
+}
+
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.52.2.1  2006/02/19 00:11:36  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.52  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

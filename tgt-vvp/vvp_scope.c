@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.1 2006/01/18 06:15:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.2 2006/02/19 00:11:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -382,6 +382,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       lpm = ivl_nexus_ptr_lpm(nptr);
       if (lpm) switch (ivl_lpm_type(lpm)) {
+
+	  case IVL_LPM_DECODE:
+	      /* The decoder has no outputs.
+		 (It is bound to other devices.) */
+	    break;
 
 	  case IVL_LPM_FF:
 	  case IVL_LPM_MUX:
@@ -1224,6 +1229,28 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_lpm_decode(ivl_lpm_t net)
+{
+      unsigned idx;
+
+      fprintf(vvp_out, "L_%s.%s .decode/adr ",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)));
+
+      for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
+	    ivl_nexus_t a = ivl_lpm_select(net, idx);
+	    if (idx > 0)
+		  fprintf(vvp_out, ", ");
+	    if (a) {
+		  draw_input_from_net(a);
+	    } else {
+		  fprintf(vvp_out, "C<0>");
+	    }
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 /*
  * Draw == and != gates. This is done as XNOR functors to compare each
  * pair of bits. The result is combined with a wide and, or a NAND if
@@ -1349,6 +1376,28 @@ static void draw_lpm_ff(ivl_lpm_t net)
 		  fprintf(vvp_out, ", C<1>;\n");
 	    }
 
+	      /* If there is a decoder for this FF, then create a
+		 decoder enable node. */
+	    if (ivl_lpm_decode(net)) {
+		  ivl_lpm_t dec = ivl_lpm_decode(net);
+		  fprintf(vvp_out, "L_%s.%s/dec/%u .decode/en L_%s.%s, %u",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx,
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(dec))),
+			  vvp_mangle_id(ivl_lpm_basename(dec)), idx);
+
+		  tmp = ivl_lpm_enable(net);
+		  if (tmp && (ivl_lpm_sync_clr(net)||ivl_lpm_sync_set(net))) {
+			fprintf(vvp_out, ", L_%s.%s/en",
+				vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+				vvp_mangle_id(ivl_lpm_basename(net)));
+		  } else if (tmp) {
+			fprintf(vvp_out, ", ");
+			draw_input_from_net(tmp);
+		  }
+		  fprintf(vvp_out, ";\n");
+	    }
+
 	    fprintf(vvp_out, "L_%s.%s/%u .udp ",
 		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
@@ -1363,17 +1412,28 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	      /* Draw the enable input. */
 	    tmp = ivl_lpm_enable(net);
 	    fprintf(vvp_out, ", ");
-	    if (tmp && (ivl_lpm_sync_clr(net) || ivl_lpm_sync_set(net))) {
+	    if (ivl_lpm_decode(net)) {
+		    /* If there is a decoder, get the enable from a
+		       decoder node. */
+		  fprintf(vvp_out, "L_%s.%s/dec/%u",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
+	    } else if (tmp && (ivl_lpm_sync_clr(net) || ivl_lpm_sync_set(net))) {
+		    /* If there is no decoder but an otherwise complex
+		       enable, get the enable from the calculated
+		       logic. */
 		  fprintf(vvp_out, "L_%s.%s/en",
 			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 			  vvp_mangle_id(ivl_lpm_basename(net)));
 	    } else if (tmp) {
+		    /* Draw a simple enable if that's what we got. */
 		  draw_input_from_net(tmp);
 	    } else {
+		    /* Otherwise, permanently enable the DFF. */
 		  fprintf(vvp_out, "C<1>");
 	    }
 
-	      /* Drat the data input. MUX it with the sync input
+	      /* Draw the data input. MUX it with the sync input
 		 if there is one. */
 	    if (ivl_lpm_sync_clr(net) || ivl_lpm_sync_set(net)) {
 		  fprintf(vvp_out, ", L_%s.%s/din/%u",
@@ -1558,6 +1618,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_ufunc(net);
 	    return;
 
+	  case IVL_LPM_DECODE:
+	    draw_lpm_decode(net);
+	    return;
+
 	  default:
 	    fprintf(stderr, "XXXX LPM not supported: %s.%s\n",
 		    ivl_scope_name(ivl_lpm_scope(net)), ivl_lpm_basename(net));
@@ -1681,6 +1745,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.2  2006/02/19 00:11:35  steve
+ *  Handle synthesis of FF vectors with l-value decoder.
+ *
  * Revision 1.103.2.1  2006/01/18 06:15:45  steve
  *  Support DFF with synchronous inputs.
  *
