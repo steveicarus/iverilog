@@ -18,9 +18,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.22.2.1 2006/02/19 00:11:36 steve Exp $"
+#ident "$Id: memory.cc,v 1.22.2.2 2006/02/19 16:57:31 steve Exp $"
 #endif
 
+#include "vpi_priv.h"
 #include "memory.h"
 #include "symbols.h"
 #include "schedule.h"
@@ -31,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+#if 0
 typedef struct vvp_memory_port_s *vvp_memory_port_t;
 
 struct vvp_memory_s
@@ -50,7 +51,11 @@ struct vvp_memory_s
 
   vvp_memory_bits_t bits;         // Array of bits
   vvp_memory_port_t addr_root;    // Port list root;
+  
+  // callbacks
+  struct __vpiCallback*cb;        // callback list for this vpiMemory
 };
+#endif
 
 unsigned memory_data_width(vvp_memory_t mem)
 {
@@ -153,7 +158,7 @@ vvp_memory_t memory_create(char *label)
   symbol_value_t v;
   v.ptr = mem;
   sym_set_value(memory_table, label, v);
-
+  mem->cb = NULL; // clear the callbacks
   return mem;
 }
 
@@ -432,6 +437,17 @@ void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
   unsigned bidx = idx%(4*mem->fwidth);
 
   update_data_ports(mem, get_word_ix(mem, widx), bidx, val);
+
+  // execute vpiMemory callbacks
+  for (struct __vpiCallback*cur = mem->cb ;  cur ;  cur = cur->next) {
+    cur->cb_data.time->type = vpiSimTime;
+    cur->cb_data.index = widx; // assign the memory word index
+    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+    assert(cur->cb_data.cb_rtn != 0);
+    vpi_mode_flag = VPI_MODE_RWSYNC;
+    (cur->cb_data.cb_rtn)(&cur->cb_data);
+    vpi_mode_flag = VPI_MODE_NONE;
+  }
 }
 
 // %load/mem
@@ -494,6 +510,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.22.2.2  2006/02/19 16:57:31  steve
+ *  Add change callback to vpiMemory objects.
+ *
  * Revision 1.22.2.1  2006/02/19 00:11:36  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

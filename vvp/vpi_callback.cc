@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.34 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.34.2.1 2006/02/19 16:57:31 steve Exp $"
 #endif
 
 /*
@@ -217,6 +217,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 		 callback functors. */
 	    obj->next = sig->callback->cb_handle;
 	    sig->callback->cb_handle = obj;
+	    break;
+
+          case vpiMemory: /* callback for change in any location of this vpiMemory */
+	    vpip_memory_value_change(obj,data->obj);
 	    break;
 
 	  case vpiRealVar:
@@ -564,6 +568,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.34.2.1  2006/02/19 16:57:31  steve
+ *  Add change callback to vpiMemory objects.
+ *
  * Revision 1.34  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.23 2004/05/19 03:30:46 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.23.2.1 2006/02/19 16:57:31 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -583,8 +583,19 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
       return &(obj->base);
 }
 
+void vpip_memory_value_change(struct __vpiCallback*cbh,
+			      vpiHandle ref)
+{
+      struct __vpiMemory*obj = (struct __vpiMemory*)ref;
+      cbh->next = obj->mem->cb;
+      obj->mem->cb = cbh;
+}
+
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.23.2.1  2006/02/19 16:57:31  steve
+ *  Add change callback to vpiMemory objects.
+ *
  * Revision 1.23  2004/05/19 03:30:46  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.7 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: memory.h,v 1.7.2.1 2006/02/19 16:57:31 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -34,6 +34,31 @@
 typedef struct vvp_memory_s *vvp_memory_t;
 typedef unsigned char *vvp_memory_bits_t;
 typedef struct vvp_memory_index_s *vvp_memory_index_t;
+
+// moved from memory.cc for callback function visibility
+typedef struct vvp_memory_port_s *vvp_memory_port_t;
+
+// moved here from memory.cc for callback function visibility
+struct vvp_memory_s
+{
+  char *name;                     // VPI scope.name
+
+  // Address port properties:
+  unsigned size;                  // total number of data words
+  unsigned a_idxs;                // number of address indices
+  vvp_memory_index_t a_idx;       // vector of address indices
+
+  // Data port properties:
+  unsigned width;                 // number of data bits
+  unsigned fwidth;                // number of bytes (4bits) per data word
+  int msb, lsb;                   // Most/Least Significant data bit (VPI)
+
+  vvp_memory_bits_t bits;         // Array of bits
+  vvp_memory_port_t addr_root;    // Port list root; 
+  
+  // callbacks
+  struct __vpiCallback*cb;        // callback list for this vpiMemory
+};
 
 void memory_new(vvp_memory_t mem, char *name, int lsb, int msb,
 		unsigned idxs, long *idx);
@@ -65,6 +90,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.7.2.1  2006/02/19 16:57:31  steve
+ *  Add change callback to vpiMemory objects.
+ *
  * Revision 1.7  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

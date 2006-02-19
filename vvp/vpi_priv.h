@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.59 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.59.2.1 2006/02/19 16:57:31 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -209,6 +209,12 @@ extern vpiHandle vpip_make_named_event(const char*name, vvp_ipoint_t f);
 extern void vpip_run_named_event_callbacks(vpiHandle ref);
 extern void vpip_real_value_change(struct __vpiCallback*cbh,
 				   vpiHandle ref);
+/*
+ * Callback for vpiMemory type
+ */
+void vpip_memory_value_change(struct __vpiCallback*cbh,
+			      vpiHandle ref);
+
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -418,6 +424,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.59.2.1  2006/02/19 16:57:31  steve
+ *  Add change callback to vpiMemory objects.
+ *
  * Revision 1.59  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
