@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.73 2006/02/21 02:39:27 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.74 2006/02/21 05:31:54 steve Exp $"
 #endif
 
 /*
@@ -599,94 +599,18 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 #endif
-#if 0
-	  case vpiBinStrVal: {
-		unsigned char*bits = new unsigned char[(wid+3) / 4];
-		vpip_bin_str_to_bits(bits, wid, vp->value.str, false);
-
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-
-		      switch (val) {
-			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, 0);
-			    break;
-			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, 0);
-			    break;
-			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, 0);
-			    break;
-			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, 0);
-			    break;
-		      }
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
-#if 0
-	  case vpiOctStrVal: {
-		unsigned char*bits = new unsigned char[(wid+3) / 4];
-		vpip_oct_str_to_bits(bits, wid, vp->value.str, false);
-
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-
-		      switch (val) {
-			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, 0);
-			    break;
-			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, 0);
-			    break;
-			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, 0);
-			    break;
-			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, 0);
-			    break;
-		      }
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
-
-#if 0
-	  case vpiDecStrVal: {
-		unsigned char*bits = new unsigned char[wid];
-		vpip_dec_str_to_bits(bits, wid, vp->value.str, false);
-
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-
-		      switch (bits[idx]) {
-			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, 0);
-			    break;
-			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, 0);
-			    break;
-			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, 0);
-			    break;
-			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, 0);
-			    break;
-		      }
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
+	  case vpiBinStrVal:
+	    vpip_bin_str_to_vec4(val, vp->value.str, false);
+	    break;
+	  case vpiOctStrVal:
+	    vpip_oct_str_to_vec4(val, vp->value.str);
+	    break;
+	  case vpiDecStrVal:
+	    vpip_dec_str_to_vec4(val, vp->value.str, false);
+	    break;
+	  case vpiHexStrVal:
+	    vpip_hex_str_to_vec4(val, vp->value.str);
+	    break;
 	  case vpiStringVal:
 	    val = from_stringval(vp->value.str, wid);
 	    break;
@@ -793,6 +717,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.74  2006/02/21 05:31:54  steve
+ *  Put strings for reg objects.
+ *
  * Revision 1.73  2006/02/21 02:39:27  steve
  *  Support string values for memory words.
  *
