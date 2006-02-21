@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_to_dec.cc,v 1.7 2004/10/04 01:11:00 steve Exp $"
+#ident "$Id: vpip_to_dec.cc,v 1.8 2006/02/21 02:39:27 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -105,9 +105,123 @@ static inline int write_digits(unsigned long v, char **buf,
 }
 
 
-/* bits[0] is the lsb
- * bits[nbits-1] is the msb or sign bit
- */
+unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
+			      char *buf, unsigned int nbuf,
+			      int signed_flag)
+{
+      unsigned int idx, len, vlen;
+      unsigned int mbits=vec4.size();   /* number of non-sign bits */
+      unsigned count_x = 0, count_z = 0;
+	/* Jump through some hoops so we don't have to malloc/free valv
+	 * on every call, and implement an optional malloc-less version. */
+      static unsigned long *valv=NULL;
+      static unsigned int vlen_alloc=0;
+
+      unsigned long val=0;
+      int comp=0;
+      if (signed_flag) {
+	    switch (vec4.value(vec4.size()-1)) {
+		case BIT4_X:
+		  count_x += 1;
+		  break;
+		case BIT4_Z:
+		  count_z += 1;
+		  break;
+		case BIT4_1:
+		  comp=1;
+		  break;
+		case BIT4_0:
+		  break;
+	    }
+	    mbits -= 1;
+      }
+      assert(mbits<(UINT_MAX-92)/28);
+      vlen = ((mbits*28+92)/93+BDIGITS-1)/BDIGITS;
+	/* printf("vlen=%d\n",vlen); */
+
+#define ALLOC_MARGIN 4
+      if (!valv || vlen > vlen_alloc) {
+	    if (valv) free(valv);
+	    valv = (unsigned long*)
+		  calloc( vlen+ALLOC_MARGIN, sizeof (*valv));
+	    if (!valv) {perror("malloc"); return 0; }
+	    vlen_alloc=vlen+ALLOC_MARGIN;
+      } else {
+	    memset(valv,0,vlen*sizeof(valv[0]));
+      }
+
+      for (idx = 0; idx < mbits; idx += 1) {
+	      /* printf("%c ",bits[mbits-idx-1]); */
+	    switch (vec4.value(mbits-idx-1)) {
+		case BIT4_Z:
+		  count_z += 1;
+		  break;
+		case BIT4_X:
+		  count_x += 1;
+		  break;
+		case BIT4_1:
+		  if (! comp)
+			val += 1;
+		  break;
+		case BIT4_0:
+		  if (comp)
+			val += 1;
+		  break;
+	    }
+
+	    if ((mbits-idx-1)%BBITS==0) {
+		    /* make negative 2's complement, not 1's complement */
+		  if (comp && idx==mbits-1) ++val;
+		  shift_in(valv,vlen,val);
+		  val=0;
+	    } else {
+		  val=val+val;
+	    }
+      }
+
+	if (count_x == vec4.size()) {
+	      len = 1;
+	      buf[0] = 'x';
+	      buf[1] = 0;
+	} else if (count_x > 0) {
+	      len = 1;
+	      buf[0] = 'X';
+	      buf[1] = 0;
+	} else if (count_z == vec4.size()) {
+	      len = 1;
+	      buf[0] = 'z';
+	      buf[1] = 0;
+	} else if (count_z > 0) {
+	      len = 1;
+	      buf[0] = 'Z';
+	      buf[1] = 0;
+	} else {
+	      int i;
+	      int zero_suppress=1;
+	      if (comp) {
+		    *buf++='-';
+		    nbuf--;
+		      /* printf("-"); */
+	      }
+	      for (i=vlen-1; i>=0; i--) {
+		    zero_suppress = write_digits(valv[i],
+						 &buf,&nbuf,zero_suppress);
+		      /* printf(",%.4u",valv[i]); */
+	      }
+		/* Awkward special case, since we don't want to
+		 * zero suppress down to nothing at all.  The only
+		 * way we can still have zero_suppress on in the
+		 * comp=1 case is if mbits==0, and therefore vlen==0.
+		 * We represent 1'sb1 as "-1". */
+	      if (zero_suppress) *buf++='0'+comp;
+		/* printf("\n"); */
+	      *buf='\0';
+	}
+	/* hold on to the memory, since we expect to be called again. */
+	/* free(valv); */
+	return 0;
+}
+
 unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 			      char *buf, unsigned int nbuf, int signed_flag)
 {
@@ -202,7 +316,7 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 }
 
 
-void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
+void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
 			  const char*buf, bool signed_flag)
 {
  	/* The str string is the decimal value with the least
@@ -220,8 +334,8 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 
       str[slen] = 0;
 
-      for (unsigned idx = 0 ;  idx < nbits ;  idx += 1) {
-	    unsigned val = 0;
+      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    vvp_bit4_t val4 = BIT4_0;
 
 	    switch (str[0]) {
 		case '1':
@@ -229,11 +343,11 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 		case '5':
 		case '7':
 		case '9':
-		  val = 1;
+		  val4 = BIT4_1;
 		  break;
 	    }
 
-	    bits[idx] = val;
+	    vec.set_bit(idx, val4);
 
 	      /* Divide the str string by 2 in decimal. */
 	    char*cp = str;
@@ -254,6 +368,9 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpip_to_dec.cc,v $
+ * Revision 1.8  2006/02/21 02:39:27  steve
+ *  Support string values for memory words.
+ *
  * Revision 1.7  2004/10/04 01:11:00  steve
  *  Clean up spurious trailing white space.
  *

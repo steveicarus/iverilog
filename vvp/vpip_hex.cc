@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_hex.cc,v 1.3 2005/06/13 00:54:04 steve Exp $"
+#ident "$Id: vpip_hex.cc,v 1.4 2006/02/21 02:39:27 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -32,6 +32,80 @@
 # include  <assert.h>
 
 extern const char hex_digits[256];
+
+void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str)
+{
+      unsigned str_len = strlen(str);
+
+      char pad = '0';
+      switch (str[0]) {
+	  case 'x':
+	  case 'X':
+	    pad = 'x';
+	    break;
+	  case 'z':
+	  case 'Z':
+	    pad = 'z';
+	    break;
+      }
+
+      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
+	    unsigned tmp;
+	    unsigned bit_off = idx%4;
+	    unsigned str_off = idx/4;
+
+	    char ch;
+	    if (str_off >= str_len)
+		  ch = pad;
+	    else
+		  ch = str[str_len-str_off-1];
+
+	    switch (ch) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		  tmp = ch - '0';
+		  val.set_bit(idx, ((tmp>>bit_off)&1)? BIT4_1 : BIT4_0);
+		  break;
+		case 'a':
+		case 'b':
+		case 'c':
+		case 'd':
+		case 'e':
+		case 'f':
+		  tmp = ch - 'a' + 10;
+		  val.set_bit(idx, ((tmp>>bit_off)&1)? BIT4_1 : BIT4_0);
+		  break;
+		case 'A':
+		case 'B':
+		case 'C':
+		case 'D':
+		case 'E':
+		case 'F':
+		  tmp = ch - 'A' + 10;
+		  val.set_bit(idx, ((tmp>>bit_off)&1)? BIT4_1 : BIT4_0);
+		  break;
+		case 'x':
+		case 'X':
+		  val.set_bit(idx, BIT4_X);
+		  break;
+		case 'z':
+		case 'Z':
+		  val.set_bit(idx, BIT4_Z);
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+      }
+}
 
 void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 			  unsigned nbuf, bool signed_flag)
@@ -83,86 +157,12 @@ void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
       }
 }
 
-void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
-			  const char*buf, bool signed_flag)
-{
-      const char*ebuf = buf + strlen(buf);
-      unsigned char last = 0x00;
-
-      while (ebuf > buf) {
-
-	    if (nbits == 0)
-		  break;
-
-	    ebuf -= 1;
-	    switch (*ebuf) {
-		case '0': *bits = 0x00; break;
-		case '1': *bits = 0x01; break;
-		case '2': *bits = 0x04; break;
-		case '3': *bits = 0x05; break;
-		case '4': *bits = 0x10; break;
-		case '5': *bits = 0x11; break;
-		case '6': *bits = 0x14; break;
-		case '7': *bits = 0x15; break;
-		case '8': *bits = 0x40; break;
-		case '9': *bits = 0x41; break;
-		case 'a':
-		case 'A': *bits = 0x44; break;
-		case 'b':
-		case 'B': *bits = 0x45; break;
-		case 'c':
-		case 'C': *bits = 0x50; break;
-		case 'd':
-		case 'D': *bits = 0x51; break;
-		case 'e':
-		case 'E': *bits = 0x54; break;
-		case 'f':
-		case 'F': *bits = 0x55; break;
-		case 'x':
-		case 'X': *bits = 0xaa; break;
-		case 'z':
-		case 'Z': *bits = 0xff; break;
-		default:  *bits = 0x00; break;
-	    }
-
-	    last = *bits;
-	    bits += 1;
-	    if (nbits < 4)
-		  nbits = 0;
-	    else
-		  nbits -= 4;
-      }
-
-	/* Calculate the pad value based on the top bit and the signed
-	   flag. We may sign extend or zero extend. */
-      switch (last >> 6) {
-	  case 0:
-	    last = 0x00;
-	    break;
-	  case 1:
-	    last = signed_flag? 0x55 : 0x00;
-	    break;
-	  case 2:
-	    last = 0xaa;
-	    break;
-	  case 3:
-	    last = 0xff;
-	    break;
-      }
-
-      while (nbits > 0) {
-	    *bits = last;
-	    bits += 1;
-	    if (nbits < 4)
-		  nbits = 0;
-	    else
-		  nbits -= 4;
-      }
-
-}
 
 /*
  * $Log: vpip_hex.cc,v $
+ * Revision 1.4  2006/02/21 02:39:27  steve
+ *  Support string values for memory words.
+ *
  * Revision 1.3  2005/06/13 00:54:04  steve
  *  More unified vec4 to hex string functions.
  *

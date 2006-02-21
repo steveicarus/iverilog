@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.28 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.29 2006/02/21 02:39:27 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -277,69 +277,50 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 		}
 		break;
 	  }
-#if 0
-	      /* If the caller tries to set a HexStrVal, convert it to
-		 bits and write the bits into the word. */
-	  case vpiHexStrVal: {
-		unsigned char*bits = new unsigned char[(width+3) / 4];
-		vpip_hex_str_to_bits(bits, width, val->value.str, false);
 
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-		      memory_set(rfp->mem->mem, bidx+idx, val);
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
-#if 0
-	  case vpiDecStrVal: {
-		unsigned char*bits = new unsigned char[width];
-		vpip_dec_str_to_bits(bits, width, val->value.str, false);
-
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      memory_set(rfp->mem->mem, bidx+idx, bits[idx]);
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
-#if 0
-	  case vpiOctStrVal: {
-		unsigned char*bits = new unsigned char[(width+3) / 4];
-		vpip_oct_str_to_bits(bits, width, val->value.str, false);
-
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-		      memory_set(rfp->mem->mem, bidx+idx, val);
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
-#if 0
 	  case vpiBinStrVal: {
-		unsigned char*bits = new unsigned char[(width+3) / 4];
-		vpip_bin_str_to_bits(bits, width, val->value.str, false);
-
+		char*str = val->value.str;
 		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-		      memory_set(rfp->mem->mem, bidx+idx, val);
+		      switch (str[width-idx-1]) {
+			  case '0':
+			    put_val.set_bit(idx, BIT4_0);
+			    break;
+			  case '1':
+			    put_val.set_bit(idx, BIT4_1);
+			    break;
+			  case 'x':
+			  case 'X':
+			    put_val.set_bit(idx, BIT4_X);
+			    break;
+			  case 'z':
+			  case 'Z':
+			    put_val.set_bit(idx, BIT4_Z);
+			    break;
+			  default:
+			    assert(0);
+		      }
 		}
-
-		delete[]bits;
 		break;
 	  }
-#endif
+
+	  case vpiOctStrVal: {
+		char*str = val->value.str;
+		vpip_oct_str_to_vec4(put_val, str);
+		break;
+	  }
+
+	  case vpiDecStrVal: {
+		char*str = val->value.str;
+		vpip_dec_str_to_vec4(put_val, str, false);
+		break;
+	  }
+
+	  case vpiHexStrVal: {
+		char*str = val->value.str;
+		vpip_hex_str_to_vec4(put_val, str);
+		break;
+	  }
+
 	  default:
 	    cerr << "internal error: memory_word put_value format="
 		 << val->format << endl;
@@ -393,6 +374,9 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
       switch (vp->format) {
 	  default:
+	    cerr << "internal error: Format "
+		 << vp->format
+		 << " not implemented" << endl;
 	    assert(0 && "format not implemented");
 
 	  case vpiBinStrVal:
@@ -413,6 +397,13 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 
+	  case vpiDecStrVal: {
+		rbuf = need_result_buf(width+1, RBUF_VAL);
+		vpip_vec4_to_dec_str(word_val, rbuf, width+1, false);
+		vp->value.str = rbuf;
+		break;
+	  }
+
 	  case vpiHexStrVal: {
 		unsigned  hwid = (width + 3) / 4;
 
@@ -421,6 +412,13 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		vpip_vec4_to_hex_str(word_val, rbuf, hwid+1, false);
 		vp->value.str = rbuf;
+		break;
+	  }
+
+	  case vpiIntVal: {
+		unsigned long val;
+		vector4_to_value(word_val, val);
+		vp->value.integer = val;
 		break;
 	  }
 #if 0
@@ -557,6 +555,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.29  2006/02/21 02:39:27  steve
+ *  Support string values for memory words.
+ *
  * Revision 1.28  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *

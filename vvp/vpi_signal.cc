@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.72 2005/11/30 00:42:14 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.73 2006/02/21 02:39:27 steve Exp $"
 #endif
 
 /*
@@ -659,36 +659,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 #endif
-#if 0
-	  case vpiHexStrVal: {
-		unsigned char*bits = new unsigned char[(wid+3) / 4];
-		vpip_hex_str_to_bits(bits, wid, vp->value.str, false);
 
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      unsigned bb = idx / 4;
-		      unsigned bs = (idx % 4) * 2;
-		      unsigned val = (bits[bb] >> bs) & 0x03;
-
-		      switch (val) {
-			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0, 0);
-			    break;
-			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1, 0);
-			    break;
-			  case 2: /* x */
-			    functor_poke(rfp,idx, 2, StX, 0);
-			    break;
-			  case 3: /* z */
-			    functor_poke(rfp,idx, 3, HiZ, 0);
-			    break;
-		      }
-		}
-
-		delete[]bits;
-		break;
-	  }
-#endif
 #if 0
 	  case vpiDecStrVal: {
 		unsigned char*bits = new unsigned char[wid];
@@ -822,6 +793,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.73  2006/02/21 02:39:27  steve
+ *  Support string values for memory words.
+ *
  * Revision 1.72  2005/11/30 00:42:14  steve
  *  vpi_signal supports vvp_fun_signal_vec types.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.64 2005/07/06 04:29:25 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.65 2006/02/21 02:39:27 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -395,25 +395,25 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 				     unsigned int nbits,
 				     char *buf, unsigned int nbuf,
 				     int signed_flag);
-
-extern void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
-				 const char*buf, bool signed_flag);
+extern unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
+				     char *buf, unsigned int nbuf,
+				     int signed_flag);
 
 extern void vpip_bin_str_to_bits(unsigned char*bits, unsigned nbits,
 				 const char*buf, bool signed_flag);
 
 extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
-extern void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
-				 const char*buf, bool signed_flag);
 
 extern void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
 				 char*buf, unsigned nbuf, bool signed_flag);
 extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
 
-extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
-				 const char*buf, bool signed_flag);
+extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);
+extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str, bool sign);
+extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
+
 
 /*
  * Function defined in vpi_signal.cc to manage vpi_get_* persistent
@@ -429,6 +429,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.65  2006/02/21 02:39:27  steve
+ *  Support string values for memory words.
+ *
  * Revision 1.64  2005/07/06 04:29:25  steve
  *  Implement real valued signals and arith nodes.
  *
