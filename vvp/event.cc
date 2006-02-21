@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.20 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: event.cc,v 1.21 2006/02/21 04:57:26 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -158,6 +158,8 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       run_waiting_threads_();
       vvp_net_t*net = port.ptr();
       vvp_send_vec4(net->out, bit);
+
+      vpip_run_named_event_callbacks(handle_);
 }
 
 /*
@@ -248,6 +250,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.21  2006/02/21 04:57:26  steve
+ *  Callbacks for named event triggers.
+ *
  * Revision 1.20  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *
