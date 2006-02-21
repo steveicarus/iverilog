@@ -17,11 +17,11 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.14 2004/05/20 00:40:34 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.15 2006/02/21 02:38:44 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
-CXX=gcc
+CXX=g++
 CFLAGS="@PIC@ -O -I@INCLUDEDIR@"
 
 # These are used for linking...
@@ -63,6 +63,7 @@ do
 	 ;;
 
     *.cc) CXSRC="$CXSRC $parm"
+	 LD=$CXX
          if [ x$OUT = x ]; then
 	    OUT=`basename $parm .cc`
 	 fi
