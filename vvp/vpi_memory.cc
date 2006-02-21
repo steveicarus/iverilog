@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.29 2006/02/21 02:39:27 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.30 2006/02/21 02:56:49 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -453,42 +453,40 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 #endif
-#if 0
 	  case vpiVectorVal: {
-		  unsigned hwid = (width - 1)/32 + 1;
+		unsigned hwid = (width - 1)/32 + 1;
 
-		  rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
-		  s_vpi_vecval *op = (p_vpi_vecval)rbuf;
-		  vp->value.vector = op;
+		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+		vp->value.vector = op;
 
-		  op->aval = op->bval = 0;
-		  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-			switch (memory_get(rfp->mem->mem, bidx+idx)) {
-			case 0:
-			      op->aval &= ~(1 << idx % 32);
-			      op->bval &= ~(1 << idx % 32);
-			      break;
-			case 1:
-			      op->aval |=  (1 << idx % 32);
-			      op->bval &= ~(1 << idx % 32);
-			      break;
-			case 2:
-			      op->aval |= (1 << idx % 32);
-			      op->bval |= (1 << idx % 32);
-			      break;
-			case 3:
-			      op->aval &= ~(1 << idx % 32);
-			      op->bval |=  (1 << idx % 32);
-			      break;
-			}
-			if (!((idx+1) % 32) && (idx+1 < width)) {
-			      op++;
-			      op->aval = op->bval = 0;
-			}
-		  }
-		  break;
+		op->aval = op->bval = 0;
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      switch (word_val.value(idx)) {
+			  case BIT4_0:
+			    op->aval &= ~(1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+			    break;
+			  case BIT4_1:
+			    op->aval |=  (1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+			    break;
+			  case BIT4_X:
+			    op->aval |= (1 << idx % 32);
+			    op->bval |= (1 << idx % 32);
+			    break;
+			  case BIT4_Z:
+			    op->aval &= ~(1 << idx % 32);
+			    op->bval |=  (1 << idx % 32);
+			    break;
+		      }
+		      if (!((idx+1) % 32) && (idx+1 < width)) {
+			    op++;
+			    op->aval = op->bval = 0;
+		      }
+		}
+		break;
 	  }
-#endif
       }
 }
 
@@ -555,6 +553,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.30  2006/02/21 02:56:49  steve
+ *  Get vpiVectorVal from memory words.
+ *
  * Revision 1.29  2006/02/21 02:39:27  steve
  *  Support string values for memory words.
  *
