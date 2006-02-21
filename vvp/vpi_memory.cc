@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.30 2006/02/21 02:56:49 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.31 2006/02/21 03:19:03 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -421,38 +421,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		vp->value.integer = val;
 		break;
 	  }
-#if 0
-	  case vpiDecStrVal: {
-		unsigned char*bits = new unsigned char[width];
 
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-		      bits[idx] = memory_get(rfp->mem->mem, bidx+idx);
-
-		rbuf = need_result_buf(width+1, RBUF_VAL);
-		vpip_bits_to_dec_str(bits, width, rbuf, width+1, false);
-
-		delete[]bits;
-		vp->value.str = rbuf;
-		break;
-	  }
-#endif
-#if 0
-      	  case vpiIntVal:
-	    assert(width <= 8 * sizeof vp->value.integer);
-
-	    vp->value.integer = 0;
-	    for (unsigned idx = 0;  idx < width;  idx += 1) {
-
-		  unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
-		  if (bit>1) {
-			vp->value.integer = 0;
-			break;
-		  }
-
-		  vp->value.integer |= bit << idx;
-	    }
-	    break;
-#endif
 	  case vpiVectorVal: {
 		unsigned hwid = (width - 1)/32 + 1;
 
@@ -553,6 +522,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.31  2006/02/21 03:19:03  steve
+ *  Remove dead code.
+ *
  * Revision 1.30  2006/02/21 02:56:49  steve
  *  Get vpiVectorVal from memory words.
  *
