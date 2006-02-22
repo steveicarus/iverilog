@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.41 2005/12/05 21:21:18 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.42 2006/02/22 03:08:53 steve Exp $"
 #endif
 
 /*
@@ -492,7 +492,7 @@ void vvp_fun_signal::get_value(struct t_vpi_value*vp)
 	    break;
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported\n",
+		    "format %d not supported (fun_signal)\n",
 		    vp->format);
       }
 }
@@ -507,7 +507,7 @@ void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
 	    break;
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported\n",
+		    "format %d not supported (fun_signal8)\n",
 		    vp->format);
       }
 }
@@ -564,7 +564,7 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported\n",
+		    "format %d not supported (fun_signal_real)\n",
 		    vp->format);
       }
 }
@@ -572,6 +572,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.42  2006/02/22 03:08:53  steve
+ *  Some trivial log message improvements.
+ *
  * Revision 1.41  2005/12/05 21:21:18  steve
  *  Fixes for stubborn compilers.
  *
