@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.21 2006/02/19 00:11:33 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.22 2006/02/25 05:03:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1458,7 +1458,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
       NetFF*ff = nex_ff[0].ff;
       connect(ff->pin_Clock(), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
+	    ff->attribute(perm_string::literal("ivl:clock_polarity"), verinum("INVERT"));
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, nex_ff,
@@ -1639,6 +1639,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.22  2006/02/25 05:03:29  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.39.2.21  2006/02/19 00:11:33  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

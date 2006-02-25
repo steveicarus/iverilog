@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.2 2006/02/19 00:11:35 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.3 2006/02/25 05:03:30 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -36,6 +36,18 @@ inline static char hex_digit(unsigned i)
 {
       i &= 0xf;
       return i>=10 ? i-10+'A' : i+'0';
+}
+
+ivl_attribute_t find_lpm_attr(ivl_lpm_t net, const char*key)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < ivl_lpm_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t atr = ivl_lpm_attr_val(net, idx);
+	    if (strcmp(key,atr->key) == 0)
+		  return atr;
+      }
+
+      return 0;
 }
 
 const char *vvp_mangle_id(const char *id)
@@ -1304,26 +1316,45 @@ static void draw_lpm_ff(ivl_lpm_t net)
       const char*aset_bits = 0;
 
       unsigned width, idx;
+      ivl_attribute_t clock_pol = find_lpm_attr(net, "ivl:clock_polarity");
 
       width = ivl_lpm_width(net);
 
-	/*        Q   C   CE  D   RS  --> Q+ */
-      fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
-	      " \"?" "r" "1" "0" "00"    "0\","
-	      " \"?" "r" "1" "1" "00"    "1\","
-	      " \"?" "r" "1" "x" "00"    "x\","
-	      " \"0" "r" "x" "0" "00"    "0\","
-	      " \"1" "r" "x" "1" "00"    "1\","
-	      " \"?" "*" "0" "?" "00"    "-\","
-	      " \"?" "_" "?" "?" "00"    "-\","
-	      " \"?" "?" "?" "?" "01"    "1\","
-	      " \"?" "?" "?" "?" "1?"    "0\","
-	      " \"?" "?" "1" "?" "00"    "-\","
-	      " \"?" "?" "?" "?" "00"    "-\""
-	      ";\n",
-	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)));
-
+      if (clock_pol) {
+	      /*        Q   C   CE  D   RS  --> Q+ */
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
+		    " \"?" "f" "1" "0" "00"    "0\","
+		    " \"?" "f" "1" "1" "00"    "1\","
+		    " \"?" "f" "1" "x" "00"    "x\","
+		    " \"0" "f" "x" "0" "00"    "0\","
+		    " \"1" "f" "x" "1" "00"    "1\","
+		    " \"?" "*" "0" "?" "00"    "-\","
+		    " \"?" "_" "?" "?" "00"    "-\","
+		    " \"?" "?" "?" "?" "01"    "1\","
+		    " \"?" "?" "?" "?" "1?"    "0\","
+		    " \"?" "?" "1" "?" "00"    "-\","
+		    " \"?" "?" "?" "?" "00"    "-\""
+		    ";\n",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+      } else {
+	      /*        Q   C   CE  D   RS  --> Q+ */
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
+		    " \"?" "r" "1" "0" "00"    "0\","
+		    " \"?" "r" "1" "1" "00"    "1\","
+		    " \"?" "r" "1" "x" "00"    "x\","
+		    " \"0" "r" "x" "0" "00"    "0\","
+		    " \"1" "r" "x" "1" "00"    "1\","
+		    " \"?" "*" "0" "?" "00"    "-\","
+		    " \"?" "_" "?" "?" "00"    "-\","
+		    " \"?" "?" "?" "?" "01"    "1\","
+		    " \"?" "?" "?" "?" "1?"    "0\","
+		    " \"?" "?" "1" "?" "00"    "-\","
+		    " \"?" "?" "?" "?" "00"    "-\""
+		    ";\n",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+      }
       aset_expr = ivl_lpm_aset_value(net);
       if (aset_expr) {
 	    assert(ivl_expr_width(aset_expr) == width);
@@ -1745,6 +1776,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.3  2006/02/25 05:03:30  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.103.2.2  2006/02/19 00:11:35  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

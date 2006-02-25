@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.5 2006/02/19 00:11:34 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.6 2006/02/25 05:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,6 +34,23 @@
 # include  <stdio.h>
 
 static FILE*out;
+
+static void show_attribute(ivl_attribute_t attr, unsigned ind)
+{
+      switch (attr->type) {
+	  case IVL_ATT_VOID:
+	    fprintf(out, "%*s(* %s *)\n", ind,"", attr->key);
+	    break;
+	  case IVL_ATT_STR:
+	    fprintf(out, "%*s(* %s = \"%s\" *)\n", ind,"", attr->key,
+		    attr->val.str);
+	    break;
+	  case IVL_ATT_NUM:
+	    fprintf(out, "%*s(* %s = %ld *)\n", ind,"", attr->key,
+		    attr->val.num);
+	    break;
+      }
+}
 
 static void show_expression(ivl_expr_t net, unsigned ind)
 {
@@ -433,6 +450,11 @@ static void show_lpm(ivl_lpm_t net)
 		    ivl_lpm_width(net),
 		    ivl_lpm_signed(net));
       }
+
+      for (idx = 0 ;  idx < ivl_lpm_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t atr = ivl_lpm_attr_val(net,idx);
+	    show_attribute(atr, 4);
+      }
 }
 
 static void show_assign_lval(ivl_lval_t lval, unsigned ind)
@@ -643,19 +665,7 @@ static int show_process(ivl_process_t net, void*x)
 
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
-	    switch (attr->type) {
-		case IVL_ATT_VOID:
-		  fprintf(out, "    (* %s *)\n", attr->key);
-		  break;
-		case IVL_ATT_STR:
-		  fprintf(out, "    (* %s = \"%s\" *)\n", attr->key,
-			  attr->val.str);
-		  break;
-		case IVL_ATT_NUM:
-		  fprintf(out, "    (* %s = %ld *)\n", attr->key,
-			  attr->val.num);
-		  break;
-	    }
+	    show_attribute(attr,4);
       }
 
       show_statement(ivl_process_stmt(net), 4);
@@ -1023,6 +1033,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.6  2006/02/25 05:03:30  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.90.2.5  2006/02/19 00:11:34  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

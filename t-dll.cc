@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.3 2006/02/19 00:11:34 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.4 2006/02/25 05:03:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -967,6 +967,8 @@ bool dll_target::net_function(const NetUserFunc*net)
       obj->type = IVL_LPM_UFUNC;
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
+      obj->attr = 0;
+      obj->nattr = 0;
       assert(obj->scope);
 
 	/* Get the definition of the function and save it. */
@@ -1109,6 +1111,8 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       obj->name = net->name(); // NetAddSub names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
+      obj->attr  = 0;
+      obj->nattr = 0;
       assert(obj->scope);
 
       obj->u_.arith.signed_flag = 0;
@@ -1178,6 +1182,8 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SHIFTL;
       obj->name = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1245,6 +1251,8 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 void dll_target::lpm_compare(const NetCompare*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->attr  = 0;
+      obj->nattr = 0;
       obj->name = net->name(); // NetCompare names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
@@ -1359,6 +1367,8 @@ void dll_target::lpm_divide(const NetDivide*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_DIVIDE;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1429,6 +1439,8 @@ void dll_target::lpm_modulo(const NetModulo*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MOD;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1504,6 +1516,8 @@ ivl_lpm_t dll_target::lpm_decode_ff_(const NetDecode*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_DECODE;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       obj->scope = find_scope(des_, net->scope());
 
       obj->u_.mux.swid  = net->awidth();
@@ -1538,11 +1552,16 @@ void dll_target::lpm_ff(const NetFF*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       obj->scope = find_scope(des_, net->scope());
       obj->u_.ff.a.decode = lpm_decode_ff_(net->get_demux());
       assert(obj->scope);
 
       obj->u_.ff.width = net->width();
+
+      obj->nattr = net->attr_cnt();
+      obj->attr = fill_in_attributes(net);
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1655,6 +1674,8 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       obj->u_.ff.a.mem = find_memory(des_, net->mem());
       assert(obj->u_.ff.a.mem);
       obj->scope = find_scope(des_, net->mem()->scope());
@@ -1769,6 +1790,8 @@ void dll_target::lpm_mult(const NetMult*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MULT;
       obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1849,6 +1872,8 @@ void dll_target::lpm_mux(const NetMux*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
       obj->name  = net->name(); // NetMux names are permallocated
+      obj->attr  = 0;
+      obj->nattr = 0;
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -2225,6 +2250,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.4  2006/02/25 05:03:29  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.131.2.3  2006/02/19 00:11:34  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

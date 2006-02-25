@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108.2.1 2006/02/19 00:11:33 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108.2.2 2006/02/25 05:03:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -618,6 +618,19 @@ extern "C" const char* ivl_udp_name(ivl_udp_t net)
 {
       assert(net->name);
       return net->name;
+}
+
+extern "C" unsigned ivl_lpm_attr_cnt(ivl_lpm_t net)
+{
+      return net->nattr;
+}
+
+extern "C" ivl_attribute_t ivl_lpm_attr_val(ivl_lpm_t net, unsigned idx)
+{
+      if (idx >= net->nattr)
+	    return 0;
+      else
+	    return net->attr + idx;
 }
 
 extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
@@ -1951,6 +1964,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108.2.2  2006/02/25 05:03:29  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.108.2.1  2006/02/19 00:11:33  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

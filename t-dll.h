@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115.2.1 2006/02/19 00:11:34 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115.2.2 2006/02/25 05:03:30 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -292,6 +292,9 @@ struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
       perm_string name;
+
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
 
       union {
 	    struct ivl_lpm_ff_s {
@@ -690,6 +693,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115.2.2  2006/02/25 05:03:30  steve
+ *  Add support for negedge FFs by using attributes.
+ *
  * Revision 1.115.2.1  2006/02/19 00:11:34  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *
