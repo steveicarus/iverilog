@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.28 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: memory.cc,v 1.29 2006/03/05 05:45:58 steve Exp $"
 #endif
 
 #include "memory.h"
 #include "symbols.h"
 #include "schedule.h"
+#include "vpi_priv.h"
 #include <assert.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -52,6 +53,7 @@ struct vvp_memory_s
 
 	// List of ports into this memory.
       class vvp_fun_memport* port_list;
+      vpiHandle vpi_self;
 };
 
 #define VVP_MEMORY_NO_ADDR ((int)0x80000000)
@@ -119,6 +121,13 @@ void memory_configure(vvp_memory_t mem,
       assert(mem->words);
 
       mem->port_list = 0;
+      mem->vpi_self  = 0;
+}
+
+void memory_attach_self(vvp_memory_t mem, vpiHandle self)
+{
+      assert(mem->vpi_self == 0);
+      mem->vpi_self = self;
 }
 
 unsigned memory_word_width(vvp_memory_t mem)
@@ -208,6 +217,8 @@ void memory_set_word(vvp_memory_t mem, unsigned addr,
 		 ; cur ;  cur = cur->next_) {
 	    cur->check_word_change(addr);
       }
+
+      vpip_run_memory_value_change(mem->vpi_self, addr);
 }
 
 void schedule_memory(vvp_memory_t mem, unsigned addr,
@@ -264,6 +275,9 @@ void vvp_fun_memport::check_word_change(unsigned long addr)
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.29  2006/03/05 05:45:58  steve
+ *  Add support for memory value change callbacks.
+ *
  * Revision 1.28  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *

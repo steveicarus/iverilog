@@ -20,10 +20,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.11 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: memory.h,v 1.12 2006/03/05 05:45:58 steve Exp $"
 #endif
 
 #include "vvp_net.h"
+#include "vpi_user.h"
 
 /*
 **  vvp_memory_t         is a memory
@@ -52,6 +53,7 @@ struct memory_address_range {
 extern void memory_configure(vvp_memory_t mem, int msb, int lsb,
 			     unsigned idxs,
 			     const struct memory_address_range *idx);
+extern void memory_attach_self(vvp_memory_t mem, vpiHandle self);
 
 /*
  * init_word and set_word functions take the memory to be manipulated
@@ -97,6 +99,7 @@ long memory_right_range(vvp_memory_t mem, unsigned ix);
   /* Get the user defined geometry for the memory *word*. */
 long memory_word_left_range(vvp_memory_t mem);
 long memory_word_right_range(vvp_memory_t mem);
+
 
 /* vvp_fun_memport
  * The vvp_fum_memport is a structural port into a vvp_memory_t
@@ -154,6 +157,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.12  2006/03/05 05:45:58  steve
+ *  Add support for memory value change callbacks.
+ *
  * Revision 1.11  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *

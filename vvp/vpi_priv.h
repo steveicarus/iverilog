@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.66 2006/02/21 05:31:54 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.67 2006/03/05 05:45:58 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -218,6 +218,10 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  */
 
 extern vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name);
+extern void vpip_memory_value_change(struct __vpiCallback*cbh,
+				     vpiHandle ref);
+
+extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
 
 /*
  * These are the various variable types.
@@ -429,6 +433,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.67  2006/03/05 05:45:58  steve
+ *  Add support for memory value change callbacks.
+ *
  * Revision 1.66  2006/02/21 05:31:54  steve
  *  Put strings for reg objects.
  *

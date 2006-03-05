@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.31 2006/02/21 03:19:03 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.32 2006/03/05 05:45:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -52,6 +52,7 @@ struct __vpiMemory {
       struct __vpiDecConst word_left_range;
       struct __vpiDecConst word_right_range;
 
+      struct __vpiCallback*value_change_cb;
 };
 
 struct __vpiMemWordIterator {
@@ -360,16 +361,15 @@ static char* memory_word_get_str(int code, vpiHandle ref)
       return 0;
 }
 
-static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
+/*
+ * This is a generic function to convert a vvp_vector4_t value into a
+ * vpi_value structure. The format is selected by the format of the
+ * value pointer. The width is the real width of the word, in case the
+ * word_val width is not accurate.
+ */
+void vec4_get_value(const vvp_vector4_t word_val, unsigned width,
+			   s_vpi_value*vp)
 {
-      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
-      assert(rfp->base.vpi_type->type_code==vpiMemoryWord);
-
-      unsigned width = memory_word_width(rfp->mem->mem);
-      unsigned word_address = rfp->index.value;
-
-      vvp_vector4_t word_val = memory_get_word(rfp->mem->mem, word_address);
-
       char *rbuf = 0;
 
       switch (vp->format) {
@@ -459,6 +459,19 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
+static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
+{
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
+      assert(rfp->base.vpi_type->type_code==vpiMemoryWord);
+
+      unsigned width = memory_word_width(rfp->mem->mem);
+      unsigned word_address = rfp->index.value;
+
+      vvp_vector4_t word_val = memory_get_word(rfp->mem->mem, word_address);
+
+      vec4_get_value(word_val, width, vp);
+}
+
 static const struct __vpirt vpip_memory_rt = {
       vpiMemory,
       vpi_memory_get,
@@ -499,6 +512,45 @@ static void memory_make_word_handles(struct __vpiMemory*rfp)
       }
 }
 
+/*
+ * Run the callbacks for a memory value change. The memory.cc methods
+ * call this method with the canonical address of the word that
+ * changed, and we here run through all the callbacks for the memory,
+ * passing the translated index through.
+ */
+void vpip_run_memory_value_change(vpiHandle ref, unsigned addr)
+{
+      struct __vpiMemory*obj = reinterpret_cast<struct __vpiMemory*>(ref);
+
+      vvp_vector4_t word_val = memory_get_word(obj->mem, addr);
+      unsigned width = memory_word_width(obj->mem);
+
+      for (struct __vpiCallback*cur=obj->value_change_cb;
+	   cur != 0 ;  cur = cur->next) {
+
+	    if (cur->cb_data.cb_rtn == 0)
+		  continue;
+
+	    if (cur->cb_data.value)
+		  vec4_get_value(word_val, width, cur->cb_data.value);
+
+	    cur->cb_data.index = addr;
+	    vpi_mode_flag = VPI_MODE_RWSYNC;
+	    (cur->cb_data.cb_rtn) (&cur->cb_data);
+	    vpi_mode_flag = VPI_MODE_NONE;
+      }
+}
+
+/*
+ * Attach the callback to the memory.
+ */
+void vpip_memory_value_change(struct __vpiCallback*cbh, vpiHandle ref)
+{
+      struct __vpiMemory*obj = reinterpret_cast<struct __vpiMemory*>(ref);
+      cbh->next = obj->value_change_cb;
+      obj->value_change_cb = cbh;
+}
+
 vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 {
       struct __vpiMemory*obj = (struct __vpiMemory*)
@@ -509,7 +561,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
       obj->scope = vpip_peek_current_scope();
       obj->mem = mem;
       obj->name = vpip_name_string(name);
+      obj->value_change_cb = 0;
 
+      memory_attach_self(mem, &(obj->base));
       vpip_make_dec_const(&obj->left_range, memory_left_range(mem, 0));
       vpip_make_dec_const(&obj->right_range, memory_right_range(mem, 0));
       vpip_make_dec_const(&obj->word_left_range, memory_word_left_range(mem));
@@ -522,6 +576,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.32  2006/03/05 05:45:58  steve
+ *  Add support for memory value change callbacks.
+ *
  * Revision 1.31  2006/02/21 03:19:03  steve
  *  Remove dead code.
  *

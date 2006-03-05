@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.42 2006/02/22 03:08:53 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.43 2006/03/05 05:45:58 steve Exp $"
 #endif
 
 /*
@@ -149,6 +149,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
 	    obj->next = nev->callbacks;
 	    nev->callbacks = obj;
+	    break;
+
+	  case vpiMemory:
+	    vpip_memory_value_change(obj, data->obj);
 	    break;
 
 	  case vpiModule:
@@ -572,6 +576,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.43  2006/03/05 05:45:58  steve
+ *  Add support for memory value change callbacks.
+ *
  * Revision 1.42  2006/02/22 03:08:53  steve
  *  Some trivial log message improvements.
  *
