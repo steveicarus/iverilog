@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.33 2006/03/06 05:43:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -263,7 +263,7 @@ static int binary_get(int code, vpiHandle ref)
 	    return rfp->signed_flag? 1 : 0;
 
 	  case vpiSize:
-	    return rfp->nbits;
+	    return rfp->bits.size();
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
@@ -273,81 +273,6 @@ static int binary_get(int code, vpiHandle ref)
       }
 }
 
-static void binary_vpiStringVal(struct __vpiBinaryConst*rfp, p_vpi_value vp)
-{
-      unsigned nchar = rfp->nbits / 8;
-      unsigned tail = rfp->nbits%8;
-
-      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
-      char*cp = rbuf;
-
-      if (tail > 0) {
-	    char char_val = 0;
-	    for (unsigned idx = rfp->nbits-tail; idx < rfp->nbits; idx += 1) {
-		  unsigned nibble = idx/4;
-		  unsigned shift  = 2 * (idx%4);
-		  unsigned val = (rfp->bits[nibble] >> shift) & 3;
-		  if (val & 1)
-			char_val |= 1 << idx;
-	    }
-
-	    if (char_val != 0)
-		  *cp++ = char_val;
-      }
-
-      for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
-	    unsigned bit = (nchar - idx - 1) * 8;
-	    unsigned nibble = bit/4;
-	    unsigned vall = rfp->bits[nibble+0];
-	    unsigned valh = rfp->bits[nibble+1];
-
-	    char char_val = 0;
-	    if (vall&0x01) char_val |= 0x01;
-	    if (vall&0x04) char_val |= 0x02;
-	    if (vall&0x10) char_val |= 0x04;
-	    if (vall&0x40) char_val |= 0x08;
-	    if (valh&0x01) char_val |= 0x10;
-	    if (valh&0x04) char_val |= 0x20;
-	    if (valh&0x10) char_val |= 0x40;
-	    if (valh&0x40) char_val |= 0x80;
-
-	    if (char_val != 0)
-		  *cp++ = char_val;
-      }
-
-      *cp = 0;
-      vp->value.str = rbuf;
-}
-
-static int bits2int(struct __vpiBinaryConst*rfp)
-{
-      unsigned val = 0;
-      unsigned bit_val = 0;
-      unsigned bit_limit = rfp->nbits;
-      if (bit_limit > 8*sizeof(val))
-	bit_limit = 8*sizeof(val);
-
-      for (unsigned idx = 0 ;  idx < bit_limit ;  idx += 1) {
-	unsigned nibble = idx/4;
-	unsigned shift  = 2 * (idx%4);
-	bit_val = (rfp->bits[nibble] >> shift) & 3;
-	if (bit_val > 1) {
-	      return 0;
-	} else {
-	      val |= bit_val << idx;
-	}
-      }
-
-      /* sign extend */
-      if (rfp->signed_flag && bit_val) {
-	  for (unsigned idx = rfp->nbits; idx <sizeof(val)*8; idx++)
-	  {
-	  val |= bit_val << idx;
-	  }
-      }
-
-      return val;
-}
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
@@ -360,125 +285,16 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
       switch (vp->format) {
 
 	  case vpiObjTypeVal:
-	  case vpiBinStrVal: {
-	    rbuf = need_result_buf(rfp->nbits + 1, RBUF_VAL);
-	    for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
-		  unsigned nibble = idx/4;
-		  unsigned shift  = 2 * (idx%4);
-		  unsigned val = (rfp->bits[nibble] >> shift) & 3;
-
-		  rbuf[rfp->nbits-idx-1] = "01xz"[val];
-	    }
-	    rbuf[rfp->nbits] = 0;
-	    vp->value.str = rbuf;
-	    break;
-	  }
-
-	  case vpiDecStrVal: {
-		unsigned wid = rfp->nbits;
-		rbuf = need_result_buf(rfp->nbits + 1, RBUF_VAL);
-		unsigned char*tmp = new unsigned char[wid];
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		      tmp[idx] = (rfp->bits[idx/4] >> 2*(idx%4)) & 3;
-
-		vpip_bits_to_dec_str(tmp, wid, rbuf, wid + 1,
-				     rfp->signed_flag);
-
-		delete[]tmp;
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiHexStrVal: {
-		unsigned nchar = (rfp->nbits+3)/4;
-	        rbuf = need_result_buf(nchar + 1, RBUF_VAL);
-		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 4) {
-		      unsigned nibble = idx/4;
-		      unsigned vals = rfp->bits[nibble];
-
-		      if (vals == 0xff) {
-			    rbuf[nchar-idx/4-1] = 'z';
-		      } else if (vals == 0xaa) {
-			    rbuf[nchar-idx/4-1] = 'x';
-		      } else if (vals & 0xaa) {
-			    rbuf[nchar-idx/4-1] = 'X';
-		      } else {
-			    unsigned val = vals&1;
-			    if (vals&0x04) val |= 2;
-			    if (vals&0x10) val |= 4;
-			    if (vals&0x40) val |= 8;
-			    rbuf[nchar-idx/4-1] = "0123456789abcdef"[val];
-		      }
-		}
-
-		rbuf[nchar] = 0;
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiOctStrVal: {
-		unsigned nchar = (rfp->nbits+2)/3;
-	        rbuf = need_result_buf(nchar + 1, RBUF_VAL);
-		vpip_bits_to_oct_str(rfp->bits, rfp->nbits,
-				     rbuf, nchar+1, rfp->signed_flag);
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiIntVal: {
-		vp->value.integer = bits2int(rfp);
-		break;
-	  }
-
-	  case vpiVectorVal: {
-	      unsigned int obit = 0;
-	      unsigned hwid = (rfp->nbits - 1)/32 + 1;
-	      rbuf = need_result_buf(hwid*sizeof(s_vpi_vecval), RBUF_VAL);
-
-	      s_vpi_vecval *op = (p_vpi_vecval)rbuf;
-	      vp->value.vector = op;
-
-	      op->aval = op->bval = 0;
-	      for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
-		unsigned nibble = idx/4;
-		unsigned shift  = 2 * (idx%4);
-		unsigned bit_val = (rfp->bits[nibble] >> shift) & 3;
-
-		switch (bit_val) {
-		case 0:
-		  op->aval &= ~(1 << obit);
-		  op->bval &= ~(1 << obit);
-		  break;
-		case 1:
-		  op->aval |= (1 << obit);
-		  op->bval &= ~(1 << obit);
-		  break;
-		case 2:
-		  op->aval |= (1 << obit);
-		  op->bval |= (1 << obit);
-		  break;
-		case 3:
-		  op->aval &= ~(1 << obit);
-		  op->bval |= (1 << obit);
-		  break;
-		}
-		obit++;
-		if (!(obit % 32)) {
-		      op += 1;
-		      if ((op - vp->value.vector) < (long)hwid)
-			    op->aval = op->bval = 0;
-		      obit = 0;
-		}
-	      }
-	      break;
-	  }
-
-	  case vpiRealVal:
-	      vp->value.real = (double)bits2int(rfp);
-	    break;
-
+	  case vpiBinStrVal:
+	  case vpiDecStrVal:
+	  case vpiOctStrVal:
+	  case vpiHexStrVal:
+	  case vpiIntVal:
+	  case vpiVectorVal:
 	  case vpiStringVal:
-	    binary_vpiStringVal(rfp, vp);
+	  case vpiRealVal:
+	    vpip_vec4_get_value(rfp->bits, rfp->bits.size(),
+				rfp->signed_flag, vp);
 	    break;
 
 	  default:
@@ -513,9 +329,7 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
       obj->base.vpi_type = &vpip_binary_rt;
 
       obj->signed_flag = 0;
-      obj->nbits = wid;
-      obj->bits = (unsigned char*)malloc((obj->nbits + 3) / 4);
-      memset(obj->bits, 0, (obj->nbits + 3) / 4);
+      obj->bits = vvp_vector4_t(wid);
 
       const char*bp = bits;
       if (*bp == 's') {
@@ -523,25 +337,24 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 	    obj->signed_flag = 1;
       }
 
-      for (unsigned idx = 0 ;  idx < obj->nbits ;  idx += 1) {
-	    unsigned nibble = idx / 4;
-	    unsigned val = 0;
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t val = BIT4_0;
 	    switch (bp[wid-idx-1]) {
 		case '0':
-		  val = 0;
+		  val = BIT4_0;
 		  break;
 		case '1':
-		  val = 1;
+		  val = BIT4_1;
 		  break;
 		case 'x':
-		  val = 2;
+		  val = BIT4_X;
 		  break;
 		case 'z':
-		  val = 3;
+		  val = BIT4_Z;
 		  break;
 	    }
 
-	    obj->bits[nibble] |= val << (2 * (idx%4));
+	    obj->bits.set_bit(idx, val);
       }
 
       free(bits);
@@ -652,52 +465,13 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.33  2006/03/06 05:43:15  steve
+ *  Cleanup vpi_const to use vec4 values.
+ *
  * Revision 1.32  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
  * Revision 1.31  2004/05/18 18:43:38  steve
  *  Allow vpiParamter as a string type.
- *
- * Revision 1.30  2003/05/30 04:22:13  steve
- *  Add tf_strgetp functions.
- *
- * Revision 1.29  2003/05/29 03:46:21  steve
- *  Add tf_getp/putp support for integers
- *  and real valued arguments.
- *
- *  Add tf_mipname function.
- *
- * Revision 1.28  2003/03/17 23:47:25  steve
- *  Make a safe copy of const string values.
- *
- * Revision 1.27  2003/03/15 05:44:50  steve
- *  Remove excess assignment.
- *
- * Revision 1.26  2003/03/14 05:02:13  steve
- *  Streamline parameter string value, get paramete scope.
- *
- * Revision 1.25  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.24  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.23  2003/03/10 19:14:27  steve
- *  More carful about shifting beyond word size.
- *
- * Revision 1.22  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.21  2002/11/03 20:33:43  steve
- *  Compiler error wrt ptrdiff_t.
- *
- * Revision 1.20  2002/11/03 02:07:24  steve
- *  Get VectorVals from constant values.
- *
- * Revision 1.19  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.18  2002/06/23 18:23:09  steve
- *  trivial performance boost.
  */
 

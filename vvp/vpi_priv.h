@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.67 2006/03/05 05:45:58 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.68 2006/03/06 05:43:15 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -290,8 +290,7 @@ vpiHandle vpip_make_string_param(char*name, char*value);
 
 struct __vpiBinaryConst {
       struct __vpiHandle base;
-      unsigned nbits;
-      unsigned char*bits;
+      vvp_vector4_t bits;
       unsigned signed_flag :1;
 };
 
@@ -381,14 +380,7 @@ extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 extern const char* vpip_string(const char*str);
 extern const char* vpip_name_string(const char*str);
 
-#if 0
-/*
-**  Functions defined in vpi_scope.cc, to keep track of functor scope.
-*/
 
-extern vpiHandle ipoint_get_scope(vvp_ipoint_t ipt);
-extern void functor_set_scope(vpiHandle scope);
-#endif
 /*
  * This function is used to make decimal string versions of various
  * vectors. The input format is an array of bit values (0, 1, 2, 3)
@@ -418,6 +410,8 @@ extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);
 extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str, bool sign);
 extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
 
+extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
+				bool signed_flag, s_vpi_value*vp);
 
 /*
  * Function defined in vpi_signal.cc to manage vpi_get_* persistent
@@ -433,6 +427,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.68  2006/03/06 05:43:15  steve
+ *  Cleanup vpi_const to use vec4 values.
+ *
  * Revision 1.67  2006/03/05 05:45:58  steve
  *  Add support for memory value change callbacks.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.32 2006/03/05 05:45:58 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.33 2006/03/06 05:43:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -361,104 +361,6 @@ static char* memory_word_get_str(int code, vpiHandle ref)
       return 0;
 }
 
-/*
- * This is a generic function to convert a vvp_vector4_t value into a
- * vpi_value structure. The format is selected by the format of the
- * value pointer. The width is the real width of the word, in case the
- * word_val width is not accurate.
- */
-void vec4_get_value(const vvp_vector4_t word_val, unsigned width,
-			   s_vpi_value*vp)
-{
-      char *rbuf = 0;
-
-      switch (vp->format) {
-	  default:
-	    cerr << "internal error: Format "
-		 << vp->format
-		 << " not implemented" << endl;
-	    assert(0 && "format not implemented");
-
-	  case vpiBinStrVal:
-	    rbuf = need_result_buf(width+1, RBUF_VAL);
-	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		  vvp_bit4_t bit = word_val.value(idx);
-		  rbuf[width-idx-1] = "01xz"[bit];
-	    }
-	    rbuf[width] = 0;
-	    vp->value.str = rbuf;
-	    break;
-
-	  case vpiOctStrVal: {
-		unsigned hwid = (width+2) / 3;
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
-		vpip_vec4_to_oct_str(word_val, rbuf, hwid+1, false);
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiDecStrVal: {
-		rbuf = need_result_buf(width+1, RBUF_VAL);
-		vpip_vec4_to_dec_str(word_val, rbuf, width+1, false);
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiHexStrVal: {
-		unsigned  hwid = (width + 3) / 4;
-
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
-		rbuf[hwid] = 0;
-
-		vpip_vec4_to_hex_str(word_val, rbuf, hwid+1, false);
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiIntVal: {
-		unsigned long val;
-		vector4_to_value(word_val, val);
-		vp->value.integer = val;
-		break;
-	  }
-
-	  case vpiVectorVal: {
-		unsigned hwid = (width - 1)/32 + 1;
-
-		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
-		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
-		vp->value.vector = op;
-
-		op->aval = op->bval = 0;
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		      switch (word_val.value(idx)) {
-			  case BIT4_0:
-			    op->aval &= ~(1 << idx % 32);
-			    op->bval &= ~(1 << idx % 32);
-			    break;
-			  case BIT4_1:
-			    op->aval |=  (1 << idx % 32);
-			    op->bval &= ~(1 << idx % 32);
-			    break;
-			  case BIT4_X:
-			    op->aval |= (1 << idx % 32);
-			    op->bval |= (1 << idx % 32);
-			    break;
-			  case BIT4_Z:
-			    op->aval &= ~(1 << idx % 32);
-			    op->bval |=  (1 << idx % 32);
-			    break;
-		      }
-		      if (!((idx+1) % 32) && (idx+1 < width)) {
-			    op++;
-			    op->aval = op->bval = 0;
-		      }
-		}
-		break;
-	  }
-      }
-}
-
 static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
@@ -469,7 +371,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
       vvp_vector4_t word_val = memory_get_word(rfp->mem->mem, word_address);
 
-      vec4_get_value(word_val, width, vp);
+      vpip_vec4_get_value(word_val, width, false /* never signed */, vp);
 }
 
 static const struct __vpirt vpip_memory_rt = {
@@ -532,7 +434,7 @@ void vpip_run_memory_value_change(vpiHandle ref, unsigned addr)
 		  continue;
 
 	    if (cur->cb_data.value)
-		  vec4_get_value(word_val, width, cur->cb_data.value);
+		  vpip_vec4_get_value(word_val, width, false, cur->cb_data.value);
 
 	    cur->cb_data.index = addr;
 	    vpi_mode_flag = VPI_MODE_RWSYNC;
@@ -576,6 +478,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.33  2006/03/06 05:43:15  steve
+ *  Cleanup vpi_const to use vec4 values.
+ *
  * Revision 1.32  2006/03/05 05:45:58  steve
  *  Add support for memory value change callbacks.
  *

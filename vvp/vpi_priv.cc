@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.49 2005/12/05 21:19:55 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.50 2006/03/06 05:43:15 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -353,6 +353,166 @@ void vpi_set_vlog_info(int argc, char** argv)
     }
 }
 
+/*
+ * This is a generic function to convert a vvp_vector4_t value into a
+ * vpi_value structure. The format is selected by the format of the
+ * value pointer. The width is the real width of the word, in case the
+ * word_val width is not accurate.
+ */
+
+static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
+				  s_vpi_value*vp);
+
+void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
+			 bool signed_flag, s_vpi_value*vp)
+{
+      char *rbuf = 0;
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "internal error: Format %d not implemented\n",
+		    vp->format);
+	    assert(0 && "format not implemented");
+
+	  case vpiBinStrVal:
+	    rbuf = need_result_buf(width+1, RBUF_VAL);
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		  vvp_bit4_t bit = word_val.value(idx);
+		  rbuf[width-idx-1] = "01xz"[bit];
+	    }
+	    rbuf[width] = 0;
+	    vp->value.str = rbuf;
+	    break;
+
+	  case vpiOctStrVal: {
+		unsigned hwid = (width+2) / 3;
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		vpip_vec4_to_oct_str(word_val, rbuf, hwid+1, signed_flag);
+		vp->value.str = rbuf;
+		break;
+	  }
+
+	  case vpiDecStrVal: {
+		rbuf = need_result_buf(width+1, RBUF_VAL);
+		vpip_vec4_to_dec_str(word_val, rbuf, width+1, signed_flag);
+		vp->value.str = rbuf;
+		break;
+	  }
+
+	  case vpiHexStrVal: {
+		unsigned  hwid = (width + 3) / 4;
+
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		rbuf[hwid] = 0;
+
+		vpip_vec4_to_hex_str(word_val, rbuf, hwid+1, signed_flag);
+		vp->value.str = rbuf;
+		break;
+	  }
+
+	  case vpiIntVal: {
+		long val = 0;
+		vvp_bit4_t pad = BIT4_0;
+		if (signed_flag && word_val.size() > 0)
+		      pad = word_val.value(word_val.size()-1);
+
+		for (long idx = 0 ; idx < 8*sizeof(val) ;  idx += 1) {
+		      vvp_bit4_t val4 = pad;
+		      if (idx < word_val.size())
+			    val4 = word_val.value(idx);
+		      if (val4 == BIT4_1)
+			    val |= 1L << idx;
+		}
+
+		vp->value.integer = val;
+		break;
+	  }
+
+	  case vpiVectorVal: {
+		unsigned hwid = (width - 1)/32 + 1;
+
+		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+		vp->value.vector = op;
+
+		op->aval = op->bval = 0;
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      switch (word_val.value(idx)) {
+			  case BIT4_0:
+			    op->aval &= ~(1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+			    break;
+			  case BIT4_1:
+			    op->aval |=  (1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+			    break;
+			  case BIT4_X:
+			    op->aval |= (1 << idx % 32);
+			    op->bval |= (1 << idx % 32);
+			    break;
+			  case BIT4_Z:
+			    op->aval &= ~(1 << idx % 32);
+			    op->bval |=  (1 << idx % 32);
+			    break;
+		      }
+		      if (!((idx+1) % 32) && (idx+1 < width)) {
+			    op++;
+			    op->aval = op->bval = 0;
+		      }
+		}
+		break;
+	  }
+
+	  case vpiStringVal:
+	    vec4_get_value_string(word_val, width, vp);
+	    break;
+
+	  case vpiRealVal: {
+		unsigned long val;
+		vector4_to_value(word_val, val);
+		vp->value.real = val;
+		break;
+	  }
+      }
+}
+
+static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
+				  s_vpi_value*vp)
+{
+      unsigned nchar = width / 8;
+      unsigned tail = width % 8;
+
+      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+      char*cp = rbuf;
+
+      if (tail > 0) {
+	    char char_val = 0;
+	    for (unsigned idx = width-tail; idx < width ;  idx += 1) {
+		  vvp_bit4_t val = word_val.value(idx);
+		  if (val == BIT4_1)
+			char_val |= 1 << idx;
+	    }
+
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
+	    unsigned bit = (nchar - idx - 1) * 8;
+	    char char_val = 0;
+	    for (unsigned bdx = 0 ;  bdx < 8 ;  bdx += 1) {
+		  vvp_bit4_t val = word_val.value(bit+bdx);
+		  if (val == BIT4_1)
+			char_val |= 1 << bdx;
+	    }
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      *cp = 0;
+      vp->value.str = rbuf;
+}
+
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
       assert(expr);
@@ -686,6 +846,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.50  2006/03/06 05:43:15  steve
+ *  Cleanup vpi_const to use vec4 values.
+ *
  * Revision 1.49  2005/12/05 21:19:55  steve
  *  Be more careful with double types.
  *

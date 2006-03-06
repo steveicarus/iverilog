@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.34 2005/06/12 01:10:26 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.35 2006/03/06 05:43:15 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -207,96 +207,6 @@ static vpiHandle module_iter(int code, vpiHandle obj)
       return module_iter_subset(code, ref);
 }
 
-/*
-**  Keeping track of functor scope.  When the scope changes during
-**  compilation, we record the current number of functors in a list.
-**
-**  Why are we doing this?  The SDF annotator needs this for
-**  INTERCONNECT delays.  The INTERCONNECT delay is specified between
-**  a source modules output port and a target module input port, which
-**  are connected with a wire.  The vpiSignal for both ports point to
-**  the same functor output, together with all other ports that may be
-**  connected to the same wire.  The SDF annotator need to find those
-**  functors which are inside the scope of the target module, which
-**  are driven by the source functor.  And even this is only an
-**  approximation, in case the wire is connected to multiple inputs of
-**  the same module.  But those should have the same delays anyway.
-**
-*/
-#if 0
-struct functor_scope_s {
-      vpiHandle scope;
-      unsigned start;
-};
-#endif
-#if 0
-static struct functor_scope_s * functor_scopes = 0;
-static unsigned n_functor_scopes = 0;
-static unsigned a_functor_scopes = 0;
-#endif
-#if 0
-void functor_set_scope(vpiHandle scope)
-{
-      unsigned nfun = functor_limit();
-
-      if (n_functor_scopes) {
-	    functor_scope_s *last = &functor_scopes[n_functor_scopes - 1];
-
-	    if (last->scope == scope) {
-		  return;
-	    }
-
-	    if (last->start == nfun) {
-		  last->scope = scope;
-		  return;
-	    }
-      }
-
-      n_functor_scopes += 1;
-      if (n_functor_scopes >= a_functor_scopes) {
-	    a_functor_scopes += 512;
-	    functor_scopes = (struct functor_scope_s *)
-		  realloc(functor_scopes,
-			  a_functor_scopes*sizeof(struct functor_scope_s));
-	    assert(functor_scopes);
-      }
-
-      functor_scope_s *last = &functor_scopes[n_functor_scopes - 1];
-      last->start = nfun;
-      last->scope = scope;
-}
-#endif
-#if 0
-/*
-**  Look up the scope of a functor.
-**
-**  Cannot use bsearch, since we are not looking for an exact match
-*/
-vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
-{
-      if (n_functor_scopes == 0)
-	    return NULL;
-
-      unsigned fidx = ipt/4;
-
-      unsigned first = 0;
-      unsigned last = n_functor_scopes;
-      while (first < last) {
-	    unsigned next = (first+last)/2;
-	    functor_scope_s *cur = &functor_scopes[next];
-
-	    if (cur->start > fidx)
-		  last = next;
-	    else if (next == first)
-		  break;
-	    else
-		  first = next;
-      }
-
-      functor_scope_s *cur = &functor_scopes[first];
-      return cur->scope;
-}
-#endif
 
 static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
@@ -479,6 +389,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.35  2006/03/06 05:43:15  steve
+ *  Cleanup vpi_const to use vec4 values.
+ *
  * Revision 1.34  2005/06/12 01:10:26  steve
  *  Remove useless references to functor.h
  *
