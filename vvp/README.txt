@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.75 2006/01/02 05:32:06 steve Exp $
+ *  $Id: README.txt,v 1.76 2006/03/08 05:29:42 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -101,22 +101,23 @@ objects.
 
 The syntax of a parameter is:
 
-	<label> .param <name>, <type>, <value>;
+	<label> .param/str <name>, <value>;
+	<label> .param/b <name>, <value> [<msb>,<lsb>,<s>];
+	<label> .param/l <name>, <value> [<msb>,<lsb>,<s>];
+	<label> .param/r <name>, <value>;
 
 The <name> is a string that names the parameter. The name is placed in
-the current scope as a vpiParameter object. The <type> is one of the
-following:
+the current scope as a vpiParameter object. The .param suffix
+specifies the parameter type.
 
-	real          -- The parameter has a real value
-	string        -- The parameter has a string value
-	[<msb>,<lsb>,<s>]
-		      -- The parameter is a vector, with specified
-		         indices. The <s> is s or u for signed or
-			 unsigned.
+	.param/str    -- The parameter has a string value
+	.param/l      -- The parameter has a logic vector value
+	.param/b      -- The parameter has a boolean vector value
+	.param/r      -- The parameter has a real value
 
 The value, then, is appropriate for the data type. For example:
 
-	P_123 .param "hello", string, "Hello, World.";
+	P_123 .param/str "hello", "Hello, World.";
 
 
 FUNCTOR STATEMENTS:

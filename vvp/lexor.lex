@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.58 2006/01/02 05:32:07 steve Exp $"
+#ident "$Id: lexor.lex,v 1.59 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -114,7 +114,8 @@
 ".net8/s"   { return K_NET8_S; }
 ".net/real" { return K_NET_R; }
 ".net/s"    { return K_NET_S; }
-".param"    { return K_PARAM; }
+".param/l"  { return K_PARAM_L; }
+".param/str" { return K_PARAM_STR; }
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
 ".part/v"   { return K_PART_V; }
@@ -205,6 +206,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.59  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.58  2006/01/02 05:32:07  steve
  *  Require explicit delay node from source.
  *

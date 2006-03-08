@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.139 2006/01/02 05:33:20 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.140 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -2091,11 +2091,24 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, "P_%p .param \"%s\", string, \"%s\";\n",
+		  fprintf(vvp_out, "P_%p .param/str \"%s\", \"%s\";\n",
 			  par, ivl_parameter_basename(par),
 			  ivl_expr_string(pex));
 		  break;
+		case IVL_EX_NUMBER:
+		  fprintf(vvp_out, "P_%p .param/l \"%s\", C4<",
+			  par, ivl_parameter_basename(par));
+		  { const char*bits = ivl_expr_bits(pex);
+		    unsigned nbits = ivl_expr_width(pex);
+		    unsigned bb;
+		    for (bb = 0 ;  bb < nbits;  bb += 1)
+			  fprintf(vvp_out, "%c", bits[nbits-bb-1]);
+		  }
+		  fprintf(vvp_out, ">;\n");
+		  break;
 		default:
+		  fprintf(vvp_out, "; parameter type %d unsupported\n",
+			  ivl_expr_type(pex));
 		  break;
 	    }
       }
@@ -2153,6 +2166,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.140  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.139  2006/01/02 05:33:20  steve
  *  Node delays can be more general expressions in structural contexts.
  *

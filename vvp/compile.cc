@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.217 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: compile.cc,v 1.218 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -686,30 +686,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 	  && (tp[1] == 0)
 	  && (strspn(label+3, "01xz")+3 == (unsigned)(tp-label))) {
 
-	    size_t v4size = tp-label-3;
-	    vvp_vector4_t tmp (v4size);
-
-	    for (unsigned idx = 0 ;  idx < v4size ;  idx += 1) {
-		  vvp_bit4_t bit;
-		  switch (label[3+idx]) {
-		      case '0':
-			bit = BIT4_0;
-			break;
-		      case '1':
-			bit = BIT4_1;
-			break;
-		      case 'x':
-			bit = BIT4_X;
-			break;
-		      case 'z':
-			bit = BIT4_Z;
-			break;
-		      default:
-			assert(0);
-			break;
-		  }
-		  tmp.set_bit(v4size-idx-1, bit);
-	    }
+	    vvp_vector4_t tmp = c4string_to_vector4(label);
 
 	      // Inputs that are constants are schedule to execute as
 	      // soon at the simulation starts. In Verilog, constants
@@ -1496,11 +1473,19 @@ void compile_thread(char*start_sym, char*flag)
 	    free(flag);
 }
 
-void compile_param_string(char*label, char*name, char*str, char*value)
+void compile_param_logic(char*label, char*name, char*value)
 {
-      assert(strcmp(str,"string") == 0);
-      free(str);
+      vvp_vector4_t value4 = c4string_to_vector4(value);
+      vpiHandle obj = vpip_make_binary_param(name, value4);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
 
+      free(label);
+      free(value);
+}
+
+void compile_param_string(char*label, char*name, char*value)
+{
       vpiHandle obj = vpip_make_string_param(name, value);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
@@ -1510,6 +1495,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.218  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.217  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.33 2006/03/06 05:43:15 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.34 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -253,7 +253,8 @@ vpiHandle vpip_make_string_param(char*name, char*text)
 static int binary_get(int code, vpiHandle ref)
 {
       struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
+      assert(ref->vpi_type->type_code == vpiConstant
+	     || ref->vpi_type->type_code == vpiParameter);
 
       switch (code) {
 	  case vpiConstType:
@@ -276,10 +277,10 @@ static int binary_get(int code, vpiHandle ref)
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
-      assert(ref->vpi_type->type_code == vpiConstant);
+      assert(ref->vpi_type->type_code == vpiConstant
+	     || ref->vpi_type->type_code == vpiParameter);
 
       struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
-      char*rbuf = 0;
 
 
       switch (vp->format) {
@@ -324,8 +325,7 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 {
       struct __vpiBinaryConst*obj;
 
-      obj = (struct __vpiBinaryConst*)
-	    malloc(sizeof (struct __vpiBinaryConst));
+      obj = new __vpiBinaryConst;
       obj->base.vpi_type = &vpip_binary_rt;
 
       obj->signed_flag = 0;
@@ -361,6 +361,69 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
       return &(obj->base);
 }
 
+struct __vpiBinaryParam  : public __vpiBinaryConst {
+      const char*basename;
+      struct __vpiScope*scope;
+};
+
+static char* binary_param_get_str(int code, vpiHandle obj)
+{
+      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)obj;
+      char *rbuf = need_result_buf(strlen(rfp->basename) + 1, RBUF_STR);
+
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      switch (code) {
+	  case vpiName:
+	    strcpy(rbuf, rfp->basename);
+	    return rbuf;
+
+	  default:
+	    return 0;
+      }
+}
+
+static vpiHandle binary_param_handle(int code, vpiHandle obj)
+{
+      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)obj;
+
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      switch (code) {
+	  case vpiScope:
+	    return &rfp->scope->base;
+
+	  default:
+	    return 0;
+      }
+}
+
+static const struct __vpirt vpip_binary_param_rt = {
+      vpiParameter,
+      binary_get,
+      binary_param_get_str,
+      binary_value,
+      0,
+
+      binary_param_handle,
+      0,
+      0,
+
+      0
+};
+
+vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits)
+{
+      struct __vpiBinaryParam*obj = new __vpiBinaryParam;
+
+      obj->base.vpi_type = &vpip_binary_param_rt;
+      obj->bits = bits;
+      obj->signed_flag = 0;
+      obj->basename = name;
+      obj->scope = vpip_peek_current_scope();
+
+      return &obj->base;
+}
 
 
 static int dec_get(int code, vpiHandle ref)
@@ -465,6 +528,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.34  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.33  2006/03/06 05:43:15  steve
  *  Cleanup vpi_const to use vec4 values.
  *

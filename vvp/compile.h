@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.78 2006/01/02 05:32:07 steve Exp $"
+#ident "$Id: compile.h,v 1.79 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -182,8 +182,8 @@ extern void compile_timescale(long units);
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
-extern void compile_param_string(char*label, char*name,
-				 char*str, char*value);
+extern void compile_param_string(char*label, char*name, char*value);
+extern void compile_param_logic(char*label, char*name, char*value);
 
 /*
  * This function schedules a lookup of an indexed label. The ref
@@ -342,6 +342,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.79  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.78  2006/01/02 05:32:07  steve
  *  Require explicit delay node from source.
  *

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.49 2005/11/26 17:16:05 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.50 2006/03/08 05:29:42 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -309,6 +309,9 @@ extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator / (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator % (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
+/* A c4string is of the form C4<...> where ... are bits. */
+extern vvp_vector4_t c4string_to_vector4(const char*str);
+
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
 /*
@@ -1005,6 +1008,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.50  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.49  2005/11/26 17:16:05  steve
  *  Force instruction that can be indexed.
  *

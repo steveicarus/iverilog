@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.68 2006/03/06 05:43:15 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.69 2006/03/08 05:29:42 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -295,6 +295,7 @@ struct __vpiBinaryConst {
 };
 
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
+vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits);
 
 struct __vpiDecConst {
       struct __vpiHandle base;
@@ -427,6 +428,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.69  2006/03/08 05:29:42  steve
+ *  Add support for logic parameters.
+ *
  * Revision 1.68  2006/03/06 05:43:15  steve
  *  Cleanup vpi_const to use vec4 values.
  *
