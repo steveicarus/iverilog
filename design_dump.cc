@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.2 2006/02/19 00:11:31 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.3 2006/03/12 07:34:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -219,7 +219,7 @@ void NetCompare::dump_node(ostream&o, unsigned ind) const
 void NetDecode::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_DECODE (NetDecode): " << name()
-	<< " ff=" << ff_->name() << endl;
+	<< " ff=" << ff_->name() << ", word width=" << width() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -369,7 +369,11 @@ void NetRamDq::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_RAM_DQ (";
 
-      if (mem_) o << "mem=" << mem_->name();
+      if (mem_)
+	    if (NetNet*tmp = mem_->reg_from_explode())
+		  o << "exploded mem=" << tmp->name();
+	    else
+		  o << "mem=" << mem_->name();
 
       o << "): " << name() << endl;
 
@@ -1105,6 +1109,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.3  2006/03/12 07:34:16  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.149.2.2  2006/02/19 00:11:31  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

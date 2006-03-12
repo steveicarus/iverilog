@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.10 2006/02/19 00:11:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.11 2006/03/12 07:34:17 steve Exp $"
 #endif
 
 /*
@@ -599,9 +599,15 @@ class NetCompare  : public NetNode {
 class NetDecode  : public NetNode {
 
     public:
-      NetDecode(NetScope*s, perm_string name, NetFF*mem, unsigned awid);
+      NetDecode(NetScope*s, perm_string name, NetFF*mem,
+		unsigned awid, unsigned word_width);
       ~NetDecode();
 
+	// This is the width of the word. The width of the NetFF mem
+	// is an even multiple of this.
+      unsigned width() const;
+	// This is the width of the address. The address value for the
+	// base of a word is the address * width().
       unsigned awidth() const;
 
       const NetFF*ff() const;
@@ -615,6 +621,7 @@ class NetDecode  : public NetNode {
       virtual bool emit_node(struct target_t*) const;
 
     private:
+      unsigned width_;
       NetFF* ff_;
 
     private:
@@ -784,6 +791,7 @@ class NetMemory  {
 
       // NetScope*scope();
       const NetScope*scope() const { return scope_; };
+       NetScope*scope() { return scope_; };
 
 	// This is the number of memory positions.
       unsigned count() const;
@@ -792,6 +800,13 @@ class NetMemory  {
 	// indexed by idx. The Verilog source may give index ranges
 	// that are not zero based.
       unsigned index_to_address(long idx) const;
+
+	// This method returns a NetNet::REG that has the same number
+	// of bits as the memory as a whole. This is used to represent
+	// memories that are synthesized to individual bits.
+      NetNet* explode_to_reg();
+      NetNet* reg_from_explode();
+      const NetNet* reg_from_explode() const;
 
       void dump(ostream&o, unsigned lm) const;
 
@@ -807,6 +822,8 @@ class NetMemory  {
       friend class NetScope;
       NetMemory*snext_, *sprev_;
       NetScope*scope_;
+
+      NetNet*explode_;
 
     private: // not implemented
       NetMemory(const NetMemory&);
@@ -3439,6 +3456,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.11  2006/03/12 07:34:17  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.321.2.10  2006/02/19 00:11:32  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

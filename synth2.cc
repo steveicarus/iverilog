@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.22 2006/02/25 05:03:29 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.23 2006/03/12 07:34:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,6 +104,44 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
       unsigned roff = 0;
 
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+
+	    NetMemory*lmem = cur->mem();
+	    if (lmem && !sync_flag) {
+		  cerr << get_line() << ": error: Cannot synthesize memory "
+		       << "assignment is asynchronous logic." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	      /* Is this an assignment to a memory? If so, then
+		 explode the memory to an array of reg bits. The
+		 context that is calling this will attach a decoder
+		 between the ff and the r-val. In fact, the memory at
+		 this point has already been scanned and exploded, so
+		 the explode_to_reg method below will return a
+		 pre-existing vector.
+
+		 Note that this is only workable if we are in the
+		 asynchronous path of a synchronous thread. The
+		 sync_flag must be true in this case. */
+	    if (lmem) {
+		  assert(sync_flag);
+		  NetNet*msig = lmem->explode_to_reg();
+		  msig->incr_lref();
+
+		  if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
+			long adr= ae->value().as_long();
+			adr = lmem->index_to_address(adr) * lmem->width();
+			for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
+			      unsigned off = adr+idx;
+			      unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
+			      assert(ptr <= nex_map->pin_count());
+			      connect(nex_out->pin(ptr), rsig->pin(roff+idx));
+			}
+		  }
+		  continue;
+	    }
+
 
 	    NetNet*lsig = cur->sig();
 	    if (!lsig) {
@@ -851,6 +889,8 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    if (cur->bmux())
 		  demux = cur;
+	    if (cur->mem())
+		  demux = cur;
 
 	    count_lval += 1;
       }
@@ -872,7 +912,8 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 
       NetNet*adr = demux->bmux()->synthesize(des);
       NetDecode*dq = new NetDecode(scope, scope->local_symbol(),
-				 nex_ff[0].ff, adr->pin_count());
+				   nex_ff[0].ff, adr->pin_count(),
+				   lval_->lwidth());
       des->add_node(dq);
       dq->set_line(*this);
 
@@ -880,11 +921,16 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	    connect(dq->pin_Address(idx), adr->pin(idx));
 
       NetNet*rsig = rval_->synthesize(des);
-      assert(rsig->pin_count() == 1);
+      assert(rsig->pin_count() == lval_->lwidth());
 
       for (unsigned idx = 0 ;  idx < nex_ff[0].ff->width() ;  idx += 1)
-	    connect(nex_ff[0].ff->pin_Data(idx), rsig->pin(0));
+	    connect(nex_ff[0].ff->pin_Data(idx), rsig->pin(idx%lval_->lwidth()));
 
+      if (lval_->mem()) {
+	    NetNet*exp = lval_->mem()->reg_from_explode();
+	    assert(exp);
+	    exp->incr_lref();
+      }
       lval_->turn_sig_to_wire_on_release();
       return true;
 }
@@ -1269,7 +1315,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 	   Also, we will not allow both Sset and Sclr to be used on a
 	   single LPM_FF (due to unclear priority issues) so don't try
-	   if either are already connected. */
+	   if either are already connected.
+
+	   XXXX This should be disabled if there is a memory involved
+	   in any sub-statements? */
       assert(if_ != 0);
       NexusSet*a_set = if_->nex_input();
 
@@ -1639,6 +1688,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.23  2006/03/12 07:34:18  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.39.2.22  2006/02/25 05:03:29  steve
  *  Add support for negedge FFs by using attributes.
  *

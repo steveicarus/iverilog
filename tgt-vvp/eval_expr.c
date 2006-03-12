@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.110 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.110.2.1 2006/03/12 07:34:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1841,6 +1841,40 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_ulong_expr(ivl_expr_t exp, unsigned wid)
+{
+      unsigned long idx;
+      struct vector_info res;
+      unsigned long uval = ivl_expr_uvalue(exp);
+
+      if (uval == 0) {
+	    res.wid = wid;
+	    res.base = 0;
+	    return res;
+      }
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      idx = 0;
+      while (idx < wid) {
+	    unsigned long cnt;
+
+	    int bit = 1 & (uval >> idx);
+	    for (cnt = 1 ;  idx+cnt < wid ;  cnt += 1) {
+		  int tmp = 1 & (uval >> (idx+cnt));
+		  if (tmp != bit)
+			break;
+	    }
+
+	    fprintf(vvp_out, "   %%mov %u, %d, %lu;\n",
+		    res.base+idx, bit, cnt);
+	    idx += cnt;
+      }
+
+      return res;
+}
+
 static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
@@ -2120,6 +2154,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    res = draw_ufunc_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_ULONG:
+	    res = draw_ulong_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_UNARY:
 	    res = draw_unary_expr(exp, wid);
 	    break;
@@ -2139,6 +2177,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.110.2.1  2006/03/12 07:34:20  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.110  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.56.2.1 2006/02/19 00:11:35 steve Exp $"
+#ident "$Id: compile.h,v 1.56.2.2 2006/03/12 07:34:21 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -118,7 +118,8 @@ extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 extern void compile_decode_adr(char*label,
 			       unsigned argc, struct symb_s*argv);
 extern void compile_decode_en(char*label, char*decoder, int slice,
-			      struct symb_s enable);
+			      struct symb_s enable,
+			      struct symb_s mass_enable);
 extern void compile_shiftl(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_shiftr(char*label, long width,
@@ -272,6 +273,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.56.2.2  2006/03/12 07:34:21  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.56.2.1  2006/02/19 00:11:35  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.3 2006/02/25 05:03:30 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.4 2006/03/12 07:34:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -411,7 +411,29 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  }
 	    break;
 
+	      /* The output for a RAM depends on whether it is
+		 exploded or not. If it is, treat is like a MUX. If it
+		 is not, treat it like an arithmetic LPM. */
 	  case IVL_LPM_RAM:
+	    if (ivl_lpm_memory(lpm)) {
+		  for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1) {
+			if (ivl_lpm_q(lpm, idx) == nex) {
+			      sprintf(result, "L_%p[%u]", lpm, idx);
+			      return result;
+			}
+		  }
+	    } else {
+		  for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1) {
+			if (ivl_lpm_q(lpm, idx) == nex) {
+			      sprintf(result, "L_%s.%s/%u",
+				      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
+				      vvp_mangle_id(ivl_lpm_basename(lpm)), idx);
+			      return result;
+			}
+		  }
+	    }
+	    break;
+
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
@@ -1105,7 +1127,13 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
-inline static void draw_lpm_ram(ivl_lpm_t net)
+static void draw_lpm_ram_exploded(ivl_lpm_t net)
+{
+      fprintf(vvp_out, "; exploded ram port!\n");
+      draw_lpm_mux(net);
+}
+
+static void draw_lpm_ram(ivl_lpm_t net)
 {
       unsigned idx;
       unsigned width = ivl_lpm_width(net);
@@ -1113,6 +1141,11 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
       ivl_memory_t mem = ivl_lpm_memory(net);
       ivl_nexus_t clk = ivl_lpm_clk(net);
       ivl_nexus_t pin;
+
+      if (mem == 0) {
+	    draw_lpm_ram_exploded(net);
+	    return;
+      }
 
       if (clk) {
 	    fprintf(vvp_out, "CLK_%p .event posedge, ", net);
@@ -1317,6 +1350,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
 
       unsigned width, idx;
       ivl_attribute_t clock_pol = find_lpm_attr(net, "ivl:clock_polarity");
+      ivl_lpm_t decode = ivl_lpm_decode(net);
 
       width = ivl_lpm_width(net);
 
@@ -1408,23 +1442,34 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    }
 
 	      /* If there is a decoder for this FF, then create a
-		 decoder enable node. */
-	    if (ivl_lpm_decode(net)) {
+		 decoder enable node. The .decode/en arguments are the
+		 label for the .decode/adr, a .decoder/en slice
+		 number (the address it responds to), the label for a
+		 decoder enable, and the label for a mass-write enable. */
+	    if (decode) {
 		  ivl_lpm_t dec = ivl_lpm_decode(net);
 		  fprintf(vvp_out, "L_%s.%s/dec/%u .decode/en L_%s.%s, %u",
 			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-			  vvp_mangle_id(ivl_lpm_basename(net)), idx,
+			  vvp_mangle_id(ivl_lpm_basename(net)),
+			  idx,
 			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(dec))),
-			  vvp_mangle_id(ivl_lpm_basename(dec)), idx);
+			  vvp_mangle_id(ivl_lpm_basename(dec)),
+			  idx / ivl_lpm_width(decode));
 
 		  tmp = ivl_lpm_enable(net);
-		  if (tmp && (ivl_lpm_sync_clr(net)||ivl_lpm_sync_set(net))) {
-			fprintf(vvp_out, ", L_%s.%s/en",
-				vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-				vvp_mangle_id(ivl_lpm_basename(net)));
-		  } else if (tmp) {
+		  if (tmp) {
 			fprintf(vvp_out, ", ");
 			draw_input_from_net(tmp);
+		  } else {
+			fprintf(vvp_out, ", C<1> ");
+		  }
+		  fprintf(vvp_out, ", ");
+		  if (ivl_lpm_sync_clr(net)) {
+			draw_input_from_net(ivl_lpm_sync_clr(net));
+		  } else if (ivl_lpm_sync_set(net)) {
+			draw_input_from_net(ivl_lpm_sync_set(net));
+		  } else {
+			fprintf(vvp_out, "C<0>");
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1776,6 +1821,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.4  2006/03/12 07:34:20  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.103.2.3  2006/02/25 05:03:30  steve
  *  Add support for negedge FFs by using attributes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108.2.2 2006/02/25 05:03:29 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108.2.3 2006/03/12 07:34:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -826,6 +826,22 @@ extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 		return net->u_.ufunc.pins[base+idx];
 	  }
 
+	  case IVL_LPM_RAM:
+	    if (net->u_.ff.a.mem == 0) {
+		    // This is an exploded RAM, so we use sdx and idx
+		    // to address a nexa into the exploded ram.
+		  if (sdx >= net->u_.ff.scnt)
+			return 0;
+		  if (idx >= net->u_.ff.width)
+			return 0;
+		  unsigned adr = sdx * net->u_.ff.width + idx;
+		  return net->u_.ff.d.pins[adr];
+
+	    } else {
+		    // Normal RAM port does not have data2 nexa
+		  return 0;
+	    }
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -1025,6 +1041,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.size;
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.scnt;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.ports - 1;
 	  default:
@@ -1045,6 +1063,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.width;
+	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
 	  case IVL_LPM_ADD:
@@ -1062,8 +1081,6 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.shift.width;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.port_wid[0];
-	  case IVL_LPM_DECODE:
-	    return 1;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1964,6 +1981,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108.2.3  2006/03/12 07:34:19  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.108.2.2  2006/02/25 05:03:29  steve
  *  Add support for negedge FFs by using attributes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126.2.2 2006/02/25 05:03:28 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.126.2.3 2006/03/12 07:34:16 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -675,9 +675,16 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * - IVL_LPM_FF
  * The IVL_LPM_FF and IVL_LPM_DECODE devices are closely related. If
  * the ivl_lpm_decode function returns a non-nil value, then the
- * decoder represents an extra ENABLE-like input, where exactly one(1)
- * bit of the width of the FF is enabled. The decoder inputs are and
- * address that selects the FF to be enabled.
+ * decoder represents an extra ENABLE-like input, where exactly <N>
+ * bits of the width of the FF is enabled. The ivl_lpm_width of the
+ * decoder defines <N>.
+ *
+ * The decoder inputs are the address that selects the FF to be
+ * enabled, and the ivl_lpm_selects for the decoder gives the width of
+ * the address. The address of the LSB of the memory, then, is the
+ * word width times the input address. For a simple l-value bit
+ * select, the word width <N> will be 1, and the address goes directly
+ * to the bit. Otherwise, <N>*address gets to the first bit of the word.
  *
  * The core compiler generates these attributes in certain cases:
  *
@@ -685,6 +692,19 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    If present, the string value can be "INVERT". That indicates
  *    that the clock is negedge sensitive instead of the default
  *    posedge sensitive.
+ *
+ * - IVL_LPM_RAM
+ * The IVL_LPM_RAM may also appear as a READ port for a FF array. In
+ * this case, the IVL_LPM_RAM device has an ivl_lpm_width that is the
+ * width of the word, and an ivl_lpm_size that is the number of words
+ * in the array. In effect, the IVL_LPM_RAM reorganizes a vector into
+ * an array of words. If this is happening, then the ivl_lpm_memory
+ * will return 0.
+ *
+ * The ivl_lpm_q function gets the output nexa of the read port. The
+ * "q" port has as many bits as the width. The ivl_lpm_data2 function
+ * gets the nexa of the input, with the sdx the word address and the
+ * idx the bit within the word.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -727,7 +747,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX */
+  /* IVL_LPM_MUX, IVL_LPM_RAM */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
@@ -1268,6 +1288,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.126.2.3  2006/03/12 07:34:16  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.126.2.2  2006/02/25 05:03:28  steve
  *  Add support for negedge FFs by using attributes.
  *

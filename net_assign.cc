@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.18 2004/08/28 15:08:31 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.18.2.1 2006/03/12 07:34:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -71,6 +71,14 @@ NetAssign_::~NetAssign_()
 		  sig_->type(NetNet::WIRE);
       }
 
+      if (mem_) {
+	    NetNet*exp = mem_->reg_from_explode();
+	    if (exp) {
+		  exp->decr_lref();
+		  if (turn_sig_to_wire_on_release_ && exp->peek_lref() == 0)
+			exp->type(NetNet::WIRE);
+	    }
+      }
       assert( more == 0 );
       if (bmux_) delete bmux_;
 }
@@ -111,7 +119,10 @@ perm_string NetAssign_::name() const
 
 NetNet* NetAssign_::sig() const
 {
-      return sig_;
+      if (mem_)
+	    return 0;
+      else
+	    return sig_;
 }
 
 NetMemory* NetAssign_::mem() const
@@ -261,6 +272,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.18.2.1  2006/03/12 07:34:17  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.18  2004/08/28 15:08:31  steve
  *  Do not change reg to wire in NetAssign_ unless synthesizing.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.1 2006/01/18 01:23:23 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.2 2006/03/12 07:34:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,18 +47,42 @@ void NetAssignBase::nex_output(NexusSet&out)
 {
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    if (NetNet*lsig = cur->sig()) {
-#if 0
-		  if (cur->bmux()) {
-			cerr << get_line() << ": internal error: "
-			     << "L-Value mux not supported by nex_output: ";
-			cur->dump_lval(cerr);
-			cerr << endl;
-		  }
-#endif
+
+		    /* Handle l-value signals. We don't need to worry
+		       here about whether there is a bmux, because the
+		       synthesizer will detect that mux and create a
+		       decoder between the expression and the signal. */
 		  for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 			unsigned off = cur->get_loff() + idx;
 			out.add(lsig->pin(off).nexus());
 		  }
+
+	    } else if (NetMemory*lmem = cur->mem()) {
+
+		    /* Memories here are treated as a bunch of reg
+		       devices. Use the explode_to_reg method to get
+		       access to the FF version of the memory and use
+		       that in our l-value management. */
+		  NetNet*tmp = lmem->explode_to_reg();
+
+		  if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
+			  /* The address is constant, so simply
+			     connect to the right pins and we are
+			     done. */
+			long adr= ae->value().as_long();
+			adr = lmem->index_to_address(adr) * lmem->width();
+
+			for (unsigned idx = 0; idx < cur->lwidth(); idx += 1)
+			      out.add(tmp->pin(adr+idx).nexus());
+
+		  } else {
+			  /* Fake an address of 0. The context will
+			     actually shove a decoder in place here. */
+			long adr= 0;
+			for (unsigned idx = 0; idx < cur->lwidth(); idx += 1)
+			      out.add(tmp->pin(adr+idx).nexus());
+		  }
+
 	    } else {
 		    /* Quoting from netlist.h comments for class NetMemory:
 		     * "This is not a node because memory objects can only be
@@ -130,6 +154,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.2  2006/03/12 07:34:17  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.11.2.1  2006/01/18 01:23:23  steve
  *  Rework l-value handling to allow for more l-value type flexibility.
  *

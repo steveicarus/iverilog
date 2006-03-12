@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.39 2004/06/17 16:06:19 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.39.2.1 2006/03/12 07:34:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -222,12 +222,58 @@ void dll_target::expr_memory(const NetEMemory*net)
       ivl_expr_t cur = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(cur);
 
-      cur->type_ = IVL_EX_MEMORY;
-      cur->value_ = IVL_VT_VECTOR;
-      cur->width_= net->expr_width();
-      cur->signed_ = net->has_sign()? 1 : 0;
-      cur->u_.memory_.mem_ = find_memory(des_, net->memory());
-      cur->u_.memory_.idx_ = expr_;
+      const NetMemory*mem = net->memory();
+
+      if (const NetNet*reg = mem->reg_from_explode()) {
+
+	    cur->type_ = IVL_EX_SELECT;
+	    cur->value_ = IVL_VT_VECTOR;
+	    cur->width_ = net->expr_width();
+	    cur->signed_ = net->has_sign()? 1 : 0;
+
+	      // Create an expression form of the exploded
+	      // memory. This is what the select will apply to.
+	    ivl_expr_t sig = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+	    sig->type_ = IVL_EX_SIGNAL;
+	    sig->value_ = IVL_VT_VECTOR;
+	    sig->width_ = reg->pin_count();
+	    sig->signed_ = 0;
+	    sig->u_.signal_.sig = find_signal(des_, reg);
+	    sig->u_.signal_.lsi = 0;
+	    sig->u_.signal_.msi = reg->pin_count()-1;
+	    cur->u_.binary_.lef_ = sig;
+
+	      // Create an expression of the address calculation.
+	    cur->u_.binary_.rig_ = expr_;
+
+	    if (cur->width_ > 1) {
+		  ivl_expr_t mul = (ivl_expr_t)calloc(2, sizeof(struct ivl_expr_s));
+		  ivl_expr_t fac = mul+1;
+
+		  fac->type_  = IVL_EX_ULONG;
+		  fac->value_ = IVL_VT_VECTOR;
+		  fac->width_ = 8*sizeof(cur->width_);
+		  fac->signed_= 0;
+		  fac->u_.ulong_.value = cur->width_;
+
+		  mul->type_  = IVL_EX_BINARY;
+		  mul->value_ = IVL_VT_VECTOR;
+		  mul->width_ = fac->width_;
+		  mul->signed_= 0;
+		  mul->u_.binary_.op_  = '*';
+		  mul->u_.binary_.lef_ = cur->u_.binary_.rig_;
+		  mul->u_.binary_.rig_ = fac;
+		  cur->u_.binary_.rig_ = mul;
+	    }
+
+      } else {
+	    cur->type_ = IVL_EX_MEMORY;
+	    cur->value_ = IVL_VT_VECTOR;
+	    cur->width_= net->expr_width();
+	    cur->signed_ = net->has_sign()? 1 : 0;
+	    cur->u_.memory_.mem_ = find_memory(des_, net->memory());
+	    cur->u_.memory_.idx_ = expr_;
+      }
 
       expr_ = cur;
 }
@@ -604,6 +650,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.39.2.1  2006/03/12 07:34:19  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.39  2004/06/17 16:06:19  steve
  *  Help system function signedness survive elaboration.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115.2.2 2006/02/25 05:03:30 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115.2.3 2006/03/12 07:34:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -300,6 +300,7 @@ struct ivl_lpm_s {
 	    struct ivl_lpm_ff_s {
 		  unsigned width;
 		  unsigned swid; // ram only
+		  unsigned scnt;
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
 		  ivl_nexus_t aclr;
@@ -693,6 +694,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115.2.3  2006/03/12 07:34:19  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.115.2.2  2006/02/25 05:03:30  steve
  *  Add support for negedge FFs by using attributes.
  *

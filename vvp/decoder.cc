@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: decoder.cc,v 1.1.2.1 2006/02/19 00:11:36 steve Exp $"
+#ident "$Id: decoder.cc,v 1.1.2.2 2006/03/12 07:34:21 steve Exp $"
 
 # include  "compile.h"
 # include  "functor.h"
@@ -86,6 +86,8 @@ struct vvp_decode_en_s : public functor_s {
       bool decode_en;
 	// This is the enable that arrives from the extra input.
       bool extra_en;
+	// This is the mass-enable that enables independent of address
+      bool mass_en;
 };
 
 vvp_decode_adr_s::vvp_decode_adr_s(vvp_ipoint_t me, unsigned w)
@@ -119,6 +121,7 @@ vvp_decode_en_s::vvp_decode_en_s(vvp_decode_adr_s*dec, unsigned s)
       enable_next = 0;
       decode_en = false;
       extra_en = true;
+      mass_en = false;
 
       decoder = dec;
       enable_next = decoder->enable_list;
@@ -132,13 +135,25 @@ void vvp_decode_en_s::set(vvp_ipoint_t i, bool push,
       ifu->put(i, val);
 
       int abval = functor_get_input(i);
-      if (abval == 1) {
-	    extra_en = true;
-      } else {
-	    extra_en = false;
+      unsigned port = ipoint_port(i);
+      switch (port) {
+	  case 0: // regular enable
+	    if (abval == 1) {
+		  extra_en = true;
+	    } else {
+		  extra_en = false;
+	    }
+	    break;
+	  case 1: // mass enable
+	    if (abval == 1) {
+		  mass_en = true;
+	    } else {
+		  mass_en = false;
+	    }
+	    break;
       }
 
-      if (extra_en && decode_en)
+      if (extra_en && decode_en || mass_en)
 	    put_oval(1, true);
       else
 	    put_oval(0, true);
@@ -183,7 +198,8 @@ void compile_decode_adr(char*label, unsigned argc, struct symb_s*argv)
 }
 
 void compile_decode_en(char*label, char*decoder, int slice,
-		       struct symb_s enable)
+		       struct symb_s enable,
+		       struct symb_s mass_enable)
 {
       vvp_decode_adr_s*adr = decoder_find(decoder);
       vvp_decode_en_s*a = new struct vvp_decode_en_s(adr, slice);
@@ -191,9 +207,10 @@ void compile_decode_en(char*label, char*decoder, int slice,
       vvp_ipoint_t ix = functor_allocate(1);
       functor_define(ix, a);
 
-      if (enable.text) {
-	    inputs_connect(ix, 1, &enable);
-      }
+      symb_s argv[2];
+      argv[0] = enable;
+      argv[1] = mass_enable;
+      inputs_connect(ix, 2, argv);
 
       define_functor_symbol(label, ix);
       free(label);
@@ -201,6 +218,9 @@ void compile_decode_en(char*label, char*decoder, int slice,
 
 /*
  * $Log: decoder.cc,v $
+ * Revision 1.1.2.2  2006/03/12 07:34:21  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.1.2.1  2006/02/19 00:11:36  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

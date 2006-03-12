@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.6 2006/02/25 05:03:30 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.7 2006/03/12 07:34:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,6 +112,12 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_EX_ULONG: {
+		fprintf(out, "%*s<ulong=%u'd%lu, %s>\n",
+			ind, "", width, ivl_expr_uvalue(net), sign);
+		break;
+	  }
+
 	  case IVL_EX_SELECT:
 	      /* The SELECT expression can be used to express part
 		 select, or if the base is null vector extension. */
@@ -195,6 +201,35 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  default:
 	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
 	    break;
+      }
+}
+
+static void show_lpm_ram(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned count = ivl_lpm_size(net);
+
+      unsigned idx, sdx;
+
+      fprintf(out, "  LPM_RAM_DQ %s (word-width=%u, count=%u)\n",
+	      ivl_lpm_basename(net), ivl_lpm_width(net), count);
+      for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_select(net, idx);
+	    fprintf(out, "    Address %u: %s\n", idx,
+		    nex? ivl_nexus_name(nex) : "");
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_q(net, idx);
+	    fprintf(out, "    Q %u: %s\n", idx, nex? ivl_nexus_name(nex) : "");
+      }
+
+      for (sdx = 0 ;  sdx < count ;  sdx += 1) {
+	    for (idx = 0 ;  idx < width ;  idx += 1) {
+		  ivl_nexus_t nex = ivl_lpm_data2(net, sdx, idx);
+		  fprintf(out, "    Word%u %u: %s\n",
+			  sdx, idx, nex? ivl_nexus_name(nex) : "");
+	    }
       }
 }
 
@@ -296,7 +331,8 @@ static void show_lpm(ivl_lpm_t net)
 	  }
 
 	  case IVL_LPM_DECODE: {
-		fprintf(out, "  LPM_DECODE %s\n", ivl_lpm_basename(net));
+		fprintf(out, "  LPM_DECODE %s (word-width=%u)\n",
+			ivl_lpm_basename(net), ivl_lpm_width(net));
 		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
 		      ivl_nexus_t nex = ivl_lpm_select(net, idx);
 		      fprintf(out, "    Address %u: %s\n", idx,
@@ -304,6 +340,10 @@ static void show_lpm(ivl_lpm_t net)
 		}
 		break;
 	  }
+
+	  case IVL_LPM_RAM:
+	    show_lpm_ram(net);
+	    break;
 
 	  case IVL_LPM_SHIFTL: {
 		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u %s>\n",
@@ -1033,6 +1073,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.7  2006/03/12 07:34:20  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.90.2.6  2006/02/25 05:03:30  steve
  *  Add support for negedge FFs by using attributes.
  *

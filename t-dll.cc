@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.4 2006/02/25 05:03:29 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.5 2006/03/12 07:34:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1522,7 +1522,7 @@ ivl_lpm_t dll_target::lpm_decode_ff_(const NetDecode*net)
 
       obj->u_.mux.swid  = net->awidth();
       obj->u_.mux.size  = 0;
-      obj->u_.mux.width = 0;
+      obj->u_.mux.width = net->width();
       obj->u_.mux.d = 0;
 
       if (obj->u_.mux.swid > 1) {
@@ -1671,18 +1671,23 @@ void dll_target::lpm_ff(const NetFF*net)
 
 void dll_target::lpm_ram_dq(const NetRamDq*net)
 {
+      ivl_memory_t mem = find_memory(des_, net->mem());
+      assert(mem);
+
+      const NetNet*ereg = net->mem()->reg_from_explode();
+
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
       obj->name  = net->name();
       obj->attr  = 0;
       obj->nattr = 0;
-      obj->u_.ff.a.mem = find_memory(des_, net->mem());
-      assert(obj->u_.ff.a.mem);
+      obj->u_.ff.a.mem = ereg? 0 : mem;
       obj->scope = find_scope(des_, net->mem()->scope());
       assert(obj->scope);
 
       obj->u_.ff.width = net->width();
       obj->u_.ff.swid = net->awidth();
+      obj->u_.ff.scnt = net->mem()->count();
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1692,6 +1697,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       // the clock input.
 
       bool has_write_port = net->pin_InClock().is_linked();
+      assert( ereg? !has_write_port : 1 );
 
       // Connect the write clock and write enable
 
@@ -1781,6 +1787,21 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
 		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
 				IVL_DR_STRONG, IVL_DR_STRONG);
+	    }
+      }
+
+      if (ereg) {
+	    unsigned count = obj->u_.ff.width * obj->u_.ff.scnt;
+	    assert(ereg->pin_count() == count);
+
+	    obj->u_.ff.d.pins = new ivl_nexus_t [count];
+
+	    for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
+		  nex = ereg->pin(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
       }
 }
@@ -2250,6 +2271,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.5  2006/03/12 07:34:19  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.131.2.4  2006/02/25 05:03:29  steve
  *  Add support for negedge FFs by using attributes.
  *

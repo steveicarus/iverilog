@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.60.2.1 2006/02/19 00:11:36 steve Exp $"
+#ident "$Id: parse.y,v 1.60.2.2 2006/03/12 07:34:21 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -270,8 +270,8 @@ statement
 		  compile_decode_adr($1, obj.cnt, obj.vect);
 		}
 
-	| T_LABEL K_DECODE_EN T_SYMBOL ',' T_NUMBER ',' symbol ';'
-		{ compile_decode_en($1, $3, $5, $7);
+	| T_LABEL K_DECODE_EN T_SYMBOL ',' T_NUMBER ',' symbol ',' symbol ';'
+		{ compile_decode_en($1, $3, $5, $7, $9);
 		}
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
@@ -646,6 +646,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.60.2.2  2006/03/12 07:34:21  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.60.2.1  2006/02/19 00:11:36  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

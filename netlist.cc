@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.2 2006/02/19 00:11:32 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.3 2006/03/12 07:34:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -686,6 +686,11 @@ const verinum& NetFF::sset_value() const
       return sset_value_;
 }
 
+unsigned NetDecode::width() const
+{
+      return width_;
+}
+
 unsigned NetDecode::awidth() const
 {
       return pin_count();
@@ -1076,9 +1081,13 @@ const Link& NetCompare::pin_DataB(unsigned idx) const
       return pin(8+width_+idx);
 }
 
-NetDecode::NetDecode(NetScope*s, perm_string name, NetFF*mem, unsigned awid)
+NetDecode::NetDecode(NetScope*s, perm_string name, NetFF*mem,
+		     unsigned awid, unsigned word_width)
 : NetNode(s, name, awid)
 {
+      width_ = word_width;
+      assert( mem->width() % width_ == 0 );
+
       ff_ = mem;
       ff_->demux_ = this;
       make_pins_(awid);
@@ -2057,6 +2066,7 @@ NetMemory::NetMemory(NetScope*sc, perm_string n, long w, long s, long e)
 : width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
 {
       name_ = n;
+      explode_ = 0;
       scope_->add_memory(this);
 }
 
@@ -2087,7 +2097,24 @@ unsigned NetMemory::index_to_address(long idx) const
 	    return idx - idxl_;
 }
 
+NetNet* NetMemory::explode_to_reg()
+{
+      if (explode_)
+	    return explode_;
 
+      explode_ = new NetNet(scope_, name_, NetNet::REG, count()*width_);
+      return explode_;
+}
+
+NetNet* NetMemory::reg_from_explode()
+{
+      return explode_;
+}
+
+const NetNet* NetMemory::reg_from_explode() const
+{
+      return explode_;
+}
 
 NetEMemory* NetEMemory::dup_expr() const
 {
@@ -2335,6 +2362,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.3  2006/03/12 07:34:17  steve
+ *  Fix the memsynth1 case.
+ *
  * Revision 1.226.2.2  2006/02/19 00:11:32  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *
