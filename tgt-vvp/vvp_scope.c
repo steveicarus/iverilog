@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.140 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.141 2006/03/15 05:52:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -658,7 +658,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  * does *not* check for a previously calculated string. Use the
  * draw_net_input for the general case.
  */
-static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit,
+  /* Omit LPMPART_BI device pin-data(0) drivers. */
+# define OMIT_PART_BI_DATA 0x0001
+
+static char* draw_net_input_x(ivl_nexus_t nex,
+			      ivl_nexus_ptr_t omit_ptr, int omit_flags,
 			      struct vvp_nexus_data*nex_data)
 {
       ivl_signal_type_t res;
@@ -704,9 +708,17 @@ static char* draw_net_input_x(ivl_nexus_t nex, ivl_nexus_ptr_t omit,
 
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_lpm_t lpm_tmp;
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
 
-	    if (nptr == omit)
+	      /* If we are supposed to skip LPM_PART_BI data pins,
+		 check that this driver is that. */
+	    if ((omit_flags&OMIT_PART_BI_DATA)
+		&& (lpm_tmp = ivl_nexus_ptr_lpm(nptr))
+		&& (nex == ivl_lpm_data(lpm_tmp,0)))
+		  continue;
+
+	    if (nptr == omit_ptr)
 		  continue;
 
 	      /* Skip input only pins. */
@@ -837,7 +849,7 @@ const char*draw_net_input(ivl_nexus_t nex)
       }
 
       assert(nex_data->net_input == 0);
-      nex_data->net_input = draw_net_input_x(nex, 0, nex_data);
+      nex_data->net_input = draw_net_input_x(nex, 0, 0, nex_data);
 
       return nex_data->net_input;
 }
@@ -1877,7 +1889,27 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
  * X value, so something special is needed.
  *
  * NOTE: The inputs of the tran device at this point need to be from
- * all the drivers of the nexus *except* the tran itself.
+ * all the drivers of the nexus *except* the tran itself. This
+ * function will draw three labels that can be linked:
+ *
+ * The ivl_lpm_q of a part(bi) may be a smaller vector then the
+ * ivl_lpm_data, the tran acts like a forward part select in that
+ * way.
+ *
+ * The device creates these nodes:
+ *
+ * - L_%p/i
+ * This is the Q port of the tran resolved and padded to the maximum
+ * width of the tran. The tran itself is not included in the
+ * resolution of this port.
+ *
+ * - L_%p/V
+ * This is the Q and D parts resolved together, still without the tran
+ * driving anything.
+ *
+ * - L_%p/P
+ * This is the /V node part-selected back to the dimensions of the Q
+ * side.
  */
 static void draw_lpm_part_bi(ivl_lpm_t net)
 {
@@ -1904,7 +1936,7 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 		  break;
       }
       assert(ptr != 0);
-      p_str = draw_net_input_x(nex, ptr, 0);
+      p_str = draw_net_input_x(nex, ptr, 0, 0);
 
       nex = ivl_lpm_data(net,0);
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -1912,13 +1944,18 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
 	    if (ivl_nexus_ptr_lpm(ptr) == net)
 		  break;
       }
-      v_str = draw_net_input_x(nex, ptr, 0);
+      v_str = draw_net_input_x(nex, ptr, OMIT_PART_BI_DATA, 0);
 
-	/* Pad the part-sized input out to a common width... */
+	/* Pad the part-sized input out to a common width...
+	   The /i label is the Q side of the tran, resolved except for
+	   the tran itself and padded (with z) to the larger width. */
       fprintf(vvp_out, "L_%p/i .part/pv %s, %u, %u, %u;\n",
 	      net, p_str, base, width, signal_width);
 
-	/* Resolve together the two halves of the tran... */
+	/* Resolve together the two halves of the tran...
+	   The /V label is the ports of the tran (now the same width)
+	   resolved together. Neither input to this resolver includes
+	   the tran itself. */
       fprintf(vvp_out, "L_%p/V .resolv tri, L_%p/i, %s;\n",
 	      net, net, v_str);
 
@@ -2166,6 +2203,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.141  2006/03/15 05:52:20  steve
+ *  Handle multiple part/bi devices connected together.
+ *
  * Revision 1.140  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *
