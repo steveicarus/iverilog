@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.51 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.52 2006/03/15 19:15:34 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1124,7 +1124,7 @@ vvp_vector4_t c4string_to_vector4(const char*str)
       assert((str[0]=='C') && (str[1]=='4') && (str[2]=='<'));
 
       str += 3;
-      char*tp = str + strspn(str,"01xz");
+      const char*tp = str + strspn(str,"01xz");
       assert(tp[0] == '>');
 
       vvp_vector4_t tmp (tp-str);
@@ -2163,6 +2163,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.52  2006/03/15 19:15:34  steve
+ *  const/non-const clash.
+ *
  * Revision 1.51  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *
