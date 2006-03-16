@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.23 2006/03/12 07:34:18 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.24 2006/03/16 05:39:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,7 +108,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    NetMemory*lmem = cur->mem();
 	    if (lmem && !sync_flag) {
 		  cerr << get_line() << ": error: Cannot synthesize memory "
-		       << "assignment is asynchronous logic." << endl;
+		       << "assignment in asynchronous logic." << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -1688,6 +1688,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.24  2006/03/16 05:39:43  steve
+ *  Fix a spelling error in an error message.
+ *
  * Revision 1.39.2.23  2006/03/12 07:34:18  steve
  *  Fix the memsynth1 case.
  *
