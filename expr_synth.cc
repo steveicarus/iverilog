@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.2 2005/09/11 02:56:37 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.3 2006/03/16 05:39:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -566,7 +566,6 @@ NetNet* NetEBShift::synthesize(Design*des)
 			       NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
-      assert(op() == 'l');
       NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
 				      osig->pin_count(),
 				      rsig->pin_count(),
@@ -876,6 +875,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.3  2006/03/16 05:39:20  steve
+ *  Right shifts really are allowed.
+ *
  * Revision 1.59.2.2  2005/09/11 02:56:37  steve
  *  Attach line numbers to NetMux devices.
  *
