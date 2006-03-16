@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.11 2006/03/12 07:34:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.12 2006/03/16 05:40:18 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,7 @@ class ostream;
 class Design;
 class Link;
 class Nexus;
+class NetMemory;
 class NetNode;
 class NetProc;
 class NetProcTop;
@@ -434,6 +435,11 @@ class NetNet  : public NetObj {
 
       unsigned get_refs() const;
 
+	/* This may be and explode of a memory. */
+      void mref(NetMemory*ref);
+      NetMemory*mref();
+      const NetMemory*mref() const;
+
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
@@ -458,6 +464,7 @@ class NetNet  : public NetObj {
       bool local_flag_;
       unsigned eref_count_;
       unsigned lref_count_;
+      NetMemory*mref_;
 };
 
 /*
@@ -3456,6 +3463,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.12  2006/03/16 05:40:18  steve
+ *  Fix crash when memory exploding doesnot work
+ *
  * Revision 1.321.2.11  2006/03/12 07:34:17  steve
  *  Fix the memsynth1 case.
  *

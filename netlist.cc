@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.3 2006/03/12 07:34:17 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.4 2006/03/16 05:40:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -229,7 +229,7 @@ NetNode::~NetNode()
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, npins), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), signed_(false), msb_(npins-1), lsb_(0),
-    local_flag_(false), eref_count_(0), lref_count_(0)
+    local_flag_(false), eref_count_(0), lref_count_(0), mref_(0)
 {
       assert(s);
 
@@ -270,7 +270,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
 : NetObj(s, n, ((ms>ls)?ms-ls:ls-ms) + 1),
     sig_next_(0), sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), signed_(false), msb_(ms), lsb_(ls),
-    local_flag_(false), eref_count_(0), lref_count_(0)
+    local_flag_(false), eref_count_(0), lref_count_(0), mref_(0)
 {
       assert(s);
 
@@ -322,6 +322,14 @@ NetNet::~NetNet()
 	    dump_net(cerr, 4);
       }
       assert(lref_count_ == 0);
+      if (mref_ != 0) {
+	    cerr << get_line() << ": internal error: attempt to delete "
+		 << "signal ``" << name() << "'' which has "
+		 << "memory explode references." << endl;
+	    dump_net(cerr, 4);
+      }
+      assert(mref_ == 0);
+
       if (scope())
 	    scope()->rem_signal(this);
 
@@ -460,6 +468,23 @@ unsigned NetNet::peek_lref() const
 unsigned NetNet::get_refs() const
 {
       return lref_count_ + eref_count_;
+}
+
+void NetNet::mref(NetMemory*mem)
+{
+      assert(mref_ == 0);
+      assert(mem != 0);
+      mref_ = mem;
+}
+
+NetMemory*NetNet::mref()
+{
+      return mref_;
+}
+
+const NetMemory* NetNet::mref() const
+{
+      return mref_;
 }
 
 
@@ -2103,6 +2128,7 @@ NetNet* NetMemory::explode_to_reg()
 	    return explode_;
 
       explode_ = new NetNet(scope_, name_, NetNet::REG, count()*width_);
+      explode_->mref(this);
       return explode_;
 }
 
@@ -2362,6 +2388,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.4  2006/03/16 05:40:18  steve
+ *  Fix crash when memory exploding doesnot work
+ *
  * Revision 1.226.2.3  2006/03/12 07:34:17  steve
  *  Fix the memsynth1 case.
  *
