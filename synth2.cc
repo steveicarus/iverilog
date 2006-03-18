@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.24 2006/03/16 05:39:43 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.25 2006/03/18 18:43:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -149,6 +149,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			"on unsupported lval ";
 		  dump_lval(cerr);
 		  cerr << endl;
+		  des->errors += 1;
 		  return false;
 	    }
 
@@ -476,9 +477,11 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
 		  cerr << get_line()
-		       << ": error: Incomplete case"
-		       << " in asynchronous process"
-		       << " needs a default case." << endl;
+		       << ": error: Incomplete case statement"
+		       << " in asynchronous (combinational) process." << endl;
+		  cerr << get_line()
+		       << ":      : Are you missing a default case?" << endl;
+		  des->errors += 1;
 		  return_flag = false;
 		  continue;
 	    }
@@ -512,6 +515,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			      cerr << get_line()
 				   << ": error: case " << item << " statement"
 				   << " does not assign expected outputs." << endl;
+			      des->errors += 1;
 			      return_flag = false;
 			}
 		  }
@@ -692,12 +696,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    if (if_ == 0) {
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " is missing the if clause." << endl;
+		  des->errors += 1;
 		  return false;
 	    }
 
 	    if (else_ == 0) {
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " is missing the else clause." << endl;
+		  des->errors += 1;
 		  return false;
 	    }
       }
@@ -726,6 +732,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  delete asig;
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " true clause failed to synthesize." << endl;
+		  des->errors += 1;
 		  return false;
 	    }
       }
@@ -750,6 +757,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  delete bsig;
 		  cerr << get_line() << ": error: Asynchronous if statement"
 		       << " else clause failed to synthesize." << endl;
+		  des->errors += 1;
 		  return false;
 	    }
       }
@@ -780,6 +788,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  cerr << get_line()
 		       << ": error: Condition true clause "
 		       << "does not assign expected outputs." << endl;
+		  des->errors += 1;
 		  return_flag = false;
 	    }
       }
@@ -795,6 +804,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  cerr << get_line()
 		       << ": error: Condition false clause "
 		       << "does not assign expected outputs." << endl;
+		  des->errors += 1;
 		  return_flag = false;
 	    }
       }
@@ -1157,6 +1167,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		       << "pin " << pin << " out of range of "
 		       << ff2->width() << " bit DFF." << endl;
 		  flag = false;
+		  des->errors += 1;
 
 	      /* If this block mentioned it, then the data must have
 		 been set here. */
@@ -1165,6 +1176,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		       << "DFF introduced here is missing Data "
 		       << pin << " input." << endl;
 		  flag = false;
+		  des->errors += 1;
 	    }
       }
 
@@ -1500,6 +1512,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 		 << " are valid clock inputs." << endl;
 	    cerr << get_line() << ":      : Perhaps the clock"
 		 << " is read by a statement or expression?" << endl;
+	    des->errors += 1;
 	    DEBUG_SYNTH2_EXIT("NetEvWait",false)
 	    return false;
       }
@@ -1515,6 +1528,16 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
       DEBUG_SYNTH2_EXIT("NetEvWait",flag)
       return flag;
+}
+
+bool NetWhile::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			   NetNet*nex_map, NetNet*nex_out)
+{
+      cerr << get_line()
+	   << ": error: Cannot synthesize for or while loops."
+	   << endl;
+      des->errors += 1;
+      return false;
 }
 
 bool NetProcTop::synth_sync(Design*des)
@@ -1562,46 +1585,6 @@ bool NetProcTop::synth_sync(Design*des)
 					 nex_q, nex_d,
 					 svector<NetEvProbe*>());
 
-#if 0
-	/* Now look for FFs that have been attached to a
-	   decoder. These need to be handled specially. */
-      for (unsigned idx = 0; idx < process_pin_count ;  idx += 1) {
-	    NetFF*ff = nex_ff[idx].ff;
-	    unsigned pin = nex_ff[idx].pin;
-	    if (ff == 0)
-		  continue;
-		  
-	    NetDecode*demux = ff->get_demux();
-
-	    nex_ff[idx].ff = 0;
-
-	    if (demux == 0)
-		  continue;
-
-	    cerr << "XXXX Demux bit " << idx << "["<<pin<<"]"
-		 << " of " << ff
-		 << " with demux=" << demux << endl;
-	    ff->pin_Data(pin).unlink();
-
-	    for (unsigned idx2 = idx+1 ;  idx2 < process_pin_count; idx2+=1) {
-		  NetFF*ff2 = nex_ff[idx2].ff;
-		  unsigned pin2 = nex_ff[idx2].pin;
-
-		  if (ff2->get_demux() != demux)
-			continue;
-
-		  nex_ff[idx2].ff = 0;
-		  assert(ff2 == ff);
-
-		  cerr << "XXXX Demux bit " << idx2
-		       << "["<<pin2<<"]"
-		       << " also attached to demux=" << demux << endl;
-
-		  ff2->pin_Data(pin2).unlink();
-	    }
-
-      }
-#endif
 
       delete nex_q;
       delete[]nex_ff;
@@ -1662,17 +1645,17 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 		  synth_error_flag = true;
 	    }
 
-	    if (! synth_error_flag)
+	    if (! synth_error_flag) {
 		  cerr << top->get_line() << ": warning: "
 		       << "Process not synthesized." << endl;
-
+	    }
 	    return;
       }
 
       if (! top->synth_async(des)) {
-	    cerr << top->get_line() << ": internal error: "
-		 << "is_asynchronous does not match "
-		 << "sync_async results." << endl;
+	    cerr << top->get_line() << ": error: "
+		 << "Asynchronous process cannot be synthesized." << endl;
+	    des->errors += 1;
 	    return;
       }
 
@@ -1688,6 +1671,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.25  2006/03/18 18:43:22  steve
+ *  Better error messages when synthesis fails.
+ *
  * Revision 1.39.2.24  2006/03/16 05:39:43  steve
  *  Fix a spelling error in an error message.
  *

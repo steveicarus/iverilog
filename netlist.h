@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.12 2006/03/16 05:40:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.13 2006/03/18 18:43:21 steve Exp $"
 #endif
 
 /*
@@ -2415,6 +2415,9 @@ class NetWhile  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
+      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       NetNet*nex_map, NetNet*nex_out);
+
     private:
       NetExpr* cond_;
       NetProc*proc_;
@@ -3463,6 +3466,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.13  2006/03/18 18:43:21  steve
+ *  Better error messages when synthesis fails.
+ *
  * Revision 1.321.2.12  2006/03/16 05:40:18  steve
  *  Fix crash when memory exploding doesnot work
  *
