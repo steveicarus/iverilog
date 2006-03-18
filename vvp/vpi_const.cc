@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.34 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.35 2006/03/18 22:51:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -329,6 +329,7 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
       obj->base.vpi_type = &vpip_binary_rt;
 
       obj->signed_flag = 0;
+      obj->sized_flag = 0;
       obj->bits = vvp_vector4_t(wid);
 
       const char*bp = bits;
@@ -412,13 +413,15 @@ static const struct __vpirt vpip_binary_param_rt = {
       0
 };
 
-vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits)
+vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
+				 bool signed_flag)
 {
       struct __vpiBinaryParam*obj = new __vpiBinaryParam;
 
       obj->base.vpi_type = &vpip_binary_param_rt;
       obj->bits = bits;
-      obj->signed_flag = 0;
+      obj->signed_flag = signed_flag? 1 : 0;
+      obj->sized_flag = 0;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
 
@@ -528,6 +531,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.35  2006/03/18 22:51:10  steve
+ *  Syntax for carrying sign with parameter.
+ *
  * Revision 1.34  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.81 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: parse.y,v 1.82 2006/03/18 22:51:10 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -502,7 +502,10 @@ statement
 		{ compile_param_string($1, $3, $5); }
 
 	| T_LABEL K_PARAM_L T_STRING ',' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $5); }
+		{ compile_param_logic($1, $3, $5, false); }
+
+	| T_LABEL K_PARAM_L T_STRING ',' '+' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $6, true); }
 
   /* Oh and by the way, empty statements are OK as well. */
 
@@ -736,6 +739,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.82  2006/03/18 22:51:10  steve
+ *  Syntax for carrying sign with parameter.
+ *
  * Revision 1.81  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *

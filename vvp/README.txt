@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.76 2006/03/08 05:29:42 steve Exp $
+ *  $Id: README.txt,v 1.77 2006/03/18 22:51:10 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -102,8 +102,8 @@ objects.
 The syntax of a parameter is:
 
 	<label> .param/str <name>, <value>;
-	<label> .param/b <name>, <value> [<msb>,<lsb>,<s>];
-	<label> .param/l <name>, <value> [<msb>,<lsb>,<s>];
+	<label> .param/b <name>, <value> [<msb>,<lsb>];
+	<label> .param/l <name>, <value> [<msb>,<lsb>];
 	<label> .param/r <name>, <value>;
 
 The <name> is a string that names the parameter. The name is placed in
@@ -119,6 +119,9 @@ The value, then, is appropriate for the data type. For example:
 
 	P_123 .param/str "hello", "Hello, World.";
 
+The boolean and logic values can also be signed or not. If signed, the
+value is preceeded by a '+' character. (Note that the value is 2s
+compliment, so the '+' says only that it is signed, not positive.)
 
 FUNCTOR STATEMENTS:
 

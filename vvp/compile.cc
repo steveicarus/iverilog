@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.218 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: compile.cc,v 1.219 2006/03/18 22:51:10 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1473,10 +1473,10 @@ void compile_thread(char*start_sym, char*flag)
 	    free(flag);
 }
 
-void compile_param_logic(char*label, char*name, char*value)
+void compile_param_logic(char*label, char*name, char*value, bool signed_flag)
 {
       vvp_vector4_t value4 = c4string_to_vector4(value);
-      vpiHandle obj = vpip_make_binary_param(name, value4);
+      vpiHandle obj = vpip_make_binary_param(name, value4, signed_flag);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1495,6 +1495,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.219  2006/03/18 22:51:10  steve
+ *  Syntax for carrying sign with parameter.
+ *
  * Revision 1.218  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *

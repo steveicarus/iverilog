@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.69 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.70 2006/03/18 22:51:10 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -291,11 +291,15 @@ vpiHandle vpip_make_string_param(char*name, char*value);
 struct __vpiBinaryConst {
       struct __vpiHandle base;
       vvp_vector4_t bits;
-      unsigned signed_flag :1;
+	/* TRUE if this constant is signed. */
+      int signed_flag :1;
+	/* TRUE if this constant has an explicit size (i.e. 19'h0 vs. 'h0) */
+      int sized_flag   :1;
 };
 
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
-vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits);
+vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
+				 bool signed_flag);
 
 struct __vpiDecConst {
       struct __vpiHandle base;
@@ -428,6 +432,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.70  2006/03/18 22:51:10  steve
+ *  Syntax for carrying sign with parameter.
+ *
  * Revision 1.69  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *
