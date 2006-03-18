@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.67 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.68 2006/03/18 22:52:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -211,43 +211,6 @@ NetEConst* NetEBBits::eval_tree()
       }
 
       return new NetEConst(res);
-}
-
-NetEConst* NetEBComp::eval_eqeq_()
-{
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
-      if (l == 0) return 0;
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
-      if (r == 0) return 0;
-
-      const verinum&lv = l->value();
-      const verinum&rv = r->value();
-
-      unsigned s_len = lv.len();
-      if (rv.len() < s_len) s_len = rv.len();
-
-      verinum result(verinum::V1, 1);
-      for (unsigned idx = 0 ; idx < s_len; idx += 1) {
-	    if (lv[idx] != rv[idx])
-		  result = verinum::V0;
-      }
-
-      // If one operand was wider than the other, check that the
-      // remaining bits are all zero
-      if (lv.len() > s_len) {
-	    for (unsigned idx = s_len; idx < lv.len(); idx += 1) {
-		  if (lv[idx] != 0)
-			result = verinum::V0;
-	    }
-      }
-      if (rv.len() > s_len) {
-	    for (unsigned idx = s_len; idx < rv.len(); idx += 1) {
-		  if (rv[idx] != 0)
-			result = verinum::V0;
-	    }
-      }
-
-      return new NetEConst(result);
 }
 
 
@@ -555,21 +518,25 @@ NetEConst* NetEBComp::eval_gteq_()
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign() && (lv.as_long() >= rv.as_long())) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
-      }
+      if (lv.has_sign() && rv.has_sign()) {
 
-      if (lv.as_ulong() >= rv.as_ulong()) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+	    if (lv.as_long() >= rv.as_long()) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
+      } else {
+
+	    if (lv.as_ulong() >= rv.as_ulong()) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
       }
 
       verinum result(verinum::V0, 1);
       return new NetEConst(result);
 }
 
-NetEConst* NetEBComp::eval_neeq_()
+NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
 {
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -579,7 +546,10 @@ NetEConst* NetEBComp::eval_neeq_()
       const verinum&lv = l->value();
       const verinum&rv = r->value();
 
-      verinum::V res = verinum::V0;
+      const verinum::V eq_res = ne_flag? verinum::V0 : verinum::V1;
+      const verinum::V ne_res = ne_flag? verinum::V1 : verinum::V0;
+
+      verinum::V res = eq_res;
       unsigned top = lv.len();
       if (rv.len() < top)
 	    top = rv.len();
@@ -612,10 +582,18 @@ NetEConst* NetEBComp::eval_neeq_()
 		  break;
 
 	    if (rv.get(idx) != lv.get(idx))
-		  res = verinum::V1;
+		  res = ne_res;
       }
 
       if (res != verinum::Vx) {
+	    verinum::V lpad = verinum::V0;
+	    verinum::V rpad = verinum::V0;
+
+	    if (lv.has_sign() && lv.get(lv.len()-1) == verinum::V1)
+		  lpad = verinum::V1;
+	    if (rv.has_sign() && rv.get(rv.len()-1) == verinum::V1)
+		  rpad = verinum::V1;
+
 	    for (unsigned idx = top ;  idx < lv.len() ;  idx += 1)
 		  switch (lv.get(idx)) {
 
@@ -624,9 +602,14 @@ NetEConst* NetEBComp::eval_neeq_()
 			res = verinum::Vx;
 			break;
 
+		      case verinum::V0:
+			if (res != verinum::Vx && rpad != verinum::V0)
+			      res = ne_res;
+			break;
+
 		      case verinum::V1:
-			if (res != verinum::Vx)
-			      res = verinum::V1;
+			if (res != verinum::Vx && rpad != verinum::V1)
+			      res = ne_res;
 			break;
 
 		      default:
@@ -641,9 +624,14 @@ NetEConst* NetEBComp::eval_neeq_()
 			res = verinum::Vx;
 			break;
 
+		      case verinum::V0:
+			if (res != verinum::Vx && lpad != verinum::V0)
+			      res = ne_res;
+			break;
+
 		      case verinum::V1:
-			if (res != verinum::Vx)
-			      res = verinum::V1;
+			if (res != verinum::Vx && lpad != verinum::V1)
+			      res = ne_res;
 			break;
 
 		      default:
@@ -711,7 +699,7 @@ NetEConst* NetEBComp::eval_tree()
 	    return eval_eqeqeq_();
 
 	  case 'e': // Equality (==)
-	    return eval_eqeq_();
+	    return eval_eqeq_(false);
 
 	  case 'G': // >=
 	    return eval_gteq_();
@@ -723,7 +711,7 @@ NetEConst* NetEBComp::eval_tree()
 	    return eval_neeqeq_();
 
 	  case 'n': // not-equal (!=)
-	    return eval_neeq_();
+	    return eval_eqeq_(true);
 
 	  case '<': // Less than
 	    return eval_less_();
@@ -1601,6 +1589,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.68  2006/03/18 22:52:27  steve
+ *  Properly handle signedness in compare.
+ *
  * Revision 1.67  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

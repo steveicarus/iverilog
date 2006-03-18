@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.355 2006/02/02 02:43:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.356 2006/03/18 22:53:04 steve Exp $"
 #endif
 
 /*
@@ -2686,13 +2686,12 @@ class NetEBComp : public NetEBinary {
       virtual NetNet* synthesize(Design*);
 
     private:
-      NetEConst*eval_eqeq_();
+      NetEConst*eval_eqeq_(bool ne_flag);
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
       NetEConst*eval_leeq_real_();
       NetEConst*eval_gt_();
       NetEConst*eval_gteq_();
-      NetEConst*eval_neeq_();
       NetEConst*eval_eqeqeq_();
       NetEConst*eval_neeqeq_();
 };
@@ -3459,6 +3458,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.356  2006/03/18 22:53:04  steve
+ *  Properly handle signedness in compare.
+ *
  * Revision 1.355  2006/02/02 02:43:58  steve
  *  Allow part selects of memory words in l-values.
  *
