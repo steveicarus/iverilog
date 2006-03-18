@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.141 2006/03/15 05:52:20 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.142 2006/03/18 22:53:38 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -2133,8 +2133,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 			  ivl_expr_string(pex));
 		  break;
 		case IVL_EX_NUMBER:
-		  fprintf(vvp_out, "P_%p .param/l \"%s\", C4<",
-			  par, ivl_parameter_basename(par));
+		  fprintf(vvp_out, "P_%p .param/l \"%s\", %sC4<",
+			  par, ivl_parameter_basename(par),
+			  ivl_expr_signed(pex)? "+":"");
 		  { const char*bits = ivl_expr_bits(pex);
 		    unsigned nbits = ivl_expr_width(pex);
 		    unsigned bb;
@@ -2203,6 +2204,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.142  2006/03/18 22:53:38  steve
+ *  Support more parameter syntax.
+ *
  * Revision 1.141  2006/03/15 05:52:20  steve
  *  Handle multiple part/bi devices connected together.
  *

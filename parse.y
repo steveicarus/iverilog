@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.209 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: parse.y,v 1.210 2006/03/18 22:53:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1898,6 +1898,33 @@ var_type
 	: K_reg { $$ = NetNet::REG; }
 	;
 
+  /* In this rule we have matched the "parameter" keyword. The rule
+     generates a type (optional) and a list of assignments. */
+
+parameter_assign_decl
+	: parameter_assign_list
+	| range          { active_range = $1; active_signed = false; }
+          parameter_assign_list
+		{ active_range = 0;
+		  active_signed = false;
+		}
+	| K_signed range { active_range = $2; active_signed = true; }
+          parameter_assign_list
+		{ active_range = 0;
+		  active_signed = false;
+		}
+	| K_integer      { active_range = 0; active_signed = true; }
+          parameter_assign_list
+		{ active_range = 0;
+		  active_signed = false;
+		}
+	;
+
+parameter_assign_list
+	: parameter_assign
+	| parameter_assign_list ',' parameter_assign
+	;
+
 parameter_assign
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
@@ -1914,26 +1941,6 @@ parameter_assign
 		  delete $1;
 		}
 	;
-
-parameter_assign_decl
-	: parameter_assign_list
-	| range { active_range = $1; active_signed = false; }
-          parameter_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	| K_signed range { active_range = $2; active_signed = true; }
-          parameter_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	;
-
-parameter_assign_list
-	: parameter_assign
-	| parameter_assign_list ',' parameter_assign
-	;
-
 
   /* Localparam assignments and assignment lists are broken into
      separate BNF so that I can call slightly different parameter
