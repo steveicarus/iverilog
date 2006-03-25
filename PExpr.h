@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.77 2006/02/02 02:43:57 steve Exp $"
+#ident "$Id: PExpr.h,v 1.78 2006/03/25 02:36:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -380,7 +380,7 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
-      verinum* PEString::eval_const(const Design*, NetScope*) const;
+      verinum* eval_const(const Design*, NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -548,6 +548,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.78  2006/03/25 02:36:26  steve
+ *  Get rid of excess PESTring:: prefix within class declaration.
+ *
  * Revision 1.77  2006/02/02 02:43:57  steve
  *  Allow part selects of memory words in l-values.
  *
