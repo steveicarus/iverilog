@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.210 2006/03/18 22:53:38 steve Exp $"
+#ident "$Id: parse.y,v 1.211 2006/03/25 02:42:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1703,14 +1703,18 @@ module_item
      primitives. These devices to not have delay lists or strengths,
      but then can have parameter lists. */
 
-	| IDENTIFIER parameter_value_opt gate_instance_list ';'
-		{ perm_string tmp1 = lex_strings.make($1);
-		  pform_make_modgates(tmp1, $2, $3);
-		  delete $1;
+	| attribute_list_opt
+	  IDENTIFIER parameter_value_opt gate_instance_list ';'
+		{ perm_string tmp1 = lex_strings.make($2);
+		  pform_make_modgates(tmp1, $3, $4);
+		  delete $2;
+		  if ($1) delete $1;
 		}
 
-        | IDENTIFIER parameter_value_opt error ';'
-		{ yyerror(@1, "error: Invalid module instantiation");
+        | attribute_list_opt
+	  IDENTIFIER parameter_value_opt error ';'
+		{ yyerror(@2, "error: Invalid module instantiation");
+		  if ($1) delete $1;
 		}
 
   /* Continuous assignment can have an optional drive strength, then
