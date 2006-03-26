@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65 2004/06/17 14:47:22 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.1 2006/03/26 21:47:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,6 +86,10 @@ extern const char*optarg;
 
 #ifndef IVL_ROOT
 # define IVL_ROOT "."
+#endif
+
+#ifndef IVL_ROOT_VARIABLE
+# define IVL_ROOT_VARIABLE "IVERILOG_ROOT"
 #endif
 
 # include  "globals.h"
@@ -409,13 +413,14 @@ int process_generation(const char*name)
       return 0;
 }
 
-int main(int argc, char **argv)
+/*
+ * This function fills in th ivl_root directory with the appropriate
+ * path, based on operating system, build time configuration, and
+ * environment.
+ */
+static char* get_root_dir()
 {
-      char*cmd;
-      unsigned ncmd;
-      int e_flag = 0;
-      int version_flag = 0;
-      int opt, idx, rc;
+      char*var = 0;
 
 #ifdef __MINGW32__
       { char * s;
@@ -443,16 +448,54 @@ int main(int argc, char **argv)
 	s = strrchr(ivl_root, sep);
 	if (s) *s = 0;
 	strcat(ivl_root, "\\lib\\ivl");
+      }
+#else
+	/* In other systems, use the configured root. */
+      strcpy(ivl_root, IVL_ROOT);
 
-	base = ivl_root;
+	/* In any case, the IVL_ROOT variable can be used to override
+	   the install location at run time. If it is set, use that
+	   value instead. */
+      if ( (var = getenv(IVL_ROOT_VARIABLE)) ) {
+	    strncpy(ivl_root, var, MAXSIZE);
       }
 
+#endif
+
+      return ivl_root;
+}
+
+int main(int argc, char **argv)
+{
+      char*cmd;
+      unsigned ncmd;
+      int e_flag = 0;
+      int version_flag = 0;
+      int opt, idx, rc;
+
+      get_root_dir();
+
+      base = get_root_dir();
+
+#ifdef __MINGW32__
+	/* Under Windows, there is no point checking the root
+	   directory. */
 #else
-        /* In a UNIX environment, the IVL_ROOT from the Makefile is
-	   dependable. It points to the $prefix/lib/ivl directory,
-	   where the sub-parts are installed. */
-      strcpy(ivl_root, IVL_ROOT);
-      base = ivl_root;
+	/* On other systems, check that the root directory seems
+	   reasonable. */
+      { size_t tmp_len = strlen(base) + 16;
+        char*  tmp = malloc(tmp_len);
+	snprintf(tmp, tmp_len, "%s%civl", base, sep);
+
+	if (0 != access(tmp, F_OK)) {
+	      fprintf(stderr, "%s: INSTALLATION ERROR: Directory %s"
+		      " does not contain ivl files.\n", argv[0], base);
+	      fprintf(stderr, "%s:                   : Check installation"
+		      " or set " IVL_ROOT_VARIABLE " correctly.\n", argv[0]);
+	      return 1;
+	}
+	free(tmp);
+      }
 #endif
 
 	/* Create a temporary file for communicating input parameters
@@ -735,6 +778,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.1  2006/03/26 21:47:26  steve
+ *  More installation directory flexibility.
+ *
  * Revision 1.65  2004/06/17 14:47:22  steve
  *  Add a .sft file for the system functions.
  *
