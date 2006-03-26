@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.5 2006/03/12 07:34:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.6 2006/03/26 23:09:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1547,6 +1547,66 @@ ivl_lpm_t dll_target::lpm_decode_ff_(const NetDecode*net)
       return obj;
 }
 
+bool dll_target::lpm_demux(const NetDemux*net)
+{
+      unsigned idx;
+      unsigned width = net->width();
+      unsigned awid = net->awidth();
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_DEMUX;
+      obj->name  = net->name();
+      obj->attr  = 0;
+      obj->nattr = 0;
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.demux.width = width;
+      obj->u_.demux.awid  = awid;
+
+      ivl_nexus_t*tmp = new ivl_nexus_t [2*net->width() + net->awidth()];
+      obj->u_.demux.q = tmp;
+      obj->u_.demux.d = tmp + width;
+      obj->u_.demux.a = tmp + 2*width;
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    const Nexus*nex = net->pin_Q(idx).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.demux.q[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.demux.q[idx], obj, idx,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    const Nexus*nex = net->pin_Data(idx).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.demux.d[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.demux.d[idx], obj, idx,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      for (idx = 0 ;  idx < awid ;  idx += 1) {
+	    const Nexus*nex = net->pin_Address(idx).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.demux.a[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.demux.a[idx], obj, idx,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      {
+	    const Nexus*nex = net->pin_WriteData().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.demux.bit_in = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.demux.bit_in, obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      obj->nattr = net->attr_cnt();
+      obj->attr = fill_in_attributes(net);
+
+      scope_add_lpm(obj->scope, obj);
+      return true;
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -2271,6 +2331,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.6  2006/03/26 23:09:24  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.131.2.5  2006/03/12 07:34:19  steve
  *  Fix the memsynth1 case.
  *

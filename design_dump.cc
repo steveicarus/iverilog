@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.3 2006/03/12 07:34:16 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.4 2006/03/26 23:09:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -220,6 +220,14 @@ void NetDecode::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_DECODE (NetDecode): " << name()
 	<< " ff=" << ff_->name() << ", word width=" << width() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetDemux::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_DEMUX (NetDemux): " << name()
+	<< " word width=" << width() << ", address width=" << awidth() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1109,6 +1117,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.4  2006/03/26 23:09:21  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.149.2.3  2006/03/12 07:34:16  steve
  *  Fix the memsynth1 case.
  *

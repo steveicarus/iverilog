@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115.2.3 2006/03/12 07:34:19 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115.2.4 2006/03/26 23:09:25 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -77,6 +77,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
       bool lpm_decode(const NetDecode*);
+      bool lpm_demux(const NetDemux*);
       void lpm_divide(const NetDivide*);
       void lpm_ff(const NetFF*);
       void lpm_modulo(const NetModulo*);
@@ -341,6 +342,13 @@ struct ivl_lpm_s {
 			ivl_nexus_t pin;
 		  } s;
 	    } mux;
+
+	    struct ivl_lpm_demux_s {
+		  unsigned width;
+		  unsigned awid;
+		  ivl_nexus_t bit_in;
+		  ivl_nexus_t *q,*d,*a;
+	    } demux;
 
 	    struct ivl_lpm_shift_s {
 		  unsigned width;
@@ -694,6 +702,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115.2.4  2006/03/26 23:09:25  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.115.2.3  2006/03/12 07:34:19  steve
  *  Fix the memsynth1 case.
  *

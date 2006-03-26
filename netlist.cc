@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.4 2006/03/16 05:40:18 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.5 2006/03/26 23:09:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -719,6 +719,89 @@ unsigned NetDecode::width() const
 unsigned NetDecode::awidth() const
 {
       return pin_count();
+}
+
+NetDemux::NetDemux(NetScope*s, perm_string name,
+		   unsigned word_width, unsigned address_width)
+: NetNode(s, name, word_width*2+address_width+1)
+{
+      width_ = word_width;
+      awidth_ = address_width;
+
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+	    pin_Q(idx).set_dir(Link::OUTPUT);
+	    pin_Q(idx).set_name(perm_string::literal("Q"), idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+	    pin_Data(idx).set_dir(Link::INPUT);
+	    pin_Data(idx).set_name(perm_string::literal("Data"), idx);
+      }
+      for (unsigned idx = 0 ;  idx < awidth_ ;  idx += 1) {
+	    pin_Address(idx).set_dir(Link::INPUT);
+	    pin_Address(idx).set_name(perm_string::literal("Address"), idx);
+      }
+      pin_WriteData().set_dir(Link::INPUT);
+      pin_WriteData().set_name(perm_string::literal("Writedata"), 0);
+}
+
+NetDemux::~NetDemux()
+{
+}
+
+unsigned NetDemux::width() const
+{
+      return width_;
+}
+
+unsigned NetDemux::awidth() const
+{
+      return awidth_;
+}
+
+Link& NetDemux::pin_Q(unsigned idx)
+{
+      assert(idx < width_);
+      return pin(idx);
+}
+
+const Link& NetDemux::pin_Q(unsigned idx) const
+{
+      assert(idx < width_);
+      return pin(idx);
+}
+
+Link& NetDemux::pin_Data(unsigned idx)
+{
+      assert(idx < width_);
+      return pin(width_+idx);
+}
+
+const Link& NetDemux::pin_Data(unsigned idx) const
+{
+      assert(idx < width_);
+      return pin(width_+idx);
+}
+
+Link& NetDemux::pin_Address(unsigned idx)
+{
+      assert(idx < awidth_);
+      return pin(width_+width_+idx);
+}
+
+const Link& NetDemux::pin_Address(unsigned idx) const
+{
+      assert(idx < awidth_);
+      return pin(width_+width_+idx);
+}
+
+Link& NetDemux::pin_WriteData()
+{
+      return pin(width_+width_+awidth_);
+}
+
+const Link& NetDemux::pin_WriteData() const
+{
+      return pin(width_+width_+awidth_);
 }
 
 NetDecode* NetFF::get_demux()
@@ -2388,6 +2471,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.5  2006/03/26 23:09:22  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.226.2.4  2006/03/16 05:40:18  steve
  *  Fix crash when memory exploding doesnot work
  *

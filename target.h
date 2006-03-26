@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.65.2.1 2006/02/19 00:11:34 steve Exp $"
+#ident "$Id: target.h,v 1.65.2.2 2006/03/26 23:09:25 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -80,6 +80,7 @@ struct target_t {
       virtual void lpm_clshift(const NetCLShift*);
       virtual void lpm_compare(const NetCompare*);
       virtual bool lpm_decode(const NetDecode*);
+      virtual bool lpm_demux(const NetDemux*);
       virtual void lpm_divide(const NetDivide*);
       virtual void lpm_modulo(const NetModulo*);
       virtual void lpm_ff(const NetFF*);
@@ -171,6 +172,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.65.2.2  2006/03/26 23:09:25  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.65.2.1  2006/02/19 00:11:34  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

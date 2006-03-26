@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.69.2.1 2006/02/19 00:11:34 steve Exp $"
+#ident "$Id: target.cc,v 1.69.2.2 2006/03/26 23:09:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,6 +105,13 @@ bool target_t::lpm_decode(const NetDecode*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetDecode." << endl;
+      return false;
+}
+
+bool target_t::lpm_demux(const NetDemux*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetDemux." << endl;
       return false;
 }
 
@@ -427,6 +434,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.69.2.2  2006/03/26 23:09:25  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.69.2.1  2006/02/19 00:11:34  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

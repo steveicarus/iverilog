@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108.2.3 2006/03/12 07:34:19 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108.2.4 2006/03/26 23:09:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -765,6 +765,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.a[idx];
 
+	  case IVL_LPM_DEMUX:
+	    assert(idx < net->u_.demux.width);
+	    return net->u_.demux.d[idx];
+
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
@@ -800,6 +804,10 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.b[idx];
+
+	  case IVL_LPM_DEMUX:
+	    assert(idx < 1);
+	    return net->u_.demux.bit_in;
 
 	  default:
 	    assert(0);
@@ -939,6 +947,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.mux.q.pins[idx];
 
+	  case IVL_LPM_DEMUX:
+	    assert(idx < net->u_.demux.width);
+	    return net->u_.demux.q[idx];
+
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.width);
@@ -978,6 +990,10 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.mux.s.pins[idx];
 
+	  case IVL_LPM_DEMUX:
+	    assert(idx < net->u_.demux.awid);
+	    return net->u_.demux.a[idx];
+
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    assert(idx < net->u_.shift.select);
@@ -997,6 +1013,8 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
+	  case IVL_LPM_DEMUX:
+	    return net->u_.demux.awid;
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.select;
@@ -1013,6 +1031,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_MUX:
+	  case IVL_LPM_DEMUX:
 	    return 0;
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EQ:
@@ -1066,6 +1085,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
+	  case IVL_LPM_DEMUX:
+	    return net->u_.demux.width;
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
@@ -1981,6 +2002,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108.2.4  2006/03/26 23:09:24  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.108.2.3  2006/03/12 07:34:19  steve
  *  Fix the memsynth1 case.
  *

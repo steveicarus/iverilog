@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.77.2.1 2006/02/19 00:11:31 steve Exp $"
+#ident "$Id: emit.cc,v 1.77.2.2 2006/03/26 23:09:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,11 @@ bool NetConst::emit_node(struct target_t*tgt) const
 bool NetDecode::emit_node(struct target_t*tgt) const
 {
       return tgt->lpm_decode(this);
+}
+
+bool NetDemux::emit_node(struct target_t*tgt) const
+{
+      return tgt->lpm_demux(this);
 }
 
 bool NetDivide::emit_node(struct target_t*tgt) const
@@ -516,6 +521,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.77.2.2  2006/03/26 23:09:21  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.77.2.1  2006/02/19 00:11:31  steve
  *  Handle synthesis of FF vectors with l-value decoder.
  *

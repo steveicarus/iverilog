@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.25 2006/03/18 18:43:22 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.26 2006/03/26 23:09:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,17 +41,27 @@ static int debug_synth2=0;
 #define DEBUG_SYNTH2_EXIT(class,val)
 #endif
 
-bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			  NetNet*nex_map, NetNet*nex_out)
+bool NetProc::synth_async_noaccum(Design*des, NetScope*scope, bool sync_flag,
+				  struct sync_accounting_cell*nex_ff,
+				  NetNet*nex_map, NetNet*nex_out)
 {
-      return false;
+	/* Make an unconnected stub for the accum_in net. */
+      const perm_string tmp = perm_string::literal("tmp");
+      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
+
+      bool flag = synth_async(des, scope, sync_flag, nex_ff,
+			      nex_map, nex_out, stub);
+
+      delete stub;
+      return flag;
 }
 
 bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  struct sync_accounting_cell*nex_ff,
 			  NetNet*nex_map, NetNet*nex_out,
 			  NetNet*accum_in)
 {
-      return synth_async(des, scope, sync_flag, nex_map, nex_out);
+      return false;
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
@@ -59,8 +69,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
-	/* Synthesize the input to the DFF. */
-      return synth_async(des, scope, true, nex_map, nex_out);
+      return synth_async_noaccum(des, scope, true, nex_ff, nex_map, nex_out);
 }
 
 static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
@@ -85,16 +94,7 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
  */
 
 bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
-				NetNet*nex_map, NetNet*nex_out)
-{
-      const perm_string tmp = perm_string::literal("tmp");
-      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
-      delete stub;
-      return flag;
-}
-
-bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+				struct sync_accounting_cell*nex_ff,
 				NetNet*nex_map, NetNet*nex_out,
 				NetNet*accum_in)
 {
@@ -160,6 +160,45 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  return false;
 	    }
 
+	      /* Handle the special case that this is a decoded
+		 enable. generate a demux for the device, with the
+		 WriteData connected to the r-value and the Data
+		 vector connected to the feedback. */
+	    if (cur->bmux() != 0) {
+		  assert(sync_flag);
+
+		  NetNet*adr = cur->bmux()->synthesize(des);
+
+		  NetDemux*dq = new NetDemux(scope, scope->local_symbol(),
+					     lsig->pin_count(),
+					     adr->pin_count());
+		  des->add_node(dq);
+		  dq->set_line(*this);
+
+		  for (unsigned idx = 0; idx < adr->pin_count() ;  idx += 1)
+			connect(dq->pin_Address(idx), adr->pin(idx));
+
+		  assert(cur->lwidth() == 1);
+
+		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
+			unsigned off = cur->get_loff()+idx;
+			unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
+			assert(ptr <= nex_map->pin_count());
+			connect(nex_out->pin(ptr), dq->pin_Q(idx));
+		  }
+
+		  for (unsigned idx = 0 ;  idx < lsig->pin_count(); idx += 1)
+			connect(dq->pin_Data(idx), nex_map->pin(roff+idx));
+
+		  connect(dq->pin_WriteData(), rsig->pin(roff));
+
+		  roff += cur->lwidth();
+		  cur->turn_sig_to_wire_on_release();
+		  continue;
+	    }
+
+	      /* By this point ant bmux() has been dealt with. Panic
+		 if that is not so. */
 	    assert(! cur->bmux());
 
 	      /* Bind the outputs that we do make to the nex_out. Use the
@@ -192,7 +231,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
  * substatements.
  */
 bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			   NetNet*nex_map, NetNet*nex_out)
+			   struct sync_accounting_cell*nex_ff,
+			   NetNet*nex_map, NetNet*nex_out, NetNet*accum_in)
 {
       DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
@@ -241,7 +281,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			connect(new_accum->pin(idx), accum_out->pin(ptr));
 	    }
 
-	    bool ok_flag = cur->synth_async(des, scope, sync_flag,
+	    bool ok_flag = cur->synth_async(des, scope, sync_flag, nex_ff,
 					    tmp_map, tmp_out, new_accum);
 	    flag = flag && ok_flag;
 
@@ -307,16 +347,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			  NetNet*nex_map, NetNet*nex_out)
-{
-      const perm_string tmp = perm_string::literal("tmp");
-      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
-      delete stub;
-      return flag;
-}
-
-bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			  struct sync_accounting_cell*nex_ff,
 			  NetNet*nex_map, NetNet*nex_out, NetNet*accum)
 {
       unsigned cur;
@@ -371,7 +402,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	/* Handle the special case that this can be done it a smaller
 	   1-hot MUX. */
       if (nondefault_items < sel_pins)
-	    return synth_async_1hot_(des, scope, sync_flag,
+	    return synth_async_1hot_(des, scope, sync_flag, nex_ff,
 				    nex_map, nex_out, accum,
 				    esig, nondefault_items);
 
@@ -502,6 +533,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		       connect all the output bits it knows how to the
 		       sig net. */
 		  statement_map[item]->synth_async(des, scope, sync_flag,
+						   nex_ff,
 						   nex_map, sig, accum);
 
 		  for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
@@ -529,6 +561,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 }
 
 bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
+				struct sync_accounting_cell*nex_ff,
 				NetNet*nex_map, NetNet*nex_out, NetNet*accum,
 				NetNet*esig, unsigned hot_items)
 {
@@ -583,7 +616,7 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 	    NetNet*item_sig = new NetNet(scope, scope->local_symbol(),
 					 NetNet::WIRE, nex_map->pin_count());
 	    assert(items_[item].statement);
-	    items_[item].statement->synth_async(des, scope, sync_flag,
+	    items_[item].statement->synth_async(des, scope, sync_flag, nex_ff,
 						nex_map, item_sig, accum);
 	    for (unsigned idx = 0 ;  idx < item_sig->pin_count() ;  idx += 1)
 		  connect(mux->pin_Data(idx, 1<<use_item), item_sig->pin(idx));
@@ -600,7 +633,7 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
       if (default_statement) {
 	    default_sig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, nex_map->pin_count());
-	    default_statement->synth_async(des, scope, sync_flag,
+	    default_statement->synth_async(des, scope, sync_flag, nex_ff,
 					   nex_map, default_sig, accum);
 
       }
@@ -644,26 +677,12 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 }
 
 /*
- * If the synth_async method is called without an accumulated input
- * (in other words not from within a block) then stub the input signal
- * with an unconnected net.
- */
-bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			    NetNet*nex_map, NetNet*nex_out)
-{
-      const perm_string tmp = perm_string::literal("tmp");
-      NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
-      bool flag = synth_async(des, scope, sync_flag, nex_map, nex_out, stub);
-      delete stub;
-      return flag;
-}
-
-/*
  * Handle synthesis for an asynchronous condition statement. If we get
  * here, we know that the CE of a DFF has already been filled, so the
  * condition expression goes to the select of an asynchronous mux.
  */
 bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
+			    struct sync_accounting_cell*nex_ff,
 			    NetNet*nex_map, NetNet*nex_out,
 			    NetNet*accum)
 {
@@ -726,7 +745,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    }
 
       } else {
-	    bool flag = if_->synth_async(des, scope, sync_flag,
+	    bool flag = if_->synth_async(des, scope, sync_flag, nex_ff,
 					 nex_map, asig, accum);
 	    if (!flag) {
 		  delete asig;
@@ -750,7 +769,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			connect(bsig->pin(idx), nex_map->pin(idx));
 	    }
       } else {
-	    bool flag = else_->synth_async(des, scope, sync_flag,
+	    bool flag = else_->synth_async(des, scope, sync_flag, nex_ff,
 					   nex_map, bsig, accum);
 	    if (!flag) {
 		  delete asig;
@@ -818,10 +837,11 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			    NetNet*nex_map, NetNet*nex_out)
+			    sync_accounting_cell*nex_ff,
+			    NetNet*nex_map, NetNet*nex_out, NetNet*accum_in)
 {
-      bool flag = statement_->synth_async(des, scope, sync_flag,
-					  nex_map, nex_out);
+      bool flag = statement_->synth_async(des, scope, sync_flag, nex_ff,
+					  nex_map, nex_out, accum_in);
       return flag;
 }
 
@@ -836,8 +856,8 @@ bool NetProcTop::synth_async(Design*des)
       for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
 	    connect(nex_set[idx], nex_out->pin(idx));
 
-      bool flag = statement_->synth_async(des, scope(), false,
-					  nex_out, nex_out);
+      bool flag = statement_->synth_async_noaccum(des, scope(), false, 0,
+						  nex_out, nex_out);
 
       delete nex_out;
       return flag;
@@ -915,7 +935,8 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	   assignments. */
       if (demux == 0) {
 	      /* Synthesize the input to the DFF. */
-	    return synth_async(des, scope, true, nex_map, nex_out);
+	    return synth_async_noaccum(des, scope, true, nex_ff,
+				       nex_map, nex_out);
       }
 
       assert(demux->bmux() != 0);
@@ -1256,7 +1277,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    asig->local_flag(true);
 
 	    assert(if_ != 0);
-	    bool flag = if_->synth_async(des, scope, true, nex_map, asig);
+	    bool flag = if_->synth_async_noaccum(des, scope, true, nex_ff,
+						 nex_map, asig);
 
 	    assert(asig->pin_count() == ff->width());
 
@@ -1347,7 +1369,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, nex_map->pin_count());
 	    asig->local_flag(true);
-	    bool flag = if_->synth_async(des, scope, true, nex_map, asig);
+	    bool flag = if_->synth_async_noaccum(des, scope, true, nex_ff,
+						 nex_map, asig);
 
 	    if (!flag) {
 		  /* This path leads nowhere */
@@ -1399,7 +1422,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
-	    bool flag = synth_async(des, scope, true, nex_map, nex_out);
+	    bool flag =synth_async_noaccum(des, scope, true, nex_ff,
+					   nex_map, nex_out);
 	    return flag;
       }
 
@@ -1531,7 +1555,8 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 }
 
 bool NetWhile::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			   NetNet*nex_map, NetNet*nex_out)
+			   struct sync_accounting_cell*nex_ff,
+			   NetNet*nex_map, NetNet*nex_out, NetNet*accum_in)
 {
       cerr << get_line()
 	   << ": error: Cannot synthesize for or while loops."
@@ -1671,6 +1696,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.26  2006/03/26 23:09:24  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.39.2.25  2006/03/18 18:43:22  steve
  *  Better error messages when synthesis fails.
  *

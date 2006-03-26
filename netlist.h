@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.13 2006/03/18 18:43:21 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.14 2006/03/26 23:09:23 steve Exp $"
 #endif
 
 /*
@@ -633,6 +633,46 @@ class NetDecode  : public NetNode {
 
     private:
       void make_pins_(unsigned awid);
+};
+
+/*
+ * The NetDemux is similar to the NetDecode, except that it is
+ * combinational. The inputs are an address, Data, and WriteData.
+ * The Q output is the same as the Data input, except for the bit that
+ * is addressed by the address input, which gets WriteData instead.
+ */
+class NetDemux  : public NetNode {
+
+    public:
+      NetDemux(NetScope*s, perm_string name,
+	       unsigned word_width, unsigned address_width);
+      ~NetDemux();
+
+	// This is the width of the word. The width of the NetFF mem
+	// is an even multiple of this.
+      unsigned width() const;
+	// This is the width of the address. The address value for the
+	// base of a word is the address * width().
+      unsigned awidth() const;
+
+      Link& pin_Address(unsigned idx);
+      Link& pin_Data(unsigned idx);
+      Link& pin_Q(unsigned idx);
+      Link& pin_WriteData();
+
+      const Link& pin_Address(unsigned idx) const;
+      const Link& pin_Data(unsigned idx) const;
+      const Link& pin_Q(unsigned idx) const;
+      const Link& pin_WriteData() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_, awidth_;
+
+    private:
+      void make_pins_(unsigned wid, unsigned awid);
 };
 
 /*
@@ -1425,9 +1465,13 @@ class NetProc : public virtual LineInfo {
 	// sync_flag is used to tell the async synthesizer that the
 	// output nex_map is ultimately connected to a DFF Q
 	// output. This can affect how cycles are handled.
-      virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+
+      bool synth_async_noaccum(Design*des, NetScope*scope, bool sync_flag,
+			       struct sync_accounting_cell*nex_ff,
 			       NetNet*nex_map, NetNet*nex_out);
+
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+			       struct sync_accounting_cell*nex_ff,
 			       NetNet*nex_map, NetNet*nex_out,
 			       NetNet*accum_in);
 
@@ -1571,8 +1615,7 @@ class NetAssignBase : public NetProc {
       unsigned lwidth() const;
 
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       struct sync_accounting_cell*nex_ff,
 		       NetNet*nex_map, NetNet*nex_out,
 		       NetNet*accum_in);
       bool synth_sync(Design*des, NetScope*scope,
@@ -1645,7 +1688,8 @@ class NetBlock  : public NetProc {
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       NetNet*nex_map, NetNet*nex_out);
+		       struct sync_accounting_cell*nex_ff,
+		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      struct sync_accounting_cell*nex_ff,
@@ -1701,8 +1745,7 @@ class NetCase  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       struct sync_accounting_cell*nex_ff,
 		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
 
       virtual bool emit_proc(struct target_t*) const;
@@ -1710,6 +1753,7 @@ class NetCase  : public NetProc {
 
     private:
       bool synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
+			     struct sync_accounting_cell*nex_ff,
 			     NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
 			     NetNet*esig, unsigned hot_items);
     private:
@@ -1789,8 +1833,7 @@ class NetCondit  : public NetProc {
 
       bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       NetNet*nex_map, NetNet*nex_out);
-      bool synth_async(Design*des, NetScope*scope, bool sync_flag,
+		       struct sync_accounting_cell*nex_ff,
 		       NetNet*nex_map, NetNet*nex_out, NetNet*accum);
 
       bool synth_sync(Design*des, NetScope*scope,
@@ -2017,7 +2060,9 @@ class NetEvWait  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-			       NetNet*nex_map, NetNet*nex_out);
+			       struct sync_accounting_cell*nex_ff,
+			       NetNet*nex_map, NetNet*nex_out,
+			       NetNet*accum_in);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      struct sync_accounting_cell*nex_ff,
@@ -2416,7 +2461,8 @@ class NetWhile  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
       bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       NetNet*nex_map, NetNet*nex_out);
+		       struct sync_accounting_cell*nex_ff,
+		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in);
 
     private:
       NetExpr* cond_;
@@ -3466,6 +3512,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.14  2006/03/26 23:09:23  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.321.2.13  2006/03/18 18:43:21  steve
  *  Better error messages when synthesis fails.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126.2.3 2006/03/12 07:34:16 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.126.2.4 2006/03/26 23:09:22 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -227,6 +227,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_GT =  2,
       IVL_LPM_CMP_NE = 11,
       IVL_LPM_DECODE = 15,
+      IVL_LPM_DEMUX  = 16,
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
       IVL_LPM_MOD    = 13,
@@ -705,6 +706,17 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * "q" port has as many bits as the width. The ivl_lpm_data2 function
  * gets the nexa of the input, with the sdx the word address and the
  * idx the bit within the word.
+ *
+ * - IVL_LPM_DEMUX
+ * This device is a form of bit replacement. The device has a data
+ * width (ivl_lpm_width) and an address width. The Data outputs are
+ * ivl_lpm_q and have the data width. The ivl_lpm_data functions are
+ * inputs to the device. Normally, the device passes the data inputs
+ * through to the Q output.
+ *
+ * The ivl_lpm_select inputs address a bit of the device. The
+ * addressed bit is substituted by the replacement bit. This
+ * replacement bit comes from the ivl_lpm_datab(net,0) nexus.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -732,20 +744,21 @@ extern ivl_lpm_t   ivl_lpm_decode(ivl_lpm_t net);
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_FF IVL_LPM_MULT */
+  /*  IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_MULT IVL_LPM_SUB */
   /* IVL_LPM_MUX IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
   /* IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
+  /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_RAM */
+  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_DEMUX IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
-  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_RAM */
+  /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_DEMUX IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX, IVL_LPM_RAM */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
@@ -1288,6 +1301,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.126.2.4  2006/03/26 23:09:22  steve
+ *  Handle asynchronous demux/bit replacements.
+ *
  * Revision 1.126.2.3  2006/03/12 07:34:16  steve
  *  Fix the memsynth1 case.
  *
