@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: decoder.cc,v 1.1.2.2 2006/03/12 07:34:21 steve Exp $"
+#ident "$Id: decoder.cc,v 1.1.2.3 2006/03/26 23:09:00 steve Exp $"
 
 # include  "compile.h"
 # include  "functor.h"
@@ -67,10 +67,33 @@ struct vvp_decode_adr_s : public functor_s {
       vvp_ipoint_t ix;
       const unsigned width;
 	// Keep a list of decode_en objects that reference me.
-      struct vvp_decode_en_s* enable_list;
+      struct vvp_decodable_s* enable_list;
 };
 
-struct vvp_decode_en_s : public functor_s {
+/*
+ * A vvp_decodeable_s object may receive results from an address
+ * decoder. The propagate_decoder_address virtual method is called by
+ * the address decoder for all the associated decodable objects.
+ */
+struct vvp_decodable_s {
+      vvp_decodable_s(vvp_decode_adr_s*dec, unsigned s)
+      : decoder(dec), self(s)
+      {
+	    enable_next = decoder->enable_list;
+	    decoder->enable_list = this;
+      }
+
+      virtual void propagate_decoder_address(unsigned adr) =0;
+
+      struct vvp_decode_adr_s*decoder;
+      const unsigned self;
+
+      struct vvp_decodable_s* enable_next;
+};
+
+/*
+ */
+struct vvp_decode_en_s : public functor_s, public vvp_decodable_s {
 
       vvp_decode_en_s(vvp_decode_adr_s*dec, unsigned s);
 
@@ -78,16 +101,25 @@ struct vvp_decode_en_s : public functor_s {
 
       void propagate_decoder_address(unsigned adr);
 
-      struct vvp_decode_adr_s*decoder;
-      struct vvp_decode_en_s* enable_next;
-
-      const unsigned self;
 	// This is the enable calculated from the decoder
       bool decode_en;
 	// This is the enable that arrives from the extra input.
       bool extra_en;
 	// This is the mass-enable that enables independent of address
       bool mass_en;
+};
+
+struct vvp_demux_s : public functor_s, public vvp_decodable_s {
+
+      vvp_demux_s(vvp_decode_adr_s*dec, unsigned s);
+
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+      void propagate_decoder_address(unsigned adr);
+
+      unsigned char sel_val;
+      unsigned char not_val;
+      bool decode_en;
 };
 
 vvp_decode_adr_s::vvp_decode_adr_s(vvp_ipoint_t me, unsigned w)
@@ -111,21 +143,17 @@ void vvp_decode_adr_s::set(vvp_ipoint_t i, bool push,
 
       }
 
-      for (vvp_decode_en_s*cur = enable_list ; cur ; cur = cur->enable_next)
+      for (vvp_decodable_s*cur = enable_list ; cur ; cur = cur->enable_next)
 	    cur->propagate_decoder_address(cur_adr);
 }
 
 vvp_decode_en_s::vvp_decode_en_s(vvp_decode_adr_s*dec, unsigned s)
-: self(s)
+: vvp_decodable_s(dec, s)
 {
-      enable_next = 0;
       decode_en = false;
       extra_en = true;
       mass_en = false;
 
-      decoder = dec;
-      enable_next = decoder->enable_list;
-      decoder->enable_list = this;
 }
 
 void vvp_decode_en_s::set(vvp_ipoint_t i, bool push,
@@ -173,6 +201,50 @@ void vvp_decode_en_s::propagate_decoder_address(unsigned adr)
 	    put_oval(0, true);
 }
 
+vvp_demux_s::vvp_demux_s(vvp_decode_adr_s*dec, unsigned s)
+: vvp_decodable_s(dec, s)
+{
+      decode_en = false;
+      sel_val = StX;
+      not_val = StX;
+}
+
+void vvp_demux_s::set(vvp_ipoint_t i, bool push,
+			   unsigned val, unsigned str)
+{
+      functor_t ifu = functor_index(i);
+      ifu->put(i, val);
+
+      unsigned port = ipoint_port(i);
+      switch (port) {
+	  case 0: // not-selected input
+	    not_val = val;
+	    break;
+	  case 1: // is-selected input
+	    sel_val = val;
+	    break;
+      }
+
+      if (decode_en)
+	    put_oval(sel_val, true);
+      else
+	    put_oval(not_val, true);
+}
+
+void vvp_demux_s::propagate_decoder_address(unsigned adr)
+{
+      if (adr == self) {
+	    decode_en = true;
+      } else {
+	    decode_en = false;
+      }
+
+      if (decode_en)
+	    put_oval(sel_val, true);
+      else
+	    put_oval(not_val, true);
+}
+
 void compile_decode_adr(char*label, unsigned argc, struct symb_s*argv)
 {
       unsigned nfun = (argc + 3)/4;
@@ -216,8 +288,30 @@ void compile_decode_en(char*label, char*decoder, int slice,
       free(label);
 }
 
+void compile_demux(char*label, char*decoder, int slice,
+		   struct symb_s not_selected,
+		   struct symb_s selected)
+{
+      vvp_decode_adr_s*adr = decoder_find(decoder);
+      vvp_demux_s*a = new struct vvp_demux_s(adr, slice);
+
+      vvp_ipoint_t ix = functor_allocate(1);
+      functor_define(ix, a);
+
+      symb_s argv[2];
+      argv[0] = not_selected;
+      argv[1] = selected;
+      inputs_connect(ix, 2, argv);
+
+      define_functor_symbol(label, ix);
+      free(label);
+}
+
 /*
  * $Log: decoder.cc,v $
+ * Revision 1.1.2.3  2006/03/26 23:09:00  steve
+ *  Add the .demux device.
+ *
  * Revision 1.1.2.2  2006/03/12 07:34:21  steve
  *  Fix the memsynth1 case.
  *

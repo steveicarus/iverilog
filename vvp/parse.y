@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.60.2.2 2006/03/12 07:34:21 steve Exp $"
+#ident "$Id: parse.y,v 1.60.2.3 2006/03/26 23:09:01 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,7 +60,7 @@ extern FILE*yyin;
 %token K_ARITH_DIV K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
 %token K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
-%token K_DECODE_ADR K_DECODE_EN
+%token K_DECODE_ADR K_DECODE_EN K_DEMUX
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
@@ -272,6 +272,10 @@ statement
 
 	| T_LABEL K_DECODE_EN T_SYMBOL ',' T_NUMBER ',' symbol ',' symbol ';'
 		{ compile_decode_en($1, $3, $5, $7, $9);
+		}
+
+	| T_LABEL K_DEMUX T_SYMBOL ',' T_NUMBER ',' symbol ',' symbol ';'
+		{ compile_demux($1, $3, $5, $7, $9);
 		}
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
@@ -646,6 +650,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.60.2.3  2006/03/26 23:09:01  steve
+ *  Add the .demux device.
+ *
  * Revision 1.60.2.2  2006/03/12 07:34:21  steve
  *  Fix the memsynth1 case.
  *
