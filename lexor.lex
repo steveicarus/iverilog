@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.89 2006/02/02 05:21:45 steve Exp $"
+#ident "$Id: lexor.lex,v 1.90 2006/03/30 05:44:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -293,10 +293,10 @@ W [ \t\b\f\r]+
 ^{W}?`disable_portfaults{W}?.*   {  }
 ^{W}?`enable_portfaults{W}?.*    {  }
 ^{W}?`endcelldefine{W}?.*        {  }
-^{W}?`endprotect{W}?.*           {  }
+`endprotect                      {  }
 ^{W}?`nosuppress_faults{W}?.*    {  }
 ^{W}?`nounconnected_drive{W}?.*  {  }
-^{W}?`protect{W}?.*              {  }
+`protect                         {  }
 ^{W}?`resetall{W}?.*             {  }
 ^{W}?`suppress_faults{W}?.*      {  }
 ^{W}?`unconnected_drive{W}?.*    {  }
