@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.38 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: Module.h,v 1.39 2006/03/30 01:49:07 steve Exp $"
 #endif
 
 # include  <list>
@@ -142,7 +142,8 @@ class Module : public LineInfo {
       void dump(ostream&out) const;
       bool elaborate(Design*, NetScope*scope) const;
 
-      bool elaborate_scope(Design*, NetScope*scope) const;
+      typedef map<perm_string,NetExpr*> replace_t;
+      bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep) const;
 
       bool elaborate_sig(Design*, NetScope*scope) const;
 
@@ -163,6 +164,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.39  2006/03/30 01:49:07  steve
+ *  Fix instance arrays indexed by overridden parameters.
+ *
  * Revision 1.38  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

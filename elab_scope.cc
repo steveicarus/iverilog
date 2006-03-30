@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.37 2006/03/18 22:53:38 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.38 2006/03/30 01:49:07 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "compiler.h"
+# include  "netmisc.h"
 # include  <iostream>
 # include  <stdio.h>
 
@@ -44,7 +45,8 @@
 # include  <typeinfo>
 # include  <assert.h>
 
-bool Module::elaborate_scope(Design*des, NetScope*scope) const
+bool Module::elaborate_scope(Design*des, NetScope*scope,
+			     const replace_t&replacements) const
 {
       if (debug_scopes) {
 	    cerr << get_line() << ": debug: Elaborate scope "
@@ -135,6 +137,26 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 				       msb, lsb, signed_flag);
 	    assert(val);
 	    delete val;
+      }
+
+	/* run parameter replacements that were collected from the
+	   containing scope and meant for me. */
+      for (replace_t::const_iterator cur = replacements.begin()
+		 ; cur != replacements.end() ;  cur ++) {
+
+	    NetExpr*val = (*cur).second;
+	    if (debug_scopes) {
+		  cerr << get_line() << ": debug: "
+		       << "Replace " << (*cur).first
+		       << " with expression " << *val
+		       << " from " << val->get_line() << "." << endl;
+	    }
+	    bool flag = scope->replace_parameter((*cur).first, val);
+	    if (! flag) {
+		  cerr << val->get_line() << ": warning: parameter "
+		       << (*cur).first << " not found in "
+		       << scope->name() << "." << endl;
+	    }
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -313,8 +335,10 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
-      verinum*msb = msb_ ? msb_->eval_const(des, sc) : 0;
-      verinum*lsb = lsb_ ? lsb_->eval_const(des, sc) : 0;
+      NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_) : 0;
+      NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_) : 0;
+      NetEConst*msb = dynamic_cast<NetEConst*> (mse);
+      NetEConst*lsb = dynamic_cast<NetEConst*> (lse);
 
       assert( (msb == 0) || (lsb != 0) );
 
@@ -325,12 +349,15 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
       if (msb) {
 	    instance_array = true;
-	    instance_high = msb->as_long();
-	    instance_low  = lsb->as_long();
+	    instance_high = msb->value().as_long();
+	    instance_low  = lsb->value().as_long();
 	    if (instance_high > instance_low)
 		  instance_count = instance_high - instance_low + 1;
 	    else
 		  instance_count = instance_low - instance_high + 1;
+
+	    delete mse;
+	    delete lse;
       }
 
       NetScope::scope_vec_t instances (instance_count);
@@ -378,13 +405,6 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    my_scope->time_precision(mod->time_precision);
 	    des->set_precision(mod->time_precision);
 
-	      // This call actually arranges for the description of the
-	      // module type to process this instance and handle parameters
-	      // and sub-scopes that might occur. Parameters are also
-	      // created in that scope, as they exist. (I'll override them
-	      // later.)
-	    mod->elaborate_scope(des, my_scope);
-
 	      // Look for module parameter replacements. The "replace" map
 	      // maps parameter name to replacement expression that is
 	      // passed. It is built up by the ordered overrides or named
@@ -427,6 +447,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    }
 
 
+	    Module::replace_t replace_net;
+
 	      // And here we scan the replacements we collected. Elaborate
 	      // the expression in my context, then replace the sub-scope
 	      // parameter value with the new expression.
@@ -436,13 +458,16 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 		  PExpr*tmp = (*cur).second;
 		  NetExpr*val = tmp->elaborate_pexpr(des, sc);
-		  bool flag = my_scope->replace_parameter((*cur).first, val);
-		  if (! flag) {
-			cerr << val->get_line() << ": warning: parameter "
-			     << (*cur).first << " not found in "
-			     << sc->name() << "." << endl;
-		  }
+		  replace_net[(*cur).first] = val;
 	    }
+
+	      // This call actually arranges for the description of the
+	      // module type to process this instance and handle parameters
+	      // and sub-scopes that might occur. Parameters are also
+	      // created in that scope, as they exist. (I'll override them
+	      // later.)
+	    mod->elaborate_scope(des, my_scope, replace_net);
+
       }
 
 	/* Stash the instance array of scopes into the parent
@@ -610,6 +635,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.38  2006/03/30 01:49:07  steve
+ *  Fix instance arrays indexed by overridden parameters.
+ *
  * Revision 1.37  2006/03/18 22:53:38  steve
  *  Support more parameter syntax.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.334 2006/01/03 05:22:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.335 2006/03/30 01:49:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2998,14 +2998,16 @@ Design* elaborate(list<perm_string>roots)
 
 	    Module *rmod = (*mod).second;
 
-	    // Make the root scope, then scan the pform looking for scopes
-	    // and parameters.
+	      // Make the root scope.
 	    NetScope*scope = des->make_root_scope(*root);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
 	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
-	    if (! rmod->elaborate_scope(des, scope)) {
+
+	    Module::replace_t stub;
+	      // Recursively elaborate from this root scope down.
+	    if (! rmod->elaborate_scope(des, scope, stub)) {
 		  delete des;
 		  return 0;
 	    }
@@ -3069,6 +3071,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.335  2006/03/30 01:49:07  steve
+ *  Fix instance arrays indexed by overridden parameters.
+ *
  * Revision 1.334  2006/01/03 05:22:14  steve
  *  Handle complex net node delays.
  *
