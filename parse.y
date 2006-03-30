@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.211 2006/03/25 02:42:58 steve Exp $"
+#ident "$Id: parse.y,v 1.212 2006/03/30 05:22:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1065,36 +1065,63 @@ expr_primary
      declaration) or an input declaration. There are no output or
      inout ports. */
 function_item
-	: K_input range_opt list_of_identifiers ';'
+	: K_input signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, false,
-						$2, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_input K_signed range_opt list_of_identifiers ';'
-                { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, true,
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, $2,
 						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output range_opt list_of_identifiers ';'
+	| K_output signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, false,
-						$2, $3,
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, $2,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have output ports.");
 		}
-	| K_inout range_opt list_of_identifiers ';'
+	| K_inout signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, false,
-						$2, $3,
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, $2,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have inout ports.");
 		}
+  /* When the port is an integer, infer a signed vector of the integer
+     shape. Generate a range to make it work. */
+
+	| K_input K_integer list_of_identifiers ';'
+                { svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, true,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+  /* Ports can be real. */
+
+	| K_input K_real list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_REAL, false,
+						0, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
 	| block_item_decl
                 { $$ = 0; }
 	;
@@ -1641,7 +1668,7 @@ module_item
 		}
 
 	| port_type signed_opt range_opt delay3_opt error ';'
-		{ yyerror(@3, "error: Invalid variable list"
+		{ yyerror(@1, "error: Invalid variable list"
 			  " in port declaration.");
 		  if ($3) delete $3;
 		  if ($4) delete $4;
@@ -2941,24 +2968,109 @@ statement_opt
 task_item
 	: block_item_decl
 	    { $$ = new svector<PWire*>(0); }
-	| K_input range_opt list_of_identifiers ';'
+
+  /* The basic port concept. */
+
+	| K_input signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT, false,
-						$2, $3,
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, $2,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output range_opt list_of_identifiers ';'
+	| K_output signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT, false,
-						$2, $3,
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, $2,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout range_opt list_of_identifiers ';'
+	| K_inout signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT, false,
-						$2, $3,
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, $2,
+						$3, $4,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+  /* When the port is an integer, infer a signed vector of the integer
+     shape. Generate a range to make it work. */
+
+	| K_input K_integer list_of_identifiers ';'
+                { svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, true,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_integer list_of_identifiers ';'
+		{ svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, true,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_integer list_of_identifiers ';'
+		{ svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, true,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+  /* Ports can be real. */
+
+	| K_input K_real list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_REAL, false,
+						0, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_real list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_REAL, true,
+						0, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_real list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_REAL, true,
+						0, $3,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}

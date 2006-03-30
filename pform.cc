@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.133 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: pform.cc,v 1.134 2006/03/30 05:22:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1266,6 +1266,7 @@ void pform_set_port_type(perm_string nm, NetNet::PortType pt,
  * no output or inout ports.
  */
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+				      ivl_variable_type_t vtype,
 				      bool signed_flag,
 				      svector<PExpr*>*range,
 				      list<perm_string>*names,
@@ -1286,8 +1287,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    if (curw) {
 		  curw->set_port_type(pt);
 	    } else {
-		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt,
-				   IVL_VT_LOGIC);
+		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
 		  curw->set_file(file);
 		  curw->set_lineno(lineno);
 		  pform_cur_module->add_wire(curw);
@@ -1596,6 +1596,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.134  2006/03/30 05:22:34  steve
+ *  task/function ports can have types.
+ *
  * Revision 1.133  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
