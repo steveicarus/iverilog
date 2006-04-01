@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.86 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: main.cc,v 1.86.2.1 2006/04/01 01:37:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,6 +112,8 @@ bool error_implicit = false;
 bool debug_scopes = false;
 bool debug_eval_tree = false;
 bool debug_elaborate = false;
+bool debug_synth = false;
+
 /*
  * Verbose messages enabled.
  */
@@ -314,6 +316,9 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"elaborate") == 0) {
 			debug_elaborate = true;
 			cerr << "debug: Enable elaborate debug" << endl;
+		  } else if (strcmp(cp,"synth") == 0) {
+			debug_synth = true;
+			cerr << "debug: Enable synthesis debug" << endl;
 		  } else {
 		  }
 
@@ -744,6 +749,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.86.2.1  2006/04/01 01:37:24  steve
+ *  Add synth debug flag
+ *
  * Revision 1.86  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

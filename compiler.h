@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.26 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: compiler.h,v 1.26.2.1 2006/04/01 01:37:24 steve Exp $"
 #endif
 
 # include  <list>
@@ -84,6 +84,7 @@ extern bool verbose_flag;
 extern bool debug_scopes;
 extern bool debug_eval_tree;
 extern bool debug_elaborate;
+extern bool debug_synth;
 
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
@@ -136,6 +137,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.26.2.1  2006/04/01 01:37:24  steve
+ *  Add synth debug flag
+ *
  * Revision 1.26  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *
