@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.26 2006/03/26 23:09:24 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.27 2006/04/01 01:37:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1375,7 +1375,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    if (!flag) {
 		  /* This path leads nowhere */
 		  delete asig;
-	    } else {
+	    } else do {
 		  assert(asig->pin_count() == ff->width());
 
 		    /* Collect the set/reset value into a verinum. If
@@ -1387,6 +1387,19 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 			assert(asig->pin(bit).nexus()->drivers_constant());
 			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+		  }
+
+		    /* Oops, this is not a constant, presumably
+		       because the case is not fully connected. In
+		       this case, we need to fall back on more general
+		       synthesis. */
+		  if (! tmp.is_defined()) {
+			if (debug_synth)
+			      cerr << get_line() << ": debug: "
+				   << "Give up on set/clr synthesis, since "
+				   << "r-value = " << tmp << endl;
+			delete asig;
+			break;
 		  }
 
 		  if (! tmp.is_defined())
@@ -1410,7 +1423,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 					   svector<NetEvProbe*>(0))
 			&& flag;
 		  return flag;
-	    }
+	    } while (0);
       }
 
       delete a_set;
@@ -1696,6 +1709,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.27  2006/04/01 01:37:58  steve
+ *  Punt on set/reset if some sources are unconnected.
+ *
  * Revision 1.39.2.26  2006/03/26 23:09:24  steve
  *  Handle asynchronous demux/bit replacements.
  *
