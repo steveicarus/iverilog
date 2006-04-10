@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.14 2006/03/26 23:09:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.15 2006/04/10 03:43:39 steve Exp $"
 #endif
 
 /*
@@ -3079,7 +3079,7 @@ class NetEMemory  : public NetExpr {
       const NetExpr* index() const;
 
       virtual bool set_width(unsigned);
-
+      virtual NetNet* synthesize(Design*);
       NetExpr* eval_tree();
       virtual NetEMemory*dup_expr() const;
 
@@ -3512,6 +3512,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.15  2006/04/10 03:43:39  steve
+ *  Exploded memories accessed by constant indices.
+ *
  * Revision 1.321.2.14  2006/03/26 23:09:23  steve
  *  Handle asynchronous demux/bit replacements.
  *

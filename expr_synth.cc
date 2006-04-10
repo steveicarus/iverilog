@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.3 2006/03/16 05:39:20 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.4 2006/04/10 03:43:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,12 +26,14 @@
 
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "compiler.h"
 
 NetNet* NetExpr::synthesize(Design*des)
 {
       cerr << get_line() << ": internal error: cannot synthesize expression: "
 	   << *this << endl;
       des->errors += 1;
+
       return 0;
 }
 
@@ -639,6 +641,53 @@ NetNet* NetEConst::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEMemory::synthesize(Design*des)
+{
+      NetScope*scope = mem_->scope();
+
+      NetNet*explode = mem_->reg_from_explode();
+      unsigned width = expr_width();
+
+      assert(idx_);
+      NetNet*addr = idx_->synthesize(des);
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT,
+			       width);
+      osig->set_line(*this);
+
+      if (explode) {
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: synthesize read of "
+		       << explode->pin_count() << " bit exploded memory." << endl;
+	      /* This is a reference to an exploded memory. So locate
+		 the reg vector and use the addr expression as a
+		 select into a MUX. */
+	    NetMux*mux = new NetMux(scope, scope->local_symbol(),
+				    width, mem_->count(), addr->pin_count());
+	    des->add_node(mux);
+	    mux->set_line(*this);
+
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		  connect(mux->pin_Result(idx), osig->pin(idx));
+	    for (unsigned idx = 0 ;  idx < mux->sel_width() ;  idx += 1)
+		  connect(mux->pin_Sel(idx), addr->pin(idx));
+
+	    for (unsigned wrd = 0 ;  wrd < mem_->count() ;  wrd += 1)
+		  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+			unsigned bit = wrd*width + idx;
+			connect(mux->pin_Data(idx, wrd), explode->pin(bit));
+		  }
+
+      } else {
+	    cerr << get_line() << ": internal error: Synthesize memory "
+		 << "expression that is not exploded?" << endl;
+	    des->errors += 1;
+      }
+
+      return osig;
+}
+
 NetNet* NetECReal::synthesize(Design*des)
 {
       cerr << get_line() << ": error: Real constants are "
@@ -875,6 +924,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.4  2006/04/10 03:43:39  steve
+ *  Exploded memories accessed by constant indices.
+ *
  * Revision 1.59.2.3  2006/03/16 05:39:20  steve
  *  Right shifts really are allowed.
  *

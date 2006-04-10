@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.27 2006/04/01 01:37:58 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.28 2006/04/10 03:43:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -941,6 +941,34 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 
       assert(demux->bmux() != 0);
 
+	/* Obviously, we need the r-value synthesized to connect it up. */
+      NetNet*rsig = rval_->synthesize(des);
+      assert(rsig->pin_count() == lval_->lwidth());
+
+	/* Detect and handle the special case that the l-value is an
+	   assign to a constant bit. We don't need a demux in that
+	   case. */
+      if (demux->mem() && dynamic_cast<NetEConst*>(demux->bmux())) {
+	    NetMemory*lmem = demux->mem();
+	    NetNet*msig = lmem->explode_to_reg();
+	    msig->incr_lref();
+
+	    NetEConst*ae = dynamic_cast<NetEConst*>(demux->bmux());
+	    long adr = ae->value().as_long();
+	    adr = lmem->index_to_address(adr) * lmem->width();
+
+	    for (unsigned idx = 0 ;  idx < demux->lwidth() ;  idx += 1) {
+		  unsigned off = adr+idx;
+		  unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
+		  assert(ptr <= nex_map->pin_count());
+		  connect(nex_out->pin(ptr), rsig->pin(idx));
+	    }
+	    lval_->turn_sig_to_wire_on_release();
+	    return true;
+      }
+
+	/* We also need the address (now known to be non-constant)
+	   synthesized and connected to a decoder. */
       NetNet*adr = demux->bmux()->synthesize(des);
       NetDecode*dq = new NetDecode(scope, scope->local_symbol(),
 				   nex_ff[0].ff, adr->pin_count(),
@@ -950,9 +978,6 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(dq->pin_Address(idx), adr->pin(idx));
-
-      NetNet*rsig = rval_->synthesize(des);
-      assert(rsig->pin_count() == lval_->lwidth());
 
       for (unsigned idx = 0 ;  idx < nex_ff[0].ff->width() ;  idx += 1)
 	    connect(nex_ff[0].ff->pin_Data(idx), rsig->pin(idx%lval_->lwidth()));
@@ -1095,6 +1120,20 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 
 		  } else {
 			ff2->aset_value(aset_value2);
+		  }
+	    }
+
+	    if (tmp_sset.len() == ff->width()) {
+
+		  if (sset_value2.is_zero()
+		      && ff2->pin_Sset().is_linked()
+		      && !ff2->pin_Sclr().is_linked()) {
+
+			ff2->pin_Sset().unlink();
+			connect(ff2->pin_Sclr(), ff->pin_Sset());
+
+		  } else {
+			ff2->sset_value(sset_value2);
 		  }
 	    }
 
@@ -1709,6 +1748,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.28  2006/04/10 03:43:40  steve
+ *  Exploded memories accessed by constant indices.
+ *
  * Revision 1.39.2.27  2006/04/01 01:37:58  steve
  *  Punt on set/reset if some sources are unconnected.
  *
