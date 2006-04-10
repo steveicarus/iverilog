@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.40 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.41 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  "Module.h"
 # include  "PExpr.h"
 # include  "PGate.h"
+# include  "PGenerate.h"
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "compiler.h"
@@ -160,6 +161,16 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       }
 
+	// Run through all the generate schemes to enaborate the
+	// signals that they hold. Note that the generate schemes hold
+	// the scopes that they instantiated, so we don't pass any
+	// scope in.
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
+	    (*cur) -> elaborate_sig(des);
+      }
+
 	// Get all the gates of the module and elaborate them by
 	// connecting them to the signals. The gate may be simple or
 	// complex. What we are looking for is gates that are modules
@@ -237,6 +248,44 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 
       return flag;
 }
+
+bool PGenerate::elaborate_sig(Design*des) const
+{
+      bool flag = true;
+
+      typedef list<NetScope*>::const_iterator scope_list_it_t;
+      for (scope_list_it_t cur = scope_list_.begin()
+		 ; cur != scope_list_.end() ; cur ++ ) {
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Elaborate nets in "
+		       << "scope " << (*cur)->name() << endl;
+	    flag = elaborate_sig_(des, *cur) & flag;
+      }
+
+      return flag;
+}
+
+bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
+{
+	// Scan the declared PWires to elaborate the obvious signals
+	// in the current scope.
+      typedef map<hname_t,PWire*>::const_iterator wires_it_t;
+      for (wires_it_t wt = wires.begin()
+		 ; wt != wires.end() ;  wt ++ ) {
+
+	    PWire*cur = (*wt).second;
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Elaborate PWire "
+		       << cur->path() << " in scope " << scope->name() << endl;
+
+	    cur->elaborate_sig(des, scope);
+      }
+
+      return true;
+}
+
 
 /*
  * A function definition exists within an elaborated module. This
@@ -671,6 +720,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.41  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.40  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

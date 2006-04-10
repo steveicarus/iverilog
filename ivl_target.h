@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.165 2006/02/02 02:43:58 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.166 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -266,7 +266,8 @@ typedef enum ivl_scope_type_e {
       IVL_SCT_FUNCTION= 1,
       IVL_SCT_TASK    = 2,
       IVL_SCT_BEGIN   = 3,
-      IVL_SCT_FORK    = 4
+      IVL_SCT_FORK    = 4,
+      IVL_SCT_GENERATE= 5
 } ivl_scope_type_t;
 
 /* Signals (ivl_signal_t) that are ports into the scope that contains
@@ -1707,6 +1708,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.166  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.165  2006/02/02 02:43:58  steve
  *  Allow part selects of memory words in l-values.
  *

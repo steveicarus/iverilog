@@ -31,6 +31,7 @@ else,		K_else
 end,		K_end
 endcase,	K_endcase
 endfunction,	K_endfunction
+endgenerate,	K_endgenerate
 endmodule,	K_endmodule
 endprimitive,	K_endprimitive
 endspecify,	K_endspecify
@@ -42,6 +43,8 @@ force,		K_force
 forever,	K_forever
 fork,		K_fork
 function,	K_function
+generate,	K_generate
+genvar,		K_genvar
 highz0,		K_highz0
 highz1,		K_highz1
 if,		K_if

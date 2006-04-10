@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.356 2006/03/18 22:53:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.357 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 /*
@@ -3137,7 +3137,7 @@ class NetESignal  : public NetExpr {
 class NetScope : public Attrib {
 
     public:
-      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
+      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK };
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
@@ -3280,6 +3280,12 @@ class NetScope : public Attrib {
 	   the multiple elaboration passes. */
       typedef svector<NetScope*> scope_vec_t;
       map<perm_string, scope_vec_t>instance_arrays;
+
+	/* Loop generate uses this as scratch space during
+	   elaboration. Expression evaluation can use this to match
+	   names. */
+      perm_string genvar_tmp;
+      long genvar_tmp_val;
 
     private:
       TYPE type_;
@@ -3458,6 +3464,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.357  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.356  2006/03/18 22:53:04  steve
  *  Properly handle signedness in compare.
  *

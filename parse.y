@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.212 2006/03/30 05:22:34 steve Exp $"
+#ident "$Id: parse.y,v 1.213 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -137,9 +137,10 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
-%token K_edge K_else K_end K_endcase K_endfunction K_endmodule
+%token K_edge K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
-%token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
+%token K_force K_forever K_fork K_function K_generate K_genvar
+%token K_highz0 K_highz1 K_if
 %token K_initial K_inout K_input K_integer K_join K_large K_localparam
 %token K_logic K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
@@ -1807,6 +1808,27 @@ module_item
 		  delete $3;
 		}
 
+  /* A generate region can contain further module items. Actually, it
+     is supposed to be limited to certain kinds of module items, but
+     the semantic tests will check that for us. */
+
+        | K_generate module_item_list_opt K_endgenerate
+
+	| K_genvar list_of_identifiers ';'
+                { pform_genvars($2); }
+
+        | K_for '(' IDENTIFIER '=' expression ';'
+	            expression ';'
+	            IDENTIFIER '=' expression ')'
+                { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
+	  generate_block
+                { pform_endgenerate(); }
+
+        | K_if '(' expression ')' generate_block_opt K_else generate_block
+                { yyerror(@1, "sorry: Condition generate not supported yet.");
+		}
+
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify
@@ -1872,6 +1894,21 @@ module_item_list_opt
 	: module_item_list
 	|
 	;
+
+  /* A generate block is the thing within a generate scheme. It may be
+     a single module item, an anonymous block of module items, or a
+     named module item. In all cases, the meat is in the module items
+     inside, and the processing is done by the module_item rules. We
+     only need to take note here of the scope name, if any. */
+
+generate_block
+        : module_item
+        | K_begin module_item_list_opt K_end
+        | K_begin ':' IDENTIFIER module_item_list_opt K_end
+             { pform_generate_block_name($3); }
+        ;
+
+generate_block_opt : generate_block | ;
 
 
   /* A net declaration assignment allows the programmer to combine the

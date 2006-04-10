@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.91 2005/10/04 04:09:26 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.92 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,6 +30,7 @@
  */
 # include  "pform.h"
 # include  "PEvent.h"
+# include  "PGenerate.h"
 # include  <iostream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -211,9 +212,9 @@ void PEBinary::dump(ostream&out) const
 }
 
 
-void PWire::dump(ostream&out) const
+void PWire::dump(ostream&out, unsigned ind) const
 {
-      out << "    " << type_;
+      out << setw(ind) << "" << type_;
 
       switch (port_type_) {
 	  case NetNet::PIMPLICIT:
@@ -303,9 +304,9 @@ void PGate::dump_delays(ostream&out) const
       delay_.dump_delays(out);
 }
 
-void PGate::dump(ostream&out) const
+void PGate::dump(ostream&out, unsigned ind) const
 {
-      out << "    " << typeid(*this).name() << " ";
+      out << setw(ind) << "" << typeid(*this).name() << " ";
       delay_.dump_delays(out);
       out << " " << get_name() << "(";
       dump_pins(out);
@@ -313,45 +314,47 @@ void PGate::dump(ostream&out) const
 
 }
 
-void PGAssign::dump(ostream&out) const
+void PGAssign::dump(ostream&out, unsigned ind) const
 {
-      out << "    assign (" << strength0() << "0 " << strength1() << "1) ";
+      out << setw(ind) << "";
+      out << "assign (" << strength0() << "0 " << strength1() << "1) ";
       dump_delays(out);
       out << " " << *pin(0) << " = " << *pin(1) << ";" << endl;
 }
 
-void PGBuiltin::dump(ostream&out) const
+void PGBuiltin::dump(ostream&out, unsigned ind) const
 {
+      out << setw(ind) << "";
       switch (type()) {
 	  case PGBuiltin::BUFIF0:
-	    out << "    bufif0 ";
+	    out << "bufif0 ";
 	    break;
 	  case PGBuiltin::BUFIF1:
-	    out << "    bufif1 ";
+	    out << "bufif1 ";
 	    break;
 	  case PGBuiltin::NOTIF0:
-	    out << "    bufif0 ";
+	    out << "bufif0 ";
 	    break;
 	  case PGBuiltin::NOTIF1:
-	    out << "    bufif1 ";
+	    out << "bufif1 ";
 	    break;
 	  case PGBuiltin::NAND:
-	    out << "    nand ";
+	    out << "nand ";
 	    break;
 	  case PGBuiltin::NMOS:
-	    out << "    nmos ";
+	    out << "nmos ";
 	    break;
 	  case PGBuiltin::RNMOS:
-	    out << "    rnmos ";
+	    out << "rnmos ";
 	    break;
 	  case PGBuiltin::RPMOS:
-	    out << "    rpmos ";
+	    out << "rpmos ";
 	    break;
 	  case PGBuiltin::PMOS:
-	    out << "    pmos ";
+	    out << "pmos ";
 	    break;
 	  default:
-	    out << "    builtin gate ";
+	    out << "builtin gate ";
       }
 
       out << "(" << strength0() << "0 " << strength1() << "1) ";
@@ -367,9 +370,9 @@ void PGBuiltin::dump(ostream&out) const
       out << ");" << endl;
 }
 
-void PGModule::dump(ostream&out) const
+void PGModule::dump(ostream&out, unsigned ind) const
 {
-      out << "    " << type_ << " ";
+      out << setw(ind) << "" << type_ << " ";
 
 	// If parameters are overridden by order, dump them.
       if (overrides_) {
@@ -731,6 +734,44 @@ void PProcess::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+2);
 }
 
+void PGenerate::dump(ostream&out) const
+{
+      out << "    generate(" << id_number << ")";
+
+      switch (scheme_type) {
+	  case GS_NONE:
+	    break;
+	  case GS_LOOP:
+	    out << " for ("
+		<< loop_index
+		<< "=" << *loop_init
+		<< "; " << *loop_test
+		<< "; " << loop_index
+		<< "=" << *loop_step << ")";
+	    break;
+	  case GS_CONDIT:
+	    break;
+      }
+
+      if (scope_name)
+	    out << " : " << scope_name;
+
+      out << endl;
+
+      for (map<hname_t,PWire*>::const_iterator idx = wires.begin()
+		 ; idx != wires.end() ;  idx++) {
+
+	    (*idx).second->dump(out, 6);
+      }
+
+      for (list<PGate*>::const_iterator idx = gates.begin()
+		 ; idx != gates.end() ;  idx++) {
+	    (*idx)->dump(out, 6);
+      }
+
+      out << "    endgenerate" << endl;
+}
+
 void Module::dump(ostream&out) const
 {
       if (attributes.begin() != attributes.end()) {
@@ -794,6 +835,18 @@ void Module::dump(ostream&out) const
 		  out << *(*cur).second.expr << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
+      }
+
+      typedef list<perm_string>::const_iterator genvar_iter_t;
+      for (genvar_iter_t cur = genvars.begin()
+		 ; cur != genvars.end() ; cur++) {
+	    out << "    genvar " << (*cur) << ";" << endl;
+      }
+
+      typedef list<PGenerate*>::const_iterator genscheme_iter_t;
+      for (genscheme_iter_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur++) {
+	    (*cur)->dump(out);
       }
 
       typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
@@ -914,6 +967,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.92  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.91  2005/10/04 04:09:26  steve
  *  Add support for indexed select attached to parameters.
  *

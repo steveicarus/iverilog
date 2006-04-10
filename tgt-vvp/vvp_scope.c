@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.142 2006/03/18 22:53:38 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.143 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -2107,6 +2107,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       case IVL_SCT_TASK:     type = "task";     break;
       case IVL_SCT_BEGIN:    type = "begin";    break;
       case IVL_SCT_FORK:     type = "fork";     break;
+      case IVL_SCT_GENERATE: type = "generate"; break;
       default:               type = "?";        assert(0);
       }
 
@@ -2204,6 +2205,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.143  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.142  2006/03/18 22:53:38  steve
  *  Support more parameter syntax.
  *

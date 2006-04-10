@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.335 2006/03/30 01:49:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.336 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,6 +34,7 @@
 # include  <list>
 # include  "pform.h"
 # include  "PEvent.h"
+# include  "PGenerate.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -2846,6 +2847,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
 
+	// Elaborate within the generate blocks.
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
+	    (*cur)->elaborate(des);
+      }
 
 	// Elaborate functions.
       typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
@@ -2966,6 +2973,35 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       return result_flag;
 }
 
+bool PGenerate::elaborate(Design*des) const
+{
+      bool flag = true;
+
+      typedef list<NetScope*>::const_iterator scope_list_it_t;
+      for (scope_list_it_t cur = scope_list_.begin()
+		 ; cur != scope_list_.end() ; cur ++ ) {
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Elaborate in "
+		       << "scope " << (*cur)->name() << endl;
+
+	    flag = elaborate_(des, *cur) & flag;
+      }
+
+      return flag;
+}
+
+bool PGenerate::elaborate_(Design*des, NetScope*scope) const
+{
+      typedef list<PGate*>::const_iterator gates_it_t;
+      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ ) {
+
+	    (*cur)->elaborate(des, scope);
+      }
+
+      return true;
+}
+
 struct root_elem {
       Module *mod;
       NetScope *scope;
@@ -2981,6 +3017,7 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
+	// Scan the root modules, and elaborate their scopes.
       for (list<perm_string>::const_iterator root = roots.begin()
 		 ; root != roots.end()
 		 ; root++) {
@@ -2996,6 +3033,7 @@ Design* elaborate(list<perm_string>roots)
 		  continue;
 	    }
 
+	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
 	      // Make the root scope.
@@ -3006,7 +3044,9 @@ Design* elaborate(list<perm_string>roots)
 	    des->set_precision(rmod->time_precision);
 
 	    Module::replace_t stub;
-	      // Recursively elaborate from this root scope down.
+
+	      // Recursively elaborate from this root scope down. This
+	      // does a lot of the grunt work of creating sub-scopes, etc.
 	    if (! rmod->elaborate_scope(des, scope, stub)) {
 		  delete des;
 		  return 0;
@@ -3071,6 +3111,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.336  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.335  2006/03/30 01:49:07  steve
  *  Fix instance arrays indexed by overridden parameters.
  *

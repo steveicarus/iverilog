@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.39 2005/12/07 04:04:23 steve Exp $"
+#ident "$Id: eval.cc,v 1.40 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -168,11 +168,19 @@ verinum* PEConcat::eval_const(const Design*des, NetScope*scope) const
 verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
 {
       assert(scope);
-	//const NetExpr*expr = des->find_parameter(scope, path_);
       NetNet*net;
       NetMemory*mem;
       NetEvent*eve;
       const NetExpr*expr;
+
+	// Handle the special case that this ident is a genvar
+	// variable name. In that case, the genvar meaning preempts
+	// everything and we just return that value immediately.
+      if (scope->genvar_tmp
+	  && strcmp(path_.peek_tail_name(),scope->genvar_tmp) == 0) {
+	    return new verinum(scope->genvar_tmp_val);
+      }
+
       NetScope*found_in = symbol_search(des, scope, path_,
 					net, mem, expr, eve);
 
@@ -263,6 +271,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.40  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.39  2005/12/07 04:04:23  steve
  *  Allow constant concat expressions.
  *

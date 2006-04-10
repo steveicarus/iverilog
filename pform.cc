@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.134 2006/03/30 05:22:34 steve Exp $"
+#ident "$Id: pform.cc,v 1.135 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,7 @@
 # include  "parse_api.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
+# include  "PGenerate.h"
 # include  <list>
 # include  <map>
 # include  <assert.h>
@@ -44,7 +45,17 @@ string vl_file = "";
 
 extern int VLparse();
 
+  /* This tracks the current module being processed. There can only be
+     exactly one module currently being parsed, since verilog does not
+     allow nested module definitions. */
 static Module*pform_cur_module = 0;
+  /* increment this for generate schemes within a module, and set it
+     to zero when a new module starts. */
+static unsigned scope_generate_counter = 1;
+
+  /* This tracks the current generate scheme being processed. This is
+     always within a module. */
+static PGenerate*pform_cur_generate = 0;
 
 static NetNet::Type pform_default_nettype = NetNet::WIRE;
 
@@ -63,10 +74,13 @@ static unsigned pform_timescale_line = 0;
  * of scope. As I enter a scope, the push function is called, and as I
  * leave a scope the pop function is called. Entering tasks, functions
  * and named blocks causes scope to be pushed and popped. The module
- * name is not included it this scope stack.
+ * name is not included in this scope stack.
  *
- * The hier_name function, therefore, returns the name path of a
- * function relative the current function.
+ * The hier_name function, therefore, converts the name to the scope
+ * of the module currently in progress.
+ *
+ * The scope stack does not include any scope created by a generate
+ * scheme.
  */
 
 static hname_t scope_stack;
@@ -88,6 +102,18 @@ static hname_t hier_name(const char*tail)
       hname_t name = scope_stack;
       name.append(tail);
       return name;
+}
+
+static PWire*get_wire_in_module(const hname_t&name)
+{
+	/* Note that if we are processing a generate, then the
+	   scope depth will be empty because generate schemes
+	   cannot be within sub-scopes. Only directly in
+	   modules. */
+      if (pform_cur_generate)
+	    return pform_cur_generate->get_wire(name);
+
+      return pform_cur_module->get_wire(name);
 }
 
 void pform_set_default_nettype(NetNet::Type type,
@@ -216,6 +242,10 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       pform_cur_module->set_file(file);
       pform_cur_module->set_lineno(lineno);
 
+	/* The generate scheme numbering starts with *1*, not
+	   zero. That's just the way it is, thanks to the standard. */
+      scope_generate_counter = 1;
+
       if (warn_timescale && pform_timescale_file
 	  && (strcmp(pform_timescale_file,file) != 0)) {
 
@@ -290,6 +320,58 @@ void pform_endmodule(const char*name)
       }
       pform_modules[mod_name] = pform_cur_module;
       pform_cur_module = 0;
+}
+
+void pform_genvars(list<perm_string>*names)
+{
+      list<perm_string>::const_iterator cur;
+      for (cur = names->begin(); cur != names->end() ; *cur++) {
+	    pform_cur_module->genvars.push_back( *cur );
+      }
+
+      delete names;
+}
+
+void pform_start_generate_for(const struct vlltype&li,
+			      char*ident1, PExpr*init,
+			      PExpr*test,
+			      char*ident2, PExpr*next)
+{
+      PGenerate*gen = new PGenerate(scope_generate_counter++);
+
+      gen->set_file(li.text);
+      gen->set_lineno(li.first_line);
+
+	// For now, assume that generates do not nest.
+      assert(pform_cur_generate == 0);
+      pform_cur_generate = gen;
+
+      pform_cur_generate->scheme_type = PGenerate::GS_LOOP;
+
+      pform_cur_generate->loop_index = lex_strings.make(ident1);
+      pform_cur_generate->loop_init = init;
+      pform_cur_generate->loop_test = test;
+      pform_cur_generate->loop_step = next;
+
+      delete[]ident1;
+      delete[]ident2;
+}
+
+void pform_generate_block_name(char*name)
+{
+      assert(pform_cur_generate != 0);
+      assert(pform_cur_generate->scope_name == 0);
+      pform_cur_generate->scope_name = lex_strings.make(name);
+      delete[]name;
+}
+
+void pform_endgenerate()
+{
+      assert(pform_cur_generate != 0);
+      assert(pform_cur_module);
+
+      pform_cur_module->generate_schemes.push_back(pform_cur_generate);
+      pform_cur_generate = 0;
 }
 
 bool pform_expression_is_constant(const PExpr*ex)
@@ -695,8 +777,7 @@ static void pform_set_net_range(const char* name,
 				bool signed_flag,
 				ivl_variable_type_t dt)
 {
-
-      PWire*cur = pform_cur_module->get_wire(hier_name(name));
+      PWire*cur = get_wire_in_module(hier_name(name));
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
@@ -796,7 +877,10 @@ void pform_makegate(PGBuiltin::Type type,
       cur->set_file(info.file);
       cur->set_lineno(info.lineno);
 
-      pform_cur_module->add_gate(cur);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_gate(cur);
+      else
+	    pform_cur_module->add_gate(cur);
 }
 
 void pform_makegates(PGBuiltin::Type type,
@@ -854,7 +938,10 @@ static void pform_make_modgate(perm_string type,
 	    cur->set_parameters(overrides->by_order);
       }
 
-      pform_cur_module->add_gate(cur);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_gate(cur);
+      else
+	    pform_cur_module->add_gate(cur);
 }
 
 static void pform_make_modgate(perm_string type,
@@ -956,7 +1043,11 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       cur->strength0(str.str0);
       cur->strength1(str.str1);
 
-      pform_cur_module->add_gate(cur);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_gate(cur);
+      else
+	    pform_cur_module->add_gate(cur);
+
       return cur;
 }
 
@@ -1089,13 +1180,22 @@ void pform_module_define_port(const struct vlltype&li,
  * do check to see if the name has already been declared, as this
  * function is called for every declaration.
  */
+
+/*
+ * this is the basic form of pform_makwire. This takes a single simple
+ * name, port type, net type, data type, and attributes, and creates
+ * the variable/net. Other forms of pform_makewire ultimately call
+ * this one to create the wire and stash it.
+ */
 void pform_makewire(const vlltype&li, const char*nm,
 		    NetNet::Type type, NetNet::PortType pt,
 		    ivl_variable_type_t dt,
 		    svector<named_pexpr_t*>*attr)
 {
       hname_t name = hier_name(nm);
-      PWire*cur = pform_cur_module->get_wire(name);
+
+      PWire*cur = get_wire_in_module(name);
+
       if (cur) {
 	    if ((cur->get_wire_type() != NetNet::IMPLICIT)
 		&& (cur->get_wire_type() != NetNet::IMPLICIT_REG)) {
@@ -1130,9 +1230,17 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    }
       }
 
-      pform_cur_module->add_wire(cur);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_wire(cur);
+      else
+	    pform_cur_module->add_wire(cur);
 }
 
+/*
+ * This form takes a list of names and some type information, and
+ * generates a bunch of variables/nets. We hse the basic
+ * pform_makewire above.
+ */
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
 		    bool signed_flag,
@@ -1155,6 +1263,9 @@ void pform_makewire(const vlltype&li,
 	    delete range;
 }
 
+/*
+ * This form makes nets with delays and continuous assignments.
+ */
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
 		    bool signed_flag,
@@ -1174,7 +1285,7 @@ void pform_makewire(const vlltype&li,
 	    pform_set_net_range(first->name, range, signed_flag, dt);
 
 	    hname_t name = hier_name(first->name);
-	    PWire*cur = pform_cur_module->get_wire(name);
+	    PWire*cur = get_wire_in_module(name);
 	    if (cur != 0) {
 		  PEIdent*lval = new PEIdent(hname_t(first->name));
 		  lval->set_file(li.text);
@@ -1596,6 +1707,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.135  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.134  2006/03/30 05:22:34  steve
  *  task/function ports can have types.
  *

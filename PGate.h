@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.31 2006/01/03 05:22:14 steve Exp $"
+#ident "$Id: PGate.h,v 1.32 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -94,7 +94,7 @@ class PGate : public LineInfo {
 
       map<perm_string,PExpr*> attributes;
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -128,7 +128,7 @@ class PGAssign  : public PGate {
       explicit PGAssign(svector<PExpr*>*pins, svector<PExpr*>*dels);
       ~PGAssign();
 
-      void dump(ostream&out) const;
+      void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
 
     private:
@@ -165,7 +165,7 @@ class PGBuiltin  : public PGate {
       Type type() const { return type_; }
       void set_range(PExpr*msb, PExpr*lsb);
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
 
     private:
@@ -208,7 +208,7 @@ class PGModule  : public PGate {
 	// method to pass the range to the pform.
       void set_range(PExpr*msb, PExpr*lsb);
 
-      virtual void dump(ostream&out) const;
+      virtual void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -239,6 +239,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.32  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.31  2006/01/03 05:22:14  steve
  *  Handle complex net node delays.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.38 2006/03/30 01:49:07 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.39 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -37,6 +37,7 @@
 # include  "PEvent.h"
 # include  "PExpr.h"
 # include  "PGate.h"
+# include  "PGenerate.h"
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "Statement.h"
@@ -220,6 +221,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       delete[]attr;
 
+	// Generate schemes can create new scopes in the form of
+	// generated code. Scan the generate schemes, and *generate*
+	// new scopes, which is slightly different from simple
+	// elaboration.
+
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
+	    (*cur) -> generate_scope(des, scope);
+      }
+
 
 	// Tasks introduce new scopes, so scan the tasks in this
 	// module. Create a scope for the task and pass that to the
@@ -287,6 +299,101 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       }
 
       return des->errors == 0;
+}
+
+bool PGenerate::generate_scope(Design*des, NetScope*container)
+{
+      switch (scheme_type) {
+	  case GS_LOOP:
+	    return generate_scope_loop_(des, container);
+
+	  default:
+	    cerr << get_line() << ": sorry: Generate of this sort"
+		 << " is not supported yet!" << endl;
+	    return false;
+      }
+}
+
+/*
+ * This is the elaborate scope method for a generate loop.
+ */
+bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
+{
+	// We're going to need a genvar...
+      int genvar;
+
+	// The initial value for the genvar does not need (nor can it
+	// use) the genvar itself, so we can evaluate this expression
+	// the same way any other paramter value is evaluated.
+      NetExpr*init_ex = elab_and_eval(des, container, loop_init);
+      NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
+      if (init == 0) {
+	    cerr << get_line() << ": error: Cannot evaluate genvar"
+		 << " init expression: " << *loop_init << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      genvar = init->value().as_long();
+      delete init_ex;
+
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: genvar init = " << genvar << endl;
+
+      container->genvar_tmp = loop_index;
+      container->genvar_tmp_val = 0;
+      verinum*test = loop_test->eval_const(des, container);
+      assert(test);
+      while (test->as_long()) {
+
+	      // The actual name of the scope includes the genvar so
+	      // that each instance has a unique name in the
+	      // container. The format of using [] is part of the
+	      // Verilog standard.
+	    char name_buf[128];
+	    snprintf(name_buf, sizeof name_buf,
+		     "%s[%d]", scope_name.str(), genvar);
+	    perm_string use_name = lex_strings.make(name_buf);
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: "
+		       << "Create generated scope " << use_name << endl;
+
+	    NetScope*scope = new NetScope(container, use_name,
+					  NetScope::GENBLOCK);
+
+	      // Set in the scope a localparam for the value of the
+	      // genvar within this instance of the generate
+	      // block. Code within this scope thus has access to the
+	      // genvar as a constant.
+	    {
+		  verinum genvar_verinum(genvar);
+		  genvar_verinum.has_sign(true);
+		  NetEConstParam*gp = new NetEConstParam(scope,
+							 loop_index,
+							 genvar_verinum);
+		  scope->set_localparam(loop_index, gp);
+	    }
+
+	    scope_list_.push_back(scope);
+
+	      // Calculate the step for the loop variable.
+	    verinum*step = loop_step->eval_const(des, container);
+	    assert(step);
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: genvar step from "
+		       << genvar << " to " << step->as_long() << endl;
+
+	    genvar = step->as_long();
+	    container->genvar_tmp_val = genvar;
+	    delete step;
+	    delete test;
+	    test = loop_test->eval_const(des, container);
+      }
+
+      container->genvar_tmp = perm_string();
+
+      return true;
 }
 
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
@@ -635,6 +742,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.39  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.38  2006/03/30 01:49:07  steve
  *  Fix instance arrays indexed by overridden parameters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.39 2006/03/30 01:49:07 steve Exp $"
+#ident "$Id: Module.h,v 1.40 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  <list>
@@ -34,6 +34,7 @@ class PEvent;
 class PExpr;
 class PEIdent;
 class PGate;
+class PGenerate;
 class PTask;
 class PFunction;
 class PWire;
@@ -113,6 +114,14 @@ class Module : public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
 
+	/* The module has a list of genvars that may be used in
+	   various generate schemes. */
+      list<perm_string> genvars;
+
+	/* the module has a list of generate schemes that appear in
+	   the module definition. These are used at elaboration time. */
+      list<PGenerate*> generate_schemes;
+
       perm_string mod_name() const { return name_; }
 
       void add_gate(PGate*gate);
@@ -164,51 +173,13 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.40  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.39  2006/03/30 01:49:07  steve
  *  Fix instance arrays indexed by overridden parameters.
  *
  * Revision 1.38  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.37  2004/06/13 04:56:53  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.36  2004/05/25 19:21:06  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.35  2004/02/20 18:53:33  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.34  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.33  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.32  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.31  2003/06/13 19:10:45  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.30  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.29  2003/02/27 06:45:11  steve
- *  specparams as far as pform.
- *
- * Revision 1.28  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.27  2002/08/19 02:39:16  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.26  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.25  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
  */
 #endif

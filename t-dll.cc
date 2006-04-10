@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.155 2006/01/02 05:33:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.156 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2018,6 +2018,10 @@ void dll_target::scope(const NetScope*net)
 		  scope->type_ = IVL_SCT_FORK;
 		  scope->tname_ = scope->name_;
 		  break;
+		case NetScope::GENBLOCK:
+		  scope->type_ = IVL_SCT_GENERATE;
+		  scope->tname_ = scope->name_;
+		  break;
 	    }
 
 	    assert(scope->parent != 0);
@@ -2163,6 +2167,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.156  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.155  2006/01/02 05:33:19  steve
  *  Node delays can be more general expressions in structural contexts.
  *

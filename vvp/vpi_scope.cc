@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.35 2006/03/06 05:43:15 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.36 2006/04/10 00:37:43 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -292,23 +292,21 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
 
-      switch(type[2]) {
-	  case 'd': /* type == moDule */
+      if (strcmp(type,"module") == 0)
 	    scope->base.vpi_type = &vpip_scope_module_rt;
-	    break;
-	  case 'n': /* type == fuNction */
+      else if (strcmp(type,"function") == 0)
 	    scope->base.vpi_type = &vpip_scope_function_rt;
-	    break;
-	  case 's': /* type == taSk */
+      else if (strcmp(type,"task") == 0)
 	    scope->base.vpi_type = &vpip_scope_task_rt;
-	    break;
-	  case 'r': /* type == foRk */
+      else if (strcmp(type,"fork") == 0)
 	    scope->base.vpi_type = &vpip_scope_fork_rt;
-	    break;
-	  case 'g': /* type == beGin */
+      else if (strcmp(type,"begin") == 0)
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
-	    break;
-	  default:
+      else if (strcmp(type,"generate") == 0)
+	      // Generate blocks are not really modules, but this is a
+	      // hack that will work for now.
+	    scope->base.vpi_type = &vpip_scope_module_rt;
+      else {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
 	    assert(0);
       }
@@ -389,6 +387,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.36  2006/04/10 00:37:43  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.35  2006/03/06 05:43:15  steve
  *  Cleanup vpi_const to use vec4 values.
  *

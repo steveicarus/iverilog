@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.18 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: PWire.h,v 1.19 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -81,7 +81,7 @@ class PWire : public LineInfo {
       map<perm_string,PExpr*> attributes;
 
 	// Write myself to the specified stream.
-      void dump(ostream&out) const;
+      void dump(ostream&out, unsigned ind=4) const;
 
       void elaborate_sig(Design*, NetScope*scope) const;
 
@@ -110,6 +110,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.19  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.18  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

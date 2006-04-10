@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.85 2006/03/30 05:22:34 steve Exp $"
+#ident "$Id: pform.h,v 1.86 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -168,6 +168,22 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
 					const char*file, unsigned loneno);
 
 /*
+ * This function takes the list of names as new genvars to declare in
+ * the current module scope.
+ */
+extern void pform_genvars(list<perm_string>*names);
+
+extern void pform_start_generate_for(const struct vlltype&li,
+				     char*ident1,
+				     PExpr*init,
+				     PExpr*test,
+				     char*ident2,
+				     PExpr*next);
+extern void pform_generate_block_name(char*name);
+extern void pform_endgenerate();
+
+
+/*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
@@ -307,6 +323,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.86  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.85  2006/03/30 05:22:34  steve
  *  task/function ports can have types.
  *

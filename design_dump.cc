@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.164 2006/02/02 02:43:57 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.165 2006/04/10 00:37:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -811,6 +811,9 @@ void NetScope::dump(ostream&o) const
 	  case TASK:
 	    o << " task";
 	    break;
+	  case GENBLOCK:
+	    o << " generate block";
+	    break;
       }
       o << endl;
 
@@ -1170,6 +1173,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.165  2006/04/10 00:37:42  steve
+ *  Add support for generate loops w/ wires and gates.
+ *
  * Revision 1.164  2006/02/02 02:43:57  steve
  *  Allow part selects of memory words in l-values.
  *
