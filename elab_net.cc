@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.178 2006/02/02 02:43:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.179 2006/04/10 00:32:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1923,9 +1923,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	    assert(idx_.size() == 1);
 	    verinum*mval = idx_[0]->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << get_line() << ": index of " << path_ <<
+		  cerr << get_line() << ": error: Index of " << path_ <<
 			" needs to be constant in this context." <<
 			endl;
+		  cerr << get_line() << ":      : Index expression is: "
+		       << *(idx_[0]) << endl;
 		  des->errors += 1;
 		  return false;
 	    }
@@ -2660,6 +2662,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.179  2006/04/10 00:32:14  steve
+ *  Clean up index expression error message.
+ *
  * Revision 1.178  2006/02/02 02:43:57  steve
  *  Allow part selects of memory words in l-values.
  *
