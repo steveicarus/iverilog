@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.39 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.40 2006/04/12 05:05:03 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -342,9 +342,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = 0;
-      verinum*test = loop_test->eval_const(des, container);
+      NetExpr*test_ex = elab_and_eval(des, container, loop_test);
+      NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       assert(test);
-      while (test->as_long()) {
+      while (test->value().as_long()) {
 
 	      // The actual name of the scope includes the genvar so
 	      // that each instance has a unique name in the
@@ -378,19 +379,24 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    scope_list_.push_back(scope);
 
 	      // Calculate the step for the loop variable.
-	    verinum*step = loop_step->eval_const(des, container);
+	    NetExpr*step_ex = elab_and_eval(des, container, loop_step);
+	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    assert(step);
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: genvar step from "
-		       << genvar << " to " << step->as_long() << endl;
+		       << genvar << " to " << step->value().as_long() << endl;
 
-	    genvar = step->as_long();
+	    genvar = step->value().as_long();
 	    container->genvar_tmp_val = genvar;
 	    delete step;
-	    delete test;
-	    test = loop_test->eval_const(des, container);
+	    delete test_ex;
+	    test_ex = elab_and_eval(des, container, loop_test);
+	    test = dynamic_cast<NetEConst*>(test_ex);
+	    assert(test);
       }
 
+	// Clear the genvar_tmp field in the scope to reflect that the
+	// genvar is no longer value for evaluating expressions.
       container->genvar_tmp = perm_string();
 
       return true;
@@ -742,6 +748,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.40  2006/04/12 05:05:03  steve
+ *  Use elab_and_eval to evaluate genvar expressions.
+ *
  * Revision 1.39  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

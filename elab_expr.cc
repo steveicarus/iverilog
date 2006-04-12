@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.102 2006/02/02 02:43:57 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.103 2006/04/12 05:05:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -633,6 +633,18 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// is a variable reference.
       if (eve != 0) {
 	    NetEEvent*tmp = new NetEEvent(eve);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// Hmm... maybe this is a genvar? This is only possible while
+	// processing generate blocks, but then the genvar_tmp will be
+	// set in the scope.
+      if (path_.component_count() == 1
+	  && scope->genvar_tmp.str()
+	  && strcmp(path_.peek_name(0), scope->genvar_tmp) == 0) {
+	    verinum val (scope->genvar_tmp_val);
+	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
 	    return tmp;
       }
@@ -1345,6 +1357,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.103  2006/04/12 05:05:03  steve
+ *  Use elab_and_eval to evaluate genvar expressions.
+ *
  * Revision 1.102  2006/02/02 02:43:57  steve
  *  Allow part selects of memory words in l-values.
  *
