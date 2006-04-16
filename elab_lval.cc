@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.33 2006/02/02 02:43:57 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.34 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,6 +179,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       assert(reg);
 
+      if (sel_ == SEL_IDX_UP)
+	    return elaborate_lval_net_idx_up_(des, scope, reg);
+
+      if (sel_ == SEL_IDX_DO)
+	    return elaborate_lval_net_idx_do_(des, scope, reg);
+
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. Wires are not allows in this context,
 	   unless this is the l-value of a force. */
@@ -197,6 +203,11 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       if (msb_ || lsb_) {
 	    assert(msb_ && lsb_);
+	    if (sel_ != SEL_PART)
+		  cerr << get_line() << ": internal error: not a part select?"
+		       << endl;
+
+	    assert(sel_ == SEL_PART);
 
 	      /* This handles part selects. In this case, there are
 		 two bit select expressions, and both must be
@@ -273,7 +284,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 bmux to select the target bit. */
 	    lv = new NetAssign_(reg);
 
-	    lv->set_bmux(mux);
+	      /* Correct the mux for the range of the vector. */
+	    if (reg->msb() < reg->lsb())
+		  mux = make_sub_expr(reg->lsb(), mux);
+	    else if (reg->lsb() != 0)
+		  mux = make_add_expr(mux, - reg->lsb());
+
+	    lv->set_part(mux, 1);
 
       } else if (msb == reg->msb() && lsb == reg->lsb()) {
 
@@ -319,6 +336,65 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       return lv;
 }
 
+NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
+						NetScope*scope,
+						NetNet*reg) const
+{
+      assert(lsb_);
+      assert(msb_);
+
+      if (reg->type() != NetNet::REG) {
+	    cerr << get_line() << ": error: " << path_ <<
+		  " is not a reg/integer/time in " << scope->name() <<
+		  "." << endl;
+	    cerr << reg->get_line() << ":      : " << path_ <<
+		  " is declared here as " << reg->type() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	/* Calculate the width expression (in the lsb_ position)
+	   first. If the expression is not constant, error but guess 1
+	   so we can keep going and find more errors. */
+      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+      NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
+
+      if (wid_c == 0) {
+	    cerr << get_line() << ": error: Indexed part width must be "
+		 << "constant. Expression in question is..." << endl;
+	    cerr << get_line() << ":      : " << *wid_ex << endl;
+	    des->errors += 1;
+      }
+
+      unsigned wid = wid_c? wid_c->value().as_ulong() : 1;
+      delete wid_ex;
+
+      NetExpr*base = elab_and_eval(des, scope, msb_);
+
+	/* Correct the mux for the range of the vector. */
+      if (reg->msb() < reg->lsb())
+	    base = make_sub_expr(reg->lsb(), base);
+      else if (reg->lsb() != 0)
+	    base = make_add_expr(base, - reg->lsb());
+
+      NetAssign_*lv = new NetAssign_(reg);
+      lv->set_part(base, wid);
+
+      return lv;
+}
+
+NetAssign_* PEIdent::elaborate_lval_net_idx_do_(Design*des,
+						NetScope*scope,
+						NetNet*reg) const
+{
+      assert(lsb_);
+      assert(msb_);
+      cerr << get_line() << ": internal error: don't know how to "
+	    "deal with SEL_IDX_DO in lval?" << endl;
+      des->errors += 1;
+      return 0;
+}
+
 NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 					NetMemory*mem) const
 {
@@ -352,7 +428,7 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 
 	/* If there is no extra part select, then we are done. */
       if (msb_ == 0 && lsb_ == 0) {
-	    lv->set_part(0U, mem->width());
+	    lv->set_part(0, mem->width());
 	    return lv;
       }
 
@@ -419,6 +495,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.34  2006/04/16 00:15:43  steve
+ *  Fix part selects in l-values.
+ *
  * Revision 1.33  2006/02/02 02:43:57  steve
  *  Allow part selects of memory words in l-values.
  *

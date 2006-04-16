@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.122 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.123 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -76,24 +76,27 @@ static void set_to_lvariable(ivl_lval_t lval,
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-      unsigned part_off;
+      unsigned part_off = 0;
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else {
-	    assert(number_is_immediate(part_off_ex, 64));
+      } else if (number_is_immediate(part_off_ex, 64)) {
 	    part_off = get_number_immediate(part_off_ex);
+	    part_off_ex = 0;
       }
 
-      if (ivl_lval_mux(lval)) {
+      if (ivl_lval_mux(lval))
+	    part_off_ex = ivl_lval_mux(lval);
+
+      if (part_off_ex) {
 	    unsigned skip_set = transient_id++;
 
 	      /* There is a mux expression, so this must be a write to
-		 a bit-select leval. Presumably, the x0 index register
+		 a bit-select l-val. Presumably, the x0 index register
 		 has been loaded wit the result of the evaluated
-		 ivl_lval_mux expression. */
+		 part select base expression. */
 
-	    draw_eval_expr_into_integer(ivl_lval_mux(lval), 0);
+	    draw_eval_expr_into_integer(part_off_ex, 0);
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 
 	    fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
@@ -103,7 +106,7 @@ static void set_to_lvariable(ivl_lval_t lval,
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
 	      /* There is no mux expression, but a constant part
 		 offset. Load that into index x0 and generate a
-		 single-bit set instruction. */
+		 vector set instruction. */
 	    assert(ivl_lval_width(lval) == wid);
 
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
@@ -152,20 +155,22 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-      ivl_expr_t mux = ivl_lval_mux(lval);
-      unsigned part_off;
+      unsigned part_off = 0;
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else {
-	    assert(number_is_immediate(part_off_ex, 64));
+      } else if (number_is_immediate(part_off_ex, 64)) {
 	    part_off = get_number_immediate(part_off_ex);
+	    part_off_ex = 0;
       }
 
-      if (mux != 0) {
+      if (ivl_lval_mux(lval))
+	    part_off_ex = ivl_lval_mux(lval);
+
+      if (part_off_ex) {
 	    unsigned skip_assign = transient_id++;
 	    assert(dexp == 0);
-	    draw_eval_expr_into_integer(mux, 1);
+	    draw_eval_expr_into_integer(part_off_ex, 1);
 	      /* If the index expression has XZ bits, skip the assign. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
@@ -1479,6 +1484,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.123  2006/04/16 00:15:43  steve
+ *  Fix part selects in l-values.
+ *
  * Revision 1.122  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

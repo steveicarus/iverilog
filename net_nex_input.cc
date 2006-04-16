@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.14 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.15 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -170,10 +170,19 @@ NexusSet* NetEUnary::nex_input()
 
 NexusSet* NetAssign_::nex_input()
 {
-      if (bmux_ == 0)
-	    return new NexusSet;
-      else
-	    return bmux_->nex_input();
+      NexusSet*result = new NexusSet;
+      if (bmux_) {
+	    NexusSet*tmp = bmux_->nex_input();
+	    result->add(*tmp);
+	    delete tmp;
+      }
+      if (base_) {
+	    NexusSet*tmp = base_->nex_input();
+	    result->add(*tmp);
+	    delete tmp;
+      }
+
+      return result;
 }
 
 NexusSet* NetAssignBase::nex_input()
@@ -384,6 +393,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.15  2006/04/16 00:15:43  steve
+ *  Fix part selects in l-values.
+ *
  * Revision 1.14  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

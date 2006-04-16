@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.213 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: parse.y,v 1.214 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1480,6 +1480,7 @@ lpvalue
 		{ PEIdent*tmp = $1;
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
+		  tmp->sel_ = PEIdent::SEL_PART;
 		  $$ = tmp;
 		}
 	| indexed_identifier '[' expression K_PO_POS expression ']'

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.78 2006/03/25 02:36:26 steve Exp $"
+#ident "$Id: PExpr.h,v 1.79 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 # include  <string>
@@ -252,6 +252,10 @@ class PEIdent : public PExpr {
       verinum* eval_const(const Design*des, NetScope*sc) const;
 
       const hname_t& path() const;
+
+    private:
+      NetAssign_*elaborate_lval_net_idx_up_(Design*, NetScope*, NetNet*) const;
+      NetAssign_*elaborate_lval_net_idx_do_(Design*, NetScope*, NetNet*) const;
 
     private:
       NetExpr*elaborate_expr_param(Design*des,
@@ -548,6 +552,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.79  2006/04/16 00:15:43  steve
+ *  Fix part selects in l-values.
+ *
  * Revision 1.78  2006/03/25 02:36:26  steve
  *  Get rid of excess PESTring:: prefix within class declaration.
  *

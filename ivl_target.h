@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.166 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.167 2006/04/16 00:15:43 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -1108,10 +1108,8 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  * signal (or even 1) if only a part of the l-value signal is to be
  * assigned.
  *
- * The ivl_lval_part_off is the canonical base of a constant part or
- * bit select. If the bit select base is non-constant, then the
- * ivl_lval_mux will contain an expression. If there is a mux
- * expression, then the ivl_lval_part_off result can be ignored.
+ * The ivl_lval_part_off is the canonical base of a part or
+ * bit select.
  *
  * - Memory words
  * If the l-value is a memory word, the ivl_lval_mem function returns
@@ -1122,7 +1120,7 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
-extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
+extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); // XXXX Obsolete?
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
@@ -1708,6 +1706,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.167  2006/04/16 00:15:43  steve
+ *  Fix part selects in l-values.
+ *
  * Revision 1.166  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
