@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.15 2006/04/10 03:43:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.16 2006/04/16 19:26:38 steve Exp $"
 #endif
 
 /*
@@ -645,31 +645,35 @@ class NetDemux  : public NetNode {
 
     public:
       NetDemux(NetScope*s, perm_string name,
-	       unsigned word_width, unsigned address_width);
+	       unsigned bus_width, unsigned address_width,
+	       unsigned size);
       ~NetDemux();
 
-	// This is the width of the word. The width of the NetFF mem
-	// is an even multiple of this.
+	// This is the width of the bus that passes through the
+	// device. The address addresses into this width.
       unsigned width() const;
 	// This is the width of the address. The address value for the
 	// base of a word is the address * width().
       unsigned awidth() const;
+	// This is the number of words in the width that can be
+	// addressed. This implies (by division) the width of a word.
+      unsigned size() const;
 
       Link& pin_Address(unsigned idx);
       Link& pin_Data(unsigned idx);
       Link& pin_Q(unsigned idx);
-      Link& pin_WriteData();
+      Link& pin_WriteData(unsigned idx);
 
       const Link& pin_Address(unsigned idx) const;
       const Link& pin_Data(unsigned idx) const;
       const Link& pin_Q(unsigned idx) const;
-      const Link& pin_WriteData() const;
+      const Link& pin_WriteData(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
-      unsigned width_, awidth_;
+      unsigned width_, awidth_, size_;
 
     private:
       void make_pins_(unsigned wid, unsigned awid);
@@ -1564,6 +1568,8 @@ class NetAssign_ {
 	// into a wire.
       void turn_sig_to_wire_on_release();
 
+      void incr_mem_lref();
+
 	// It is possible that l-values can have *inputs*, as well as
 	// being outputs. For example foo[idx] = ... is the l-value
 	// (NetAssign_ object) with a foo l-value and the input
@@ -1584,6 +1590,7 @@ class NetAssign_ {
       bool turn_sig_to_wire_on_release_;
       unsigned loff_;
       unsigned lwid_;
+      bool mem_lref_;
 };
 
 class NetAssignBase : public NetProc {
@@ -1626,6 +1633,11 @@ class NetAssignBase : public NetProc {
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
       virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      bool synth_async_mem_sync_(Design*des, NetScope*scope,
+				 NetAssign_*cur, NetNet*rsig, unsigned&roff,
+				 NetNet*nex_map, NetNet*nex_out);
 
     private:
       NetAssign_*lval_;
@@ -3512,6 +3524,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.16  2006/04/16 19:26:38  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.321.2.15  2006/04/10 03:43:39  steve
  *  Exploded memories accessed by constant indices.
  *

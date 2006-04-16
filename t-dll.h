@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115.2.4 2006/03/26 23:09:25 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115.2.5 2006/04/16 19:26:40 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -346,7 +346,8 @@ struct ivl_lpm_s {
 	    struct ivl_lpm_demux_s {
 		  unsigned width;
 		  unsigned awid;
-		  ivl_nexus_t bit_in;
+		  unsigned size;
+		  ivl_nexus_t*bit_in;
 		  ivl_nexus_t *q,*d,*a;
 	    } demux;
 
@@ -702,6 +703,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115.2.5  2006/04/16 19:26:40  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.115.2.4  2006/03/26 23:09:25  steve
  *  Handle asynchronous demux/bit replacements.
  *

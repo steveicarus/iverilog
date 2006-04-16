@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126.2.4 2006/03/26 23:09:22 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.126.2.5 2006/04/16 19:26:37 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -708,11 +708,22 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * idx the bit within the word.
  *
  * - IVL_LPM_DEMUX
- * This device is a form of bit replacement. The device has a data
+ * This device is a form of bit replacement. The device has a data bus
  * width (ivl_lpm_width) and an address width. The Data outputs are
- * ivl_lpm_q and have the data width. The ivl_lpm_data functions are
+ * ivl_lpm_q and have the data bus width. The ivl_lpm_data functions are
  * inputs to the device. Normally, the device passes the data inputs
  * through to the Q output.
+ *
+ * The IVL_LPM_DEMUX also has a size (ivl_lpm_size) which is the
+ * number of addressable units in the device. If the device is bit-
+ * addressable, then the size is the same as the width. I.e. if
+ * ivl_lpm_width == ivl_lpm_size, then the address selects a single
+ * bit. If ivl_lpm_width/ivl_lpm_size == 8, then the address selects
+ * words of 8 bits and there are ivl_lpm_size of them. The
+ * ivl_lpm_width will always be an exact multiple of
+ * ivl_lpm_size. This is slightly different from the meaning of width
+ * in memory ports, but reflects that the DEMUX manipulates fixed
+ * width ranges within a single vector.
  *
  * The ivl_lpm_select inputs address a bit of the device. The
  * addressed bit is substituted by the replacement bit. This
@@ -760,7 +771,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_DEMUX IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX, IVL_LPM_RAM */
+  /* IVL_LPM_DEMUX, IVL_LPM_MUX, IVL_LPM_RAM */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
@@ -1301,6 +1312,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.126.2.5  2006/04/16 19:26:37  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.126.2.4  2006/03/26 23:09:22  steve
  *  Handle asynchronous demux/bit replacements.
  *

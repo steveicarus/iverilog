@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.28 2006/04/10 03:43:40 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.29 2006/04/16 19:26:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -126,19 +126,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		 sync_flag must be true in this case. */
 	    if (lmem) {
 		  assert(sync_flag);
-		  NetNet*msig = lmem->explode_to_reg();
-		  msig->incr_lref();
-
-		  if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
-			long adr= ae->value().as_long();
-			adr = lmem->index_to_address(adr) * lmem->width();
-			for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
-			      unsigned off = adr+idx;
-			      unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
-			      assert(ptr <= nex_map->pin_count());
-			      connect(nex_out->pin(ptr), rsig->pin(roff+idx));
-			}
-		  }
+		  synth_async_mem_sync_(des, scope, cur, rsig, roff,
+					nex_map, nex_out);
 		  continue;
 	    }
 
@@ -171,7 +160,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 		  NetDemux*dq = new NetDemux(scope, scope->local_symbol(),
 					     lsig->pin_count(),
-					     adr->pin_count());
+					     adr->pin_count(),
+					     lsig->pin_count());
 		  des->add_node(dq);
 		  dq->set_line(*this);
 
@@ -190,7 +180,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  for (unsigned idx = 0 ;  idx < lsig->pin_count(); idx += 1)
 			connect(dq->pin_Data(idx), nex_map->pin(roff+idx));
 
-		  connect(dq->pin_WriteData(), rsig->pin(roff));
+		  connect(dq->pin_WriteData(0), rsig->pin(roff));
 
 		  roff += cur->lwidth();
 		  cur->turn_sig_to_wire_on_release();
@@ -220,6 +210,73 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		 synthesis can continue to work with it as a WIRE. */
 	    cur->turn_sig_to_wire_on_release();
       }
+
+      return true;
+}
+
+/*
+ * Handle the special case of assignment to memory. Explode the memory
+ * to an array of reg bits. The context that is calling this will
+ * attach a decoder between the ff and the r-val. In fact, the memory
+ * at this point has already been scanned and exploded, so the
+ * explode_to_reg method below will return a pre-existing vector.
+ */
+bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
+					  NetAssign_*cur,
+					  NetNet*rsig, unsigned&roff,
+					  NetNet*nex_map, NetNet*nex_out)
+{
+      NetMemory*lmem = cur->mem();
+      assert(lmem);
+
+      NetNet*msig = lmem->explode_to_reg();
+      cur->incr_mem_lref();
+
+	/* Handle the special case that the mux expression is
+	   constant. In this case, just hook up the pertinent bits. */
+      if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
+	    long adr= ae->value().as_long();
+	    adr = lmem->index_to_address(adr) * lmem->width();
+	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
+		  unsigned off = adr+idx;
+		  unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
+		  assert(ptr <= nex_map->pin_count());
+		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
+	    }
+
+	    cur->turn_sig_to_wire_on_release();
+	    return true;
+      }
+
+      assert(cur->bmux() != 0);
+
+      NetNet*adr = cur->bmux()->synthesize(des);
+
+      NetDemux*dq = new NetDemux(scope, scope->local_symbol(),
+				 msig->pin_count(),
+				 adr->pin_count(),
+				 msig->pin_count() / cur->lwidth());
+      des->add_node(dq);
+      dq->set_line(*this);
+
+      for (unsigned idx = 0; idx < adr->pin_count() ;  idx += 1)
+	    connect(dq->pin_Address(idx), adr->pin(idx));
+
+      for (unsigned idx = 0; idx < msig->pin_count(); idx += 1) {
+	    unsigned off = idx;
+	    unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
+	    assert(ptr <= nex_map->pin_count());
+	    connect(nex_out->pin(ptr), dq->pin_Q(idx));
+      }
+
+      for (unsigned idx = 0 ;  idx < msig->pin_count(); idx += 1)
+	    connect(dq->pin_Data(idx), nex_map->pin(roff+idx));
+
+      for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1)
+	    connect(dq->pin_WriteData(idx), rsig->pin(roff+idx));
+
+      roff += cur->lwidth();
+      cur->turn_sig_to_wire_on_release();
 
       return true;
 }
@@ -951,7 +1008,7 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
       if (demux->mem() && dynamic_cast<NetEConst*>(demux->bmux())) {
 	    NetMemory*lmem = demux->mem();
 	    NetNet*msig = lmem->explode_to_reg();
-	    msig->incr_lref();
+	    demux->incr_mem_lref();
 
 	    NetEConst*ae = dynamic_cast<NetEConst*>(demux->bmux());
 	    long adr = ae->value().as_long();
@@ -985,7 +1042,7 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
       if (lval_->mem()) {
 	    NetNet*exp = lval_->mem()->reg_from_explode();
 	    assert(exp);
-	    exp->incr_lref();
+	    lval_->incr_mem_lref();
       }
       lval_->turn_sig_to_wire_on_release();
       return true;
@@ -1441,17 +1498,22 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			break;
 		  }
 
-		  if (! tmp.is_defined())
-			cerr << get_line() << ": internal error: "
-			     << "Strange clr r-value=" << tmp << endl;
-
 		  assert(tmp.is_defined());
 		  if (tmp.is_zero()) {
 			connect(ff->pin_Sclr(), rst->pin(0));
 
+			if (debug_synth)
+			      cerr << get_line() << ": debug: "
+				   << "Create a synchronous clr (set=0) for "
+				   << ff->width() << " bit ff." << endl;
 		  } else {
 			connect(ff->pin_Sset(), rst->pin(0));
 			ff->sset_value(tmp);
+
+			if (debug_synth)
+			      cerr << get_line() << ": debug: "
+				   << "Create a synchronous set for "
+				   << ff->width() << " bit ff." << endl;
 		  }
 
 		  delete a_set;
@@ -1748,6 +1810,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.29  2006/04/16 19:26:39  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.39.2.28  2006/04/10 03:43:40  steve
  *  Exploded memories accessed by constant indices.
  *

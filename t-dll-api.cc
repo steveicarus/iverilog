@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108.2.4 2006/03/26 23:09:24 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108.2.5 2006/04/16 19:26:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -806,8 +806,8 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	    return net->u_.arith.b[idx];
 
 	  case IVL_LPM_DEMUX:
-	    assert(idx < 1);
-	    return net->u_.demux.bit_in;
+	    assert(idx < net->u_.demux.width/net->u_.demux.size);
+	    return net->u_.demux.bit_in[idx];
 
 	  default:
 	    assert(0);
@@ -1058,6 +1058,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 {
       switch (net->type) {
+	  case IVL_LPM_DEMUX:
+	    return net->u_.demux.size;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.size;
 	  case IVL_LPM_RAM:
@@ -2002,6 +2004,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108.2.5  2006/04/16 19:26:40  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.108.2.4  2006/03/26 23:09:24  steve
  *  Handle asynchronous demux/bit replacements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.8 2006/03/26 23:09:25 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.9 2006/04/16 19:26:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -238,9 +238,14 @@ static void show_lpm_demux(ivl_lpm_t net)
       unsigned idx;
       unsigned width = ivl_lpm_width(net);
       unsigned awid = ivl_lpm_selects(net);
+      unsigned size = ivl_lpm_size(net);
 
-      fprintf(out, "  LPM_DEMUX %s (word-width=%u, addr-width=%u)\n",
-	      ivl_lpm_basename(net), width, awid);
+      fprintf(out, "  LPM_DEMUX %s (bus-width=%u, addr-width=%u, size=%u)\n",
+	      ivl_lpm_basename(net), width, awid, size);
+
+      if (width%size != 0) {
+	    fprintf(out, "    ERROR: width %% size == %u\n", width%size);
+      }
 
       for (idx = 0 ;  idx < width ;  idx += 1)
 	    fprintf(out, "    Q %u: %s\n", idx,
@@ -256,9 +261,9 @@ static void show_lpm_demux(ivl_lpm_t net)
 		    nex? ivl_nexus_name(nex) : "");
       }
 
-      {
-	    ivl_nexus_t nex = ivl_lpm_datab(net, 0);
-	    fprintf(out, "    WriteIn: %s\n",
+      for (idx = 0 ;  idx < width/size ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_datab(net, idx);
+	    fprintf(out, "    WriteIn %u: %s\n", idx,
 		    nex? ivl_nexus_name(nex) : "");
       }
 }
@@ -463,6 +468,8 @@ static void show_lpm(ivl_lpm_t net)
 		if (ivl_lpm_sync_set(net)) {
 		      fprintf(out, "    Sset: %s\n",
 			      ivl_nexus_name(ivl_lpm_sync_set(net)));
+		      if (ivl_lpm_sset_value(net))
+			    show_expression(ivl_lpm_sset_value(net), 10);
 		}
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
@@ -1107,6 +1114,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.9  2006/04/16 19:26:41  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.90.2.8  2006/03/26 23:09:25  steve
  *  Handle asynchronous demux/bit replacements.
  *

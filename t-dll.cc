@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.6 2006/03/26 23:09:24 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.7 2006/04/16 19:26:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1552,6 +1552,7 @@ bool dll_target::lpm_demux(const NetDemux*net)
       unsigned idx;
       unsigned width = net->width();
       unsigned awid = net->awidth();
+      unsigned size = net->size();
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_DEMUX;
       obj->name  = net->name();
@@ -1562,11 +1563,13 @@ bool dll_target::lpm_demux(const NetDemux*net)
 
       obj->u_.demux.width = width;
       obj->u_.demux.awid  = awid;
+      obj->u_.demux.size  = net->size();
 
-      ivl_nexus_t*tmp = new ivl_nexus_t [2*net->width() + net->awidth()];
+      ivl_nexus_t*tmp = new ivl_nexus_t [2*width + awid + width/size];
       obj->u_.demux.q = tmp;
       obj->u_.demux.d = tmp + width;
       obj->u_.demux.a = tmp + 2*width;
+      obj->u_.demux.bit_in = tmp + 2*width + awid;
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    const Nexus*nex = net->pin_Q(idx).nexus();
@@ -1592,11 +1595,11 @@ bool dll_target::lpm_demux(const NetDemux*net)
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
 
-      {
-	    const Nexus*nex = net->pin_WriteData().nexus();
+      for (idx = 0 ;  idx < width/size ;  idx += 1) {
+	    const Nexus*nex = net->pin_WriteData(idx).nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.demux.bit_in = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.demux.bit_in, obj, 0,
+	    obj->u_.demux.bit_in[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.demux.bit_in[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
 
@@ -2331,6 +2334,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.7  2006/04/16 19:26:40  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.131.2.6  2006/03/26 23:09:24  steve
  *  Handle asynchronous demux/bit replacements.
  *

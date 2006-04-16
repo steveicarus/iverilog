@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.5 2006/03/26 23:09:26 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.6 2006/04/16 19:26:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1302,41 +1302,47 @@ static void draw_lpm_decode(ivl_lpm_t net)
  */
 static void draw_lpm_demux(ivl_lpm_t net)
 {
-      unsigned idx;
+      unsigned idx, wbit;
       unsigned width = ivl_lpm_width(net);
+      unsigned size = ivl_lpm_size(net);
+      unsigned word = width / size;
+
+      assert(width%size == 0);
 
 	/* Draw a .decode/adr node to do address decoding. */
       draw_lpm_decode(net);
 
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t nex;
+      for (wbit = 0 ;  wbit < word ;  wbit += 1) {
+	    for (idx = wbit ;  idx < width ;  idx += word) {
+		  ivl_nexus_t nex;
 
-	      /* This is a demux bit slice idx */
-	    fprintf(vvp_out, "L_%s.%s/%u .demux ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
+		    /* This is a demux bit slice idx */
+		  fprintf(vvp_out, "L_%s.%s/%u .demux ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
 
-	      /* Reference the address decoder... */
-	    fprintf(vvp_out, "L_%s.%s, %u, ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
+		    /* Reference the address decoder... */
+		  fprintf(vvp_out, "L_%s.%s, %u, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)), idx/word);
 
-	      /* not-selected bit value. */
-	    nex = ivl_lpm_data(net, idx);
-	    if (nex)
-		  draw_input_from_net(nex);
-	    else
-		  fprintf(vvp_out, "C<z>");
+		    /* not-selected bit value. */
+		  nex = ivl_lpm_data(net, idx);
+		  if (nex)
+			draw_input_from_net(nex);
+		  else
+			fprintf(vvp_out, "C<z>");
 
-	      /* selected bit value. */
-	    fprintf(vvp_out, ", ");
-	    nex = ivl_lpm_datab(net, 0);
-	    if (nex)
-		  draw_input_from_net(nex);
-	    else
-		  fprintf(vvp_out, "C<z>");
+		    /* selected bit value. */
+		  fprintf(vvp_out, ", ");
+		  nex = ivl_lpm_datab(net, wbit);
+		  if (nex)
+			draw_input_from_net(nex);
+		  else
+			fprintf(vvp_out, "C<z>");
 
-	    fprintf(vvp_out, ";\n");
+		  fprintf(vvp_out, ";\n");
+	    }
       }
 }
 
@@ -1390,7 +1396,9 @@ static void draw_lpm_eq(ivl_lpm_t net)
 static void draw_lpm_ff(ivl_lpm_t net)
 {
       ivl_expr_t aset_expr = 0;
+      ivl_expr_t sset_expr = 0;
       const char*aset_bits = 0;
+      const char*sset_bits = 0;
 
       unsigned width, idx;
       ivl_attribute_t clock_pol = find_lpm_attr(net, "ivl:clock_polarity");
@@ -1439,6 +1447,12 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    aset_bits = ivl_expr_bits(aset_expr);
       }
 
+      sset_expr = ivl_lpm_sset_value(net);
+      if (sset_expr) {
+	    assert(ivl_expr_width(sset_expr) == width);
+	    sset_bits = ivl_expr_bits(sset_expr);
+      }
+
 	/* If there is a synchronous clear or set, then draw a
 	   compound enable that includes the Sclr or Sset input. We
 	   will use this for the enable of the basic DFF. */
@@ -1480,7 +1494,10 @@ static void draw_lpm_ff(ivl_lpm_t net)
 			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
 		  draw_input_from_net(ivl_lpm_data(net,idx));
-		  fprintf(vvp_out, ", C<1>, ");
+		  if (sset_bits[idx] == '1')
+			fprintf(vvp_out, ", C<1>, ");
+		  else
+			fprintf(vvp_out, ", C<0>, ");
 		  draw_input_from_net(ivl_lpm_sync_set(net));
 		  fprintf(vvp_out, ", C<1>;\n");
 	    }
@@ -1869,6 +1886,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.6  2006/04/16 19:26:41  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.103.2.5  2006/03/26 23:09:26  steve
  *  Handle asynchronous demux/bit replacements.
  *

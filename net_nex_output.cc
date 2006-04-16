@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.2 2006/03/12 07:34:17 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.3 2006/04/16 19:26:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,11 +76,11 @@ void NetAssignBase::nex_output(NexusSet&out)
 			      out.add(tmp->pin(adr+idx).nexus());
 
 		  } else {
-			  /* Fake an address of 0. The context will
-			     actually shove a decoder in place here. */
-			long adr= 0;
-			for (unsigned idx = 0; idx < cur->lwidth(); idx += 1)
-			      out.add(tmp->pin(adr+idx).nexus());
+			  /* Put all the bits of the memory into the
+			     set. The synthesis will generate a
+			     decoder to handle this. */
+			for (unsigned idx = 0; idx < tmp->pin_count(); idx+=1)
+			      out.add(tmp->pin(idx).nexus());
 		  }
 
 	    } else {
@@ -154,6 +154,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.3  2006/04/16 19:26:38  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.11.2.2  2006/03/12 07:34:17  steve
  *  Fix the memsynth1 case.
  *

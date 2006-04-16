@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.18.2.1 2006/03/12 07:34:17 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.18.2.2 2006/04/16 19:26:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -61,6 +61,7 @@ NetAssign_::NetAssign_(NetVariable*s)
       loff_ = 0;
       lwid_ = 0;
       more = 0;
+      mem_lref_ = 0;
 }
 
 NetAssign_::~NetAssign_()
@@ -73,7 +74,7 @@ NetAssign_::~NetAssign_()
 
       if (mem_) {
 	    NetNet*exp = mem_->reg_from_explode();
-	    if (exp) {
+	    if (exp && mem_lref_) {
 		  exp->decr_lref();
 		  if (turn_sig_to_wire_on_release_ && exp->peek_lref() == 0)
 			exp->type(NetNet::WIRE);
@@ -135,6 +136,16 @@ NetVariable* NetAssign_::var() const
       return var_;
 }
 
+void NetAssign_::incr_mem_lref()
+{
+      if (! mem_lref_) {
+	    assert(mem_);
+	    NetNet*exp = mem_->reg_from_explode();
+	    assert(exp);
+	    exp->incr_lref();
+	    mem_lref_ = true;
+      }
+}
 
 void NetAssign_::set_part(unsigned lo, unsigned lw)
 {
@@ -272,6 +283,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.18.2.2  2006/04/16 19:26:38  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.18.2.1  2006/03/12 07:34:17  steve
  *  Fix the memsynth1 case.
  *

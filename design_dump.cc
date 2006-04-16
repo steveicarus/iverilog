@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.4 2006/03/26 23:09:21 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.5 2006/04/16 19:26:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,7 +227,8 @@ void NetDecode::dump_node(ostream&o, unsigned ind) const
 void NetDemux::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_DEMUX (NetDemux): " << name()
-	<< " word width=" << width() << ", address width=" << awidth() << endl;
+	<< " bus width=" << width() << ", address width=" << awidth()
+	<< ", word count=" << size() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -288,7 +289,8 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_FF: " << name()
 	<< " scope=" << (scope()? scope()->name() : "")
-	<< " aset_value=" << aset_value_;
+	<< " aset_value=" << aset_value_
+	<< " sset_value=" << sset_value_;
 
       if (demux_) o << " demux=" << demux_->name();
 
@@ -1117,6 +1119,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.5  2006/04/16 19:26:37  steve
+ *  Fix handling of exploded memories with partial or missing resets.
+ *
  * Revision 1.149.2.4  2006/03/26 23:09:21  steve
  *  Handle asynchronous demux/bit replacements.
  *
