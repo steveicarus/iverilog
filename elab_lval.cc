@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.34 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.35 2006/04/16 00:54:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,6 +179,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       assert(reg);
 
+      if (sel_ == SEL_PART)
+	    return elaborate_lval_net_part_(des, scope, reg);
+
       if (sel_ == SEL_IDX_UP)
 	    return elaborate_lval_net_idx_up_(des, scope, reg);
 
@@ -198,55 +201,18 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
+      assert(msb_ == 0);
+      assert(lsb_ == 0);
       long msb, lsb;
       NetExpr*mux;
 
-      if (msb_ || lsb_) {
-	    assert(msb_ && lsb_);
-	    if (sel_ != SEL_PART)
-		  cerr << get_line() << ": internal error: not a part select?"
-		       << endl;
-
-	    assert(sel_ == SEL_PART);
-
-	      /* This handles part selects. In this case, there are
-		 two bit select expressions, and both must be
-		 constant. Evaluate them and pass the results back to
-		 the caller. */
-	    verinum*vl = lsb_->eval_const(des, scope);
-	    if (vl == 0) {
-		  cerr << lsb_->get_line() << ": error: "
-			"Part select expressions must be constant."
-		       << endl;
-		  cerr << lsb_->get_line() << ":      : This lsb expression "
-			"violates the rule: " << *lsb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    verinum*vm = msb_->eval_const(des, scope);
-	    if (vm == 0) {
-		  cerr << msb_->get_line() << ": error: "
-			"Part select expressions must be constant."
-		       << endl;
-		  cerr << msb_->get_line() << ":      : This msb expression "
-			"violates the rule: " << *msb_ << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    msb = vm->as_long();
-	    lsb = vl->as_long();
-	    mux = 0;
-
-      } else if (! idx_.empty()) {
+      if (! idx_.empty()) {
 
 	      /* If there is only a single select expression, it is a
 		 bit select. Evaluate the constant value and treat it
 		 as a part select with a bit width of 1. If the
 		 expression it not constant, then return the
 		 expression as a mux. */
-	    assert(msb_ == 0);
-	    assert(lsb_ == 0);
 	    assert(idx_.size() == 1);
 	    verinum*v = idx_[0]->eval_const(des, scope);
 	    if (v == 0) {
@@ -268,8 +234,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	      /* No select expressions, so presume a part select the
 		 width of the register. */
 
-	    assert(msb_ == 0);
-	    assert(lsb_ == 0);
 	    msb = reg->msb();
 	    lsb = reg->lsb();
 	    mux = 0;
@@ -332,6 +296,91 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    lv->set_part(new NetEConst(verinum(loff)), wid);
       }
 
+
+      return lv;
+}
+
+NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
+					      NetScope*scope,
+					      NetNet*reg) const
+{
+      assert(msb_ && lsb_);
+
+	/* This handles part selects. In this case, there are
+	   two bit select expressions, and both must be
+	   constant. Evaluate them and pass the results back to
+	   the caller. */
+      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_);
+      NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
+      if (lsb_c == 0) {
+	    cerr << lsb_->get_line() << ": error: "
+		  "Part select expressions must be constant."
+		 << endl;
+	    cerr << lsb_->get_line() << ":      : This lsb expression "
+		  "violates the rule: " << *lsb_ << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*msb_ex = elab_and_eval(des, scope, msb_);
+      NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
+      if (msb_c == 0) {
+	    cerr << msb_->get_line() << ": error: "
+		  "Part select expressions must be constant."
+		 << endl;
+	    cerr << msb_->get_line() << ":      : This msb expression "
+		  "violates the rule: " << *msb_ << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      long msb = msb_c->value().as_long();
+      long lsb = lsb_c->value().as_long();
+
+      delete msb_ex;
+      delete lsb_ex;
+
+      NetAssign_*lv = 0;
+
+      if (msb == reg->msb() && lsb == reg->lsb()) {
+
+	      /* No bit select, and part select covers the entire
+		 vector. Simplest case. */
+	    lv = new NetAssign_(reg);
+
+      } else {
+
+	      /* If the bit/part select is constant, then make the
+		 NetAssign_ only as wide as it needs to be and connect
+		 only to the selected bits of the reg. */
+	    unsigned loff = reg->sb_to_idx(lsb);
+	    unsigned moff = reg->sb_to_idx(msb);
+	    unsigned wid = moff - loff + 1;
+
+	    if (moff < loff) {
+		  cerr << get_line() << ": error: part select "
+		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		       << " is reversed." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	      /* If the part select extends beyond the extreme of the
+		 variable, then report an error. Note that loff is
+		 converted to normalized form so is relative the
+		 variable pins. */
+
+	    if ((wid + loff) > reg->vector_width()) {
+		  cerr << get_line() << ": error: bit/part select "
+		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		       << " is out of range." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    lv = new NetAssign_(reg);
+	    lv->set_part(new NetEConst(verinum(loff)), wid);
+      }
 
       return lv;
 }
@@ -495,6 +544,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.35  2006/04/16 00:54:04  steve
+ *  Cleanup lval part select handling.
+ *
  * Revision 1.34  2006/04/16 00:15:43  steve
  *  Fix part selects in l-values.
  *

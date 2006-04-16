@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.79 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: PExpr.h,v 1.80 2006/04/16 00:54:04 steve Exp $"
 #endif
 
 # include  <string>
@@ -254,6 +254,7 @@ class PEIdent : public PExpr {
       const hname_t& path() const;
 
     private:
+      NetAssign_*elaborate_lval_net_part_(Design*, NetScope*, NetNet*) const;
       NetAssign_*elaborate_lval_net_idx_up_(Design*, NetScope*, NetNet*) const;
       NetAssign_*elaborate_lval_net_idx_do_(Design*, NetScope*, NetNet*) const;
 
@@ -552,6 +553,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.80  2006/04/16 00:54:04  steve
+ *  Cleanup lval part select handling.
+ *
  * Revision 1.79  2006/04/16 00:15:43  steve
  *  Fix part selects in l-values.
  *
