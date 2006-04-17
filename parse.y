@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.214 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: parse.y,v 1.215 2006/04/17 04:35:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -140,7 +140,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_edge K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
 %token K_force K_forever K_fork K_function K_generate K_genvar
-%token K_highz0 K_highz1 K_if
+%token K_highz0 K_highz1 K_if K_ifnone
 %token K_initial K_inout K_input K_integer K_join K_large K_localparam
 %token K_logic K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
@@ -2418,6 +2418,9 @@ specify_item
 		{
 		}
 	| K_if '(' expression ')' specify_edge_path_decl ';'
+		{
+		}
+	| K_ifnone specify_simple_path_decl ';'
 		{
 		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event

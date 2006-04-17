@@ -48,6 +48,7 @@ genvar,		K_genvar
 highz0,		K_highz0
 highz1,		K_highz1
 if,		K_if
+ifnone,		K_ifnone
 initial,	K_initial
 inout,		K_inout
 input,		K_input
