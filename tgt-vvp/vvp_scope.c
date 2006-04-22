@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.143 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.144 2006/04/22 04:27:36 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1621,7 +1621,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
       unsigned icnt = ivl_lpm_selects(net);
 
       if (icnt <= 4) {
-	      /* This is the easies case. There are 4 or fewer input
+	      /* This is the easiest case. There are 4 or fewer input
 		 vectors, so the entire IVL_LPM_CONCAT can be
 		 implemented with a single .concat node. */
 	    draw_lpm_data_inputs(net, 0, icnt, src_table);
@@ -1660,6 +1660,10 @@ static void draw_lpm_concat(ivl_lpm_t net)
 		  tree[idx/4].wid  = wid;
 	    }
 
+	      /* icnt is the input count for the level. It is the
+		 number of .concats of the previous level that have to
+		 be concatenated at the current level. (This is not
+		 the same as the bit width.) */
 	    icnt = (icnt + 3)/4;
 
 	      /* Tree now has icnt nodes that are depth=0 concat nodes
@@ -1682,8 +1686,8 @@ static void draw_lpm_concat(ivl_lpm_t net)
 				net, depth, idx);
 
 			for (tdx = 0 ;  tdx < trans ;  tdx += 1) {
-			      fprintf(vvp_out, " %u", tree[idx].wid);
-			      wid += tree[idx].wid;
+			      fprintf(vvp_out, " %u", tree[idx+tdx].wid);
+			      wid += tree[idx+tdx].wid;
 			}
 
 			for ( ;  tdx < 4 ;  tdx += 1)
@@ -2205,6 +2209,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.144  2006/04/22 04:27:36  steve
+ *  Get tail counts right in nested concatenations.
+ *
  * Revision 1.143  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
