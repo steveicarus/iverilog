@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.86.2.1 2006/04/01 01:37:24 steve Exp $"
+#ident "$Id: main.cc,v 1.86.2.2 2006/04/23 04:25:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -113,6 +113,7 @@ bool debug_scopes = false;
 bool debug_eval_tree = false;
 bool debug_elaborate = false;
 bool debug_synth = false;
+bool debug_cprop = false;
 
 /*
  * Verbose messages enabled.
@@ -319,6 +320,9 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"synth") == 0) {
 			debug_synth = true;
 			cerr << "debug: Enable synthesis debug" << endl;
+		  } else if (strcmp(cp,"cprop") == 0) {
+			debug_cprop = true;
+			cerr << "debug: Enable cprop debug" << endl;
 		  } else {
 		  }
 
@@ -749,6 +753,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.86.2.2  2006/04/23 04:25:45  steve
+ *  Add cprop debugging.
+ *
  * Revision 1.86.2.1  2006/04/01 01:37:24  steve
  *  Add synth debug flag
  *
