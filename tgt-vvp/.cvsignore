@@ -1,4 +1,6 @@
 Makefile
+vvp.conf
+vvp-s.conf
 vvp_config.h
 configure
 config.status
