@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.4 2005/09/11 02:50:51 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.5 2006/04/23 04:26:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "functor.h"
+# include  "compiler.h"
 # include  <assert.h>
 
 
@@ -48,6 +49,8 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
       virtual void lpm_mux_large(Design*des, NetMux*obj);
+      virtual void lpm_ram_dq(Design*des, NetRamDq*obj);
+      bool lpm_ram_dq_const_address_(Design*des, NetRamDq*obj);
 };
 
 void cprop_functor::signal(Design*des, NetNet*obj)
@@ -1142,6 +1145,59 @@ void cprop_functor::lpm_mux_large(Design*des, NetMux*obj)
       count += 1;
 }
 
+void cprop_functor::lpm_ram_dq(Design*des, NetRamDq*obj)
+{
+      if (lpm_ram_dq_const_address_(des,obj))
+	    return;
+
+}
+
+/*
+ * Try to evaluate a constant address input. If we find it, then
+ * replace the NetRamDq with a direct link to the addressed word.
+ */
+bool cprop_functor::lpm_ram_dq_const_address_(Design*des, NetRamDq*obj)
+{
+      NetMemory*mem = obj->mem();
+      NetNet* reg = mem->reg_from_explode();
+
+	/* I only know how to do this on exploded memories. */
+      if (reg == 0)
+	    return false;
+
+      verinum sel (0UL, obj->awidth());
+      for (unsigned idx = 0 ;  idx < obj->awidth() ;  idx += 1) {
+	    if (! obj->pin_Address(idx).nexus()->drivers_constant())
+		  return false;
+
+	    sel.set(idx, obj->pin_Address(idx).nexus()->driven_value());
+      }
+
+      unsigned long address = sel.as_ulong();
+
+	/* If the address is outside the ram, then leave this to the
+	   code generator to figure out. */
+      if (address >= obj->size())
+	    return false;
+
+
+      unsigned base = address * obj->width();
+      assert(base+obj->width() <= reg->pin_count());
+
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1)
+	    connect(reg->pin(base+idx), obj->pin_Q(idx));
+
+      if (debug_cprop) {
+	    cerr << obj->get_line() << ": debug: Replace read port with"
+		 << " fixed link to word " << address << "." << endl;
+      }
+
+      delete obj;
+      count += 1;
+      return true;
+}
+
+
 /*
  * This functor looks to see if the constant is connected to nothing
  * but signals. If that is the case, delete the dangling constant and
@@ -1260,6 +1316,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.5  2006/04/23 04:26:13  steve
+ *  Constant propagate addresses through NetRamDq read ports.
+ *
  * Revision 1.47.2.4  2005/09/11 02:50:51  steve
  *  Fix overly agressive constant propagation through MUX causing lost Z bits.
  *

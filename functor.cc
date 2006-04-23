@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.32 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: functor.cc,v 1.32.2.1 2006/04/23 04:26:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -79,6 +79,9 @@ void functor_t::lpm_mux(class Design*, class NetMux*)
 {
 }
 
+void functor_t::lpm_ram_dq(class Design*, class NetRamDq*)
+{
+}
 
 void NetScope::run_functor(Design*des, functor_t*fun)
 {
@@ -206,6 +209,11 @@ void NetMux::functor_node(Design*des, functor_t*fun)
       fun->lpm_mux(des, this);
 }
 
+void NetRamDq::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_ram_dq(des, this);
+}
+
 proc_match_t::~proc_match_t()
 {
 }
@@ -267,6 +275,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.32.2.1  2006/04/23 04:26:14  steve
+ *  Constant propagate addresses through NetRamDq read ports.
+ *
  * Revision 1.32  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

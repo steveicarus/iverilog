@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.16 2006/04/16 19:26:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.17 2006/04/23 04:26:14 steve Exp $"
 #endif
 
 /*
@@ -995,6 +995,8 @@ class NetRamDq  : public NetNode {
       unsigned width() const;
       unsigned awidth() const;
       unsigned size() const;
+
+      NetMemory*mem();
       const NetMemory*mem() const;
 
       Link& pin_InClock();
@@ -1024,6 +1026,8 @@ class NetRamDq  : public NetNode {
 	// Use this method to count the partners (including myself)
 	// that are ports to the attached memory.
       unsigned count_partners() const;
+
+      void functor_node(Design*des, functor_t*fun);
 
     private:
       NetMemory*mem_;
@@ -3524,6 +3528,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.17  2006/04/23 04:26:14  steve
+ *  Constant propagate addresses through NetRamDq read ports.
+ *
  * Revision 1.321.2.16  2006/04/16 19:26:38  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *

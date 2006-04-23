@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.6 2006/04/16 19:26:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226.2.7 2006/04/23 04:26:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1625,6 +1625,11 @@ unsigned NetRamDq::size() const
       return 0;
 }
 
+NetMemory* NetRamDq::mem()
+{
+      return mem_;
+}
+
 const NetMemory* NetRamDq::mem() const
 {
       return mem_;
@@ -2481,6 +2486,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226.2.7  2006/04/23 04:26:14  steve
+ *  Constant propagate addresses through NetRamDq read ports.
+ *
  * Revision 1.226.2.6  2006/04/16 19:26:38  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *

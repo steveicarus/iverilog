@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.20 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: functor.h,v 1.20.2.1 2006/04/23 04:26:14 steve Exp $"
 #endif
 
 /*
@@ -77,6 +77,9 @@ struct functor_t {
 
 	/* This method is called for each MUX. */
       virtual void lpm_mux(class Design*des, class NetMux*);
+
+	/* This is called for eacm RamDq device. */
+      virtual void lpm_ram_dq(class Design*des, class NetRamDq*);
 };
 
 struct proc_match_t {
@@ -92,6 +95,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.20.2.1  2006/04/23 04:26:14  steve
+ *  Constant propagate addresses through NetRamDq read ports.
+ *
  * Revision 1.20  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
