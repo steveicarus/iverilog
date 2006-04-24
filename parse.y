@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.215 2006/04/17 04:35:49 steve Exp $"
+#ident "$Id: parse.y,v 1.216 2006/04/24 05:15:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1287,6 +1287,7 @@ indexed_identifier
 		}
 	| indexed_identifier '[' expression ']'
 		{ PEIdent*tmp = $1;
+		  tmp->sel_ = PEIdent::SEL_NONE;
 		  tmp->idx_.push_back($3);
 		  $$ = tmp;
 		}
@@ -2224,6 +2225,7 @@ port_reference
 		  }
 		  wtmp->msb_ = $3;
 		  wtmp->lsb_ = $5;
+		  wtmp->sel_ = PEIdent::SEL_PART;
 		  Module::port_t*ptmp = new Module::port_t;
 		  ptmp->name = perm_string();
 		  ptmp->expr = svector<PEIdent*>(1);

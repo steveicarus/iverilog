@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.179 2006/04/10 00:32:14 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.180 2006/04/24 05:15:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1884,69 +1884,138 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 				unsigned&midx, unsigned&lidx) const
 {
-      if (msb_ && lsb_) {
-	    verinum*mval = msb_->eval_const(des, scope);
-	    assert(mval);
-	    verinum*lval = lsb_->eval_const(des, scope);
-	    assert(lval);
+      switch (sel_) {
+	  default:
+	    cerr << get_line() << ": internal error: "
+		 << "Unexpected sel_ value = " << sel_ << endl;
+	    assert(0);
+	    break;
 
-	    midx = sig->sb_to_idx(mval->as_long());
-	    lidx = sig->sb_to_idx(lval->as_long());
+	  case PEIdent::SEL_IDX_DO:
+	  case PEIdent::SEL_IDX_UP: {
+		assert(msb_);
+		assert(lsb_);
+		assert(idx_.empty());
 
-	      /* Detect reversed indices of a part select. */
-	    if (lidx > midx) {
-		  cerr << get_line() << ": error: Part select "
-		       << sig->name() << "[" << mval->as_long() << ":"
-		       << lval->as_long() << "] indices reversed." << endl;
-		  cerr << get_line() << ":      : Did you mean "
-		       << sig->name() << "[" << lval->as_long() << ":"
-		       << mval->as_long() << "]?" << endl;
-		  unsigned tmp = midx;
-		  midx = lidx;
-		  lidx = tmp;
-		  des->errors += 1;
-	    }
+		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_);
+		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		assert(tmp);
 
-	      /* Detect a part select out of range. */
-	    if (midx >= sig->vector_width()) {
-		  cerr << get_line() << ": error: Part select "
-		       << sig->name() << "[" << mval->as_long() << ":"
-		       << lval->as_long() << "] out of range." << endl;
+		long midx_val = tmp->value().as_long();
+		midx = sig->sb_to_idx(midx_val);
+		delete tmp_ex;
+
+		tmp_ex = elab_and_eval(des, scope, lsb_);
+		tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		assert(tmp);
+
+		long wid = tmp->value().as_long();
+		delete tmp_ex;
+
+		if (sel_ == PEIdent::SEL_IDX_UP)
+		      lidx = sig->sb_to_idx(midx_val+wid-1);
+		else
+		      lidx = sig->sb_to_idx(midx_val-wid+1);
+
+		if (midx < lidx) {
+		      long tmp = midx;
+		      midx = lidx;
+		      lidx = tmp;
+		}
+
+		break;
+	  }
+
+	  case PEIdent::SEL_PART: {
+		assert(msb_);
+		assert(lsb_);
+		assert(idx_.empty());
+
+		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_);
+		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		assert(tmp);
+
+		long midx_val = tmp->value().as_long();
+		midx = sig->sb_to_idx(midx_val);
+		delete tmp_ex;
+
+		tmp_ex = elab_and_eval(des, scope, lsb_);
+		tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		assert(tmp);
+
+		long lidx_val = tmp->value().as_long();
+		lidx = sig->sb_to_idx(lidx_val);
+		delete tmp_ex;
+
+		  /* Detect reversed indices of a part select. */
+		if (lidx > midx) {
+		      cerr << get_line() << ": error: Part select "
+			   << sig->name() << "[" << midx_val << ":"
+			   << lidx_val << "] indices reversed." << endl;
+		      cerr << get_line() << ":      : Did you mean "
+			   << sig->name() << "[" << lidx_val << ":"
+			   << midx_val << "]?" << endl;
+		      unsigned tmp = midx;
+		      midx = lidx;
+		      lidx = tmp;
+		      des->errors += 1;
+		}
+
+		  /* Detect a part select out of range. */
+		if (midx >= sig->vector_width()) {
+		      cerr << get_line() << ": error: Part select "
+			   << sig->name() << "[" << midx_val << ":"
+			   << midx_val << "] out of range." << endl;
+		      midx = sig->vector_width() - 1;
+		      lidx = 0;
+		      des->errors += 1;
+		}
+		break;
+	  }
+
+	  case PEIdent::SEL_NONE:
+	    if (!idx_.empty()) {
+		  assert(msb_ == 0);
+		  assert(lsb_ == 0);
+		  assert(idx_.size() == 1);
+		  verinum*mval = idx_[0]->eval_const(des, scope);
+		  if (mval == 0) {
+			cerr << get_line() << ": error: Index of " << path_ <<
+			      " needs to be constant in this context." <<
+			      endl;
+			cerr << get_line() << ":      : Index expression is: "
+			     << *(idx_[0]) << endl;
+			des->errors += 1;
+			return false;
+		  }
+		  assert(mval);
+
+		  midx = sig->sb_to_idx(mval->as_long());
+		  if (midx >= sig->vector_width()) {
+			cerr << get_line() << ": error: Index " << sig->name()
+			     << "[" << mval->as_long() << "] out of range."
+			     << endl;
+			des->errors += 1;
+			midx = 0;
+		  }
+		  lidx = midx;
+
+	    } else {
+		  if (msb_ || lsb_) {
+			cerr << get_line() << ": internal error: "
+			     << "Unexpected msb_/lsb_ values?" << endl;
+			if (msb_)
+			      cerr << get_line() << "               : "
+				   << *msb_ << endl;
+			if (lsb_)
+			      cerr << get_line() << "               : "
+				   << *lsb_ << endl;
+		  }
+		  assert(msb_ == 0 && lsb_ == 0);
 		  midx = sig->vector_width() - 1;
 		  lidx = 0;
-		  des->errors += 1;
 	    }
-
-      } else if (!idx_.empty()) {
-	    assert(msb_ == 0);
-	    assert(lsb_ == 0);
-	    assert(idx_.size() == 1);
-	    verinum*mval = idx_[0]->eval_const(des, scope);
-	    if (mval == 0) {
-		  cerr << get_line() << ": error: Index of " << path_ <<
-			" needs to be constant in this context." <<
-			endl;
-		  cerr << get_line() << ":      : Index expression is: "
-		       << *(idx_[0]) << endl;
-		  des->errors += 1;
-		  return false;
-	    }
-	    assert(mval);
-
-	    midx = sig->sb_to_idx(mval->as_long());
-	    if (midx >= sig->vector_width()) {
-		  cerr << get_line() << ": error: Index " << sig->name()
-		       << "[" << mval->as_long() << "] out of range."
-		       << endl;
-		  des->errors += 1;
-		  midx = 0;
-	    }
-	    lidx = midx;
-
-      } else {
-	    assert(msb_ == 0 && lsb_ == 0);
-	    midx = sig->vector_width() - 1;
-	    lidx = 0;
+	    break;
       }
 
       return true;
@@ -2662,6 +2731,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.180  2006/04/24 05:15:07  steve
+ *  Fix support for indexed part select in continuous assign l-values.
+ *
  * Revision 1.179  2006/04/10 00:32:14  steve
  *  Clean up index expression error message.
  *
