@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.16 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.16.2.1 2006/04/25 05:11:14 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -133,6 +133,9 @@ static int sys_readmem_calltf(char*name)
       /* min_addr and max_addr are equal to start_addr and stop_addr if
 	 start_addr<stop_addr or vice versa if not... */
       unsigned min_addr, max_addr;
+
+	/* This is the number of words that we need from the memory. */
+      unsigned word_count;
 
 
       /*======================================== Get parameters */
@@ -252,6 +255,9 @@ static int sys_readmem_calltf(char*name)
       min_addr = start_addr<stop_addr ? start_addr : stop_addr ;
       max_addr = start_addr<stop_addr ? stop_addr  : start_addr;
 
+	/* We need this many words from the file. */
+      word_count = max_addr-min_addr+1;
+
       /* Check that start_addr and stop_addr are within the memory
 	 range */
       if (left_addr<right_addr){
@@ -304,6 +310,11 @@ static int sys_readmem_calltf(char*name)
 	  switch (code) {
 	  case MEM_ADDRESS:
 	      addr = value.value.vector->aval;
+		/* if there is an address in the memory file, then
+		   turn off any possible warnings about not having
+		   enough words to load the memory. This is standard
+		   behavior. */
+	      word_count = 0;
 	      break;
 
 	  case MEM_WORD:
@@ -311,6 +322,9 @@ static int sys_readmem_calltf(char*name)
 		  word_index = vpi_handle_by_index(mitem, addr);
 		  assert(word_index);
 		  vpi_put_value(word_index, &value, 0, vpiNoDelay);
+
+		  if (word_count > 0)
+			word_count -= 1;
 	      }
 	      else{
 		  vpi_printf("%s(%s): address (0x%x) out of range (0x%x:0x%x)\n",
@@ -326,6 +340,10 @@ static int sys_readmem_calltf(char*name)
 	      break;
 	  }
       }
+
+      if (word_count > 0)
+	    vpi_printf("%s(%s): Not enough words in the read file "
+		       "for requested range.\n", name, path);
 
  bailout:
       free(value.value.vector);
@@ -576,6 +594,12 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.16.2.1  2006/04/25 05:11:14  steve
+ *  Merge fixes from devel tree.
+ *
+ * Revision 1.17  2006/04/25 05:00:12  steve
+ *  Warning when file is inadequate for requested range.
+ *
  * Revision 1.16  2004/10/04 01:10:58  steve
  *  Clean up spurious trailing white space.
  *
