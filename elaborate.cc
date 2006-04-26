@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.336 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.337 2006/04/26 04:43:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -266,6 +266,22 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   of the l-value. */
       if (lval->vector_width() > rval->vector_width())
 	    rval = pad_to_width(des, rval, lval->vector_width());
+
+	/* If, on the other hand, the r-value insists on being
+	   LARGER then the l-value, use a part select to chop it down
+	   down to size. */
+      if (lval->vector_width() < rval->vector_width()) {
+	    NetPartSelect*tmp = new NetPartSelect(rval, 0,lval->vector_width(),
+						  NetPartSelect::VP);
+	    des->add_node(tmp);
+	    tmp->set_line(*this);
+	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::TRI, lval->vector_width());
+	    osig->set_line(*this);
+	    osig->data_type(rval->data_type());
+	    connect(osig->pin(0), tmp->pin(0));
+	    rval = osig;
+      }
 
       connect(lval->pin(0), rval->pin(0));
 
@@ -3111,6 +3127,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.337  2006/04/26 04:43:50  steve
+ *  Chop down assign r-values that elaborate too wide.
+ *
  * Revision 1.336  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
