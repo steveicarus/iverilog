@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.9 2005/09/20 00:51:53 steve Exp $"
+#ident "$Id: part.cc,v 1.10 2006/04/26 04:39:23 steve Exp $"
 
 # include  "compile.h"
 # include  "part.h"
@@ -85,7 +85,7 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       if (bit.size() != wid_) {
 	    cerr << "internal error: part_pv data mismatch. "
 		 << "base_=" << base_ << ", wid_=" << wid_
-		 << ", vwid_=" << vwid_ << ", bit=" // XXX << bit
+		 << ", vwid_=" << vwid_ << ", bit=" << bit
 		 << endl;
       }
       assert(bit.size() == wid_);
@@ -183,6 +183,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.10  2006/04/26 04:39:23  steve
+ *  Include  bit value in assertion message.
+ *
  * Revision 1.9  2005/09/20 00:51:53  steve
  *  Lazy processing of vvp_fun_part functor.
  *
