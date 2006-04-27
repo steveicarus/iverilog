@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.152 2006/02/02 05:48:45 steve Exp $"
+#ident "$Id: vthread.cc,v 1.153 2006/04/27 04:38:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -579,16 +579,17 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       unsigned delay = cp->bit_idx[0];
+      unsigned index = cp->bit_idx[1];
       s_vpi_time del;
 
       del.type = vpiSimTime;
-      vpip_time_to_timestruct(&del, schedule_simtime() + delay);
+      vpip_time_to_timestruct(&del, delay);
 
       struct __vpiHandle*tmp = cp->handle;
 
       t_vpi_value val;
       val.format = vpiRealVal;
-      val.value.real = thr->words[cp->bit_idx[1]].w_real;
+      val.value.real = thr->words[index].w_real;
       vpi_put_value(tmp, &val, &del, vpiInertialDelay);
 
       return true;
@@ -3219,6 +3220,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.153  2006/04/27 04:38:00  steve
+ *  schedule takes relative, not absolute, time.
+ *
  * Revision 1.152  2006/02/02 05:48:45  steve
  *  real-to-integer conversions round, not truncate.
  *
