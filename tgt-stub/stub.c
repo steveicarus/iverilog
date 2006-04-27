@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.136 2006/01/02 05:33:20 steve Exp $"
+#ident "$Id: stub.c,v 1.137 2006/04/27 04:26:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -256,9 +256,8 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    fprintf(out, "%*s<function=\"%s\", width=%u, %s, vt=%d>\n",
-		    ind, "", ivl_expr_name(net), ivl_expr_width(net),
-		    sign, ivl_expr_value(net));
+	    fprintf(out, "%*s<function=\"%s\", width=%u, %s, type=%s>\n",
+		    ind, "", ivl_expr_name(net), width, sign, vt);
 	    { unsigned cnt = ivl_expr_parms(net);
 	      unsigned idx;
 	      for (idx = 0 ;  idx < cnt ;  idx += 1)
@@ -1580,6 +1579,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.137  2006/04/27 04:26:38  steve
+ *  Dump function type as string.
+ *
  * Revision 1.136  2006/01/02 05:33:20  steve
  *  Node delays can be more general expressions in structural contexts.
  *
