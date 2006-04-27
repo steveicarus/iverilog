@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.40 2005/01/29 06:28:19 steve Exp $"
+#ident "$Id: main.cc,v 1.41 2006/04/27 05:04:59 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -51,6 +51,21 @@
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;
 extern "C" const char*optarg;
+#endif
+
+#if !defined(HAVE_LROUND)
+/*
+ * If the system doesn't provide the lround function, then we provide
+ * it ourselves here. It is simply the nearest integer, rounded away
+ * from zero.
+ */
+extern "C" long int lround(float x)
+{
+      if (x >= 0.0)
+	    return floor(x+0.5);
+      else
+	    return ceil(x-0.5);
+}
 #endif
 
 bool verbose_flag = false;
@@ -281,6 +296,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.41  2006/04/27 05:04:59  steve
+ *  Detect missing lround function.
+ *
  * Revision 1.40  2005/01/29 06:28:19  steve
  *  Add the -s flag to start up interactive.
  *
