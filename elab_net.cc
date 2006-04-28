@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.181 2006/04/28 04:28:35 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.182 2006/04/28 05:09:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2494,7 +2494,10 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 	/* This is the width of the LPM_MUX device that I'm about to
 	   create. It may be smaller then the desired output, but I'll
-	   handle padding below.
+	   handle padding below. Note that in principle the
+	   alternatives should be padded to the output width first,
+	   but it is more efficient to pad them only just enough to
+	   prevent loss, and do the finished padding later.
 
 	   Create a NetNet object wide enough to hold the
 	   result. Also, pad the result values (if necessary) so that
@@ -2503,7 +2506,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       unsigned dwidth = (iwidth > width)? width : iwidth;
 
       NetNet*sig = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, width);
+			      NetNet::WIRE, dwidth);
       sig->data_type(expr_type);
       sig->local_flag(true);
 
@@ -2554,9 +2557,17 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 	/* If the MUX device result is too narrow to fill out the
 	   desired result, pad with zeros... */
-      assert(dwidth == width);
+      assert(dwidth <= width);
 
       des->add_node(mux);
+
+	/* If the MUX device results is too narrow to fill out the
+	   desired result, then pad it. It is OK to have a too-narrow
+	   result here because the dwidth choise is >= the width of
+	   both alternatives. Thus, padding here is equivilent to
+	   padding inside, and is cheaper. */
+      if (dwidth < width)
+	    sig = pad_to_width(des, sig, width);
 
       return sig;
 }
@@ -2750,6 +2761,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.182  2006/04/28 05:09:51  steve
+ *  Handle padding of MUX net results.
+ *
  * Revision 1.181  2006/04/28 04:28:35  steve
  *  Allow concatenations as arguments to inout ports.
  *
