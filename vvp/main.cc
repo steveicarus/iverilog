@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.41 2006/04/27 05:04:59 steve Exp $"
+#ident "$Id: main.cc,v 1.42 2006/04/28 15:40:30 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -59,7 +59,7 @@ extern "C" const char*optarg;
  * it ourselves here. It is simply the nearest integer, rounded away
  * from zero.
  */
-extern "C" long int lround(float x)
+extern "C" long int lround(double x)
 {
       if (x >= 0.0)
 	    return floor(x+0.5);
@@ -296,6 +296,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.42  2006/04/28 15:40:30  steve
+ *  lround takes double, not float.
+ *
  * Revision 1.41  2006/04/27 05:04:59  steve
  *  Detect missing lround function.
  *
