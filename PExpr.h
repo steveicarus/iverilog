@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.80 2006/04/16 00:54:04 steve Exp $"
+#ident "$Id: PExpr.h,v 1.81 2006/04/28 04:28:35 steve Exp $"
 #endif
 
 # include  <string>
@@ -128,6 +128,7 @@ class PEConcat : public PExpr {
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
 				     bool implicit_net_ok =false) const;
+      virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -143,6 +144,10 @@ class PEConcat : public PExpr {
 					 bool is_force) const;
       virtual bool is_constant(Module*) const;
 
+    private:
+      NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
+				     bool implicit_net_ok,
+				     bool bidirectional_flag) const;
     private:
       svector<PExpr*>parms_;
       PExpr*repeat_;
@@ -553,6 +558,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.81  2006/04/28 04:28:35  steve
+ *  Allow concatenations as arguments to inout ports.
+ *
  * Revision 1.80  2006/04/16 00:54:04  steve
  *  Cleanup lval part select handling.
  *

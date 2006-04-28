@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.180 2006/04/24 05:15:07 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.181 2006/04/28 04:28:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1733,8 +1733,9 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
  * destination. The caller can connect gate outputs to this signal to
  * make the l-value connections.
  */
-NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
-				 bool implicit_net_ok) const
+NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
+					 bool implicit_net_ok,
+					 bool bidirectional_flag) const
 {
       assert(scope);
 
@@ -1764,8 +1765,12 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    nets[idx] = parms_[idx]->elaborate_lnet(des, scope,
-						    implicit_net_ok);
+	    if (bidirectional_flag) {
+		  nets[idx] = parms_[idx]->elaborate_bi_net(des, scope);
+	    } else {
+		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope,
+							  implicit_net_ok);
+	    }
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
@@ -1797,11 +1802,14 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 		 << endl;
       }
 
+      NetPartSelect::dir_t part_dir = bidirectional_flag
+	    ? NetPartSelect::BI
+	    : NetPartSelect::VP;
+
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 	    unsigned wid = nets[idx]->vector_width();
 	    unsigned off = width - wid;
-	    NetPartSelect*ps = new NetPartSelect(osig, off, wid,
-						 NetPartSelect::VP);
+	    NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);
 	    des->add_node(ps);
 
 	    connect(ps->pin(1), osig->pin(0));
@@ -1814,6 +1822,17 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 
       osig->local_flag(true);
       return osig;
+}
+
+NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
+				 bool implicit_net_ok) const
+{
+      return elaborate_lnet_common_(des, scope, implicit_net_ok, false);
+}
+
+NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
+{
+      return elaborate_lnet_common_(des, scope, true, true);
 }
 
 /*
@@ -2731,6 +2750,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.181  2006/04/28 04:28:35  steve
+ *  Allow concatenations as arguments to inout ports.
+ *
  * Revision 1.180  2006/04/24 05:15:07  steve
  *  Fix support for indexed part select in continuous assign l-values.
  *
