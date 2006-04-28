@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.92 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.93 2006/04/28 04:19:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -161,6 +161,11 @@ void PEIdent::dump(ostream&out) const
 		  break;
 	    }
 	    out << "]";
+      }
+
+      typedef std::vector<PExpr*>::const_iterator vector_it_t;
+      for (vector_it_t cur = idx_.begin() ; cur != idx_.end() ;  cur++) {
+	    out << "[" << *(*cur) << "]";
       }
 }
 
@@ -967,6 +972,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.93  2006/04/28 04:19:31  steve
+ *  Dump indexes of ident expressions
+ *
  * Revision 1.92  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
