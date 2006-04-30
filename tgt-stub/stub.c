@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.137 2006/04/27 04:26:38 steve Exp $"
+#ident "$Id: stub.c,v 1.138 2006/04/30 05:16:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -761,14 +761,25 @@ static void show_lpm_re(ivl_lpm_t net)
 	  case IVL_LPM_RE_AND:
 	    type = "AND";
 	    break;
+	  case IVL_LPM_RE_NAND:
+	    type = "NAND";
+	    break;
 	  case IVL_LPM_RE_OR:
 	    type = "OR";
 	    break;
+	  case IVL_LPM_RE_NOR:
+	    type = "NOR";
+	  case IVL_LPM_RE_XOR:
+	    type = "XOR";
+	    break;
+	  case IVL_LPM_RE_XNOR:
+	    type = "XNOR";
 	  default:
 	    break;
       }
 
-      fprintf(out, "  LPM_RE_%s: <width=%u>\n", type, width);
+      fprintf(out, "  LPM_RE_%s: %s <width=%u>\n",
+	      type, ivl_lpm_name(net),width);
 
       nex = ivl_lpm_q(net, 0);
       fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
@@ -953,10 +964,11 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_RE_AND:
-	    show_lpm_re(net);
-	    break;
-
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_XNOR:
 	    show_lpm_re(net);
 	    break;
 
@@ -1579,6 +1591,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.138  2006/04/30 05:16:53  steve
+ *  Dump *all* the reduction operator gates.
+ *
  * Revision 1.137  2006/04/27 04:26:38  steve
  *  Dump function type as string.
  *
