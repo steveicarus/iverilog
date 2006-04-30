@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.74 2006/01/03 05:15:33 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.75 2006/04/30 05:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -720,10 +720,12 @@ NetNet* NetESelect::synthesize(Design *des)
 	    sel->set_line(*this);
 	    des->add_node(sel);
 
-	    sub = new NetNet(scope, scope->local_symbol(),
-			     NetNet::IMPLICIT, expr_width());
-	    sub->local_flag(true);
-	    sub->set_line(*this);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::IMPLICIT, expr_width());
+	    tmp->data_type(sub->data_type());
+	    tmp->local_flag(true);
+	    tmp->set_line(*this);
+	    sub = tmp;
 	    connect(sub->pin(0), sel->pin(0));
       }
 
@@ -848,6 +850,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.75  2006/04/30 05:17:48  steve
+ *  Get the data type of part select results right.
+ *
  * Revision 1.74  2006/01/03 05:15:33  steve
  *  Fix the return type of a synthesized divide.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.182 2006/04/28 05:09:51 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.183 2006/04/30 05:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -383,6 +383,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 				      1);
 			NetEConst*ogate = new NetEConst(oval);
 			NetNet*osig = ogate->synthesize(des);
+			osig->data_type(lsig->data_type());
 			delete ogate;
 
 			if (debug_elaborate)
@@ -437,7 +438,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, 0, 0);
-	    tmp->data_type(IVL_VT_LOGIC);
+	    tmp->data_type(lsig->data_type());
 	    tmp->local_flag(true);
 	    tmp->set_line(*lsig);
 
@@ -1795,6 +1796,9 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, width);
 
+	/* Assume that the data types of the nets are all the same, so
+	   we can take the data type of any, the first will do. */
+      osig->data_type(nets[0]->data_type());
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Generating part selects "
@@ -2761,6 +2765,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.183  2006/04/30 05:17:48  steve
+ *  Get the data type of part select results right.
+ *
  * Revision 1.182  2006/04/28 05:09:51  steve
  *  Handle padding of MUX net results.
  *

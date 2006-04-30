@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.337 2006/04/26 04:43:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.338 2006/04/30 05:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -585,6 +585,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			connect(tmp1->pin(1), sig->pin(0));
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
 						 NetNet::WIRE, 1);
+			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
 			connect(cur[gdx]->pin(idx), tmp1->pin(0));
 		  }
@@ -3127,6 +3128,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.338  2006/04/30 05:17:48  steve
+ *  Get the data type of part select results right.
+ *
  * Revision 1.337  2006/04/26 04:43:50  steve
  *  Chop down assign r-values that elaborate too wide.
  *
