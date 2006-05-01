@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.175 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: Makefile.in,v 1.176 2006/05/01 20:47:29 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -161,10 +161,8 @@ lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
 
-parse.cc: $(srcdir)/parse.y
+parse.cc parse.h: $(srcdir)/parse.y
 	$(YACC) --verbose -t -p VL -d -o parse.cc $(srcdir)/parse.y
-
-parse.h: parse.cc
 	mv parse.cc.h parse.h 2>/dev/null || mv parse.hh parse.h
 
 syn-rules.cc: $(srcdir)/syn-rules.y
