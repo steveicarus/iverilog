@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.338 2006/04/30 05:17:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.339 2006/05/01 20:47:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -536,6 +536,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 			sig = new NetNet(scope, scope->local_symbol(),
 					 NetNet::WIRE, instance_width);
+			sig->data_type(IVL_VT_LOGIC);
 			sig->local_flag(true);
 			sig->set_line(*this);
 			connect(rep->pin(0), sig->pin(0));
@@ -572,6 +573,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			      NetNet*tmp2 = new NetNet(scope,
 						       scope->local_symbol(),
 						       NetNet::WIRE, 1);
+			      tmp2->local_flag(true);
+			      tmp2->data_type(IVL_VT_LOGIC);
 			      connect(cc->pin(gdx+1), tmp2->pin(0));
 			}
 
@@ -585,6 +588,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			connect(tmp1->pin(1), sig->pin(0));
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
 						 NetNet::WIRE, 1);
+			tmp2->local_flag(true);
 			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
 			connect(cur[gdx]->pin(idx), tmp1->pin(0));
@@ -1444,6 +1448,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::REG, wid);
 	    tmp->set_line(*this);
+	    tmp->data_type(rv->expr_type());
 
 	    NetESignal*sig = new NetESignal(tmp);
 
@@ -3128,6 +3133,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.339  2006/05/01 20:47:59  steve
+ *  More explicit datatype setup.
+ *
  * Revision 1.338  2006/04/30 05:17:48  steve
  *  Get the data type of part select results right.
  *

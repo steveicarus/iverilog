@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.183 2006/04/30 05:17:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.184 2006/05/01 20:47:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -873,6 +873,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 		 temporary signal to represent it. */
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
+	    tmp->data_type(IVL_VT_LOGIC);
 	    tmp->local_flag(true);
 	    connect(gate->pin(1), tmp->pin(0));
 
@@ -894,6 +895,7 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 		 temporary signal to represent it. */
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
+	    tmp->data_type(IVL_VT_LOGIC);
 	    tmp->local_flag(true);
 	    connect(gate->pin(2), tmp->pin(0));
 
@@ -943,6 +945,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 		  connect(odev->pin(idx), osig->pin(idx));
 
 	    des->add_node(odev);
+	    osig->data_type(IVL_VT_LOGIC);
 	    osig->local_flag(true);
 	    return osig;
       }
@@ -1299,6 +1302,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 			       NetNet::WIRE,
 			       def->return_sig()->vector_width());
       osig->local_flag(true);
+      osig->data_type(def->return_sig()->data_type());
 
       connect(net->pin(0), osig->pin(0));
 
@@ -1824,6 +1828,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
       assert(width == 0);
 
+      osig->data_type(nets[0]->data_type());
       osig->local_flag(true);
       return osig;
 }
@@ -2388,6 +2393,7 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 	    net = new NetNet(scope, scope->local_symbol(),
 			     NetNet::IMPLICIT, strbits);
       }
+      net->data_type(IVL_VT_BOOL);
       net->local_flag(true);
 
 	/* Make a verinum that is filled with the 0 pad. */
@@ -2488,6 +2494,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, 1);
+	    tmp->data_type(IVL_VT_LOGIC);
 	    tmp->local_flag(true);
 	    connect(log->pin(0), tmp->pin(0));
 
@@ -2541,6 +2548,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       if (rise || fall || decay) {
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, dwidth);
+	    sig->data_type(expr_type);
 
 	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), dwidth);
 	    tmpz->rise_time(rise);
@@ -2727,6 +2735,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
 					      NetNet::WIRE,
 					      sub_sig->vector_width());
+		  tmp_sig->data_type(sub_sig->data_type());
 		  tmp_sig->local_flag(true);
 
 		  connect(tmp_sig->pin(0), sub->pin_DataA());
@@ -2765,6 +2774,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.184  2006/05/01 20:47:58  steve
+ *  More explicit datatype setup.
+ *
  * Revision 1.183  2006/04/30 05:17:48  steve
  *  Get the data type of part select results right.
  *

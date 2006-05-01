@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.76 2006/05/01 05:40:21 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.77 2006/05/01 20:47:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,6 +57,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       perm_string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
+      osig->data_type(expr_type());
 
       perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
@@ -107,6 +108,7 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lsig->vector_width());
       osig->local_flag(true);
+      osig->data_type(expr_type());
 
       perm_string oname = scope->local_symbol();
       unsigned wid = lsig->vector_width();
@@ -262,6 +264,7 @@ NetNet* NetEBMult::synthesize(Design*des)
 			       NetNet::IMPLICIT, expr_width());
       osig->data_type(lsig->data_type());
       osig->set_line(*this);
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
       connect(mult->pin_Result(), osig->pin(0));
@@ -342,6 +345,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
 
@@ -434,6 +438,7 @@ NetNet* NetEBShift::synthesize(Design*des)
 
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, expr_width());
+	    osig->data_type(expr_type());
 	    osig->local_flag(true);
 
 	    unsigned long ushift = shift>=0? shift : -shift;
@@ -455,6 +460,7 @@ NetNet* NetEBShift::synthesize(Design*des)
 
 	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, znum.len());
+	    zsig->data_type(osig->data_type());
 	    connect(zcon->pin(0), zsig->pin(0));
 
 	    NetConcat*ccat = new NetConcat(scope, scope->local_symbol(),
@@ -480,6 +486,7 @@ NetNet* NetEBShift::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
       assert(op() == 'l');
@@ -579,6 +586,7 @@ NetNet* NetEUBits::synthesize(Design*des)
       unsigned width = isig->vector_width();
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, width);
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
       perm_string oname = scope->local_symbol();
@@ -609,6 +617,7 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
       perm_string oname = scope->local_symbol();
@@ -739,6 +748,7 @@ NetNet* NetESelect::synthesize(Design *des)
 
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, expr_width());
+      net->data_type(expr_type());
       if (has_sign()) {
 	    NetSignExtend*pad = new NetSignExtend(scope,
 						  scope->local_symbol(),
@@ -766,6 +776,7 @@ NetNet* NetESelect::synthesize(Design *des)
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, pad_width);
+	    tmp->data_type(expr_type());
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 	    connect(tmp->pin(0), con->pin(0));
@@ -796,6 +807,7 @@ NetNet* NetETernary::synthesize(Design *des)
 
       unsigned width=expr_width();
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
+      osig->data_type(expr_type());
       osig->local_flag(true);
 
 	/* Make sure both value operands are the right width. */
@@ -854,6 +866,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.77  2006/05/01 20:47:59  steve
+ *  More explicit datatype setup.
+ *
  * Revision 1.76  2006/05/01 05:40:21  steve
  *  fix net type of multiply output.
  *

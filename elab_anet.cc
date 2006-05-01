@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.11 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.12 2006/05/01 20:47:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,10 +89,13 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT_REG, pins);
+	/* Assume that all the data types are the same. */
+      osig->data_type(nets[0]->data_type());
 
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
 	    NetNet*cur = nets[idx-1];
+	    assert(cur->data_type() == osig->data_type());
 	    for (unsigned pin = 0;  pin < cur->pin_count();  pin += 1) {
 		  connect(osig->pin(pins), cur->pin(pin));
 		  pins += 1;
@@ -166,6 +169,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.12  2006/05/01 20:47:58  steve
+ *  More explicit datatype setup.
+ *
  * Revision 1.11  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
