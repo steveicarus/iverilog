@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: reduce.cc,v 1.2 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: reduce.cc,v 1.3 2006/05/01 18:44:08 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -53,8 +53,7 @@ void vvp_reduce_and::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res & bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, res);
+      vvp_vector4_t rv (1, res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -81,8 +80,7 @@ void vvp_reduce_or::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res | bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, res);
+      vvp_vector4_t rv (1, res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -109,8 +107,7 @@ void vvp_reduce_xor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res ^ bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, res);
+      vvp_vector4_t rv (1, res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -137,8 +134,7 @@ void vvp_reduce_nand::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res & bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, ~res);
+      vvp_vector4_t rv (1, res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -165,8 +161,7 @@ void vvp_reduce_nor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res | bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, ~res);
+      vvp_vector4_t rv (1, ~res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -193,8 +188,7 @@ void vvp_reduce_xnor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
 	    res = res ^ bit.value(idx);
 
-      vvp_vector4_t rv (1);
-      rv.set_bit(0, ~res);
+      vvp_vector4_t rv (1, ~res);
       vvp_send_vec4(prt.ptr()->out, rv);
 }
 
@@ -247,6 +241,9 @@ void compile_reduce_xnor(char*label, struct symb_s arg)
 
 /*
  * $Log: reduce.cc,v $
+ * Revision 1.3  2006/05/01 18:44:08  steve
+ *  Reduce steps to make logic output.
+ *
  * Revision 1.2  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

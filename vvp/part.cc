@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.10 2006/04/26 04:39:23 steve Exp $"
+#ident "$Id: part.cc,v 1.11 2006/05/01 18:44:08 steve Exp $"
 
 # include  "compile.h"
 # include  "part.h"
@@ -58,13 +58,10 @@ void vvp_fun_part::run_run()
       vvp_net_t*ptr = net_;
       net_ = 0;
 
-      vvp_vector4_t res (wid_);
+      vvp_vector4_t res (wid_, BIT4_X);
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    if (idx + base_ < val_.size())
 		  res.set_bit(idx, val_.value(base_+idx));
-	    else
-	
-	  res.set_bit(idx, BIT4_X);
       }
       vvp_send_vec4(ptr->out, res);
 }
@@ -183,6 +180,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.11  2006/05/01 18:44:08  steve
+ *  Reduce steps to make logic output.
+ *
  * Revision 1.10  2006/04/26 04:39:23  steve
  *  Include  bit value in assertion message.
  *
