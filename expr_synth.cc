@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.75 2006/04/30 05:17:48 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.76 2006/05/01 05:40:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -260,6 +260,7 @@ NetNet* NetEBMult::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->data_type(lsig->data_type());
       osig->set_line(*this);
       osig->local_flag(true);
 
@@ -699,12 +700,15 @@ NetNet* NetESelect::synthesize(Design *des)
 
       if (base_ != 0) {
 	      // For now, only handle constant part selects in this
-	      // context.
+	      // context. NOTE: the elaboration that created the
+	      // NetESelect already translated the part base to
+	      // canonical form, so the base_ is canonical already.
 	    NetEConst*bcon = dynamic_cast<NetEConst*>(base_);
 	    assert(bcon);
 
 	    long bval = bcon->value().as_long();
-	    off = sub->sb_to_idx(bval);
+	    assert(bval >= 0);
+	    off = bval;
       }
 
 	/* If there is a part select, then generate a PartSelect node
@@ -850,6 +854,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.76  2006/05/01 05:40:21  steve
+ *  fix net type of multiply output.
+ *
  * Revision 1.75  2006/04/30 05:17:48  steve
  *  Get the data type of part select results right.
  *
