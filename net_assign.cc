@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.18.2.2 2006/04/16 19:26:38 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.18.2.3 2006/05/02 02:00:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,6 +45,7 @@ NetAssign_::NetAssign_(NetNet*s)
       lwid_ = sig_->pin_count();
       sig_->incr_lref();
       more = 0;
+      mem_lref_ = false;
 }
 
 NetAssign_::NetAssign_(NetMemory*s)
@@ -53,6 +54,7 @@ NetAssign_::NetAssign_(NetMemory*s)
       loff_ = 0;
       lwid_ = mem_->width();
       more = 0;
+      mem_lref_ = false;
 }
 
 NetAssign_::NetAssign_(NetVariable*s)
@@ -61,7 +63,7 @@ NetAssign_::NetAssign_(NetVariable*s)
       loff_ = 0;
       lwid_ = 0;
       more = 0;
-      mem_lref_ = 0;
+      mem_lref_ = false;
 }
 
 NetAssign_::~NetAssign_()
@@ -283,6 +285,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.18.2.3  2006/05/02 02:00:15  steve
+ *  Fix uninitialized mem_lref_ member.
+ *
  * Revision 1.18.2.2  2006/04/16 19:26:38  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *
