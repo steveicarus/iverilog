@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.37 2005/11/26 00:35:44 steve Exp $"
+#ident "$Id: set_width.cc,v 1.38 2006/05/02 04:29:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -373,11 +373,21 @@ bool NetESignal::set_width(unsigned w, bool)
       return true;
 }
 
-bool NetETernary::set_width(unsigned w, bool)
+bool NetETernary::set_width(unsigned w, bool last_chance)
 {
       bool flag = true;
-      flag = flag && true_val_->set_width(w);
-      flag = flag && false_val_->set_width(w);
+      flag = flag && true_val_->set_width(w, last_chance);
+      flag = flag && false_val_->set_width(w, last_chance);
+
+	/* The ternary really insists that the true and false clauses
+	   have the same width. Even if we fail to make the width that
+	   the user requests, at least pad the smaller width to suit
+	   the larger. */
+      if (true_val_->expr_width() < false_val_->expr_width())
+	    true_val_ = pad_to_width(true_val_, false_val_->expr_width());
+      if (false_val_->expr_width() < true_val_->expr_width())
+	    false_val_ = pad_to_width(false_val_, true_val_->expr_width());
+
       expr_width(true_val_->expr_width());
       return flag;
 }
@@ -424,6 +434,9 @@ bool NetEUReduce::set_width(unsigned w, bool)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.38  2006/05/02 04:29:42  steve
+ *  Be more stubborn about widths.
+ *
  * Revision 1.37  2005/11/26 00:35:44  steve
  *  More precise about r-value width of constants.
  *
