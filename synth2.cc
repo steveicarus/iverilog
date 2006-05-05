@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.29 2006/04/16 19:26:39 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.30 2006/05/05 01:56:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -236,6 +236,15 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
 	   constant. In this case, just hook up the pertinent bits. */
       if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
 	    long adr= ae->value().as_long();
+	    if (adr >= lmem->count()) {
+		  cerr << get_line() << ": error: "
+		       << "Address " << adr
+		       << " is outside range of memory."
+		       << " Skipping assignment." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
 	    adr = lmem->index_to_address(adr) * lmem->width();
 	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 		  unsigned off = adr+idx;
@@ -1810,6 +1819,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.30  2006/05/05 01:56:36  steve
+ *  Handle memory assignments out of range during synthesis
+ *
  * Revision 1.39.2.29  2006/04/16 19:26:39  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.3 2006/04/16 19:26:38 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.4 2006/05/05 01:56:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -72,8 +72,14 @@ void NetAssignBase::nex_output(NexusSet&out)
 			long adr= ae->value().as_long();
 			adr = lmem->index_to_address(adr) * lmem->width();
 
-			for (unsigned idx = 0; idx < cur->lwidth(); idx += 1)
-			      out.add(tmp->pin(adr+idx).nexus());
+			if (adr >= lmem->count()*lmem->width()) {
+				/* Skip assignments with constant
+				   addresses that are outside the
+				   range of memories. */
+			} else {
+			      for (unsigned idx=0; idx<cur->lwidth(); idx += 1)
+				    out.add(tmp->pin(adr+idx).nexus());
+			}
 
 		  } else {
 			  /* Put all the bits of the memory into the
@@ -154,6 +160,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.4  2006/05/05 01:56:36  steve
+ *  Handle memory assignments out of range during synthesis
+ *
  * Revision 1.11.2.3  2006/04/16 19:26:38  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *
