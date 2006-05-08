@@ -5,6 +5,8 @@ dnl Checks for programs.
 AC_PROG_CC
 
 AC_PROG_INSTALL
+AC_CHECK_PROGS(MAN,man,none)
+AC_CHECK_PROGS(PS2PDF,ps2pdf,none)
 
 AC_CANONICAL_HOST
 # $host

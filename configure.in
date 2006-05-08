@@ -9,6 +9,9 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_PROGS(XGPERF,gperf,none)
+AC_CHECK_PROGS(MAN,man,none)
+AC_CHECK_PROGS(PS2PDF,ps2pdf,none)
+
 if test "$XGPERF" = "none"
 then
 	echo ""

@@ -22,6 +22,11 @@
 
 #include "lxt_write.h"
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#define fseeko fseek
+#define ftello ftell
+#endif
+
 /************************ splay ************************/
 
 static int dslxt_success;

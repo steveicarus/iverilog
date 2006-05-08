@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.24.2.1 2005/02/23 18:40:23 steve Exp $"
+#ident "$Id: Makefile.in,v 1.24.2.2 2006/05/08 04:33:35 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -40,6 +40,8 @@ CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+MAN = @MAN@
+PS2PDF = @PS2PDF@
 
 CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
@@ -76,15 +78,23 @@ cflexor.o: cflexor.c cfparse.h cfparse_misc.h globals.h
 cfparse.o: cfparse.c globals.h cfparse_misc.h
 
 iverilog.ps: $(srcdir)/iverilog.man
-	man -t $(srcdir)/iverilog.man > iverilog.ps
+	$(MAN) -t $(srcdir)/iverilog.man > iverilog.ps
 
 iverilog.pdf: iverilog.ps
-	ps2pdf iverilog.ps iverilog.pdf
+	$(PS2PDF) iverilog.ps iverilog.pdf
 
 ifeq (@WIN32@,yes)
+ifeq ($(MAN),none)
+INSTALL_DOC = $(mandir)/man1/iverilog.1
+else
+ifeq ($(PS2PDF),none)
+INSTALL_DOC = $(mandir)/man1/iverilog.1
+else
 INSTALL_DOC = $(prefix)/iverilog.pdf $(mandir)/man1/iverilog.1
-INSTALL_DOCDIR = $(mandir)/man1
 all: iverilog.pdf
+endif
+endif
+INSTALL_DOCDIR = $(mandir)/man1
 else
 INSTALL_DOC = $(mandir)/man1/iverilog.1
 INSTALL_DOCDIR = $(mandir)/man1

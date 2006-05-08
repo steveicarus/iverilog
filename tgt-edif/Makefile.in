@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#ident "$Id: Makefile.in,v 1.1.2.2 2005/09/25 16:35:36 steve Exp $"
+#ident "$Id: Makefile.in,v 1.1.2.3 2006/05/08 04:33:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -47,6 +47,8 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 RANLIB = @RANLIB@
+MAN = @MAN@
+PS2pdf = @ps2pdf@
 
 CPPFLAGS = @ident_support@ -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
@@ -82,10 +84,10 @@ libedif_tgt.a: $O
 	$(RANLIB) libedif_tgt.a
 
 iverilog-edif.ps: $(srcdir)/iverilog-edif.man
-	man -t $(srcdir)/iverilog-edif.man > iverilog-edif.ps
+	$(MAN) -t $(srcdir)/iverilog-edif.man > iverilog-edif.ps
 
 iverilog-edif.pdf: iverilog-edif.ps
-	ps2pdf iverilog-edif.ps iverilog-edif.pdf
+	$(PS2PDF) iverilog-edif.ps iverilog-edif.pdf
 
 
 Makefile: Makefile.in config.status
@@ -101,11 +103,18 @@ distclean: clean
 check: all
 
 ifeq (@WIN32@,yes)
-#INSTALL_DOC = $(prefix)/iverilog-edif.pdf $(mandir)/man1/iverilog-edif.1
-#INSTALL_DOCDIR = $(mandir)/man1
-all: iverilog-edif.pdf
+ifeq ($(MAN),none)
+INSTALL_DOC = 
 else
+ifeq ($(PS2PDF),none)
 #INSTALL_DOC = $(mandir)/man1/iverilog-edif.1
+else
+#INSTALL_DOC = $(prefix)/iverilog-edif.pdf $(mandir)/man1/iverilog-edif.1
+#all: iverilog-edif.pdf
+endif
+endif
+else
+#INSTALL_DOC = $(prefix)/iverilog-edif.pdf $(mandir)/man1/iverilog-edif.1
 #INSTALL_DOCDIR = $(mandir)/man1
 endif
 

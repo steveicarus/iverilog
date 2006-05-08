@@ -1,4 +1,6 @@
 
+%option never-interactive
+
 %{
 /*
  * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
@@ -19,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.86.2.2 2005/09/09 02:13:15 steve Exp $"
+#ident "$Id: lexor.lex,v 1.86.2.3 2006/05/08 04:33:35 steve Exp $"
 #endif
 
 # include "config.h"

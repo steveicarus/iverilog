@@ -1,4 +1,4 @@
-
+%option never-interactive
 %{
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.43.2.2 2006/03/26 23:09:00 steve Exp $"
+#ident "$Id: lexor.lex,v 1.43.2.3 2006/05/08 04:33:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -185,6 +185,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.43.2.3  2006/05/08 04:33:36  steve
+ *  Update to use only Mingw for build.
+ *
  * Revision 1.43.2.2  2006/03/26 23:09:00  steve
  *  Add the .demux device.
  *
