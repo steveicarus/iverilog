@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.216 2006/04/24 05:15:07 steve Exp $"
+#ident "$Id: parse.y,v 1.217 2006/05/11 03:26:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,6 +68,22 @@ static struct {
  */
 const static struct str_pair_t pull_strength = { PGate::PULL,  PGate::PULL };
 const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
+
+static list<perm_string>* list_from_identifier(char*id)
+{
+      list<perm_string>*tmp = new list<perm_string>;
+      tmp->push_back(lex_strings.make(id));
+      delete id;
+      return tmp;
+}
+
+static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
+{
+      tmp->push_back(lex_strings.make(id));
+      delete id;
+      return tmp;
+}
+
 %}
 
 %union {
@@ -181,6 +197,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <mports> list_of_ports module_port_list_opt list_of_port_declarations
 
 %type <wires> task_item task_item_list task_item_list_opt
+%type <wires> task_port_item task_port_decl task_port_decl_list
 %type <wires> function_item function_item_list
 
 %type <named_pexpr> port_name parameter_value_byname
@@ -237,7 +254,6 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 /* to resolve dangling else ambiguity. */
 %nonassoc less_than_K_else
 %nonassoc K_else
-
 
 %%
 
@@ -1297,17 +1313,9 @@ indexed_identifier
      non-hierarchical names separated by ',' characters. */
 list_of_identifiers
 	: IDENTIFIER
-		{ list<perm_string>*tmp = new list<perm_string>;
-		  tmp->push_back(lex_strings.make($1));
-		  $$ = tmp;
-		  delete[]$1;
-		}
+                { $$ = list_from_identifier($1); }
 	| list_of_identifiers ',' IDENTIFIER
-		{ list<perm_string>*tmp = $1;
-		  tmp->push_back(lex_strings.make($3));
-		  $$ = tmp;
-		  delete[]$3;
-		}
+                { $$ = list_from_identifier($1, $3); }
 	;
 
 
@@ -1776,7 +1784,8 @@ module_item
 
 	| K_task IDENTIFIER ';'
 		{ pform_push_scope($2); }
-	  task_item_list_opt statement_opt
+	  task_item_list_opt
+	  statement_opt
 	  K_endtask
 		{ PTask*tmp = new PTask;
 		  perm_string tmp2 = lex_strings.make($2);
@@ -1784,6 +1793,23 @@ module_item
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_ports($5);
 		  tmp->set_statement($6);
+		  pform_set_task(tmp2, tmp);
+		  pform_pop_scope();
+		  delete $2;
+		}
+
+	| K_task IDENTIFIER
+		{ pform_push_scope($2); }
+          '(' task_port_decl_list ')' ';'
+	  task_item_list_opt
+	  statement_opt
+	  K_endtask
+		{ PTask*tmp = new PTask;
+		  perm_string tmp2 = lex_strings.make($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  tmp->set_ports($5);
+		  tmp->set_statement($9);
 		  pform_set_task(tmp2, tmp);
 		  pform_pop_scope();
 		  delete $2;
@@ -3007,14 +3033,16 @@ statement_opt
 	| ';' { $$ = 0; }
 	;
 
-
+  /* Task items are, other then the statement, task port items and
+     other block items. */
 task_item
-	: block_item_decl
-	    { $$ = new svector<PWire*>(0); }
+        : block_item_decl  { $$ = new svector<PWire*>(0); }
+        | task_port_item   { $$ = $1; }
+        ;
 
-  /* The basic port concept. */
+task_port_item
 
-	| K_input signed_opt range_opt list_of_identifiers ';'
+	: K_input signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, $2,
@@ -3135,6 +3163,125 @@ task_item_list_opt
 		{ $$ = $1; }
 	|
 		{ $$ = 0; }
+	;
+
+task_port_decl
+
+	: K_input signed_opt range_opt IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, $2,
+						$3, list_from_identifier($4),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+	| K_output signed_opt range_opt IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, $2,
+						$3, list_from_identifier($4),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout signed_opt range_opt IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, $2,
+						$3, list_from_identifier($4),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+	| K_input K_integer IDENTIFIER
+                { svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, true,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_integer IDENTIFIER
+                { svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, true,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_integer IDENTIFIER
+                { svector<PExpr*>*range_stub
+			= new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
+						INTEGER_WIDTH));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum(0UL, INTEGER_WIDTH));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, true,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+  /* Ports can be real. */
+
+	| K_input K_real IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_REAL, false,
+						0, list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_real IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_REAL, false,
+						0, list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_real IDENTIFIER
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_REAL, false,
+						0, list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+        ;
+
+task_port_decl_list
+	: task_port_decl_list ',' task_port_decl
+		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$3);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
+		}
+	| task_port_decl
+		{ $$ = $1; }
 	;
 
 udp_body
