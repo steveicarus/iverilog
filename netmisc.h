@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.19 2004/03/07 20:04:11 steve Exp $"
+#ident "$Id: netmisc.h,v 1.19.2.1 2006/05/15 03:55:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,6 +58,11 @@ extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
 
 /*
+ * Calculate the reduction OR from the input signal.
+ */
+extern NetNet*reduction_or(Design*des, NetNet*sig);
+
+/*
  * In some cases the lval is accessible as a pointer to the head of
  * a list of NetAssign_ objects. This function returns the width of
  * the l-value represented by this list.
@@ -75,6 +80,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.19.2.1  2006/05/15 03:55:23  steve
+ *  Fix synthesis of expressions with land of vectors.
+ *
  * Revision 1.19  2004/03/07 20:04:11  steve
  *  MOre thorough use of elab_and_eval function.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.8 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.8.2.1 2006/05/15 03:55:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -72,6 +72,26 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
       return res;
 }
 
+NetNet* reduction_or(Design*des, NetNet*isig)
+{
+      NetScope*scope = isig->scope();
+
+      NetLogic*olog = new NetLogic(scope, scope->local_symbol(),
+				   isig->pin_count()+1, NetLogic::OR);
+      olog->set_line(*isig);
+      des->add_node(olog);
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, 1);
+      osig->local_flag(true);
+      osig->set_line(*isig);
+
+      connect(olog->pin(0), osig->pin(0));
+      for (unsigned idx = 0 ;  idx < isig->pin_count() ;  idx += 1)
+	    connect(olog->pin(1+idx), isig->pin(idx));
+
+      return osig;
+}
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 {
@@ -90,6 +110,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.8.2.1  2006/05/15 03:55:23  steve
+ *  Fix synthesis of expressions with land of vectors.
+ *
  * Revision 1.8  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *

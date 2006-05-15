@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.4 2006/04/10 03:43:39 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.5 2006/05/15 03:55:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -474,19 +474,29 @@ NetNet* NetEBLogic::synthesize(Design*des)
 	    perm_string oname = scope->local_symbol();
 
 	    olog = new NetLogic(scope, oname, 3, NetLogic::AND);
+	    olog->set_line(*this);
 
 	    connect(osig->pin(0), olog->pin(0));
 	    des->add_node(olog);
 
-	      /* XXXX Here, I need to reduce the parameters with
-		 reduction or. */
+	      /* Here, I need to reduce the parameters with
+		 reduction or. Only do this if we must. */
+	    if (lsig->pin_count() > 1)
+		  lsig = reduction_or(des, lsig);
 
+	    if (rsig->pin_count() > 1)
+		  rsig = reduction_or(des, rsig);
 
 	      /* By this point, the left and right parameters have been
 		 reduced to single bit values. Now we just connect them to
 		 the logic gate. */
 	    assert(lsig->pin_count() == 1);
 	    connect(lsig->pin(0), olog->pin(1));
+
+	    if (rsig->pin_count() != 1) {
+		  cerr << olog->get_line() << ": internal error: "
+		       << "right argument not reduced. expr=" << *this << endl;
+	    }
 
 	    assert(rsig->pin_count() == 1);
 	    connect(rsig->pin(0), olog->pin(2));
@@ -924,6 +934,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.5  2006/05/15 03:55:22  steve
+ *  Fix synthesis of expressions with land of vectors.
+ *
  * Revision 1.59.2.4  2006/04/10 03:43:39  steve
  *  Exploded memories accessed by constant indices.
  *
