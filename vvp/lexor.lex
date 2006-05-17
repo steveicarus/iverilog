@@ -1,4 +1,6 @@
 
+%option never-interactive
+
 %{
 /*
  * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
@@ -19,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.59 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.60 2006/05/17 04:15:25 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -206,6 +208,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.60  2006/05/17 04:15:25  steve
+ *  Lexor os never interactive.
+ *
  * Revision 1.59  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *
