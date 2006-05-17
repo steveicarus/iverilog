@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.40 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: eval.cc,v 1.41 2006/05/17 16:49:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -150,7 +150,15 @@ verinum* PEConcat::eval_const(const Design*des, NetScope*scope) const
 	    return 0;
 
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+
 	    verinum*tmp = parms_[idx]->eval_const(des, scope);
+	    if (tmp == 0) {
+		  cerr << get_line() << ": error: "
+		       << "Unable to evaluate constant expression in concat: "
+		       << *parms_[idx] << endl;
+		  delete accum;
+		  return 0;
+	    }
 	    assert(tmp);
 
 	    *accum = concat(*accum, *tmp);
@@ -271,6 +279,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.41  2006/05/17 16:49:30  steve
+ *  Error message if concat expression cannot evaluate.
+ *
  * Revision 1.40  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
