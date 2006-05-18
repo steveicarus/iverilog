@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.30 2006/05/05 01:56:36 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.31 2006/05/18 01:47:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -158,6 +158,9 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 		  NetNet*adr = cur->bmux()->synthesize(des);
 
+		    /* Create a NetEemux wide enough to connect to all
+		       the bits of the lvalue signal (generally more
+		       then the bits of lwidth). */
 		  NetDemux*dq = new NetDemux(scope, scope->local_symbol(),
 					     lsig->pin_count(),
 					     adr->pin_count(),
@@ -165,21 +168,31 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  des->add_node(dq);
 		  dq->set_line(*this);
 
+		    /* The bmux expression connects to the address of
+		       the Demux device. */
 		  for (unsigned idx = 0; idx < adr->pin_count() ;  idx += 1)
 			connect(dq->pin_Address(idx), adr->pin(idx));
 
 		  assert(cur->lwidth() == 1);
 
+		    /* Cycle the associated FF Data and Q through the
+		       demux to make synchronous "latches" that the
+		       Demux modifies. */
+		  assert(nex_ff[0].ff->width() >= lsig->pin_count());
+		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
+			unsigned off = cur->get_loff()+idx;
+			connect(nex_ff[0].ff->pin_Q(off), dq->pin_Data(idx));
+		  }
+
 		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
 			unsigned off = cur->get_loff()+idx;
 			unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
-			assert(ptr <= nex_map->pin_count());
+			assert(ptr < nex_out->pin_count());
 			connect(nex_out->pin(ptr), dq->pin_Q(idx));
 		  }
 
-		  for (unsigned idx = 0 ;  idx < lsig->pin_count(); idx += 1)
-			connect(dq->pin_Data(idx), nex_map->pin(roff+idx));
-
+		    /* The r-value (1 bit) connects to the WriteData
+		       input of the demux. */
 		  connect(dq->pin_WriteData(0), rsig->pin(roff));
 
 		  roff += cur->lwidth();
@@ -197,6 +210,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 		  unsigned off = cur->get_loff()+idx;
 		  unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
+
 		  assert(ptr <= nex_map->pin_count());
 		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
 	    }
@@ -300,10 +314,14 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			   struct sync_accounting_cell*nex_ff,
 			   NetNet*nex_map, NetNet*nex_out, NetNet*accum_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetBlock")
       if (last_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetBlock",true)
 	    return true;
+      }
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << (sync_flag?"sync":"async")
+		 << " synthesis of statement block." << endl;
       }
 
       const perm_string tmp1 = perm_string::literal("tmp1");
@@ -408,7 +426,6 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
       delete accum_out;
 
-      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
 }
 
@@ -1819,6 +1836,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.31  2006/05/18 01:47:12  steve
+ *  Fix synthesis of l-value bit select in block.
+ *
  * Revision 1.39.2.30  2006/05/05 01:56:36  steve
  *  Handle memory assignments out of range during synthesis
  *

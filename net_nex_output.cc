@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.4 2006/05/05 01:56:36 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.5 2006/05/18 01:47:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,13 @@ void NetAssignBase::nex_output(NexusSet&out)
 {
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    if (NetNet*lsig = cur->sig()) {
+
+		  if (cur->bmux()) {
+			for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
+			      out.add(lsig->pin(idx).nexus());
+			}
+			continue;
+		  }
 
 		    /* Handle l-value signals. We don't need to worry
 		       here about whether there is a bmux, because the
@@ -160,6 +167,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.5  2006/05/18 01:47:12  steve
+ *  Fix synthesis of l-value bit select in block.
+ *
  * Revision 1.11.2.4  2006/05/05 01:56:36  steve
  *  Handle memory assignments out of range during synthesis
  *
