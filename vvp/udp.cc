@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.33 2005/06/11 16:21:08 steve Exp $"
+#ident "$Id: udp.cc,v 1.34 2006/05/18 05:13:45 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -42,6 +42,14 @@ struct vvp_udp_s *udp_find(const char *label)
 {
       symbol_value_t v = sym_get_value(udp_table, label);
       return (struct vvp_udp_s *)v.ptr;
+}
+
+ostream& operator <<(ostream&o, const struct udp_levels_table&table)
+{
+      o << "[" << hex << table.mask0
+	<< "/" << hex << table.mask1
+	<< "/" << hex << table.maskx << "]";
+      return o;
 }
 
 vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init)
@@ -607,10 +615,24 @@ void vvp_udp_seq_s::compile_table(char**tab)
 
 }
 
+bool operator == (const udp_levels_table&a, const udp_levels_table&b)
+{
+      if (a.mask0 != b.mask0)
+	    return false;
+      if (a.mask1 != b.mask1)
+	    return false;
+      if (a.maskx != b.maskx)
+	    return false;
+      return true;
+}
+
 vvp_bit4_t vvp_udp_seq_s::calculate_output(const udp_levels_table&cur,
 					   const udp_levels_table&prev,
 					   vvp_bit4_t cur_out)
 {
+      if (cur == prev)
+	    return cur_out;
+
       udp_levels_table cur_tmp = cur;
 
       unsigned long mask_out = 1UL << port_count();
@@ -924,6 +946,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.34  2006/05/18 05:13:45  steve
+ *  Synchronous primitives only follow edges.
+ *
  * Revision 1.33  2005/06/11 16:21:08  steve
  *  UD delays use delay node.
  *

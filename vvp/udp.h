@@ -22,7 +22,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.19 2005/06/11 16:21:08 steve Exp $"
+#ident "$Id: udp.h,v 1.20 2006/05/18 05:13:45 steve Exp $"
 #endif
 
 # include  <vvp_net.h>
@@ -108,6 +108,7 @@ struct udp_levels_table {
       unsigned long mask1;
       unsigned long maskx;
 };
+extern ostream& operator<< (ostream&o, const struct udp_levels_table&t);
 
 class vvp_udp_comb_s : public vvp_udp_s {
 
@@ -245,6 +246,9 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.20  2006/05/18 05:13:45  steve
+ *  Synchronous primitives only follow edges.
+ *
  * Revision 1.19  2005/06/11 16:21:08  steve
  *  UD delays use delay node.
  *
