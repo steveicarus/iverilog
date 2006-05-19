@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.184 2006/05/01 20:47:58 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.185 2006/05/19 04:44:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2691,6 +2691,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    reduction=true; rtype = NetUReduce::XNOR; break;
 
 	  case '-': // Unary 2's complement.
+	      // If this expression is self determined, get its width
+	      // from the sub_expression.
+	    if (owidth == 0)
+		  owidth = sub_sig->vector_width();
+
 	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, owidth);
 	    sig->data_type(sub_sig->data_type());
@@ -2774,6 +2779,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.185  2006/05/19 04:44:55  steve
+ *  Get self-determined unary - width right.
+ *
  * Revision 1.184  2006/05/01 20:47:58  steve
  *  More explicit datatype setup.
  *
