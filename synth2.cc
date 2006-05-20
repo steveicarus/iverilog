@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.31 2006/05/18 01:47:12 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.32 2006/05/20 16:06:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,6 +99,13 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 				NetNet*accum_in)
 {
       NetNet*rsig = rval_->synthesize(des);
+      if (rsig == 0) {
+	    cerr << get_line() << ": error: Cannot synthesize r-value "
+		 << "expression of assignment." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
       assert(rsig);
 
       unsigned roff = 0;
@@ -1288,6 +1295,10 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 
       } while (cur != last_);
 
+
+      if (flag == false)
+	    return false;
+
 	/* Done. The large NetFF is no longer needed, as it has been
 	   taken up by the smaller NetFF devices. */
       delete ff;
@@ -1413,6 +1424,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 		  assert(asig->pin(bit).nexus()->drivers_constant());
 		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+	    }
+
+	    if (!tmp.is_defined()) {
+		  cerr << get_line() << ": internal error: "
+		       << "True clause returns constant 'bx/'bz values"
+		       << " which are not plausible for set/reset." << endl;
+		  return false;
 	    }
 
 	    assert(tmp.is_defined());
@@ -1836,6 +1854,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.32  2006/05/20 16:06:48  steve
+ *  Replace assertions with error messages.
+ *
  * Revision 1.39.2.31  2006/05/18 01:47:12  steve
  *  Fix synthesis of l-value bit select in block.
  *
