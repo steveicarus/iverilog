@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.7 2004/01/18 23:26:54 steve Exp $"
+#ident "$Id: async.cc,v 1.7.2.1 2006/05/21 21:58:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,6 +66,10 @@ bool NetEvWait::is_asynchronous()
 
       NexusSet*inputs = statement_->nex_input();
 
+	/* All the inputs of the statement must be accounted for in
+	   the sensitivity list. Otherwise, there are inputs that can
+	   change without the event being triggered, and that implies
+	   a latch, not a combinational circuit. */
       if (! sense->contains(*inputs)) {
 	    delete sense;
 	    delete inputs;
@@ -95,6 +99,9 @@ bool NetProcTop::is_asynchronous()
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.7.2.1  2006/05/21 21:58:46  steve
+ *  NetESignal input is only selected bits.
+ *
  * Revision 1.7  2004/01/18 23:26:54  steve
  *  The is_combinational function really need not recurse.
  *

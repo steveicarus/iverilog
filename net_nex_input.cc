@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.12 2004/09/04 04:24:15 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.12.2.1 2006/05/21 21:58:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -138,7 +138,8 @@ NexusSet* NetESFunc::nex_input()
 NexusSet* NetESignal::nex_input()
 {
       NexusSet*result = new NexusSet;
-      for (unsigned idx = 0 ;  idx < net_->pin_count() ;  idx += 1)
+      assert(msi_ <= net_->pin_count());
+      for (unsigned idx = lsi_ ;  idx <= msi_ ;  idx += 1)
 	    result->add(net_->pin(idx).nexus());
 
       return result;
@@ -398,6 +399,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.12.2.1  2006/05/21 21:58:47  steve
+ *  NetESignal input is only selected bits.
+ *
  * Revision 1.12  2004/09/04 04:24:15  steve
  *  PR1026: assignment statements can have sensitivities in the l-values.
  *
