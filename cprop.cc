@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.54 2005/07/15 19:22:52 steve Exp $"
+#ident "$Id: cprop.cc,v 1.55 2006/05/24 04:32:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -738,6 +738,48 @@ v		}
       }
 }
 
+static void replace_with_bufif(Design*des, NetMux*obj, NetLogic::TYPE type)
+{
+      NetScope*scope = obj->scope();
+      NetLogic*tmp = new NetLogic(obj->scope(),
+				  scope->local_symbol(),
+				  3, type, obj->width());
+
+      des->add_node(tmp);
+
+      connect(obj->pin_Result(), tmp->pin(0));
+      connect(obj->pin_Data(type==NetLogic::BUFIF0? 0 : 1),  tmp->pin(1));
+
+      if (obj->width() == 1) {
+	      /* Special case that the expression is 1 bit
+		 wide. Connect the select directly to the enable. */
+	    connect(obj->pin_Sel(), tmp->pin(2));
+
+      } else {
+	      /* General case that the expression is arbitrarily
+		 wide. Replicate the enable signal (which we
+		 assume is 1 bit wide) to match the expression,
+		 and connect the enable vector to the enable
+		 input of the gate. */
+	    NetReplicate*rtmp = new NetReplicate(scope,
+						 scope->local_symbol(),
+						 obj->width(),
+						 obj->width());
+	    des->add_node(rtmp);
+
+	    connect(obj->pin_Sel(), rtmp->pin(1));
+	    connect(tmp->pin(2), rtmp->pin(0));
+
+	    NetNet*rsig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, obj->width());
+	    rsig->local_flag(true);
+	    rsig->data_type(IVL_VT_LOGIC);
+	    connect(tmp->pin(2), rsig->pin(0));
+      }
+
+      delete obj;
+}
+
 /*
  * This detects the case where the mux selects between a value and
  * Vz. In this case, replace the device with a bufif with the sel
@@ -764,47 +806,8 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       }
 
       if (flag) {
-	    NetScope*scope = obj->scope();
-	    NetLogic*tmp = new NetLogic(obj->scope(),
-					scope->local_symbol(),
-					3, NetLogic::BUFIF1, obj->width());
-
-	    des->add_node(tmp);
-
-	    connect(obj->pin_Result(), tmp->pin(0));
-	    connect(obj->pin_Data(1),  tmp->pin(1));
-
-	    if (obj->width() == 1) {
-		    /* Special case that the expression is 1 bit
-		       wide. Connect the select directly to the
-		       enable. */
-		  connect(obj->pin_Sel(), tmp->pin(2));
-
-	    } else {
-		    /* General case that the expression is arbitrarily
-		       wide. Replicate the enable signal (which we
-		       assume is 1 bit wide) to match the expression,
-		       and connect the enable vector to the enable
-		       input of the gate. */
-		  NetReplicate*rtmp = new NetReplicate(scope,
-						       scope->local_symbol(),
-						       obj->width(),
-						       obj->width());
-		  des->add_node(rtmp);
-
-
-		  connect(obj->pin_Sel(), rtmp->pin(1));
-		  connect(tmp->pin(2), rtmp->pin(0));
-
-		  NetNet*rsig = new NetNet(scope, scope->local_symbol(),
-					   NetNet::WIRE, obj->width());
-		  rsig->local_flag(true);
-		  rsig->data_type(IVL_VT_LOGIC);
-		  connect(tmp->pin(2), rsig->pin(0));
-	    }
-
+	    replace_with_bufif(des, obj, NetLogic::BUFIF1);
 	    count += 1;
-	    delete obj;
 	    return;
       }
 
@@ -821,19 +824,8 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       }
 
       if (flag) {
-	    NetScope*scope = obj->scope();
-
-	    NetLogic*tmp = new NetLogic(obj->scope(),
-					scope->local_symbol(),
-					3, NetLogic::BUFIF0, obj->width());
-
-	    connect(obj->pin_Result(), tmp->pin(0));
-	    connect(obj->pin_Data(0),  tmp->pin(1));
-	    connect(obj->pin_Sel(),    tmp->pin(2));
-	    des->add_node(tmp);
-
+	    replace_with_bufif(des, obj, NetLogic::BUFIF0);
 	    count += 1;
-	    delete obj;
 	    return;
       }
 }
@@ -956,6 +948,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.55  2006/05/24 04:32:57  steve
+ *  Fix handling of ternary-to-bufif0 constant propagation.
+ *
  * Revision 1.54  2005/07/15 19:22:52  steve
  *  bufif enable is LOGIC.
  *
