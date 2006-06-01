@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.103 2006/04/12 05:05:03 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.104 2006/06/01 03:54:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1275,6 +1275,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 		  verinum val = ipc->value();
 		  verinum zero (verinum::V0, val.len()+1, val.has_len());
 		  val = zero - val;
+		  if (ipc->value().has_len())
+			val = verinum(val, ipc->value().len());
 		  val.has_sign(true);
 		  tmp = new NetEConst(val);
 		  delete ip;
@@ -1357,6 +1359,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.104  2006/06/01 03:54:51  steve
+ *  Fix broken subtraction of small constants.
+ *
  * Revision 1.103  2006/04/12 05:05:03  steve
  *  Use elab_and_eval to evaluate genvar expressions.
  *

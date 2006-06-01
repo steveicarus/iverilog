@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.28 2005/12/07 04:04:24 steve Exp $"
+#ident "$Id: verinum.h,v 1.29 2006/06/01 03:54:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -112,6 +112,7 @@ extern verinum trim_vnum(const verinum&);
 extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
 
+extern verinum::V operator ~ (verinum::V l);
 extern verinum::V operator | (verinum::V l, verinum::V r);
 extern verinum::V operator & (verinum::V l, verinum::V r);
 extern verinum::V operator ^ (verinum::V l, verinum::V r);
@@ -151,6 +152,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.29  2006/06/01 03:54:51  steve
+ *  Fix broken subtraction of small constants.
+ *
  * Revision 1.28  2005/12/07 04:04:24  steve
  *  Allow constant concat expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.44 2005/12/07 04:04:24 steve Exp $"
+#ident "$Id: verinum.cc,v 1.45 2006/06/01 03:54:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -612,7 +612,7 @@ verinum operator + (const verinum&left, const verinum&right)
 	    val_bits[idx] = add_with_carry(left[idx], right[idx], carry);
 
       verinum::V rpad = signed_flag? right[right.len()-1] : verinum::V0;
-      verinum::V lpad = signed_flag? left[left.len()-1] : verinum::V0;
+      verinum::V lpad = signed_flag? left[left.len()-1]   : verinum::V0;
 
       if (left.len() > right.len()) {
 
@@ -639,35 +639,46 @@ verinum operator + (const verinum&left, const verinum&right)
       return val;
 }
 
-verinum operator - (const verinum&left, const verinum&r)
+verinum operator - (const verinum&left, const verinum&right)
 {
-      verinum right;
       unsigned min = left.len();
-      if (r.len() < min) {
-	    right = verinum(verinum::V0, min);
-	    for (unsigned idx = 0 ;  idx < r.len() ;  idx += 1)
-		  right.set(idx, r[idx]);
-
-      } else {
-	    right = r;
-      }
-
-      right = v_not(right);
+      if (right.len() < min) min = right.len();
 
       unsigned max = left.len();
       if (right.len() > max) max = right.len();
 
-      verinum val (verinum::V0, max);
+      bool signed_flag = left.has_sign() && right.has_sign();
+      verinum::V*val_bits = new verinum::V[max+1];
 
       verinum::V carry = verinum::V1;
       for (unsigned idx = 0 ;  idx < min ;  idx += 1)
-	    val.set(idx, add_with_carry(left[idx], right[idx], carry));
+	    val_bits[idx] = add_with_carry(left[idx], ~right[idx], carry);
 
-      assert(left.len() <= right.len());
-      for (unsigned idx = min ;  idx < max ;  idx += 1)
-	    val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
+      verinum::V rpad = signed_flag? ~right[right.len()-1] : verinum::V1;
+      verinum::V lpad = signed_flag?  left[left.len()-1]   : verinum::V0;
 
-      val.has_sign(left.has_sign() && r.has_sign());
+      if (left.len() > right.len()) {
+
+	    for (unsigned idx = min ;  idx < left.len() ;  idx += 1)
+		  val_bits[idx] = add_with_carry(left[idx], rpad, carry);
+
+      } else {
+
+	    for (unsigned idx = min ;  idx < right.len() ;  idx += 1)
+		  val_bits[idx] = add_with_carry(lpad, ~right[idx], carry);
+      }
+
+      if (signed_flag) {
+	    val_bits[max] = add_with_carry(lpad, rpad, carry);
+	    if (val_bits[max] != val_bits[max-1])
+		  max += 1;
+      }
+
+      verinum val (val_bits, max, false);
+      val.has_sign(signed_flag);
+
+      delete[]val_bits;
+
       return val;
 }
 
@@ -920,6 +931,18 @@ verinum concat(const verinum&left, const verinum&right)
       return res;
 }
 
+verinum::V operator ~ (verinum::V l)
+{
+      switch (l) {
+	  case verinum::V0:
+	    return verinum::V1;
+	  case verinum::V1:
+	    return verinum::V0;
+	  default:
+	    return verinum::Vx;
+      }
+}
+
 verinum::V operator | (verinum::V l, verinum::V r)
 {
       if (l == verinum::V1)
@@ -960,6 +983,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.45  2006/06/01 03:54:51  steve
+ *  Fix broken subtraction of small constants.
+ *
  * Revision 1.44  2005/12/07 04:04:24  steve
  *  Allow constant concat expressions.
  *
