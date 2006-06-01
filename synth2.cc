@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.32 2006/05/20 16:06:48 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.33 2006/06/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -766,6 +766,7 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
       return true;
 }
 
+
 /*
  * Handle synthesis for an asynchronous condition statement. If we get
  * here, we know that the CE of a DFF has already been filled, so the
@@ -871,13 +872,27 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    }
       }
 
+      unsigned mux_width = 0;
+
+	/* Figure out how many mux bits we are going to need. */
+      for (unsigned idx = 0 ;  idx < nex_out->pin_count();  idx += 1) {
+	    if (accum->pin(idx).is_linked() || sync_flag) {
+		  mux_width += 1;
+		  continue;
+	    }
+
+	    if (asig->pin(idx).is_linked() && bsig->pin(idx).is_linked()) {
+		  mux_width += 1;
+		  continue;
+	    }
+      }
+
+	/* Create a mux and hook it up. */
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      nex_out->pin_count(), 2, 1);
+			      mux_width, 2, 1);
       mux->set_line(*this);
 
       connect(mux->pin_Sel(0), ssig->pin(0));
-
-      bool return_flag = true;
 
 	/* Connected the clauses to the data inputs of the
 	   condition. If there are bits unassigned by the case, then
@@ -885,41 +900,98 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	   represented in the accum list, but this is a synchronous
 	   output, then get the bit from the nex_map, which is the
 	   output held in the DFF. */
-
-      for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1) {
+      mux_width = 0;
+      for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1) {
+	    int flag = 0;
 	    if (asig->pin(idx).is_linked())
-		  connect(mux->pin_Data(idx, 1), asig->pin(idx));
-	    else if (accum->pin(idx).is_linked())
-		  connect(mux->pin_Data(idx, 1), accum->pin(idx));
-	    else if (sync_flag)
-		  connect(mux->pin_Data(idx, 1), nex_map->pin(idx));
-	    else {
-		  cerr << get_line()
-		       << ": error: Condition true clause "
-		       << "does not assign expected outputs." << endl;
-		  des->errors += 1;
-		  return_flag = false;
-	    }
-      }
-
-      for (unsigned idx = 0 ;  idx < bsig->pin_count() ;  idx += 1) {
+		  flag |= 0100;
 	    if (bsig->pin(idx).is_linked())
-		  connect(mux->pin_Data(idx, 0), bsig->pin(idx));
-	    else if (accum->pin(idx).is_linked())
-		  connect(mux->pin_Data(idx, 0), accum->pin(idx));
-	    else if (sync_flag)
-		  connect(mux->pin_Data(idx, 0), nex_map->pin(idx));
-	    else {
-		  cerr << get_line()
-		       << ": error: Condition false clause "
-		       << "does not assign expected outputs." << endl;
-		  des->errors += 1;
-		  return_flag = false;
+		  flag |= 0010;
+	    if (accum->pin(idx).is_linked())
+		  flag |= 0001;
+	    switch (flag) {
+		case 0111:
+		case 0110:
+		  connect(mux->pin_Data(mux_width, 1), asig->pin(idx));
+		  connect(mux->pin_Data(mux_width, 0), bsig->pin(idx));
+		  connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+		  mux_width += 1;
+		  break;
+		case 0101:
+		  connect(mux->pin_Data(mux_width, 1), asig->pin(idx));
+		  connect(mux->pin_Data(mux_width, 0), accum->pin(idx));
+		  connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+		  mux_width += 1;
+		  break;
+		case 0100:
+		  if (sync_flag) {
+			connect(mux->pin_Data(mux_width, 1), asig->pin(idx));
+			connect(mux->pin_Data(mux_width, 0),nex_map->pin(idx));
+			connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+			mux_width += 1;
+		  } else {
+#if 0
+			cerr << get_line()
+			     << ": error: Condition false clause "
+			     << "does not assign expected outputs." << endl;
+			des->errors += 1;
+			return_flag = false;
+#else
+			  /* This should check that bsig is latched by
+			     the condition select or is used
+			     internally by the false clause. but since
+			     there is no latch support, assume it is
+			     used internally. */
+			connect(nex_out->pin(idx), asig->pin(idx));
+#endif
+		  }
+		  break;
+		case 0011:
+		  connect(mux->pin_Data(mux_width, 1), accum->pin(idx));
+		  connect(mux->pin_Data(mux_width, 0), bsig->pin(idx));
+		  connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+		  mux_width += 1;
+		  break;
+		case 0010:
+		  if (sync_flag) {
+			connect(mux->pin_Data(mux_width, 1),nex_map->pin(idx));
+			connect(mux->pin_Data(mux_width, 0), bsig->pin(idx));
+			connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+			mux_width += 1;
+		  } else {
+#if 0
+			cerr << get_line()
+			     << ": error: Condition true clause "
+			     << "does not assign expected outputs." << endl;
+			des->errors += 1;
+			return_flag = false;
+#else
+			  /* This should check that bsig is latched by
+			     the condition select or is used
+			     internally by the false clause. but since
+			     there is no latch support, assume it is
+			     used internally. */
+			connect(nex_out->pin(idx), bsig->pin(idx));
+#endif
+		  }
+		  break;
+		case 0001:
+		  connect(mux->pin_Data(mux_width, 1), accum->pin(idx));
+		  connect(mux->pin_Data(mux_width, 0), accum->pin(idx));
+		  connect(nex_out->pin(idx), mux->pin_Result(mux_width));
+		  mux_width += 1;
+		  break;
+		case 0000:
+		  assert(0);
+		  break;
+		default:
+		  assert(0);
+		  break;
 	    }
       }
 
-      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
-	    connect(nex_out->pin(idx), mux->pin_Result(idx));
+      assert(mux_width == mux->width());
+
 
       des->add_node(mux);
 
@@ -1854,6 +1926,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.33  2006/06/01 03:01:48  steve
+ *  Handle condit clauses with unassigned outputs.
+ *
  * Revision 1.39.2.32  2006/05/20 16:06:48  steve
  *  Replace assertions with error messages.
  *

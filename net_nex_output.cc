@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.5 2006/05/18 01:47:12 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.6 2006/06/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,11 +114,12 @@ void NetBlock::nex_output(NexusSet&out)
       if (last_ == 0)
 	    return;
 
-      NetProc*cur = last_;
+      NetProc*cur = last_->next_;
+      NexusSet accum;
       do {
-	    cur = cur->next_;
 	    cur->nex_output(out);
-      } while (cur != last_);
+	    cur = cur->next_;
+      } while (cur != last_->next_);
 }
 
 void NetCase::nex_output(NexusSet&out)
@@ -167,6 +168,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.6  2006/06/01 03:01:48  steve
+ *  Handle condit clauses with unassigned outputs.
+ *
  * Revision 1.11.2.5  2006/05/18 01:47:12  steve
  *  Fix synthesis of l-value bit select in block.
  *
