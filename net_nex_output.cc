@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.6 2006/06/01 03:01:48 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.7 2006/06/02 23:42:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,8 +76,8 @@ void NetAssignBase::nex_output(NexusSet&out)
 			  /* The address is constant, so simply
 			     connect to the right pins and we are
 			     done. */
-			long adr= ae->value().as_long();
-			adr = lmem->index_to_address(adr) * lmem->width();
+			long adr_s = ae->value().as_long();
+			unsigned adr = lmem->index_to_address(adr_s) * lmem->width();
 
 			if (adr >= lmem->count()*lmem->width()) {
 				/* Skip assignments with constant
@@ -168,6 +168,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.7  2006/06/02 23:42:48  steve
+ *  Compilation warnings.
+ *
  * Revision 1.11.2.6  2006/06/01 03:01:48  steve
  *  Handle condit clauses with unassigned outputs.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.33 2006/06/01 03:01:48 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.34 2006/06/02 23:42:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -256,17 +256,17 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
 	/* Handle the special case that the mux expression is
 	   constant. In this case, just hook up the pertinent bits. */
       if (NetEConst*ae = dynamic_cast<NetEConst*>(cur->bmux())) {
-	    long adr= ae->value().as_long();
-	    if (adr >= lmem->count()) {
+	    long adr_s = ae->value().as_long();
+	    if (adr_s >= (long)lmem->count()) {
 		  cerr << get_line() << ": error: "
-		       << "Address " << adr
+		       << "Address " << adr_s
 		       << " is outside range of memory."
 		       << " Skipping assignment." << endl;
 		  des->errors += 1;
 		  return false;
 	    }
 
-	    adr = lmem->index_to_address(adr) * lmem->width();
+	    unsigned adr = lmem->index_to_address(adr_s) * lmem->width();
 	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 		  unsigned off = adr+idx;
 		  unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
@@ -1926,6 +1926,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.34  2006/06/02 23:42:48  steve
+ *  Compilation warnings.
+ *
  * Revision 1.39.2.33  2006/06/01 03:01:48  steve
  *  Handle condit clauses with unassigned outputs.
  *
