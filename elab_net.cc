@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.185 2006/05/19 04:44:55 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.186 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -474,7 +474,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
 	   into synthesized nets. */
-      NetExpr*lexp = elab_and_eval(des, scope, left_);
+      NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth);
       if (lexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
@@ -482,7 +482,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      NetExpr*rexp = elab_and_eval(des, scope, right_);
+      NetExpr*rexp = elab_and_eval(des, scope, right_, lwidth);
       if (rexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
@@ -1341,7 +1341,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	   constant. This is used to generate the width of the
 	   concatenation. */
       if (repeat_) {
-	    NetExpr*etmp = elab_and_eval(des, scope, repeat_);
+	    NetExpr*etmp = elab_and_eval(des, scope, repeat_, -1);
 	    assert(etmp);
 	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp);
 
@@ -1479,7 +1479,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       NetNet*sel;
 
       if (sig->msb() < sig->lsb()) {
-	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope);
+	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope, -1, false);
 	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1489,7 +1489,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel = sel_expr->synthesize(des);
 
       } else if (sig->lsb() != 0) {
-	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope);
+	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope, -1,false);
 	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1696,7 +1696,7 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
       const bool must_be_self_determined_save = must_be_self_determined_flag;
       must_be_self_determined_flag = false;
 
-      NetExpr*adr_expr = elab_and_eval(des, scope, idx_[0]);
+      NetExpr*adr_expr = elab_and_eval(des, scope, idx_[0], -1);
 
 	/* If an offset is needed, subtract it from the address to get
 	   an expression for the canonical address. */
@@ -1925,7 +1925,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		assert(lsb_);
 		assert(idx_.empty());
 
-		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_);
+		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -1933,7 +1933,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		midx = sig->sb_to_idx(midx_val);
 		delete tmp_ex;
 
-		tmp_ex = elab_and_eval(des, scope, lsb_);
+		tmp_ex = elab_and_eval(des, scope, lsb_, -1);
 		tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -1959,7 +1959,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		assert(lsb_);
 		assert(idx_.empty());
 
-		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_);
+		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -1967,7 +1967,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		midx = sig->sb_to_idx(midx_val);
 		delete tmp_ex;
 
-		tmp_ex = elab_and_eval(des, scope, lsb_);
+		tmp_ex = elab_and_eval(des, scope, lsb_, -1);
 		tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -2779,6 +2779,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.186  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.185  2006/05/19 04:44:55  steve
  *  Get self-determined unary - width right.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.81 2006/04/28 04:28:35 steve Exp $"
+#ident "$Id: PExpr.h,v 1.82 2006/06/02 04:48:49 steve Exp $"
 #endif
 
 # include  <string>
@@ -51,11 +51,13 @@ class PExpr : public LineInfo {
 
       virtual void dump(ostream&) const;
 
-	// Procedural elaboration of the expression. Set the
-	// bare_memory_ok flag if the result is allowed to be a
-	// NetEMemory without an index.
+	// Procedural elaboration of the expression. The expr_width is
+	// the width of the context of the expression (i.e. the
+	// l-value width of an assignment) or -1 if the expression is
+	// self-determinted. The sys_task_arg flag is true if
+	// expressions are allowed to be incomplete.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     bool sys_task_arg =false) const;
+				     int expr_width, bool sys_task_arg) const;
 
 	// Elaborate expressions that are the r-value of parameter
 	// assignments. This elaboration follows the restrictions of
@@ -137,7 +139,7 @@ class PEConcat : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				     int expr_width, bool sys_task_arg) const;
       virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
@@ -200,7 +202,7 @@ class PEFNumber : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
@@ -246,7 +248,7 @@ class PEIdent : public PExpr {
 				    Link::strength_t drive1) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
@@ -350,7 +352,7 @@ class PENumber : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				       int expr_width, bool) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
@@ -388,7 +390,7 @@ class PEString : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				       int expr_width, bool) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
       verinum* eval_const(const Design*, NetScope*) const;
 
@@ -413,7 +415,7 @@ class PEUnary : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     bool sys_task_arg =false) const;
+				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
@@ -441,7 +443,7 @@ class PEBinary : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
-					bool sys_task_arg =false) const;
+					int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
@@ -515,7 +517,7 @@ class PETernary : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetETernary*elaborate_expr(Design*des, NetScope*,
-					 bool sys_task_arg =false) const;
+					 int expr_width, bool sys_task_arg) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
@@ -545,7 +547,7 @@ class PECallFunction : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     bool sys_task_arg =false) const;
+				     int expr_wid, bool sys_task_arg) const;
 
     private:
       hname_t path_;
@@ -558,6 +560,11 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.82  2006/06/02 04:48:49  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.81  2006/04/28 04:28:35  steve
  *  Allow concatenations as arguments to inout ports.
  *

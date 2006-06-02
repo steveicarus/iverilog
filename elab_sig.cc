@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.41 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.42 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -318,10 +318,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	    if (return_type_.range) {
 		  NetExpr*me = elab_and_eval(des, scope,
-					     (*return_type_.range)[0]);
+					     (*return_type_.range)[0], -1);
 		  assert(me);
 		  NetExpr*le = elab_and_eval(des, scope,
-					     (*return_type_.range)[1]);
+					     (*return_type_.range)[1], -1);
 		  assert(le);
 
 		  long mnum = 0, lnum = 0;
@@ -548,7 +548,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 
 		  NetEConst*tmp;
-		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx]);
+		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx], -1);
 
 		  tmp = dynamic_cast<NetEConst*>(texpr);
 		  if (tmp == 0) {
@@ -562,7 +562,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  mnum[idx] = tmp->value().as_long();
 		  delete texpr;
 
-		  texpr = elab_and_eval(des, scope, lsb_[idx]);
+		  texpr = elab_and_eval(des, scope, lsb_[idx], -1);
 		  tmp = dynamic_cast<NetEConst*>(texpr);
 		  if (tmp == 0) {
 			cerr << msb_[idx]->get_line() << ": error: "
@@ -623,8 +623,8 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
 
-	    NetExpr*lexp = elab_and_eval(des, scope, lidx_);
-	    NetExpr*rexp = elab_and_eval(des, scope, ridx_);
+	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1);
+	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);
 
 	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_line() << ": internal error: There is "
@@ -720,6 +720,11 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.42  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.41  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

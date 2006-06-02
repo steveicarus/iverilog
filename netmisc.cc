@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.11 2005/04/08 04:50:31 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.12 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -123,9 +123,10 @@ NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
-NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
+NetExpr* elab_and_eval(Design*des, NetScope*scope,
+		       const PExpr*pe, int expr_wid)
 {
-      NetExpr*tmp = pe->elaborate_expr(des, scope);
+      NetExpr*tmp = pe->elaborate_expr(des, scope, expr_wid, false);
       if (tmp == 0)
 	    return 0;
 
@@ -140,6 +141,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.12  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.11  2005/04/08 04:50:31  steve
  *  Don not give to make_add express an unwanted width.
  *

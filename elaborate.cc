@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.339 2006/05/01 20:47:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.340 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -308,8 +308,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   gates, then I am expected to make more then one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_);
-	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_);
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
 
 	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
 	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
@@ -1333,7 +1333,7 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
  */
 static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
-      NetExpr*dex = elab_and_eval(des, scope, expr);
+      NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
@@ -1410,7 +1410,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the r-value expression, then try to evaluate it. */
 
       assert(rval());
-      NetExpr*rv = elab_and_eval(des, scope, rval());
+      NetExpr*rv = elab_and_eval(des, scope, rval(), lv->lwidth());
       if (rv == 0) return 0;
       assert(rv);
 
@@ -1530,7 +1530,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       assert(rval());
 
 	/* Elaborate and precalculate the r-value. */
-      NetExpr*rv = elab_and_eval(des, scope, rval());
+      NetExpr*rv = elab_and_eval(des, scope, rval(), count_lval_width(lv));
       if (rv == 0)
 	    return 0;
 
@@ -1638,7 +1638,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetExpr*expr = elab_and_eval(des, scope, expr_);
+      NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
@@ -1690,7 +1690,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
-		  gu = elab_and_eval(des, scope, cur->expr[e]);
+		  gu = elab_and_eval(des, scope, cur->expr[e], -1);
 
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, scope);
@@ -1708,7 +1708,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
 	// Elaborate and try to evaluate the conditional expression.
-      NetExpr*expr = elab_and_eval(des, scope, expr_);
+      NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate"
 		  " condition expression." << endl;
@@ -1815,7 +1815,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    PExpr*ex = parm(idx);
-	    eparms[idx] = ex? ex->elaborate_expr(des, scope, true) : 0;
+	    eparms[idx] = ex? ex->elaborate_expr(des, scope, -1, true) : 0;
 
 	      /* Attempt to pre-evaluate the parameters. It may be
 		 possible to at least partially reduce the
@@ -1929,7 +1929,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    NetAssign_*lv = new NetAssign_(port);
 	    unsigned wid = count_lval_width(lv);
 
-	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx]);
+	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx], wid);
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
 	    NetAssign*pr = new NetAssign(lv, rv);
@@ -2009,11 +2009,11 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       if (lval == 0)
 	    return 0;
 
-      NetExpr*rexp = elab_and_eval(des, scope, expr_);
+      unsigned lwid = count_lval_width(lval);
+
+      NetExpr*rexp = elab_and_eval(des, scope, expr_, lwid);
       if (rexp == 0)
 	    return 0;
-
-      unsigned lwid = count_lval_width(lval);
 
       rexp->set_width(lwid);
       rexp = pad_to_width(rexp, lwid);
@@ -2357,7 +2357,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
 	/* Elaborate wait expression. Don't eval yet, we will do that
 	   shortly, after we apply a reduction or. */
-      NetExpr*expr = pe->elaborate_expr(des, scope);
+      NetExpr*expr = pe->elaborate_expr(des, scope, -1, false);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
@@ -2537,11 +2537,11 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       if (lval == 0)
 	    return 0;
 
-      NetExpr*rexp = elab_and_eval(des, scope, expr_);
+      unsigned lwid = count_lval_width(lval);
+
+      NetExpr*rexp = elab_and_eval(des, scope, expr_, lwid);
       if (rexp == 0)
 	    return 0;
-
-      unsigned lwid = count_lval_width(lval);
 
       rexp->set_width(lwid, true);
       rexp = pad_to_width(rexp, lwid);
@@ -2600,7 +2600,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elab_and_eval(des, scope, expr1_);
+      etmp = elab_and_eval(des, scope, expr1_, lv->lwidth());
       etmp->set_width(lv->lwidth());
       etmp = pad_to_width(etmp, lv->lwidth());
 
@@ -2643,7 +2643,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the rvalue of the increment expression, and size it
 	   for the lvalue. */
-      etmp = expr2_->elaborate_expr(des, scope);
+      etmp = expr2_->elaborate_expr(des, scope, lv->lwidth(), false);
       etmp->set_width(lv->lwidth());
       NetAssign*step = new NetAssign(lv, etmp);
       step->set_line(*this);
@@ -2654,7 +2654,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
-      NetExpr*ce = elab_and_eval(des, scope, cond_);
+      NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
 	    delete top;
 	    return 0;
@@ -2735,7 +2735,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetExpr*expr = elab_and_eval(des, scope, expr_);
+      NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_line() << ": Unable to elaborate"
 		  " repeat expression." << endl;
@@ -2856,7 +2856,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetWhile*loop = new NetWhile(elab_and_eval(des, scope, cond_),
+      NetWhile*loop = new NetWhile(elab_and_eval(des, scope, cond_, -1),
 				   statement_->elaborate(des, scope));
       return loop;
 }
@@ -3133,6 +3133,11 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.340  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.339  2006/05/01 20:47:59  steve
  *  More explicit datatype setup.
  *

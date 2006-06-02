@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.29 2006/06/01 03:54:51 steve Exp $"
+#ident "$Id: verinum.h,v 1.30 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include  <string>
@@ -105,6 +105,11 @@ class verinum {
       bool string_flag_;
 };
 
+/* Return a verinum that has the same value as the input, but is at
+   least as wide as the requested width. This may involve sign
+   extension, if the value is signed. */
+extern verinum pad_to_width(const verinum&, unsigned width);
+
 /* Return a verinum that is minimal. That is, it has only the length
    needed to accurately represent the contained value, signed or not. */
 extern verinum trim_vnum(const verinum&);
@@ -152,6 +157,11 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.30  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.29  2006/06/01 03:54:51  steve
  *  Fix broken subtraction of small constants.
  *

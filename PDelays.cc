@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.13 2006/01/03 05:22:14 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.14 2006/06/02 04:48:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -65,7 +65,7 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
 static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
 {
 
-      NetExpr*dex = expr->elaborate_expr(des, scope);
+      NetExpr*dex = expr->elaborate_expr(des, scope, -1, false);
       if (NetExpr*tmp = dex->eval_tree()) {
 	    delete dex;
 	    dex = tmp;
@@ -163,6 +163,11 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.14  2006/06/02 04:48:49  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.13  2006/01/03 05:22:14  steve
  *  Handle complex net node delays.
  *

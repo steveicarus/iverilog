@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.104 2006/06/01 03:54:51 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.105 2006/06/02 04:48:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,7 +28,7 @@
 # include  "netmisc.h"
 # include  "util.h"
 
-NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
+NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
 {
       cerr << get_line() << ": internal error: I do not know how to elaborate"
 	   << " expression. " << endl;
@@ -43,13 +43,14 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
  * and right sides, and creating one of a variety of different NetExpr
  * types.
  */
-NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
+				     int expr_wid, bool) const
 {
       assert(left_);
       assert(right_);
 
-      NetExpr*lp = left_->elaborate_expr(des, scope);
-      NetExpr*rp = right_->elaborate_expr(des, scope);
+      NetExpr*lp = left_->elaborate_expr(des, scope, expr_wid, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, expr_wid, false);
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
 	    delete rp;
@@ -195,7 +196,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 	    sub->cast_signed(true);
 	    return sub;
       }
@@ -209,7 +210,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 	    sub->cast_signed(false);
 	    return sub;
       }
@@ -232,7 +233,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 		       << " Use $bits() instead." << endl;
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 	    verinum val (sub->expr_width(), 8*sizeof(unsigned));
 	    delete sub;
 
@@ -255,7 +256,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 
 	    verinum val (sub->has_sign()? verinum::V1 : verinum::V0, 1);
 	    delete sub;
@@ -303,7 +304,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    PExpr*expr = parms_[idx];
 	    if (expr) {
-		  NetExpr*tmp1 = expr->elaborate_expr(des, scope, true);
+		  NetExpr*tmp1 = expr->elaborate_expr(des, scope, -1, true);
 		  if (NetExpr*tmp2 = tmp1->eval_tree()) {
 			delete tmp1;
 			fun->parm(idx, tmp2);
@@ -329,7 +330,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       return fun;
 }
 
-NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
+					int expr_wid, bool) const
 {
       if (path_.peek_name(0)[0] == '$')
 	    return elaborate_sfunc_(des, scope);
@@ -366,7 +368,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
-		  parms[idx] = tmp->elaborate_expr(des, scope);
+		  parms[idx] = tmp->elaborate_expr(des, scope, -1, false);
 
 	    } else {
 		  missing_parms += 1;
@@ -405,14 +407,15 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
 }
 
 
-NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
+				  int expr_wid, bool) const
 {
       NetExpr* repeat = 0;
 
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
       if (repeat_) {
-	    NetExpr*tmp = elab_and_eval(des, scope, repeat_);
+	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1);
 	    assert(tmp);
 	    NetEConst*rep = dynamic_cast<NetEConst*>(tmp);
 
@@ -444,7 +447,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    }
 
 	    assert(parms_[idx]);
-	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx]);
+	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx], -1);
 	    if (ex == 0) continue;
 
 	    ex->set_line(*parms_[idx]);
@@ -465,7 +468,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
       return tmp;
 }
 
-NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
 {
       NetECReal*tmp = new NetECReal(*value_);
       tmp->set_line(*this);
@@ -484,7 +487,7 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, bool) const
  * The signal name may be escaped, but that affects nothing here.
  */
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
-				 bool sys_task_arg) const
+				 int expr_wid, bool sys_task_arg) const
 {
       assert(scope);
 
@@ -555,7 +558,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    PExpr*addr = idx_[0];
 	    assert(addr);
 
-	    NetExpr*i = addr->elaborate_expr(des, scope);
+	    NetExpr*i = addr->elaborate_expr(des, scope, -1, false);
 	    if (i == 0) {
 		  cerr << get_line() << ": error: Unable to elaborate "
 			"index expression `" << *addr << "'" << endl;
@@ -575,8 +578,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (sel_ == SEL_PART) {
 
-		  NetExpr*le = elab_and_eval(des, scope, lsb_);
-		  NetExpr*me = elab_and_eval(des, scope, msb_);
+		  NetExpr*le = elab_and_eval(des, scope, lsb_, -1);
+		  NetExpr*me = elab_and_eval(des, scope, msb_, -1);
 
 		  NetEConst*lec = dynamic_cast<NetEConst*>(le);
 		  NetEConst*mec = dynamic_cast<NetEConst*>(me);
@@ -601,7 +604,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	    assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
 
-	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
 	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
 	    if (wid_ec == 0) {
 		  cerr << lsb_->get_line() << ": error: "
@@ -613,7 +616,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	    unsigned wid = wid_ec->value().as_ulong();
 
-	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_);
+	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_, -1);
 	    if (idx_ex == 0) {
 		  return 0;
 	    }
@@ -771,7 +774,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 
 	      /* Get and evaluate the width of the index
 		 select. This must be constant. */
-	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
 	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
 	    if (wid_ec == 0) {
 		  cerr << lsb_->get_line() << ": error: "
@@ -783,7 +786,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 
 	    unsigned wid = wid_ec->value().as_ulong();
 
-	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_);
+	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_, -1);
 	    if (idx_ex == 0) {
 		  return 0;
 	    }
@@ -806,7 +809,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	      /* Handle the case where a parameter has a bit
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
-	    NetExpr*mtmp = idx_[0]->elaborate_expr(des, scope);
+	    NetExpr*mtmp = idx_[0]->elaborate_expr(des, scope, -1,false);
 	    if (! dynamic_cast<NetEConst*>(mtmp)) {
 		  NetExpr*re = mtmp->eval_tree();
 		  if (re) {
@@ -985,9 +988,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
 
-      NetExpr*base = elab_and_eval(des, scope, msb_);
+      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
-      NetExpr*wid_e = elab_and_eval(des, scope, lsb_);
+      NetExpr*wid_e = elab_and_eval(des, scope, lsb_, -1);
       NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
       if (wid_c == 0) {
 	    cerr << get_line() << ": error: Width of indexed part select "
@@ -1038,9 +1041,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
 
-      NetExpr*base = elab_and_eval(des, scope, msb_);
+      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
-      NetExpr*wid_e = elab_and_eval(des, scope, lsb_);
+      NetExpr*wid_e = elab_and_eval(des, scope, lsb_, -1);
       NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
       if (wid_c == 0) {
 	    cerr << get_line() << ": error: Width of indexed part select "
@@ -1136,7 +1139,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      NetExpr*ex = idx_[0]->elaborate_expr(des, scope);
+      NetExpr*ex = idx_[0]->elaborate_expr(des, scope, -1, false);
 
       if (net->msb() < net->lsb()) {
 	    ex = make_sub_expr(net->lsb(), ex);
@@ -1181,7 +1184,8 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, bool) const
+NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
+				    int expr_width, bool) const
 {
       assert(value_);
       NetEConst*tmp = new NetEConst(*value_);
@@ -1189,7 +1193,8 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, bool) const
       return tmp;
 }
 
-NetEConst* PEString::elaborate_expr(Design*des, NetScope*, bool) const
+NetEConst* PEString::elaborate_expr(Design*des, NetScope*,
+				    int expr_width, bool) const
 {
       NetEConst*tmp = new NetEConst(value());
       tmp->set_line(*this);
@@ -1214,23 +1219,24 @@ static bool test_ternary_operand_compat(ivl_variable_type_t l,
  * parsed so I can presume that they exist, and call elaboration
  * methods. If any elaboration fails, then give up and return 0.
  */
-NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
+				      int expr_wid, bool) const
 {
       assert(expr_);
       assert(tru_);
       assert(fal_);
 
-      NetExpr*con = expr_->elaborate_expr(des, scope);
+      NetExpr*con = expr_->elaborate_expr(des, scope, -1, false);
       if (con == 0)
 	    return 0;
 
-      NetExpr*tru = tru_->elaborate_expr(des, scope);
+      NetExpr*tru = tru_->elaborate_expr(des, scope, expr_wid, false);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = fal_->elaborate_expr(des, scope);
+      NetExpr*fal = fal_->elaborate_expr(des, scope, expr_wid, false);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -1251,9 +1257,10 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
       return res;
 }
 
-NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
+				 int expr_wid, bool) const
 {
-      NetExpr*ip = expr_->elaborate_expr(des, scope);
+      NetExpr*ip = expr_->elaborate_expr(des, scope, expr_wid, false);
       if (ip == 0) return 0;
 
       /* Should we evaluate expressions ahead of time,
@@ -1269,16 +1276,22 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 	  case '-':
 	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
+
+		  verinum val = ipc->value();
+		  if (expr_wid > 0)
+			val = pad_to_width(val, expr_wid);
+
 		    /* When taking the - of a number, turn it into a
 		       signed expression and extend it one bit to
 		       accommodate a possible sign bit. */
-		  verinum val = ipc->value();
 		  verinum zero (verinum::V0, val.len()+1, val.has_len());
-		  val = zero - val;
-		  if (ipc->value().has_len())
-			val = verinum(val, ipc->value().len());
-		  val.has_sign(true);
-		  tmp = new NetEConst(val);
+		  verinum nval = zero - val;
+
+		  if (val.has_len())
+			nval = verinum(nval, val.len());
+		  nval.has_sign(true);
+		  tmp = new NetEConst(nval);
+		  tmp->set_line(*this);
 		  delete ip;
 
 	    } else if (NetECReal*ipc = dynamic_cast<NetECReal*>(ip)) {
@@ -1359,6 +1372,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.105  2006/06/02 04:48:49  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.104  2006/06/01 03:54:51  steve
  *  Fix broken subtraction of small constants.
  *

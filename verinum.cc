@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.45 2006/06/01 03:54:51 steve Exp $"
+#ident "$Id: verinum.cc,v 1.46 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -315,6 +315,30 @@ bool verinum::is_zero() const
 	    if (bits_[idx] != V0) return false;
 
       return true;
+}
+
+verinum pad_to_width(const verinum&that, unsigned width)
+{
+      if (that.len() >= width)
+	    return that;
+
+      if (that.len() == 0) {
+	    verinum val (verinum::V0, width, that.has_len());
+	    val.has_sign(that.has_sign());
+	    return val;
+      }
+
+      verinum::V pad = that[that.len()-1];
+      if (pad==verinum::V1 && !that.has_sign())
+	    pad = verinum::V0;
+
+      verinum val(pad, width, that.has_len());
+
+      for (unsigned idx = 0 ;  idx < that.len() ;  idx += 1)
+	    val.set(idx, that[idx]);
+
+      val.has_sign(that.has_sign());
+      return val;
 }
 
 /*
@@ -983,6 +1007,11 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.46  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.45  2006/06/01 03:54:51  steve
  *  Fix broken subtraction of small constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.40 2006/04/12 05:05:03 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.41 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -325,7 +325,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// The initial value for the genvar does not need (nor can it
 	// use) the genvar itself, so we can evaluate this expression
 	// the same way any other paramter value is evaluated.
-      NetExpr*init_ex = elab_and_eval(des, container, loop_init);
+      NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
 	    cerr << get_line() << ": error: Cannot evaluate genvar"
@@ -342,7 +342,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = 0;
-      NetExpr*test_ex = elab_and_eval(des, container, loop_test);
+      NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       assert(test);
       while (test->value().as_long()) {
@@ -379,7 +379,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    scope_list_.push_back(scope);
 
 	      // Calculate the step for the loop variable.
-	    NetExpr*step_ex = elab_and_eval(des, container, loop_step);
+	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    assert(step);
 	    if (debug_elaborate)
@@ -390,7 +390,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
-	    test_ex = elab_and_eval(des, container, loop_test);
+	    test_ex = elab_and_eval(des, container, loop_test, -1);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    assert(test);
       }
@@ -448,8 +448,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
-      NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_) : 0;
-      NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_) : 0;
+      NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
+      NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;
       NetEConst*msb = dynamic_cast<NetEConst*> (mse);
       NetEConst*lsb = dynamic_cast<NetEConst*> (lse);
 
@@ -748,6 +748,11 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.41  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.40  2006/04/12 05:05:03  steve
  *  Use elab_and_eval to evaluate genvar expressions.
  *

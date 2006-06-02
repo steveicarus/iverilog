@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.35 2006/04/16 00:54:04 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.36 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -216,7 +216,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    assert(idx_.size() == 1);
 	    verinum*v = idx_[0]->eval_const(des, scope);
 	    if (v == 0) {
-		  NetExpr*m = idx_[0]->elaborate_expr(des, scope);
+		  NetExpr*m = idx_[0]->elaborate_expr(des, scope, -1, false);
 		  assert(m);
 		  msb = 0;
 		  lsb = 0;
@@ -310,7 +310,7 @@ NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
 	   two bit select expressions, and both must be
 	   constant. Evaluate them and pass the results back to
 	   the caller. */
-      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_, -1);
       NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
       if (lsb_c == 0) {
 	    cerr << lsb_->get_line() << ": error: "
@@ -322,7 +322,7 @@ NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
 	    return 0;
       }
 
-      NetExpr*msb_ex = elab_and_eval(des, scope, msb_);
+      NetExpr*msb_ex = elab_and_eval(des, scope, msb_, -1);
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
 	    cerr << msb_->get_line() << ": error: "
@@ -405,7 +405,7 @@ NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
 	/* Calculate the width expression (in the lsb_ position)
 	   first. If the expression is not constant, error but guess 1
 	   so we can keep going and find more errors. */
-      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
       if (wid_c == 0) {
@@ -418,7 +418,7 @@ NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
       unsigned wid = wid_c? wid_c->value().as_ulong() : 1;
       delete wid_ex;
 
-      NetExpr*base = elab_and_eval(des, scope, msb_);
+      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
 	/* Correct the mux for the range of the vector. */
       if (reg->msb() < reg->lsb())
@@ -468,7 +468,7 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
       assert(idx_.size() == 1);
 
 	/* Elaborate the address expression. */
-      NetExpr*ix = elab_and_eval(des, scope, idx_[0]);
+      NetExpr*ix = elab_and_eval(des, scope, idx_[0], -1);
       if (ix == 0)
 	    return 0;
 
@@ -485,8 +485,8 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
       assert(msb_ && lsb_);
 
       if (sel_ == SEL_PART) {
-	    NetExpr*le = elab_and_eval(des, scope, lsb_);
-	    NetExpr*me = elab_and_eval(des, scope, msb_);
+	    NetExpr*le = elab_and_eval(des, scope, lsb_, -1);
+	    NetExpr*me = elab_and_eval(des, scope, msb_, -1);
 
 	    NetEConst*lec = dynamic_cast<NetEConst*>(le);
 	    NetEConst*mec = dynamic_cast<NetEConst*>(me);
@@ -509,7 +509,7 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 
       assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
 
-      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_);
+      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
       NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
       if (wid_ec == 0) {
 	    cerr << lsb_->get_line() << ": error: "
@@ -521,7 +521,7 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 
       unsigned wid = wid_ec->value().as_ulong();
 
-      NetExpr*base_ex = elab_and_eval(des, scope, msb_);
+      NetExpr*base_ex = elab_and_eval(des, scope, msb_, -1);
       if (base_ex == 0) {
 	    return 0;
       }
@@ -544,6 +544,11 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.36  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.35  2006/04/16 00:54:04  steve
  *  Cleanup lval part select handling.
  *

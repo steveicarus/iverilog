@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.24 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: netmisc.h,v 1.25 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -114,10 +114,16 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * it can. If the expression cannot be elaborated, return 0.
  */
 class PExpr;
-extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
+extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
+			      const PExpr*pe, int expr_wid);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.25  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.24  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.23 2006/02/02 02:43:58 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.24 2006/06/02 04:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -119,7 +119,7 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 
 NetExpr*PEFNumber::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      return elaborate_expr(des, scope);
+      return elaborate_expr(des, scope, -1, false);
 }
 
 /*
@@ -181,13 +181,13 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
  */
 NetExpr*PENumber::elaborate_pexpr(Design*des, NetScope*sc) const
 {
-      return elaborate_expr(des, sc);
+      return elaborate_expr(des, sc, -1, false);
 }
 
 
 NetEConst* PEString::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      return elaborate_expr(des, scope);
+      return elaborate_expr(des, scope, -1, false);
 }
 
 NetETernary* PETernary::elaborate_pexpr(Design*des, NetScope*scope) const
@@ -236,6 +236,11 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.24  2006/06/02 04:48:50  steve
+ *  Make elaborate_expr methods aware of the width that the context
+ *  requires of it. In the process, fix sizing of the width of unary
+ *  minus is context determined sizes.
+ *
  * Revision 1.23  2006/02/02 02:43:58  steve
  *  Allow part selects of memory words in l-values.
  *
