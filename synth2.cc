@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.34 2006/06/02 23:42:48 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.35 2006/06/07 03:17:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -876,15 +876,37 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 	/* Figure out how many mux bits we are going to need. */
       for (unsigned idx = 0 ;  idx < nex_out->pin_count();  idx += 1) {
-	    if (accum->pin(idx).is_linked() || sync_flag) {
+	    int flag = 0;
+	    if (asig->pin(idx).is_linked())
+		  flag |= 0100;
+	    if (bsig->pin(idx).is_linked())
+		  flag |= 0010;
+	    if (accum->pin(idx).is_linked())
+		  flag |= 0001;
+	    switch (flag) {
+		case 0111:
+		case 0110:
+		case 0101:
 		  mux_width += 1;
-		  continue;
+		  break;
+		case 0100:
+		  if (sync_flag)
+			mux_width += 1;
+		  break;
+		case 0011:
+		  mux_width += 1;
+		  break;
+		case 0010:
+		  if (sync_flag)
+			mux_width += 1;
+		  break;
+		case 0001:
+		  mux_width += 1;
+		  break;
+		case 0000:
+		  break;
 	    }
 
-	    if (asig->pin(idx).is_linked() && bsig->pin(idx).is_linked()) {
-		  mux_width += 1;
-		  continue;
-	    }
       }
 
 	/* Create a mux and hook it up. */
@@ -982,7 +1004,16 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  mux_width += 1;
 		  break;
 		case 0000:
-		  assert(0);
+		  if (sync_flag) {
+			connect(nex_out->pin(idx), nex_map->pin(idx));
+		  } else {
+			cerr << get_line() << ": internal error: "
+			     << "Unexplained mode?" << endl;
+			cerr << get_line() << ": XXXX: "
+			     << "nex_out->pin_count() = "
+			     << nex_out->pin_count() << endl;
+			assert(0);
+		  }
 		  break;
 		default:
 		  assert(0);
@@ -1926,6 +1957,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.35  2006/06/07 03:17:39  steve
+ *  Fix partial use of NetMux in sync condit statements.
+ *
  * Revision 1.39.2.34  2006/06/02 23:42:48  steve
  *  Compilation warnings.
  *
