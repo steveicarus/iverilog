@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308.2.2 2005/12/10 03:30:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308.2.3 2006/06/12 00:16:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1179,6 +1179,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    tmp->set_line(*this);
 
 	    NetESignal*sig = new NetESignal(tmp);
+	    sig->set_line(*this);
 
 	      /* Generate an assignment of the l-value to the temporary... */
 	    string n = scope->local_hsymbol();
@@ -1715,6 +1716,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  continue;
 
 	    NetESignal*sig = new NetESignal(port);
+	    sig->set_line(*this);
 
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign(lv, sig);
@@ -2783,6 +2785,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308.2.3  2006/06/12 00:16:51  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.308.2.2  2005/12/10 03:30:50  steve
  *  Fix crash on block with assignments that assign lval to self.
  *

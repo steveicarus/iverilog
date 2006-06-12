@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.18 2004/06/17 16:06:18 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.18.2.1 2006/06/12 00:16:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,6 +90,7 @@ NetESignal* NetESignal::dup_expr() const
       NetESignal*tmp = new NetESignal(net_, msi_, lsi_);
       assert(tmp);
       tmp->expr_width(expr_width());
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -143,6 +144,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.18.2.1  2006/06/12 00:16:50  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.18  2004/06/17 16:06:18  steve
  *  Help system function signedness survive elaboration.
  *

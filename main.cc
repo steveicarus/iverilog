@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.86.2.2 2006/04/23 04:25:45 steve Exp $"
+#ident "$Id: main.cc,v 1.86.2.3 2006/06/12 00:16:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -103,6 +103,7 @@ FILE *depend_file = NULL;
 bool warn_implicit  = false;
 bool warn_timescale = false;
 bool warn_portbinding = false;
+bool warn_unused = false;
 
 bool error_implicit = false;
 
@@ -384,6 +385,9 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		      case 't':
 			warn_timescale = true;
+			break;
+		      case 'u':
+			warn_unused = true;
 			break;
 		      default:
 			break;
@@ -753,6 +757,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.86.2.3  2006/06/12 00:16:53  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.86.2.2  2006/04/23 04:25:45  steve
  *  Add cprop debugging.
  *

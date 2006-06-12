@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.91 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.91.2.1 2006/06/12 00:16:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -742,6 +742,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    NetESignal*node = new NetESignal(net);
+	    node->set_line(*this);
 	    assert(idx_ == 0);
 
 	      // Non-constant bit select? punt and make a subsignal
@@ -1005,6 +1006,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.91.2.1  2006/06/12 00:16:50  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.91  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

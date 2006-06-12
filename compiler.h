@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.26.2.2 2006/04/23 04:25:45 steve Exp $"
+#ident "$Id: compiler.h,v 1.26.2.3 2006/06/12 00:16:50 steve Exp $"
 #endif
 
 # include  <list>
@@ -77,6 +77,9 @@ extern bool warn_timescale;
 
 /* Warn about legal but questionable module port bindings. */
 extern bool warn_portbinding;
+
+/* Warn about unused or unassigned variables. */
+extern bool warn_unused;
 
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
@@ -138,6 +141,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.26.2.3  2006/06/12 00:16:50  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.26.2.2  2006/04/23 04:25:45  steve
  *  Add cprop debugging.
  *

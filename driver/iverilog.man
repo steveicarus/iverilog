@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2004/10/04 01:10:56 $" Version "$Date: 2004/10/04 01:10:56 $"
+.TH iverilog 1 "$Date: 2006/06/12 00:16:53 $" Version "$Date: 2006/06/12 00:16:53 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -211,6 +211,12 @@ directive. It detects if some modules have no timescale, or if modules
 inherit timescale from another file. Both probably mean that
 timescales are inconsistent, and simulation timing can be confusing
 and dependent on compilation order.
+
+.TP 8
+.B unused
+This enables warnings for unused variables. This may detect variables
+that are not assigned, or variables and nets that are not used, or
+similar possible misuses of variables and nets.
 
 .SH "SYSTEM FUNCTION TABLE FILES"
 If the source file name as a \fB.sft\fP suffix, then it is taken to be

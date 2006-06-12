@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.1 2006/03/26 21:47:26 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.2 2006/06/12 00:16:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -295,7 +295,7 @@ static int t_default(char*cmd, unsigned ncmd)
 static void process_warning_switch(const char*name)
 {
       if (strcmp(name,"all") == 0) {
-	    strcat(warning_flags, "ipt");
+	    strcat(warning_flags, "iptu");
 
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags+2, 'i'))
@@ -306,6 +306,9 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"timescale") == 0) {
 	    if (! strchr(warning_flags+2, 't'))
 		  strcat(warning_flags, "t");
+      } else if (strcmp(name,"unused") == 0) {
+	    if (! strchr(warning_flags+2, 'u'))
+		  strcat(warning_flags, "u");
       } else if (strcmp(name,"no-implicit") == 0) {
 	    char*cp = strchr(warning_flags+2, 'i');
 	    if (cp) while (*cp) {
@@ -320,6 +323,12 @@ static void process_warning_switch(const char*name)
 	    }
       } else if (strcmp(name,"no-timescale") == 0) {
 	    char*cp = strchr(warning_flags+2, 't');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-unused") == 0) {
+	    char*cp = strchr(warning_flags+2, 'u');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -778,6 +787,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.2  2006/06/12 00:16:53  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.65.2.1  2006/03/26 21:47:26  steve
  *  More installation directory flexibility.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.5 2006/05/15 03:55:22 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.6 2006/06/12 00:16:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -913,6 +913,21 @@ NetNet* NetETernary::synthesize(Design *des)
  */
 NetNet* NetESignal::synthesize(Design*des)
 {
+      if (warn_unused) {
+	    if (net_->peek_lref() == 0 && net_->type()==NetNet::REG) {
+		  cerr << get_line() << ": warning: "
+		       << "reg " << net_->name()
+		       << " is used by logic but never assigned." << endl;
+	    }
+
+	    if (net_->peek_lref() == 0 && net_->type()==NetNet::INTEGER) {
+		  cerr << get_line() << ": warning: "
+		       << "reg " << net_->name()
+		       << " is used by logic but never assigned." << endl;
+	    }
+      }
+
+	/* If there is no part select, then the synthesis is trivial. */
       if ((lsi_ == 0) && (msi_ == (net_->pin_count() - 1)))
 	    return net_;
 
@@ -925,6 +940,7 @@ NetNet* NetESignal::synthesize(Design*des)
       perm_string name = scope->local_symbol();
       NetNet*tmp = new NetNet(scope, name, NetNet::WIRE, wid);
       tmp->local_flag(true);
+      tmp->set_line(*this);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 	    connect(tmp->pin(idx), net_->pin(idx+lsi_));
@@ -934,6 +950,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.6  2006/06/12 00:16:52  steve
+ *  Add support for -Wunused warnings.
+ *
  * Revision 1.59.2.5  2006/05/15 03:55:22  steve
  *  Fix synthesis of expressions with land of vectors.
  *
@@ -957,82 +976,5 @@ NetNet* NetESignal::synthesize(Design*des)
  *
  * Revision 1.57  2004/06/12 15:00:02  steve
  *  Support / and % in synthesized contexts.
- *
- * Revision 1.56  2004/06/01 01:04:57  steve
- *  Fix synthesis method for logical and/or
- *
- * Revision 1.55  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.54  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.53  2004/02/15 04:23:48  steve
- *  Fix evaluation of compare to constant expression.
- *
- * Revision 1.52  2003/11/10 19:39:20  steve
- *  Remove redundant scope tokens.
- *
- * Revision 1.51  2003/10/27 06:04:21  steve
- *  More flexible width handling for synthesized add.
- *
- * Revision 1.50  2003/09/26 02:44:27  steve
- *  Assure ternary arguments are wide enough.
- *
- * Revision 1.49  2003/09/03 23:31:36  steve
- *  Support synthesis of constant downshifts.
- *
- * Revision 1.48  2003/08/28 04:11:18  steve
- *  Spelling patch.
- *
- * Revision 1.47  2003/08/09 03:23:40  steve
- *  Add support for IVL_LPM_MULT device.
- *
- * Revision 1.46  2003/07/26 03:34:42  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.45  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.44  2003/04/19 04:52:56  steve
- *  Less picky about expression widths while synthesizing ternary.
- *
- * Revision 1.43  2003/04/08 05:07:15  steve
- *  Detect constant shift distances in synthesis.
- *
- * Revision 1.42  2003/04/08 04:33:55  steve
- *  Synthesize shift expressions.
- *
- * Revision 1.41  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.40  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.39  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.38  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.37  2002/11/17 23:37:55  steve
- *  Magnitude compare to 0.
- *
- * Revision 1.36  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.35  2002/07/07 22:31:39  steve
- *  Smart synthesis of binary AND expressions.
- *
- * Revision 1.34  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.33  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
  */
 
