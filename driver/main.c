@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.2 2006/06/12 00:16:53 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.3 2006/06/14 03:01:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -482,8 +482,6 @@ int main(int argc, char **argv)
       int version_flag = 0;
       int opt, idx, rc;
 
-      get_root_dir();
-
       base = get_root_dir();
 
 #ifdef __MINGW32__
@@ -787,6 +785,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.3  2006/06/14 03:01:49  steve
+ *  Remove redundant call to get_root_dir.
+ *
  * Revision 1.65.2.2  2006/06/12 00:16:53  steve
  *  Add support for -Wunused warnings.
  *
