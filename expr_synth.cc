@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.6 2006/06/12 00:16:52 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.7 2006/06/14 03:02:54 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  <iostream>
+# include  <typeinfo>
 
 # include  "netlist.h"
 # include  "netmisc.h"
@@ -32,9 +33,46 @@ NetNet* NetExpr::synthesize(Design*des)
 {
       cerr << get_line() << ": internal error: cannot synthesize expression: "
 	   << *this << endl;
+      cerr << get_line() << ":               : typeid="
+	   << typeid(*this).name() << endl;
       des->errors += 1;
 
       return 0;
+}
+
+/*
+ * For the NetEBitSel expression, create a NetMux node that selects a
+ * bit from the input.
+ */
+NetNet* NetEBitSel::synthesize(Design*des)
+{
+      NetNet*net = sig_->synthesize(des);
+      assert(net);
+
+      NetNet*adr = idx_->synthesize(des);
+      if (adr == 0)
+	    return 0;
+
+      NetScope*scope = adr->scope();
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, 1);
+      osig->set_line(*this);
+      osig->local_flag(true);
+
+      NetMux*mux = new NetMux(scope, scope->local_symbol(),
+			      1, net->pin_count(), adr->pin_count());
+      des->add_node(mux);
+
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1)
+	    connect(mux->pin_Data(0, idx),  net->pin(idx));
+
+      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
+	    connect(mux->pin_Sel(idx), adr->pin(idx));
+
+      connect(mux->pin_Result(0), osig->pin(0));
+
+      return osig;
 }
 
 /*
@@ -950,6 +988,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.7  2006/06/14 03:02:54  steve
+ *  synthesis for NetEBitSel.
+ *
  * Revision 1.59.2.6  2006/06/12 00:16:52  steve
  *  Add support for -Wunused warnings.
  *

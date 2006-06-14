@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.17 2006/04/23 04:26:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.18 2006/06/14 03:02:54 steve Exp $"
 #endif
 
 /*
@@ -3175,6 +3175,7 @@ class NetEBitSel  : public NetExpr {
       const NetNet* sig() const;
 
       NetEBitSel* dup_expr() const;
+      NetNet* synthesize(Design*des);
 
       virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3528,6 +3529,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.18  2006/06/14 03:02:54  steve
+ *  synthesis for NetEBitSel.
+ *
  * Revision 1.321.2.17  2006/04/23 04:26:14  steve
  *  Constant propagate addresses through NetRamDq read ports.
  *
