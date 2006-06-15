@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.7 2006/06/14 03:02:54 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.8 2006/06/15 01:57:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -693,7 +693,7 @@ NetNet* NetEMemory::synthesize(Design*des)
 {
       NetScope*scope = mem_->scope();
 
-      NetNet*explode = mem_->reg_from_explode();
+      NetNet*explode = mem_->explode_to_reg();
       unsigned width = expr_width();
 
       assert(idx_);
@@ -708,11 +708,26 @@ NetNet* NetEMemory::synthesize(Design*des)
 	    if (debug_synth)
 		  cerr << get_line() << ": debug: synthesize read of "
 		       << explode->pin_count() << " bit exploded memory." << endl;
+
+	      /* Only make a muc big enough to address the words that
+		 the address can generate. (If the address is
+		 0-extended, then only the low words are addressable.) */
+	    unsigned use_count = mem_->count();
+	    if (use_count > (1U << addr->pin_count())) {
+		  use_count = 1 << addr->pin_count();
+
+		  if (debug_synth)
+			cerr << get_line() << ": debug: "
+			     << "Index expression can only address "
+			     << use_count << " of "
+			     << mem_->count() << " words." << endl;
+	    }
+
 	      /* This is a reference to an exploded memory. So locate
 		 the reg vector and use the addr expression as a
 		 select into a MUX. */
 	    NetMux*mux = new NetMux(scope, scope->local_symbol(),
-				    width, mem_->count(), addr->pin_count());
+				    width, use_count, addr->pin_count());
 	    des->add_node(mux);
 	    mux->set_line(*this);
 
@@ -721,7 +736,7 @@ NetNet* NetEMemory::synthesize(Design*des)
 	    for (unsigned idx = 0 ;  idx < mux->sel_width() ;  idx += 1)
 		  connect(mux->pin_Sel(idx), addr->pin(idx));
 
-	    for (unsigned wrd = 0 ;  wrd < mem_->count() ;  wrd += 1)
+	    for (unsigned wrd = 0 ;  wrd < use_count ;  wrd += 1)
 		  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 			unsigned bit = wrd*width + idx;
 			connect(mux->pin_Data(idx, wrd), explode->pin(bit));
@@ -988,6 +1003,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.8  2006/06/15 01:57:26  steve
+ *  Handle simple memory addressing in expression synthesis.
+ *
  * Revision 1.59.2.7  2006/06/14 03:02:54  steve
  *  synthesis for NetEBitSel.
  *
