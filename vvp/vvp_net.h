@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.50 2006/03/08 05:29:42 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.51 2006/06/18 04:15:50 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -918,15 +918,19 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
     protected:
       void propagate_vec4(const vvp_vector4_t&bit, vvp_time64_t delay =0);
       unsigned port_count() const;
+
       vvp_vector4_t& value(unsigned);
+      double value_r(unsigned);
 
     private:
 	// the derived class implements this to receive an indication
 	// that one of the port input values changed.
       virtual void recv_vec4_from_inputs(unsigned port) =0;
+      virtual void recv_real_from_inputs(unsigned port);
 
       friend class vvp_wide_fun_t;
       void dispatch_vec4_from_input_(unsigned port, vvp_vector4_t bit);
+      void dispatch_real_from_input_(unsigned port, double bit);
 
     private:
 	// Back-point to the vvp_net_t that points to me.
@@ -934,7 +938,7 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
 	// Structure to track the input values from the input functors.
       unsigned nports_;
       vvp_vector4_t*port_values_;
-
+      double*port_rvalues_;
 };
 
 /*
@@ -950,6 +954,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
       ~vvp_wide_fun_t();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t port, double bit);
 
     private:
       vvp_wide_fun_core*core_;
@@ -1008,6 +1013,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.51  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.50  2006/03/08 05:29:42  steve
  *  Add support for logic parameters.
  *

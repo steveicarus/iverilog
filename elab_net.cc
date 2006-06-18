@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.186 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.187 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1209,39 +1209,11 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       unsigned errors = 0;
       unsigned func_pins = 0;
 
-	/* Handle the special case that the function call is to
-	   $signed. This takes a single expression argument, and
-	   forces it to be a signed result. Otherwise, it is as if the
-	   $signed did not exist. */
-      if (strcmp(path_.peek_name(0), "$signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $signed() function "
-		       << "takes exactly one(1) argument." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+      if (path_.peek_name(0)[0] == '$')
+	    return elaborate_net_sfunc_(des, scope,
+					width, rise, fall, decay,
+					drive0, drive1);
 
-	    PExpr*expr = parms_[0];
-	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
-					     fall, decay, drive0, drive1);
-	    sub->set_signed(true);
-	    return sub;
-      }
-      /* handle $unsigned like $signed */
-      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $unsigned() function "
-		       << "takes exactly one(1) argument." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    PExpr*expr = parms_[0];
-	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
-					     fall, decay, drive0, drive1);
-	    sub->set_signed(false);
-	    return sub;
-      }
 
 	/* Look up the function definition. */
       NetFuncDef*def = des->find_function(scope, path_);
@@ -1316,6 +1288,87 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	    connect(net->pin(idx+1), tmp->pin(0));
       }
 
+      return osig;
+}
+
+NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
+					     unsigned width,
+					     const NetExpr* rise,
+					     const NetExpr* fall,
+					     const NetExpr* decay,
+					     Link::strength_t drive0,
+					     Link::strength_t drive1) const
+{
+	/* Handle the special case that the function call is to
+	   $signed. This takes a single expression argument, and
+	   forces it to be a signed result. Otherwise, it is as if the
+	   $signed did not exist. */
+      if (strcmp(path_.peek_name(0), "$signed") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $signed() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
+					     fall, decay, drive0, drive1);
+	    sub->set_signed(true);
+	    return sub;
+      }
+
+      /* handle $unsigned like $signed */
+      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $unsigned() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
+					     fall, decay, drive0, drive1);
+	    sub->set_signed(false);
+	    return sub;
+      }
+
+      const struct sfunc_return_type*def = lookup_sys_func(path_.peek_name(0));
+
+      if (def == 0) {
+	    cerr << get_line() << ": error: System function "
+		 << path_.peek_name(0) << " not defined." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
+				      def, 1+parms_.count());
+      des->add_node(net);
+      net->set_line(*this);
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, def->wid);
+      osig->local_flag(true);
+      osig->data_type(def->type);
+      osig->set_line(*this);
+
+      connect(net->pin(0), osig->pin(0));
+
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope, 0,
+						    0, 0, 0,
+						    Link::STRONG, Link::STRONG);
+	    if (tmp == 0) {
+		  cerr << get_line() << ": error: Unable to elaborate "
+		       << "port " << idx << " of call to " << path_ <<
+			"." << endl;
+		  continue;
+	    }
+
+	    connect(net->pin(1+idx), tmp->pin(0));
+      }
       return osig;
 }
 
@@ -2779,6 +2832,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.187  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.186  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

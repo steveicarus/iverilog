@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.80 2006/03/18 22:51:10 steve Exp $"
+#ident "$Id: compile.h,v 1.81 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -169,6 +169,8 @@ extern void compile_reduce_xnor(char*label, struct symb_s arg);
 
 extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
+extern void compile_sfunc(char*label, char*name, char*format_string,
+			  unsigned argc, struct symb_s*argv);
 extern void compile_repeat(char*label, long width, long repeat,
 			   struct symb_s arg);
 
@@ -343,6 +345,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.81  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.80  2006/03/18 22:51:10  steve
  *  Syntax for carrying sign with parameter.
  *

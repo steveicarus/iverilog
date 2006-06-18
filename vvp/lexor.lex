@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.60 2006/05/17 04:15:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.61 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -130,6 +130,7 @@
 ".repeat"   { return K_REPEAT; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
+".sfunc"    { return K_SFUNC; }
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".thread"   { return K_THREAD; }
@@ -208,6 +209,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.61  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.60  2006/05/17 04:15:25  steve
  *  Lexor os never interactive.
  *

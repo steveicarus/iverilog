@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.52 2006/03/15 19:15:34 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.53 2006/06/18 04:15:50 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1709,12 +1709,14 @@ vvp_wide_fun_core::vvp_wide_fun_core(vvp_net_t*net, unsigned nports)
 {
       ptr_ = net;
       nports_ = nports;
-      port_values_ = new vvp_vector4_t [nports_];
+      port_values_ = 0;
+      port_rvalues_ = 0;
 }
 
 vvp_wide_fun_core::~vvp_wide_fun_core()
 {
-      delete[]port_values_;
+      if (port_values_) delete[]port_values_;
+      if (port_rvalues_) delete[]port_rvalues_;
 }
 
 void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
@@ -1735,15 +1737,37 @@ unsigned vvp_wide_fun_core::port_count() const
 vvp_vector4_t& vvp_wide_fun_core::value(unsigned idx)
 {
       assert(idx < nports_);
+      assert(port_values_);
       return port_values_[idx];
+}
+
+double vvp_wide_fun_core::value_r(unsigned idx)
+{
+      assert(idx < nports_);
+      return port_rvalues_? port_rvalues_[idx] : 0.0;
+}
+
+void vvp_wide_fun_core::recv_real_from_inputs(unsigned p)
+{
+      assert(0);
 }
 
 void vvp_wide_fun_core::dispatch_vec4_from_input_(unsigned port,
 						   vvp_vector4_t bit)
 {
       assert(port < nports_);
+      if (port_values_ == 0) port_values_ = new vvp_vector4_t [nports_];
       port_values_[port] = bit;
       recv_vec4_from_inputs(port);
+}
+
+void vvp_wide_fun_core::dispatch_real_from_input_(unsigned port,
+						  double bit)
+{
+      assert(port < nports_);
+      if (port_rvalues_ == 0) port_rvalues_ = new double[nports_];
+      port_rvalues_[port] = bit;
+      recv_real_from_inputs(port);
 }
 
 vvp_wide_fun_t::vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base)
@@ -1759,6 +1783,12 @@ void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_vec4_from_input_(pidx, bit);
+}
+
+void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit)
+{
+      unsigned pidx = port_base_ + port.port();
+      core_->dispatch_real_from_input_(pidx, bit);
 }
 
 
@@ -2163,6 +2193,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.53  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.52  2006/03/15 19:15:34  steve
  *  const/non-const clash.
  *

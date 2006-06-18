@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.144 2006/04/22 04:27:36 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.145 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -611,6 +611,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_RE_NAND:
 	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_XNOR:
+	  case IVL_LPM_SFUNC:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SIGN_EXT:
@@ -1801,6 +1802,43 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_type_string_of_nex(ivl_nexus_t nex)
+{
+      switch (data_type_of_nexus(nex)) {
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "r");
+	    break;
+	  case IVL_VT_LOGIC:
+	    fprintf(vvp_out, "v%d", width_of_nexus(nex));
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
+static void draw_lpm_sfunc(ivl_lpm_t net)
+{
+      unsigned idx;
+      fprintf(vvp_out, "L_%p .sfunc \"%s\"", net, ivl_lpm_string(net));
+
+	/* Print the function type descriptor string. */
+      fprintf(vvp_out, ", \"");
+
+      draw_type_string_of_nex(ivl_lpm_q(net,0));
+
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1)
+	    draw_type_string_of_nex(ivl_lpm_data(net,idx));
+
+      fprintf(vvp_out, "\"");
+
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,idx)));
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_ufunc(ivl_lpm_t net)
 {
       unsigned idx;
@@ -2078,6 +2116,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_sign_ext(net);
 	    return;
 
+	  case IVL_LPM_SFUNC:
+	    draw_lpm_sfunc(net);
+	    return;
+
 	  case IVL_LPM_UFUNC:
 	    draw_lpm_ufunc(net);
 	    return;
@@ -2209,6 +2251,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.145  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.144  2006/04/22 04:27:36  steve
  *  Get tail counts right in nested concatenations.
  *

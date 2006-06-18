@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.167 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.168 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -244,6 +244,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_RE_XNOR= 24,
       IVL_LPM_RE_XOR = 25,
       IVL_LPM_REPEAT = 26,
+      IVL_LPM_SFUNC  = 29,
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SIGN_EXT=27,
@@ -991,6 +992,19 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * the shift distance. The vector input is the same width as the
  * output, but the distance has its own width.
  *
+ * - System function call (IVL_LPM_SFUNC)
+ * This device represents a netlist call to a system function. The
+ * inputs to the device are passed to a system function, and the
+ * result is sent via the output. The ivl_lpm_q function returns the
+ * output nexus.
+ *
+ * The ivl_lpm_size function returns the number of arguments, and the
+ * ivl_lpm_data(net,N) returns the nexa for the argument.
+ *
+ * The ivl_lpm_string(net) function returns the name of the system
+ * function (i.e. "$display") that was found in the source code. The
+ * compiler does little checking of that name.
+ *
  * - User Function Call (IVL_LPM_UFUNC)
  * This device is special as it represents a call to a user defined
  * function (behavioral code) within a netlist. The inputs to the
@@ -1039,14 +1053,6 @@ extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
-#if 0
-  /* IVL_LPM_UFUNC */
-extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
-#endif
-#if 0
-  /* IVL_LPM_UFUNC */
-extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
-#endif
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_RAM
      IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
@@ -1056,6 +1062,8 @@ extern unsigned ivl_lpm_selects(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net);
   /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
+  /* IVL_LPM_SFUNC */
+extern const char*ivl_lpm_string(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
 
@@ -1706,6 +1714,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.168  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.167  2006/04/16 00:15:43  steve
  *  Fix part selects in l-values.
  *

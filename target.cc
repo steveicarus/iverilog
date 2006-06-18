@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.77 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: target.cc,v 1.78 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,6 +171,13 @@ bool target_t::net_const(const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled CONSTANT node." << endl;
+      return false;
+}
+
+bool target_t::net_sysfunction(const NetSysFunc*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetSysFunc node." << endl;
       return false;
 }
 
@@ -431,6 +438,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.78  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.77  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.86 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: emit.cc,v 1.87 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,6 +146,10 @@ bool NetUReduce::emit_node(struct target_t*tgt) const
       return tgt->ureduce(this);
 }
 
+bool NetSysFunc::emit_node(struct target_t*tgt) const
+{
+      return tgt->net_sysfunction(this);
+}
 
 bool NetUserFunc::emit_node(struct target_t*tgt) const
 {
@@ -525,6 +529,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.87  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.86  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

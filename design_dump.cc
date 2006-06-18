@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.165 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.166 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,7 @@
 # include  <iostream>
 # include  <iomanip>
 # include  "netlist.h"
-
+# include  "compiler.h"
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
 {
@@ -458,6 +458,13 @@ void NetUReduce::dump_node(ostream&o, unsigned ind) const
 	<< " scope=" << (scope()? scope()->name() : "")
 	<< endl;
 
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetSysFunc::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << def_->name << "(...)" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1173,6 +1180,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.166  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.165  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

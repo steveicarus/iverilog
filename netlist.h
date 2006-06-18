@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.357 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.358 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 /*
@@ -1018,6 +1018,28 @@ class NetUserFunc  : public NetNode {
 
     private:
       NetScope*def_;
+};
+
+/*
+ * The number of ports includes the return value, so will always be at
+ * least 1.
+ */
+class NetSysFunc  : public NetNode {
+
+    public:
+      NetSysFunc(NetScope*s, perm_string n,
+		 const struct sfunc_return_type*def,
+		 unsigned ports);
+      ~NetSysFunc();
+
+      unsigned vector_width() const;
+      const char* func_name() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      const struct sfunc_return_type*def_;
 };
 
 /* =========
@@ -3464,6 +3486,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.358  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.357  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

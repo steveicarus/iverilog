@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.82 2006/06/02 04:48:49 steve Exp $"
+#ident "$Id: PExpr.h,v 1.83 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  <string>
@@ -556,10 +556,20 @@ class PECallFunction : public PExpr {
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope) const;
+      NetNet* elaborate_net_sfunc_(Design*des, NetScope*scope,
+				   unsigned width,
+				   const NetExpr* rise,
+				   const NetExpr* fall,
+				   const NetExpr* decay,
+				   Link::strength_t drive0,
+				   Link::strength_t drive1) const;
 };
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.83  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.82  2006/06/02 04:48:49  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

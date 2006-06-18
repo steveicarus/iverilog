@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.70 2006/03/18 22:51:10 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.71 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -257,6 +257,9 @@ struct __vpiUserSystf {
       s_vpi_systf_data info;
 };
 
+extern struct __vpiUserSystf* vpip_find_systf(const char*name);
+
+
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
       struct __vpiScope* scope;
@@ -268,6 +271,7 @@ struct __vpiSysTaskCall {
 	/* These represent where in the vthread to put the return value. */
       unsigned vbit;
       signed   vwid;
+      class vvp_net_t*fnet;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -308,6 +312,13 @@ struct __vpiDecConst {
 
 vpiHandle vpip_make_dec_const(int value);
 vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value);
+
+struct __vpiRealConst {
+      struct __vpiHandle base;
+      double value;
+};
+
+vpiHandle vpip_make_real_const(double value);
 
 /*
  *  This one looks like a constant, but really is a vector in the current
@@ -350,6 +361,7 @@ extern unsigned vpip_module_path_cnt;
  */
 extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned vbit, int vwid,
+				     class vvp_net_t*fnet,
 				     unsigned argc,
 				     vpiHandle*argv);
 
@@ -432,6 +444,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.71  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.70  2006/03/18 22:51:10  steve
  *  Syntax for carrying sign with parameter.
  *

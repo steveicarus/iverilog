@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.156 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.157 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -904,7 +904,7 @@ bool dll_target::sign_extend(const NetSignExtend*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SIGN_EXT;
-      obj->u_.reduce.width = net->width();
+      obj->width = net->width();
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -959,7 +959,7 @@ bool dll_target::ureduce(const NetUReduce*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.reduce.width = net->width();
+      obj->width = net->width();
 
       const Nexus*nex;
 
@@ -988,7 +988,7 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.arith.width = net->width();
+      obj->width = net->width();
       obj->u_.arith.signed_flag = 0;
 
       const Nexus*nex;
@@ -1012,6 +1012,46 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       scope_add_lpm(obj->scope, obj);
+}
+
+bool dll_target::net_sysfunction(const NetSysFunc*net)
+{
+      unsigned idx;
+      const Nexus*nex;
+
+      struct ivl_lpm_s*obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_SFUNC;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.sfunc.ports = net->pin_count();
+
+      assert(net->pin_count() >= 1);
+      obj->width = net->vector_width();
+
+      obj->u_.sfunc.fun_name = net->func_name();
+
+      obj->u_.sfunc.pins = new ivl_nexus_t[net->pin_count()];
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.sfunc.pins[0] = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.sfunc.pins[0], obj, 0,
+		    IVL_DR_STRONG, IVL_DR_STRONG);
+
+      for (idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
+	    nex = net->pin(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.sfunc.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.sfunc.pins[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      scope_add_lpm(obj->scope, obj);
+      return true;
 }
 
 /*
@@ -1039,7 +1079,7 @@ bool dll_target::net_function(const NetUserFunc*net)
       obj->u_.ufunc.ports = net->pin_count();
 
       assert(net->pin_count() >= 1);
-      obj->u_.ufunc.width = net->port_width(0);
+      obj->width = net->port_width(0);
 
 	/* Now collect all the pins and connect them to the nexa of
 	   the net. The output pins have strong drive, and the
@@ -1177,9 +1217,9 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	/* Choose the width of the adder. If the carry bit is
 	   connected, then widen the adder by one and plan on leaving
 	   the fake inputs unconnected. */
-      obj->u_.arith.width = net->width();
+      obj->width = net->width();
       if (net->pin_Cout().is_linked()) {
-	    obj->u_.arith.width += 1;
+	    obj->width += 1;
       }
 
 
@@ -1235,7 +1275,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       else
 	    obj->u_.shift.signed_flag = 0;
 
-      obj->u_.shift.width = net->width();
+      obj->width = net->width();
       obj->u_.shift.select = net->width_dist();
 
       const Nexus*nex;
@@ -1276,7 +1316,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 
       bool swap_operands = false;
 
-      obj->u_.arith.width = net->width();
+      obj->width = net->width();
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       const Nexus*nex;
@@ -1377,7 +1417,7 @@ void dll_target::lpm_divide(const NetDivide*net)
 
       unsigned wid = net->width_r();
 
-      obj->u_.arith.width = wid;
+      obj->width = wid;
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       const Nexus*nex;
@@ -1415,7 +1455,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
 
       unsigned wid = net->width_r();
 
-      obj->u_.arith.width = wid;
+      obj->width = wid;
       obj->u_.arith.signed_flag = 0;
 
       const Nexus*nex;
@@ -1449,7 +1489,7 @@ void dll_target::lpm_ff(const NetFF*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.ff.width = net->width();
+      obj->width = net->width();
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1548,7 +1588,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       obj->scope = find_scope(des_, net->mem()->scope());
       assert(obj->scope);
 
-      obj->u_.ff.width = net->width();
+      obj->width = net->width();
       obj->u_.ff.swid = net->awidth();
 
       scope_add_lpm(obj->scope, obj);
@@ -1619,7 +1659,7 @@ void dll_target::lpm_mult(const NetMult*net)
 
       unsigned wid = net->width_r();
 
-      obj->u_.arith.width = wid;
+      obj->width = wid;
 
       const Nexus*nex;
 
@@ -1657,7 +1697,7 @@ void dll_target::lpm_mux(const NetMux*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.mux.width = net->width();
+      obj->width = net->width();
       obj->u_.mux.size  = net->size();
       obj->u_.mux.swid  = net->sel_width();
 
@@ -1701,7 +1741,7 @@ bool dll_target::concat(const NetConcat*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.concat.width = net->width();
+      obj->width = net->width();
 
       obj->u_.concat.inputs = net->pin_count() - 1;
       obj->u_.concat.pins = new ivl_nexus_t[obj->u_.concat.inputs+1];
@@ -1743,7 +1783,7 @@ bool dll_target::part_select(const NetPartSelect*net)
       obj->u_.part.signed_flag = 0;
 
 	/* Choose the width of the part select. */
-      obj->u_.part.width = net->width();
+      obj->width = net->width();
       obj->u_.part.base  = net->base();
       obj->u_.part.s = 0;
 
@@ -1834,7 +1874,7 @@ bool dll_target::replicate(const NetReplicate*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->u_.repeat.width = net->width();
+      obj->width = net->width();
       obj->u_.repeat.count = net->repeat();
 
       ivl_drive_t dr = IVL_DR_STRONG;
@@ -2167,6 +2207,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.157  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.156  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

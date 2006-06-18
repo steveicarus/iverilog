@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.138 2006/04/30 05:16:53 steve Exp $"
+#ident "$Id: stub.c,v 1.139 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -83,11 +83,29 @@ unsigned width_of_nexus(ivl_nexus_t nex)
       return 0;
 }
 
-const char*vt_type_string(ivl_expr_t net)
+ivl_variable_type_t type_of_nexus(ivl_nexus_t net)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(net); idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(net, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+
+	    if (sig != 0) {
+		  return ivl_signal_data_type(sig);
+	    }
+      }
+
+	/* ERROR: A nexus should have at least one signal to carry
+	   properties like the data type. */
+      return IVL_VT_NO_TYPE;
+}
+
+const char*data_type_string(ivl_variable_type_t vtype)
 {
       const char*vt = "??";
 
-      switch (ivl_expr_value(net)) {
+      switch (vtype) {
 	  case IVL_VT_NO_TYPE:
 	    vt = "NO_TYPE";
 	    break;
@@ -106,6 +124,11 @@ const char*vt_type_string(ivl_expr_t net)
       }
 
       return vt;
+}
+
+const char*vt_type_string(ivl_expr_t net)
+{
+      return data_type_string(ivl_expr_value(net));
 }
 
 void show_binary_expression(ivl_expr_t net, unsigned ind)
@@ -894,6 +917,34 @@ static void show_lpm_sub(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
+static void show_lpm_sfunc(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned ports = ivl_lpm_size(net);
+      ivl_variable_type_t data_type = type_of_nexus(ivl_lpm_q(net,0));
+      ivl_nexus_t nex;
+      unsigned idx;
+
+      fprintf(out, "  LPM_SFUNC %s: <call=%s, width=%u, type=%s, ports=%u>\n",
+	      ivl_lpm_basename(net), ivl_lpm_string(net),
+	      width, data_type_string(data_type), ports);
+
+      nex = ivl_lpm_q(net, 0);
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    ERROR: Q output nexus width=%u "
+		    " does not match part width\n", width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+      for (idx = 0 ;  idx < ports ;  idx += 1) {
+	    nex = ivl_lpm_data(net, idx);
+	    fprintf(out, "    D%u: %s <width=%u, type=%s>\n", idx,
+		    ivl_nexus_name(nex), width_of_nexus(nex),
+		    data_type_string(type_of_nexus(nex)));
+      }
+}
+
 static void show_lpm_ufunc(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -1012,6 +1063,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_REPEAT:
 	    show_lpm_repeat(net);
+	    break;
+
+	  case IVL_LPM_SFUNC:
+	    show_lpm_sfunc(net);
 	    break;
 
 	  case IVL_LPM_UFUNC:
@@ -1591,6 +1646,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.139  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.138  2006/04/30 05:16:53  steve
  *  Dump *all* the reduction operator gates.
  *

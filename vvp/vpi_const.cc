@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.35 2006/03/18 22:51:10 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.36 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -529,8 +529,69 @@ vpiHandle vpip_make_dec_const(int value)
 }
 
 
+static int real_get(int code, vpiHandle ref)
+{
+
+      switch (code) {
+	  case vpiConstType:
+	    return vpiRealConst;
+
+	  case vpiSigned:
+	    return 1;
+
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		    "by vpiDecConst\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+static void real_value(vpiHandle ref, p_vpi_value vp)
+{
+      struct __vpiRealConst*rfp = (struct __vpiRealConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (vp->format) {
+	  case vpiObjTypeVal:
+	    vp->format = vpiRealVal;
+	  case vpiRealVal:
+	    vp->value.real = rfp->value;
+	    break;
+	  default:
+	    assert(0);
+      }
+}
+
+static const struct __vpirt vpip_real_rt = {
+      vpiConstant,
+      real_get,
+      0,
+      real_value,
+      0,
+      0,
+      0
+};
+
+vpiHandle vpip_make_real_const(struct __vpiRealConst*obj, double value)
+{
+      obj->base.vpi_type = &vpip_real_rt;
+      obj->value = value;
+      return &(obj->base);
+}
+
+vpiHandle vpip_make_real_const(double value)
+{
+      struct __vpiRealConst*obj;
+      obj =(struct __vpiRealConst*) malloc(sizeof (struct __vpiRealConst));
+      return vpip_make_real_const(obj, value);
+}
+
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.36  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.35  2006/03/18 22:51:10  steve
  *  Syntax for carrying sign with parameter.
  *

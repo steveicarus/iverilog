@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.74 2005/07/11 16:56:51 steve Exp $"
+#ident "$Id: target.h,v 1.75 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -94,6 +94,7 @@ struct target_t {
       virtual void udp(const NetUDP*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_const(const NetConst*);
+      virtual bool net_sysfunction(const NetSysFunc*);
       virtual bool net_function(const NetUserFunc*);
       virtual bool net_literal(const NetLiteral*);
       virtual void net_probe(const NetEvProbe*);
@@ -170,6 +171,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.75  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.74  2005/07/11 16:56:51  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

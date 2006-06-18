@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.130 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: t-dll.h,v 1.131 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -86,6 +86,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool part_select(const NetPartSelect*);
       bool replicate(const NetReplicate*);
       void net_assign(const NetAssign_*);
+      bool net_sysfunction(const NetSysFunc*);
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
       bool net_literal(const NetLiteral*);
@@ -282,10 +283,11 @@ struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
       perm_string name;
+	// Value returned by ivl_lpm_width;
+      unsigned width;
 
       union {
 	    struct ivl_lpm_ff_s {
-		  unsigned width;
 		  unsigned swid; // ram only
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
@@ -311,7 +313,6 @@ struct ivl_lpm_s {
 	    } ff;
 
 	    struct ivl_lpm_mux_s {
-		  unsigned width;
 		  unsigned size;
 		  unsigned swid;
 		  ivl_nexus_t*d;
@@ -319,26 +320,22 @@ struct ivl_lpm_s {
 	    } mux;
 
 	    struct ivl_lpm_shift_s {
-		  unsigned width;
 		  unsigned select;
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q, d, s;
 	    } shift;
 
 	    struct ivl_lpm_arith_s {
-		  unsigned width;
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q,  a,  b;
 	    } arith;
 
 	    struct ivl_concat_s {
-		  unsigned width;
 		  unsigned inputs;
 		  ivl_nexus_t*pins;
 	    } concat;
 
 	    struct ivl_part_s {
-		  unsigned width;
 		  unsigned base;
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q, a, s;
@@ -346,20 +343,23 @@ struct ivl_lpm_s {
 
 	      // IVL_LPM_RE_* and IVL_LPM_SIGN_EXT use this.
 	    struct ivl_lpm_reduce_s {
-		  unsigned width;
 		  ivl_nexus_t q,  a;
 	    } reduce;
 
 	    struct ivl_lpm_repeat_s {
-		  unsigned width;
 		  unsigned count;
 		  ivl_nexus_t q, a;
 	    } repeat;
 
+	    struct ivl_lpm_sfunc_s {
+		  const char* fun_name;
+		  unsigned ports;
+		  ivl_nexus_t*pins;
+	    } sfunc;
+
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
 		  unsigned ports;
-		  unsigned width;
 		  ivl_nexus_t*pins;
 	    } ufunc;
       } u_;
@@ -671,6 +671,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.131  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.130  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

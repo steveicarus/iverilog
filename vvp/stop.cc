@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.15 2005/11/25 18:35:38 steve Exp $"
+#ident "$Id: stop.cc,v 1.16 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 /*
@@ -174,7 +174,7 @@ static void cmd_call(unsigned argc, char*argv[])
 	   vpi task and execute that call. Free the call structure
 	   when we finish. */
       if (errors == 0) {
-	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0,
+	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0, 0,
 							vpi_argc, vpi_argv);
 	    if (call_handle == 0)
 		  goto out;
@@ -505,6 +505,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.16  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.15  2005/11/25 18:35:38  steve
  *  stop/continue messages go through MCD for logging.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.31 2005/09/20 18:34:02 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.32 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 /*
@@ -266,6 +266,92 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp)
       return 0;
 }
 
+static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
+{
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+      unsigned vwid = (unsigned) rfp->vwid;
+      vvp_vector4_t val (vwid);
+
+      switch (vp->format) {
+
+	  case vpiIntVal: {
+		long tmp = vp->value.integer;
+		for (unsigned idx = 0 ;  idx < vwid ;  idx += 1) {
+		      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+		      tmp >>= 1;
+		}
+		break;
+	  }
+
+	  case vpiVectorVal:
+
+	    for (unsigned wdx = 0 ;  wdx < vwid ;  wdx += 32) {
+		  unsigned word = wdx / 32;
+		  unsigned long aval = vp->value.vector[word].aval;
+		  unsigned long bval = vp->value.vector[word].bval;
+
+		  for (unsigned idx = 0 ;  (wdx+idx) < vwid ; idx += 1) {
+			int bit = (aval&1) | ((bval<<1)&2);
+			vvp_bit4_t bit4;
+
+			switch (bit) {
+			    case 0:
+			      bit4 = BIT4_0;
+			      break;
+			    case 1:
+			      bit4 = BIT4_1;
+			      break;
+			    case 2:
+			      bit4 = BIT4_Z;
+			      break;
+			    case 3:
+			      bit4 = BIT4_X;
+			      break;
+			    default:
+			      assert(0);
+			}
+			val.set_bit(wdx+idx, bit4);
+
+			aval >>= 1;
+			bval >>= 1;
+		  }
+	    }
+	    break;
+
+	  default:
+	    fprintf(stderr, "XXXX format=%d, vwid=%u\n", vp->format, rfp->vwid);
+	    assert(0);
+      }
+
+      vvp_send_vec4(rfp->fnet->out, val);
+      return 0;
+}
+
+static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp)
+{
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      double val;
+
+      switch (vp->format) {
+
+	  case vpiRealVal:
+	    val = vp->value.real;
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      vvp_send_real(rfp->fnet->out, val);
+
+      return 0;
+}
+
 
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
@@ -283,6 +369,26 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
       systask_get_str,
       0,
       sysfunc_put_real_value,
+      systask_handle,
+      systask_iter
+};
+
+static const struct __vpirt vpip_sysfunc_4net_rt = {
+      vpiSysFuncCall,
+      0,
+      systask_get_str,
+      0,
+      sysfunc_put_4net_value,
+      systask_handle,
+      systask_iter
+};
+
+static const struct __vpirt vpip_sysfunc_rnet_rt = {
+      vpiSysFuncCall,
+      0,
+      systask_get_str,
+      0,
+      sysfunc_put_rnet_value,
       systask_handle,
       systask_iter
 };
@@ -315,7 +421,7 @@ static struct __vpiUserSystf* allocate_def(void)
 }
 
 
-static struct __vpiUserSystf* vpip_find_systf(const char*name)
+struct __vpiUserSystf* vpip_find_systf(const char*name)
 {
       for (unsigned idx = 0 ;  idx < def_count ;  idx += 1)
 	    if (strcmp(def_table[idx]->info.tfname, name) == 0)
@@ -337,6 +443,7 @@ static struct __vpiUserSystf* vpip_find_systf(const char*name)
  * vbit is also a non-zero value, the address in thread space of the result.
  */
 vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
+			      class vvp_net_t*fnet,
 			      unsigned argc, vpiHandle*argv)
 {
       struct __vpiUserSystf*defn = vpip_find_systf(name);
@@ -348,7 +455,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 
       switch (defn->info.type) {
 	  case vpiSysTask:
-	    if (vwid != 0) {
+	    if (vwid != 0 || fnet != 0) {
 		  fprintf(stderr, "%s: This is a system Task, "
 			  "you cannot call it as a Function\n", name);
 		  return 0;
@@ -357,7 +464,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    break;
 
 	  case vpiSysFunc:
-	    if (vwid == 0) {
+	    if (vwid == 0 && fnet == 0) {
 		  fprintf(stderr, "%s: This is a system Function, "
 			  "you cannot call it as a Task\n", name);
 		  return 0;
@@ -376,18 +483,20 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    break;
 
 	  case vpiSysFunc:
-	    if (vwid > 0) {
-		  obj->base.vpi_type = &vpip_sysfunc_rt;
+	    if (fnet && vwid == -vpiRealConst) {
+		  obj->base.vpi_type = &vpip_sysfunc_rnet_rt;
 
-	    } else switch (vwid) {
+	    } else if (fnet && vwid > 0) {
+		  obj->base.vpi_type = &vpip_sysfunc_4net_rt;
 
-		case -vpiRealConst:
+	    } else if (vwid == -vpiRealConst) {
 		  obj->base.vpi_type = &vpip_sysfunc_real_rt;
-		  break;
 
-		default:
-		  assert(0);
+	    } else if (vwid > 0) {
 		  obj->base.vpi_type = &vpip_sysfunc_rt;
+
+	    } else {
+		  assert(0);
 	    }
 	    break;
       }
@@ -398,6 +507,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->args  = argv;
       obj->vbit  = vbit;
       obj->vwid  = vwid;
+      obj->fnet  = fnet;
       obj->userdata = 0;
 
 	/* If there is a compiletf function, call it here. */
@@ -487,6 +597,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.32  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.31  2005/09/20 18:34:02  steve
  *  Clean up compiler warnings.
  *

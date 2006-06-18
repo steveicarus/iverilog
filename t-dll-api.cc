@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.133 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.134 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -852,6 +852,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.repeat.a;
 
+	  case IVL_LPM_SFUNC:
+	      // Skip the return port.
+	    assert(idx < (net->u_.sfunc.ports-1));
+	    return net->u_.sfunc.pins[idx+1];
+
 	  case IVL_LPM_UFUNC:
 	      // Skip the return port.
 	    assert(idx < (net->u_.ufunc.ports-1));
@@ -1005,6 +1010,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.shift.q;
 
+	  case IVL_LPM_SFUNC:
+	    assert(idx == 0);
+	    return net->u_.sfunc.pins[0];
+
 	  case IVL_LPM_UFUNC:
 	    assert(idx == 0);
 	    return net->u_.ufunc.pins[0];
@@ -1096,6 +1105,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return net->u_.shift.signed_flag;
 	  case IVL_LPM_SIGN_EXT: // Sign extend is always signed.
 	    return 1;
+	  case IVL_LPM_SFUNC:
+	    return 0;
 	  case IVL_LPM_UFUNC:
 	    return 0;
 	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
@@ -1117,6 +1128,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.size;
+	  case IVL_LPM_SFUNC:
+	    return net->u_.sfunc.ports - 1;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.ports - 1;
 	  case IVL_LPM_REPEAT:
@@ -1127,6 +1140,12 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
       }
 }
 
+extern "C" const char* ivl_lpm_string(ivl_lpm_t net)
+{
+      assert(net->type == IVL_LPM_SFUNC);
+      return net->u_.sfunc.fun_name;
+}
+
 extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
 {
       return net->type;
@@ -1135,50 +1154,7 @@ extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
 extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 {
       assert(net);
-      switch (net->type) {
-	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
-	    return net->u_.ff.width;
-	  case IVL_LPM_MUX:
-	    return net->u_.mux.width;
-	  case IVL_LPM_ADD:
-	  case IVL_LPM_CMP_EEQ:
-	  case IVL_LPM_CMP_EQ:
-	  case IVL_LPM_CMP_GE:
-	  case IVL_LPM_CMP_GT:
-	  case IVL_LPM_CMP_NE:
-	  case IVL_LPM_CMP_NEE:
-	  case IVL_LPM_DIVIDE:
-	  case IVL_LPM_MOD:
-	  case IVL_LPM_MULT:
-	  case IVL_LPM_SUB:
-	    return net->u_.arith.width;
-	  case IVL_LPM_RE_AND:
-	  case IVL_LPM_RE_OR:
-	  case IVL_LPM_RE_XOR:
-	  case IVL_LPM_RE_NAND:
-	  case IVL_LPM_RE_NOR:
-	  case IVL_LPM_RE_XNOR:
-	  case IVL_LPM_SIGN_EXT:
-	    return net->u_.reduce.width;
-	  case IVL_LPM_SHIFTL:
-	  case IVL_LPM_SHIFTR:
-	    return net->u_.shift.width;
-	  case IVL_LPM_UFUNC:
-	    return net->u_.ufunc.width;
-	  case IVL_LPM_CONCAT:
-	    return net->u_.concat.width;
-	  case IVL_LPM_PART_VP:
-	  case IVL_LPM_PART_PV:
-	    return net->u_.part.width;
-	  case IVL_LPM_PART_BI:
-	    return net->u_.part.width;
-	  case IVL_LPM_REPEAT:
-	    return net->u_.repeat.width;
-	  default:
-	    assert(0);
-	    return 0;
-      }
+      return net->width;
 }
 
 extern "C" ivl_memory_t ivl_lpm_memory(ivl_lpm_t net)
@@ -2033,6 +2009,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.134  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.133  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

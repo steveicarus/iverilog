@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.82 2006/03/18 22:51:10 steve Exp $"
+#ident "$Id: parse.y,v 1.83 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,7 +67,7 @@ extern FILE*yyin;
 %token K_PARAM_STR K_PARAM_L K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
+%token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
@@ -328,6 +328,10 @@ statement
 
         | T_LABEL K_EXTEND_S T_NUMBER ',' symbol ';'
                 { compile_extend_signed($1, $3, $5); }
+
+  /* System function call */
+        | T_LABEL K_SFUNC T_STRING ',' T_STRING ',' symbols ';'
+                { compile_sfunc($1, $3, $5, $7.cnt, $7.vect); }
 
   /* Shift nodes. */
 
@@ -739,6 +743,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.83  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.82  2006/03/18 22:51:10  steve
  *  Syntax for carrying sign with parameter.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.219 2006/03/18 22:51:10 steve Exp $"
+#ident "$Id: compile.cc,v 1.220 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1417,7 +1417,7 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, 0, 0, argc, argv);
+      code->handle = vpip_build_vpi_call(name, 0, 0, 0, argc, argv);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1438,7 +1438,7 @@ void compile_vpi_func_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, vbit, vwid, argc, argv);
+      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, argc, argv);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1495,6 +1495,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.220  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.219  2006/03/18 22:51:10  steve
  *  Syntax for carrying sign with parameter.
  *

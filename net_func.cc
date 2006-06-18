@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.7 2005/03/18 02:56:03 steve Exp $"
+#ident "$Id: net_func.cc,v 1.8 2006/06/18 04:15:50 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -112,8 +112,46 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
       return true;
 }
 
+
+NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
+		       const struct sfunc_return_type*def,
+		       unsigned ports)
+: NetNode(s, n, ports)
+{
+      def_ = def;
+
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Q"), 0);
+
+      for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
+
+	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name(perm_string::literal("D"), idx-1);
+	    pin(idx).drive0(Link::HIGHZ);
+	    pin(idx).drive1(Link::HIGHZ);
+      }
+}
+
+NetSysFunc::~NetSysFunc()
+{
+}
+
+const char*NetSysFunc::func_name() const
+{
+      return def_->name;
+}
+
+unsigned NetSysFunc::vector_width() const
+{
+      return def_->wid;
+}
+
+
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.8  2006/06/18 04:15:50  steve
+ *  Add support for system functions in continuous assignments.
+ *
  * Revision 1.7  2005/03/18 02:56:03  steve
  *  Add support for LPM_UFUNC user defined functions.
  *
