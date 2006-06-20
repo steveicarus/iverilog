@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.187 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.188 2006/06/20 05:06:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -209,14 +209,21 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 	    assert(0);
       }
 
+      bool expr_signed = lsig->get_signed() && rsig->get_signed();
 
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
       if (lsig->vector_width() < width)
-	    lsig = pad_to_width(des, lsig, width);
+	    if (expr_signed)
+		  lsig = pad_to_width_signed(des, lsig, width);
+	    else
+		  lsig = pad_to_width(des, lsig, width);
 
       if (rsig->vector_width() < width)
-	    rsig = pad_to_width(des, rsig, width);
+	    if (expr_signed)
+		  rsig = pad_to_width_signed(des, rsig, width);
+	    else
+		  rsig = pad_to_width(des, rsig, width);
 
 	// Check that the argument types match.
       if (lsig->data_type() != rsig->data_type()) {
@@ -232,6 +239,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       osig = new NetNet(scope, scope->local_symbol(),
 			NetNet::WIRE, owidth);
       osig->data_type(lsig->data_type());
+      osig->set_signed(expr_signed);
       osig->local_flag(true);
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Elaborate NetAddSub "
@@ -2832,6 +2840,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.188  2006/06/20 05:06:47  steve
+ *  Sign extend operands of signed addition.
+ *
  * Revision 1.187  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
