@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.35 2006/06/07 03:17:39 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.36 2006/06/23 03:49:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1440,6 +1440,116 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
       return flag;
 }
 
+static bool test_ff_set_clr(struct sync_accounting_cell*nex_ff, unsigned bits)
+{
+      for (unsigned idx = 0 ;  idx < bits ;  idx += 1) {
+	    NetFF*ff = nex_ff[idx].ff;
+	    if (ff->pin_Sset().is_linked())
+		  return true;
+	    if (ff->pin_Sclr().is_linked())
+		  return true;
+      }
+
+      return false;
+}
+
+int NetCondit::connect_set_clr_range_(struct sync_accounting_cell*nex_ff,
+				      unsigned bits, NetNet*rst,
+				      const verinum&val)
+{
+	/* Oops, this is not a constant, presumably because the case
+	   is not fully connected. In this case, we need to fall back
+	   on more general synthesis. */
+      if (! val.is_defined()) {
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: "
+		       << "Give up on set/clr synthesis, since "
+		       << "r-value = " << val << endl;
+	    return -1;
+      }
+
+      assert(val.is_defined());
+
+      unsigned base = 0;
+      unsigned wid = nex_ff[0].ff->width();
+      while (base < bits) {
+	    NetFF*ff = nex_ff[base].ff;
+	    assert(base+wid <= bits);
+
+	    verinum tmp(0UL, wid);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  assert(nex_ff[base+idx].ff == ff);
+		  tmp.set(idx, val.get(base+idx));
+	    }
+
+	    if (tmp.is_zero()) {
+		  connect(ff->pin_Sclr(), rst->pin(0));
+
+	    } else {
+		  connect(ff->pin_Sset(), rst->pin(0));
+		  ff->sset_value(tmp);
+	    }
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: "
+		       << "Create a synchronous set for "
+		       << ff->width() << " bit ff." << endl;
+
+	    base += wid;
+      }
+
+      return 0;
+}
+
+int NetCondit::connect_enable_range_(Design*des, NetScope*scope,
+				     struct sync_accounting_cell*nex_ff,
+				     unsigned bits, NetNet*ce)
+{
+      unsigned base = 0;
+      unsigned wid = nex_ff[0].ff->width();
+      while (base < bits) {
+	    NetFF*ff = nex_ff[base].ff;
+	    assert(base+wid <= bits);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  assert(nex_ff[base+idx].ff == ff);
+	    }
+
+	      /* Watch out for the special case that there is already
+		 a CE connected to this FF. This can be caused by code
+		 like this: 
+
+		 if (a) if (b) <statement>;
+
+		 In this case, we are working on the inner IF, so we
+		 AND the a and b expressions to make a new CE. */
+
+	    if (ff->pin_Enable().is_linked()) {
+		  NetLogic*ce_and = new NetLogic(scope,
+						 scope->local_symbol(), 3,
+						 NetLogic::AND);
+		  des->add_node(ce_and);
+		  connect(ff->pin_Enable(), ce_and->pin(1));
+		  connect(ce->pin(0), ce_and->pin(2));
+
+		  ff->pin_Enable().unlink();
+		  connect(ff->pin_Enable(), ce_and->pin(0));
+
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::IMPLICIT, 1);
+		  tmp->local_flag(true);
+		  connect(ff->pin_Enable(), tmp->pin(0));
+
+	    } else {
+
+		  connect(ff->pin_Enable(), ce->pin(0));
+	    }
+
+	    base += wid;
+      }
+
+      return 0;
+}
+
 /*
  * This method handles the case where I find a conditional near the
  * surface of a synchronous thread. This conditional can be a CE or an
@@ -1451,12 +1561,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      for (unsigned idx = 1 ;  idx < nex_out->pin_count() ; idx += 1) {
-	    assert(nex_ff[0].ff == nex_ff[idx].ff);
-      }
-
-      NetFF*ff = nex_ff[0].ff;
-
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
 	   inputs that are included in the sensitivity list, then it
@@ -1465,6 +1569,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
       NexusSet*expr_input = expr_->nex_input();
       assert(expr_input);
       for (unsigned idx = 0 ;  idx < events_in.count() ;  idx += 1) {
+
 
 	    NetEvProbe*ev = events_in[idx];
 	    NexusSet pin_set;
@@ -1500,6 +1605,13 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    NetNet*rst = expr_->synthesize(des);
 	    assert(rst->pin_count() == 1);
 
+	      /* WARNING: This case relies on the ff vector being a
+		 single NetFF. */
+	    for (unsigned bit = 1 ;  bit < nex_out->pin_count() ; bit += 1) {
+		  assert(nex_ff[0].ff == nex_ff[bit].ff);
+	    }
+	    NetFF*ff = nex_ff[0].ff;
+
 	      /* XXXX I really should find a way to check that the
 		 edge used on the reset input is correct. This would
 		 involve interpreting the exression that is fed by the
@@ -1516,24 +1628,91 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    bool flag = if_->synth_async_noaccum(des, scope, true, nex_ff,
 						 nex_map, asig);
 
-	    assert(asig->pin_count() == ff->width());
+	    assert(asig->pin_count() == nex_map->pin_count());
 
 	      /* Collect the set/reset value into a verinum. If
 		 this turns out to be entirely 0 values, then
 		 use the Aclr input. Otherwise, use the Aset
 		 input and save the set value. */
 	    verinum tmp (verinum::V0, ff->width());
+	    unsigned count_z = 0;
+	    unsigned count_x = 0;
 	    for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
 
 		  assert(asig->pin(bit).nexus()->drivers_constant());
-		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+		  verinum::V val = asig->pin(bit).nexus()->driven_value();
+		  tmp.set(bit, val);
+
+		  switch (val) {
+		      case verinum::V0:
+		      case verinum::V1:
+			break;
+		      case verinum::Vz:
+			count_z += 1;
+			break;
+		      case verinum::Vx:
+			count_x += 1;
+			break;
+		  }
 	    }
 
-	    if (!tmp.is_defined()) {
+	    if (count_x > 0) {
 		  cerr << get_line() << ": internal error: "
-		       << "True clause returns constant 'bx/'bz values"
+		       << "True clause returns constant 'bx values"
 		       << " which are not plausible for set/reset." << endl;
+		  cerr << get_line() << ":               : "
+		       << "XXXX val = " << tmp << endl;
 		  return false;
+	    }
+
+	    if (count_z > 0) {
+#if 0
+		  cerr << get_line() << ": internal error: "
+		       << "True clause returns constant 'bz values"
+		       << " which are not plausible for set/reset." << endl;
+		  cerr << get_line() << ":               : "
+		       << "XXXX val = " << tmp << endl;
+		  return false;
+#endif
+		  assert(count_z < ff->width());
+		    /* Some bits are not reset by this input. To make
+		       this work, split the current ff into a pair of
+		       FF, one connected to the reset, and the other
+		       not. */
+		  NetFF*ff1 = new NetFF(scope, ff->name(),
+					ff->width() - count_z);
+		  NetFF*ffz = new NetFF(scope, scope->local_symbol(),
+					count_z);
+		  des->add_node(ff1);
+		  des->add_node(ffz);
+		  connect(ff->pin_Clock(), ff1->pin_Clock());
+		  connect(ff->pin_Clock(), ffz->pin_Clock());
+		  verinum tmp1(0UL, ff1->width());
+		  unsigned bit1 = 0;
+		  unsigned bitz = 0;
+
+		  for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+
+			if (tmp.get(bit) == verinum::Vz) {
+			      connect(ffz->pin_Q(bitz), ff->pin_Q(bit));
+			      connect(ffz->pin_Data(bitz), ff->pin_Data(bit));
+			      nex_ff[bit].ff = ffz;
+			      nex_ff[bit].pin = bitz;
+			      bitz += 1;
+
+			} else {
+			      connect(ff1->pin_Q(bit1), ff->pin_Q(bit));
+			      connect(ff1->pin_Data(bit1), ff->pin_Data(bit));
+			      nex_ff[bit].ff = ff1;
+			      nex_ff[bit].pin = bit1;
+			      tmp1.set(bit1, tmp.get(bit));
+			      bit1 += 1;
+			}
+		  }
+
+		  delete ff;
+		  ff = ff1;
+		  tmp = tmp1;
 	    }
 
 	    assert(tmp.is_defined());
@@ -1601,8 +1780,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
       if ((a_set->count() == 0)
 	  && if_ && else_
-	  && !ff->pin_Sset().is_linked()
-	  && !ff->pin_Sclr().is_linked()) {
+	  && !test_ff_set_clr(nex_ff, nex_map->pin_count())) {
 
 	    NetNet*rst = expr_->synthesize(des);
 	    assert(rst->pin_count() == 1);
@@ -1619,49 +1797,26 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		  /* This path leads nowhere */
 		  delete asig;
 	    } else do {
-		  assert(asig->pin_count() == ff->width());
+		  assert(asig->pin_count() == nex_map->pin_count());
+
+		  unsigned nbits = nex_map->pin_count();
 
 		    /* Collect the set/reset value into a verinum. If
 		       this turns out to be entirely 0 values, then
 		       use the Sclr input. Otherwise, use the Aset
 		       input and save the set value. */
-		  verinum tmp (verinum::V0, ff->width());
-		  for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+		  verinum tmp (verinum::V0, nbits);
+		  for (unsigned bit = 0; bit< nbits; bit += 1) {
 
 			assert(asig->pin(bit).nexus()->drivers_constant());
 			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
 		  }
 
-		    /* Oops, this is not a constant, presumably
-		       because the case is not fully connected. In
-		       this case, we need to fall back on more general
-		       synthesis. */
-		  if (! tmp.is_defined()) {
-			if (debug_synth)
-			      cerr << get_line() << ": debug: "
-				   << "Give up on set/clr synthesis, since "
-				   << "r-value = " << tmp << endl;
+		  if (connect_set_clr_range_(nex_ff, nbits, rst, tmp) < 0) {
 			delete asig;
 			break;
 		  }
 
-		  assert(tmp.is_defined());
-		  if (tmp.is_zero()) {
-			connect(ff->pin_Sclr(), rst->pin(0));
-
-			if (debug_synth)
-			      cerr << get_line() << ": debug: "
-				   << "Create a synchronous clr (set=0) for "
-				   << ff->width() << " bit ff." << endl;
-		  } else {
-			connect(ff->pin_Sset(), rst->pin(0));
-			ff->sset_value(tmp);
-
-			if (debug_synth)
-			      cerr << get_line() << ": debug: "
-				   << "Create a synchronous set for "
-				   << ff->width() << " bit ff." << endl;
-		  }
 
 		  delete a_set;
 
@@ -1702,36 +1857,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	   The expr_ expression has already been synthesized to the ce
 	   net, so we connect it here to the FF. What's left is to
 	   synthesize the substatement as a combinational
-	   statement.
+	   statement. */
 
-	   Watch out for the special case that there is already a CE
-	   connected to this FF. This can be caused by code like this:
-
-	     if (a) if (b) <statement>;
-
-	   In this case, we are working on the inner IF, so we AND the
-	   a and b expressions to make a new CE. */
-
-      if (ff->pin_Enable().is_linked()) {
-	    NetLogic*ce_and = new NetLogic(scope,
-					   scope->local_symbol(), 3,
-					   NetLogic::AND);
-	    des->add_node(ce_and);
-	    connect(ff->pin_Enable(), ce_and->pin(1));
-	    connect(ce->pin(0), ce_and->pin(2));
-
-	    ff->pin_Enable().unlink();
-	    connect(ff->pin_Enable(), ce_and->pin(0));
-
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::IMPLICIT, 1);
-	    tmp->local_flag(true);
-	    connect(ff->pin_Enable(), tmp->pin(0));
-
-      } else {
-
-	    connect(ff->pin_Enable(), ce->pin(0));
-      }
+      unsigned nbits = nex_map->pin_count();
+      connect_enable_range_(des, scope, nex_ff, nbits, ce);
 
       bool flag = if_->synth_sync(des, scope,
 				  nex_ff, nex_map, nex_out,
@@ -1802,10 +1931,20 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 	    return false;
       }
 
-      NetFF*ff = nex_ff[0].ff;
-      connect(ff->pin_Clock(), pclk->pin(0));
-      if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute(perm_string::literal("ivl:clock_polarity"), verinum("INVERT"));
+      unsigned base = 0;
+      while (base < nex_map->pin_count()) {
+	    unsigned wid = nex_ff[base].ff->width();
+	    assert((base + wid) <= nex_map->pin_count());
+
+	    NetFF*ff = nex_ff[base].ff;
+	    connect(ff->pin_Clock(), pclk->pin(0));
+	    if (pclk->edge() == NetEvProbe::NEGEDGE)
+		  ff->attribute(perm_string::literal("ivl:clock_polarity"),
+				verinum("INVERT"));
+
+	    base += wid;
+      }
+      assert(base == nex_map->pin_count());
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, nex_ff,
@@ -1957,6 +2096,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.36  2006/06/23 03:49:47  steve
+ *  synthesis of NetCondit handles partial resets.
+ *
  * Revision 1.39.2.35  2006/06/07 03:17:39  steve
  *  Fix partial use of NetMux in sync condit statements.
  *

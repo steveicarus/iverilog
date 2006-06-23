@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.18 2006/06/14 03:02:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.19 2006/06/23 03:49:46 steve Exp $"
 #endif
 
 /*
@@ -1862,6 +1862,13 @@ class NetCondit  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
+      int connect_set_clr_range_( struct sync_accounting_cell*nex_ff,
+				  unsigned bits, NetNet*rst,
+				  const verinum&val);
+      int connect_enable_range_(Design*des, NetScope*scope,
+				struct sync_accounting_cell*nex_ff,
+				unsigned bits, NetNet*ce);
+    private:
       NetExpr* expr_;
       NetProc*if_;
       NetProc*else_;
@@ -3529,6 +3536,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.19  2006/06/23 03:49:46  steve
+ *  synthesis of NetCondit handles partial resets.
+ *
  * Revision 1.321.2.18  2006/06/14 03:02:54  steve
  *  synthesis for NetEBitSel.
  *
