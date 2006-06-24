@@ -2,7 +2,7 @@ Summary: Icarus Verilog
 Name: verilog
 Version: 0.9.0.20060618
 Release: 0
-Copyright: GPL
+License: GPL
 Group: Applications/Engineering
 Source: ftp://icarus.com/pub/eda/verilog//verilog-20060618.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
