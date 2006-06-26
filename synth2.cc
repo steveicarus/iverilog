@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.36 2006/06/23 03:49:47 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.37 2006/06/26 00:05:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -634,14 +634,57 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			else if (sync_flag)
 			      connect(mux->pin_Data(idx,item), nex_map->pin(idx));
 			else {
-			      cerr << get_line()
-				   << ": error: case " << item << " statement"
-				   << " does not assign expected outputs." << endl;
-			      des->errors += 1;
-			      return_flag = false;
+				/* No likely input for this bit. So
+				   leave it. The connectivity test
+				   below will determine if this is an
+				   error or not. */
+
 			}
 		  }
 	    }
+      }
+
+	/* Input connectivity check. */
+
+      for (unsigned wdx = 0 ;  wdx < mux->width() ;  wdx += 1) {
+	    unsigned linked_count = 0;
+	    unsigned last_linked = 0;
+	    for (unsigned item = 0 ; item < (1U<<sel_pins) ;  item += 1) {
+		  if (mux->pin_Data(wdx,item).is_linked()) {
+			linked_count += 1;
+			last_linked = item;
+		  }
+	    }
+
+	    if (linked_count == (1U<<sel_pins))
+		  continue;
+
+	      /* If we find a single input is connected to the mux,
+		 then we can guess that this is probably a case of an
+		 internal value that is not really an output. In that
+		 case, repeat the connection to all the inputs so that
+		 it consistently follows the expression that feeds it,
+		 no matter what the select.
+
+		 NOTE: Perhaps it would be better th reduce the mux
+		 width by one and connect this through? */
+	    if (linked_count==1) {
+		  for (unsigned item = 0; item < (1U<<sel_pins);  item += 1) {
+			if (item == last_linked)
+			      continue;
+
+			connect(mux->pin_Data(wdx,item),
+				mux->pin_Data(wdx,last_linked));
+		  }
+		  continue;
+	    }
+
+	      /* Strange connection pattern. Error message. */
+	    cerr << get_line()
+		 << ": error: case " << last_linked << " statement"
+		 << " does not assign expected outputs." << endl;
+	    des->errors += 1;
+	    return_flag = false;
       }
 
       delete[]statement_map;
@@ -2096,6 +2139,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.37  2006/06/26 00:05:46  steve
+ *  Handle case where case output appears to be internal.
+ *
  * Revision 1.39.2.36  2006/06/23 03:49:47  steve
  *  synthesis of NetCondit handles partial resets.
  *
