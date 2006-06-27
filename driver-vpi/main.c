@@ -562,4 +562,5 @@ int main(int argc, char *argv[])
 		compile_and_link();
 
 	myExit(0);
+	return 0; // eliminate warnings.
 }
