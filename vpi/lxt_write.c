@@ -23,8 +23,12 @@
 #include "lxt_write.h"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
+#ifndef fseeko
 #define fseeko fseek
+#endif
+#ifndef ftello
 #define ftello ftell
+#endif
 #endif
 
 /************************ splay ************************/
@@ -1644,6 +1648,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	unsigned int last_change_delta;
 
 	if((lt->clock_compress)&&(s->rows==0))
+	{
 	if((len>1)&&(len<=32))
 		{
 		int ivalue = value;
@@ -1784,7 +1789,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 
 		s->clk_prevval = ivalue + '0';
 		}
-
+	}
 	/* normal trace handling */
 
 	last_change_delta = lt->position - s->last_change - 2;
@@ -2250,6 +2255,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	int len = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
 
 	if((lt->clock_compress)&&(s->rows==0))
+	{
 	if((len>1)&&(len<=32))
 		{
 		int legal = 0;
@@ -2413,7 +2419,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 
 		s->clk_prevval = value[0];
 		}
-
+	}
 	/* normal trace handling */
 
 	last_change_delta = lt->position - s->last_change - 2;
