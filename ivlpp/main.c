@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.20 2004/09/10 00:15:45 steve Exp $"
+#ident "$Id: main.c,v 1.20.2.1 2006/06/27 01:37:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -126,8 +126,8 @@ int main(int argc, char*argv[])
       int opt, idx;
       const char*flist_path = 0;
       unsigned flag_errors = 0;
-      char*out_path = 0;
-      char *dep_path = NULL;
+      const char*out_path = 0;
+      const char*dep_path = NULL;
       FILE*out;
 
 	/* Define preprocessor keywords that I plan to just pass. */
@@ -290,6 +290,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.20.2.1  2006/06/27 01:37:14  steve
+ *  Fix const/non-const warnings.
+ *
  * Revision 1.20  2004/09/10 00:15:45  steve
  *  Remove bad casts.
  *
