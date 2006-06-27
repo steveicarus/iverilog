@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.3 2006/06/14 03:01:49 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.4 2006/06/27 01:30:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -429,8 +429,6 @@ int process_generation(const char*name)
  */
 static char* get_root_dir()
 {
-      char*var = 0;
-
 #ifdef __MINGW32__
       { char * s;
 	char basepath[1024];
@@ -459,16 +457,19 @@ static char* get_root_dir()
 	strcat(ivl_root, "\\lib\\ivl");
       }
 #else
-	/* In other systems, use the configured root. */
-      strcpy(ivl_root, IVL_ROOT);
 
-	/* In any case, the IVL_ROOT variable can be used to override
-	   the install location at run time. If it is set, use that
-	   value instead. */
-      if ( (var = getenv(IVL_ROOT_VARIABLE)) ) {
-	    strncpy(ivl_root, var, MAXSIZE);
+      { char*var = 0;
+
+	  /* In other systems, use the configured root. */
+        strcpy(ivl_root, IVL_ROOT);
+
+	  /* In any case, the IVL_ROOT variable can be used to override
+	     the install location at run time. If it is set, use that
+	     value instead. */
+	if ( (var = getenv(IVL_ROOT_VARIABLE)) ) {
+	      strncpy(ivl_root, var, MAXSIZE);
+	}
       }
-
 #endif
 
       return ivl_root;
@@ -785,6 +786,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.4  2006/06/27 01:30:20  steve
+ *  Fix unused var warning for mingw32 build.
+ *
  * Revision 1.65.2.3  2006/06/14 03:01:49  steve
  *  Remove redundant call to get_root_dir.
  *
