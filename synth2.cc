@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.37 2006/06/26 00:05:46 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.38 2006/07/02 00:50:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -539,15 +539,53 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    assert(ge);
 	    verinum gval = ge->value();
 
-	      /* Skip guards that are unreachable. */
-	    if ((sel_ref&~sel_mask) != (gval.as_ulong()&~sel_mask)) {
-		  continue;
+	    list<verinum>gstack;
+	    gstack.push_front(gval);
+
+	      /* A guard may have X/Z values, if this is a casex
+		 statement. In this case, replace a number with an x/z
+		 values with two numbers, one with a 0 substituted,
+		 another with a 1 substituted. Only process as a guard
+		 numbers that are well defined. The gstack allows us
+		 to build a list of numbers that match the pattern. */
+	    while (! gstack.empty()) {
+		  verinum tmp = gstack.front();
+		  gstack.pop_front();
+
+		  if (tmp.is_defined()
+		      || type() == NetCase::EQ) {
+
+			  /* Skip guards that are unreachable. */
+			if ((sel_ref&~sel_mask) != (tmp.as_ulong()&~sel_mask))
+			      continue;
+
+			unsigned sel_idx = guard2sel[tmp.as_ulong()];
+			assert(items_[item].statement);
+			statement_map[sel_idx] = items_[item].statement;
+
+		  } else if (type() == NetCase::EQX) {
+			  /* Process casex patterns. */
+			verinum tmp0 = tmp;
+			verinum tmp1 = tmp;
+			unsigned idx = 0;
+			while (idx < tmp.len()) {
+			      verinum::V tv = tmp.get(idx);
+			      if (tv == verinum::Vx)
+				    break;
+			      if (tv == verinum::Vz)
+				    break;
+			      idx += 1;
+			}
+			assert(idx < tmp.len());
+			tmp0.set(idx, verinum::V0);
+			tmp1.set(idx, verinum::V1);
+			gstack.push_front(tmp1);
+			gstack.push_front(tmp0);
+		  } else {
+			assert(type() == NetCase::EQZ);
+			assert(0);
+		  }
 	    }
-
-	    unsigned sel_idx = guard2sel[gval.as_ulong()];
-
-	    assert(items_[item].statement);
-	    statement_map[sel_idx] = items_[item].statement;
       }
 
 	/* Set up a default default_sig that uses the accumulated
@@ -598,10 +636,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
 		  cerr << get_line()
-		       << ": error: Incomplete case statement"
-		       << " in asynchronous (combinational) process." << endl;
+		       << ": error: Case item " << item << " is missing"
+		       << " in combinational process." << endl;
 		  cerr << get_line()
-		       << ":      : Are you missing a default case?" << endl;
+		       << ":      : Do you need a default case?" << endl;
 		  des->errors += 1;
 		  return_flag = false;
 		  continue;
@@ -680,11 +718,13 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    }
 
 	      /* Strange connection pattern. Error message. */
-	    cerr << get_line()
-		 << ": error: case " << last_linked << " statement"
-		 << " does not assign expected outputs." << endl;
-	    des->errors += 1;
-	    return_flag = false;
+	    if (return_flag != false) {
+		  cerr << get_line()
+		       << ": error: case " << last_linked << " statement"
+		       << " does not assign expected outputs." << endl;
+		  des->errors += 1;
+		  return_flag = false;
+	    }
       }
 
       delete[]statement_map;
@@ -2139,6 +2179,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.38  2006/07/02 00:50:15  steve
+ *  Properly synthesize casex statements.
+ *
  * Revision 1.39.2.37  2006/06/26 00:05:46  steve
  *  Handle case where case output appears to be internal.
  *
