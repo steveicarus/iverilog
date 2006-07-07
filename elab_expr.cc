@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.105 2006/06/02 04:48:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.106 2006/07/07 04:06:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1188,7 +1188,17 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
 				    int expr_width, bool) const
 {
       assert(value_);
-      NetEConst*tmp = new NetEConst(*value_);
+      verinum tvalue = *value_;
+
+	// If the expr_width is >0, then the context is requesting a
+	// specific size (for example this is part of the r-values of
+	// an assignment) so we pad to the desired width and ignore
+	// the self-determined size.
+      if (expr_width > 0) {
+	    tvalue = pad_to_width(tvalue, expr_width);
+      }
+
+      NetEConst*tmp = new NetEConst(tvalue);
       tmp->set_line(*this);
       return tmp;
 }
@@ -1372,6 +1382,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.106  2006/07/07 04:06:37  steve
+ *  Fix context determined with of constants.
+ *
  * Revision 1.105  2006/06/02 04:48:49  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary
