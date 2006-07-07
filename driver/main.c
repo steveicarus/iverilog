@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.4 2006/06/27 01:30:20 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.5 2006/07/07 21:31:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -468,6 +468,7 @@ static char* get_root_dir()
 	     value instead. */
 	if ( (var = getenv(IVL_ROOT_VARIABLE)) ) {
 	      strncpy(ivl_root, var, MAXSIZE);
+	      strcat(ivl_root, "/lib/ivl");
 	}
       }
 #endif
@@ -786,6 +787,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.5  2006/07/07 21:31:50  steve
+ *  Root dir variable does not include lib/ivl components.
+ *
  * Revision 1.65.2.4  2006/06/27 01:30:20  steve
  *  Fix unused var warning for mingw32 build.
  *
