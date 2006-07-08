@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.12 2006/01/02 05:32:07 steve Exp $"
+#ident "$Id: delay.cc,v 1.13 2006/07/08 21:48:00 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -220,6 +220,27 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
 void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
 {
+      if (port.port() > 0) {
+	    /* If the port is not 0, then this is a delay value that
+	    should be rounded and converted to an integer delay. */
+	    unsigned long long val = 0;
+	    if (bit > 0)
+		  val = (unsigned long long) (bit+0.5);
+
+	    switch (port.port()) {
+		case 1:
+		  delay_.set_rise(val);
+		  return;
+		case 2:
+		  delay_.set_fall(val);
+		  return;
+		case 3:
+		  delay_.set_decay(val);
+		  return;
+	    }
+	    return;
+      }
+
       if (cur_real_ == bit)
 	    return;
 
@@ -258,6 +279,9 @@ void vvp_fun_delay::run_run_real_()
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.13  2006/07/08 21:48:00  steve
+ *  Delay object supports real valued delays.
+ *
  * Revision 1.12  2006/01/02 05:32:07  steve
  *  Require explicit delay node from source.
  *

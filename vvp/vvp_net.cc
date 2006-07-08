@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.53 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.54 2006/07/08 21:48:00 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1296,10 +1296,10 @@ void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
       recv_vec4(port, reduce4(bit));
 }
 
-void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double)
+void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double bit)
 {
-      fprintf(stderr, "internal error: %s: recv_real not implemented\n",
-	      typeid(*this).name());
+      fprintf(stderr, "internal error: %s: recv_real(%f) not implemented\n",
+	      typeid(*this).name(), bit);
       assert(0);
 }
 
@@ -2193,6 +2193,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.54  2006/07/08 21:48:00  steve
+ *  Delay object supports real valued delays.
+ *
  * Revision 1.53  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
