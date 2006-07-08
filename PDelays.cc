@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.14 2006/06/02 04:48:49 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.15 2006/07/08 21:48:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,6 +115,12 @@ static NetExpr* make_delay_nets(Design*des, NetExpr*expr)
 	    return expr;
 
       NetNet*sig = expr->synthesize(des);
+      if (sig == 0) {
+	    cerr << expr->get_line() << ": error: Expression " << *expr
+		 << " is not suitable for delay expression." << endl;
+	    return 0;
+      }
+
       expr = new NetESignal(sig);
       return expr;
 }
@@ -163,6 +169,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.15  2006/07/08 21:48:46  steve
+ *  Handle real valued literals in net contexts.
+ *
  * Revision 1.14  2006/06/02 04:48:49  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

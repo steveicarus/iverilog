@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.77 2006/05/01 20:47:59 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.78 2006/07/08 21:48:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -564,12 +564,28 @@ NetNet* NetEConst::synthesize(Design*des)
       return osig;
 }
 
+/*
+* Create a NetLiteral object to represent real valued constants.
+*/
 NetNet* NetECReal::synthesize(Design*des)
 {
-      cerr << get_line() << ": error: Real constants are "
-	   << "not synthesizable." << endl;
-      des->errors += 1;
-      return 0;
+      NetScope*scope = des->find_root_scope();
+      assert(scope);
+
+      perm_string path = scope->local_symbol();
+
+      NetNet*osig = new NetNet(scope, path, NetNet::WIRE, 1);
+      osig->local_flag(true);
+      osig->data_type(IVL_VT_REAL);
+      osig->set_signed(has_sign());
+      osig->set_line(*this);
+
+      NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), value_);
+      des->add_node(con);
+      con->set_line(*this);
+
+      connect(osig->pin(0), con->pin(0));
+      return osig;
 }
 
 /*
@@ -866,6 +882,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.78  2006/07/08 21:48:46  steve
+ *  Handle real valued literals in net contexts.
+ *
  * Revision 1.77  2006/05/01 20:47:59  steve
  *  More explicit datatype setup.
  *
