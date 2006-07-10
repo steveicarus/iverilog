@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.19 2006/06/23 03:49:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.20 2006/07/10 00:21:51 steve Exp $"
 #endif
 
 /*
@@ -1438,7 +1438,7 @@ class NetUDP  : public NetNode {
  * linked into the netlist. However, elaborating a process may cause
  * special nodes to be created to handle things like events.
  */
-class NetProc : public virtual LineInfo {
+class NetProc : public virtual LineInfo, public Attrib {
 
     public:
       explicit NetProc();
@@ -1495,6 +1495,7 @@ class NetProc : public virtual LineInfo {
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
+      void dump_proc_attr(ostream&, unsigned ind) const;
 
     private:
       friend class NetBlock;
@@ -3536,6 +3537,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.20  2006/07/10 00:21:51  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.321.2.19  2006/06/23 03:49:46  steve
  *  synthesis of NetCondit handles partial resets.
  *

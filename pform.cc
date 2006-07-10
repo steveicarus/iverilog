@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.129 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: pform.cc,v 1.129.2.1 2006/07/10 00:21:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -201,6 +201,19 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
       delete siz;
       delete val;
       return res;
+}
+
+void pform_attach_attributes(Statement*obj, svector<named_pexpr_t*>*attr)
+{
+      if (obj == 0)
+	    return;
+      if (attr == 0)
+	    return;
+
+      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+	    named_pexpr_t*tmp = (*attr)[idx];
+	    obj->attributes[tmp->name] = tmp->parm;
+      }
 }
 
 void pform_startmodule(const char*name, const char*file, unsigned lineno,
@@ -1597,6 +1610,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.129.2.1  2006/07/10 00:21:53  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.129  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

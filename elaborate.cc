@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308.2.3 2006/06/12 00:16:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308.2.4 2006/07/10 00:21:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -65,6 +65,21 @@ void PGate::elaborate(Design*des, NetScope*scope) const
 {
       cerr << "internal error: what kind of gate? " <<
 	    typeid(*this).name() << endl;
+}
+
+void process_attributes(Design*des, NetScope*scope,
+			Attrib*dest, const map<perm_string,PExpr*>&table)
+{
+      struct attrib_list_t*attrib_list = 0;
+      unsigned attrib_list_n = 0;
+      attrib_list = evaluate_attributes(table, attrib_list_n,
+					des, scope);
+
+      for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+	    dest->attribute(attrib_list[adx].key,
+			    attrib_list[adx].val);
+
+      delete[]attrib_list;
 }
 
 /*
@@ -1391,6 +1406,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
       NetCase*res = new NetCase(type_, expr, icount);
       res->set_line(*this);
+      process_attributes(des, scope, res, attributes);
 
 	/* Iterate over all the case items (guard/statement pairs)
 	   elaborating them. If the guard has no expression, then this
@@ -2785,6 +2801,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308.2.4  2006/07/10 00:21:50  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.308.2.3  2006/06/12 00:16:51  steve
  *  Add support for -Wunused warnings.
  *

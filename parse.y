@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.3 2006/02/07 22:45:54 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.4 2006/07/10 00:21:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -308,17 +308,14 @@ attribute
      integers. This rule matches those declarations. The containing
      rule has presumably set up the scope. */
 block_item_decl
-	: attribute_list_opt K_reg signed_opt range register_variable_list ';'
-		{ pform_set_net_range($5, $4, $3);
-		  if ($1) delete $1;
+	: K_reg signed_opt range register_variable_list ';'
+		{ pform_set_net_range($4, $3, $2);
 		}
-	| attribute_list_opt K_reg signed_opt register_variable_list ';'
-		{ pform_set_net_range($4, 0, $3);
-		  if ($1) delete $1;
+	| K_reg signed_opt register_variable_list ';'
+		{ pform_set_net_range($3, 0, $2);
 		}
-	| attribute_list_opt K_integer register_variable_list ';'
-		{ pform_set_reg_integer($3);
-		  if ($1) delete $1;
+	| K_integer register_variable_list ';'
+		{ pform_set_reg_integer($2);
 		}
 	| K_time register_variable_list ';'
 		{ pform_set_reg_time($2);
@@ -335,15 +332,13 @@ block_item_decl
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
 
-	| attribute_list_opt K_reg error ';'
-		{ yyerror(@2, "error: syntax error in reg variable list.");
+	| K_reg error ';'
+		{ yyerror(@1, "error: syntax error in reg variable list.");
 		  yyerrok;
-		  if ($1) delete $1;
 		}
-	| attribute_list_opt K_integer error ';'
-		{ yyerror(@2, "error: syntax error in integer variable list.");
+	| K_integer error ';'
+		{ yyerror(@1, "error: syntax error in integer variable list.");
 		  yyerrok;
-		  if ($1) delete $1;
 		}
 	| K_time error ';'
 		{ yyerror(@1, "error: syntax error in time variable list.");
@@ -2548,9 +2543,9 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_begin error K_end
+/*	| K_begin error K_end
 		{ yyerrok; }
-
+*/
   /* fork-join blocks are very similar to begin-end blocks. In fact,
      from the parser's perspective there is no real difference. All we
      need to do is remember that this is a parallel block so that the
@@ -2697,28 +2692,34 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| event_control statement_opt
+	| event_control attribute_list_opt statement_opt
 		{ PEventStatement*tmp = $1;
 		  if (tmp == 0) {
 			yyerror(@1, "error: Invalid event control.");
 			$$ = 0;
 		  } else {
-			tmp->set_statement($2);
+			pform_attach_attributes($3, $2);
+			tmp->set_statement($3);
 			$$ = tmp;
 		  }
+		  if ($2) delete $2;
 		}
-	| '@' '*' statement_opt
+	| '@' '*' attribute_list_opt statement_opt
 		{ PEventStatement*tmp = new PEventStatement;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  tmp->set_statement($3);
+		  pform_attach_attributes($4, $3);
+		  tmp->set_statement($4);
+		  if ($3) delete $3;
 		  $$ = tmp;
 		}
-	| '@' '(' '*' ')' statement_opt
+	| '@' '(' '*' ')' attribute_list_opt statement_opt
 		{ PEventStatement*tmp = new PEventStatement;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  tmp->set_statement($5);
+		  pform_attach_attributes($6, $5);
+		  tmp->set_statement($6);
+		  if ($5) delete $5;
 		  $$ = tmp;
 		}
 	| lpvalue '=' expression ';'
@@ -2827,14 +2828,18 @@ statement
 	;
 
 statement_list
-	: statement_list statement
-		{ svector<Statement*>*tmp = new svector<Statement*>(*$1, $2);
+	: statement_list attribute_list_opt statement
+                { pform_attach_attributes($3, $2);
+		  svector<Statement*>*tmp = new svector<Statement*>(*$1, $3);
 		  delete $1;
+		  if ($2) delete $2;
 		  $$ = tmp;
 		}
-	| statement
-		{ svector<Statement*>*tmp = new svector<Statement*>(1);
-		  (*tmp)[0] = $1;
+	| attribute_list_opt statement
+		{ pform_attach_attributes($2, $1);
+		  svector<Statement*>*tmp = new svector<Statement*>(1);
+		  (*tmp)[0] = $2;
+		  if ($1) delete $1;
 		  $$ = tmp;
 		}
 	;

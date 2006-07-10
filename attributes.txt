@@ -70,6 +70,14 @@ warning.)
 
 * Other Attributes
 
+(* ivl_full_case *)
+
+    This attribute only has meaning when attached to case statements,
+    and only when doing synthesis. The statement means to ignore the
+    possibility that some cases are not defined. Presume that the
+    device really is fully specified and do not emit any warnings
+    about missing guards.
+
 [ none defined yet ]
 
 

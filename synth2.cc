@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.38 2006/07/02 00:50:15 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.39 2006/07/10 00:21:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -444,6 +444,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
       NetNet*esig = expr_->synthesize(des);
 
+      bool full_case_flag = false;
+      if (attribute(perm_string::literal("ivl_full_case")).len() > 0)
+	    full_case_flag = true;
+
 	/* Scan the select vector looking for constant bits. The
 	   constant bits will be elided from the select input connect,
 	   but we still need to keep track of them. */
@@ -632,7 +636,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  default_sig = sig;
 	    }
 
-	    if (statement_map[item] == 0 && !sync_flag) {
+	    if (statement_map[item] == 0 && !sync_flag && !full_case_flag) {
 		  /* Missing case and no default; this could still be
 		   * synthesizable with synchronous logic, but not here. */
 		  cerr << get_line()
@@ -645,7 +649,35 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  continue;
 	    }
 
-	    if (statement_map[item] == 0) {
+	    if (statement_map[item] == 0 && !sync_flag) {
+		  assert(full_case_flag);
+
+		    /* Cases that should never happen, we connect to
+		       0 bits. Hopefully, the target (or constant
+		       propagation) will know how to optimize this
+		       away. */
+		  NetConst*zero = new NetConst(scope, scope->local_symbol(),
+					       verinum::V0);
+		  zero->set_line(*this);
+		  des->add_node(zero);
+
+		  NetNet*zsig = new NetNet(scope, scope->local_symbol(),
+					   NetNet::WIRE, 1);
+		  zsig->local_flag(true);
+		  zsig->set_line(*this);
+
+		  connect(zsig->pin(0), zero->pin(0));
+
+		  for (unsigned idx=0; idx < mux->width(); idx += 1)
+			connect(mux->pin_Data(idx,item), zsig->pin(0));
+
+		  if (debug_synth) {
+			cerr << get_line()
+			     << ": debug: Case item " << item << " is set to"
+			     << " zero in combinational process." << endl;
+		  }
+
+	    } else if (statement_map[item] == 0) {
 
 		    /* If this is an unspecified case, then get the
 		       input from the synchronous output. Note that we
@@ -2179,6 +2211,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.39  2006/07/10 00:21:54  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.39.2.38  2006/07/02 00:50:15  steve
  *  Properly synthesize casex statements.
  *

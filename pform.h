@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.81 2004/08/26 04:02:04 steve Exp $"
+#ident "$Id: pform.h,v 1.81.2.1 2006/07/10 00:21:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -219,6 +219,8 @@ extern void pform_set_attrib(perm_string name, perm_string key,
 extern void pform_set_type_attrib(perm_string name, const string&key,
 				  char*value);
 
+extern void pform_attach_attributes(Statement*obj, svector<named_pexpr_t*>*attr);
+
 extern void pform_set_parameter(perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
@@ -298,6 +300,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.81.2.1  2006/07/10 00:21:53  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.81  2004/08/26 04:02:04  steve
  *  Add support for localparam ranges.
  *

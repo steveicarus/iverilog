@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.40 2004/02/20 18:53:33 steve Exp $"
+#ident "$Id: Statement.h,v 1.40.2.1 2006/07/10 00:21:49 steve Exp $"
 #endif
 
 # include  <string>
@@ -71,12 +71,15 @@ class PProcess : public LineInfo {
  * fact, the Statement class is abstract and represents all the
  * possible kinds of statements that exist in Verilog.
  */
-class Statement : public LineInfo {
+class Statement : public LineInfo, public Attrib {
 
     public:
       Statement() { }
       virtual ~Statement() =0;
 
+      map<perm_string,PExpr*> attributes;
+
+      void dump_attributes(ostream&out, unsigned ind) const;
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
@@ -456,6 +459,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.40.2.1  2006/07/10 00:21:49  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.40  2004/02/20 18:53:33  steve
  *  Addtrbute keys are perm_strings.
  *

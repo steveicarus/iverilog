@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.88 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.88.2.1 2006/07/10 00:21:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -418,6 +418,19 @@ void Statement::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "";
       out << "/* " << get_line() << ": " << typeid(*this).name()
 	  << " */ ;" << endl;
+      dump_attributes(out, ind+2);
+}
+
+void Statement::dump_attributes(ostream&out, unsigned ind) const
+{
+      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end()
+		 ; idx ++) {
+	    out << setw(ind) << "" << "(* " << (*idx).first;
+	    if ((*idx).second)
+		  out << " = " << *(*idx).second;
+	    out << " *)" << endl;
+      }
 }
 
 void PAssign::dump(ostream&out, unsigned ind) const
@@ -486,6 +499,8 @@ void PCase::dump(ostream&out, unsigned ind) const
 	    break;
       }
       out << " (" << *expr_ << ") /* " << get_line() << " */" << endl;
+
+      dump_attributes(out, ind+2);
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
@@ -909,6 +924,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.88.2.1  2006/07/10 00:21:54  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.88  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.5 2006/04/16 19:26:37 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.6 2006/07/10 00:21:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -567,6 +567,8 @@ void NetCase::dump(ostream&o, unsigned ind) const
 	    break;
       }
 
+      dump_proc_attr(o, ind+2);
+
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    o << setw(ind+2) << "";
 	    if (items_[idx].guard)
@@ -872,6 +874,15 @@ void NetProc::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "// " << typeid(*this).name() << endl;
 }
 
+void NetProc::dump_proc_attr(ostream&o, unsigned ind) const
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < attr_cnt() ;  idx += 1) {
+	    o << setw(ind) << "" << "(* " << attr_key(idx) << " = "
+	      << attr_value(idx) << " *)" << endl;
+      }
+}
+
 /* Dump an expression that no one wrote a dump method for. */
 void NetExpr::dump(ostream&o) const
 {
@@ -1119,6 +1130,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.6  2006/07/10 00:21:50  steve
+ *  Add support for full_case attribute.
+ *
  * Revision 1.149.2.5  2006/04/16 19:26:37  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *
