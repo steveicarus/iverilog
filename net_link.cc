@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.2 2006/01/27 02:05:46 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.3 2006/07/23 19:42:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -242,6 +242,18 @@ verinum::V Nexus::get_init() const
       }
 
       return verinum::Vz;
+}
+
+int Nexus::is_driven() const
+{
+      int count = 0;
+
+      for (Link*cur = list_ ; cur ;  cur = cur->next_) {
+	    if (cur->get_dir() == Link::OUTPUT)
+		  count += 1;
+      }
+
+      return count;
 }
 
 void Nexus::unlink(Link*that)
@@ -501,6 +513,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.3  2006/07/23 19:42:33  steve
+ *  Handle statement output override better in blocks.
+ *
  * Revision 1.14.2.2  2006/01/27 02:05:46  steve
  *  Speed up processing of connect when one side is empty.
  *

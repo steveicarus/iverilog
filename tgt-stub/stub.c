@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.9 2006/04/16 19:26:41 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.10 2006/07/23 19:42:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -247,9 +247,11 @@ static void show_lpm_demux(ivl_lpm_t net)
 	    fprintf(out, "    ERROR: width %% size == %u\n", width%size);
       }
 
-      for (idx = 0 ;  idx < width ;  idx += 1)
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_q(net, idx);
 	    fprintf(out, "    Q %u: %s\n", idx,
-		    ivl_nexus_name(ivl_lpm_q(net, idx)));
+		    nex? ivl_nexus_name(nex) : "");
+      }
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
 	    fprintf(out, "    Data %u: %s\n", idx,
@@ -509,9 +511,11 @@ static void show_lpm(ivl_lpm_t net)
 			ivl_lpm_basename(net), width, ivl_lpm_size(net),
 			ivl_lpm_selects(net));
 
-		for (idx = 0 ;  idx < width ;  idx += 1)
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_q(net, idx);
 		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+			      nex? ivl_nexus_name(nex) : "");
+		}
 
 		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
 		      fprintf(out, "    S %u: %s\n", idx,
@@ -1114,6 +1118,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.10  2006/07/23 19:42:35  steve
+ *  Handle statement output override better in blocks.
+ *
  * Revision 1.90.2.9  2006/04/16 19:26:41  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *

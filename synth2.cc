@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.39 2006/07/10 00:21:54 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.40 2006/07/23 19:42:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -328,7 +328,8 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
       if (debug_synth) {
 	    cerr << get_line() << ": debug: "
 		 << (sync_flag?"sync":"async")
-		 << " synthesis of statement block." << endl;
+		 << " synthesis of statement block. "
+		 << "pin_count=" << nex_out->pin_count() << endl;
       }
 
       const perm_string tmp1 = perm_string::literal("tmp1");
@@ -391,6 +392,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    new_accum = new NetNet(scope, tmp3, NetNet::WIRE,
 				   nex_out->pin_count());
 	    new_accum->set_line(*this);
+	    new_accum->local_flag(true);
 
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a whole. */
@@ -410,11 +412,20 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    delete tmp_map;
 	    delete tmp_out;
 
+	    assert(new_accum->pin_count() == accum_out->pin_count());
+
 	      /* Anything that is not redriven by the current
 		 statement inherits the value that was driven from any
-		 previous statements. */
+		 previous statements. Thus, the current statement can
+		 *override* the outputs of any previous statements. */
 	    for (unsigned idx = 0;  idx < new_accum->pin_count();  idx += 1) {
-		  if (new_accum->pin(idx).is_linked())
+#if 0
+		  cerr << cur->get_line() << ": XXXX: "
+		       << "Bit " << idx << " new_accum has "
+		       << new_accum->pin(idx).nexus()->is_driven()
+		       << " drivers." << endl;
+#endif
+		  if (new_accum->pin(idx).nexus()->is_driven())
 			continue;
 
 		  connect(new_accum->pin(idx), accum_out->pin(idx));
@@ -424,15 +435,27 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
       } while (cur != last_);
 
-	/* Now bind the accumulated output valies to the nex_out
+	/* Now bind the accumulated output values to the nex_out
 	   passed in. Note that each previous step has already did the
 	   pin mapping, so just connect. */
+      assert(nex_out->pin_count() == accum_out->pin_count());
       for (unsigned idx = 0 ;  idx < accum_out->pin_count() ;  idx += 1) {
 	    connect(nex_out->pin(idx), accum_out->pin(idx));
       }
 
       delete accum_out;
 
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << (sync_flag?"sync":"async")
+		 << " synthesis of statement block complete. " << endl;
+#if 0
+	    for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
+		  cerr << get_line() << ": XXXX: Bit " << idx
+		       << " has " << nex_out->pin(idx).nexus()->is_driven()
+		       << " drivers." << endl;
+#endif
+      }
       return flag;
 }
 
@@ -1029,6 +1052,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			      mux_width, 2, 1);
       mux->set_line(*this);
 
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Condit synth to MUX "
+		 << " width=" << mux_width
+		 << " sel_width=1" << endl;
+      }
+
       connect(mux->pin_Sel(0), ssig->pin(0));
 
 	/* Connected the clauses to the data inputs of the
@@ -1046,6 +1075,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  flag |= 0010;
 	    if (accum->pin(idx).is_linked())
 		  flag |= 0001;
+
 	    switch (flag) {
 		case 0111:
 		case 0110:
@@ -1328,9 +1358,12 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
       }
 
       NetFF*ff = nex_ff[0].ff;
-
       assert(ff->width() == nex_out->pin_count());
+
       unsigned block_width = nex_out->pin_count();
+
+      verinum tmp_aset = ff->aset_value();
+      verinum tmp_sset = ff->sset_value();
 
       bool flag = true;
 
@@ -1360,9 +1393,6 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 for the inputs of the FF bank. */
 	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
 					tmp_map->pin_count());
-
-	    verinum tmp_aset = ff->aset_value();
-	    verinum tmp_sset = ff->sset_value();
 
 	      /* Create a new DFF to handle this part of the begin-end
 		 block. Connect this NetFF to the associated pins of
@@ -2211,6 +2241,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.40  2006/07/23 19:42:34  steve
+ *  Handle statement output override better in blocks.
+ *
  * Revision 1.39.2.39  2006/07/10 00:21:54  steve
  *  Add support for full_case attribute.
  *

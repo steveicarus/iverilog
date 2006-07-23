@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.20 2006/07/10 00:21:51 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.21 2006/07/23 19:42:33 steve Exp $"
 #endif
 
 /*
@@ -263,6 +263,9 @@ class Nexus {
 
       Link*first_nlink();
       const Link* first_nlink()const;
+
+	/* Return the number of drivers, or 0 if undriven. */
+      int is_driven() const;
 
 	/* This method returns true if all the possible drivers of
 	   this nexus are constant. It will also return true if there
@@ -3537,6 +3540,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.21  2006/07/23 19:42:33  steve
+ *  Handle statement output override better in blocks.
+ *
  * Revision 1.321.2.20  2006/07/10 00:21:51  steve
  *  Add support for full_case attribute.
  *

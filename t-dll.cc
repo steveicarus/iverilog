@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.7 2006/04/16 19:26:40 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.8 2006/07/23 19:42:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1573,10 +1573,12 @@ bool dll_target::lpm_demux(const NetDemux*net)
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    const Nexus*nex = net->pin_Q(idx).nexus();
-	    assert(nex->t_cookie());
 	    obj->u_.demux.q[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.demux.q[idx], obj, idx,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	      /* It is possible, but unlikely, that the Q is unused. */
+	    if (obj->u_.demux.q[idx])
+		  nexus_lpm_add(obj->u_.demux.q[idx], obj, idx,
+				IVL_DR_STRONG, IVL_DR_STRONG);
       }
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
@@ -1982,10 +1984,34 @@ void dll_target::lpm_mux(const NetMux*net)
 
 	    for (unsigned idx = 0 ;  idx < obj->u_.mux.width ;  idx += 1) {
 		  nex = net->pin_Result(idx).nexus();
-		  assert(nex->t_cookie());
+#if 0
+		  if (! nex->t_cookie()) {
+			cerr << net->get_line() << ": internal error: "
+			     << "broken mux. name=" << net->name()
+			     << ", width=" << obj->u_.mux.width
+			     << ", swid=" << obj->u_.mux.swid << endl;
+			for (unsigned tmp = 0; tmp < obj->u_.mux.width; tmp += 1) {
+			      const Nexus*tmpn = net->pin_Result(tmp).nexus();
+			      if (tmpn->t_cookie() == 0)
+				    continue;
+
+			      cerr << net->get_line() << ": XXXX "
+				   << "Result(" << tmp << ") : "
+				   << tmpn->name() << endl;
+			}
+		  }
+#endif
 		  obj->u_.mux.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
+
+		    /* It is possible (although unlikely) that the
+		       result bit of the mux is not used. This can
+		       happen, for example, if the output is
+		       overridden in the HDL. In that case, skip
+		       it. But if the bit is used, then add it to the
+		       nexus. */
+		  if (obj->u_.mux.q.pins[idx])
+			nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0,
+				      IVL_DR_STRONG, IVL_DR_STRONG);
 	    }
       }
 
@@ -2334,6 +2360,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.8  2006/07/23 19:42:35  steve
+ *  Handle statement output override better in blocks.
+ *
  * Revision 1.131.2.7  2006/04/16 19:26:40  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *
