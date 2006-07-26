@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.67 2005/07/14 23:38:44 steve Exp $"
+#ident "$Id: main.c,v 1.68 2006/07/26 00:02:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -111,8 +111,6 @@ const char*generation = "2x";
 
 char warning_flags[16] = "";
 
-char*inc_list = 0;
-char*def_list = 0;
 char*mod_list = 0;
 char*command_filename = 0;
 
@@ -122,6 +120,9 @@ char*command_filename = 0;
 char*source_path = 0;
 FILE*source_file = 0;
 unsigned source_count = 0;
+
+char*defines_path = 0;
+FILE*defines_file = 0;
 
 char*iconfig_path = 0;
 FILE*iconfig_file = 0;
@@ -269,8 +270,11 @@ static int t_default(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       remove(source_path);
-      if ( ! getenv("IVERILOG_ICONFIG"))
+      if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(iconfig_path);
+	    remove(defines_path);
+      }
+
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
@@ -340,32 +344,12 @@ void process_library2_switch(const char *name)
 
 void process_include_dir(const char *name)
 {
-      if (inc_list == 0) {
-	    inc_list = malloc(strlen(" -I")+strlen(name)+1);
-	    strcpy(inc_list, " -I");
-	    strcat(inc_list, name);
-      } else {
-	    inc_list = realloc(inc_list, strlen(inc_list)
-			       + strlen(" -I")
-			       + strlen(name) + 1);
-	    strcat(inc_list, " -I");
-	    strcat(inc_list, name);
-      }
+      fprintf(defines_file, "I:%s\n", name);
 }
 
 void process_define(const char*name)
 {
-      if (def_list == 0) {
-	    def_list = malloc(strlen(" -D")+strlen(name)+1);
-	    strcpy(def_list, " -D");
-	    strcat(def_list, name);
-      } else {
-	    def_list = realloc(def_list, strlen(def_list)
-			       + strlen(" -D")
-			       + strlen(name) + 1);
-	    strcat(def_list, " -D");
-	    strcat(def_list, name);
-      }
+      fprintf(defines_file,"D:%s\n", name);
 }
 
 /*
@@ -465,6 +449,19 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
+      defines_path = strdup(my_tempfile("ivrlg2", &defines_file));
+      if (NULL == defines_file) {
+	    fprintf(stderr, "%s: Error opening temporary file %s\n",
+		    argv[0], defines_path);
+	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
+
+	    fclose(source_file);
+	    remove(source_path);
+	    return 1;
+      }
+
+      fprintf(defines_file, "D:__ICARUS__=1\n");
+
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
 
@@ -485,6 +482,9 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
 	    fclose(source_file);
 	    remove(source_path);
+
+	    fclose(defines_file);
+	    remove(defines_path);
 	    return 1;
       }
 
@@ -647,6 +647,9 @@ int main(int argc, char **argv)
       fclose(source_file);
       source_file = 0;
 
+      fclose(defines_file);
+      defines_file = 0;
+
       if (source_count == 0) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
  	    fprintf(stderr, "%s\n", HELP);
@@ -656,25 +659,13 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%civlpp %s%s -D__ICARUS__=1 -f%s ", pbase,sep,
+      sprintf(tmp, "%s%civlpp %s%s -F%s -f%s ", pbase,sep,
 	      verbose_flag?" -v":"",
-	      e_flag?"":" -L", source_path);
+	      e_flag?"":" -L", defines_path, source_path);
 
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
       strcpy(cmd, tmp);
-
-      if (inc_list) {
-	    cmd = realloc(cmd, ncmd + strlen(inc_list) + 1);
-	    strcat(cmd, inc_list);
-	    ncmd += strlen(inc_list);
-      }
-
-      if (def_list) {
-	    cmd = realloc(cmd, ncmd + strlen(def_list) + 1);
-	    strcat(cmd, def_list);
-	    ncmd += strlen(def_list);
-      }
 
       if (depfile) {
 	    cmd = realloc(cmd, ncmd + strlen(depfile) + 5);
@@ -720,10 +711,8 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -D__ICARUS__ -L %s %s\n",
-	      pbase, sep,
-	      inc_list? inc_list : "",
-	      def_list? def_list : "");
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -D__ICARUS__ -L -F%s\n",
+	      pbase, sep, defines_path);
 
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
@@ -735,6 +724,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.68  2006/07/26 00:02:48  steve
+ *  Pass defines and includes through temp file.
+ *
  * Revision 1.67  2005/07/14 23:38:44  steve
  *  Display as version 0.9.devel
  *

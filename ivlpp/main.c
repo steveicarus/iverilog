@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.20 2004/09/10 00:15:45 steve Exp $"
+#ident "$Id: main.c,v 1.21 2006/07/26 00:02:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,69 @@ int line_direct_flag = 0;
 unsigned error_count = 0;
 FILE *depend_file = NULL;
 
+static int flist_read_flags(const char*path)
+{
+      char line_buf[2048];
+      FILE*fd = fopen(path, "r");
+      if (fd == 0) {
+	    fprintf(stderr, "%s: unable to open for reading.\n", path);
+	    return -1;
+      }
+
+      while (fgets(line_buf, sizeof line_buf, fd) != 0) {
+	      /* Skip leading white space. */
+	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
+	      /* Remove trailing white space. */
+	    char*tail = cp + strlen(cp);
+	    while (tail > cp) {
+		  if (! isspace(tail[-1]))
+			break;
+		  tail -= 1;
+		  tail[0] = 0;
+	    }
+
+	      /* Skip empty lines */
+	    if (*cp == 0)
+		  continue;
+	      /* Skip comment lines */
+	    if (cp[0] == '#')
+		  continue;
+
+	      /* The arg points to the argument to the keyword. */
+	    char*arg = strchr(cp, ':');
+	    if (arg) *arg++ = 0;
+
+	    if (strcmp(cp,"D") == 0) {
+		  char*val = strchr(arg, '=');
+		  if (val)
+			*val++ = 0;
+		  else
+			val = "1";
+
+		  define_macro(arg, val, 0);
+
+	    } else if (strcmp(cp,"I") == 0) {
+		  include_dir = realloc(include_dir,
+					(include_cnt+1)*sizeof(char*));
+		  include_dir[include_cnt] = strdup(arg);
+		  include_cnt += 1;
+
+	    } else if (strcmp(cp,"keyword") == 0) {
+		  char*buf = malloc(strlen(arg) + 2);
+		  buf[0] = '`';
+		  strcpy(buf+1, optarg);
+		  define_macro(optarg, buf, 1);
+		  free(buf);
+
+	    } else {
+		  fprintf(stderr, "%s: Invalid keyword %s\n", path, cp);
+	    }
+      }
+
+      fclose(fd);
+      return 0;
+}
+
 /*
  * This function reads from a file a list of file names. Each name
  * starts with the first non-space character, and ends with the last
@@ -153,20 +216,11 @@ int main(int argc, char*argv[])
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
-      while ((opt = getopt(argc, argv, "D:f:I:K:LM:o:v")) != EOF) switch (opt) {
+      while ((opt=getopt(argc, argv, "F:f:K:LM:o:v")) != EOF) switch (opt) {
 
-	  case 'D': {
-		char*tmp = strdup(optarg);
-		char*val = strchr(tmp, '=');
-		if (val)
-		      *val++ = 0;
-		else
-		      val = "1";
-
-		define_macro(tmp, val, 0);
-		free(tmp);
-		break;
-	  }
+	  case 'F':
+	    flist_read_flags(optarg);
+	    break;
 
 	  case 'f':
 	    if (flist_path) {
@@ -174,13 +228,6 @@ int main(int argc, char*argv[])
 		  flag_errors += 1;
 	    }
 	    flist_path = optarg;
-	    break;
-
-	  case 'I':
-	    include_dir = realloc(include_dir,
-					  (include_cnt+1)*sizeof(char*));
-	    include_dir[include_cnt] = strdup(optarg);
-	    include_cnt += 1;
 	    break;
 
 	  case 'K': {
@@ -225,10 +272,9 @@ int main(int argc, char*argv[])
       }
 
       if (flag_errors) {
-	    fprintf(stderr, "\nUsage: %s [-v][-L][-I<dir>][-D<def>] <file>...\n"
-		    "    -D<def> - Predefine a value.\n"
+	    fprintf(stderr, "\nUsage: %s [-v][-L][-F<fil>][-f<fil>] <file>...\n"
+		    "    -F<fil> - Get defines and includes from file\n"
 		    "    -f<fil> - Read the sources listed in the file\n"
-		    "    -I<dir> - Add an include file search directory\n"
 		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
 		    "    -M<fil> - Write dependencies to <fil>\n"
@@ -290,6 +336,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.21  2006/07/26 00:02:48  steve
+ *  Pass defines and includes through temp file.
+ *
  * Revision 1.20  2004/09/10 00:15:45  steve
  *  Remove bad casts.
  *
