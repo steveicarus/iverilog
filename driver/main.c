@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.68 2006/07/26 00:02:48 steve Exp $"
+#ident "$Id: main.c,v 1.69 2006/07/26 00:11:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -668,10 +668,7 @@ int main(int argc, char **argv)
       strcpy(cmd, tmp);
 
       if (depfile) {
-	    cmd = realloc(cmd, ncmd + strlen(depfile) + 5);
-	    strcat(cmd, " -M ");
-	    strcat(cmd, depfile);
-	    ncmd += strlen(depfile) + 4;
+	    fprintf(defines_file, "M:%s\n", depfile);
       }
 
 	/* If the -E flag was given on the command line, then all we
@@ -724,6 +721,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.69  2006/07/26 00:11:40  steve
+ *  Pass depfiles through temp defines file.
+ *
  * Revision 1.68  2006/07/26 00:02:48  steve
  *  Pass defines and includes through temp file.
  *

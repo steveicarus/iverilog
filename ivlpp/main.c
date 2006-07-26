@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.21 2006/07/26 00:02:48 steve Exp $"
+#ident "$Id: main.c,v 1.22 2006/07/26 00:11:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,6 +58,8 @@ extern int getopt(int argc, char*argv[], const char*fmt);
 extern int optind;
 extern const char*optarg;
 #endif
+/* Path to the dependency file, if there is one. */
+char *dep_path = NULL;
 
 /*
  * Keep in source_list an array of pointers to file names. The array
@@ -143,6 +145,13 @@ static int flist_read_flags(const char*path)
 		  define_macro(optarg, buf, 1);
 		  free(buf);
 
+	    } else if (strcmp(cp,"M") == 0) {
+		  if (dep_path) {
+			fprintf(stderr, "duplicate -M flag.\n");
+		  } else {
+			dep_path = arg;
+		  }
+
 	    } else {
 		  fprintf(stderr, "%s: Invalid keyword %s\n", path, cp);
 	    }
@@ -190,7 +199,6 @@ int main(int argc, char*argv[])
       const char*flist_path = 0;
       unsigned flag_errors = 0;
       char*out_path = 0;
-      char *dep_path = NULL;
       FILE*out;
 
 	/* Define preprocessor keywords that I plan to just pass. */
@@ -216,7 +224,7 @@ int main(int argc, char*argv[])
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
-      while ((opt=getopt(argc, argv, "F:f:K:LM:o:v")) != EOF) switch (opt) {
+      while ((opt=getopt(argc, argv, "F:f:K:Lo:v")) != EOF) switch (opt) {
 
 	  case 'F':
 	    flist_read_flags(optarg);
@@ -241,14 +249,6 @@ int main(int argc, char*argv[])
 
 	  case 'L':
 	    line_direct_flag = 1;
-	    break;
-
-	  case 'M':
-	    if (dep_path) {
-		  fprintf(stderr, "duplicate -M flag.\n");
-	    } else {
-		  dep_path = optarg;
-	    }
 	    break;
 
 	  case 'o':
@@ -277,7 +277,6 @@ int main(int argc, char*argv[])
 		    "    -f<fil> - Read the sources listed in the file\n"
 		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
-		    "    -M<fil> - Write dependencies to <fil>\n"
 		    "    -o<fil> - Send the output to <fil>\n"
 		    "    -v      - Print version information\n",
 		    argv[0]);
@@ -336,6 +335,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.22  2006/07/26 00:11:40  steve
+ *  Pass depfiles through temp defines file.
+ *
  * Revision 1.21  2006/07/26 00:02:48  steve
  *  Pass defines and includes through temp file.
  *
