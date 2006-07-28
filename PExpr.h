@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.66.2.1 2005/12/07 03:28:44 steve Exp $"
+#ident "$Id: PExpr.h,v 1.66.2.2 2006/07/28 16:26:17 steve Exp $"
 #endif
 
 # include  <string>
@@ -326,7 +326,7 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
-      verinum* PEString::eval_const(const Design*, const NetScope*) const;
+      verinum* eval_const(const Design*, const NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -494,6 +494,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.66.2.2  2006/07/28 16:26:17  steve
+ *  Remove excess PEString:: prefix for stubborn compilers.
+ *
  * Revision 1.66.2.1  2005/12/07 03:28:44  steve
  *  Support constant concatenation of constants.
  *
