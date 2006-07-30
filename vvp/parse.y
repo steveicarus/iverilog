@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.83 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: parse.y,v 1.84 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,7 +67,8 @@ extern FILE*yyin;
 %token K_PARAM_STR K_PARAM_L K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
+%token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
@@ -342,7 +343,13 @@ statement
 
 	| T_LABEL K_SHIFTR T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
-		  compile_shiftr($1, $3, obj.cnt, obj.vect);
+		      compile_shiftr($1, $3, false, obj.cnt, obj.vect);
+		}
+
+
+	| T_LABEL K_SHIFTRS T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		      compile_shiftr($1, $3, true, obj.cnt, obj.vect);
 		}
 
 
@@ -743,6 +750,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.84  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.83  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

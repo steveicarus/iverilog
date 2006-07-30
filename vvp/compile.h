@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.81 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: compile.h,v 1.82 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -176,7 +176,7 @@ extern void compile_repeat(char*label, long width, long repeat,
 
 extern void compile_shiftl(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
-extern void compile_shiftr(char*label, long width,
+extern void compile_shiftr(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 
 extern void compile_timescale(long units);
@@ -345,6 +345,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.82  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.81  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

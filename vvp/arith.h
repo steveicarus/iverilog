@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.33 2006/01/03 06:19:31 steve Exp $"
+#ident "$Id: arith.h,v 1.34 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -191,9 +191,12 @@ class vvp_shiftl  : public vvp_arith_ {
 class vvp_shiftr  : public vvp_arith_ {
 
     public:
-      explicit vvp_shiftr(unsigned wid);
+      explicit vvp_shiftr(unsigned wid, bool signed_flag);
       ~vvp_shiftr();
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+
+    private:
+      bool signed_flag_;
 };
 
 /*
@@ -233,6 +236,9 @@ class vvp_arith_sub_real : public vvp_arith_real_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.34  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.33  2006/01/03 06:19:31  steve
  *  Support wide divide nodes.
  *

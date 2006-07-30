@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.220 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: compile.cc,v 1.221 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1060,11 +1060,12 @@ void compile_shiftl(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, argc, argv);
 }
 
-void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
+void compile_shiftr(char*label, long wid, bool signed_flag,
+		    unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      vvp_arith_ *arith = new vvp_shiftr(wid);
+      vvp_arith_ *arith = new vvp_shiftr(wid, signed_flag);
       make_arith(arith, label, argc, argv);
 }
 
@@ -1495,6 +1496,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.221  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.220  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

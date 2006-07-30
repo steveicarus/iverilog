@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.168 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.169 2006/07/30 02:51:35 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -986,11 +986,15 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * input must be signed, and the output will be a vector sign extended
  * to the desired width. The ivl_lpm_width() value is the output
  * width, the input will be whatever it wants to be.
+ *
  * - Shifts (IVL_LPM_SHIFTL/SHIFTR)
  * This node takes two inputs, a vector and a shift distance. The
  * ivl_lpm_data(0) nexus is the vector input, and the ivl_lpm_data(1)
  * the shift distance. The vector input is the same width as the
  * output, but the distance has its own width.
+ *
+ * The ivl_lpm_signed() flag means for IVL_LPM_SHIFTR that the right
+ * shift is *signed*. For SHIFTL, then signed-ness is emaningless.
  *
  * - System function call (IVL_LPM_SFUNC)
  * This device represents a netlist call to a system function. The
@@ -1714,6 +1718,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.169  2006/07/30 02:51:35  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.168  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.139 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: stub.c,v 1.140 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -861,8 +861,9 @@ static void show_lpm_shift(ivl_lpm_t net, const char*shift_dir)
       ivl_nexus_t nex;
       unsigned width = ivl_lpm_width(net);
 
-      fprintf(out, "  LPM_SHIFT%s %s: <width=%u>\n", shift_dir,
-	      ivl_lpm_basename(net), width);
+      fprintf(out, "  LPM_SHIFT%s %s: <width=%u, %ssigned>\n", shift_dir,
+	      ivl_lpm_basename(net), width,
+	      ivl_lpm_signed(net)? "" : "un");
 
       nex = ivl_lpm_q(net, 0);
       fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
@@ -1646,6 +1647,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.140  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.139  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

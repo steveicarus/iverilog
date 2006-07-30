@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.61 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: lexor.lex,v 1.62 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -133,6 +133,7 @@
 ".sfunc"    { return K_SFUNC; }
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
+".shift/rs" { return K_SHIFTRS; }
 ".thread"   { return K_THREAD; }
 ".timescale" { return K_TIMESCALE; }
 ".ufunc"    { return K_UFUNC; }
@@ -209,6 +210,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.62  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.61  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.145 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.146 2006/07/30 02:51:36 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1788,10 +1788,10 @@ static void draw_lpm_ff(ivl_lpm_t net)
 static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
-
+      const char* signed_flag = ivl_lpm_signed(net)? "s" : "";
 
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
-	    fprintf(vvp_out, "L_%p .shift/r %u", net, width);
+	    fprintf(vvp_out, "L_%p .shift/r%s %u", net, signed_flag, width);
       else
 	    fprintf(vvp_out, "L_%p .shift/l %u", net, width);
 
@@ -2251,6 +2251,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.146  2006/07/30 02:51:36  steve
+ *  Fix/implement signed right shift.
+ *
  * Revision 1.145  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
