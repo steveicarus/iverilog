@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.217 2006/05/11 03:26:57 steve Exp $"
+#ident "$Id: parse.y,v 1.218 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -148,7 +148,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
-%token K_PO_POS K_PO_NEG
+%token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
@@ -249,6 +249,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %left K_LS K_RS K_RSS
 %left '+' '-'
 %left '*' '/' '%'
+%left K_POW
 %left UNARY_PREC
 
 /* to resolve dangling else ambiguity. */
@@ -788,6 +789,12 @@ expression
 		}
 	| expression '^' expression
 		{ PEBinary*tmp = new PEBinary('^', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| expression K_POW expression
+		{ PEBinary*tmp = new PEBinary('p', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.30 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: verinum.h,v 1.31 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include  <string>
@@ -147,6 +147,8 @@ extern verinum operator * (const verinum&left, const verinum&right);
 extern verinum operator / (const verinum&left, const verinum&right);
 extern verinum operator % (const verinum&left, const verinum&right);
 
+extern verinum pow(const verinum&left, const verinum&right);
+
 extern verinum operator<< (const verinum&left, unsigned shift);
 extern verinum operator>> (const verinum&left, unsigned shift);
 
@@ -157,6 +159,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.31  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.30  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

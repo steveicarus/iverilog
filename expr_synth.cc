@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.78 2006/07/08 21:48:46 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.79 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -232,6 +232,14 @@ NetNet* NetEBComp::synthesize(Design*des)
       }
 
       return osig;
+}
+
+NetNet* NetEBPow::synthesize(Design*des)
+{
+      cerr << get_line() << ": internal error: Do not yet know how to handle"
+	   << " power operator in this context." << endl;
+      des->errors += 1;
+      return 0;
 }
 
 NetNet* NetEBMult::synthesize(Design*des)
@@ -882,6 +890,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.79  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.78  2006/07/08 21:48:46  steve
  *  Handle real valued literals in net contexts.
  *

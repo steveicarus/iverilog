@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.91 2006/05/17 04:15:12 steve Exp $"
+#ident "$Id: lexor.lex,v 1.92 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -134,6 +134,7 @@ W [ \t\b\f\r]+
 "<<<" { return K_LS; /* Note: Functionally, <<< is the same as <<. */}
 ">>"  { return K_RS; }
 ">>>" { return K_RSS; }
+"**" { return K_POW; }
 "<=" { return K_LE; }
 ">=" { return K_GE; }
 "=>" { return K_EG; }

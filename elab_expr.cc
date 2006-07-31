@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.106 2006/07/07 04:06:37 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.107 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,6 +98,11 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'a':
 	  case 'o':
 	    tmp = new NetEBLogic(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case 'p':
+	    tmp = new NetEBPow(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
 
@@ -1382,6 +1387,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.107  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.106  2006/07/07 04:06:37  steve
  *  Fix context determined with of constants.
  *

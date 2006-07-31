@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.48 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: net_design.cc,v 1.49 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -327,12 +327,20 @@ void NetScope::evaluate_parameters(Design*des)
 	    switch (expr->expr_type()) {
 		case IVL_VT_REAL:
 		  if (! dynamic_cast<const NetECReal*>(expr)) {
-			cerr << (*cur).second.expr->get_line()
-			     << ": internal error: "
-			      "unable to evaluate real parameter values: " <<
-			      *expr << endl;
-			des->errors += 1;
-			continue;
+
+			NetExpr*nexpr = expr->eval_tree();
+			if (nexpr == 0) {
+			      cerr << (*cur).second.expr->get_line()
+				   << ": internal error: "
+				   << "unable to evaluate real parameter value: "
+				   << *expr << endl;
+			      des->errors += 1;
+			      continue;
+			}
+
+			assert(nexpr);
+			delete expr;
+			(*cur).second.expr = nexpr;
 		  }
 		  break;
 
@@ -554,6 +562,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.49  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.48  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

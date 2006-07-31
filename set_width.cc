@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.38 2006/05/02 04:29:42 steve Exp $"
+#ident "$Id: set_width.cc,v 1.39 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -183,6 +183,12 @@ bool NetEBLogic::set_width(unsigned w, bool)
 bool NetEBMult::set_width(unsigned w, bool)
 {
       return w == expr_width();
+}
+
+bool NetEBPow::set_width(unsigned w, bool last_chance)
+{
+      bool flag = left_->set_width(w, last_chance);
+      return flag;
 }
 
 /*
@@ -434,6 +440,9 @@ bool NetEUReduce::set_width(unsigned w, bool)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.39  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.38  2006/05/02 04:29:42  steve
  *  Be more stubborn about widths.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.358 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.359 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 /*
@@ -2559,6 +2559,7 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   *  -- Arithmetic multiply
  *   /  -- Arithmetic divide
  *   %  -- Arithmetic modulus
+ *   p  -- Arithmetic power (**)
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
  *   <  -- Less then
@@ -2753,6 +2754,28 @@ class NetEBMult : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBMult* dup_expr() const;
+      virtual NetExpr* eval_tree();
+      virtual NetNet* synthesize(Design*);
+
+    private:
+
+      NetExpr* eval_tree_real_();
+
+};
+
+/*
+ * Support the binary multiplication (*) operator.
+ */
+class NetEBPow : public NetEBinary {
+
+    public:
+      NetEBPow(char op, NetExpr*l, NetExpr*r);
+      ~NetEBPow();
+
+      virtual ivl_variable_type_t expr_type() const;
+
+      virtual bool set_width(unsigned w, bool last_chance);
+      virtual NetEBPow* dup_expr() const;
       virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*);
 
@@ -3486,6 +3509,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.359  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.358  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

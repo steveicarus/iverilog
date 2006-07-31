@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.15 2004/06/04 23:33:51 steve Exp $"
+#ident "$Id: verireal.cc,v 1.16 2006/07/31 03:50:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -117,6 +117,13 @@ verireal operator% (const verireal&l, const verinum&r)
       return res;
 }
 
+verireal pow (const verireal&l, const verireal&r)
+{
+      verireal res;
+      res.value_ = pow(l.value_, r.value_);
+      return res;
+}
+
 verireal operator- (const verireal&l)
 {
       verireal res;
@@ -132,6 +139,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.16  2006/07/31 03:50:18  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.15  2004/06/04 23:33:51  steve
  *  Add unary minus as operator supported by verireal.
  *

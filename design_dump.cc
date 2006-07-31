@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.166 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.167 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -991,6 +991,9 @@ void NetEBinary::dump(ostream&o) const
 	  case 'O':
 	    o << "~|";
 	    break;
+	  case 'p':
+	    o << "**";
+	    break;
 	  case 'r':
 	    o << ">>";
 	    break;
@@ -1180,6 +1183,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.167  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.166  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

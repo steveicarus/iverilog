@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.68 2006/03/18 22:52:27 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.69 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -937,6 +937,80 @@ NetExpr* NetEBMult::eval_tree()
       return new NetEConst(lval * rval);
 }
 
+NetExpr* NetEBPow::eval_tree_real_()
+{
+      verireal lval;
+      verireal rval;
+
+      switch (left_->expr_type()) {
+	  case IVL_VT_REAL: {
+		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
+		if (lc == 0) return 0;
+		lval = lc->value();
+		break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+		if (lc == 0) return 0;
+		verinum tmp = lc->value();
+		lval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      switch (right_->expr_type()) {
+	  case IVL_VT_REAL: {
+		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
+		if (rc == 0) return 0;
+		rval = rc->value();
+		break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+		if (rc == 0) return 0;
+		verinum tmp = rc->value();
+		rval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+
+      NetECReal*res = new NetECReal( pow(lval,rval) );
+      res->set_line(*this);
+      return res;
+}
+
+NetExpr* NetEBPow::eval_tree()
+{
+      eval_sub_tree_();
+
+      if (expr_type() == IVL_VT_REAL)
+	    return eval_tree_real_();
+
+      assert(expr_type() == IVL_VT_LOGIC);
+
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
+
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      return new NetEConst( pow(lval,rval) );
+
+}
+
 /*
  * Evaluate the shift operator if possible. For this to work, both
  * operands must be constant.
@@ -1589,6 +1663,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.69  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.68  2006/03/18 22:52:27  steve
  *  Properly handle signedness in compare.
  *

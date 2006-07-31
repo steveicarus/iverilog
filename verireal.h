@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.11 2005/06/14 19:13:43 steve Exp $"
+#ident "$Id: verireal.h,v 1.12 2006/07/31 03:50:18 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -47,6 +47,7 @@ class verireal {
       friend verireal operator/ (const verireal&, const verinum&);
       friend verireal operator% (const verireal&, const verireal&);
       friend verireal operator% (const verireal&, const verinum&);
+      friend verireal pow(const verireal&, const verireal&);
 
 	// Unary minus.
       friend verireal operator- (const verireal&);
@@ -76,10 +77,14 @@ extern verireal operator/ (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verinum&);
 extern verireal operator% (const verireal&, const verireal&);
 extern verireal operator% (const verireal&, const verinum&);
+extern verireal pow(const verireal&, const verireal&);
 extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.12  2006/07/31 03:50:18  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.11  2005/06/14 19:13:43  steve
  *  gcc3/4 compile errors.
  *

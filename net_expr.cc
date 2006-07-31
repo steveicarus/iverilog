@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.26 2005/11/26 00:35:43 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.27 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -243,6 +243,40 @@ ivl_variable_type_t NetEBMult::expr_type() const
 	    return IVL_VT_REAL;
 
       if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+
+      return IVL_VT_LOGIC;
+}
+
+NetEBPow::NetEBPow(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      assert(op == 'p');
+      expr_width(l->expr_width());
+      cast_signed(l->has_sign() || r->has_sign());
+}
+
+NetEBPow::~NetEBPow()
+{
+}
+
+NetEBPow* NetEBPow::dup_expr() const
+{
+      NetEBPow*result = new NetEBPow(op_, left_->dup_expr(),
+				     right_->dup_expr());
+      result->set_line(*this);
+      return result;
+}
+
+ivl_variable_type_t NetEBPow::expr_type() const
+{
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+      if (left_->has_sign())
+	    return IVL_VT_REAL;
+      if (right_->has_sign())
 	    return IVL_VT_REAL;
 
       return IVL_VT_LOGIC;
@@ -526,6 +560,9 @@ ivl_variable_type_t NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.27  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.26  2005/11/26 00:35:43  steve
  *  More precise about r-value width of constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.46 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: verinum.cc,v 1.47 2006/07/31 03:50:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -749,6 +749,17 @@ verinum operator * (const verinum&left, const verinum&right)
       return trim_vnum(result);
 }
 
+verinum pow(const verinum&left, const verinum&right)
+{
+      verinum result = left;
+      unsigned pow_count = right.as_ulong();
+
+      for (unsigned idx = 1 ;  idx < pow_count ;  idx += 1)
+	    result = result * result;
+
+      return result;
+}
+
 verinum operator << (const verinum&that, unsigned shift)
 {
       verinum result(verinum::V0, that.len() + shift, that.has_len());
@@ -1007,6 +1018,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.47  2006/07/31 03:50:17  steve
+ *  Add support for power in constant expressions.
+ *
  * Revision 1.46  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary
