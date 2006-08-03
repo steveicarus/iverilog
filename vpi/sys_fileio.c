@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.7 2005/09/20 18:34:01 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.8 2006/08/03 05:02:46 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -33,6 +33,54 @@
 /*
  * Implement the $fopen system function.
  */
+static int sys_fopen_compiletf(char *name)
+{
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item;
+
+      if (argv == 0) {
+	    vpi_printf("%s: file name argument missing.\n", name);
+	    vpi_sim_control(vpiFinish, -1);
+	    return -1;
+      }
+
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("%s: file name argument missing.\n", name);
+	    vpi_sim_control(vpiFinish, -1);
+	    return -1;
+      }
+
+      item = vpi_scan(argv);
+      if (item == 0) {
+	      /* The mode argument is optional. It is OK for it
+		 to be missing. In this case, there are no more
+		 arguments, and we're done. */
+	    return 0;
+      }
+
+      if (! is_constant(item)) {
+	    vpi_printf("ERROR: %s mode argument must be a constant\n", name);
+	    vpi_sim_control(vpiFinish, -1);
+      }
+
+      if (vpi_get(vpiConstType, item) != vpiStringConst) {
+	    vpi_printf("ERROR: %s mode argument must be a string.\n", name);
+	    vpi_sim_control(vpiFinish, -1);
+      }
+ 
+      item = vpi_scan(argv);
+      if (item == 0) {
+	      /* There should be no more arguments. */
+	    return 0;
+      }
+
+      vpi_free_object(argv);
+      vpi_printf("%s: Too many arguments to system function.\n", name);
+      return 0;
+}
+
 static int sys_fopen_calltf(char *name)
 {
       s_vpi_value value;
@@ -40,33 +88,17 @@ static int sys_fopen_calltf(char *name)
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
-      vpiHandle item = argv ? vpi_scan(argv) : 0;
-      vpiHandle mode = item ? vpi_scan(argv) : 0;
+      vpiHandle item = vpi_scan(argv);
+      vpiHandle mode = vpi_scan(argv);
 
-      if (item == 0) {
-	    vpi_printf("%s: file name parameter missing.\n", name);
-	    return 0;
-      }
-
-      if (mode == 0) {
-	    argv = 0;
-      }
+      assert(item);
 
       if (mode) {
-	    if (! is_constant(mode)) {
-		vpi_printf("ERROR: %s parameter must be a constant\n", name);
-		if (argv) vpi_free_object(argv);
-	        return 0;
-	    }
-
-           if (vpi_get(vpiConstType, mode) != vpiStringConst) {
-               vpi_printf("ERROR: %s parameter must be a string.\n", name);
-               if (argv) vpi_free_object(argv);
-               return 0;
-           }
            value.format = vpiStringVal;
            vpi_get_value(mode, &value);
            mode_string = strdup(value.value.str);
+
+	   vpi_free_object(argv);
       }
 
 	/* Get the string form of the file name from the file name
@@ -79,7 +111,6 @@ static int sys_fopen_calltf(char *name)
 		       " does not have a string value\n",
 		       name, vpi_get(vpiType, item));
 	    if (mode) free(mode_string);
-	    if (argv) vpi_free_object(argv);
 	    return 0;
       }
 
@@ -413,7 +444,7 @@ void sys_fileio_register()
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$fopen";
       tf_data.calltf    = sys_fopen_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fopen_compiletf;
       tf_data.sizetf    = sys_fopen_sizetf;
       tf_data.user_data = "$fopen";
       vpi_register_systf(&tf_data);
@@ -479,6 +510,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.8  2006/08/03 05:02:46  steve
+ *  Use compiletf to check arguments.
+ *
  * Revision 1.7  2005/09/20 18:34:01  steve
  *  Clean up compiler warnings.
  *
