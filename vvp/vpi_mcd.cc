@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.13 2006/08/03 05:05:31 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -200,6 +200,14 @@ extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 /*
  * MCD/FD Extensions
  */
+
+/*
+ * The vpi_fopen function opens a file with the given path, and
+ * returns a file descriptor that includes bit 31 set. This is to
+ * differentiate the fd from a mcd discriptor. Note that these
+ * descriptors are distinct from the mcd descriptors, so uses a
+ * different fd table.
+ */
 extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
 {
 	unsigned i;
@@ -230,6 +238,9 @@ extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 
 /*
  * $Log: vpi_mcd.cc,v $
+ * Revision 1.13  2006/08/03 05:05:31  steve
+ *  Better comments for vpi_fopen function.
+ *
  * Revision 1.12  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
