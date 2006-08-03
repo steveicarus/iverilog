@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_bin.cc,v 1.3 2006/02/21 05:31:54 steve Exp $"
+#ident "$Id: vpip_bin.cc,v 1.4 2006/08/03 05:05:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -78,11 +78,14 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4,
       }
 
       while (idx < vec4.size())
-	    vec4.set_bit(idx, last);
+	    vec4.set_bit(idx++, last);
 }
 
 /*
  * $Log: vpip_bin.cc,v $
+ * Revision 1.4  2006/08/03 05:05:06  steve
+ *  Fix infinite loop padding binary string to result.
+ *
  * Revision 1.3  2006/02/21 05:31:54  steve
  *  Put strings for reg objects.
  *
