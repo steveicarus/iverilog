@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.25 2004/06/09 22:14:10 steve Exp $"
+#ident "$Id: sys_table.c,v 1.26 2006/08/03 05:06:04 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -35,6 +35,7 @@ extern void sys_plusargs_register();
 extern void sys_random_register();
 extern void sys_random_mti_register();
 extern void sys_readmem_register();
+extern void sys_scanf_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_vcdoff_register();
@@ -150,6 +151,7 @@ void (*vlog_startup_routines[])() = {
       sys_random_register,
       sys_random_mti_register,
       sys_readmem_register,
+      sys_scanf_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
       0
@@ -158,6 +160,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.26  2006/08/03 05:06:04  steve
+ *  Add the scanf functions.
+ *
  * Revision 1.25  2004/06/09 22:14:10  steve
  *  Move Mersenne Twister to $mti_random, and make
  *  the standard $random standard. Also, add $dist_poisson.
