@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.51 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.52 2006/08/04 04:37:37 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -478,6 +478,9 @@ class vvp_net_ptr_t {
 
       bool nil() const;
 
+      bool operator == (vvp_net_ptr_t that) const;
+      bool operator != (vvp_net_ptr_t that) const;
+
     private:
       unsigned long bits_;
 };
@@ -520,6 +523,16 @@ inline unsigned vvp_net_ptr_t::port() const
 inline bool vvp_net_ptr_t::nil() const
 {
       return bits_ == 0;
+}
+
+inline bool vvp_net_ptr_t::operator == (vvp_net_ptr_t that) const
+{
+      return bits_ == that.bits_;
+}
+
+inline bool vvp_net_ptr_t::operator != (vvp_net_ptr_t that) const
+{
+      return bits_ != that.bits_;
 }
 
 
@@ -1013,6 +1026,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.52  2006/08/04 04:37:37  steve
+ *  Support release of a for/linked reg.
+ *
  * Revision 1.51  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

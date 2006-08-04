@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.153 2006/04/27 04:38:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.154 2006/08/04 04:37:37 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -334,6 +334,41 @@ void vthread_run(vthread_t thr)
 
 	    thr = tmp;
       }
+}
+
+/*
+ * Unlink a ptr object from the driver. The input is the driver in the
+ * form of a vvp_net_t pointer. The .out member of that object is the
+ * driver. The dst_ptr argument is the receiver pin to be located and
+ * removed from the fan-out list.
+ */
+static void unlink_from_driver(vvp_net_t*src, vvp_net_ptr_t dst_ptr)
+{
+      vvp_net_t*net = dst_ptr.ptr();
+      unsigned net_port = dst_ptr.port();
+
+      if (src->out == dst_ptr) {
+	      /* If the drive fan-out list starts with this pointer,
+		 then the unlink is easy. Pull the list forward. */
+	    src->out = net->port[net_port];
+      } else {
+	      /* Scan the linked list, looking for the net_ptr_t
+		 pointer *before* the one we wish to remove. */
+	    vvp_net_ptr_t cur = src->out;
+	    assert(!cur.nil());
+	    vvp_net_t*cur_net = cur.ptr();
+	    unsigned cur_port = cur.port();
+	    while (cur_net->port[cur_port] != dst_ptr) {
+		  cur = cur_net->port[cur_port];
+		  assert(!cur.nil());
+		  cur_net = cur.ptr();
+		  cur_port = cur.port();
+	    }
+	      /* Unlink. */
+	    cur_net->port[cur_port] = net->port[net_port];
+      }
+
+      net->port[net_port] = vvp_net_ptr_t(0,0);
 }
 
 /*
@@ -2754,6 +2789,7 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+
 bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -2761,9 +2797,14 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_base*sig = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
       assert(sig);
 
-	/* XXXX Release for %force/link not yet implemented. */
-      assert(sig->force_link == 0);
+	// This is the net that is forcing me...
+      if (vvp_net_t*src = sig->force_link) {
+	      // And this is the pointer to be removed.
+	    vvp_net_ptr_t dst_ptr (net, 2);
+	    unlink_from_driver(src, dst_ptr);
+     }
 
+	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 3);
       vvp_send_long(ptr, 3);
 
@@ -3220,6 +3261,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.154  2006/08/04 04:37:37  steve
+ *  Support release of a for/linked reg.
+ *
  * Revision 1.153  2006/04/27 04:38:00  steve
  *  schedule takes relative, not absolute, time.
  *
