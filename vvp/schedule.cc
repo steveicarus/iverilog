@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.41 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: schedule.cc,v 1.42 2006/08/06 18:17:00 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -293,7 +293,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    struct event_time_s*tmp = new struct event_time_s;
 	    tmp->active = 0;
 	    tmp->nbassign = 0;
-	    ctim->rosync = 0;
+	    tmp->rosync = 0;
 	    tmp->delay = delay;
 	    tmp->next = ctim;
 	    ctim->delay -= delay;
@@ -608,6 +608,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.42  2006/08/06 18:17:00  steve
+ *  Fix typo in initialize of new event_time cell.
+ *
  * Revision 1.41  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *
