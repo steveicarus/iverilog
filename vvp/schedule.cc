@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.28 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: schedule.cc,v 1.28.2.1 2006/08/06 18:09:42 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -247,7 +247,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    struct event_time_s*tmp = new struct event_time_s;
 	    tmp->active = 0;
 	    tmp->nbassign = 0;
-	    ctim->rosync = 0;
+	    tmp->rosync = 0;
 	    tmp->delay = delay;
 	    tmp->next = ctim;
 	    ctim->delay -= delay;
@@ -556,6 +556,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.28.2.1  2006/08/06 18:09:42  steve
+ *  Typo clearing an event cell.
+ *
  * Revision 1.28  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
