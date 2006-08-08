@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.8 2006/06/15 01:57:26 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.9 2006/08/08 02:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -742,6 +742,9 @@ NetNet* NetEMemory::synthesize(Design*des)
 			connect(mux->pin_Data(idx, wrd), explode->pin(bit));
 		  }
 
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: synthesis done." << endl;
+
       } else {
 	    cerr << get_line() << ": internal error: Synthesize memory "
 		 << "expression that is not exploded?" << endl;
@@ -1003,6 +1006,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.9  2006/08/08 02:17:48  steve
+ *  Improved nexus management performance.
+ *
  * Revision 1.59.2.8  2006/06/15 01:57:26  steve
  *  Handle simple memory addressing in expression synthesis.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.40 2006/07/23 19:42:34 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.41 2006/08/08 02:17:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -71,7 +71,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
 {
       return synth_async_noaccum(des, scope, true, nex_ff, nex_map, nex_out);
 }
-
+#if 0
 static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
 {
       unsigned idx = 0;
@@ -80,6 +80,48 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
 		  return idx;
 
       return idx;
+}
+#endif
+struct nexus_map_t {
+      const Nexus*nex;
+      int idx;
+};
+static int ncp_compare(const void*p1, const void*p2)
+{
+      const Nexus*a1 = ((const struct nexus_map_t*)p1) -> nex;
+      const Nexus*a2 = ((const struct nexus_map_t*)p2) -> nex;
+      if (a1 < a2)
+	    return -1;
+      if (a1 > a2)
+	    return 1;
+      return 0;
+}
+
+static struct nexus_map_t*make_nexus_index(const NetNet*nset)
+{
+      struct nexus_map_t*table = new struct nexus_map_t[nset->pin_count()];
+      for (unsigned idx = 0 ;  idx < nset->pin_count() ;  idx += 1) {
+	    table[idx].nex = nset->pin(idx).nexus();
+	    table[idx].idx = idx;
+      }
+      qsort(table, nset->pin_count(), sizeof(struct nexus_map_t), ncp_compare);
+      return table;
+}
+
+static int map_nexus_in_index(struct nexus_map_t*table, size_t ntable,
+			      const Nexus*nex)
+{
+      struct nexus_map_t key;
+      key.nex = nex;
+      struct nexus_map_t*res = (struct nexus_map_t*)
+	    bsearch(&key, table, ntable,
+		    sizeof(struct nexus_map_t), ncp_compare);
+
+      if (res == 0)
+	    return -1;
+
+      assert(res->nex == nex);
+      return res->idx;
 }
 
 /*
@@ -191,12 +233,19 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			connect(nex_ff[0].ff->pin_Q(off), dq->pin_Data(idx));
 		  }
 
+		  struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
 			unsigned off = cur->get_loff()+idx;
-			unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
-			assert(ptr < nex_out->pin_count());
+			int tmp = map_nexus_in_index(nex_map_idx,
+						     nex_map->pin_count(),
+						     lsig->pin(off).nexus());
+			assert(tmp >= 0);
+			unsigned ptr = tmp;
 			connect(nex_out->pin(ptr), dq->pin_Q(idx));
 		  }
+
+		  delete[]nex_map_idx;
 
 		    /* The r-value (1 bit) connects to the WriteData
 		       input of the demux. */
@@ -214,11 +263,16 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	      /* Bind the outputs that we do make to the nex_out. Use the
 		 nex_map to map the l-value bit position to the nex_out bit
 		 position. */
+
+	    struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 		  unsigned off = cur->get_loff()+idx;
-		  unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
-
-		  assert(ptr <= nex_map->pin_count());
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       lsig->pin(off).nexus());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
 	    }
 
@@ -250,6 +304,11 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
       NetMemory*lmem = cur->mem();
       assert(lmem);
 
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Start synthesis of assign "
+		  "to memory " << lmem->name() << "." << endl;
+      }
+
       NetNet*msig = lmem->explode_to_reg();
       cur->incr_mem_lref();
 
@@ -266,13 +325,20 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
 		  return false;
 	    }
 
+	    struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 	    unsigned adr = lmem->index_to_address(adr_s) * lmem->width();
 	    for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
 		  unsigned off = adr+idx;
-		  unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
-		  assert(ptr <= nex_map->pin_count());
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       msig->pin(off).nexus());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
 	    }
+
+	    delete[]nex_map_idx;
 
 	    cur->turn_sig_to_wire_on_release();
 	    return true;
@@ -292,12 +358,19 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
       for (unsigned idx = 0; idx < adr->pin_count() ;  idx += 1)
 	    connect(dq->pin_Address(idx), adr->pin(idx));
 
+      struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
       for (unsigned idx = 0; idx < msig->pin_count(); idx += 1) {
 	    unsigned off = idx;
-	    unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
-	    assert(ptr <= nex_map->pin_count());
+	    int tmp = map_nexus_in_index(nex_map_idx,
+					 nex_map->pin_count(),
+					 msig->pin(off).nexus());
+	    assert(tmp >= 0);
+	    unsigned ptr = tmp;
 	    connect(nex_out->pin(ptr), dq->pin_Q(idx));
       }
+
+      delete[]nex_map_idx;
 
       for (unsigned idx = 0 ;  idx < msig->pin_count(); idx += 1)
 	    connect(dq->pin_Data(idx), nex_map->pin(roff+idx));
@@ -307,6 +380,11 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
 
       roff += cur->lwidth();
       cur->turn_sig_to_wire_on_release();
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Finish synthesis of assign "
+		  "to memory " << lmem->name() << "." << endl;
+      }
 
       return true;
 }
@@ -367,11 +445,19 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		 handle default cases specially. We will delete this
 		 temporary map as soon as the synth_async is done. */
 	    new_accum = new NetNet(scope, tmp3, NetNet::WIRE, tmp_set.count());
+	    struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < tmp_set.count() ;  idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       tmp_set[idx]);
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 		  if (accum_out->pin(ptr).is_linked())
 			connect(new_accum->pin(idx), accum_out->pin(ptr));
 	    }
+
+	    delete [] nex_map_idx;
 
 	    bool ok_flag = cur->synth_async(des, scope, sync_flag, nex_ff,
 					    tmp_map, tmp_out, new_accum);
@@ -395,19 +481,28 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    new_accum->local_flag(true);
 
 	      /* Use the nex_map to link up the output from the
-		 substatement to the output of the block as a whole. */
+		 substatement to the output of the block as a
+		 whole. */
+
+	    nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_map->pin(idx).nexus());
-		  if (ptr >= nex_map->pin_count()) {
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       tmp_map->pin(idx).nexus());
+		  if (tmp < 0) {
 			cerr << cur->get_line() << ": internal error: "
 			     << "Nexus isn't in nex_map?! idx=" << idx
 			     << " map width = " << nex_map->pin_count()
 			     << " tmp_map count = " << tmp_map->pin_count()
 			     << endl;
 		  }
-		  assert(ptr < new_accum->pin_count());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 		  connect(new_accum->pin(ptr), tmp_out->pin(idx));
 	    }
+
+	    delete[]nex_map_idx;
 
 	    delete tmp_map;
 	    delete tmp_out;
@@ -1272,6 +1367,11 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	/* There is no memory address, so resort to async
 	   assignments. */
       if (demux == 0) {
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: Looks like simple assign "
+		       << "to a synchronous vector." << endl;
+	    }
+
 	      /* Synthesize the input to the DFF. */
 	    return synth_async_noaccum(des, scope, true, nex_ff,
 				       nex_map, nex_out);
@@ -1287,6 +1387,11 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	   assign to a constant bit. We don't need a demux in that
 	   case. */
       if (demux->mem() && dynamic_cast<NetEConst*>(demux->bmux())) {
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: Looks like an assign "
+		       << "to a fixed memory word." << endl;
+	    }
+
 	    NetMemory*lmem = demux->mem();
 	    NetNet*msig = lmem->explode_to_reg();
 	    demux->incr_mem_lref();
@@ -1295,14 +1400,27 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	    long adr = ae->value().as_long();
 	    adr = lmem->index_to_address(adr) * lmem->width();
 
+	    struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < demux->lwidth() ;  idx += 1) {
 		  unsigned off = adr+idx;
-		  unsigned ptr = find_nexus_in_set(nex_map, msig->pin(off).nexus());
-		  assert(ptr <= nex_map->pin_count());
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       msig->pin(off).nexus());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 		  connect(nex_out->pin(ptr), rsig->pin(idx));
 	    }
+
+	    delete[]nex_map_idx;
+
 	    lval_->turn_sig_to_wire_on_release();
 	    return true;
+      }
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Looks like an assign "
+		 << "to an addressed memory word." << endl;
       }
 
 	/* We also need the address (now known to be non-constant)
@@ -1326,6 +1444,11 @@ bool NetAssignBase::synth_sync(Design*des, NetScope*scope,
 	    lval_->incr_mem_lref();
       }
       lval_->turn_sig_to_wire_on_release();
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Synchronous assign done." << endl;
+      }
+
       return true;
 }
 
@@ -1352,6 +1475,10 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
       if (last_ == 0)
 	    return true;
 
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Start synthesis of block" << endl;
+      }
+
 	/* Assert that this region still represents a single DFF. */
       for (unsigned idx = 1 ;  idx < nex_out->pin_count() ; idx += 1) {
 	    assert(nex_ff[0].ff == nex_ff[idx].ff);
@@ -1373,6 +1500,12 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
       NetProc*cur = last_;
       do {
 	    cur = cur->next_;
+
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Collect information for statement at "
+		       << cur->get_line() << endl;
+	    }
 
 	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
@@ -1406,11 +1539,22 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	    struct sync_accounting_cell*tmp_ff
 		  = new struct sync_accounting_cell[ff2->width()];
 
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Map pins for statement at "
+		       << cur->get_line() << endl;
+	    }
+
 	    verinum aset_value2 (verinum::V1, ff2->width());
 	    verinum sset_value2 (verinum::V1, ff2->width());
+	    struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map,
-						   tmp_map->pin(idx).nexus());
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       tmp_map->pin(idx).nexus());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 
 		    /* Copy the asynch set bit to the new device. */
 		  if (ptr < tmp_aset.len())
@@ -1427,6 +1571,14 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		  tmp_ff[idx].ff = ff2;
 		  tmp_ff[idx].pin = idx;
 		  tmp_ff[idx].proc = cur;
+	    }
+
+	    delete[]nex_map_idx;
+
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Propagate FF controls for statement at "
+		       << cur->get_line() << endl;
 	    }
 
 	      /* PUll the non-sliced inputs (clock, set, reset, etc)
@@ -1475,6 +1627,12 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		  }
 	    }
 
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Start substatement synthesis at "
+		       << cur->get_line() << endl;
+	    }
+
 	      /* Now go on with the synchronous synthesis for this
 		 statement of the block. The tmp_map is the output
 		 nexa that we expect, and the tmp_out is where we want
@@ -1488,16 +1646,27 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	    if (ok_flag == false)
 		  continue;
 
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Bind block substatement to ff bits." << endl;
+	    }
 	      /* Use the nex_map to link up the output from the
 		 substatement to the output of the block as a
 		 whole. It is occasionally possible to have outputs
 		 beyond the input set, for example when the l-value of
 		 an assignment is smaller then the r-value. */
+
+	    nex_map_idx = make_nexus_index(nex_map);
+
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
 		  ff2 = tmp_ff[idx].ff;
 		  unsigned ff2_pin = tmp_ff[idx].pin;
-		  unsigned ptr = find_nexus_in_set(nex_map,
-					   tmp_map->pin(idx).nexus());
+
+		  int tmp = map_nexus_in_index(nex_map_idx,
+					       nex_map->pin_count(),
+					       tmp_map->pin(idx).nexus());
+		  assert(tmp >= 0);
+		  unsigned ptr = tmp;
 
 		  if (ptr >= nex_out->pin_count())
 			continue;
@@ -1536,6 +1705,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			}
 		  }
 	    }
+	    delete[]nex_map_idx;
 
 	    delete tmp_map;
 	    delete tmp_out;
@@ -1551,6 +1721,11 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	   taken up by the smaller NetFF devices. */
       delete ff;
       ff = 0;
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << "Check block synthesis for completelness. " << endl;
+      }
 
 	/* Run through the pin accounting one more time to make sure
 	   the data inputs are all connected. */
@@ -1580,6 +1755,10 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		  flag = false;
 		  des->errors += 1;
 	    }
+      }
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Finish synthesis of block" << endl;
       }
 
       return flag;
@@ -1706,6 +1885,11 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << "Start sync synthesis of conditional" << endl;
+      }
+
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
 	   inputs that are included in the sensitivity list, then it
@@ -1899,10 +2083,19 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 					     nex_ff, nex_map,
 					     nex_out, events_tmp);
 
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: "
+		       << "End synthesis of conditional" << endl;
 	    return flag;
       }
 
       delete expr_input;
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << "Condit expression input not sensitive, "
+		 << "so must be synchronous. " << endl;
+      }
 
 	/* Detect the case that this is a *synchronous* set/reset. It
 	   is not asyncronous because we know the condition is not
@@ -1970,6 +2163,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 					   nex_ff, nex_map, nex_out,
 					   svector<NetEvProbe*>(0))
 			&& flag;
+
+		  if (debug_synth)
+			cerr << get_line() << ": debug: "
+			     << "End synthesis of conditional" << endl;
 		  return flag;
 	    } while (0);
       }
@@ -1983,13 +2180,29 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Condit expression looks like a synchronous mux."
+		       << endl;
+	    }
+
 	    bool flag =synth_async_noaccum(des, scope, true, nex_ff,
 					   nex_map, nex_out);
+
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: "
+		       << "End synthesis of conditional" << endl;
 	    return flag;
       }
 
       assert(if_);
       assert(!else_);
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << "Condit expression looks like a synchronous enable. "
+		 << endl;
+      }
 
 	/* Synthesize the enable expression. */
       NetNet*ce = expr_->synthesize(des);
@@ -2007,10 +2220,20 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
       unsigned nbits = nex_map->pin_count();
       connect_enable_range_(des, scope, nex_ff, nbits, ce);
 
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: "
+		 << "Condit expression make input that is sync enabled."
+		 << endl;
+      }
+
       bool flag = if_->synth_sync(des, scope,
 				  nex_ff, nex_map, nex_out,
 				  events_in);
 
+
+      if (debug_synth)
+	    cerr << get_line() << ": debug: "
+		 << "End synthesis of conditional" << endl;
       return flag;
 }
 
@@ -2019,7 +2242,6 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      DEBUG_SYNTH2_ENTRY("NetEvWait")
       if (events_in.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
 		 << " for in process synthesis. (evw)" << endl;
@@ -2027,6 +2249,11 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
       }
 
       assert(events_in.count() == 0);
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Start synthesis of event wait statement."
+		 << endl;
+      }
 
 	/* This can't be other then one unless there are named events,
 	   which I cannot synthesize. */
@@ -2072,7 +2299,6 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 	    cerr << get_line() << ":      : Perhaps the clock"
 		 << " is read by a statement or expression?" << endl;
 	    des->errors += 1;
-	    DEBUG_SYNTH2_EXIT("NetEvWait",false)
 	    return false;
       }
 
@@ -2095,7 +2321,11 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
       bool flag = statement_->synth_sync(des, scope, nex_ff,
 					 nex_map, nex_out, events);
 
-      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Finished synthesis of event wait statement."
+		 << endl;
+      }
+
       return flag;
 }
 
@@ -2112,8 +2342,17 @@ bool NetWhile::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 bool NetProcTop::synth_sync(Design*des)
 {
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Start synthesis of process." << endl;
+      }
+
       NexusSet nex_set;
       statement_->nex_output(nex_set);
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Process seems to have "
+		 << nex_set.count() << " output bits." << endl;
+      }
 
       NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
 			   nex_set.count());
@@ -2158,6 +2397,10 @@ bool NetProcTop::synth_sync(Design*des)
 
       delete nex_q;
       delete[]nex_ff;
+
+      if (debug_synth) {
+	    cerr << get_line() << ": debug: Finished synthesis of process." << endl;
+      }
 
       return flag;
 }
@@ -2241,6 +2484,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.41  2006/08/08 02:17:49  steve
+ *  Improved nexus management performance.
+ *
  * Revision 1.39.2.40  2006/07/23 19:42:34  steve
  *  Handle statement output override better in blocks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.3 2006/07/23 19:42:33 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.4 2006/08/08 02:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,8 +40,8 @@ void connect(Nexus*l, Link&r)
       if (l == r.nexus_)
 	    return;
 
-
       Nexus*tmp = r.nexus_;
+
       while (Link*cur = tmp->list_) {
 	    tmp->list_ = cur->next_;
 	    cur->nexus_ = 0;
@@ -49,9 +49,6 @@ void connect(Nexus*l, Link&r)
 	    l->relink(cur);
       }
 
-      l->driven_ = Nexus::NO_GUESS;
-
-      assert(tmp->list_ == 0);
       delete tmp;
 }
 
@@ -59,6 +56,8 @@ void connect(Link&l, Link&r)
 {
       assert(&l != &r);
       if (r.is_linked() && !l.is_linked())
+	    connect(r.nexus_, l);
+      else if (r.nexus_->list_len_ > l.nexus_->list_len_)
 	    connect(r.nexus_, l);
       else
 	    connect(l.nexus_, r);
@@ -218,6 +217,7 @@ Nexus::Nexus()
 {
       name_ = 0;
       list_ = 0;
+      list_len_ = 0;
       driven_ = NO_GUESS;
       t_cookie_ = 0;
 }
@@ -269,10 +269,12 @@ void Nexus::unlink(Link*that)
 	    driven_ = NO_GUESS;
 
       assert(that);
+      assert(that->nexus_ == this);
       if (list_ == that) {
 	    list_ = that->next_;
 	    that->next_ = 0;
 	    that->nexus_ = 0;
+	    list_len_ -= 1;
 	    return;
       }
 
@@ -285,6 +287,7 @@ void Nexus::unlink(Link*that)
       cur->next_ = that->next_;
       that->nexus_ = 0;
       that->next_ = 0;
+      list_len_ -= 1;
 }
 
 void Nexus::relink(Link*that)
@@ -304,6 +307,7 @@ void Nexus::relink(Link*that)
       that->next_ = list_;
       that->nexus_ = this;
       list_ = that;
+      list_len_ += 1;
 }
 
 Link* Nexus::first_nlink()
@@ -393,6 +397,7 @@ const char* Nexus::name() const
 NexusSet::NexusSet()
 {
       items_ = 0;
+      index_ = 0;
       nitems_ = 0;
 }
 
@@ -401,8 +406,11 @@ NexusSet::~NexusSet()
       if (nitems_ > 0) {
 	    assert(items_ != 0);
 	    delete[] items_;
+	    assert(index_ != 0);
+	    delete[] index_;
       } else {
 	    assert(items_ == 0);
+	    assert(index_ == 0);
       }
 }
 
@@ -411,26 +419,44 @@ unsigned NexusSet::count() const
       return nitems_;
 }
 
+/*
+ * Add the Nexus to the nexus set at the *end* of the array. This
+ * preserves order, which is used in a few cases by the
+ * synthesizer. But for efficiency, also create a sorted index.
+ */
 void NexusSet::add(Nexus*that)
 {
+	/* Handle the special case that the set is empty. */
       if (nitems_ == 0) {
 	    assert(items_ == 0);
+	    assert(index_ == 0);
 	    items_ = (Nexus**)malloc(sizeof(Nexus*));
 	    items_[0] = that;
+	    index_ = (unsigned*)malloc(sizeof(unsigned));
+	    index_[0] = 0;
 	    nitems_ = 1;
 	    return;
       }
 
       unsigned ptr = bsearch_(that);
-      if (ptr < nitems_) {
-	    assert(items_[ptr] == that);
+      if (ptr < nitems_ && items_[index_[ptr]] == that) {
+	    assert(items_[index_[ptr]] == that);
 	    return;
       }
 
-      assert(ptr == nitems_);
+      items_ = (Nexus**)  realloc(items_, (nitems_+1) * sizeof(Nexus*));
+      index_ = (unsigned*)realloc(index_, (nitems_+1) * sizeof(unsigned));
 
-      items_ = (Nexus**)realloc(items_, (nitems_+1) * sizeof(Nexus*));
-      items_[ptr] = that;
+      items_[nitems_] = that;
+
+      unsigned dest = nitems_;
+      for (unsigned idx = ptr ;  idx < nitems_ ;  idx += 1) {
+	    unsigned tmp = index_[idx];
+	    index_[idx] = dest;
+	    dest = tmp;
+      }
+      index_[nitems_] = dest;
+
       nitems_ += 1;
 }
 
@@ -446,20 +472,31 @@ void NexusSet::rem(Nexus*that)
 	    return;
 
       unsigned ptr = bsearch_(that);
-      if (ptr >= nitems_)
+      if (ptr >= nitems_ || items_[index_[ptr]] != that)
 	    return;
 
       if (nitems_ == 1) {
 	    free(items_);
+	    free(index_);
 	    items_ = 0;
+	    index_ = 0;
 	    nitems_ = 0;
 	    return;
       }
 
-      for (unsigned idx = ptr ;  idx < (nitems_-1) ;  idx += 1)
+      unsigned index_ptr = index_[ptr];
+      for (unsigned idx = index_ptr ;  idx < (nitems_-1) ;  idx += 1)
 	    items_[idx] = items_[idx+1];
 
-      items_ = (Nexus**)realloc(items_, (nitems_-1) * sizeof(Nexus*));
+      for (unsigned idx = ptr ;  idx < (nitems_-1) ;  idx += 1)
+	    index_[idx] = index_[idx+1];
+
+      for (unsigned idx = 0 ;  idx < (nitems_-1) ;  idx += 1)
+	    if (index_[idx] > index_ptr)
+		  index_[idx] -= 1;
+
+      items_ = (Nexus**)  realloc(items_, (nitems_-1) * sizeof(Nexus*));
+      index_ = (unsigned*)realloc(index_, (nitems_-1) * sizeof(unsigned));
       nitems_ -= 1;
 }
 
@@ -475,14 +512,37 @@ Nexus* NexusSet::operator[] (unsigned idx) const
       return items_[idx];
 }
 
+/*
+ * This method uses binary search to locate the item in the list of
+ * nexus pointers. If the item is in the set, then this method returns
+ * the index where it exists in the *index* array. If the item is not
+ * in the set, the index points to where in the array the item should go.
+ */
 unsigned NexusSet::bsearch_(Nexus*that) const
 {
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx] == that)
-		  return idx;
+
+      unsigned low = 0, hig = nitems_;
+
+      while (low < hig) {
+	    unsigned mid = (low + hig) / 2;
+	    if (mid == hig) mid -= 1;
+	    assert(mid >= low);
+	    assert(mid < hig);
+
+	    if (items_[index_[mid]] == that) {
+		  return mid;
+
+	    } else if (items_[index_[mid]] > that) {
+		  hig = mid;
+
+	    } else {
+		  low = mid+1;
+	    }
       }
 
-      return nitems_;
+      assert(low == hig);
+      assert(low == nitems_ || items_[index_[low]] >= that);
+      return low;
 }
 
 bool NexusSet::contains(const NexusSet&that) const
@@ -491,7 +551,7 @@ bool NexusSet::contains(const NexusSet&that) const
 	    unsigned where = bsearch_(that[idx]);
 	    if (where == nitems_)
 		  return false;
-	    if (items_[where] != that[idx])
+	    if (items_[index_[where]] != that[idx])
 		  return false;
       }
 
@@ -504,7 +564,7 @@ bool NexusSet::intersect(const NexusSet&that) const
 	    unsigned where = bsearch_(that[idx]);
 	    if (where == nitems_)
 		  continue;
-	    if (items_[where] == that[idx])
+	    if (items_[index_[where]] == that[idx])
 		  return true;
       }
 
@@ -513,6 +573,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.4  2006/08/08 02:17:48  steve
+ *  Improved nexus management performance.
+ *
  * Revision 1.14.2.3  2006/07/23 19:42:33  steve
  *  Handle statement output override better in blocks.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.21 2006/07/23 19:42:33 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.22 2006/08/08 02:17:48 steve Exp $"
 #endif
 
 /*
@@ -281,6 +281,7 @@ class Nexus {
 
     private:
       Link*list_;
+      int list_len_;
       void unlink(Link*);
       void relink(Link*);
 
@@ -321,6 +322,7 @@ class NexusSet {
 
     private:
       Nexus**items_;
+      unsigned*index_;
       unsigned nitems_;
 
       unsigned bsearch_(Nexus*that) const;
@@ -3540,6 +3542,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.22  2006/08/08 02:17:48  steve
+ *  Improved nexus management performance.
+ *
  * Revision 1.321.2.21  2006/07/23 19:42:33  steve
  *  Handle statement output override better in blocks.
  *

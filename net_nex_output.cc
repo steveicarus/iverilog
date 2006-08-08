@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.7 2006/06/02 23:42:48 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11.2.8 2006/08/08 02:17:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,7 +115,6 @@ void NetBlock::nex_output(NexusSet&out)
 	    return;
 
       NetProc*cur = last_->next_;
-      NexusSet accum;
       do {
 	    cur->nex_output(out);
 	    cur = cur->next_;
@@ -168,6 +167,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11.2.8  2006/08/08 02:17:48  steve
+ *  Improved nexus management performance.
+ *
  * Revision 1.11.2.7  2006/06/02 23:42:48  steve
  *  Compilation warnings.
  *
