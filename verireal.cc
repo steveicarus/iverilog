@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.16 2006/07/31 03:50:18 steve Exp $"
+#ident "$Id: verireal.cc,v 1.17 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,6 +75,23 @@ long verireal::as_long(int shift) const
 		  outf -= 1.0;
       }
       return (long) outf;
+}
+
+int64_t verireal::as_long64(int shift) const
+{
+      double out = value_ * pow(10.0,shift);
+      double outf;
+
+      if (out >= 0.0) {
+	    outf = floor(out);
+	    if (out >= (outf + 0.5))
+		  outf += 1.0;
+      } else {
+	    outf = ceil(out);
+	    if (out <= (outf - 0.5))
+		  outf -= 1.0;
+      }
+      return (int64_t) outf;
 }
 
 double verireal::as_double() const
@@ -139,6 +156,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.17  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.16  2006/07/31 03:50:18  steve
  *  Add support for power in constant expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.188 2006/06/20 05:06:47 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.189 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1619,7 +1619,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		 constant value, extend the value to fit the desired
 		 output. */
 	    if (lwidth > pvalue.len()) {
-		  verinum tmp (0UL, lwidth);
+		  verinum tmp ((uint64_t)0, lwidth);
 		  for (unsigned idx = 0 ;  idx < pvalue.len() ;  idx += 1)
 			tmp.set(idx, pvalue.get(idx));
 
@@ -2840,6 +2840,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.189  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.188  2006/06/20 05:06:47  steve
  *  Sign extend operands of signed addition.
  *

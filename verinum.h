@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.31 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: verinum.h,v 1.32 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include  <string>
+# include  <stdint.h>
 
 # include  "config.h"
 #ifdef HAVE_IOSFWD
@@ -48,11 +49,11 @@ class verinum {
       verinum(const string&str);
       verinum(const V*v, unsigned nbits, bool has_len =true);
       verinum(V, unsigned nbits =1, bool has_len =true);
-      verinum(unsigned long val, unsigned bits);
+      verinum(uint64_t val, unsigned bits);
       verinum(const verinum&);
 
 	// Create a signed number, with an unspecified number of bits.
-      explicit verinum(long val);
+      explicit verinum(int64_t val);
 
 	// Copy only the specified number of bits from the
 	// source. Also mark this number as has_len.
@@ -90,6 +91,7 @@ class verinum {
       V operator[] (unsigned idx) const { return get(idx); }
 
 
+      uint64_t as_ulong64() const;
       unsigned long as_ulong() const;
       signed long   as_long() const;
       string as_string() const;
@@ -159,6 +161,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.32  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.31  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

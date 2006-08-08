@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.42 2006/05/19 04:07:24 steve Exp $"
+#ident "$Id: eval.cc,v 1.43 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -259,7 +259,7 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 		  /* We need to expand the value a bit if we are
 		     taking the 2's complement so that we are
 		     guaranteed to not overflow. */
-		verinum tmp (0UL, val->len()+1);
+		verinum tmp ((uint64_t)0, val->len()+1);
 		for (unsigned idx = 0 ;  idx < val->len() ;  idx += 1)
 		      tmp.set(idx, val->get(idx));
 
@@ -276,6 +276,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.43  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.42  2006/05/19 04:07:24  steve
  *  eval_const is not strict.
  *

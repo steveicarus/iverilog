@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.12 2006/07/31 03:50:18 steve Exp $"
+#ident "$Id: verireal.h,v 1.13 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -27,6 +27,8 @@
 #else
 class ostream;
 #endif
+
+# include  <stdint.h>
 
 using namespace std;
 
@@ -64,6 +66,7 @@ class verireal {
 	   example if the value is 2.5 and shift == 1, the result
 	   is 25. */
       long as_long(int shift =0) const;
+      int64_t as_long64(int shift =0) const;
 
       double as_double() const;
 
@@ -82,6 +85,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.13  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.12  2006/07/31 03:50:18  steve
  *  Add support for power in constant expressions.
  *

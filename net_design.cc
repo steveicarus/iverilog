@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.49 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: net_design.cc,v 1.50 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,8 +67,8 @@ int Design::get_precision() const
       return des_precision_;
 }
 
-unsigned long Design::scale_to_precision(unsigned long val,
-					 const NetScope*scope) const
+uint64_t Design::scale_to_precision(uint64_t val,
+				    const NetScope*scope) const
 {
       int units = scope->time_unit();
       assert( units >= des_precision_ );
@@ -562,6 +562,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.50  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.49  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

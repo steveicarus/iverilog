@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_proc.cc,v 1.6 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_proc.cc,v 1.7 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -131,7 +131,7 @@ NetForever::~NetForever()
       delete statement_;
 }
 
-NetPDelay::NetPDelay(unsigned long d, NetProc*st)
+NetPDelay::NetPDelay(uint64_t d, NetProc*st)
 : delay_(d), expr_(0), statement_(st)
 {
 }
@@ -146,7 +146,7 @@ NetPDelay::~NetPDelay()
       if (expr_) delete expr_;
 }
 
-unsigned long NetPDelay::delay() const
+uint64_t NetPDelay::delay() const
 {
       assert(expr_ == 0);
       return delay_;
@@ -177,6 +177,9 @@ const NetExpr* NetRepeat::expr() const
 
 /*
  * $Log: net_proc.cc,v $
+ * Revision 1.7  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.6  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.79 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.80 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -792,7 +792,7 @@ NetNet* NetESelect::synthesize(Design *des)
 
 	    assert(expr_width() > sub->vector_width());
 	    unsigned pad_width = expr_width() - sub->vector_width();
-	    verinum pad(0UL, pad_width);
+	    verinum pad((uint64_t)0, pad_width);
 	    NetConst*con = new NetConst(scope, scope->local_symbol(),
 					pad);
 	    con->set_line(*this);
@@ -890,6 +890,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.80  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.79  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.134 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.135 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1824,7 +1824,7 @@ extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
       }
 }
 
-extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
+extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_DELAY);
       return net->u_.delay_.delay_;
@@ -2009,6 +2009,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.135  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.134  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

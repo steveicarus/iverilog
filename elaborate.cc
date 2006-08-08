@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.340 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.341 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1343,7 +1343,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 	    verireal fn = tmp->value();
 
 	    int shift = scope->time_unit() - des->get_precision();
-	    long delay = fn.as_long(shift);
+	    int64_t delay = fn.as_long64(shift);
 	    if (delay < 0)
 		  delay = 0;
 
@@ -1355,8 +1355,8 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    verinum fn = tmp->value();
 
-	    unsigned long delay =
-		  des->scale_to_precision(fn.as_ulong(), scope);
+	    uint64_t delay =
+		  des->scale_to_precision(fn.as_ulong64(), scope);
 
 	    delete tmp;
 	    return new NetEConst(verinum(delay));
@@ -1368,7 +1368,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 	   return that expression. */
       int shift = scope->time_unit() - des->get_precision();
       if (shift > 0) {
-	    unsigned long scale = 1;
+	    uint64_t scale = 1;
 	    while (shift > 0) {
 		  scale *= 10;
 		  shift -= 1;
@@ -2063,7 +2063,7 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    if (statement_)
-		  return new NetPDelay(tmp->value().as_ulong(),
+		  return new NetPDelay(tmp->value().as_ulong64(),
 				       statement_->elaborate(des, scope));
 	    else
 		  return new NetPDelay(tmp->value().as_ulong(), 0);
@@ -3133,6 +3133,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.341  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.340  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

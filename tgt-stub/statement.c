@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.9 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: statement.c,v 1.10 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -301,7 +301,7 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_DELAY:
-	    fprintf(out, "%*s#%lu\n", ind, "", ivl_stmt_delay_val(net));
+	    fprintf(out, "%*s#%llu\n", ind, "", ivl_stmt_delay_val(net));
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
 	    break;
 

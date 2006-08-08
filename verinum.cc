@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.47 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: verinum.cc,v 1.48 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,14 +87,14 @@ verinum::verinum(verinum::V val, unsigned n, bool h)
 	    bits_[idx] = val;
 }
 
-verinum::verinum(unsigned long val, unsigned n)
+verinum::verinum(uint64_t val, unsigned n)
 : has_len_(true), has_sign_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
 	    bits_[idx] = (val&1) ? V1 : V0;
-	    val >>= 1;
+	    val >>= (uint64_t)1;
       }
 }
 
@@ -134,10 +134,10 @@ verinum::verinum(const verinum&that, unsigned nbits)
       }
 }
 
-verinum::verinum(long that)
+verinum::verinum(int64_t that)
 : has_len_(false), has_sign_(true), string_flag_(false)
 {
-      long tmp;
+      int64_t tmp;
 
       tmp = that/2;
       nbits_ = 1;
@@ -201,6 +201,27 @@ unsigned long verinum::as_ulong() const
 
       unsigned long val = 0;
       unsigned long mask = 1;
+      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1)
+		  val |= mask;
+
+      return val;
+}
+
+uint64_t verinum::as_ulong64() const
+{
+      if (nbits_ == 0)
+	    return 0;
+
+      if (!is_defined())
+	    return 0;
+
+      unsigned top = nbits_;
+      if (top >= (8 * sizeof(uint64_t)))
+	  top = 8 * sizeof(uint64_t);
+
+      uint64_t val = 0;
+      uint64_t mask = 1;
       for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
 	    if (bits_[idx] == V1)
 		  val |= mask;
@@ -447,7 +468,7 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 	/* If the number is fully defined (no x or z) then print it
 	   out as a decimal number. */
-      if (v.is_defined()) {
+      if (v.is_defined() && v.len() < sizeof(long)) {
 	    if (v.has_sign())
 		  o << "'sd" << v.as_long();
 	    else
@@ -1018,6 +1039,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.48  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.47  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

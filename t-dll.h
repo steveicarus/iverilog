@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.131 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: t-dll.h,v 1.132 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -626,7 +626,7 @@ struct ivl_statement_s {
 	    } condit_;
 
 	    struct { /* IVL_ST_DELAY */
-		  unsigned long delay_;
+		  uint64_t delay_;
 		  ivl_statement_t stmt_;
 	    } delay_;
 
@@ -671,6 +671,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.132  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.131  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

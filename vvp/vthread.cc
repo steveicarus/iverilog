@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.154 2006/08/04 04:37:37 steve Exp $"
+#ident "$Id: vthread.cc,v 1.155 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1049,10 +1049,21 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * The delay takes two 32bit numbers to make up a 64bit time.
+ *
+ *   %delay <low>, <hig>
+ */
 bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
-	//printf("thread %p: %%delay %lu\n", thr, cp->number);
-      schedule_vthread(thr, cp->number);
+      vvp_time64_t low = cp->bit_idx[0];
+      vvp_time64_t hig = cp->bit_idx[1];
+
+      vvp_time64_t res = 32;
+      res = hig << res;
+      res += low;
+
+      schedule_vthread(thr, res);
       return false;
 }
 
@@ -3261,6 +3272,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.155  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.154  2006/08/04 04:37:37  steve
  *  Support release of a for/linked reg.
  *

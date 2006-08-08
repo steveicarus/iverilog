@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.169 2006/07/30 02:51:35 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.170 2006/08/08 05:11:37 steve Exp $"
 #endif
+
+# include  <stdint.h>
 
 #ifdef __cplusplus
 #define _BEGIN_DECL extern "C" {
@@ -1658,7 +1660,7 @@ extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_DELAYX */
 extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
-extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
+extern uint64_t ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT IVL_ST_TRIGGER */
 extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
 extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
@@ -1718,6 +1720,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.170  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.169  2006/07/30 02:51:35  steve
  *  Fix/implement signed right shift.
  *

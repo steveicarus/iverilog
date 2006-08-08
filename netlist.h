@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.359 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.360 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <string>
 # include  <map>
 # include  <list>
+# include  <stdint.h>
 # include  "ivl_target.h"
 # include  "verinum.h"
 # include  "verireal.h"
@@ -2288,11 +2289,11 @@ class NetFuncDef {
 class NetPDelay  : public NetProc {
 
     public:
-      NetPDelay(unsigned long d, NetProc*st);
+      NetPDelay(uint64_t d, NetProc*st);
       NetPDelay(NetExpr* d, NetProc*st);
       ~NetPDelay();
 
-      unsigned long delay() const;
+      uint64_t delay() const;
       const NetExpr*expr() const;
 
       virtual NexusSet* nex_input();
@@ -2304,7 +2305,7 @@ class NetPDelay  : public NetProc {
       bool emit_proc_recurse(struct target_t*) const;
 
     private:
-      unsigned long delay_;
+      uint64_t delay_;
       NetExpr*expr_;
       NetProc*statement_;
 };
@@ -3394,7 +3395,7 @@ class Design {
 
 	/* This function takes a delay value and a scope, and returns
 	   the delay value scaled to the precision of the design. */
-      unsigned long scale_to_precision(unsigned long, const NetScope*)const;
+      uint64_t scale_to_precision(uint64_t, const NetScope*)const;
 
 	/* Look up a scope. If no starting scope is passed, then the
 	   path is taken as an absolute scope name. Otherwise, the
@@ -3509,6 +3510,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.360  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.359  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

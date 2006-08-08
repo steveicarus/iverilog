@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.135 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: pform.cc,v 1.136 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1583,7 +1583,7 @@ static void pform_set_reg_integer(const char*nm)
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
-		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
+		     new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH)));
       cur->set_signed(true);
 }
 
@@ -1614,7 +1614,7 @@ static void pform_set_reg_time(const char*nm)
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, INTEGER_WIDTH)),
-		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
+		     new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH)));
 }
 
 void pform_set_reg_time(list<perm_string>*names)
@@ -1707,6 +1707,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.136  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.135  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

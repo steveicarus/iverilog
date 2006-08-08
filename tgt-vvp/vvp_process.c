@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.123 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.124 2006/08/08 05:11:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -907,10 +907,13 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      unsigned long delay = ivl_stmt_delay_val(net);
+      uint64_t delay = ivl_stmt_delay_val(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
-      fprintf(vvp_out, "    %%delay %lu;\n", delay);
+      unsigned long low = delay % UINT64_C(0x100000000);
+      unsigned long hig = delay / UINT64_C(0x100000000);
+
+      fprintf(vvp_out, "    %%delay %lu, %lu;\n", low, hig);
 	/* Lots of things can happen during a delay. */
       clear_expression_lookaside();
 
@@ -1484,6 +1487,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.124  2006/08/08 05:11:37  steve
+ *  Handle 64bit delay constants.
+ *
  * Revision 1.123  2006/04/16 00:15:43  steve
  *  Fix part selects in l-values.
  *
