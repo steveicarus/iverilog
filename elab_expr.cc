@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.107 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.108 2006/08/09 05:19:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -111,8 +111,19 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    break;
 
-	  case '/':
 	  case '%':
+	      /* The % operator does not support real arguments in
+		 baseline Verilog. But we allow it in our extended
+		 form of verilog. */
+	    if (generation_flag < GN_VER2001X) {
+		  if (lp->expr_type()==IVL_VT_REAL || rp->expr_type()==IVL_VT_REAL) {
+			cerr << get_line() << ": error: Modulus operator may not "
+			      "have REAL operands." << endl;
+			des->errors += 1;
+		  }
+	    }
+	      /* Fall through to handle the % with the / operator. */
+	  case '/':
 	    tmp = new NetEBDiv(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -1387,6 +1398,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.108  2006/08/09 05:19:08  steve
+ *  Add support for real valued modulus.
+ *
  * Revision 1.107  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

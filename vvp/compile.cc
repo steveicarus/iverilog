@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.222 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: compile.cc,v 1.223 2006/08/09 05:19:08 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -139,6 +139,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mod/wr", of_MOD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul/wr", of_MUL_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -1496,6 +1497,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.223  2006/08/09 05:19:08  steve
+ *  Add support for real valued modulus.
+ *
  * Revision 1.222  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

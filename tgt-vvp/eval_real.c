@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.14 2005/07/13 04:52:31 steve Exp $"
+#ident "$Id: eval_real.c,v 1.15 2006/08/09 05:19:08 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,10 @@ static int draw_binary_real(ivl_expr_t exp)
 	    break;
 
 	  case '%':
+	    fprintf(vvp_out, "    %%mod/wr %d, %d;\n", l, r);
+	    break;
+#if 0
+	  case '%':
 	      { struct vector_info res = draw_eval_expr(exp, STUFF_OK_XZ);
 		l = allocate_word();
 		fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
@@ -89,7 +93,7 @@ static int draw_binary_real(ivl_expr_t exp)
 	        clr_vector(res);
 	      }
 	      break;
-
+#endif
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
 		    ivl_expr_opcode(exp));
@@ -312,6 +316,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.15  2006/08/09 05:19:08  steve
+ *  Add support for real valued modulus.
+ *
  * Revision 1.14  2005/07/13 04:52:31  steve
  *  Handle functions with real values.
  *

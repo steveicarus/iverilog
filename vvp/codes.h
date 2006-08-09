@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.78 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: codes.h,v 1.79 2006/08/09 05:19:08 steve Exp $"
 #endif
 
 
@@ -95,6 +95,7 @@ extern bool of_LOAD_XP(vthread_t thr, vvp_code_t code);
 extern bool of_LOADI_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_S(vthread_t thr, vvp_code_t code);
+extern bool of_MOD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
@@ -178,6 +179,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.79  2006/08/09 05:19:08  steve
+ *  Add support for real valued modulus.
+ *
  * Revision 1.78  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *

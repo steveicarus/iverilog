@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.155 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: vthread.cc,v 1.156 2006/08/09 05:19:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2280,6 +2280,18 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %mod/wr <dest>, <src>
+ */
+bool of_MOD_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = fmod(l,r);
+
+      return true;
+}
+
+/*
  * %mov <dest>, <src>, <wid>
  *   This instruction is implemented by the of_MOV function
  *   below. However, during runtime vvp might notice that the
@@ -3272,6 +3284,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.156  2006/08/09 05:19:08  steve
+ *  Add support for real valued modulus.
+ *
  * Revision 1.155  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *
