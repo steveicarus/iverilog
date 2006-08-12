@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.71 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: sys_display.c,v 1.72 2006/08/12 03:38:12 steve Exp $"
 #endif
 
 # include "vpi_config.h"
 
 # include  "vpi_user.h"
+# include  "sys_priv.h"
 # include  <assert.h>
 # include  <string.h>
 # include  <ctype.h>
@@ -50,13 +51,6 @@ static PLI_INT32 my_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
       va_end(ap);
       return r;
 }
-
-struct timeformat_info_s {
-      int units;
-      unsigned prec;
-      char*suff;
-      unsigned width;
-};
 
 struct timeformat_info_s timeformat_info = { 0, 0, 0, 20 };
 
@@ -1566,6 +1560,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.72  2006/08/12 03:38:12  steve
+ *  scanf support for real values.
+ *
  * Revision 1.71  2004/10/04 01:10:58  steve
  *  Clean up spurious trailing white space.
  *

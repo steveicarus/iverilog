@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.1 2006/08/03 05:06:04 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.2 2006/08/12 03:38:12 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -26,6 +26,7 @@
 # include  <string.h>
 # include  <stdio.h>
 # include  <stdlib.h>
+# include  <math.h>
 # include  <assert.h>
 
 struct byte_source {
@@ -59,6 +60,121 @@ static void byte_ungetc(struct byte_source*src, int ch)
       ungetc(ch, src->fd);
 }
 
+
+static int sys_fscanf_compiletf(char*name)
+{
+      return 0;
+}
+
+/*
+ * This function matches the input characters of a floating point
+ * number and generates a floating point (double) from that string.
+ */
+static double float_string(struct byte_source*src)
+{
+      int ch;
+      char*str = 0;
+      size_t len;
+      double sign_flag = 1.0;
+
+      ch = byte_getc(src);
+
+      if (ch == '+') {
+	    sign_flag = 1.0;
+	    ch = byte_getc(src);
+      } else if (ch == '-') {
+	    sign_flag = -1.0;
+	    ch = byte_getc(src);
+      }
+
+      str = malloc(1);
+      len = 0;
+      *str = 0;
+
+      while (isdigit(ch)) {
+	    str = realloc(str, len+2);
+	    str[len++] = ch;
+	    ch = byte_getc(src);
+      }
+
+      if (ch == '.') {
+	    str = realloc(str, len+2);
+	    str[len++] = ch;
+	    ch = byte_getc(src);
+	    while (isdigit(ch)) {
+		  str = realloc(str, len+2);
+		  str[len++] = ch;
+		  ch = byte_getc(src);
+	    }
+      }
+
+      if (ch == 'e' || ch == 'E') {
+	    str = realloc(str, len+2);
+	    str[len++] = ch;
+	    ch = byte_getc(src);
+
+	    if (ch == '-' || ch == '+') {
+		  str = realloc(str, len+2);
+		  str[len++] = ch;
+		  ch - byte_getc(src);
+	    }
+
+	    while (isdigit(ch)) {
+		  src = realloc(str, len+2);
+		  str[len++] = ch;
+		  ch = byte_getc(src);
+	    }
+      }
+
+      str[len] = 0;
+
+      sign_flag *= strtod(str, 0);
+      free(str);
+
+      if (ch != EOF)
+	    byte_ungetc(src, ch);
+
+      return sign_flag;
+}
+
+static int scan_format_float(struct byte_source*src,
+			     vpiHandle arg)
+{
+      s_vpi_value val;
+
+      val.format = vpiRealVal;
+      val.value.real = float_string(src);
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+
+      return 1;
+}
+
+static int scan_format_float_time(vpiHandle sys,
+				  struct byte_source*src,
+				  vpiHandle arg)
+{
+      vpiHandle scope = vpi_handle(vpiScope, sys);
+      int time_units = vpi_get(vpiTimeUnit, scope);
+      double scale;
+
+      s_vpi_value val;
+
+      val.format = vpiRealVal;
+      val.value.real = float_string(src);
+
+	/* Round the value to the specified precision. Handle this bit
+	   by shifting the decimal point to the precision where we
+	   want to round, do the rounding, then shift the point back */
+      scale = pow(10.0, timeformat_info.prec);
+      val.value.real = round(val.value.real*scale) / scale;
+
+	/* Change the units from the timeformat to the timescale. */
+      scale = pow(10.0, timeformat_info.units - time_units);
+      val.value.real *= scale;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+
+      return 1;
+}
 
 /*
  * The $fscanf and $sscanf functions are the same except for the first
@@ -180,7 +296,6 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			rc += 1;
 			break;
 
-
 		      case 'd':
 			  /* Decimal integer */
 			ch = byte_getc(src);
@@ -201,6 +316,14 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			val.value.integer = value;
 			vpi_put_value(item, &val, 0, vpiNoDelay);
 			rc += 1;
+			break;
+
+		      case 'e':
+		      case 'f':
+		      case 'g':
+			item = vpi_scan(argv);
+			assert(item);
+			rc += scan_format_float(src, item);
 			break;
 
 		      case 'h':
@@ -264,6 +387,12 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			rc += 1;
 			break;
 
+		      case 't':
+			item = vpi_scan(argv);
+			assert(item);
+			rc += scan_format_float_time(sys, src, item);
+			break;
+
 		      default:
 			vpi_printf("$scanf: Unknown format code: %c\n", code);
 			break;
@@ -278,11 +407,6 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
       val.format = vpiIntVal;
       val.value.integer = rc;
       vpi_put_value(sys, &val, 0, vpiNoDelay);
-      return 0;
-}
-
-static int sys_fscanf_compiletf(char*name)
-{
       return 0;
 }
 

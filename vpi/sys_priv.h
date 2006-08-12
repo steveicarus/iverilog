@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_priv.h,v 1.5 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_priv.h,v 1.6 2006/08/12 03:38:12 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -47,8 +47,21 @@ extern int is_constant(vpiHandle obj);
 
 extern PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time);
 
+struct timeformat_info_s {
+      int units;
+      unsigned prec;
+      char*suff;
+      unsigned width;
+};
+
+extern struct timeformat_info_s timeformat_info;
+
+
 /*
  * $Log: sys_priv.h,v $
+ * Revision 1.6  2006/08/12 03:38:12  steve
+ *  scanf support for real values.
+ *
  * Revision 1.5  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *
