@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.2 2006/08/12 03:38:12 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.3 2006/08/12 04:16:07 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -177,6 +177,46 @@ static int scan_format_float_time(vpiHandle sys,
 }
 
 /*
+ * Match the %s format by loading a string of non-space characters.
+ */
+static int scan_format_string(struct byte_source*src, vpiHandle arg)
+{
+      char*tmp = malloc(1);
+      size_t len = 0;
+      s_vpi_value val;
+      int ch;
+
+      *tmp = 0;
+
+      ch = byte_getc(src);
+      while (!isspace(ch)) {
+	    if (ch == EOF)
+		  break;
+
+	    tmp = realloc(tmp, len+1);
+	    tmp[len++] = ch;
+
+	    ch = byte_getc(src);
+      }
+
+      if (ch == EOF && len == 0)
+	    return 0;
+
+      if (ch != EOF)
+	    byte_ungetc(src, ch);
+
+      tmp[len] = 0;
+      val.format = vpiStringVal;
+      val.value.str = tmp;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+
+      free(tmp);
+
+      return 1;
+}
+
+
+/*
  * The $fscanf and $sscanf functions are the same except for the first
  * argument, which is the source. The wrapper functions below peel off
  * the first argument and make a byte_source object that then gets
@@ -296,6 +336,17 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			rc += 1;
 			break;
 
+		      case 'c':
+			ch = byte_getc(src);
+			item = vpi_scan(argv);
+			assert(item);
+
+			val.format = vpiIntVal;
+			val.value.integer = ch;
+			vpi_put_value(item, &val, 0, vpiNoDelay);
+			rc += 1;
+			break;
+
 		      case 'd':
 			  /* Decimal integer */
 			ch = byte_getc(src);
@@ -385,6 +436,12 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			vpi_put_value(item, &val, 0, vpiNoDelay);
 			free(tmp);
 			rc += 1;
+			break;
+
+		      case 's':
+			item = vpi_scan(argv);
+			assert(item);
+			rc += scan_format_string(src, item);
 			break;
 
 		      case 't':
