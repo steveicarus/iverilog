@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.4 2006/08/08 02:17:48 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.5 2006/08/15 03:41:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,6 +46,7 @@ void connect(Nexus*l, Link&r)
 	    tmp->list_ = cur->next_;
 	    cur->nexus_ = 0;
 	    cur->next_  = 0;
+	    cur->prev_  = 0;
 	    l->relink(cur);
       }
 
@@ -65,7 +66,7 @@ void connect(Link&l, Link&r)
 
 Link::Link()
 : dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
-  inst_(0), next_(0), nexus_(0)
+  inst_(0), next_(0), prev_(0), nexus_(0)
 {
       (new Nexus()) -> relink(this);
 }
@@ -271,22 +272,29 @@ void Nexus::unlink(Link*that)
       assert(that);
       assert(that->nexus_ == this);
       if (list_ == that) {
+	    assert(that->prev_ == 0);
+	      // Move the second item the front of the list.
 	    list_ = that->next_;
-	    that->next_ = 0;
-	    that->nexus_ = 0;
+	    if (list_)
+		  list_->prev_ = 0;
 	    list_len_ -= 1;
+	      // Clear the pointers for the link.
+	    that->next_ = 0;
+	    that->prev_ = 0;
+	    that->nexus_ = 0;
 	    return;
       }
 
-      Link*cur = list_;
-      while (cur->next_ != that) {
-	    assert(cur->next_);
-	    cur = cur->next_;
-      }
+
+      Link*cur = that->prev_;
+      assert(cur->nexus_ == this);
 
       cur->next_ = that->next_;
+      if (cur->next_)
+	    cur->next_->prev_ = cur;
       that->nexus_ = 0;
       that->next_ = 0;
+      that->prev_ = 0;
       list_len_ -= 1;
 }
 
@@ -305,6 +313,10 @@ void Nexus::relink(Link*that)
       assert(that->nexus_ == 0);
       assert(that->next_ == 0);
       that->next_ = list_;
+      that->prev_ = 0;
+      if (that->next_)
+	    that->next_->prev_ = that;
+
       that->nexus_ = this;
       list_ = that;
       list_len_ += 1;
@@ -573,6 +585,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.5  2006/08/15 03:41:24  steve
+ *  Improve performance of unlink of heavily connected nexa.
+ *
  * Revision 1.14.2.4  2006/08/08 02:17:48  steve
  *  Improved nexus management performance.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.41 2006/08/08 02:17:49 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.42 2006/08/15 03:41:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1707,6 +1707,11 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	    }
 	    delete[]nex_map_idx;
 
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: "
+		       << "Bind block substatement done." << endl;
+	    }
+
 	    delete tmp_map;
 	    delete tmp_out;
 	    delete tmp_ff;
@@ -2484,6 +2489,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.42  2006/08/15 03:41:25  steve
+ *  Improve performance of unlink of heavily connected nexa.
+ *
  * Revision 1.39.2.41  2006/08/08 02:17:49  steve
  *  Improved nexus management performance.
  *

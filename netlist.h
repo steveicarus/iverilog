@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.22 2006/08/08 02:17:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.23 2006/08/15 03:41:24 steve Exp $"
 #endif
 
 /*
@@ -226,7 +226,7 @@ class Link {
       unsigned    inst_;
 
     private:
-      Link *next_;
+      Link *next_, *prev_;
       Nexus*nexus_;
 
     private: // not implemented
@@ -3542,6 +3542,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.23  2006/08/15 03:41:24  steve
+ *  Improve performance of unlink of heavily connected nexa.
+ *
  * Revision 1.321.2.22  2006/08/08 02:17:48  steve
  *  Improved nexus management performance.
  *
