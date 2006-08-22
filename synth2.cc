@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.42 2006/08/15 03:41:25 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.43 2006/08/22 04:22:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -685,27 +685,28 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			assert(items_[item].statement);
 			statement_map[sel_idx] = items_[item].statement;
 
-		  } else if (type() == NetCase::EQX) {
-			  /* Process casex patterns. */
+		  } else {
+			  /* Process casex and casez patterns. */
 			verinum tmp0 = tmp;
 			verinum tmp1 = tmp;
 			unsigned idx = 0;
+			verinum::V tv = verinum::Vz;
 			while (idx < tmp.len()) {
-			      verinum::V tv = tmp.get(idx);
+			      tv = tmp.get(idx);
 			      if (tv == verinum::Vx)
 				    break;
 			      if (tv == verinum::Vz)
 				    break;
 			      idx += 1;
 			}
+			  // Can't handle an X in a casez statement.
+			assert(tv==verinum::Vx? type()==NetCase::EQX : true);
 			assert(idx < tmp.len());
+
 			tmp0.set(idx, verinum::V0);
 			tmp1.set(idx, verinum::V1);
 			gstack.push_front(tmp1);
 			gstack.push_front(tmp0);
-		  } else {
-			assert(type() == NetCase::EQZ);
-			assert(0);
 		  }
 	    }
       }
@@ -2489,6 +2490,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.43  2006/08/22 04:22:45  steve
+ *  Add synthesis for casez statements.
+ *
  * Revision 1.39.2.42  2006/08/15 03:41:25  steve
  *  Improve performance of unlink of heavily connected nexa.
  *
