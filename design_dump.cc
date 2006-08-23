@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149.2.6 2006/07/10 00:21:50 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149.2.7 2006/08/23 04:09:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,7 +171,8 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 
 	    if (pin(idx).is_linked()) {
 		  const Nexus*nex = pin(idx).nexus();
-		  o << nex << " " << nex->name();
+		  const char*nex_name = nex->name();
+		  o << nex << " " << (nex_name? nex_name : "????");
 	    }
 	    o << endl;
 
@@ -257,6 +258,7 @@ void NetMux::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Multiplexer (NetMux): " << name()
 	<< " scope=" << scope()->name() << endl;
+      o << setw(ind+6) << "" << "source=" << get_line() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1130,6 +1132,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149.2.7  2006/08/23 04:09:14  steve
+ *  missing sig diagnostics.
+ *
  * Revision 1.149.2.6  2006/07/10 00:21:50  steve
  *  Add support for full_case attribute.
  *

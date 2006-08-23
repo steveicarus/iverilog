@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.5 2006/08/15 03:41:24 steve Exp $"
+#ident "$Id: net_link.cc,v 1.14.2.6 2006/08/23 04:09:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -391,8 +391,9 @@ const char* Nexus::name() const
 		  obj->name() << " pin " << pin << "(" <<
 		  lnk->get_name() << "<" << lnk->get_inst() << ">)"
 		  " type=" << typeid(*obj).name() << "?" << endl;
-
+	    return 0;
       }
+
       assert(sig);
       ostringstream tmp;
       tmp << sig->name();
@@ -585,6 +586,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.14.2.6  2006/08/23 04:09:14  steve
+ *  missing sig diagnostics.
+ *
  * Revision 1.14.2.5  2006/08/15 03:41:24  steve
  *  Improve performance of unlink of heavily connected nexa.
  *
