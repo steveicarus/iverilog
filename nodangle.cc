@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: nodangle.cc,v 1.21.2.1 2006/03/16 05:40:19 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.21.2.2 2006/08/23 04:08:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -163,6 +163,9 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 		  if (cursig == 0)
 			continue;
 
+		  if (cursig == sig)
+			continue;
+
 		  if (cursig->local_flag())
 			continue;
 
@@ -208,6 +211,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.21.2.2  2006/08/23 04:08:55  steve
+ *  Do not count self as signifincant in nodangle.
+ *
  * Revision 1.21.2.1  2006/03/16 05:40:19  steve
  *  Fix crash when memory exploding doesnot work
  *
