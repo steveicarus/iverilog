@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.43 2006/08/22 04:22:45 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.44 2006/08/23 04:08:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1011,7 +1011,17 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			    NetNet*nex_map, NetNet*nex_out,
 			    NetNet*accum)
 {
-      DEBUG_SYNTH2_ENTRY("NetCondit")
+	/* Detect the special case that this is a nul-effect (for
+	   synthesis) statement. This happens, for example, for code
+	   like this: if (foo) $display(...); */
+      if (nex_out->pin_count() == 0) {
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: Skip synthesis of "
+		       << "Condit statement with null effect." << endl;
+	    }
+	    return true;
+      }
+
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
 
@@ -1147,6 +1157,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      mux_width, 2, 1);
       mux->set_line(*this);
+
+      NetNet*mux_sig = new NetNet(scope, scope->local_symbol(),
+				  NetNet::WIRE, mux_width);
+      mux_sig->local_flag(true);
+      mux_sig->set_line(*this);
+
+      for (unsigned idx = 0 ;  idx < mux_width ;  idx += 1)
+	    connect(mux->pin_Result(idx), mux_sig->pin(idx));
 
       if (debug_synth) {
 	    cerr << get_line() << ": debug: Condit synth to MUX "
@@ -2490,6 +2508,10 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.44  2006/08/23 04:08:19  steve
+ *  Fix missing sig on certain mux outputs.
+ *  Ignore condit statements (for synthesis) with no outputs.
+ *
  * Revision 1.39.2.43  2006/08/22 04:22:45  steve
  *  Add synthesis for casez statements.
  *
