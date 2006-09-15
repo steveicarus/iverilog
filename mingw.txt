@@ -51,6 +51,8 @@ critical, but these are the versions I use.
      bzip2-1.0.3		<http://gnuwin32.sourceforge.net>
      zlib-1.2.3			<http://gnuwin32.sourceforge.net>
      gperf-3.0.1		<http://gnuwin32.sourceforge.net>
+     bison-2.1			<http://gnuwin32.sourceforge.net>
+     flex-2.5.4a		<http://gnuwin32.sourceforge.net>
 
 The above table lists the packages required. It is convenient to
 install them in the above order. Many of these packages are also
@@ -142,6 +144,8 @@ You will need these gnuwin32 packages to compile Icarus Verilog:
     bzip2-1.0.3.exe
     zlib-1.2.3.exe
     gperf-3.0.1.exe
+    bison-2.1.exe
+    flex-2.5.4a.exe
 
 I suggest creating a common directory for holding all your gnuwin32
 packages. I use C:\gnuwin32. The download page at the gnuwin32 site
@@ -153,12 +157,11 @@ c:\gunwin32 directory.
    NOTES:
       You need the binaries and the developer files, but you do not
       need the source to these packages. The installer gives you the
-      choise.
+      choice.
 
 After you are done installing the gnuwin32 tools, you should add the
 c:\gnuwin32\bin directory (assuming you installed in c:\gnuwin32) to
-your Windows path. The msys shell will pikc up your Windows
-path.
+your Windows path. The msys shell will pick up your Windows path.
 
 * Unpack Icarus Verilog source
 
@@ -193,7 +196,7 @@ Now, configure the source to make the makefiles and configuration
 details. Run these commands:
 
 	$ CPPFLAGS="-Ic:/gnuwin32/include -Ic:/mingw-packages/include"
-	$ LDFLAGS="-Lc:/gnuwin32/lib -Lc:/mingw-packages/include"
+	$ LDFLAGS="-Lc:/gnuwin32/lib -Lc:/mingw-packages/lib"
 	$ export CPPFLAGS LDFLAGS
 	$ ./configure --prefix=c:/iverilog
 
