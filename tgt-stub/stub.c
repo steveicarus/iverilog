@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.10 2006/07/23 19:42:35 steve Exp $"
+#ident "$Id: stub.c,v 1.90.2.11 2006/09/15 23:56:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,12 +81,21 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    show_expression(ivl_expr_oper1(net), ind+3);
 	    break;
 
-	  case IVL_EX_BINARY:
-	    fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign, vt);
-	    show_expression(ivl_expr_oper1(net), ind+3);
-	    show_expression(ivl_expr_oper2(net), ind+3);
-	    break;
+	  case IVL_EX_BINARY: {
+		ivl_expr_t oper1 = ivl_expr_oper1(net);
+		ivl_expr_t oper2 = ivl_expr_oper2(net);
+		fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
+			ivl_expr_opcode(net), width, sign, vt);
+		if (oper1)
+		      show_expression(oper1, ind+3);
+		else
+		      fprintf(out, "%*sERROR: nil oper1\n", ind+3, "");
+		if (oper2)
+		      show_expression(oper2, ind+3);
+		else
+		      fprintf(out, "%*sERROR: nil oper2\n", ind+3, "");
+		break;
+	  }
 
 	  case IVL_EX_CONCAT:
 	    fprintf(out, "%*s<concat repeat=%u, width=%u, %s, type=%s>\n",
@@ -122,9 +131,13 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	      /* The SELECT expression can be used to express part
 		 select, or if the base is null vector extension. */
 	    if (ivl_expr_oper2(net)) {
+		  ivl_expr_t o1 = ivl_expr_oper1(net);
 		  fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
 			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
+		  if (o1)
+			show_expression(ivl_expr_oper1(net), ind+3);
+		  else
+			fprintf(out, "%*sERROR: Missing oper1\n", ind+3, "");
 		  show_expression(ivl_expr_oper2(net), ind+3);
 	    } else {
 		  fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
@@ -1118,6 +1131,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90.2.11  2006/09/15 23:56:05  steve
+ *  Special handling of exploded memory arguments.
+ *
  * Revision 1.90.2.10  2006/07/23 19:42:35  steve
  *  Handle statement output override better in blocks.
  *
