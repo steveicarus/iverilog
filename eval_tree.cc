@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.69 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.70 2006/09/19 23:00:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1038,6 +1038,13 @@ NetEConst* NetEBShift::eval_tree()
 
 	    unsigned shift = rv.as_ulong();
 
+	    if (debug_eval_tree) {
+		  cerr << get_line() << ": debug: "
+		       << "Evaluate " << lv << "<<" << op() << ">> "
+		       << rv << ", wid=" << wid << ", shift=" << shift
+		       << ", lv.las_len()=" << lv.has_len() << endl;
+	    }
+
 	    if ((wid == 0) || ! lv.has_len()) {
 		    /* If the caller doesn't care what the width is,
 		       then calcuate a width from the trimmed left
@@ -1663,6 +1670,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.70  2006/09/19 23:00:15  steve
+ *  Use elab_and_eval for bit select expressions.
+ *
  * Revision 1.69  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

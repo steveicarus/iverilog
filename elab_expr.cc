@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.108 2006/08/09 05:19:08 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.109 2006/09/19 23:00:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1105,11 +1105,13 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       assert(lsb_ == 0);
       assert(idx_.size() == 1);
 
+      NetExpr*ex = elab_and_eval(des, scope, idx_[0], -1);
+
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
-      if (verinum*msn = idx_[0]->eval_const(des, scope)) {
-	    long msv = msn->as_long();
+      if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
+	    long msv = msc->value().as_long();
 	    unsigned idx = net->sb_to_idx(msv);
 
 	    if (idx >= net->vector_width()) {
@@ -1126,7 +1128,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		       << ":" << net->lsb() << "]." << endl;
 		  cerr << get_line() << ":        : Replacing "
 		       << "expression with a constant 1'bx." << endl;
-		  delete msn;
+		  delete ex;
 		  return tmp;
 	    }
 
@@ -1155,7 +1157,6 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      NetExpr*ex = idx_[0]->elaborate_expr(des, scope, -1, false);
 
       if (net->msb() < net->lsb()) {
 	    ex = make_sub_expr(net->lsb(), ex);
@@ -1398,6 +1399,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.109  2006/09/19 23:00:15  steve
+ *  Use elab_and_eval for bit select expressions.
+ *
  * Revision 1.108  2006/08/09 05:19:08  steve
  *  Add support for real valued modulus.
  *
