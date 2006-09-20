@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.36.2.2 2005/12/18 21:06:01 steve Exp $"
+#ident "$Id: eval.cc,v 1.36.2.3 2006/09/20 20:27:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,7 +112,10 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 	  case 'l': { // left shift (<<)
 		assert(r->is_defined());
 		unsigned long rv = r->as_ulong();
-		res = new verinum(verinum::V0, l->len());
+		unsigned use_wid = l->len();
+		if (! l->has_len())
+		      use_wid += rv;
+		res = new verinum(verinum::V0, use_wid);
 		if (rv < res->len()) {
 		      unsigned cnt = res->len() - rv;
 		      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
@@ -261,6 +264,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.36.2.3  2006/09/20 20:27:02  steve
+ *  Fix left shift of small unsized constants.
+ *
  * Revision 1.36.2.2  2005/12/18 21:06:01  steve
  *  Properly fail when concat is not actually constant.
  *
