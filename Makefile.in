@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.176 2006/05/01 20:47:29 steve Exp $"
+#ident "$Id: Makefile.in,v 1.177 2006/09/20 22:31:45 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -62,7 +62,7 @@ LDFLAGS = @rdynamic@ @LDFLAGS@
 
 all: dep ivl@EXEEXT@
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in ivlpp tgt-verilog ; \
+	for dir in ivlpp ; \
 	    do (cd $$dir ; $(MAKE) $@); done
 	cd driver ; $(MAKE) VERSION=$(VERSION) $@
 
