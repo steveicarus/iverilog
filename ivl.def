@@ -9,9 +9,10 @@ ivl_design_roots
 ivl_design_time_precision
 
 ivl_const_bits
-ivl_const_pin
-ivl_const_pins
+ivl_const_real
 ivl_const_signed
+ivl_const_type
+ivl_const_width
 
 ivl_event_any
 ivl_event_basename
@@ -21,13 +22,13 @@ ivl_event_neg
 ivl_event_nneg
 ivl_event_npos
 ivl_event_pos
+ivl_event_scope
 
 ivl_expr_type
 ivl_expr_bits
 ivl_expr_def
 ivl_expr_dvalue
 ivl_expr_event
-ivl_expr_lsi
 ivl_expr_memory
 ivl_expr_name
 ivl_expr_opcode
@@ -44,20 +45,22 @@ ivl_expr_signed
 ivl_expr_string
 ivl_expr_uvalue
 ivl_expr_value
-ivl_expr_variable
 ivl_expr_width
 
 ivl_logic_attr
 ivl_logic_attr_cnt
 ivl_logic_attr_val
-ivl_logic_delay
-ivl_logic_name
 ivl_logic_basename
-ivl_logic_scope
-ivl_logic_type
+ivl_logic_delay
+ivl_logic_drive0
+ivl_logic_drive1
+ivl_logic_name
 ivl_logic_pin
 ivl_logic_pins
+ivl_logic_scope
+ivl_logic_type
 ivl_logic_udp
+ivl_logic_width
 
 ivl_lpm_aset_value
 ivl_lpm_async_clr
@@ -67,8 +70,6 @@ ivl_lpm_basename
 ivl_lpm_clk
 ivl_lpm_data
 ivl_lpm_datab
-ivl_lpm_data2
-ivl_lpm_data2_width
 ivl_lpm_define
 ivl_lpm_enable
 ivl_lpm_memory
@@ -80,6 +81,7 @@ ivl_lpm_selects
 ivl_lpm_signed
 ivl_lpm_size
 ivl_lpm_sset_value
+ivl_lpm_string
 ivl_lpm_sync_clr
 ivl_lpm_sync_set
 ivl_lpm_type
@@ -89,10 +91,7 @@ ivl_lval_idx
 ivl_lval_mem
 ivl_lval_mux
 ivl_lval_part_off
-ivl_lval_pin
-ivl_lval_pins
 ivl_lval_sig
-ivl_lval_var
 
 ivl_memory_basename
 ivl_memory_root
@@ -141,23 +140,22 @@ ivl_scope_sig
 ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
-ivl_scope_var
-ivl_scope_vars
 
 ivl_signal_attr
 ivl_signal_attr_cnt
 ivl_signal_attr_val
+ivl_signal_basename
+ivl_signal_data_type
 ivl_signal_integer
 ivl_signal_local
 ivl_signal_lsb
 ivl_signal_msb
-ivl_signal_pin
-ivl_signal_pins
+ivl_signal_name
+ivl_signal_nex
 ivl_signal_port
 ivl_signal_signed
 ivl_signal_type
-ivl_signal_name
-ivl_signal_basename
+ivl_signal_width
 
 ivl_process_attr_cnt
 ivl_process_attr_val
@@ -185,8 +183,6 @@ ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
 ivl_stmt_nevent
-ivl_stmt_nexus
-ivl_stmt_nexus_count
 ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval
@@ -198,6 +194,3 @@ ivl_udp_nin
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ
-
-ivl_variable_name
-ivl_variable_type
