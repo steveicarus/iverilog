@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.69 2006/07/26 00:11:40 steve Exp $"
+#ident "$Id: main.c,v 1.70 2006/09/20 22:30:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -708,7 +708,7 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -D__ICARUS__ -L -F%s\n",
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F%s\n",
 	      pbase, sep, defines_path);
 
 	/* Done writing to the iconfig file. Close it now. */
@@ -721,6 +721,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.70  2006/09/20 22:30:52  steve
+ *  Do not pass -D__ICARUS__ to ivlpp.
+ *
  * Revision 1.69  2006/07/26 00:11:40  steve
  *  Pass depfiles through temp defines file.
  *
