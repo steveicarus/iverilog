@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.135 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.136 2006/09/20 22:31:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -892,44 +892,6 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
       }
 }
 
-#if 0
-extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
-{
-      cerr << "ANACHRONISM: Call to anachronistic ivl_lpm_data2." << endl;
-      assert(net);
-      switch (net->type) {
-
-	  case IVL_LPM_UFUNC: {
-		sdx += 1; /* skip the output port. */
-		assert(sdx < net->u_.ufunc.ports);
-		assert(idx < net->u_.ufunc.port_wid[sdx]);
-		unsigned base = 0;
-		for (unsigned i = 0 ;  i < sdx ;  i += 1)
-		      base += net->u_.ufunc.port_wid[i];
-		return net->u_.ufunc.pins[base+idx];
-	  }
-
-	  default:
-	    assert(0);
-	    return 0;
-      }
-}
-#endif
-#if 0
-extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
-{
-      assert(net);
-      switch (net->type) {
-	  case IVL_LPM_UFUNC:
-	    sdx += 1; /* skip the output port. */
-	    assert(sdx < net->u_.ufunc.ports);
-	    return net->u_.ufunc.port_wid[sdx];
-	  default:
-	    assert(0);
-	    return 0;
-      }
-}
-#endif
 
 /*
  * This function returns the hierarchical name for the LPM device. The
@@ -1204,23 +1166,6 @@ extern "C" unsigned ivl_lval_width(ivl_lval_t net)
       assert(net);
       return net->width_;
 }
-
-#if 0
-extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
-{
-      assert(net);
-      return net->width_;
-}
-#endif
-#if 0
-extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
-{
-      assert(net);
-      assert(idx < net->width_);
-      assert(net->type_ != IVL_LVAL_MEM);
-      return ivl_signal_pin(net->n.sig, idx+net->loff_);
-}
-#endif
 
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 {
@@ -2009,6 +1954,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.136  2006/09/20 22:31:23  steve
+ *  Remove dead code.
+ *
  * Revision 1.135  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *
