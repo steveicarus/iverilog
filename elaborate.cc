@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.341 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.342 2006/09/22 22:14:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -522,7 +522,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		    /* Handle the case where there is one gate that
 		       carries the whole vector width. */
 
-		  if (instance_width != sig->vector_width()) {
+		  if (1 == sig->vector_width() && instance_width != 1) {
 
 			assert(sig->vector_width() == 1);
 			NetReplicate*rep
@@ -540,6 +540,17 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			sig->local_flag(true);
 			sig->set_line(*this);
 			connect(rep->pin(0), sig->pin(0));
+
+		  }
+
+		  if (instance_width != sig->vector_width()) {
+
+			cerr << get_line() << ": error: "
+			     << "Expression width " << sig->vector_width()
+			     << " does not match width " << instance_width
+			     << " of logic gate array port " << idx
+			     << "." << endl;
+			des->errors += 1;
 		  }
 
 		  connect(cur[0]->pin(idx), sig->pin(0));
@@ -3133,6 +3144,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.342  2006/09/22 22:14:27  steve
+ *  Proper error message when logic array pi count is bad.
+ *
  * Revision 1.341  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *
