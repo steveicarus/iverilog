@@ -92,6 +92,7 @@ ivl_lval_mem
 ivl_lval_mux
 ivl_lval_part_off
 ivl_lval_sig
+ivl_lval_width
 
 ivl_memory_basename
 ivl_memory_root
