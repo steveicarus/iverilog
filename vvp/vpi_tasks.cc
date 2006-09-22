@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.32 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.33 2006/09/22 22:33:00 steve Exp $"
 #endif
 
 /*
@@ -577,12 +577,14 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 PLI_INT32 vpi_put_userdata(vpiHandle ref, void*data)
 {
+      if (ref->vpi_type->type_code != vpiSysTaskCall
+	  && ref->vpi_type->type_code != vpiSysFuncCall)
+	    return 0;
+
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
       rfp->userdata = data;
-      return 0;
+      return 1;
 }
 
 void* vpi_get_userdata(vpiHandle ref)
@@ -597,6 +599,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.33  2006/09/22 22:33:00  steve
+ *  Correct return code for vpi_put_userdata.
+ *
  * Revision 1.32  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
