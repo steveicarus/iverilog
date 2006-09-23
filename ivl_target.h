@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.170 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.171 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  <stdint.h>
@@ -137,6 +137,7 @@ _BEGIN_DECL
  * scope. These names are unique within a scope, but not necessarily
  * throughout the design.
  */
+typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
@@ -255,6 +256,16 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_UFUNC  = 14
 } ivl_lpm_type_t;
 
+/* The path edge type is the edge type used to select a specific
+   delay. */
+typedef enum ivl_path_edge_e {
+      IVL_PE_01 = 0, IVL_PE_10, IVL_PE_0z,
+      IVL_PE_z1,     IVL_PE_1z, IVL_PE_z0,
+      IVL_PE_0x,     IVL_PE_x1, IVL_PE_1x,
+      IVL_PE_x0,     IVL_PE_xz, IVL_PE_zx,
+      IVL_PE_COUNT
+} ivl_path_edge_t;
+
 /* Processes are initial or always blocks with a statement. This is
    the type of the ivl_process_t object. */
 typedef enum ivl_process_type_e {
@@ -360,6 +371,19 @@ struct ivl_attribute_s {
       } val;
 };
 typedef const struct ivl_attribute_s*ivl_attribute_t;
+
+/* DELAYPATH
+ * Delaypath objects represent delay paths called out by a specify
+ * block in the verilog source file. The destination signal references
+ * the path object, which in turn points to the source for the path.
+ *
+ * ivl_path_source
+ *    This returns the nexus that is the source end of the delay
+ *    path. Transitions on the source are the start of the delay time
+ *    for this path.
+ */
+extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
+extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
 
 
 /* DESIGN
@@ -1450,6 +1474,12 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    etc. All the signals connected to a nexus should have the same
  *    data type
  *
+ * ivl_signal_npath
+ * ivl_signal_path
+ *    This function returns the delay path object for the signal. The
+ *    delay path has this signal as the output, the source is attached
+ *    to the delay path itself.
+ *
  * ivl_signal_name (DEPRECATED)
  *    This function returns the fully scoped hierarchical name for the
  *    signal. The name refers to the entire vector that is the signal.
@@ -1481,6 +1511,8 @@ extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
 extern int         ivl_signal_local(ivl_signal_t net);
+extern unsigned    ivl_signal_npath(ivl_signal_t net);
+extern ivl_delaypath_t ivl_signal_path(ivl_signal_t net, unsigned idx);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
@@ -1720,6 +1752,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.171  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.170  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

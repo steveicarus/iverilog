@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.13 2006/07/08 21:48:00 steve Exp $"
+#ident "$Id: delay.cc,v 1.14 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -276,9 +276,93 @@ void vvp_fun_delay::run_run_real_()
       vvp_send_real(net_->out, cur_real_);
 }
 
+vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net)
+: net_(net), src_list_(0)
+{
+}
+
+vvp_fun_modpath::~vvp_fun_modpath()
+{
+	// Delete the source probes.
+      while (src_list_) {
+	    vvp_fun_modpath_src*tmp = src_list_;
+	    src_list_ = tmp->next_;
+	    delete tmp;
+      }
+}
+
+void vvp_fun_modpath::add_modpath_src(vvp_fun_modpath_src*that)
+{
+      assert(that->next_ == 0);
+      that->next_ = src_list_;
+      src_list_ = that;
+}
+
+void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+{
+	/* Only the first port is used. */
+      if (port.port() > 0)
+	    return;
+
+      if (cur_vec4_.eeq(bit))
+	    return;
+
+	/* Select a time delay source that applies. */
+      vvp_fun_modpath_src*src = 0;
+      vvp_time64_t out_at = 0;
+      for (vvp_fun_modpath_src*cur = src_list_ ;  cur ;  cur=cur->next_) {
+	    if (src == 0) {
+		  src = cur;
+	    } else if (cur->wake_time_ > src->wake_time_) {
+		  src = cur;
+	    } else {
+		  continue; /* Skip this entry. */
+	    }
+
+	    out_at = src->wake_time_ + src->delay_;
+      }
+
+	/* Given the scheduled output time, create an output event. */
+      vvp_time64_t use_delay = 0;
+      vvp_time64_t now = schedule_simtime();
+      if (out_at <= now)
+	    use_delay = 0;
+      else
+	    use_delay = out_at - now;
+
+      cur_vec4_ = bit;
+      schedule_generic(this, use_delay, false);
+}
+
+void vvp_fun_modpath::run_run()
+{
+      vvp_send_vec4(net_->out, cur_vec4_);
+}
+
+vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del)
+{
+      delay_ = del;
+      next_ = 0;
+      wake_time_ = 0;
+}
+
+vvp_fun_modpath_src::~vvp_fun_modpath_src()
+{
+}
+
+void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+{
+      if (port.port() != 0)
+	    return;
+
+      wake_time_ = schedule_simtime();
+}
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.14  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.13  2006/07/08 21:48:00  steve
  *  Delay object supports real valued delays.
  *

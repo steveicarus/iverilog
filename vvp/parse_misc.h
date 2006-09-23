@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_misc.h,v 1.7 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.8 2006/09/23 04:57:20 steve Exp $"
 #endif
 
 
@@ -63,6 +63,7 @@ struct numbv_s {
 
 extern void numbv_init(struct numbv_s*obj);
 extern void numbv_add(struct numbv_s*obj, long item);
+extern void numbv_clear(struct numbv_s*obj);
 
 struct argv_s {
       unsigned  argc;
@@ -77,6 +78,9 @@ extern void argv_sym_lookup(struct argv_s*obj);
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.8  2006/09/23 04:57:20  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.7  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.86 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: pform.h,v 1.87 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -57,6 +57,7 @@
  */
 class PGate;
 class PExpr;
+class PSpecPath;
 struct vlltype;
 
 /*
@@ -260,8 +261,12 @@ extern void pform_set_defparam(const hname_t&name, PExpr*expr);
  * Functions related to specify blocks.
  */
 extern void pform_set_specparam(perm_string name, PExpr*expr);
-extern void pform_make_specify_path(list<perm_string>*src, char pol,
-				    bool full_flag, list<perm_string>*dst);
+
+extern PSpecPath*pform_make_specify_path(const struct vlltype&li,
+					 list<perm_string>*src, char pol,
+					 bool full_flag, list<perm_string>*dst);
+extern PSpecPath*pform_assign_path_delay(PSpecPath*obj, svector<PExpr*>*delays);
+extern void pform_module_specify_path(PSpecPath*obj);
 
 /*
  * pform_make_behavior creates processes that are declared with always
@@ -323,6 +328,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.87  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.86  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

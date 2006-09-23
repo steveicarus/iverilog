@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.10 2006/01/02 05:32:07 steve Exp $"
+#ident "$Id: delay.h,v 1.11 2006/09/23 04:57:20 steve Exp $"
 #endif
 
 /*
@@ -96,8 +96,64 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       double cur_real_;
 };
 
+class vvp_fun_modpath;
+class vvp_fun_modpath_src;
+
+class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
+
+    public:
+      vvp_fun_modpath(vvp_net_t*net);
+      ~vvp_fun_modpath();
+
+      void add_modpath_src(vvp_fun_modpath_src*that);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+
+    private:
+      virtual void run_run();
+
+    private:
+      vvp_net_t*net_;
+
+      vvp_vector4_t cur_vec4_;
+
+      vvp_fun_modpath_src*src_list_;
+
+    private: // not implemented
+      vvp_fun_modpath(const vvp_fun_modpath&);
+      vvp_fun_modpath& operator= (const vvp_fun_modpath&);
+};
+
+class vvp_fun_modpath_src  : public vvp_net_fun_t {
+
+      friend class vvp_fun_modpath;
+
+    public:
+      vvp_fun_modpath_src(vvp_time64_t d);
+    private:
+      ~vvp_fun_modpath_src();
+
+    public:
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+
+    private:
+	// FIXME: Needs to be a 12-value array
+      vvp_time64_t delay_;
+	// Used by vvp_fun_modpath to keep a list of modpath_src objects.
+      vvp_fun_modpath_src*next_;
+
+      vvp_time64_t wake_time_;
+
+    private:
+      vvp_fun_modpath_src(const vvp_fun_modpath_src&);
+      vvp_fun_modpath_src& operator = (const vvp_fun_modpath_src&);
+};
+
 /*
  * $Log: delay.h,v $
+ * Revision 1.11  2006/09/23 04:57:20  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.10  2006/01/02 05:32:07  steve
  *  Require explicit delay node from source.
  *

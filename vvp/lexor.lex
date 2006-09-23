@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.62 2006/07/30 02:51:36 steve Exp $"
+#ident "$Id: lexor.lex,v 1.63 2006/09/23 04:57:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -111,6 +111,7 @@
 ".event/or" { return K_EVENT_OR; }
 ".extend/s" { return K_EXTEND_S; }
 ".functor"  { return K_FUNCTOR; }
+".modpath" { return K_MODPATH; }
 ".net"      { return K_NET; }
 ".net8"     { return K_NET8; }
 ".net8/s"   { return K_NET8_S; }
@@ -210,6 +211,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.63  2006/09/23 04:57:20  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.62  2006/07/30 02:51:36  steve
  *  Fix/implement signed right shift.
  *

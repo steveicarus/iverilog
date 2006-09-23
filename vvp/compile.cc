@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.223 2006/08/09 05:19:08 steve Exp $"
+#ident "$Id: compile.cc,v 1.224 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1048,6 +1048,45 @@ void compile_extend_signed(char*label, long wid, struct symb_s arg)
       input_connect(ptr, 0, arg.text);
 }
 
+vvp_fun_modpath* compile_modpath(char*label, struct symb_s src)
+{
+      vvp_net_t*net = new vvp_net_t;
+      vvp_fun_modpath*obj = new vvp_fun_modpath(net);
+      net->fun = obj;
+
+      input_connect(net, 0, src.text);
+
+      define_functor_symbol(label, net);
+      free(label);
+
+      return obj;
+}
+
+void compile_modpath_src(vvp_fun_modpath*dst,
+			 struct symb_s src,
+			 struct numbv_s vals)
+{
+      vvp_time64_t use_delay = 0;
+
+      assert(vals.cnt == 12);
+
+	// FIXME: For now, only support single uniform time value.
+      use_delay = vals.nvec[0];
+      for (unsigned idx = 1 ; idx < vals.cnt ;  idx += 1) {
+	    assert(use_delay == vals.nvec[idx]);
+      }
+
+      numbv_clear(&vals);
+
+      vvp_net_t*net = new vvp_net_t;
+      vvp_fun_modpath_src*obj = new vvp_fun_modpath_src(use_delay);
+      net->fun = obj;
+
+      input_connect(net, 0, src.text);
+
+      dst->add_modpath_src(obj);
+}
+
 /*
  * A .shift/l statement creates an array of functors for the
  * width. The 0 input is the data vector to be shifted and the 1 input
@@ -1497,6 +1536,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.224  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.223  2006/08/09 05:19:08  steve
  *  Add support for real valued modulus.
  *

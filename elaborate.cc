@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.342 2006/09/22 22:14:27 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.343 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,6 +35,7 @@
 # include  "pform.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
+# include  "PSpec.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -2872,6 +2873,108 @@ NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
       return loop;
 }
 
+void PSpecPath::elaborate(Design*des, NetScope*scope) const
+{
+      uint64_t delay_value[12];
+      unsigned ndelays = 0;
+
+      ndelays = delays.size();
+      if (ndelays > 12)
+	    ndelays = 12;
+
+	/* Elaborate the delay values themselves. */
+      for (unsigned idx = 0 ;  idx < ndelays ;  idx += 1) {
+	    PExpr*exp = delays[idx];
+	    NetExpr*cur = elab_and_eval(des, scope, exp, 0);
+
+	    if (NetEConst*cur_con = dynamic_cast<NetEConst*> (cur)) {
+		  delay_value[idx] = cur_con->value().as_ulong();
+	    } else {
+		  cerr << cur->get_line() << ": error: Path delay value "
+		       << "must be constant." << endl;
+		  delay_value[idx] = 0;
+		  des->errors += 1;
+	    }
+	    delete cur;
+      }
+
+      switch (ndelays) {
+	  case 1:
+	  case 2:
+	  case 3:
+	  case 6:
+	  case 12:
+	    break;
+	  default:
+	    cerr << get_line() << ": error: Incorrect delay configuration."
+		 << endl;
+	    ndelays = 1;
+	    des->errors += 1;
+	    break;
+      }
+
+	/* Create all the various paths from the path specifier. */
+      typedef std::vector<perm_string>::const_iterator str_vector_iter;
+      for (str_vector_iter cur = dst.begin()
+		 ; cur != dst.end() ;  cur ++) {
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Path to " << (*cur) << endl;
+	    }
+
+	    NetNet*dst_sig = scope->find_signal(*cur);
+	    if (dst_sig == 0) {
+		  cerr << get_line() << ": error: No such wire "
+		       << *cur << " in this module." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
+					       src.size());
+	    path->set_line(*this);
+
+	    switch (ndelays) {
+		case 12:
+		  path->set_delays(delay_value[0],  delay_value[1],
+				   delay_value[2],  delay_value[3],
+				   delay_value[4],  delay_value[5],
+				   delay_value[6],  delay_value[7],
+				   delay_value[8],  delay_value[9],
+				   delay_value[10], delay_value[11]);
+		  break;
+		case 6:
+		  path->set_delays(delay_value[0], delay_value[1],
+				   delay_value[2], delay_value[3],
+				   delay_value[4], delay_value[5]);
+		  break;
+		case 3:
+		  path->set_delays(delay_value[0], delay_value[1],
+				   delay_value[2]);
+		  break;
+		case 2:
+		  path->set_delays(delay_value[0], delay_value[1]);
+		  break;
+		case 1:
+		  path->set_delays(delay_value[0]);
+		  break;
+	    }
+
+	    unsigned idx = 0;
+	    for (str_vector_iter cur_src = src.begin()
+		       ; cur_src != src.end() ;  cur_src ++) {
+		  NetNet*src_sig = scope->find_signal(*cur_src);
+		  assert(src_sig);
+
+		  connect(src_sig->pin(0), path->pin(idx));
+		  idx += 1;
+	    }
+
+	    dst_sig->add_delay_path(path);
+      }
+
+}
+
 /*
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
@@ -3001,6 +3104,14 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 				 verinum(1));
 	    } while (0);
 
+      }
+
+	// Elaborate the specify paths of the module.
+
+      for (list<PSpecPath*>::const_iterator sp = specify_paths.begin()
+		 ; sp != specify_paths.end() ;  sp ++) {
+
+	    (*sp)->elaborate(des, scope);
       }
 
       return result_flag;
@@ -3144,6 +3255,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.343  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.342  2006/09/22 22:14:27  steve
  *  Proper error message when logic array pi count is bad.
  *

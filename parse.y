@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.219 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: parse.y,v 1.220 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,8 @@
 # include  "pform.h"
 # include  "Statement.h"
 # include  <sstream>
+
+class PSpecPath;
 
 extern void lex_start_table();
 extern void lex_end_table();
@@ -141,6 +143,8 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       verinum* number;
 
       verireal* realtime;
+
+      PSpecPath* specpath;
 };
 
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
@@ -215,7 +219,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <expr>  expression expr_primary
 %type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
-%type <exprs> delay1 delay3 delay3_opt
+%type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list
 %type <exprs> assign assign_list
 %type <indexed_identifier> indexed_identifier
@@ -236,6 +240,8 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
+
+%type <specpath> specify_simple_path specify_simple_path_decl
 
 %token K_TAND
 %right '?' ':'
@@ -548,6 +554,19 @@ delay3
 delay3_opt
 	: delay3 { $$ = $1; }
 	|        { $$ = 0; }
+	;
+
+delay_value_list
+        : delay_value
+              { svector<PExpr*>*tmp = new svector<PExpr*>(1);
+	        (*tmp)[0] = $1;
+		$$ = tmp;
+	      }
+	| delay_value_list ',' delay_value
+              { svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
+		delete $1;
+		$$ = tmp;
+	      }
 	;
 
 delay_value
@@ -2444,7 +2463,7 @@ register_variable_list
 specify_item
 	: K_specparam specparam_list ';'
 	| specify_simple_path_decl ';'
-		{
+                { pform_module_specify_path($1);
 		}
 	| specify_edge_path_decl ';'
 		{
@@ -2494,18 +2513,14 @@ specify_item
 		}
 	;
 
-specify_delay_value_list
-	: delay_value { }
-	| specify_delay_value_list ',' delay_value { }
-	;
-
 specify_item_list
 	: specify_item
 	| specify_item_list specify_item
 	;
 
 specify_edge_path_decl
-	: specify_edge_path '=' '(' specify_delay_value_list ')'
+	: specify_edge_path '=' '(' delay_value_list ')'
+                { delete $4; }
 	| specify_edge_path '=' delay_value_simple
 	;
 
@@ -2527,21 +2542,27 @@ polarity_operator
 	;
 
 specify_simple_path_decl
-	: specify_simple_path '=' '(' specify_delay_value_list ')'
+	: specify_simple_path '=' '(' delay_value_list ')'
+                { $$ = pform_assign_path_delay($1, $4); }
 	| specify_simple_path '=' delay_value_simple
+                { svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $3;
+		  $$ = pform_assign_path_delay($1, tmp);
+		}
 	| specify_simple_path '=' '(' error ')'
 		{ yyerror(@2, "Syntax error in delay value list.");
 		  yyerrok;
+		  $$ = 0;
 		}
 	;
 
 specify_simple_path
 	: '(' specify_path_identifiers spec_polarity
               K_EG specify_path_identifiers ')'
-		{ pform_make_specify_path($2, $3, false, $5); }
+                { $$ = pform_make_specify_path(@1, $2, $3, false, $5); }
 	| '(' specify_path_identifiers spec_polarity
               K_SG specify_path_identifiers ')'
-		{ pform_make_specify_path($2, $3, true, $5); }
+                { $$ = pform_make_specify_path(@1, $2, $3, true, $5); }
 	| '(' error ')'
 		{ yyerror(@2, "Invalid simple path");
 		  yyerrok;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.77 2006/03/18 22:51:10 steve Exp $
+ *  $Id: README.txt,v 1.78 2006/09/23 04:57:19 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -341,6 +341,14 @@ The first form above takes three constant numbers as the initial
 delay, and takes a single input. The second form takes 4 net inputs,
 with the first being the value to delay, and the remaining to be the
 delay values to use.
+
+MODULE PATH DELAY STATEMENTS:
+
+A module path delay takes data from its input, then a list of module
+path delays. The <src> for each possible delay set is a trigger that
+activates the delay.
+
+        .modpath <input> , [ <src> (<delays>) ] ;
 
 MEMORY STATEMENTS:
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.132 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: t-dll.h,v 1.133 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -176,6 +176,11 @@ struct dll_target  : public target_t, public expr_scan_t {
 /*
  * These are various private declarations used by the t-dll target.
  */
+
+struct ivl_delaypath_s {
+      ivl_nexus_t src;
+      uint64_t delay[12];
+};
 
 struct ivl_event_s {
       perm_string name;
@@ -585,6 +590,9 @@ struct ivl_signal_s {
 
       ivl_nexus_t pin_;
 
+      ivl_delaypath_s*path;
+      unsigned npath;
+
       struct ivl_attribute_s*attr;
       unsigned nattr;
 };
@@ -671,6 +679,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.133  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.132  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

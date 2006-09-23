@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.136 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: pform.cc,v 1.137 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  "PGenerate.h"
+# include  "PSpec.h"
 # include  <list>
 # include  <map>
 # include  <assert.h>
@@ -1535,13 +1536,52 @@ void pform_set_defparam(const hname_t&name, PExpr*expr)
 }
 
 /*
- * XXXX Not implemented yet.
+ * Specify paths.
  */
-extern void pform_make_specify_path(list<perm_string>*src, char pol,
-				    bool full_flag, list<perm_string>*dst)
+extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
+					  list<perm_string>*src, char pol,
+					  bool full_flag, list<perm_string>*dst)
 {
+      PSpecPath*path = new PSpecPath(src->size(), dst->size());
+      path->set_file(li.text);
+      path->set_lineno(li.first_line);
+
+      unsigned idx;
+      list<perm_string>::const_iterator cur;
+
+      idx = 0;
+      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  idx++, cur++) {
+	    path->src[idx] = *cur;
+      }
+      assert(idx == path->src.size());
       delete src;
+
+      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  idx++, cur++) {
+	    path->dst[idx] = *cur;
+      }
+      assert(idx == path->dst.size());
       delete dst;
+
+      return path;
+}
+
+extern PSpecPath* pform_assign_path_delay(PSpecPath*path, svector<PExpr*>*del)
+{
+      assert(path->delays.size() == 0);
+
+      path->delays.resize(del->count());
+      for (unsigned idx = 0 ;  idx < path->delays.size() ;  idx += 1)
+	    path->delays[idx] = (*del)[idx];
+
+      delete del;
+
+      return path;
+}
+
+
+extern void pform_module_specify_path(PSpecPath*obj)
+{
+      pform_cur_module->specify_paths.push_back(obj);
 }
 
 void pform_set_port_type(const struct vlltype&li,
@@ -1707,6 +1747,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.137  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.136  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

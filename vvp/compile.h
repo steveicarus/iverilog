@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.82 2006/07/30 02:51:36 steve Exp $"
+#ident "$Id: compile.h,v 1.83 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -160,6 +160,13 @@ extern void compile_dff(char*label,
 			struct symb_s arg_c,
 			struct symb_s arg_e,
 			struct symb_s arg_a);
+
+class vvp_fun_modpath;
+extern vvp_fun_modpath* compile_modpath(char*label, struct symb_s src);
+extern void compile_modpath_src(vvp_fun_modpath*dst,
+				struct symb_s input,
+				struct numbv_s d);
+
 extern void compile_reduce_and(char*label, struct symb_s arg);
 extern void compile_reduce_or(char*label, struct symb_s arg);
 extern void compile_reduce_xor(char*label, struct symb_s arg);
@@ -345,6 +352,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.83  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.82  2006/07/30 02:51:36  steve
  *  Fix/implement signed right shift.
  *

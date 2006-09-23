@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.360 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.361 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <string>
 # include  <map>
 # include  <list>
+# include  <vector>
 # include  <stdint.h>
 # include  "ivl_target.h"
 # include  "verinum.h"
@@ -369,6 +370,46 @@ class NetNode  : public NetObj {
       Design*design_;
 };
 
+/*
+ * A NetDelaySrc is an input-only device that calculates a path delay
+ * based on the time that the inputs change. This class is used by the
+ * NetNet class, and NetDelaySrc objects cannot exist outside of its
+ * association with NetNet objects.
+ */
+class NetDelaySrc  : public NetObj {
+
+    public:
+      explicit NetDelaySrc(NetScope*s, perm_string n, unsigned npins);
+      ~NetDelaySrc();
+
+	// These functions set the delays from the values in the
+	// source. These set_delays functions implement the various
+	// rules wrt collections of transitions.
+
+	// One transition specified.
+      void set_delays(uint64_t del);
+	// Two transitions: rise and fall
+      void set_delays(uint64_t rise, uint64_t fall);
+	// Three transitions
+      void set_delays(uint64_t rise, uint64_t fall, uint64_t tz);
+      void set_delays(uint64_t t01, uint64_t t10, uint64_t t0z,
+		      uint64_t tz1, uint64_t t1z, uint64_t tz0);
+      void set_delays(uint64_t t01, uint64_t t10, uint64_t t0z,
+		      uint64_t tz1, uint64_t t1z, uint64_t tz0,
+		      uint64_t t0x, uint64_t tx1, uint64_t t1x,
+		      uint64_t tx0, uint64_t txz, uint64_t tzx);
+
+      uint64_t get_delay(unsigned pe) const;
+
+      void dump(ostream&, unsigned ind) const;
+
+    private:
+      uint64_t transition_delays_[12];
+
+    private: // Not implemented
+      NetDelaySrc(const NetDelaySrc&);
+      NetDelaySrc& operator= (const NetDelaySrc&);
+};
 
 /*
  * NetNet is a special kind of NetObj that doesn't really do anything,
@@ -463,6 +504,11 @@ class NetNet  : public NetObj {
 
       unsigned get_refs() const;
 
+	/* Manage path delays */
+      void add_delay_path(class NetDelaySrc*path);
+      unsigned delay_paths(void) const;
+      const class NetDelaySrc*delay_path(unsigned idx) const;
+
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
@@ -482,6 +528,8 @@ class NetNet  : public NetObj {
       bool local_flag_;
       unsigned eref_count_;
       unsigned lref_count_;
+
+      vector<class NetDelaySrc*> delay_paths_;
 };
 
 /*
@@ -3510,6 +3558,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.361  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.360  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.157 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.158 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2174,6 +2174,28 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
+	/* Collect the delay paths for this signal. */
+      obj->npath = net->delay_paths();
+      if (obj->npath > 0) {
+	    obj->path = new struct ivl_delaypath_s[obj->npath];
+
+	    for (unsigned idx = 0 ;  idx < obj->npath ;  idx += 1) {
+		  const NetDelaySrc*src = net->delay_path(idx);
+		    // For now, only handle single-source paths.
+		  assert(src->pin_count() == 1);
+		  const Nexus*nex = src->pin(0).nexus();
+		  assert(nex->t_cookie());
+		  obj->path[idx].src = (ivl_nexus_t) nex->t_cookie();
+
+		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
+			obj->path[idx].delay[pe] = src->get_delay(pe);
+		  }
+	    }
+
+      } else {
+	    obj->path = 0;
+      }
+
       obj->data_type = net->data_type();
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
@@ -2207,6 +2229,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.158  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.157  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

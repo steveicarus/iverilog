@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_misc.cc,v 1.8 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.9 2006/09/23 04:57:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -63,6 +63,13 @@ void numbv_add(struct numbv_s*obj, long item)
       obj->cnt += 1;
 }
 
+void numbv_clear(struct numbv_s*obj)
+{
+      free(obj->nvec);
+      obj->nvec = 0;
+      obj->cnt = 0;
+}
+
 void argv_init(struct argv_s*obj)
 {
       obj->argc = 0;
@@ -98,6 +105,9 @@ void argv_sym_lookup(struct argv_s*obj)
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.9  2006/09/23 04:57:20  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.8  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

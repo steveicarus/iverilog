@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.93 2006/04/28 04:19:31 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.94 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@
 # include  "pform.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
+# include  "PSpec.h"
 # include  <iostream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -739,6 +740,33 @@ void PProcess::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+2);
 }
 
+void PSpecPath::dump(std::ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "specify path (";
+
+      for (unsigned idx = 0 ;  idx < src.size() ;  idx += 1) {
+	    if (idx > 0) out << ", ";
+	    assert(src[idx]);
+	    out << src[idx];
+      }
+
+      out << " => ";
+
+      for (unsigned idx = 0 ; idx < dst.size() ;  idx += 1) {
+	    if (idx > 0) out << ", ";
+	    assert(dst[idx]);
+	    out << dst[idx];
+      }
+
+      out << ") = (";
+      for (unsigned idx = 0 ;  idx < delays.size() ;  idx += 1) {
+	    if (idx > 0) out << ", ";
+	    assert(delays[idx]);
+	    out << *delays[idx];
+      }
+      out << ");" << endl;
+}
+
 void PGenerate::dump(ostream&out) const
 {
       out << "    generate(" << id_number << ")";
@@ -920,6 +948,13 @@ void Module::dump(ostream&out) const
 	    (*behav)->dump(out, 4);
       }
 
+      for (list<PSpecPath*>::const_iterator spec = specify_paths.begin()
+		 ; spec != specify_paths.end()
+		 ; spec ++ ) {
+
+	    (*spec)->dump(out, 4);
+      }
+
       out << "endmodule" << endl;
 }
 
@@ -972,6 +1007,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.94  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.93  2006/04/28 04:19:31  steve
  *  Dump indexes of ident expressions
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.136 2006/09/20 22:31:23 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.137 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1283,6 +1283,17 @@ extern "C" ivl_scope_t ivl_parameter_scope(ivl_parameter_t net)
       return net->scope;
 }
 
+extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t edg)
+{
+      assert(obj);
+      return obj->delay[edg];
+}
+
+extern ivl_nexus_t ivl_path_source(ivl_delaypath_t net)
+{
+      return net->src;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
@@ -1604,6 +1615,17 @@ extern "C" int ivl_signal_integer(ivl_signal_t net)
 extern "C" ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net)
 {
       return net->data_type;
+}
+
+extern "C" unsigned ivl_signal_npath(ivl_signal_t net)
+{
+      return net->npath;
+}
+
+extern "C" ivl_delaypath_t ivl_signal_path(ivl_signal_t net, unsigned idx)
+{
+      assert(idx < net->npath);
+      return net->path + idx;
 }
 
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
@@ -1954,6 +1976,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.137  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.136  2006/09/20 22:31:23  steve
  *  Remove dead code.
  *

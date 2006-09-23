@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.84 2006/07/30 02:51:36 steve Exp $"
+#ident "$Id: parse.y,v 1.85 2006/09/23 04:57:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -34,6 +34,15 @@
  */
 extern FILE*yyin;
 
+/*
+ * Local variables.
+ */
+
+/*
+ * When parsing a modpath list, this is the processed destination that
+ * the source items will attach themselves to.
+ */
+static vvp_fun_modpath*modpath_dst = 0;
 %}
 
 %union {
@@ -62,7 +71,7 @@ extern FILE*yyin;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DELAY K_DFF
-%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_NET K_NET_S K_NET_R
+%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
@@ -296,6 +305,11 @@ statement
                 { struct symbv_s obj = $3;
 		  compile_delay($1, obj.cnt, obj.vect);
 		}
+
+        | T_LABEL K_MODPATH symbol ','
+                { modpath_dst = compile_modpath($1, $3); }
+          modpath_src_list ';'
+                { modpath_dst = 0; }
 
   /* DFF nodes have an output and take exactly 4 inputs. */
 
@@ -695,6 +709,20 @@ symbol_opt
 		}
 	;
 
+  /* This rule is invoked within the rule for a modpath statement. The
+     beginning of that run has already created the modpath dst object
+     and saved it in the modpath_dst variable. The modpath_src rule,
+     then simply needs to attach the items it creates. */
+modpath_src_list
+        : modpath_src
+        | modpath_src_list ',' modpath_src
+        ;
+
+modpath_src
+        : symbol '(' numbers ')'
+                { compile_modpath_src(modpath_dst, $1, $3); }
+        ;
+
 udp_table
 	: T_STRING
 		{ $$ = compile_udp_table(0x0, $1); }
@@ -750,6 +778,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.85  2006/09/23 04:57:20  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.84  2006/07/30 02:51:36  steve
  *  Fix/implement signed right shift.
  *

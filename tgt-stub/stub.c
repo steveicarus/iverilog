@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.140 2006/07/30 02:51:36 steve Exp $"
+#ident "$Id: stub.c,v 1.141 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
 # include "priv.h"
 # include <stdlib.h>
+# include <inttypes.h>
 # include <assert.h>
 
 FILE*out;
@@ -1331,6 +1332,29 @@ static void show_signal(ivl_signal_t net)
 	    }
       }
 
+      for (idx = 0 ;  idx < ivl_signal_npath(net) ;  idx += 1) {
+	    ivl_delaypath_t path = ivl_signal_path(net,idx);
+	    ivl_nexus_t nex = ivl_path_source(path);
+
+	    fprintf(out, "      path %s", ivl_nexus_name(nex));
+	    fprintf(out, " %" PRIu64 ",%" PRIu64 ",%" PRIu64
+		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
+		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
+		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64 "\n",
+		    ivl_path_delay(path, IVL_PE_01),
+		    ivl_path_delay(path, IVL_PE_10),
+		    ivl_path_delay(path, IVL_PE_0z),
+		    ivl_path_delay(path, IVL_PE_z1),
+		    ivl_path_delay(path, IVL_PE_1z),
+		    ivl_path_delay(path, IVL_PE_z0),
+		    ivl_path_delay(path, IVL_PE_0x),
+		    ivl_path_delay(path, IVL_PE_x1),
+		    ivl_path_delay(path, IVL_PE_1x),
+		    ivl_path_delay(path, IVL_PE_x0),
+		    ivl_path_delay(path, IVL_PE_xz),
+		    ivl_path_delay(path, IVL_PE_zx));
+      }
+
       for (idx = 0 ;  idx < ivl_signal_attr_cnt(net) ;  idx += 1) {
 	    ivl_attribute_t atr = ivl_signal_attr_val(net, idx);
 
@@ -1647,6 +1671,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.141  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.140  2006/07/30 02:51:36  steve
  *  Fix/implement signed right shift.
  *

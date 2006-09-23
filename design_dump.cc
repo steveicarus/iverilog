@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.167 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.168 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,6 +90,25 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
       return o;
 }
 
+void NetDelaySrc::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "specify delay src "
+	<< "(" << transition_delays_[IVL_PE_01]
+	<< "," << transition_delays_[IVL_PE_10]
+	<< "," << transition_delays_[IVL_PE_0z]
+	<< "/" << transition_delays_[IVL_PE_z1]
+	<< "," << transition_delays_[IVL_PE_1z]
+	<< "," << transition_delays_[IVL_PE_z0]
+	<< "/" << transition_delays_[IVL_PE_0x]
+	<< "," << transition_delays_[IVL_PE_x1]
+	<< "," << transition_delays_[IVL_PE_1x]
+	<< "/" << transition_delays_[IVL_PE_x0]
+	<< "," << transition_delays_[IVL_PE_xz]
+	<< "," << transition_delays_[IVL_PE_zx]
+	<< "): " << endl;
+      dump_node_pins(o, ind+4);
+}
+
 /* Dump a net. This can be a wire or register. */
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
@@ -139,6 +158,12 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << setw(ind+4) << "" << "[" << idx << "]: " << nex
 	      << " " << nex->name() << endl;
       }
+
+      for (unsigned idx = 0 ;  idx < delay_paths_.size() ;  idx += 1) {
+	    const NetDelaySrc*cur = delay_paths_[idx];
+	    cur->dump(o, ind+4);
+      }
+
       dump_obj_attr(o, ind+4);
 }
 
@@ -1183,6 +1208,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.168  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.167  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *

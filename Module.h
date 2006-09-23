@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.40 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: Module.h,v 1.41 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include  <list>
@@ -35,6 +35,7 @@ class PExpr;
 class PEIdent;
 class PGate;
 class PGenerate;
+class PSpecPath;
 class PTask;
 class PFunction;
 class PWire;
@@ -122,6 +123,8 @@ class Module : public LineInfo {
 	   the module definition. These are used at elaboration time. */
       list<PGenerate*> generate_schemes;
 
+      list<PSpecPath*> specify_paths;
+
       perm_string mod_name() const { return name_; }
 
       void add_gate(PGate*gate);
@@ -173,6 +176,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.41  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.40  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *

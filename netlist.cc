@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.248 2005/09/14 02:53:14 steve Exp $"
+#ident "$Id: netlist.cc,v 1.249 2006/09/23 04:57:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -235,6 +235,99 @@ NetBus::NetBus(NetScope*s, unsigned pin_count)
 
 NetBus::~NetBus()
 {
+}
+
+NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins)
+: NetObj(s, n, npins)
+{
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
+	    pin(idx).set_name(perm_string::literal("I"), idx);
+	    pin(idx).set_dir(Link::INPUT);
+      }
+}
+
+NetDelaySrc::~NetDelaySrc()
+{
+}
+
+void NetDelaySrc::set_delays(uint64_t del)
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    transition_delays_[idx] = del;
+}
+
+void NetDelaySrc::set_delays(uint64_t trise, uint64_t tfall)
+{
+      transition_delays_[IVL_PE_01] = trise;
+      transition_delays_[IVL_PE_10] = tfall;
+      transition_delays_[IVL_PE_0z] = trise;
+      transition_delays_[IVL_PE_z1] = trise;
+      transition_delays_[IVL_PE_1z] = tfall;
+      transition_delays_[IVL_PE_z0] = tfall;
+      transition_delays_[IVL_PE_0x] = trise;
+      transition_delays_[IVL_PE_x1] = trise;
+      transition_delays_[IVL_PE_1x] = tfall;
+      transition_delays_[IVL_PE_x0] = tfall;
+      transition_delays_[IVL_PE_xz] = max(trise,tfall);
+      transition_delays_[IVL_PE_zx] = min(trise,tfall);
+}
+
+void NetDelaySrc::set_delays(uint64_t trise, uint64_t tfall, uint64_t tz)
+{
+      transition_delays_[IVL_PE_01] = trise;
+      transition_delays_[IVL_PE_10] = tfall;
+      transition_delays_[IVL_PE_0z] = tz;
+      transition_delays_[IVL_PE_z1] = trise;
+      transition_delays_[IVL_PE_1z] = tz;
+      transition_delays_[IVL_PE_z0] = tfall;
+      transition_delays_[IVL_PE_0x] = min(trise,tz);
+      transition_delays_[IVL_PE_x1] = trise;
+      transition_delays_[IVL_PE_1x] = min(tfall,tz);
+      transition_delays_[IVL_PE_x0] = tfall;
+      transition_delays_[IVL_PE_xz] = tz;
+      transition_delays_[IVL_PE_zx] = min(trise,tfall);
+}
+
+void NetDelaySrc::set_delays(uint64_t t01, uint64_t t10, uint64_t t0z,
+			     uint64_t tz1, uint64_t t1z, uint64_t tz0)
+{
+      transition_delays_[IVL_PE_01] = t01;
+      transition_delays_[IVL_PE_10] = t10;
+      transition_delays_[IVL_PE_0z] = t0z;
+      transition_delays_[IVL_PE_z1] = tz1;
+      transition_delays_[IVL_PE_1z] = t1z;
+      transition_delays_[IVL_PE_z0] = tz0;
+      transition_delays_[IVL_PE_0x] = min(t01,t0z);
+      transition_delays_[IVL_PE_x1] = max(t01,tz1);
+      transition_delays_[IVL_PE_1x] = min(t10,t1z);
+      transition_delays_[IVL_PE_x0] = max(t10,tz0);
+      transition_delays_[IVL_PE_xz] = max(t1z,t0z);
+      transition_delays_[IVL_PE_zx] = min(tz1,tz0);
+}
+
+void NetDelaySrc::set_delays(uint64_t t01, uint64_t t10, uint64_t t0z,
+			     uint64_t tz1, uint64_t t1z, uint64_t tz0,
+			     uint64_t t0x, uint64_t tx1, uint64_t t1x,
+			     uint64_t tx0, uint64_t txz, uint64_t tzx)
+{
+      transition_delays_[IVL_PE_01] = t01;
+      transition_delays_[IVL_PE_10] = t10;
+      transition_delays_[IVL_PE_0z] = t0z;
+      transition_delays_[IVL_PE_z1] = tz1;
+      transition_delays_[IVL_PE_1z] = t1z;
+      transition_delays_[IVL_PE_z0] = tz0;
+      transition_delays_[IVL_PE_0x] = t0x;
+      transition_delays_[IVL_PE_x1] = tx1;
+      transition_delays_[IVL_PE_1x] = t1x;
+      transition_delays_[IVL_PE_x0] = tx0;
+      transition_delays_[IVL_PE_xz] = txz;
+      transition_delays_[IVL_PE_zx] = tzx;
+}
+
+uint64_t NetDelaySrc::get_delay(unsigned idx) const
+{
+      assert(idx < 12);
+      return transition_delays_[idx];
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
@@ -477,6 +570,21 @@ unsigned NetNet::get_refs() const
       return lref_count_ + eref_count_;
 }
 
+void NetNet::add_delay_path(NetDelaySrc*path)
+{
+      delay_paths_.push_back(path);
+}
+
+unsigned NetNet::delay_paths(void)const
+{
+      return delay_paths_.size();
+}
+
+const NetDelaySrc* NetNet::delay_path(unsigned idx) const
+{
+      assert(idx < delay_paths_.size());
+      return delay_paths_[idx];
+}
 
 NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 			     NetPartSelect::dir_t dir)
@@ -2228,6 +2336,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.249  2006/09/23 04:57:19  steve
+ *  Basic support for specify timing.
+ *
  * Revision 1.248  2005/09/14 02:53:14  steve
  *  Support bool expressions and compares handle them optimally.
  *
