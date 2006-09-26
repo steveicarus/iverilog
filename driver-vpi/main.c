@@ -277,6 +277,7 @@ static int parse(int argc, char *argv[])
 
 	char dot_c_ext[]    = ".c";
 	char dot_cc_ext[]   = ".cc";
+	char dot_cpp_ext[]  = ".cpp";
 	char dot_o_ext[]    = ".o";
 	char name_option[]  = "--name=";
 	char lib_option[]   = "-l";
@@ -300,6 +301,13 @@ static int parse(int argc, char *argv[])
 			append(&gstr.pCXSRC," ");
 			if (!*gstr.pOUT)
 			   assignn(&gstr.pOUT,argv[idx],strlen(argv[idx])-strlen(dot_cc_ext));
+		}
+		else if (endsIn(dot_cpp_ext,argv[idx])) {		/* check for C++ source files */
+			++srcFileCnt;
+			append(&gstr.pCXSRC,argv[idx]);
+			append(&gstr.pCXSRC," ");
+			if (!*gstr.pOUT)
+			   assignn(&gstr.pOUT,argv[idx],strlen(argv[idx])-strlen(dot_cpp_ext));
 		}
 		else if (endsIn(dot_o_ext,argv[idx])) {			/* check for compiled object files */
 			++srcFileCnt;

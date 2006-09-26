@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.15 2006/02/21 02:38:44 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.16 2006/09/26 18:54:42 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -66,6 +66,13 @@ do
 	 LD=$CXX
          if [ x$OUT = x ]; then
 	    OUT=`basename $parm .cc`
+	 fi
+	 ;;
+
+    *.cpp) CXSRC="$CXSRC $parm"
+	 LD=$CXX
+         if [ x$OUT = x ]; then
+	    OUT=`basename $parm .cpp`
 	 fi
 	 ;;
 
