@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.343 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.344 2006/09/26 19:48:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2890,7 +2890,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    if (NetEConst*cur_con = dynamic_cast<NetEConst*> (cur)) {
 		  delay_value[idx] = cur_con->value().as_ulong();
 	    } else {
-		  cerr << cur->get_line() << ": error: Path delay value "
+		  cerr << get_line() << ": error: Path delay value "
 		       << "must be constant." << endl;
 		  delay_value[idx] = 0;
 		  des->errors += 1;
@@ -2982,6 +2982,30 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
+
+	// Elaborate specparams
+      typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
+      for (specparam_it_t cur = specparams.begin()
+		 ; cur != specparams.end() ; cur ++ ) {
+
+	    NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
+	    NetEConst*val_c = dynamic_cast<NetEConst*> (val);
+	    if (! val_c ) {
+		  cerr << (*cur).second->get_line() << ": error: "
+		       << "specparam " << (*cur).first << " value"
+		       << " is not constant: " << *val << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    scope->specparams[(*cur).first] = val_c->value().as_long();
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Elaborate "
+		       << "specparam " << (*cur).first
+		       << " value=" << val_c->value().as_long() << endl;
+
+      }
 
 	// Elaborate within the generate blocks.
       typedef list<PGenerate*>::const_iterator generate_it_t;
@@ -3255,6 +3279,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.344  2006/09/26 19:48:40  steve
+ *  Missing PSpec.cc file.
+ *
  * Revision 1.343  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

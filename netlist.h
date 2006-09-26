@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.361 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.362 2006/09/26 19:48:40 steve Exp $"
 #endif
 
 /*
@@ -3369,6 +3369,7 @@ class NetScope : public Attrib {
       };
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
+      map<perm_string,long>specparams;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
@@ -3558,6 +3559,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.362  2006/09/26 19:48:40  steve
+ *  Missing PSpec.cc file.
+ *
  * Revision 1.361  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

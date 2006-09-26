@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.168 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.169 2006/09/26 19:48:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -915,6 +915,14 @@ void NetScope::dump(ostream&o) const
 	    } while (cur != memories_->snext_);
       }
 
+	// Dump specparams
+      typedef map<perm_string,long>::const_iterator specparam_it_t;
+      for (specparam_it_t cur = specparams.begin()
+		 ; cur != specparams.end() ;  cur ++ ) {
+	    o << "    specparam " << (*cur).first
+	      << " = " << (*cur).second << endl;
+      }
+
       switch (type_) {
 	  case FUNC:
 	    if (func_def())
@@ -1208,6 +1216,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.169  2006/09/26 19:48:40  steve
+ *  Missing PSpec.cc file.
+ *
  * Revision 1.168  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *
