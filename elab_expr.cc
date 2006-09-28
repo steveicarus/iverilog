@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.109 2006/09/19 23:00:15 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.110 2006/09/28 00:29:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -663,6 +663,20 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	  && scope->genvar_tmp.str()
 	  && strcmp(path_.peek_name(0), scope->genvar_tmp) == 0) {
 	    verinum val (scope->genvar_tmp_val);
+	    NetEConst*tmp = new NetEConst(val);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// A specparam? Look up the name to see if it is a
+	// specparam. If we find it, then turn it into a NetEConst
+	// value and return that.
+
+      map<perm_string,long>::const_iterator specp;
+      const char*key = path_.peek_name(0);
+      if (path_.component_count() == 1
+	  && ((specp = scope->specparams.find(perm_string::literal(key))) != scope->specparams.end())) {
+	    verinum val ((*specp).second);
 	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
 	    return tmp;
@@ -1399,6 +1413,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.110  2006/09/28 00:29:49  steve
+ *  Allow specparams as constants in expressions.
+ *
  * Revision 1.109  2006/09/19 23:00:15  steve
  *  Use elab_and_eval for bit select expressions.
  *

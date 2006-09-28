@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.158 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.159 2006/09/28 00:29:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2175,20 +2175,30 @@ void dll_target::signal(const NetNet*net)
       }
 
 	/* Collect the delay paths for this signal. */
-      obj->npath = net->delay_paths();
-      if (obj->npath > 0) {
+      obj->npath = 0;
+      if (net->delay_paths() > 0) {
+	      /* Figure out how many paths there really are. */
+	    for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
+		  const NetDelaySrc*src = net->delay_path(idx);
+		  obj->npath += src->pin_count();
+	    }
+
 	    obj->path = new struct ivl_delaypath_s[obj->npath];
 
-	    for (unsigned idx = 0 ;  idx < obj->npath ;  idx += 1) {
+	    unsigned ptr = 0;
+	    for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
 		  const NetDelaySrc*src = net->delay_path(idx);
-		    // For now, only handle single-source paths.
-		  assert(src->pin_count() == 1);
-		  const Nexus*nex = src->pin(0).nexus();
-		  assert(nex->t_cookie());
-		  obj->path[idx].src = (ivl_nexus_t) nex->t_cookie();
 
-		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
-			obj->path[idx].delay[pe] = src->get_delay(pe);
+		  for (unsigned pin = 0; pin < src->pin_count(); pin += 1) {
+			const Nexus*nex = src->pin(pin).nexus();
+			assert(nex->t_cookie());
+			obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
+
+			for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
+			      obj->path[ptr].delay[pe] = src->get_delay(pe);
+			}
+
+			ptr += 1;
 		  }
 	    }
 
@@ -2229,6 +2239,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.159  2006/09/28 00:29:49  steve
+ *  Allow specparams as constants in expressions.
+ *
  * Revision 1.158  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

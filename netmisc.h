@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.25 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: netmisc.h,v 1.26 2006/09/28 00:29:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -112,6 +112,9 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * right away. If the expression can be evaluated, this returns a
  * constant expression. If it cannot be evaluated, it returns whatever
  * it can. If the expression cannot be elaborated, return 0.
+ *
+ * The expr_width is the width of the context where the expression is
+ * being elaborated, or -1 if the expression is self-determinted width.
  */
 class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
@@ -119,6 +122,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.26  2006/09/28 00:29:49  steve
+ *  Allow specparams as constants in expressions.
+ *
  * Revision 1.25  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary
