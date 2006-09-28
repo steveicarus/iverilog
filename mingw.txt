@@ -184,6 +184,27 @@ where we will work from now on.
       makefiles included in the source get confused by white space in
       directory names.
 
+* Preconfigure Icarus Verilog (Not normally needed)
+
+Under certain cases, you may need to "preconfigure" the Icarus Verilog
+source tree. You should only need to do this if you are getting the
+Icarus Verilog source tree from CVS, or you are using an existing
+source tree that you've patched to cause configure.in files to change.
+
+    NOTE: If you are building from a fresh, bundled source tree that
+      you downloaded from an FTP site, then SKIP THIS STEP. Go on to
+      the "Configure Icarus Verilog" step below.
+
+First, remove any autom4te.cache directories that may exist in your
+source tree. These can make a mess of autoconf runs. Then, generate
+configure scripts with this command:
+
+        $ sh autoconf.sh
+
+This script will run the "autoconf" command (part of the msysDTK) to
+generate all the necessary "configure" scripts. This will take a few
+minutes. This should go smoothly.
+
 * Configure Icarus Verilog
 
 Now we are all set to configure and compile Icarus Verilog. Choose a

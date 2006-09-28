@@ -12,7 +12,7 @@ autoconf
 for dir in vpip vpi vvp tgt-vvp tgt-edif tgt-fpga libveriuser cadpli
 do
     echo "Autoconf in $dir..."
-    ( cd ./$dir ; autoconf --include=.. )
+    ( cd ./$dir ; autoconf -f --include=.. )
 done
 
 echo "Precompiling lexor_keyword.gperf"
