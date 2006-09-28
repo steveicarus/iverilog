@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.30 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: compiler.h,v 1.31 2006/09/28 04:35:18 steve Exp $"
 #endif
 
 # include  <list>
@@ -104,11 +104,16 @@ enum generation_t {
 };
 
 extern generation_t generation_flag;
+
 extern bool gn_cadence_types_flag;
 
 /* These functions test that specific features are enabled. */
 inline bool gn_cadence_types_enabled()
 { return gn_cadence_types_flag && generation_flag==GN_VER2001X; }
+
+/* If this flag is true, then elaborate specify blocks. If this flag
+   is false, then skip elaboration of specify behavior. */
+extern bool gn_specify_blocks_flag;
 
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
@@ -143,6 +148,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.31  2006/09/28 04:35:18  steve
+ *  Support selective control of specify and xtypes features.
+ *
  * Revision 1.30  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *

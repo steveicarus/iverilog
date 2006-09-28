@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.344 2006/09/26 19:48:40 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.345 2006/09/28 04:35:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2878,6 +2878,11 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       uint64_t delay_value[12];
       unsigned ndelays = 0;
 
+	/* Do not elaborate specify delay paths if this feature is
+	   turned off. */
+      if (!gn_specify_blocks_flag)
+	    return;
+
       ndelays = delays.size();
       if (ndelays > 12)
 	    ndelays = 12;
@@ -3279,6 +3284,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.345  2006/09/28 04:35:18  steve
+ *  Support selective control of specify and xtypes features.
+ *
  * Revision 1.344  2006/09/26 19:48:40  steve
  *  Missing PSpec.cc file.
  *

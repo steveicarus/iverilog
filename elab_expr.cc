@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.110 2006/09/28 00:29:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.111 2006/09/28 04:35:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -670,16 +670,19 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// A specparam? Look up the name to see if it is a
 	// specparam. If we find it, then turn it into a NetEConst
-	// value and return that.
+	// value and return that. Of course, this does not apply if
+	// specify blocks are disabled.
 
-      map<perm_string,long>::const_iterator specp;
-      const char*key = path_.peek_name(0);
-      if (path_.component_count() == 1
-	  && ((specp = scope->specparams.find(perm_string::literal(key))) != scope->specparams.end())) {
-	    verinum val ((*specp).second);
-	    NetEConst*tmp = new NetEConst(val);
-	    tmp->set_line(*this);
-	    return tmp;
+      if (gn_specify_blocks_flag) {
+	    map<perm_string,long>::const_iterator specp;
+	    perm_string key = perm_string::literal(path_.peek_name(0));
+	    if (path_.component_count() == 1
+		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
+		  verinum val ((*specp).second);
+		  NetEConst*tmp = new NetEConst(val);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
       }
 
 	// Finally, if this is a scope name, then return that. Look
@@ -1413,6 +1416,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.111  2006/09/28 04:35:18  steve
+ *  Support selective control of specify and xtypes features.
+ *
  * Revision 1.110  2006/09/28 00:29:49  steve
  *  Allow specparams as constants in expressions.
  *

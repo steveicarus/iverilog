@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.70 2006/09/20 22:30:52 steve Exp $"
+#ident "$Id: main.c,v 1.71 2006/09/28 04:35:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,6 +108,8 @@ const char*targ  = "vvp";
 const char*depfile = 0;
 
 const char*generation = "2x";
+const char*gen_specify = "specify";
+const char*gen_xtypes = "xtypes";
 
 char warning_flags[16] = "";
 
@@ -380,13 +382,28 @@ int process_generation(const char*name)
       else if (strcmp(name,"2x") == 0)
 	    generation = "2x";
 
+      else if (strcmp(name,"xtypes") == 0)
+	    gen_xtypes = "xtypes";
+
+       else if (strcmp(name,"no-xtypes") == 0)
+	    gen_xtypes = "no-xtypes";
+
+       else if (strcmp(name,"specify") == 0)
+	    gen_specify = "specify";
+
+       else if (strcmp(name,"no-specify") == 0)
+	    gen_specify = "no-specify";
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n", name);
 	    fprintf(stderr, "Supported generations are:\n");
 	    fprintf(stderr, "    1   -- IEEE1364-1995 (Verilog 1)\n"
 		            "    2   -- IEEE1364-2001 (Verilog 2001)\n"
-		            "    2x  -- Verilog with extensions\n");
+		            "    2x  -- Verilog with extensions\n"
+		            "Other generation flags:\n"
+		            "    specify | no-specify\n"
+		            "    xtypes | no-xtypes\n");
 	    return 1;
       }
 
@@ -616,6 +633,8 @@ int main(int argc, char **argv)
 
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
+      fprintf(iconfig_file, "generation:%s\n", gen_specify);
+      fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
@@ -721,6 +740,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.71  2006/09/28 04:35:18  steve
+ *  Support selective control of specify and xtypes features.
+ *
  * Revision 1.70  2006/09/20 22:30:52  steve
  *  Do not pass -D__ICARUS__ to ivlpp.
  *

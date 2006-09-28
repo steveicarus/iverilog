@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.92 2005/07/14 23:38:43 steve Exp $"
+#ident "$Id: main.cc,v 1.93 2006/09/28 04:35:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,6 +88,7 @@ const char*target = "null";
  */
 generation_t generation_flag = GN_DEFAULT;
 bool gn_cadence_types_flag = true;
+bool gn_specify_blocks_flag = true;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
@@ -186,17 +187,29 @@ const char *net_func_to_name(const net_func func)
 
 static void process_generation_flag(const char*gen)
 {
-      if (strcmp(gen,"1") == 0)
+      if (strcmp(gen,"1") == 0) {
 	    generation_flag = GN_VER1995;
 
-      else if (strcmp(gen,"2") == 0)
+      } else if (strcmp(gen,"2") == 0) {
 	    generation_flag = GN_VER2001;
 
-      else if (strcmp(gen,"2x") == 0)
+      } else if (strcmp(gen,"2x") == 0) {
 	    generation_flag = GN_VER2001X;
 
-      else
-	    generation_flag = GN_DEFAULT;
+      } else if (strcmp(gen,"xtypes") == 0) {
+	    gn_cadence_types_flag = true;
+
+      } else if (strcmp(gen,"no-xtypes") == 0) {
+	    gn_cadence_types_flag = false;
+
+      } else if (strcmp(gen,"specify") == 0) {
+	    gn_specify_blocks_flag = true;
+ 
+      } else if (strcmp(gen,"no-specify") == 0) {
+	    gn_specify_blocks_flag = false;
+ 
+      } else {
+      }
 }
 
 static void parm_to_flagmap(const string&flag)
@@ -257,7 +270,7 @@ static void parm_to_flagmap(const string&flag)
  *    functor:<name>
  *        Append a named functor to the processing path.
  *
- *    generation:<1|2|3.0>
+ *    generation:<1|2|2x|xtypes|no-xtypes|specify|no-specify>
  *        This is the generation flag
  *
  *    ivlpp:<preprocessor command>
@@ -559,6 +572,16 @@ int main(int argc, char*argv[])
 		  break;
 	    }
 
+	    if (gn_specify_blocks_flag)
+		  cout << ",specify";
+	    else
+		  cout << ",no-specify";
+
+	    if (gn_cadence_types_flag)
+		  cout << ",xtypes";
+	    else
+		  cout << ",no-xtypes";
+
 	    cout << endl << "PARSING INPUT" << endl;
       }
 
@@ -764,6 +787,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.93  2006/09/28 04:35:18  steve
+ *  Support selective control of specify and xtypes features.
+ *
  * Revision 1.92  2005/07/14 23:38:43  steve
  *  Display as version 0.9.devel
  *

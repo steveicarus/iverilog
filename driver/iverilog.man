@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2005/06/28 04:25:55 $" Version "$Date: 2005/06/28 04:25:55 $"
+.TH iverilog 1 "$Date: 2006/09/28 04:35:18 $" Version "$Date: 2006/09/28 04:35:18 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g2x] [-Dmacro[=defn]] [-pflag=value]
+[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g2x|-gspecify-gxtypes] [-Dmacro[=defn]] [-pflag=value]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -56,6 +56,21 @@ Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
+.TP 8
+.B -gspecify\fI|\fP-gno-specify
+Enable (default) or disable specify block support. When enabled,
+specify block code is elaborated. When disabled, specify blocks are
+parsed but ignored. Specify blocks are commonly not needed for RTL
+simulation, and in fact can hurt performance of the
+simulation. However, disabling specify blocks reduces acuracy of
+full-timing simulations.
+.TP 8
+.B -gxtypes\fI|\fP-gno-xtypes
+Enable (default) or disable support for extended types. Enabling
+extended types allows for new types that are supported by Icarus
+Verilog as extensions beyond the baseline verilog. It may be necessary
+to disable extended types if compiling code that clashes with the few
+new keywords used to implement the type system.
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
