@@ -26,9 +26,9 @@ to the IEEE-1364 standard.
 
 %build
 %ifarch x86_64
-./configure --prefix=/usr libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
+./configure --prefix=/usr --mandir=/usr/share/man libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
 %else
-./configure --prefix=/usr
+./configure --prefix=/usr --mandir=/usr/share/man
 %endif
 make CXXFLAGS=-O
 
@@ -40,10 +40,10 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt cadpli/cadpli.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
-%attr(-,root,root) /usr/man/man1/iverilog.1.gz
+%attr(-,root,root) /usr/share/man/man1/iverilog.1.gz
 #%attr(-,root,root) /usr/man/man1/iverilog-fpga.1.gz
-%attr(-,root,root) /usr/man/man1/iverilog-vpi.1.gz
-%attr(-,root,root) /usr/man/man1/vvp.1.gz
+%attr(-,root,root) /usr/share/man/man1/iverilog-vpi.1.gz
+%attr(-,root,root) /usr/share/man/man1/vvp.1.gz
 
 %attr(-,root,root) /usr/bin/iverilog
 %attr(-,root,root) /usr/bin/iverilog-vpi
