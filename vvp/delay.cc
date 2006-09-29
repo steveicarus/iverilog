@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.14 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: delay.cc,v 1.15 2006/09/29 03:57:01 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -298,6 +298,19 @@ void vvp_fun_modpath::add_modpath_src(vvp_fun_modpath_src*that)
       src_list_ = that;
 }
 
+static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b, vvp_time64_t array[12])
+{
+      typedef delay_edge_t bit4_table4[4];
+      const static bit4_table4 edge_table[4] = {
+	    { DELAY_EDGE_01, DELAY_EDGE_01, DELAY_EDGE_0x, DELAY_EDGE_0z },
+	    { DELAY_EDGE_10, DELAY_EDGE_10, DELAY_EDGE_1x, DELAY_EDGE_1z },
+	    { DELAY_EDGE_x0, DELAY_EDGE_x1, DELAY_EDGE_x0, DELAY_EDGE_xz },
+	    { DELAY_EDGE_z0, DELAY_EDGE_z1, DELAY_EDGE_zx, DELAY_EDGE_z0 }
+      };
+
+      return array[ edge_table[a][b] ];
+}
+
 void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
 	/* Only the first port is used. */
@@ -309,7 +322,6 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 	/* Select a time delay source that applies. */
       vvp_fun_modpath_src*src = 0;
-      vvp_time64_t out_at = 0;
       for (vvp_fun_modpath_src*cur = src_list_ ;  cur ;  cur=cur->next_) {
 	    if (src == 0) {
 		  src = cur;
@@ -318,17 +330,32 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    } else {
 		  continue; /* Skip this entry. */
 	    }
+      }
 
-	    out_at = src->wake_time_ + src->delay_;
+      vvp_time64_t out_at[12];
+      vvp_time64_t now = schedule_simtime();
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
+	    out_at[idx] = src->wake_time_ + src->delay_[idx];
+	    if (out_at[idx] <= now)
+		  out_at[idx] = 0;
+	    else
+		  out_at[idx] -= now;
       }
 
 	/* Given the scheduled output time, create an output event. */
-      vvp_time64_t use_delay = 0;
-      vvp_time64_t now = schedule_simtime();
-      if (out_at <= now)
-	    use_delay = 0;
-      else
-	    use_delay = out_at - now;
+      vvp_time64_t use_delay = delay_from_edge(cur_vec4_.value(0),
+					       bit.value(0),
+					       out_at);
+
+	/* FIXME: This bases the edge delay on only the least
+	   bit. This is WRONG! I need to find all the possible delays,
+	   and schedule an event for each partial change. Hard! */
+      for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
+	    vvp_time64_t tmp = delay_from_edge(cur_vec4_.value(idx),
+					       bit.value(0),
+					       out_at);
+	    assert(tmp == use_delay);
+      }
 
       cur_vec4_ = bit;
       schedule_generic(this, use_delay, false);
@@ -339,9 +366,11 @@ void vvp_fun_modpath::run_run()
       vvp_send_vec4(net_->out, cur_vec4_);
 }
 
-vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del)
+vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
 {
-      delay_ = del;
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    delay_[idx] = del[idx];
+
       next_ = 0;
       wake_time_ = 0;
 }
@@ -360,6 +389,9 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.15  2006/09/29 03:57:01  steve
+ *  Modpath delay chooses correct delay for edge.
+ *
  * Revision 1.14  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

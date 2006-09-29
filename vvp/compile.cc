@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.224 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: compile.cc,v 1.225 2006/09/29 03:57:01 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1066,14 +1066,12 @@ void compile_modpath_src(vvp_fun_modpath*dst,
 			 struct symb_s src,
 			 struct numbv_s vals)
 {
-      vvp_time64_t use_delay = 0;
+      vvp_time64_t use_delay[12];
 
       assert(vals.cnt == 12);
 
-	// FIXME: For now, only support single uniform time value.
-      use_delay = vals.nvec[0];
-      for (unsigned idx = 1 ; idx < vals.cnt ;  idx += 1) {
-	    assert(use_delay == vals.nvec[idx]);
+      for (unsigned idx = 0 ; idx < vals.cnt ;  idx += 1) {
+	    use_delay[idx] = vals.nvec[idx];
       }
 
       numbv_clear(&vals);
@@ -1536,6 +1534,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.225  2006/09/29 03:57:01  steve
+ *  Modpath delay chooses correct delay for edge.
+ *
  * Revision 1.224  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

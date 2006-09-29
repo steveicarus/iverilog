@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.11 2006/09/23 04:57:20 steve Exp $"
+#ident "$Id: delay.h,v 1.12 2006/09/29 03:57:01 steve Exp $"
 #endif
 
 /*
@@ -27,6 +27,14 @@
 
 # include  "vvp_net.h"
 # include  "schedule.h"
+
+enum delay_edge_t {
+      DELAY_EDGE_01 = 0, DELAY_EDGE_10, DELAY_EDGE_0z,
+      DELAY_EDGE_z1,     DELAY_EDGE_1z, DELAY_EDGE_z0,
+      DELAY_EDGE_0x,     DELAY_EDGE_x1, DELAY_EDGE_1x,
+      DELAY_EDGE_x0,     DELAY_EDGE_xz, DELAY_EDGE_zx,
+      DELAY_EDGE_COUNT
+};
 
 /*
  * Instances of this object are functions that calculate the delay for
@@ -129,7 +137,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       friend class vvp_fun_modpath;
 
     public:
-      vvp_fun_modpath_src(vvp_time64_t d);
+      vvp_fun_modpath_src(vvp_time64_t d[12]);
     private:
       ~vvp_fun_modpath_src();
 
@@ -138,7 +146,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
     private:
 	// FIXME: Needs to be a 12-value array
-      vvp_time64_t delay_;
+      vvp_time64_t delay_[12];
 	// Used by vvp_fun_modpath to keep a list of modpath_src objects.
       vvp_fun_modpath_src*next_;
 
@@ -151,6 +159,9 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.12  2006/09/29 03:57:01  steve
+ *  Modpath delay chooses correct delay for edge.
+ *
  * Revision 1.11  2006/09/23 04:57:20  steve
  *  Basic support for specify timing.
  *
