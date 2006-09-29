@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.43 2006/09/29 01:24:34 steve Exp $"
+#ident "$Id: schedule.cc,v 1.44 2006/09/29 16:55:04 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -204,15 +204,6 @@ inline void event_time_s::operator delete(void*obj, size_t size)
  * future.
  */
 static struct event_time_s* sched_list = 0;
-
-/*
- * At the current time, events that are marked as synch events are put
- * into this list and held off until the time step is about to
- * advance. Then the events in this list are run and the clock is
- * allowed to advance.
- */
-static struct event_s* synch_list = 0;
-
 
 /*
  * This flag is true until a VPI task or function finishes the
@@ -418,23 +409,6 @@ static void schedule_event_push_(struct event_s*cur)
 }
 
 
-/*
- */
-static struct event_s* pull_sync_event(void)
-{
-      if (synch_list == 0)
-	    return 0;
-
-      struct event_s*cur = synch_list->next;
-      if (cur->next == cur) {
-	    synch_list = 0;
-      } else {
-	    synch_list->next = cur->next;
-      }
-
-      return cur;
-}
-
 void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 {
       struct vthread_event_s*cur = new vthread_event_s;
@@ -539,6 +513,33 @@ extern void vpiPresim();
 extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
+/*
+ * The scheduler uses this function to drain the rosync events of the
+ * current time. The ctim object is still in the event queue, because
+ * it is legal for a rosync callback to create other rosync
+ * callbacks. It is *not* legal for them to create any other kinds of
+ * events, and that is why the rosync is treated specially.
+ */
+static void run_rosync(struct event_time_s*ctim)
+{
+      while (ctim->rosync) {
+	    struct event_s*cur = ctim->rosync->next;
+	    if (cur->next == cur) {
+		  ctim->rosync = 0;
+	    } else {
+		  ctim->rosync->next = cur->next;
+	    }
+
+	    cur->run_run();
+	    delete cur;
+      }
+
+      if (ctim->active || ctim->nbassign || ctim->rwsync) {
+	    fprintf(stderr, "SCHEDULER ERROR: read-only sync events "
+		    "created RW events!\n");
+      }
+}
+
 void schedule_simulate(void)
 {
       schedule_time = 0;
@@ -563,13 +564,6 @@ void schedule_simulate(void)
 		 postponed sync events. Run them all. */
 	    if (ctim->delay > 0) {
 
-		  struct event_s*sync_cur;
-		  while ( (sync_cur = pull_sync_event()) ) {
-			sync_cur->run_run();
-			delete sync_cur;
-		  }
-
-
 		  schedule_time += ctim->delay;
 		  ctim->delay = 0;
 
@@ -588,9 +582,11 @@ void schedule_simulate(void)
 			ctim->active = ctim->rwsync;
 			ctim->rwsync = 0;
 
+			  /* If out of rw events, then run the rosync
+			     events and delete this timestep. */
 			if (ctim->active == 0) {
+			      run_rosync(ctim);
 			      sched_list = ctim->next;
-			      synch_list = ctim->rosync;
 			      delete ctim;
 			      continue;
 			}
@@ -612,17 +608,6 @@ void schedule_simulate(void)
 	    delete (cur);
       }
 
-	/* Clean up lingering ReadOnlySync events. It is safe to do
-	   that out here because ReadOnlySync events are not allowed
-	   to create new events. */
-      for (struct event_s*sync_cur = pull_sync_event()
-		 ; sync_cur ;  sync_cur = pull_sync_event()) {
-
-	    sync_cur->run_run();
-
-	    delete (sync_cur);
-      }
-
 
       signals_revert();
 
@@ -632,6 +617,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.44  2006/09/29 16:55:04  steve
+ *  Allow rosync events to create new rosync events.
+ *
  * Revision 1.43  2006/09/29 01:24:34  steve
  *  rwsync callback fixes from Ben Staveley (with modifications.)
  *
@@ -675,25 +663,5 @@ void schedule_simulate(void)
  *
  * Revision 1.30  2005/01/29 17:53:25  steve
  *  Use scheduler to initialize constant functor inputs.
- *
- * Revision 1.29  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.28  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.27  2003/09/26 02:15:15  steve
- *  Slight performance tweaks of scheduler.
- *
- * Revision 1.26  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.25  2003/04/19 23:32:57  steve
- *  Add support for cbNextSimTime.
- *
- * Revision 1.24  2003/02/22 02:52:06  steve
- *  Check for stopped flag in certain strategic points.
  */
 
