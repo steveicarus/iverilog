@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.42 2006/08/06 18:17:00 steve Exp $"
+#ident "$Id: schedule.cc,v 1.43 2006/09/29 01:24:34 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -61,6 +61,7 @@ struct event_time_s {
 
       struct event_s*active;
       struct event_s*nbassign;
+      struct event_s*rwsync;
       struct event_s*rosync;
 
       struct event_time_s*next;
@@ -266,7 +267,7 @@ static void signals_revert(void)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_ROSYNC } event_queue_t;
+typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_RWSYNC, SEQ_ROSYNC } event_queue_t;
 
 static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 			    event_queue_t select_queue)
@@ -281,6 +282,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    ctim = new struct event_time_s;
 	    ctim->active = 0;
 	    ctim->nbassign = 0;
+	    ctim->rwsync = 0;
 	    ctim->rosync = 0;
 	    ctim->delay = delay;
 	    ctim->next  = 0;
@@ -293,6 +295,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    struct event_time_s*tmp = new struct event_time_s;
 	    tmp->active = 0;
 	    tmp->nbassign = 0;
+	    tmp->rwsync = 0;
 	    tmp->rosync = 0;
 	    tmp->delay = delay;
 	    tmp->next = ctim;
@@ -313,6 +316,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  struct event_time_s*tmp = new struct event_time_s;
 		  tmp->active = 0;
 		  tmp->nbassign = 0;
+		  tmp->rwsync = 0;
 		  tmp->rosync = 0;
 		  tmp->delay = delay;
 		  tmp->next  = prev->next;
@@ -328,6 +332,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  struct event_time_s*tmp = new struct event_time_s;
 		  tmp->active = 0;
 		  tmp->nbassign = 0;
+		  tmp->rwsync = 0;
 		  tmp->rosync = 0;
 		  tmp->delay = delay - ctim->delay;
 		  tmp->next = 0;
@@ -364,6 +369,18 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  cur->next = ctim->nbassign->next;
 		  ctim->nbassign->next = cur;
 		  ctim->nbassign = cur;
+	    }
+	    break;
+
+	  case SEQ_RWSYNC:
+	    if (ctim->rwsync == 0) {
+		  ctim->rwsync = cur;
+
+	    } else {
+		    /* Put the cur event on the end of the active list. */
+		  cur->next = ctim->rwsync->next;
+		  ctim->rwsync->next = cur;
+		  ctim->rwsync = cur;
 	    }
 	    break;
 
@@ -502,14 +519,16 @@ void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay, bool sync_flag)
+void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
+		      bool sync_flag, bool ro_flag)
 {
       struct generic_event_s*cur = new generic_event_s;
 
       cur->obj = obj;
       cur->val = 0;
 
-      schedule_event_(cur, delay, sync_flag? SEQ_ROSYNC : SEQ_ACTIVE);
+      schedule_event_(cur, delay,
+		      sync_flag? (ro_flag?SEQ_ROSYNC:SEQ_RWSYNC) : SEQ_ACTIVE);
 }
 
 static vvp_time64_t schedule_time;
@@ -566,10 +585,15 @@ void schedule_simulate(void)
 		  ctim->nbassign = 0;
 
 		  if (ctim->active == 0) {
-			sched_list = ctim->next;
-			synch_list = ctim->rosync;
-			delete ctim;
-			continue;
+			ctim->active = ctim->rwsync;
+			ctim->rwsync = 0;
+
+			if (ctim->active == 0) {
+			      sched_list = ctim->next;
+			      synch_list = ctim->rosync;
+			      delete ctim;
+			      continue;
+			}
 		  }
 	    }
 
@@ -608,6 +632,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.43  2006/09/29 01:24:34  steve
+ *  rwsync callback fixes from Ben Staveley (with modifications.)
+ *
  * Revision 1.42  2006/08/06 18:17:00  steve
  *  Fix typo in initialize of new event_time cell.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.43 2006/03/05 05:45:58 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.44 2006/09/29 01:24:34 steve Exp $"
 #endif
 
 /*
@@ -212,16 +212,16 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
       switch (obj->cb_time.type) {
 	  case vpiSuppressTime:
-	    schedule_generic(cb, 0, readonly_flag);
+	    schedule_generic(cb, 0, true, readonly_flag);
 	    break;
 
 	  case vpiSimTime:
 	      { vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
 		vvp_time64_t tn = schedule_simtime();
 		if (tv < tn) {
-		      schedule_generic(cb, 0, readonly_flag);
+		      schedule_generic(cb, 0, true, readonly_flag);
 		} else {
-		      schedule_generic(cb, tv - tn, readonly_flag);
+		      schedule_generic(cb, tv - tn, true, readonly_flag);
 		}
 		break;
 	      }
@@ -576,6 +576,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.44  2006/09/29 01:24:34  steve
+ *  rwsync callback fixes from Ben Staveley (with modifications.)
+ *
  * Revision 1.43  2006/03/05 05:45:58  steve
  *  Add support for memory value change callbacks.
  *

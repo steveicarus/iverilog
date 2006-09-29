@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.27 2006/02/02 02:44:00 steve Exp $"
+#ident "$Id: schedule.h,v 1.28 2006/09/29 01:24:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -77,12 +77,20 @@ extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
  * up to the user to allocate/free the vvp_get_event_s object. The
  * object is never referenced by the scheduler after the run method is
  * called.
+ *
+ * The sync_flag is true if this is intended to be a sync event. These
+ * are placed in the stratified event queue after nb assignes. If the
+ * ro_flag is true as well, then it is a Read-only sync event, with
+ * all that means.
+ *
+ * If the sync_flag is false, then the event is ACTIVE, and the
+ * ro_flag is ignored.
  */
 
 typedef struct vvp_gen_event_s *vvp_gen_event_t;
 
 extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
-			     bool sync_flag);
+			     bool sync_flag, bool ro_flag =true);
 
 struct vvp_gen_event_s
 {
@@ -134,6 +142,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.28  2006/09/29 01:24:34  steve
+ *  rwsync callback fixes from Ben Staveley (with modifications.)
+ *
  * Revision 1.27  2006/02/02 02:44:00  steve
  *  Allow part selects of memory words in l-values.
  *
