@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.147 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.148 2006/10/01 23:51:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -38,6 +38,7 @@ struct vvp_nexus_data {
       ivl_signal_t net;
 };
 #define VVP_NEXUS_DATA_STR 0x0001
+
 
 static struct vvp_nexus_data*new_nexus_data()
 {
@@ -670,6 +671,39 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       return "C<z>";
 }
 
+static void draw_modpath(const char*label, const char*driver,
+			 ivl_signal_t path_sig)
+{
+      unsigned idx;
+      fprintf(vvp_out, "%s .modpath %s", label, driver);
+
+      for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
+	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
+	    ivl_nexus_t src = ivl_path_source(path);
+	    const char*src_driver = draw_net_input(src);
+	    fprintf(vvp_out, ",\n    %s", src_driver);
+	    fprintf(vvp_out,
+		    " (%"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64")",
+		    ivl_path_delay(path, IVL_PE_01),
+		    ivl_path_delay(path, IVL_PE_10),
+		    ivl_path_delay(path, IVL_PE_0z),
+		    ivl_path_delay(path, IVL_PE_z1),
+		    ivl_path_delay(path, IVL_PE_1z),
+		    ivl_path_delay(path, IVL_PE_z0),
+		    ivl_path_delay(path, IVL_PE_0x),
+		    ivl_path_delay(path, IVL_PE_x1),
+		    ivl_path_delay(path, IVL_PE_1x),
+		    ivl_path_delay(path, IVL_PE_x0),
+		    ivl_path_delay(path, IVL_PE_xz),
+		    ivl_path_delay(path, IVL_PE_zx));
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 /*
  * This function draws the input to a net into a string. What that
  * means is that it returns a static string that can be used to
@@ -809,7 +843,18 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 	   it. Note that this will *not* work if the nexus is not a
 	   TRI type nexus. */
       if (ndrivers == 1 && res == IVL_SIT_TRI) {
-	    nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
+	    ivl_signal_t path_sig = find_modpath(nex);
+	    if (path_sig) {
+		  char modpath_label[64];
+		  snprintf(modpath_label, sizeof modpath_label,
+			   "V_%p/m", path_sig);
+		  draw_modpath(modpath_label,
+			       draw_net_input_drive(nex, drivers[0]),
+			       path_sig);
+		  nex_private = strdup(modpath_label);
+	    } else {
+		  nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
+	    }
 	    return nex_private;
       }
 
@@ -917,38 +962,6 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
 }
 
-static void draw_modpath(const char*label, const char*driver,
-			 ivl_signal_t path_sig)
-{
-      unsigned idx;
-      fprintf(vvp_out, "%s .modpath %s", label, driver);
-
-      for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
-	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
-	    ivl_nexus_t src = ivl_path_source(path);
-	    const char*src_driver = draw_net_input(src);
-	    fprintf(vvp_out, ",\n    %s", src_driver);
-	    fprintf(vvp_out,
-		    " (%"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64")",
-		    ivl_path_delay(path, IVL_PE_01),
-		    ivl_path_delay(path, IVL_PE_10),
-		    ivl_path_delay(path, IVL_PE_0z),
-		    ivl_path_delay(path, IVL_PE_z1),
-		    ivl_path_delay(path, IVL_PE_1z),
-		    ivl_path_delay(path, IVL_PE_z0),
-		    ivl_path_delay(path, IVL_PE_0x),
-		    ivl_path_delay(path, IVL_PE_x1),
-		    ivl_path_delay(path, IVL_PE_1x),
-		    ivl_path_delay(path, IVL_PE_x0),
-		    ivl_path_delay(path, IVL_PE_xz),
-		    ivl_path_delay(path, IVL_PE_zx));
-      }
-
-      fprintf(vvp_out, ";\n");
-}
 
 /*
  * This function draws a net. This is a bit more complicated as we
@@ -961,7 +974,6 @@ static void draw_net_in_scope(ivl_signal_t sig)
       typedef const char*const_charp;
       const char* arg;
       const char* driver;
-      char modpath_label[64];
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
 
@@ -989,18 +1001,6 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    break;
       }
 
-	/* If there are module delay paths, then we are going to need
-	   a modpath node between the drivers and the net. the
-	   path_sig is the signal that carries the paths. There should
-	   be 0 or one of these. */
-
-      ivl_signal_t path_sig = find_modpath(ivl_signal_nex(sig));
-      if (path_sig) {
-	    snprintf(modpath_label, sizeof modpath_label,
-		     "V_%p/m", path_sig);
-	    arg = modpath_label;
-      }
-
       if (nex_data->net == 0) {
 	    const char*vec8 = "";
 	    if (nex_data->drivers_count > 1)
@@ -1016,10 +1016,6 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		    nex_data->drivers_count,
 		    nex_data->flags&VVP_NEXUS_DATA_STR?", strength-aware":"");
 	    nex_data->net = sig;
-
-	    if (path_sig) {
-		  draw_modpath(modpath_label, driver, path_sig);
-	    }
 
       } else {
 	      /* Detect that this is an alias of nex_data->net. Create
@@ -2327,6 +2323,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.148  2006/10/01 23:51:15  steve
+ *  Modpath is input to net, draw .modpath to account.
+ *
  * Revision 1.147  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *
