@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.71 2006/09/28 04:35:18 steve Exp $"
+#ident "$Id: main.c,v 1.72 2006/10/02 18:15:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -271,8 +271,8 @@ static int t_default(char*cmd, unsigned ncmd)
 
 
       rc = system(cmd);
-      remove(source_path);
       if ( ! getenv("IVERILOG_ICONFIG")) {
+	    remove(source_path);
 	    remove(iconfig_path);
 	    remove(defines_path);
       }
@@ -657,6 +657,10 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (depfile) {
+	    fprintf(defines_file, "M:%s\n", depfile);
+      }
+
 	/* Finally, process all the remaining words on the command
 	   line as file names. */
       for (idx = optind ;  idx < argc ;  idx += 1)
@@ -685,10 +689,6 @@ int main(int argc, char **argv)
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
       strcpy(cmd, tmp);
-
-      if (depfile) {
-	    fprintf(defines_file, "M:%s\n", depfile);
-      }
 
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
@@ -740,6 +740,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.72  2006/10/02 18:15:47  steve
+ *  Fix handling of dep path in new argument passing method.
+ *
  * Revision 1.71  2006/09/28 04:35:18  steve
  *  Support selective control of specify and xtypes features.
  *
