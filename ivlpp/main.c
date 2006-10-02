@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.22 2006/07/26 00:11:40 steve Exp $"
+#ident "$Id: main.c,v 1.23 2006/10/02 18:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -149,7 +149,7 @@ static int flist_read_flags(const char*path)
 		  if (dep_path) {
 			fprintf(stderr, "duplicate -M flag.\n");
 		  } else {
-			dep_path = arg;
+			dep_path = strdup(arg);
 		  }
 
 	    } else {
@@ -335,6 +335,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.23  2006/10/02 18:16:18  steve
+ *  Save dep_path because arg space is overrun.
+ *
  * Revision 1.22  2006/07/26 00:11:40  steve
  *  Pass depfiles through temp defines file.
  *
