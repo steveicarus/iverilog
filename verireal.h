@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.13 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: verireal.h,v 1.14 2006/10/03 05:06:00 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -58,6 +58,7 @@ class verireal {
       explicit verireal();
       explicit verireal(const char*text);
       explicit verireal(long val);
+      explicit verireal(double val);
       ~verireal();
 
 	/* Return the value of the floating point number as an
@@ -85,6 +86,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.14  2006/10/03 05:06:00  steve
+ *  Support real valued specify delays, properly scaled.
+ *
  * Revision 1.13  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.17 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: verireal.cc,v 1.18 2006/10/03 05:06:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,6 +54,11 @@ verireal::verireal(const char*txt)
 verireal::verireal(long val)
 {
       value_ = (double)val;
+}
+
+verireal::verireal(double val)
+{
+      value_ = val;
 }
 
 verireal::~verireal()
@@ -156,6 +161,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.18  2006/10/03 05:06:00  steve
+ *  Support real valued specify delays, properly scaled.
+ *
  * Revision 1.17  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

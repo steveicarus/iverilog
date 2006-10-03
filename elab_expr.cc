@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.111 2006/09/28 04:35:18 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.112 2006/10/03 05:06:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -674,12 +674,23 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// specify blocks are disabled.
 
       if (gn_specify_blocks_flag) {
-	    map<perm_string,long>::const_iterator specp;
+	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
 	    perm_string key = perm_string::literal(path_.peek_name(0));
 	    if (path_.component_count() == 1
 		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-		  verinum val ((*specp).second);
-		  NetEConst*tmp = new NetEConst(val);
+		  NetScope::spec_val_t value = (*specp).second;
+		  NetExpr*tmp;
+		  switch (value.type) {
+		      case IVL_VT_BOOL:
+			tmp = new NetEConst(verinum(value.integer));
+			break;
+		      case IVL_VT_REAL:
+			tmp = new NetECReal(verireal(value.real_val));
+			break;
+		      default:
+			break;
+		  }
+		  assert(tmp);
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
@@ -1416,6 +1427,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.112  2006/10/03 05:06:00  steve
+ *  Support real valued specify delays, properly scaled.
+ *
  * Revision 1.111  2006/09/28 04:35:18  steve
  *  Support selective control of specify and xtypes features.
  *

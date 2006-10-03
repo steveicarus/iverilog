@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.345 2006/09/28 04:35:18 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.346 2006/10/03 05:06:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2887,13 +2887,22 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       if (ndelays > 12)
 	    ndelays = 12;
 
-	/* Elaborate the delay values themselves. */
+      int shift = scope->time_unit() - des->get_precision();
+
+	/* Elaborate the delay values themselves. Remember to scale
+	   them for the timescale/precision of the scope. */
       for (unsigned idx = 0 ;  idx < ndelays ;  idx += 1) {
 	    PExpr*exp = delays[idx];
 	    NetExpr*cur = elab_and_eval(des, scope, exp, 0);
 
 	    if (NetEConst*cur_con = dynamic_cast<NetEConst*> (cur)) {
 		  delay_value[idx] = cur_con->value().as_ulong();
+		  for (int tmp = 0 ;  tmp < shift ;  tmp += 1)
+			delay_value[idx] *= 10;
+
+	    } else if (NetECReal*cur_rcon = dynamic_cast<NetECReal*>(cur)) {
+		  delay_value[idx] = cur_rcon->value().as_long(shift);
+
 	    } else {
 		  cerr << get_line() << ": error: Path delay value "
 		       << "must be constant." << endl;
@@ -2994,21 +3003,38 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		 ; cur != specparams.end() ; cur ++ ) {
 
 	    NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
-	    NetEConst*val_c = dynamic_cast<NetEConst*> (val);
-	    if (! val_c ) {
+	    NetScope::spec_val_t value;
+
+	    if (NetECReal*val_c = dynamic_cast<NetECReal*> (val)) {
+
+		  value.type     = IVL_VT_REAL;
+		  value.real_val = val_c->value().as_double();
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: Elaborate "
+			     << "specparam " << (*cur).first
+			     << " value=" << value.real_val << endl;
+
+	    } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
+
+		  value.type    = IVL_VT_BOOL;
+		  value.integer = val_c->value().as_long();
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: Elaborate "
+			     << "specparam " << (*cur).first
+			     << " value=" << value.integer << endl;
+
+	    } else {
 		  cerr << (*cur).second->get_line() << ": error: "
 		       << "specparam " << (*cur).first << " value"
 		       << " is not constant: " << *val << endl;
 		  des->errors += 1;
-		  continue;
 	    }
 
-	    scope->specparams[(*cur).first] = val_c->value().as_long();
-
-	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Elaborate "
-		       << "specparam " << (*cur).first
-		       << " value=" << val_c->value().as_long() << endl;
+	    assert(val);
+	    delete  val;
+	    scope->specparams[(*cur).first] = value;
 
       }
 
@@ -3284,6 +3310,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.346  2006/10/03 05:06:00  steve
+ *  Support real valued specify delays, properly scaled.
+ *
  * Revision 1.345  2006/09/28 04:35:18  steve
  *  Support selective control of specify and xtypes features.
  *

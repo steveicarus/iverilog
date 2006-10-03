@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.169 2006/09/26 19:48:40 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.170 2006/10/03 05:06:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -916,11 +916,24 @@ void NetScope::dump(ostream&o) const
       }
 
 	// Dump specparams
-      typedef map<perm_string,long>::const_iterator specparam_it_t;
+      typedef map<perm_string,spec_val_t>::const_iterator specparam_it_t;
       for (specparam_it_t cur = specparams.begin()
 		 ; cur != specparams.end() ;  cur ++ ) {
 	    o << "    specparam " << (*cur).first
-	      << " = " << (*cur).second << endl;
+	      << " = ";
+	    spec_val_t value = (*cur).second;
+	    switch (value.type) {
+		case IVL_VT_REAL:
+		  o << "R:" << value.real_val;
+		  break;
+		case IVL_VT_BOOL:
+		  o << "I:" << value.integer;
+		  break;
+		default:
+		  o << "<bad type>";
+		  break;
+	    }
+	    o << endl;
       }
 
       switch (type_) {
@@ -1216,6 +1229,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.170  2006/10/03 05:06:00  steve
+ *  Support real valued specify delays, properly scaled.
+ *
  * Revision 1.169  2006/09/26 19:48:40  steve
  *  Missing PSpec.cc file.
  *
