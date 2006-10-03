@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.346 2006/10/03 05:06:00 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.347 2006/10/03 15:33:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2997,45 +2997,46 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
 
-	// Elaborate specparams
-      typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
-      for (specparam_it_t cur = specparams.begin()
-		 ; cur != specparams.end() ; cur ++ ) {
+      if (gn_specify_blocks_flag) {
+	      // Elaborate specparams
+	    typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
+	    for (specparam_it_t cur = specparams.begin()
+		       ; cur != specparams.end() ; cur ++ ) {
 
-	    NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
-	    NetScope::spec_val_t value;
+		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
+		  NetScope::spec_val_t value;
 
-	    if (NetECReal*val_c = dynamic_cast<NetECReal*> (val)) {
+		  if (NetECReal*val_c = dynamic_cast<NetECReal*> (val)) {
 
-		  value.type     = IVL_VT_REAL;
-		  value.real_val = val_c->value().as_double();
+			value.type     = IVL_VT_REAL;
+			value.real_val = val_c->value().as_double();
 
-		  if (debug_elaborate)
-			cerr << get_line() << ": debug: Elaborate "
-			     << "specparam " << (*cur).first
-			     << " value=" << value.real_val << endl;
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: Elaborate "
+				   << "specparam " << (*cur).first
+				   << " value=" << value.real_val << endl;
 
-	    } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
+		  } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
 
-		  value.type    = IVL_VT_BOOL;
-		  value.integer = val_c->value().as_long();
+			value.type    = IVL_VT_BOOL;
+			value.integer = val_c->value().as_long();
 
-		  if (debug_elaborate)
-			cerr << get_line() << ": debug: Elaborate "
-			     << "specparam " << (*cur).first
-			     << " value=" << value.integer << endl;
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: Elaborate "
+				   << "specparam " << (*cur).first
+				   << " value=" << value.integer << endl;
 
-	    } else {
-		  cerr << (*cur).second->get_line() << ": error: "
-		       << "specparam " << (*cur).first << " value"
-		       << " is not constant: " << *val << endl;
-		  des->errors += 1;
+		  } else {
+			cerr << (*cur).second->get_line() << ": error: "
+			     << "specparam " << (*cur).first << " value"
+			     << " is not constant: " << *val << endl;
+			des->errors += 1;
+		  }
+
+		  assert(val);
+		  delete  val;
+		  scope->specparams[(*cur).first] = value;
 	    }
-
-	    assert(val);
-	    delete  val;
-	    scope->specparams[(*cur).first] = value;
-
       }
 
 	// Elaborate within the generate blocks.
@@ -3310,6 +3311,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.347  2006/10/03 15:33:49  steve
+ *  no-specify turns of specparam elaboration.
+ *
  * Revision 1.346  2006/10/03 05:06:00  steve
  *  Support real valued specify delays, properly scaled.
  *
