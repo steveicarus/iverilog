@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.11 2003/06/21 01:21:42 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.11.2.1 2006/10/04 00:37:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -72,6 +72,20 @@ static unsigned long calculate_val(Design*des, NetScope*scope,
 	    dex = tmp;
       }
 
+      int shift = scope->time_unit() - des->get_precision();
+      if (sizeof(unsigned) <= 4 && shift > 9) {
+	    cerr << expr->get_line() << ": error: Precision overflow"
+		 << " in scope " << scope->name() << "." << endl;
+	    cerr << expr->get_line() << ":      :"
+		 << " Units are 10e" << scope->time_unit()
+		 << " minus precision 10e" << des->get_precision()
+		 << " is 10e" << shift << "." << endl;
+	    cerr << expr->get_line() << ":      : Perhaps a timescale "
+		 << "is missing or incorrect?" << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
 	   units, and return an adjusted value. */
@@ -79,7 +93,6 @@ static unsigned long calculate_val(Design*des, NetScope*scope,
       if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
 	    verireal fn = tmp->value();
 
-	    int shift = scope->time_unit() - des->get_precision();
 	    long delay = fn.as_long(shift);
 	    if (delay < 0)
 		  delay = 0;
@@ -146,6 +159,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.11.2.1  2006/10/04 00:37:03  steve
+ *  Detect delay precision overflow.
+ *
  * Revision 1.11  2003/06/21 01:21:42  steve
  *  Harmless fixup of warnings.
  *
