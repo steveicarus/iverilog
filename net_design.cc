@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.45 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_design.cc,v 1.45.2.1 2006/10/04 00:34:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -279,7 +279,7 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	    bool flag = targ_scope->replace_parameter(perm_name, val);
+	    bool flag = targ_scope->replace_parameter(perm_name, val->dup_expr());
 	    if (! flag) {
 		  cerr << val->get_line() << ": warning: parameter "
 		       << perm_name << " not found in "
@@ -618,6 +618,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.45.2.1  2006/10/04 00:34:45  steve
+ *  Fix a dangling reference to NetEParam objects in defparams.
+ *
  * Revision 1.45  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
