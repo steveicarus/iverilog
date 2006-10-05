@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.125 2006/10/05 01:23:53 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.126 2006/10/05 01:37:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -239,11 +239,6 @@ static void assign_to_memory_word(ivl_lval_t lval, unsigned bit,
       fprintf(vvp_out, "t_%u ;\n", skip_set);
 
       clear_expression_lookaside();
-}
-
-static void calculate_into_x1(ivl_expr_t expr)
-{
-      draw_eval_expr_into_integer(expr, 1);
 }
 
 /*
@@ -1496,6 +1491,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.126  2006/10/05 01:37:34  steve
+ *  Remove dead code.
+ *
  * Revision 1.125  2006/10/05 01:23:53  steve
  *  Handle non-constant delays on indexed non-blocking assignments.
  *
