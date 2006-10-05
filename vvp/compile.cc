@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.225 2006/09/29 03:57:01 steve Exp $"
+#ident "$Id: compile.cc,v 1.226 2006/10/05 01:23:53 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -91,6 +91,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },
       { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
+      { "%assign/v0/x1/d",of_ASSIGN_V0X1D,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/wr",of_ASSIGN_WR,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1534,6 +1535,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.226  2006/10/05 01:23:53  steve
+ *  Handle non-constant delays on indexed non-blocking assignments.
+ *
  * Revision 1.225  2006/09/29 03:57:01  steve
  *  Modpath delay chooses correct delay for edge.
  *

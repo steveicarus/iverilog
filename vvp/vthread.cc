@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.156 2006/08/09 05:19:08 steve Exp $"
+#ident "$Id: vthread.cc,v 1.157 2006/10/05 01:23:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -586,6 +586,34 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned wid = thr->words[0].w_int;
       unsigned off = thr->words[1].w_int;
       unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_fun_signal_vec*sig
+	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      assert(sig);
+      assert(wid > 0);
+
+      if (off >= sig->size())
+	    return true;
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+      schedule_assign_vector(ptr, off, sig->size(), value, delay);
+
+      return true;
+}
+
+/*
+ * This is %assign/v0/x1 <label>, <delayx>, <bit>
+ * Index register 0 contains a vector part width.
+ * Index register 1 contains the offset into the destination vector.
+ */
+bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      unsigned off = thr->words[1].w_int;
+      unsigned delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       vvp_fun_signal_vec*sig
@@ -3284,6 +3312,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.157  2006/10/05 01:23:54  steve
+ *  Handle non-constant delays on indexed non-blocking assignments.
+ *
  * Revision 1.156  2006/08/09 05:19:08  steve
  *  Add support for real valued modulus.
  *

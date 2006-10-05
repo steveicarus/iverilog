@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.79 2006/08/09 05:19:08 steve Exp $"
+#ident "$Id: codes.h,v 1.80 2006/10/05 01:23:53 steve Exp $"
 #endif
 
 
@@ -45,6 +45,7 @@ extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
@@ -179,6 +180,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.80  2006/10/05 01:23:53  steve
+ *  Handle non-constant delays on indexed non-blocking assignments.
+ *
  * Revision 1.79  2006/08/09 05:19:08  steve
  *  Add support for real valued modulus.
  *

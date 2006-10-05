@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.124 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.125 2006/10/05 01:23:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -183,12 +183,24 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		 offset. Load that into index x1 and generate a
 		 single-bit set instruction. */
 	    assert(ivl_lval_width(lval) == width);
-	    assert(dexp == 0);
 
-	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-	    fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
-	    fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
-		    vvp_signal_label(sig), delay, bit);
+	    if (dexp == 0) {
+		    /* Constant delay... */
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1 V_%s, %u, %u;\n",
+			  vvp_signal_label(sig), delay, bit);
+
+	    } else {
+		    /* Calculated delay... */
+		  int delay_index = allocate_word();
+		  draw_eval_expr_into_integer(dexp, delay_index);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1/d V_%s, %u, %u;\n",
+			  vvp_signal_label(sig), delay_index, bit);
+		  clr_word(delay_index);
+	    }
 
       } else if (dexp != 0) {
 	    draw_eval_expr_into_integer(dexp, 1);
@@ -444,9 +456,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
         unsigned wid = res.wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
-
-	if (del != 0)
-	      calculate_into_x1(del);
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned bit_limit = wid - cur_rbit;
@@ -1487,6 +1496,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.125  2006/10/05 01:23:53  steve
+ *  Handle non-constant delays on indexed non-blocking assignments.
+ *
  * Revision 1.124  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

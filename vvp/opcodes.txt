@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.71 2006/08/09 05:19:08 steve Exp $
+ *  $Id: opcodes.txt,v 1.72 2006/10/05 01:23:54 steve Exp $
  */
 
 
@@ -87,7 +87,8 @@ course, because integer 0 is taken with the vector width.
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.
 
-* %assign/v0x1 <var-label>, <delay>, <bit>
+* %assign/v0/x1 <var-label>, <delay>, <bit>
+* %assign/v0/x1/d <var-label>, <delayx>, <bit>
 
 This is similar to the %assign/v0 instruction, but adds the index-1
 index register with the canonical index of the destination where the
