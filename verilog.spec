@@ -26,9 +26,9 @@ to the IEEE-1364 standard.
 
 %build
 %ifarch x86_64
-./configure --prefix=/usr --mandir=/usr/share/man libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
+./configure --prefix=/usr --mandir='$(prefix)/share/man' libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
 %else
-./configure --prefix=/usr --mandir=/usr/share/man
+./configure --prefix=/usr --mandir='$(prefix)/share/man'
 %endif
 make CXXFLAGS=-O
 
