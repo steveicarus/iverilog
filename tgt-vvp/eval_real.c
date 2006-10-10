@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.15 2006/08/09 05:19:08 steve Exp $"
+#ident "$Id: eval_real.c,v 1.16 2006/10/10 23:54:28 steve Exp $"
 #endif
 
 /*
@@ -112,13 +112,23 @@ static int draw_number_real(ivl_expr_t exp)
       const char*bits = ivl_expr_bits(exp);
       unsigned wid = ivl_expr_width(exp);
       unsigned long mant = 0;
+      int vexp = 0x1000;
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    if (bits[idx] == '1')
 		  mant |= 1 << idx;
       }
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, 4096;\n", res, mant);
+	/* If this is actually a negative number, then get the
+	   positive equivilent, and set the sign bit in the exponent
+	   field. */
+      if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
+	    mant = (0-mant) & ((1UL<<wid) - 1UL);
+	    vexp |= 0x4000;
+      }
+
+      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu\n",
+	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant);
       return res;
 }
 
@@ -316,6 +326,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.16  2006/10/10 23:54:28  steve
+ *  Fix rendering of signed numbers in real expressions.
+ *
  * Revision 1.15  2006/08/09 05:19:08  steve
  *  Add support for real valued modulus.
  *
