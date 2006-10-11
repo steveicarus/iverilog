@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.122 2004/10/04 01:11:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.122.2.1 2006/10/11 00:17:35 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -867,7 +867,7 @@ bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
-      long rl = (long)r;
+      long rl = lround(r);
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
 
@@ -2874,6 +2874,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.122.2.1  2006/10/11 00:17:35  steve
+ *  Get rounding of conversion correct.
+ *
  * Revision 1.122  2004/10/04 01:11:00  steve
  *  Clean up spurious trailing white space.
  *
