@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.159 2006/09/28 00:29:49 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.160 2006/10/15 03:25:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2191,6 +2191,12 @@ void dll_target::signal(const NetNet*net)
 
 		  for (unsigned pin = 0; pin < src->pin_count(); pin += 1) {
 			const Nexus*nex = src->pin(pin).nexus();
+			if (! nex->t_cookie()) {
+			      cerr << src->get_line() << ": internal error: "
+				   << "No signal connected to pin " << pin
+				   << " of delay path to " << net->name()
+				   << "." << endl;
+			}
 			assert(nex->t_cookie());
 			obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
 
@@ -2239,6 +2245,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.160  2006/10/15 03:25:58  steve
+ *  More detailed internal error message.
+ *
  * Revision 1.159  2006/09/28 00:29:49  steve
  *  Allow specparams as constants in expressions.
  *

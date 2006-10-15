@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.112 2006/10/03 05:06:00 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.113 2006/10/15 03:25:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -679,7 +679,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    if (path_.component_count() == 1
 		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
 		  NetScope::spec_val_t value = (*specp).second;
-		  NetExpr*tmp;
+		  NetExpr*tmp = 0;
 		  switch (value.type) {
 		      case IVL_VT_BOOL:
 			tmp = new NetEConst(verinum(value.integer));
@@ -1427,6 +1427,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.113  2006/10/15 03:25:57  steve
+ *  More detailed internal error message.
+ *
  * Revision 1.112  2006/10/03 05:06:00  steve
  *  Support real valued specify delays, properly scaled.
  *
