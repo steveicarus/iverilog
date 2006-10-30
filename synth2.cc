@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.44 2006/08/23 04:08:19 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.45 2006/10/30 02:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -658,6 +658,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    if (ge == 0) {
+		  cerr << items_[item].guard->get_line() << ": error: "
+		       << "Guard expression is not constant for synthesis."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	    assert(ge);
 	    verinum gval = ge->value();
 
@@ -2137,10 +2145,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 	   XXXX This should be disabled if there is a memory involved
 	   in any sub-statements? */
-      assert(if_ != 0);
-      NexusSet*a_set = if_->nex_input();
 
-      if ((a_set->count() == 0)
+      NexusSet*a_set = if_? if_->nex_input() : 0;
+
+      if (a_set && (a_set->count() == 0)
 	  && if_ && else_
 	  && !test_ff_set_clr(nex_ff, nex_map->pin_count())) {
 
@@ -2219,17 +2227,31 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    return flag;
       }
 
-      assert(if_);
-      assert(!else_);
+	/* At this point, all that's left are synchronous enables and
+	   synchronous disables. These are cases where only one of the
+	   if_ and else_ clauses is given. */
+      assert( (if_ && !else_) || (else_ && !if_) );
 
       if (debug_synth) {
 	    cerr << get_line() << ": debug: "
-		 << "Condit expression looks like a synchronous enable. "
-		 << endl;
+		 << "Condit expression looks like a synchronous "
+		 << (if_? "enable" : "disable") << ". " << endl;
+      }
+
+      NetProc*clause = if_? if_ : else_;
+      assert(clause);
+
+	/* If this is a conditional disable, then turn it to an enable
+	   by putting a NOT in front of the disable expression. */
+      NetExpr*condit = expr_;
+      if (else_ != 0) {
+	    assert(if_ == 0);
+	    condit = new NetEUReduce('!', condit);
+	    condit->set_line(*expr_);
       }
 
 	/* Synthesize the enable expression. */
-      NetNet*ce = expr_->synthesize(des);
+      NetNet*ce = condit->synthesize(des);
       assert(ce->pin_count() == 1);
 
 	/* What's left, is a synchronous CE statement like this:
@@ -2250,7 +2272,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 		 << endl;
       }
 
-      bool flag = if_->synth_sync(des, scope,
+      bool flag = clause->synth_sync(des, scope,
 				  nex_ff, nex_map, nex_out,
 				  events_in);
 
@@ -2508,6 +2530,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.45  2006/10/30 02:03:30  steve
+ *  Detect and synthesize enables using condit false.
+ *
  * Revision 1.39.2.44  2006/08/23 04:08:19  steve
  *  Fix missing sig on certain mux outputs.
  *  Ignore condit statements (for synthesis) with no outputs.
