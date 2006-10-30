@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.347 2006/10/03 15:33:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.348 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1419,10 +1419,19 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
 
+      assert(rval());
+
 	/* Elaborate the r-value expression, then try to evaluate it. */
 
-      assert(rval());
-      NetExpr*rv = elab_and_eval(des, scope, rval(), lv->lwidth());
+	/* Find out what the r-value width is going to be. We guess it
+	   will be the l-value width, but it may turn out to be
+	   something else based on self-determined widths inside. */
+      unsigned use_width = lv->lwidth();
+      bool unsized_flag = false;
+      use_width = rval()->test_width(use_width, use_width, unsized_flag);
+
+	/* Now elaborate to the expected width. */
+      NetExpr*rv = elab_and_eval(des, scope, rval(), use_width);
       if (rv == 0) return 0;
       assert(rv);
 
@@ -3311,6 +3320,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.348  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.347  2006/10/03 15:33:49  steve
  *  no-specify turns of specparam elaboration.
  *

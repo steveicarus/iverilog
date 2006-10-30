@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.70 2006/09/19 23:00:15 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.71 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1236,8 +1236,15 @@ NetExpr* NetEMemory::eval_tree()
 
 NetExpr* NetEParam::eval_tree()
 {
-      if (des_ == 0)
+      if (des_ == 0) {
+	    assert(scope_ == 0);
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: evaluating expression: "
+		 << *this << endl;
+      }
 
       assert(scope_);
       const NetExpr*expr_msb;
@@ -1670,6 +1677,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.71  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.70  2006/09/19 23:00:15  steve
  *  Use elab_and_eval for bit select expressions.
  *

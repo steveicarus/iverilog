@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.83 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: PExpr.h,v 1.84 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include  <string>
@@ -50,6 +50,29 @@ class PExpr : public LineInfo {
       virtual ~PExpr();
 
       virtual void dump(ostream&) const;
+
+	// This method tests the width that the expression wants to
+	// be. It is used by elaboration of assignments to figure out
+	// the width of the expression.
+	//
+	// The "min" is the width of the local context, so it the
+	// minimum width that this function should return. Initially
+	// this is the same as the lval width.
+	//
+	// The "lval" is the width of the destination where this
+	// result is going to go. This can be used to constrain the
+	// amount that an expression can reasonably expand. For
+	// example, there is no point expanding an addition to beyond
+	// the lval. This extra bit of information allows the
+	// expression to optimize itself a bit. If the lval==0, then
+	// the subexpression should not make l-value related
+	// optimizations.
+	//
+	// The unsigned_flag is set to true if the expression is
+	// unsized and therefore expandable. This happens if a
+	// sub-expression is an unsized literal. Some expressions make
+	// special use of that.
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&unsized_flag) const;
 
 	// Procedural elaboration of the expression. The expr_width is
 	// the width of the context of the expression (i.e. the
@@ -128,6 +151,8 @@ class PEConcat : public PExpr {
       virtual verinum* eval_const(const Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
+	//virtual int test_width(bool) const;
+
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
 				     bool implicit_net_ok =false) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
@@ -177,6 +202,8 @@ class PEEvent : public PExpr {
 
       virtual void dump(ostream&) const;
 
+	//virtual int test_width(bool) const;
+
     private:
       edge_t type_;
       PExpr *expr_;
@@ -192,6 +219,8 @@ class PEFNumber : public PExpr {
       ~PEFNumber();
 
       const verireal& value() const;
+
+	//virtual int test_width(bool) const;
 
 	/* The eval_const method as applied to a floating point number
 	   gets the *integer* value of the number. This accounts for
@@ -226,6 +255,9 @@ class PEIdent : public PExpr {
       ~PEIdent();
 
       virtual void dump(ostream&) const;
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&unsized_flag) const;
+
+	//virtual int test_width(bool) const;
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
@@ -344,6 +376,8 @@ class PENumber : public PExpr {
       const verinum& value() const;
 
       virtual void dump(ostream&) const;
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&unsized_flag) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned lwidth,
 				    const NetExpr* rise,
@@ -382,6 +416,8 @@ class PEString : public PExpr {
 
       string value() const;
       virtual void dump(ostream&) const;
+	//virtual int test_width(bool) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -407,6 +443,8 @@ class PEUnary : public PExpr {
       ~PEUnary();
 
       virtual void dump(ostream&out) const;
+	//virtual int test_width(bool) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -433,8 +471,12 @@ class PEBinary : public PExpr {
       ~PEBinary();
 
       virtual bool is_constant(Module*) const;
+	//virtual int test_width(bool) const;
 
       virtual void dump(ostream&out) const;
+
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&unsized_flag) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -447,13 +489,15 @@ class PEBinary : public PExpr {
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, NetScope*sc) const;
 
-    private:
+    protected:
       char op_;
       PExpr*left_;
       PExpr*right_;
 
       NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
+      NetEBinary*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
 
+    private:
       NetNet* elaborate_net_add_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 const NetExpr* rise,
@@ -497,6 +541,31 @@ class PEBinary : public PExpr {
 };
 
 /*
+ * Here are a few specilized classes for handling specific binary
+ * operators.
+ */
+class PEBComp  : public PEBinary {
+
+    public:
+      explicit PEBComp(char op, PExpr*l, PExpr*r);
+      ~PEBComp();
+
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&flag) const;
+
+      NetEBinary* elaborate_expr(Design*des, NetScope*scope,
+				 int expr_width, bool sys_task_arg) const;
+};
+
+class PEBShift  : public PEBinary {
+
+    public:
+      explicit PEBShift(char op, PExpr*l, PExpr*r);
+      ~PEBShift();
+
+      virtual unsigned test_width(unsigned min, unsigned lval, bool&flag) const;
+};
+
+/*
  * This class supports the ternary (?:) operator. The operator takes
  * three expressions, the test, the true result and the false result.
  */
@@ -507,6 +576,7 @@ class PETernary : public PExpr {
       ~PETernary();
 
       virtual bool is_constant(Module*) const;
+	//virtual int test_width(bool) const;
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
@@ -539,6 +609,8 @@ class PECallFunction : public PExpr {
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
+	//virtual int test_width(bool) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -567,6 +639,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.84  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.83  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

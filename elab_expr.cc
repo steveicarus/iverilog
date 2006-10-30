@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.113 2006/10/15 03:25:57 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.114 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,19 @@
 # include  "netmisc.h"
 # include  "util.h"
 
+/*
+ * The default behavor for the test_width method is to just return the
+ * minimum width that is passed in.
+ */
+unsigned PExpr::test_width(unsigned min, unsigned lval, bool&) const
+{
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: test_width defaults to "
+		 << min << ", ignoring unsized_flag" << endl;
+      }
+      return min;
+}
+
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
 {
       cerr << get_line() << ": internal error: I do not know how to elaborate"
@@ -36,6 +49,42 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
 	   << endl;
       des->errors += 1;
       return 0;
+}
+
+unsigned PEBinary::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+{
+      bool flag_left = false;
+      bool flag_right = false;
+      unsigned wid_left = left_->test_width(min, lval, flag_left);
+      unsigned wid_right = right_->test_width(min, lval, flag_right);
+
+      if (flag_left || flag_right)
+	    unsized_flag = true;
+
+      switch (op_) {
+	  case '+':
+	  case '-':
+	    if (unsized_flag) {
+		  wid_left += 1;
+		  wid_right += 1;
+	    }
+	    if (wid_left > min)
+		  min = wid_left;
+	    if (wid_right > min)
+		  min = wid_right;
+	    if (lval > 0 && min > lval)
+		  min = lval;
+	    break;
+
+	  default:
+	    if (wid_left > min)
+		  min = wid_left;
+	    if (wid_right > min)
+		  min = wid_right;
+	    break;
+      }
+
+      return min;
 }
 
 /*
@@ -57,7 +106,14 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
+     NetEBinary*tmp = elaborate_eval_expr_base_(des, lp, rp);
+      return tmp;
+}
 
+NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
+						NetExpr*lp,
+						NetExpr*rp) const
+{
 	/* If either expression can be evaluated ahead of time, then
 	   do so. This can prove helpful later. */
       { NetExpr*tmp;
@@ -74,8 +130,7 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 	}
       }
 
-      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
-      return tmp;
+      return elaborate_expr_base_(des, lp, rp);
 }
 
 /*
@@ -87,6 +142,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 					   NetExpr*lp, NetExpr*rp) const
 {
       bool flag;
+
       NetEBinary*tmp;
 
       switch (op_) {
@@ -188,6 +244,50 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 
       return tmp;
 }
+
+unsigned PEBComp::test_width(unsigned, unsigned, bool&) const
+{
+      return 1;
+}
+
+NetEBinary* PEBComp::elaborate_expr(Design*des, NetScope*scope,
+				    int expr_width, bool sys_task_arg) const
+{
+      assert(left_);
+      assert(right_);
+
+	/* Width of operands is self-determined. */
+      int use_wid = -1;
+
+      NetExpr*lp = left_->elaborate_expr(des, scope, use_wid, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, use_wid, false);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+	/* If we find that one of the operands are indefinitely wide,
+	   then go ahead and relax the width of the operand to
+	   eliminate loss. */
+      if (! lp->has_width())
+	    rp->relax_width();
+      if (! rp->has_width())
+	    lp->relax_width();
+
+      return elaborate_eval_expr_base_(des, lp, rp);
+}
+
+unsigned PEBShift::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+{
+      unsigned wid_left = left_->test_width(min, 0, unsized_flag);
+
+	// The right expression is self-determined and has no impact
+	// on the expression size that is generated.
+
+      return wid_left;
+}
+
 
 /*
  * Given a call to a system function, generate the proper expression
@@ -489,6 +589,12 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
       NetECReal*tmp = new NetECReal(*value_);
       tmp->set_line(*this);
       return tmp;
+}
+
+
+unsigned PEIdent::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+{
+      return min;
 }
 
 /*
@@ -1229,6 +1335,18 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
+unsigned PENumber::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+{
+      unsigned use_wid = value_->len();
+      if (min > use_wid)
+	    use_wid = min;
+
+      if (! value_->has_len())
+	    unsized_flag = true;
+
+      return use_wid;
+}
+
 NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
 				    int expr_width, bool) const
 {
@@ -1427,6 +1545,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.114  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.113  2006/10/15 03:25:57  steve
  *  More detailed internal error message.
  *

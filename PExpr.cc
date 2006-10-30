@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.37 2005/10/04 04:09:25 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.38 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,6 +73,24 @@ PEBinary::~PEBinary()
 bool PEBinary::is_constant(Module*mod) const
 {
       return left_->is_constant(mod) && right_->is_constant(mod);
+}
+
+PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
+: PEBinary(op, l, r)
+{
+}
+
+PEBComp::~PEBComp()
+{
+}
+
+PEBShift::PEBShift(char op, PExpr*l, PExpr*r)
+: PEBinary(op, l, r)
+{
+}
+
+PEBShift::~PEBShift()
+{
 }
 
 PECallFunction::PECallFunction(const hname_t&n, const svector<PExpr *> &parms)
@@ -270,6 +288,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.38  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.37  2005/10/04 04:09:25  steve
  *  Add support for indexed select attached to parameters.
  *

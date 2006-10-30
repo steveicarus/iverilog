@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.220 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: parse.y,v 1.221 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -879,67 +879,67 @@ expression
 		  $$ = tmp;
 		}
 	| expression '<' expression
-		{ PEBinary*tmp = new PEBinary('<', $1, $3);
+		{ PEBinary*tmp = new PEBComp('<', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression '>' expression
-		{ PEBinary*tmp = new PEBinary('>', $1, $3);
+		{ PEBinary*tmp = new PEBComp('>', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_LS expression
-		{ PEBinary*tmp = new PEBinary('l', $1, $3);
+		{ PEBinary*tmp = new PEBShift('l', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_RS expression
-		{ PEBinary*tmp = new PEBinary('r', $1, $3);
+		{ PEBinary*tmp = new PEBShift('r', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_RSS expression
-		{ PEBinary*tmp = new PEBinary('R', $1, $3);
+		{ PEBinary*tmp = new PEBShift('R', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_EQ expression
-		{ PEBinary*tmp = new PEBinary('e', $1, $3);
+		{ PEBinary*tmp = new PEBComp('e', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_CEQ expression
-		{ PEBinary*tmp = new PEBinary('E', $1, $3);
+		{ PEBinary*tmp = new PEBComp('E', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_LE expression
-		{ PEBinary*tmp = new PEBinary('L', $1, $3);
+		{ PEBinary*tmp = new PEBComp('L', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_GE expression
-		{ PEBinary*tmp = new PEBinary('G', $1, $3);
+		{ PEBinary*tmp = new PEBComp('G', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_NE expression
-		{ PEBinary*tmp = new PEBinary('n', $1, $3);
+		{ PEBinary*tmp = new PEBComp('n', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
 		}
 	| expression K_CNE expression
-		{ PEBinary*tmp = new PEBinary('N', $1, $3);
+		{ PEBinary*tmp = new PEBComp('N', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.170 2006/10/03 05:06:00 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.171 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1162,8 +1162,10 @@ void NetEParam::dump(ostream&o) const
 {
       if (scope_ != 0)
 	    o << "<" << scope_->name() << "." << name_ << ">";
-      else
+      else if (name_)
 	    o << "<" << name_ << ">";
+      else
+	    o << "<???>";
 }
 
 void NetETernary::dump(ostream&o) const
@@ -1229,6 +1231,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.171  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.170  2006/10/03 05:06:00  steve
  *  Support real valued specify delays, properly scaled.
  *

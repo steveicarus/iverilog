@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.39 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: set_width.cc,v 1.40 2006/10/30 05:44:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,6 +33,7 @@
  */
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "compiler.h"
 # include  <typeinfo>
 
 
@@ -43,6 +44,14 @@ bool NetExpr::set_width(unsigned w, bool)
 	   << "not implemented." << endl;
       expr_width(w);
       return false;
+}
+
+/*
+ * The default relax_width method does nothing, and leaves the
+ * previously elaborated width.
+ */
+void NetExpr::relax_width(void)
+{
 }
 
 bool NetEBinary::set_width(unsigned w, bool)
@@ -106,6 +115,24 @@ bool NetEBAdd::set_width(unsigned w, bool)
 
       expr_width(wid);
       return wid == w;
+}
+
+void NetEBAdd::relax_width(void)
+{
+      unsigned wid = left_->expr_width();
+      if (right_->expr_width() > wid)
+	    wid = right_->expr_width();
+
+	// Allow space for the carry.
+      wid += 1;
+
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: "
+		 << "Relax addition width to " << wid << endl;
+
+      left_->set_width(wid);
+      right_->set_width(wid);
+      expr_width(wid);
 }
 
 /*
@@ -440,6 +467,9 @@ bool NetEUReduce::set_width(unsigned w, bool)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.40  2006/10/30 05:44:49  steve
+ *  Expression widths with unsized literals are pseudo-infinite width.
+ *
  * Revision 1.39  2006/07/31 03:50:17  steve
  *  Add support for power in constant expressions.
  *
