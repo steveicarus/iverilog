@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.14 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: sys_random.c,v 1.15 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -190,7 +190,7 @@ static long poisson(long*seed, long mean)
       return n;
 }
 
-static int sys_dist_poisson_calltf(char*name)
+static PLI_INT32 sys_dist_poisson_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -230,12 +230,12 @@ static int sys_dist_poisson_calltf(char*name)
       return 0;
 }
 
-static int sys_dist_poisson_sizetf(char*x)
+static PLI_INT32 sys_dist_poisson_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_dist_uniform_calltf(char*name)
+static PLI_INT32 sys_dist_uniform_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -284,12 +284,12 @@ static int sys_dist_uniform_calltf(char*name)
       return 0;
 }
 
-static int sys_dist_uniform_sizetf(char*x)
+static PLI_INT32 sys_dist_uniform_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_random_calltf(char*name)
+static PLI_INT32 sys_random_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -327,7 +327,7 @@ static int sys_random_calltf(char*name)
       return 0;
 }
 
-static int sys_random_sizetf(char*x)
+static PLI_INT32 sys_random_sizetf(char*x)
 {
       return 32;
 }
@@ -362,6 +362,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.15  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.14  2004/10/04 01:10:58  steve
  *  Clean up spurious trailing white space.
  *

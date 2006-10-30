@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_finish.c,v 1.9 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.10 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -25,7 +25,7 @@
 # include  "vpi_user.h"
 # include  <string.h>
 
-static int sys_finish_calltf(char *name)
+static PLI_INT32 sys_finish_calltf(char *name)
 {
       if (strcmp(name,"$stop") == 0) {
 	    vpi_sim_control(vpiStop, 0);
@@ -59,6 +59,9 @@ void sys_finish_register()
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.10  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.9  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

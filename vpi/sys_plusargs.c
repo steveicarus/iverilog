@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_plusargs.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: sys_plusargs.c,v 1.6 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -25,7 +25,7 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
-static int sys_plusargs_sizetf(char*x)
+static PLI_INT32 sys_plusargs_sizetf(char*x)
 {
       return 32;
 }
@@ -34,7 +34,7 @@ static int sys_plusargs_sizetf(char*x)
  * The compiletf for $test$plusargs checks that there is one argument
  * to the function call, and that argument is a constant string.
  */
-static int sys_test_plusargs_compiletf(char*xx)
+static PLI_INT32 sys_test_plusargs_compiletf(char*xx)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -81,7 +81,7 @@ static int sys_test_plusargs_compiletf(char*xx)
  * passed to the $test$plusargs. If there is a simulator argument that
  * is like this argument, then return true. Otherwise return false.
  */
-static int sys_test_plusargs_calltf(char*xx)
+static PLI_INT32 sys_test_plusargs_calltf(char*xx)
 {
       int idx;
       int flag = 0;
@@ -125,7 +125,7 @@ static int sys_test_plusargs_calltf(char*xx)
       return 0;
 }
 
-static int sys_value_plusargs_compiletf(char*xx)
+static PLI_INT32 sys_value_plusargs_compiletf(char*xx)
 {
       s_vpi_value value;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -229,7 +229,7 @@ static int sys_value_plusargs_compiletf(char*xx)
       return 0;
 }
 
-static int sys_value_plusargs_calltf(char*xx)
+static PLI_INT32 sys_value_plusargs_calltf(char*xx)
 {
       char*cp;
       int idx;
@@ -329,6 +329,9 @@ void sys_plusargs_register()
 
 /*
  * $Log: sys_plusargs.c,v $
+ * Revision 1.6  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.5  2004/10/04 01:10:58  steve
  *  Clean up spurious trailing white space.
  *

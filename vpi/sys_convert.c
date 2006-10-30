@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_convert.c,v 1.5 2004/02/15 18:03:30 steve Exp $"
+#ident "$Id: sys_convert.c,v 1.6 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -86,13 +86,13 @@ static void double2bits(double real, PLI_UINT32 bits[2])
 #endif
 }
 
-static int sizetf_32 (char*x) { return 32; }
-static int sizetf_64 (char*x) { return 64; }
+static PLI_INT32 sizetf_32 (char*x) { return 32; }
+static PLI_INT32 sizetf_64 (char*x) { return 64; }
 
-static int sys_convert_compiletf(char *name)
+static PLI_INT32 sys_convert_compiletf(char *name)
 {
     vpiHandle call_hand, argv, arg;
-    int rtn = 0;
+    PLI_INT32 rtn = 0;
 
     call_hand = vpi_handle(vpiSysTfCall, 0);
     argv = vpi_iterate(vpiArgument, call_hand);
@@ -116,7 +116,7 @@ static int sys_convert_compiletf(char *name)
     return rtn;
 }
 
-static int sys_bitstoreal_calltf(char *user)
+static PLI_INT32 sys_bitstoreal_calltf(char *user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -147,7 +147,7 @@ static int sys_bitstoreal_calltf(char *user)
     return 0;
 }
 
-static int sys_itor_calltf(char *user)
+static PLI_INT32 sys_itor_calltf(char *user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -174,7 +174,7 @@ static int sys_itor_calltf(char *user)
     return 0;
 }
 
-static int sys_realtobits_calltf(char *user)
+static PLI_INT32 sys_realtobits_calltf(char *user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -211,7 +211,7 @@ static int sys_realtobits_calltf(char *user)
     return 0;
 }
 
-static int sys_rtoi_calltf(char *user)
+static PLI_INT32 sys_rtoi_calltf(char *user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -281,6 +281,9 @@ void sys_convert_register()
 
 /*
  * $Log: sys_convert.c,v $
+ * Revision 1.6  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.5  2004/02/15 18:03:30  steve
  *  Cleanup of warnings.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.59 2006/08/03 05:06:04 steve Exp $"
+#ident "$Id: Makefile.in,v 1.60 2006/10/30 22:45:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -111,7 +111,7 @@ clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.status config.log vpi_config.h
 
 install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft $(INSTALL32)
 

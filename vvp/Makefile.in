@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.70 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: Makefile.in,v 1.71 2006/10/30 22:45:38 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -68,7 +68,7 @@ all: dep vvp@EXEEXT@ libvpi.a $(ALL32)
 
 clean:
 	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a bin32
+	rm -rf dep vvp@EXEEXT@ libvpi.a bin32 parse.output vvp.pdf vvp.exp
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache config.h

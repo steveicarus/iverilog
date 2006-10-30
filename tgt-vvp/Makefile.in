@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.24 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: Makefile.in,v 1.25 2006/10/30 22:45:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -77,10 +77,10 @@ Makefile: Makefile.in config.status
 	./config.status
 
 clean:
-	rm -rf *.o dep vvp.tgt
+	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache
+	rm -f Makefile config.status config.log config.cache vvp_config.h
 
 check: all
 

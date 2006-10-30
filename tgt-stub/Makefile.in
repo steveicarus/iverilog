@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2006/05/01 18:48:24 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2006/10/30 22:45:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -70,7 +70,7 @@ clean:
 	rm -rf *.o dep stub.tgt
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.status config.log
 
 install: all installdirs $(libdir)/ivl/stub.tgt \
 	$(libdir)/ivl/stub.conf $(libdir)/ivl/stub-s.conf

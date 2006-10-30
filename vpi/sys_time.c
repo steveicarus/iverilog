@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.10 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_time.c,v 1.11 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -37,17 +37,17 @@ static vpiHandle module_of_function(vpiHandle obj)
       return obj;
 }
 
-static int sys_time_sizetf(char*x)
+static PLI_INT32 sys_time_sizetf(char*x)
 {
       return 64;
 }
 
-static int sys_stime_sizetf(char*x)
+static PLI_INT32 sys_stime_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_time_calltf(char*name)
+static PLI_INT32 sys_time_calltf(char*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -102,7 +102,7 @@ static int sys_time_calltf(char*name)
       return 0;
 }
 
-static int sys_realtime_calltf(char*name)
+static PLI_INT32 sys_realtime_calltf(char*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -169,6 +169,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.11  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.10  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

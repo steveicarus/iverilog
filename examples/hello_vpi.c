@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: hello_vpi.c,v 1.3 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: hello_vpi.c,v 1.4 2006/10/30 22:46:25 steve Exp $"
 #endif
 
 /*
@@ -33,7 +33,7 @@
 
 # include  <vpi_user.h>
 
-static int my_hello_calltf(char *xx)
+static PIN_INT32 my_hello_calltf(char *xx)
 {
       vpi_printf("Hello World, from VPI.\n");
       return 0;
@@ -62,6 +62,9 @@ void (*vlog_startup_routines[])() = {
 };
 /*
  * $Log: hello_vpi.c,v $
+ * Revision 1.4  2006/10/30 22:46:25  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.3  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

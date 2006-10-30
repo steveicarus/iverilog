@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.15 2004/09/10 23:13:05 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.16 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 /*
@@ -44,9 +44,9 @@ typedef struct t_pli_data {
       int	paramvc;	/* parameter number for misctf */
 } s_pli_data, *p_pli_data;
 
-static int compiletf(char *);
-static int calltf(char *);
-static int callback(p_cb_data);
+static PLI_INT32 compiletf(char *);
+static PLI_INT32 calltf(char *);
+static PLI_INT32 callback(p_cb_data);
 
 /*
  * Register veriusertfs routines/wrappers. Iterate over the tfcell
@@ -139,7 +139,7 @@ void veriusertfs_register_table(p_tfcell vtable)
  * This function calls the veriusertfs checktf and sets up all the
  * callbacks misctf requires.
  */
-static int compiletf(char *data)
+static PLI_INT32 compiletf(char *data)
 {
       p_pli_data pli;
       p_tfcell tf;
@@ -221,7 +221,7 @@ static int compiletf(char *data)
 /*
  * This function is the wrapper for the veriusertfs calltf routine.
  */
-static int calltf(char *data)
+static PLI_INT32 calltf(char *data)
 {
       int rc = 0;
       p_pli_data pli;
@@ -249,13 +249,13 @@ static int calltf(char *data)
  */
 extern int async_misctf_enable;
 
-static int callback(p_cb_data data)
+static PLI_INT32 callback(p_cb_data data)
 {
       p_pli_data pli;
       p_tfcell tf;
       int reason;
       int paramvc = 0;
-      int rc;
+      PLI_INT32 rc;
 
 	/* not enabled */
       if (data->reason == cbValueChange && !async_misctf_enable)
@@ -389,6 +389,9 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.16  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.15  2004/09/10 23:13:05  steve
  *  Compile cleanup of C code.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_next.c,v 1.3 2003/06/17 16:55:07 steve Exp $"
+#ident "$Id: a_next.c,v 1.4 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 #include  <stdio.h>
@@ -34,7 +34,7 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
 
       /* trace */
       if (pli_trace) {
-	    int *ip;
+	    PLI_INT32 *ip;
 	    fprintf(pli_trace, "acc_next(%p <", type);
 	    for (ip = type; *ip; ip++) {
 		  fprintf(pli_trace, "%s%d", ip != type ? "," : "", *ip);
@@ -94,6 +94,9 @@ handle acc_next_scope(handle scope, handle prev)
 
 /*
  * $Log: a_next.c,v $
+ * Revision 1.4  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.3  2003/06/17 16:55:07  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens

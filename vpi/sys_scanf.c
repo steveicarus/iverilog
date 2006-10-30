@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.3 2006/08/12 04:16:07 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.4 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -61,7 +61,7 @@ static void byte_ungetc(struct byte_source*src, int ch)
 }
 
 
-static int sys_fscanf_compiletf(char*name)
+static PLI_INT32 sys_fscanf_compiletf(char*name)
 {
       return 0;
 }
@@ -467,7 +467,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
       return 0;
 }
 
-static int sys_fscanf_calltf(char*name)
+static PLI_INT32 sys_fscanf_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -493,12 +493,12 @@ static int sys_fscanf_calltf(char*name)
        return 0;
 }
 
-static int sys_sscanf_compiletf(char*name)
+static PLI_INT32 sys_sscanf_compiletf(char*name)
 {
       return 0;
 }
 
-static int sys_sscanf_calltf(char*name)
+static PLI_INT32 sys_sscanf_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -526,7 +526,7 @@ static int sys_sscanf_calltf(char*name)
 /*
  * All the Xscanf functions return a 32bit value.
  */
-static int sys_fscanf_sizetf(char*x)
+static PLI_INT32 sys_fscanf_sizetf(char*x)
 {
       return 32;
 }

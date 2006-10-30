@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.17 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: Makefile.in,v 1.18 2006/10/30 22:45:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -44,18 +44,18 @@ CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: ivlpp
+all: ivlpp@EXEEXT@
 
 clean:
-	rm -f *.o lexor.c parse.c parse.h parse.output ivlpp
+	rm -f *.o lexor.c parse.c parse.h parse.output ivlpp@EXEEXT@
 
 distclean: clean
 	rm -f Makefile
 
 O = main.o lexor.o parse.o
 
-ivlpp: $O
-	$(CC) $(LDFLAGS) $O -o ivlpp @EXTRALIBS@
+ivlpp@EXEEXT@: $O
+	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
 lexor.c: lexor.lex
 	flex -s -olexor.c $(srcdir)/lexor.lex
@@ -63,16 +63,16 @@ lexor.c: lexor.lex
 parse.h parse.c: parse.y
 	bison --verbose -t -d -o parse.c $(srcdir)/parse.y
 
-install: all installdirs $(libdir)/ivl/ivlpp
+install: all installdirs $(libdir)/ivl/ivlpp@EXEEXT@
 
-$(libdir)/ivl/ivlpp: ivlpp
-	$(INSTALL_PROGRAM) ./ivlpp $(libdir)/ivl/ivlpp
+$(libdir)/ivl/ivlpp@EXEEXT@: ivlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(libdir)/ivl/ivlpp@EXEEXT@
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/ivlpp
+	rm -f $(libdir)/ivl/ivlpp@EXEEXT@
 
 lexor.o: lexor.c parse.h globals.h
 main.o: main.c globals.h

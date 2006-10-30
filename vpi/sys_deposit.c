@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_deposit.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: sys_deposit.c,v 1.6 2006/10/30 22:45:37 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -26,7 +26,7 @@
 # include  "vpi_user.h"
 # include  <assert.h>
 
-static int sys_deposit_calltf(char *name)
+static PLI_INT32 sys_deposit_calltf(char *name)
 {
   vpiHandle sys, argv, target, value;
   s_vpi_value val;
@@ -79,6 +79,9 @@ void sys_deposit_register()
 
 /*
  * $Log: sys_deposit.c,v $
+ * Revision 1.6  2006/10/30 22:45:37  steve
+ *  Updates for Cygwin portability (pr1585922)
+ *
  * Revision 1.5  2004/10/04 01:10:58  steve
  *  Clean up spurious trailing white space.
  *
