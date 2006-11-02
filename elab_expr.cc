@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.91.2.1 2006/06/12 00:16:50 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.91.2.2 2006/11/02 02:13:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -387,13 +387,16 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    eres->set_line(*this);
+	    func->set_line(*this);
 	    return func;
       }
 
       if (NetVariable*res = dscope->find_variable(dscope->basename())) {
 	    NetEVariable*eres = new NetEVariable(res);
-	    eres->set_line(*res);
 	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    eres->set_line(*res);
+	    func->set_line(*this);
 	    return func;
       }
 
@@ -1006,6 +1009,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.91.2.2  2006/11/02 02:13:15  steve
+ *  Error message for condit expression not synthesized.
+ *
  * Revision 1.91.2.1  2006/06/12 00:16:50  steve
  *  Add support for -Wunused warnings.
  *

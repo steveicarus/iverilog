@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.18.2.1 2006/06/12 00:16:50 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.18.2.2 2006/11/02 02:13:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@ NetEBComp* NetEBComp::dup_expr() const
 {
       NetEBComp*result = new NetEBComp(op_, left_->dup_expr(),
 				       right_->dup_expr());
+      result->set_line(*this);
       return result;
 }
 
@@ -119,6 +120,7 @@ NetEUFunc* NetEUFunc::dup_expr() const
 	    tmp = new NetEUFunc(func_, result_var_->dup_expr(), tmp_parms);
 
       assert(tmp);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -144,6 +146,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.18.2.2  2006/11/02 02:13:15  steve
+ *  Error message for condit expression not synthesized.
+ *
  * Revision 1.18.2.1  2006/06/12 00:16:50  steve
  *  Add support for -Wunused warnings.
  *

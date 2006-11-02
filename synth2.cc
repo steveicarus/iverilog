@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.45 2006/10/30 02:03:30 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.46 2006/11/02 02:13:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1031,6 +1031,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
       }
 
       NetNet*ssig = expr_->synthesize(des);
+      if (ssig == 0) {
+	    if (debug_synth) {
+		  cerr << get_line() << ": debug: Unable to synthesize "
+		       << "condition expression." << endl;
+	    }
+	    return false;
+      }
+
       assert(ssig);
 
 	/* Use the accumulated input net as a default input for
@@ -2530,6 +2538,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.46  2006/11/02 02:13:15  steve
+ *  Error message for condit expression not synthesized.
+ *
  * Revision 1.39.2.45  2006/10/30 02:03:30  steve
  *  Detect and synthesize enables using condit false.
  *
