@@ -16,13 +16,15 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: decoder.cc,v 1.1.2.3 2006/03/26 23:09:00 steve Exp $"
+#ident "$Id: decoder.cc,v 1.1.2.4 2006/11/02 17:47:52 steve Exp $"
 
 # include  "compile.h"
 # include  "functor.h"
 # include  "symbols.h"
 # include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <limits.h>
 # include  <assert.h>
 
@@ -309,6 +311,9 @@ void compile_demux(char*label, char*decoder, int slice,
 
 /*
  * $Log: decoder.cc,v $
+ * Revision 1.1.2.4  2006/11/02 17:47:52  steve
+ *  Fix compile on Mac OS X
+ *
  * Revision 1.1.2.3  2006/03/26 23:09:00  steve
  *  Add the .demux device.
  *
