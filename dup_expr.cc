@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.20 2005/07/11 16:56:50 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.21 2006/11/04 06:10:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,8 @@ NetEScope* NetEScope::dup_expr() const
 
 NetESelect* NetESelect::dup_expr() const
 {
-      return new NetESelect(expr_->dup_expr(), base_->dup_expr(),
+      return new NetESelect(expr_->dup_expr(),
+			    base_? base_->dup_expr() : 0,
 			    expr_width());
 }
 
@@ -133,6 +134,9 @@ NetEUReduce* NetEUReduce::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.21  2006/11/04 06:10:13  steve
+ *  Handle dup of pad as well as normal select.
+ *
  * Revision 1.20  2005/07/11 16:56:50  steve
  *  Remove NetVariable and ivl_variable_t structures.
  *
