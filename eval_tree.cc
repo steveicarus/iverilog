@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.71 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.72 2006/11/04 06:16:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1354,31 +1354,50 @@ NetEConst* NetESelect::eval_tree()
 	    expr = dynamic_cast<NetEConst*>(expr_);
       }
 
-      NetEConst*base = dynamic_cast<NetEConst*>(base_);
-      if (base == 0) {
-	    NetExpr*tmp = base_->eval_tree();
-	    if (tmp != 0) {
-		  delete base_;
-		  base_ = tmp;
+      long bval = 0;
+      if (base_) {
+	    NetEConst*base = dynamic_cast<NetEConst*>(base_);
+	    if (base == 0) {
+		  NetExpr*tmp = base_->eval_tree();
+		  if (tmp != 0) {
+			delete base_;
+			base_ = tmp;
+		  }
+
+		  base = dynamic_cast<NetEConst*>(base_);
 	    }
 
-	    base = dynamic_cast<NetEConst*>(base_);
+	    if (base == 0)
+		  return 0;
+
+	    bval = base->value().as_long();
       }
 
       if (expr == 0)
 	    return 0;
-      if (base == 0)
-	    return 0;
 
       verinum eval = expr->value();
       verinum oval (verinum::V0, expr_width(), true);
-      long bval = base->value().as_long();
+
+      verinum::V pad_bit = verinum::Vx;
+      if (base_ == 0) {
+
+	      /* If the base is NULL (different from 0) the this
+		 select is here for sign extension. So calculate a
+		 proper pad bit. Extend x or z or 0, and sign extend 1
+		 if this is signed. */
+	    unsigned top = expr->expr_width()-1;
+
+	    pad_bit = eval.get(top);
+	    if (pad_bit==verinum::V1 && !has_sign())
+		  pad_bit = verinum::V0;
+      }
 
       for (unsigned long idx = 0 ;  idx < expr_width() ;  idx += 1) {
 	    if ((bval >= 0) && ((unsigned long) bval < eval.len()))
 		  oval.set(idx, eval.get(bval));
 	    else
-		  oval.set(idx, verinum::Vx);
+		  oval.set(idx, pad_bit);
 
 	    bval += 1;
       }
@@ -1677,6 +1696,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.72  2006/11/04 06:16:27  steve
+ *  Fix padding of constant eval of NetESelect.
+ *
  * Revision 1.71  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *
