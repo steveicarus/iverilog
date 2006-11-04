@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.24 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.25 2006/11/04 06:19:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,7 +53,7 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
+      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp, -1);
       return tmp;
 }
 
@@ -236,6 +236,11 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.25  2006/11/04 06:19:25  steve
+ *  Remove last bits of relax_width methods, and use test_width
+ *  to calculate the width of an r-value expression that may
+ *  contain unsized numbers.
+ *
  * Revision 1.24  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

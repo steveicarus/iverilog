@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.348 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.349 2006/11/04 06:19:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1428,7 +1428,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   something else based on self-determined widths inside. */
       unsigned use_width = lv->lwidth();
       bool unsized_flag = false;
-      use_width = rval()->test_width(use_width, use_width, unsized_flag);
+      use_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
 
 	/* Now elaborate to the expected width. */
       NetExpr*rv = elab_and_eval(des, scope, rval(), use_width);
@@ -2619,11 +2619,17 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       assert(sig);
       NetAssign_*lv = new NetAssign_(sig);
 
+	/* Calculate the width of the initialization as if this were
+	   any other assignment statement. */
+      unsigned use_width = lv->lwidth();
+      bool unsized_flag = false;
+      use_width = expr1_->test_width(des, scope, use_width, use_width, unsized_flag);
+
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elab_and_eval(des, scope, expr1_, lv->lwidth());
-      etmp->set_width(lv->lwidth());
-      etmp = pad_to_width(etmp, lv->lwidth());
+      etmp = elab_and_eval(des, scope, expr1_, use_width);
+      etmp->set_width(use_width);
+      etmp = pad_to_width(etmp, use_width);
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: FOR initial assign: "
@@ -3320,6 +3326,11 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.349  2006/11/04 06:19:25  steve
+ *  Remove last bits of relax_width methods, and use test_width
+ *  to calculate the width of an r-value expression that may
+ *  contain unsized numbers.
+ *
  * Revision 1.348  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *

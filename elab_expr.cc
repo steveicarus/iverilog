@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.114 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.115 2006/11/04 06:19:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,7 +32,8 @@
  * The default behavor for the test_width method is to just return the
  * minimum width that is passed in.
  */
-unsigned PExpr::test_width(unsigned min, unsigned lval, bool&) const
+unsigned PExpr::test_width(Design*des, NetScope*scope,
+			   unsigned min, unsigned lval, bool&) const
 {
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: test_width defaults to "
@@ -51,12 +52,13 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
       return 0;
 }
 
-unsigned PEBinary::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+unsigned PEBinary::test_width(Design*des, NetScope*scope,
+			      unsigned min, unsigned lval, bool&unsized_flag) const
 {
       bool flag_left = false;
       bool flag_right = false;
-      unsigned wid_left = left_->test_width(min, lval, flag_left);
-      unsigned wid_right = right_->test_width(min, lval, flag_right);
+      unsigned wid_left = left_->test_width(des,scope, min, lval, flag_left);
+      unsigned wid_right = right_->test_width(des,scope, min, lval, flag_right);
 
       if (flag_left || flag_right)
 	    unsized_flag = true;
@@ -106,13 +108,14 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-     NetEBinary*tmp = elaborate_eval_expr_base_(des, lp, rp);
+      NetEBinary*tmp = elaborate_eval_expr_base_(des, lp, rp, expr_wid);
       return tmp;
 }
 
 NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
 						NetExpr*lp,
-						NetExpr*rp) const
+						NetExpr*rp,
+						int expr_wid) const
 {
 	/* If either expression can be evaluated ahead of time, then
 	   do so. This can prove helpful later. */
@@ -130,7 +133,7 @@ NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
 	}
       }
 
-      return elaborate_expr_base_(des, lp, rp);
+      return elaborate_expr_base_(des, lp, rp, expr_wid);
 }
 
 /*
@@ -139,7 +142,8 @@ NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
  * the correct NetEBinary object and connect the parameters.
  */
 NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
-					   NetExpr*lp, NetExpr*rp) const
+					   NetExpr*lp, NetExpr*rp,
+					   int expr_wid) const
 {
       bool flag;
 
@@ -204,6 +208,9 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case '+':
 	  case '-':
 	    tmp = new NetEBAdd(op_, lp, rp);
+	    if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
+				 || tmp->expr_type() == IVL_VT_LOGIC))
+		  tmp->set_width(expr_wid);
 	    tmp->set_line(*this);
 	    break;
 
@@ -245,7 +252,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
       return tmp;
 }
 
-unsigned PEBComp::test_width(unsigned, unsigned, bool&) const
+unsigned PEBComp::test_width(Design*, NetScope*,unsigned, unsigned, bool&) const
 {
       return 1;
 }
@@ -256,8 +263,26 @@ NetEBinary* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       assert(left_);
       assert(right_);
 
+      bool unsized_flag = false;
+      unsigned left_width = left_->test_width(des, scope, 0, 0, unsized_flag);
+      bool save_flag = unsized_flag;
+      unsigned right_width = right_->test_width(des, scope, 0, 0, unsized_flag);
+
+      if (save_flag != unsized_flag)
+	    left_width = left_->test_width(des, scope, 0, 0, unsized_flag);
+
 	/* Width of operands is self-determined. */
-      int use_wid = -1;
+      int use_wid = left_width;
+      if (right_width > left_width)
+	    use_wid = right_width;
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: "
+		 << "Comparison expression operands are "
+		 << left_width << " bits and "
+		 << right_width << " bits. Resorting to "
+		 << use_wid << " bits." << endl;
+      }
 
       NetExpr*lp = left_->elaborate_expr(des, scope, use_wid, false);
       NetExpr*rp = right_->elaborate_expr(des, scope, use_wid, false);
@@ -267,20 +292,13 @@ NetEBinary* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	/* If we find that one of the operands are indefinitely wide,
-	   then go ahead and relax the width of the operand to
-	   eliminate loss. */
-      if (! lp->has_width())
-	    rp->relax_width();
-      if (! rp->has_width())
-	    lp->relax_width();
-
-      return elaborate_eval_expr_base_(des, lp, rp);
+      return elaborate_eval_expr_base_(des, lp, rp, use_wid);
 }
 
-unsigned PEBShift::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+unsigned PEBShift::test_width(Design*des, NetScope*scope,
+			      unsigned min, unsigned lval, bool&unsized_flag) const
 {
-      unsigned wid_left = left_->test_width(min, 0, unsized_flag);
+      unsigned wid_left = left_->test_width(des,scope,min, 0, unsized_flag);
 
 	// The right expression is self-determined and has no impact
 	// on the expression size that is generated.
@@ -591,9 +609,118 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
       return tmp;
 }
 
-
-unsigned PEIdent::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+/*
+ * Given that the msb_ and lsb_ are part select expressions, this
+ * function calculates their values. Note that this method does *not*
+ * convert the values to canonical form.
+ */
+bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
+			       long&msb, long&lsb) const
 {
+      assert(lsb_ != 0);
+      assert(msb_ != 0);
+
+	/* This handles part selects. In this case, there are
+	   two bit select expressions, and both must be
+	   constant. Evaluate them and pass the results back to
+	   the caller. */
+      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_, -1);
+      NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
+      if (lsb_c == 0) {
+	    cerr << lsb_->get_line() << ": error: "
+		  "Part select expressions must be constant."
+		 << endl;
+	    cerr << lsb_->get_line() << ":      : This lsb expression "
+		  "violates the rule: " << *lsb_ << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      NetExpr*msb_ex = elab_and_eval(des, scope, msb_, -1);
+      NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
+      if (msb_c == 0) {
+	    cerr << msb_->get_line() << ": error: "
+		  "Part select expressions must be constant."
+		 << endl;
+	    cerr << msb_->get_line() << ":      : This msb expression "
+		  "violates the rule: " << *msb_ << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      msb = msb_c->value().as_long();
+      lsb = lsb_c->value().as_long();
+
+      delete msb_ex;
+      delete lsb_ex;
+      return true;
+}
+
+bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
+				     unsigned long&wid) const
+{
+      assert(lsb_);
+      bool flag = true;
+
+	/* Calculate the width expression (in the lsb_ position)
+	   first. If the expression is not constant, error but guess 1
+	   so we can keep going and find more errors. */
+      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
+      NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
+
+      if (wid_c == 0) {
+	    cerr << get_line() << ": error: Indexed part width must be "
+		 << "constant. Expression in question is..." << endl;
+	    cerr << get_line() << ":      : " << *wid_ex << endl;
+	    des->errors += 1;
+	    flag = false;
+      }
+
+      wid = wid_c? wid_c->value().as_ulong() : 1;
+      delete wid_ex;
+
+      return flag;
+}
+
+unsigned PEIdent::test_width(Design*des, NetScope*scope,
+			     unsigned min, unsigned lval,
+			     bool&unsized_flag) const
+{
+      NetNet*       net = 0;
+      NetMemory*    mem = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      const NetExpr*ex1, *ex2;
+
+      NetScope*found_in = symbol_search(des, scope, path_,
+					net, mem, par, eve,
+					ex1, ex2);
+
+      if (net != 0) {
+	    unsigned use_width = net->vector_width();
+	    switch (sel_) {
+		case SEL_NONE:
+		  break;
+		case SEL_PART:
+		    { long msb, lsb;
+		      bool flag = calculate_parts_(des, scope, msb, lsb);
+		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		      break;
+		    }
+		case SEL_IDX_UP:
+		case SEL_IDX_DO:
+		    { unsigned long tmp = 0;
+		      calculate_up_do_width_(des, scope, tmp);
+		      use_width = tmp;
+		      break;
+		    }
+		default:
+		  assert(0);
+	    }
+	    return use_width;
+      }
+
       return min;
 }
 
@@ -1055,37 +1182,23 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 					   NetNet*net, NetScope*found_in)const
 {
-      assert(lsb_ != 0);
-      assert(msb_ != 0);
+      long msv, lsv;
       assert(idx_.empty());
-
-      verinum*lsn = lsb_->eval_const(des, scope);
-      verinum*msn = msb_->eval_const(des, scope);
-      if ((lsn == 0) || (msn == 0)) {
-	    cerr << get_line() << ": error: "
-		  "Part select expressions must be "
-		  "constant expressions." << endl;
-	    des->errors += 1;
+      bool flag = calculate_parts_(des, scope, msv, lsv);
+      if (!flag)
 	    return 0;
-      }
-
-      assert(lsn);
-      assert(msn);
 
 	/* The indices of part selects are signed integers, so allow
 	   negative values. However, the width that they represent is
 	   unsigned. Remember that any order is possible,
 	   i.e., [1:0], [-4:6], etc. */
-
-      long lsv = lsn->as_long();
-      long msv = msn->as_long();
       unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
       if (wid > net->vector_width()) {
 	    cerr << get_line() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
-	    delete lsn;
-	    delete msn;
+	      //delete lsn;
+	      //delete msn;
 	    return 0;
       }
       assert(wid <= net->vector_width());
@@ -1094,8 +1207,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    cerr << get_line() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of order." << endl;
 	    des->errors += 1;
-	    delete lsn;
-	    delete msn;
+	      //delete lsn;
+	      //delete msn;
 	    return 0;
       }
 
@@ -1104,8 +1217,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    cerr << get_line() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
-	    delete lsn;
-	    delete msn;
+	      //delete lsn;
+	      //delete msn;
 	    return 0;
       }
 
@@ -1140,19 +1253,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
-      NetExpr*wid_e = elab_and_eval(des, scope, lsb_, -1);
-      NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
-      if (wid_c == 0) {
-	    cerr << get_line() << ": error: Width of indexed part select "
-		 << "must be constant." << endl;
-	    cerr << get_line() << ":      : Width expression is: "
-		 << *wid_e << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      unsigned long wid = 0;
+      calculate_up_do_width_(des, scope, wid);
 
-      assert(wid_c != 0);
-      unsigned long wid = wid_c->value().as_ulong();
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
@@ -1193,19 +1296,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
-      NetExpr*wid_e = elab_and_eval(des, scope, lsb_, -1);
-      NetEConst*wid_c = dynamic_cast<NetEConst*> (wid_e);
-      if (wid_c == 0) {
-	    cerr << get_line() << ": error: Width of indexed part select "
-		 << "must be constant." << endl;
-	    cerr << get_line() << ":      : Width expression is: "
-		 << *wid_e << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      assert(wid_c != 0);
-      long wid = wid_c->value().as_long();
+      unsigned long wid = 0;
+      calculate_up_do_width_(des, scope, wid);
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
@@ -1335,7 +1427,8 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-unsigned PENumber::test_width(unsigned min, unsigned lval, bool&unsized_flag) const
+unsigned PENumber::test_width(Design*, NetScope*,
+			      unsigned min, unsigned lval, bool&unsized_flag) const
 {
       unsigned use_wid = value_->len();
       if (min > use_wid)
@@ -1545,6 +1638,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.115  2006/11/04 06:19:24  steve
+ *  Remove last bits of relax_width methods, and use test_width
+ *  to calculate the width of an r-value expression that may
+ *  contain unsized numbers.
+ *
  * Revision 1.114  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *

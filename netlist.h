@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.364 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.365 2006/11/04 06:19:25 steve Exp $"
 #endif
 
 /*
@@ -1133,12 +1133,6 @@ class NetExpr  : public LineInfo {
 	// elaboration of procedural assignment to set the expression
 	// width to the l-value width, if possible.
       virtual bool set_width(unsigned wid, bool last_chance =false);
-
-	// This is similar to set_width, but allows the expression to
-	// set the width for itself, it a way that eliminates
-	// loss. This is used by elaboration in expressions where the
-	// expression width is determined to be "indefinitely large".
-      virtual void relax_width(void);
 
 	// This method returns true if the expression is
 	// signed. Unsigned expressions return false.
@@ -2682,7 +2676,6 @@ class NetEBAdd : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w, bool last_chance);
-      virtual void relax_width(void);
       virtual NetEBAdd* dup_expr() const;
       virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*);
@@ -3574,6 +3567,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.365  2006/11/04 06:19:25  steve
+ *  Remove last bits of relax_width methods, and use test_width
+ *  to calculate the width of an r-value expression that may
+ *  contain unsized numbers.
+ *
  * Revision 1.364  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *

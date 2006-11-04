@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.36 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.37 2006/11/04 06:19:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -304,41 +304,10 @@ NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg) const
 {
-      assert(msb_ && lsb_);
-
-	/* This handles part selects. In this case, there are
-	   two bit select expressions, and both must be
-	   constant. Evaluate them and pass the results back to
-	   the caller. */
-      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_, -1);
-      NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
-      if (lsb_c == 0) {
-	    cerr << lsb_->get_line() << ": error: "
-		  "Part select expressions must be constant."
-		 << endl;
-	    cerr << lsb_->get_line() << ":      : This lsb expression "
-		  "violates the rule: " << *lsb_ << endl;
-	    des->errors += 1;
+      long msb, lsb;
+      bool flag = calculate_parts_(des, scope, msb, lsb);
+      if (!flag)
 	    return 0;
-      }
-
-      NetExpr*msb_ex = elab_and_eval(des, scope, msb_, -1);
-      NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
-      if (msb_c == 0) {
-	    cerr << msb_->get_line() << ": error: "
-		  "Part select expressions must be constant."
-		 << endl;
-	    cerr << msb_->get_line() << ":      : This msb expression "
-		  "violates the rule: " << *msb_ << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      long msb = msb_c->value().as_long();
-      long lsb = lsb_c->value().as_long();
-
-      delete msb_ex;
-      delete lsb_ex;
 
       NetAssign_*lv = 0;
 
@@ -402,21 +371,8 @@ NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
 	    return 0;
       }
 
-	/* Calculate the width expression (in the lsb_ position)
-	   first. If the expression is not constant, error but guess 1
-	   so we can keep going and find more errors. */
-      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
-      NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
-
-      if (wid_c == 0) {
-	    cerr << get_line() << ": error: Indexed part width must be "
-		 << "constant. Expression in question is..." << endl;
-	    cerr << get_line() << ":      : " << *wid_ex << endl;
-	    des->errors += 1;
-      }
-
-      unsigned wid = wid_c? wid_c->value().as_ulong() : 1;
-      delete wid_ex;
+      unsigned long wid;
+      calculate_up_do_width_(des, scope, wid);
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
@@ -544,6 +500,11 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.37  2006/11/04 06:19:25  steve
+ *  Remove last bits of relax_width methods, and use test_width
+ *  to calculate the width of an r-value expression that may
+ *  contain unsized numbers.
+ *
  * Revision 1.36  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary
