@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.87 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: emit.cc,v 1.88 2006/11/10 05:44:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -344,6 +344,17 @@ void NetScope::emit_scope(struct target_t*tgt) const
 		  tgt->signal(cur);
 		  cur = cur->sig_next_;
 	    } while (cur != signals_->sig_next_);
+
+	      /* Run the signals again, but this time to connect the
+	         delay paths. This is done as a second pass because
+	         the paths reference other signals that may be later
+	         in the list. We can do it here becase delay paths are
+	         always connected within the scope. */
+	    cur = signals_->sig_next_;
+	    do {
+		  tgt->signal_paths(cur);
+		  cur = cur->sig_next_;
+	    } while (cur != signals_->sig_next_);
       }
 
       if (memories_) {
@@ -529,6 +540,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.88  2006/11/10 05:44:44  steve
+ *  Process delay paths in second path over signals.
+ *
  * Revision 1.87  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

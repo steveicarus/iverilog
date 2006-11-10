@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.75 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: target.h,v 1.76 2006/11/10 05:44:45 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -64,6 +64,7 @@ struct target_t {
 
 	/* Output a signal (called for each signal) */
       virtual void signal(const NetNet*) =0;
+      virtual bool signal_paths(const NetNet*);
 
 	/* Output a memory (called for each memory object) */
       virtual void memory(const NetMemory*);
@@ -171,6 +172,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.76  2006/11/10 05:44:45  steve
+ *  Process delay paths in second path over signals.
+ *
  * Revision 1.75  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

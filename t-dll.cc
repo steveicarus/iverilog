@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.160 2006/10/15 03:25:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.161 2006/11/10 05:44:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2174,43 +2174,9 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
-	/* Collect the delay paths for this signal. */
+	/* Initialize the path fields to be filled in later. */
       obj->npath = 0;
-      if (net->delay_paths() > 0) {
-	      /* Figure out how many paths there really are. */
-	    for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
-		  const NetDelaySrc*src = net->delay_path(idx);
-		  obj->npath += src->pin_count();
-	    }
-
-	    obj->path = new struct ivl_delaypath_s[obj->npath];
-
-	    unsigned ptr = 0;
-	    for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
-		  const NetDelaySrc*src = net->delay_path(idx);
-
-		  for (unsigned pin = 0; pin < src->pin_count(); pin += 1) {
-			const Nexus*nex = src->pin(pin).nexus();
-			if (! nex->t_cookie()) {
-			      cerr << src->get_line() << ": internal error: "
-				   << "No signal connected to pin " << pin
-				   << " of delay path to " << net->name()
-				   << "." << endl;
-			}
-			assert(nex->t_cookie());
-			obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
-
-			for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
-			      obj->path[ptr].delay[pe] = src->get_delay(pe);
-			}
-
-			ptr += 1;
-		  }
-	    }
-
-      } else {
-	    obj->path = 0;
-      }
+      obj->path = 0;
 
       obj->data_type = net->data_type();
       obj->nattr = net->attr_cnt();
@@ -2240,11 +2206,61 @@ void dll_target::signal(const NetNet*net)
 
 }
 
+bool dll_target::signal_paths(const NetNet*net)
+{
+	/* Nothing to do if there are no paths for this signal. */
+      if (net->delay_paths() == 0)
+	    return true;
+
+      ivl_signal_t obj = find_signal(des_, net);
+      assert(obj);
+
+	/* We cannot have already set up the paths for this signal. */
+      assert(obj->npath == 0);
+      assert(obj->path == 0);
+
+         /* Figure out how many paths there really are. */
+      for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
+	    const NetDelaySrc*src = net->delay_path(idx);
+	    obj->npath += src->pin_count();
+      }
+
+      obj->path = new struct ivl_delaypath_s[obj->npath];
+
+      unsigned ptr = 0;
+      for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
+	    const NetDelaySrc*src = net->delay_path(idx);
+
+	    for (unsigned pin = 0; pin < src->pin_count(); pin += 1) {
+		  const Nexus*nex = src->pin(pin).nexus();
+		  if (! nex->t_cookie()) {
+			cerr << src->get_line() << ": internal error: "
+			     << "No signal connected to pin " << pin
+			     << " of delay path to " << net->name()
+			     << "." << endl;
+		  }
+		  assert(nex->t_cookie());
+		  obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
+
+		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
+			obj->path[ptr].delay[pe] = src->get_delay(pe);
+		  }
+
+		  ptr += 1;
+	    }
+      }
+
+      return true;
+}
+
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.161  2006/11/10 05:44:45  steve
+ *  Process delay paths in second path over signals.
+ *
  * Revision 1.160  2006/10/15 03:25:58  steve
  *  More detailed internal error message.
  *

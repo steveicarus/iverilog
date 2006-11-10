@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.133 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: t-dll.h,v 1.134 2006/11/10 05:44:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -96,6 +96,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool process(const NetProcTop*);
       void scope(const NetScope*);
       void signal(const NetNet*);
+      bool signal_paths(const NetNet*);
       void memory(const NetMemory*);
 
       ivl_dll_t dll_;
@@ -679,6 +680,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.134  2006/11/10 05:44:45  steve
+ *  Process delay paths in second path over signals.
+ *
  * Revision 1.133  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

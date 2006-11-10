@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.78 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: target.cc,v 1.79 2006/11/10 05:44:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,6 +39,11 @@ void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event <" << ev->full_name() << ">." << endl;
+}
+
+bool target_t::signal_paths(const NetNet*)
+{
+      return true;
 }
 
 void target_t::memory(const NetMemory*)
@@ -438,6 +443,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.79  2006/11/10 05:44:45  steve
+ *  Process delay paths in second path over signals.
+ *
  * Revision 1.78  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
