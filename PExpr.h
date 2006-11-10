@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.85 2006/11/04 06:19:24 steve Exp $"
+#ident "$Id: PExpr.h,v 1.86 2006/11/10 04:54:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -420,6 +420,10 @@ class PEString : public PExpr {
       string value() const;
       virtual void dump(ostream&) const;
 
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  bool&unsized_flag) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -583,6 +587,10 @@ class PETernary : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  bool&unsized_flag) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -642,6 +650,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.86  2006/11/10 04:54:26  steve
+ *  Add test_width methods for PETernary and PEString.
+ *
  * Revision 1.85  2006/11/04 06:19:24  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may

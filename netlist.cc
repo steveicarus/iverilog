@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.249 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.250 2006/11/10 04:54:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2180,6 +2180,12 @@ ivl_variable_type_t NetESignal::expr_type() const
       return net_->data_type();
 }
 
+/*
+* Make a ternary operator from all the sub-expressions. The condition
+* expression is self-determined, but the true and false expressions
+* should have the same width. NOTE: This matching of the widths really
+* has to be done in elaboration.
+*/
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
@@ -2336,6 +2342,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.250  2006/11/10 04:54:26  steve
+ *  Add test_width methods for PETernary and PEString.
+ *
  * Revision 1.249  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

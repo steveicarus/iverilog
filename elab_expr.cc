@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.115 2006/11/04 06:19:24 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.116 2006/11/10 04:54:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1459,12 +1459,32 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
       return tmp;
 }
 
+unsigned PEString::test_width(Design*des, NetScope*scope,
+			      unsigned min, unsigned lval,
+			      bool&unsized_flag) const
+{
+      unsigned use_wid = text_? 8*strlen(text_) : 0;
+      if (min > use_wid)
+	    use_wid = min;
+
+      return use_wid;
+}
+
 NetEConst* PEString::elaborate_expr(Design*des, NetScope*,
 				    int expr_width, bool) const
 {
       NetEConst*tmp = new NetEConst(value());
       tmp->set_line(*this);
       return tmp;
+}
+
+unsigned PETernary::test_width(Design*des, NetScope*scope,
+			       unsigned min, unsigned lval,
+			       bool&flag) const
+{
+      unsigned tru_wid = tru_->test_width(des, scope, min, lval, flag);
+      unsigned fal_wid = fal_->test_width(des, scope, min, lval, flag);
+      return max(tru_wid,fal_wid);
 }
 
 static bool test_ternary_operand_compat(ivl_variable_type_t l,
@@ -1492,6 +1512,18 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
       assert(tru_);
       assert(fal_);
 
+      if (expr_wid < 0) {
+	    bool flag = false;
+	    unsigned tru_wid = tru_->test_width(des, scope, 0, 0, flag);
+	    unsigned fal_wid = fal_->test_width(des, scope, 0, 0, flag);
+	    expr_wid = max(tru_wid, fal_wid);
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: "
+		       << "Self-sized ternary chooses wid="<< expr_wid
+		       << " from " <<tru_wid
+		       << " and " << fal_wid << endl;
+      }
+
       NetExpr*con = expr_->elaborate_expr(des, scope, -1, false);
       if (con == 0)
 	    return 0;
@@ -1517,6 +1549,11 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+	/* Whatever the width we choose for the ternary operator, we
+	need to make sure the operands match. */
+      tru = pad_to_width(tru, expr_wid);
+      fal = pad_to_width(fal, expr_wid);
 
       NetETernary*res = new NetETernary(con, tru, fal);
       res->set_line(*this);
@@ -1638,6 +1675,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.116  2006/11/10 04:54:26  steve
+ *  Add test_width methods for PETernary and PEString.
+ *
  * Revision 1.115  2006/11/04 06:19:24  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may
