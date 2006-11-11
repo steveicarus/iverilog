@@ -10,7 +10,14 @@ Packager: Stephen Williams <steve@icarus.com>
 
 BuildRequires: zlib-devel, bison, flex, gperf, readline-devel
 
-BuildRoot: /tmp/ivl
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+
+BuildRequires: 	gcc-c++, zlib-devel, bison, flex, gperf, termcap
+BuildRequires:	bzip2 readline-devel
+%ifarch x86_64
+BuildRequires:	glibc-devel-32bit, bzip2-32bit, zlib-devel-32bit, glibc-32bit
+BuildRequires:	termcap-32bit readline-devel-32bit readline-32bit
+%endif
 
 # This provides tag allows me to use a more specific name for things
 # that actually depend on me, Icarus Verilog.
