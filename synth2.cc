@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.46 2006/11/02 02:13:15 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39.2.47 2006/11/11 23:10:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -418,6 +418,14 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 				    nex_out->pin_count());
       accum_out->local_flag(true);
 
+	/* Output that ultimately have not been driven should collect
+	   their value from the accumulated input. */
+      assert(accum_out->pin_count() == accum_in->pin_count());
+      for (unsigned idx = 0 ;  idx < accum_out->pin_count() ;  idx += 1) {
+	    if (accum_in->pin(idx).nexus()->is_driven())
+		  connect(accum_out->pin(idx), accum_in->pin(idx));
+      }
+
       bool flag = true;
       NetProc*cur = last_;
       do {
@@ -453,7 +461,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 					       tmp_set[idx]);
 		  assert(tmp >= 0);
 		  unsigned ptr = tmp;
-		  if (accum_out->pin(ptr).is_linked())
+		  if (accum_out->pin(ptr).nexus()->is_driven())
 			connect(new_accum->pin(idx), accum_out->pin(ptr));
 	    }
 
@@ -514,12 +522,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		 previous statements. Thus, the current statement can
 		 *override* the outputs of any previous statements. */
 	    for (unsigned idx = 0;  idx < new_accum->pin_count();  idx += 1) {
-#if 0
-		  cerr << cur->get_line() << ": XXXX: "
-		       << "Bit " << idx << " new_accum has "
-		       << new_accum->pin(idx).nexus()->is_driven()
-		       << " drivers." << endl;
-#endif
+
 		  if (new_accum->pin(idx).nexus()->is_driven())
 			continue;
 
@@ -529,6 +532,20 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    accum_out = new_accum;
 
       } while (cur != last_);
+
+
+	/* Output that ultimately have not been driven should collect
+	   their value from the accumulated input. Do this only for
+	   asynchronous blocks, because synchronous blocks are handled
+	   else where (from the context) where unaccounted inputs are
+	   connected to the output to feedback. */
+      if (!sync_flag) {
+	    assert(accum_out->pin_count() == accum_in->pin_count());
+	    for (unsigned idx = 0;  idx < accum_out->pin_count();  idx += 1) {
+		  if (! accum_out->pin(idx).is_linked())
+			connect(accum_out->pin(idx), accum_in->pin(idx));
+	    }
+      }
 
 	/* Now bind the accumulated output values to the nex_out
 	   passed in. Note that each previous step has already did the
@@ -544,12 +561,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    cerr << get_line() << ": debug: "
 		 << (sync_flag?"sync":"async")
 		 << " synthesis of statement block complete. " << endl;
-#if 0
-	    for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
-		  cerr << get_line() << ": XXXX: Bit " << idx
-		       << " has " << nex_out->pin(idx).nexus()->is_driven()
-		       << " drivers." << endl;
-#endif
+
       }
       return flag;
 }
@@ -612,11 +624,16 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
       }
 
 	/* Handle the special case that this can be done it a smaller
-	   1-hot MUX. */
-      if (nondefault_items < sel_pins)
+	   1-hot MUX. If there are fewer active cases then there are
+	   select pins, then a 1-hot encoding should be better. */
+      if (nondefault_items < sel_pins) {
+	    if (debug_synth)
+		  cerr << get_line() << ": debug: "
+		       << "Implement case statement as 1-hot MUX." << endl;
 	    return synth_async_1hot_(des, scope, sync_flag, nex_ff,
 				    nex_map, nex_out, accum,
 				    esig, nondefault_items);
+      }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(),
@@ -804,39 +821,41 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			     << " zero in combinational process." << endl;
 		  }
 
-	    } else if (statement_map[item] == 0) {
+		  continue;
+	    }
 
-		    /* If this is an unspecified case, then get the
-		       input from the synchronous output. Note that we
-		       know by design that there is no relevent
-		       default or accum input to use here, as those
-		       cases are handled above. */
+
+	      /* If after all this is an unspecified case, then get the
+		 input from the synchronous output. Note that we know
+		 by design that there is no relevent default or accum
+		 input to use here, as those cases are handled above. */
+	    if (statement_map[item] == 0) {
 
 		  for (unsigned idx=0; idx < mux->width(); idx += 1)
 			connect(mux->pin_Data(idx,item), nex_map->pin(idx));
 
-	    } else {
-		    /* Synthesize this specified case. The synth_async will
-		       connect all the output bits it knows how to the
-		       sig net. */
-		  statement_map[item]->synth_async(des, scope, sync_flag,
-						   nex_ff,
-						   nex_map, sig, accum);
+		  continue;
+	    }
 
-		  for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
-			if (sig->pin(idx).is_linked())
-			      connect(mux->pin_Data(idx,item), sig->pin(idx));
-			else if (accum->pin(idx).is_linked())
-			      connect(mux->pin_Data(idx,item), accum->pin(idx));
-			else if (sync_flag)
-			      connect(mux->pin_Data(idx,item), nex_map->pin(idx));
-			else {
-				/* No likely input for this bit. So
-				   leave it. The connectivity test
-				   below will determine if this is an
-				   error or not. */
 
-			}
+	      /* Synthesize this specified case. The synth_async will
+		 connect all the output bits it knows how to the sig net. */
+	    statement_map[item]->synth_async(des, scope, sync_flag,
+					     nex_ff,
+					     nex_map, sig, accum);
+
+	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
+		  if (sig->pin(idx).is_linked())
+			connect(mux->pin_Data(idx,item), sig->pin(idx));
+		  else if (accum->pin(idx).is_linked())
+			connect(mux->pin_Data(idx,item), accum->pin(idx));
+		  else if (sync_flag)
+			connect(mux->pin_Data(idx,item), nex_map->pin(idx));
+		  else {
+			  /* No likely input for this bit. So
+			     leave it. The connectivity test
+			     below will determine if this is an
+			     error or not. */
 		  }
 	    }
       }
@@ -2538,6 +2557,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39.2.47  2006/11/11 23:10:20  steve
+ *  Fix async blocks to take accumulated input.
+ *
  * Revision 1.39.2.46  2006/11/02 02:13:15  steve
  *  Error message for condit expression not synthesized.
  *
