@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.1.2.2 2005/08/21 22:25:51 steve Exp $"
+#ident "$Id: edif.c,v 1.1.2.3 2006/11/11 21:21:21 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -326,9 +326,15 @@ void edif_cell_port_pstring(edif_cell_t cell, unsigned idx,
 unsigned edif_cell_port_byname(edif_cell_t cell, const char*name)
 {
       unsigned idx = 0;
-      for (idx = 0 ;  idx < cell->nports ;  idx += 1)
-	    if (strcmp(name, cell->ports[idx].name) == 0)
-		  break;
+      for (idx = 0 ;  idx < cell->nports ;  idx += 1) {
+	    if (cell->ports[idx].ename) {
+		  if (strcmp(name, cell->ports[idx].ename) == 0)
+			break;
+	    } else {
+		  if (strcmp(name, cell->ports[idx].name) == 0)
+			break;
+	    }
+      }
 
       return idx;
 }
@@ -671,6 +677,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.1.2.3  2006/11/11 21:21:21  steve
+ *  Make signal lookup use extended names.
+ *
  * Revision 1.1.2.2  2005/08/21 22:25:51  steve
  *  Fix the comment in the EDIT header.
  *
