@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.5 2006/04/23 04:26:13 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.6 2006/11/12 01:20:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -899,6 +899,14 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    return;
       }
 
+	/* Create a temporary net to hold the result value that we
+	   build up. When we are done, we will connect this to the
+	   Result pins of the mux, then delete the mux *and* this
+	   net. That will cause all the proper connectivity to
+	   happen. */
+      NetNet result_tmp(scope, scope->local_symbol(),
+			NetNet::WIRE, obj->width());
+
 	/* We know that every slice has at least one constant. Run
 	   through the slices again, creating boolean devices to
 	   replace the MUX slice. */
@@ -912,7 +920,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::BUFIF1);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -926,7 +934,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::BUFIF0);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -937,6 +945,15 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		 the data inputs are both constant, and neither are
 		 HiZ. From this we know how to generate the output
 		 from only the S input. */
+	    if (! (obj->pin_Data(idx, 0).nexus()->drivers_constant()
+		   && obj->pin_Data(idx, 1).nexus()->drivers_constant())) {
+		  cerr << obj->get_line() << ": internal error: "
+		       << "Drivers not constant where expected?"
+		       << " obj->width()=" << obj->width()
+		       << " idx=" << idx
+		       << endl;
+		  obj->dump_node(cerr, 4);
+	    }
 	    assert(obj->pin_Data(idx, 0).nexus()->drivers_constant()
 		   && obj->pin_Data(idx, 1).nexus()->drivers_constant());
 
@@ -945,12 +962,12 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    verinum::V b = obj->pin_Data(idx, 1).nexus()->driven_value();
 
 	    if (a == b) {
-		  connect(obj->pin_Result(idx), obj->pin_Data(idx,0));
+		  connect(result_tmp.pin(idx), obj->pin_Data(idx,0));
 		  continue;
 	    }
 
 	    if (a == verinum::V0 && b == verinum::V1) {
-		  connect(obj->pin_Result(idx), obj->pin_Sel(0));
+		  connect(result_tmp.pin(idx), obj->pin_Sel(0));
 		  continue;
 	    }
 
@@ -958,7 +975,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      2, NetLogic::NOT);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Sel(0), tmp->pin(1));
 		  des->add_node(tmp);
 		  continue;
@@ -969,7 +986,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::AND);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -981,7 +998,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::OR);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -1003,7 +1020,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::OR);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
 		  connect(inv->pin(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -1025,7 +1042,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
 					      3, NetLogic::AND);
-		  connect(obj->pin_Result(idx), tmp->pin(0));
+		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
 		  connect(inv->pin(0), tmp->pin(2));
 		  des->add_node(tmp);
@@ -1035,6 +1052,9 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    assert(0);
 
       }
+
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1)
+	    connect(result_tmp.pin(idx), obj->pin_Result(idx));
 
       delete obj;
       count += 1;
@@ -1316,6 +1336,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.6  2006/11/12 01:20:45  steve
+ *  Prevent constant mux outputs from confusing itself.
+ *
  * Revision 1.47.2.5  2006/04/23 04:26:13  steve
  *  Constant propagate addresses through NetRamDq read ports.
  *
