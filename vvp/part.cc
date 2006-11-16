@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.11 2006/05/01 18:44:08 steve Exp $"
+#ident "$Id: part.cc,v 1.12 2006/11/16 01:11:26 steve Exp $"
 
 # include  "compile.h"
 # include  "part.h"
@@ -51,6 +51,26 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    net_ = port.ptr();
 	    schedule_generic(this, 0, false);
       }
+}
+
+/*
+ * Handle the case that the part select node is actually fed by a part
+ * select assignment. It's not exactly clear what might make this
+ * happen, but is does seem to happen and this should have sell
+ * defined behavior.
+ */
+void vvp_fun_part::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+
+      vvp_vector4_t tmp = val_;
+      if (tmp.size() == 0)
+	    tmp = vvp_vector4_t(vwid);
+
+      assert(tmp.size() == vwid);
+      tmp.set_vec(base, bit);
+      recv_vec4(port, tmp);
 }
 
 void vvp_fun_part::run_run()
@@ -180,6 +200,9 @@ void compile_part_select_var(char*label, char*source, char*var,
 
 /*
  * $Log: part.cc,v $
+ * Revision 1.12  2006/11/16 01:11:26  steve
+ *  Support part writes into  part select nodes.
+ *
  * Revision 1.11  2006/05/01 18:44:08  steve
  *  Reduce steps to make logic output.
  *
