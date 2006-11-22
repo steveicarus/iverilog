@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.148 2006/10/01 23:51:15 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.149 2006/11/22 06:09:08 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1414,7 +1414,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = nany;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, sub);
-			fprintf(vvp_out, ", %s", draw_net_input(nex));
+			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1429,7 +1429,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = nneg;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, sub);
-			fprintf(vvp_out, ", %s", draw_net_input(nex));
+			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1444,7 +1444,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 			top = npos;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, sub);
-			fprintf(vvp_out, ", %s", draw_net_input(nex));
+			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
 		  }
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1462,8 +1462,10 @@ static void draw_event_in_scope(ivl_event_t obj)
       } else {
 	    unsigned num_input_strings = nany + nneg + npos;
 	    unsigned idx;
-	    const char* input_strings[4];
+	    ivl_nexus_t input_nexa[4];
 	    const char*edge = 0;
+
+	    assert(num_input_strings <= 4);
 
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
@@ -1473,7 +1475,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
-			input_strings[idx] = draw_net_input(nex);
+			input_nexa[idx] = nex;
 		  }
 
 	    } else if (nneg > 0) {
@@ -1482,7 +1484,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, idx);
-			input_strings[idx] = draw_net_input(nex);
+			input_nexa[idx] = nex;
 		  }
 
 	    } else {
@@ -1491,13 +1493,13 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
-			input_strings[idx] = draw_net_input(nex);
+			input_nexa[idx] = nex;
 		  }
 	    }
 
 	    fprintf(vvp_out, "E_%p .event %s", obj, edge);
 	    for (idx = 0 ;  idx < num_input_strings ;  idx += 1)
-		  fprintf(vvp_out, ", %s", input_strings[idx]);
+		  fprintf(vvp_out, ", %s", draw_input_from_net(input_nexa[idx]));
 
 	    fprintf(vvp_out, ";\n");
       }
@@ -2323,6 +2325,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.149  2006/11/22 06:09:08  steve
+ *  Get the .event input from the signal instead of the signal input.
+ *
  * Revision 1.148  2006/10/01 23:51:15  steve
  *  Modpath is input to net, draw .modpath to account.
  *
