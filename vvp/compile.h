@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.83 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: compile.h,v 1.84 2006/11/22 06:10:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -260,16 +260,10 @@ extern void compile_ufunc(char*label, char*code, unsigned wid,
  * the threads.
  */
 extern void compile_event(char*label, char*type,
-			  unsigned argc, struct symb_s*argv);
+			  unsigned argc, struct symb_s*argv,
+			  bool debug_flag);
 extern void compile_named_event(char*label, char*type);
 
-#if 0
-/*
- * Word declarations include a label, a type symbol, and a vpi name.
- * TAKEN OVER BY compile_var_real.
- */
-extern void compile_word(char*label, char*type, char*name);
-#endif
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -352,6 +346,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.84  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.83  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

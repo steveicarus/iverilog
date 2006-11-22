@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.54 2006/07/08 21:48:00 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.55 2006/11/22 06:10:05 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1570,8 +1570,7 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 		  if (needs_init_ || !bits8_.eeq(bit)) {
 			bits8_ = bit;
 			needs_init_ = false;
-			vvp_send_vec8(ptr.ptr()->out, bit);
-			run_vpi_callbacks();
+			calculate_output_(ptr);
 		  }
 	    }
 	    break;
@@ -1579,8 +1578,7 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
 	    bits8_ = bit;
-	    vvp_send_vec8(ptr.ptr()->out, bits8_);
-	    run_vpi_callbacks();
+	    calculate_output_(ptr);
 	    break;
 
 	  case 2: // Force value
@@ -1593,14 +1591,32 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 		  force_ = bit;
 
 	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
-	    vvp_send_vec8(ptr.ptr()->out, force_);
-	    run_vpi_callbacks();
+	    calculate_output_(ptr);
 	    break;
 
 	  default:
 	    assert(0);
 	    break;
       }
+}
+
+void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
+{
+      if (force_mask_.size()) {
+	    assert(bits8_.size() == force_mask_.size());
+	    assert(bits8_.size() == force_.size());
+	    vvp_vector8_t bits (bits8_);
+	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
+		  if (force_mask_.value(idx))
+			bits.set_bit(idx, force_.value(idx));
+	    }
+	    vvp_send_vec8(ptr.ptr()->out, bits);
+
+      } else {
+	    vvp_send_vec8(ptr.ptr()->out, bits8_);
+      }
+
+      run_vpi_callbacks();
 }
 
 void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
@@ -2193,6 +2209,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.55  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.54  2006/07/08 21:48:00  steve
  *  Delay object supports real valued delays.
  *

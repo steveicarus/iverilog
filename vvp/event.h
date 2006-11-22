@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.11 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: event.h,v 1.12 2006/11/22 06:10:05 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -52,7 +52,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       typedef unsigned short edge_t;
-      explicit vvp_fun_edge(edge_t e);
+      explicit vvp_fun_edge(edge_t e, bool debug_flag);
 
       virtual ~vvp_fun_edge();
 
@@ -61,6 +61,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
     private:
       vvp_bit4_t bits_[4];
       edge_t edge_;
+      bool debug_;
 };
 
 extern const vvp_fun_edge::edge_t vvp_edge_posedge;
@@ -76,12 +77,13 @@ extern const vvp_fun_edge::edge_t vvp_edge_none;
 class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
-      explicit vvp_fun_anyedge();
+      explicit vvp_fun_anyedge(bool debug_flag);
       virtual ~vvp_fun_anyedge();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
+      bool debug_;
       vvp_vector4_t bits_[4];
 };
 
@@ -120,6 +122,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.12  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.11  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.85 2006/09/23 04:57:20 steve Exp $"
+#ident "$Id: parse.y,v 1.86 2006/11/22 06:10:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -70,7 +70,7 @@ static vvp_fun_modpath*modpath_dst = 0;
 %token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
-%token K_CONCAT K_DELAY K_DFF
+%token K_CONCAT K_DEBUG K_DELAY K_DFF
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PART K_PART_PV
@@ -372,13 +372,16 @@ statement
      named event instead. */
 
 	| T_LABEL K_EVENT T_SYMBOL ',' symbols ';'
-		{ compile_event($1, $3, $5.cnt, $5.vect); }
+                { compile_event($1, $3, $5.cnt, $5.vect, false); }
+
+	| T_LABEL K_EVENT K_DEBUG T_SYMBOL ',' symbols ';'
+                { compile_event($1, $4, $6.cnt, $6.vect, true); }
 
 	| T_LABEL K_EVENT T_STRING ';'
 		{ compile_named_event($1, $3); }
 
 	| T_LABEL K_EVENT_OR symbols ';'
-		{ compile_event($1, 0, $3.cnt, $3.vect); }
+                { compile_event($1, 0, $3.cnt, $3.vect, false); }
 
 
   /* Instructions may have a label, and have zero or more
@@ -778,6 +781,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.86  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.85  2006/09/23 04:57:20  steve
  *  Basic support for specify timing.
  *

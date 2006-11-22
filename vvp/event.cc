@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.21 2006/02/21 04:57:26 steve Exp $"
+#ident "$Id: event.cc,v 1.22 2006/11/22 06:10:05 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -32,6 +32,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+
+# include <iostream>
 
 void waitable_hooks_s::run_waiting_threads_()
 {
@@ -66,8 +68,8 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
 
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 
-vvp_fun_edge::vvp_fun_edge(edge_t e)
-: edge_(e)
+vvp_fun_edge::vvp_fun_edge(edge_t e, bool debug_flag)
+: edge_(e), debug_(debug_flag)
 {
       bits_[0] = BIT4_X;
       bits_[1] = BIT4_X;
@@ -96,7 +98,8 @@ void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 }
 
 
-vvp_fun_anyedge::vvp_fun_anyedge()
+vvp_fun_anyedge::vvp_fun_anyedge(bool debug_flag)
+: debug_(debug_flag)
 {
 }
 
@@ -164,8 +167,8 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 /*
 **  Create an event functor
-**  edge:  compile_event(label, type, argc, argv)
-**  or:    compile_event(label, NULL, argc, argv)
+**  edge:  compile_event(label, type, argc, argv, debug_flag)
+**  or:    compile_event(label, NULL, argc, argv, debug_flag)
 **
 **  Named events are handled elsewhere.
 */
@@ -173,7 +176,8 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
 
 void compile_event(char*label, char*type,
-		   unsigned argc, struct symb_s*argv)
+		   unsigned argc, struct symb_s*argv,
+		   bool debug_flag)
 {
       vvp_net_fun_t*fun = 0;
 
@@ -185,7 +189,7 @@ void compile_event(char*label, char*type,
       if (strcmp(type,"edge") == 0) {
 
 	    free(type);
-	    fun = new vvp_fun_anyedge;
+	    fun = new vvp_fun_anyedge(debug_flag);
 
       } else {
 
@@ -199,7 +203,7 @@ void compile_event(char*label, char*type,
 	    assert(argc <= 4);
 	    free(type);
 
-	    fun = new vvp_fun_edge(edge);
+	    fun = new vvp_fun_edge(edge, debug_flag);
       }
 
       vvp_net_t* ptr = new vvp_net_t;
@@ -250,6 +254,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.22  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.21  2006/02/21 04:57:26  steve
  *  Callbacks for named event triggers.
  *

@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.63 2006/09/23 04:57:20 steve Exp $"
+#ident "$Id: lexor.lex,v 1.64 2006/11/22 06:10:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -148,6 +148,7 @@
 ".mem" 	       { return K_MEM; }
 ".mem/p"(ort)? { return K_MEM_P; }
 ".mem/i"(nit)? { return K_MEM_I; }
+"-debug" { return K_DEBUG; }
 
   /* instructions start with a % character. The compiler decides what
      kind of instruction this really is. The few exceptions (that have
@@ -211,6 +212,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.64  2006/11/22 06:10:05  steve
+ *  Fix spurious event from net8 that is forced.
+ *
  * Revision 1.63  2006/09/23 04:57:20  steve
  *  Basic support for specify timing.
  *
