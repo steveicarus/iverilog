@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.78 2006/09/23 04:57:19 steve Exp $
+ *  $Id: README.txt,v 1.79 2006/11/23 23:02:36 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -92,6 +92,26 @@ and "C<z>" represent a constant driver of the given value.
 
 SCOPE STATEMENTS:
 
+The syntax of a scope statement is:
+
+        <label> .scope <type>, <instance>, <declaration>, <parent> ;
+
+The <type> is the general type of the scope: module, function, task,
+begin, fork or generate.
+
+The <instance> is a string that is the base name of the instance. For
+modules, this is the instance name. For tasks, this is the task name.
+
+The <declaration> is a string that represents the declaration. For
+modules, this is the name of the module given in the module
+declaration, and *not* the instantiation. For tasks and functions,
+this is the hierarchical name of the path to the declaration. This is
+because the declaration can be different within different module
+instances.
+
+Finally, the <parent> is the label for the parent scope for this
+one. Root scopes leave this out. Otherwise, this label references
+another .scope record.
 
 PARAMETER STATEMENTS:
 
