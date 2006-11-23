@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.149 2006/11/22 06:09:08 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.150 2006/11/23 22:42:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -675,13 +675,21 @@ static void draw_modpath(const char*label, const char*driver,
 			 ivl_signal_t path_sig)
 {
       unsigned idx;
+      typedef const char*ccharp;
+      ccharp*src_drivers;
+
+      src_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
+      for (idx = 0 ;  idx < ivl_signal_npath(path_sig) ;  idx += 1) {
+	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
+	    ivl_nexus_t src = ivl_path_source(path);
+	    src_drivers[idx] = draw_net_input(src);
+      }
+
       fprintf(vvp_out, "%s .modpath %s", label, driver);
 
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
-	    ivl_nexus_t src = ivl_path_source(path);
-	    const char*src_driver = draw_net_input(src);
-	    fprintf(vvp_out, ",\n    %s", src_driver);
+	    fprintf(vvp_out, ",\n    %s", src_drivers[idx]);
 	    fprintf(vvp_out,
 		    " (%"PRIu64",%"PRIu64",%"PRIu64
 		    ", %"PRIu64",%"PRIu64",%"PRIu64
@@ -702,6 +710,8 @@ static void draw_modpath(const char*label, const char*driver,
       }
 
       fprintf(vvp_out, ";\n");
+
+      free(src_drivers);
 }
 
 /*
@@ -845,13 +855,13 @@ static char* draw_net_input_x(ivl_nexus_t nex,
       if (ndrivers == 1 && res == IVL_SIT_TRI) {
 	    ivl_signal_t path_sig = find_modpath(nex);
 	    if (path_sig) {
+		  char*nex_str = strdup(draw_net_input_drive(nex, drivers[0]));
 		  char modpath_label[64];
 		  snprintf(modpath_label, sizeof modpath_label,
 			   "V_%p/m", path_sig);
-		  draw_modpath(modpath_label,
-			       draw_net_input_drive(nex, drivers[0]),
-			       path_sig);
+		  draw_modpath(modpath_label, nex_str, path_sig);
 		  nex_private = strdup(modpath_label);
+		  free(nex_str);
 	    } else {
 		  nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
 	    }
@@ -2325,6 +2335,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.150  2006/11/23 22:42:48  steve
+ *  Do not intertangle modpaths due to references to input nets.
+ *
  * Revision 1.149  2006/11/22 06:09:08  steve
  *  Get the .event input from the signal instead of the signal input.
  *
