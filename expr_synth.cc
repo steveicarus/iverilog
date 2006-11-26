@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.9 2006/08/08 02:17:48 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.10 2006/11/26 01:54:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -798,6 +798,96 @@ NetNet* NetEUBits::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEUFunc::synthesize(Design*des)
+{
+      assert(func_);
+
+      NetFuncDef* def = func_->func_def();
+      assert(def);
+
+      assert(parms_.count() == def->port_count());
+
+      svector<NetNet*> inports (parms_.count());
+
+      unsigned errors = 0;
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    inports[idx] = parms_[idx]->synthesize(des);
+	    if (inports[idx] == 0)
+		  errors += 1;
+      }
+
+      if (errors > 0) {
+	    cerr << get_line() << ": error: "
+		 << "Cannot continue with function instance synthesis."
+		 << endl;
+	    return 0;
+      }
+
+      NetNet*out = def->synthesize(des, inports);
+
+      if (! out) {
+	    cerr << get_line() << ": error: "
+		 << "User defined functions do not synthesize." << endl;
+	    def->dump(cerr, 4);
+	    des->errors += 1;
+	    return 0;
+      }
+
+      return out;
+}
+
+NetNet* NetFuncDef::synthesize(Design*des, const svector<NetNet*>&inports_)
+{
+
+	/* First run synthesis for the function definition as if this
+	   where a toplevel process. This will create the logic that
+	   the function represents, but connected to the port nets for
+	   the function definition. We will detach those common ports
+	   later. */
+      NexusSet nex_set;
+      statement_->nex_output(nex_set);
+
+      const perm_string tmp1 = scope()->local_symbol();
+      NetNet*nex_out = new NetNet(scope(), tmp1, NetNet::WIRE,
+				  nex_set.count());
+      for (unsigned idx = 0 ;  idx < nex_out->pin_count() ;  idx += 1)
+	    connect(nex_set[idx], nex_out->pin(idx));
+
+      bool flag = statement_->synth_async_noaccum(des, scope(), false, 0,
+						  nex_out, nex_out);
+
+      if (!flag) {
+	    delete nex_out;
+	    return 0;
+      }
+
+	/* Connect the inports_ vectors to the input ports and detach
+	   the static arg ports themselves. This moves the input from
+	   the synthesized device from the static ports to the actual
+	   ports from the instance context. */
+      for (unsigned idx = 0 ;  idx < port_count() ;  idx += 1) {
+	    NetNet*in = inports_[idx];
+	    NetNet*arg = ports_[idx];
+
+	    assert(in->pin_count() == arg->pin_count());
+	    for (unsigned pin = 0 ;  pin < arg->pin_count() ;  pin += 1) {
+		  connect(in->pin(pin), arg->pin(pin));
+		  arg->pin(pin).unlink();
+	    }
+      }
+
+	/* Detach the output signal from the synthesized result. We
+	   use instead the nex_out that was returned from the
+	   synthesis of the function. This is how we account for the
+	   fact that the function may be synthesized multiple times to
+	   go into multiple expression. Each synthesis needs a unique
+	   output. */
+      for (unsigned idx = 0 ;  idx < result_sig_->pin_count() ;  idx += 1)
+	    result_sig_->pin(idx).unlink();
+
+      return nex_out;
+}
+
 NetNet* NetEUReduce::synthesize(Design*des)
 {
       NetNet*isig = expr_->synthesize(des);
@@ -1006,6 +1096,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.10  2006/11/26 01:54:05  steve
+ *  Add synthesis of user defined functions.
+ *
  * Revision 1.59.2.9  2006/08/08 02:17:48  steve
  *  Improved nexus management performance.
  *

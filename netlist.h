@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.23 2006/08/15 03:41:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.321.2.24 2006/11/26 01:54:05 steve Exp $"
 #endif
 
 /*
@@ -2215,6 +2215,8 @@ class NetFuncDef {
       const NetNet*return_sig() const;
       const NetVariable*return_var() const;
 
+      NetNet* synthesize(Design*des, const svector<NetNet*>&inports_);
+
       void dump(ostream&, unsigned ind) const;
 
     private:
@@ -2434,6 +2436,8 @@ class NetEUFunc  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input();
+
+      virtual NetNet* synthesize(Design*);
 
     private:
       NetScope*func_;
@@ -3542,6 +3546,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321.2.24  2006/11/26 01:54:05  steve
+ *  Add synthesis of user defined functions.
+ *
  * Revision 1.321.2.23  2006/08/15 03:41:24  steve
  *  Improve performance of unlink of heavily connected nexa.
  *
