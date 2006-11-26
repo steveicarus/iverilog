@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.349 2006/11/04 06:19:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.350 2006/11/26 06:29:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -181,6 +181,17 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 						  lval->vector_width());
 			rid = tmp;
 		  }
+
+	    } else if (cnt < rid->vector_width()) {
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: PGAssign "
+			     << "Truncate r-value from "
+			     << cnt << " bits to "
+			     << lval->vector_width() << " bits." << endl;
+
+		  NetNet*tmp = crop_to_width(des, rid, lval->vector_width());
+		  rid = tmp;
 	    }
 
 	    if (! need_driver_flag) {
@@ -3326,6 +3337,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.350  2006/11/26 06:29:16  steve
+ *  Fix nexus widths for direct link assign and ternary nets.
+ *
  * Revision 1.349  2006/11/04 06:19:25  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may

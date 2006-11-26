@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.189 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.190 2006/11/26 06:29:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2588,6 +2588,11 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       if (tru_sig->vector_width() < dwidth)
 	    tru_sig = pad_to_width(des, tru_sig, dwidth);
 
+      if (dwidth < fal_sig->vector_width())
+	    fal_sig = crop_to_width(des, fal_sig, dwidth);
+
+      if (dwidth < tru_sig->vector_width())
+	    tru_sig = crop_to_width(des, tru_sig, dwidth);
 
 	/* Make the device and connect its outputs to the osig and
 	   inputs to the tru and false case nets. Also connect the
@@ -2840,6 +2845,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.190  2006/11/26 06:29:16  steve
+ *  Fix nexus widths for direct link assign and ternary nets.
+ *
  * Revision 1.189  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *
