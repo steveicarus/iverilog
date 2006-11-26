@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.350 2006/11/26 06:29:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.351 2006/11/26 07:10:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1759,8 +1759,12 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 		       << "is a constant " << val << "." << endl;
 	    }
 
+	    verinum::V reduced = verinum::V0;
+	    for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		  reduced = reduced | val[idx];
+
 	    delete expr;
-	    if (val[0] == verinum::V1)
+	    if (reduced == verinum::V1)
 		  return if_->elaborate(des, scope);
 	    else if (else_)
 		  return else_->elaborate(des, scope);
@@ -3337,6 +3341,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.351  2006/11/26 07:10:30  steve
+ *  Fix compile time eval of condition expresion to do reduction OR of vectors.
+ *
  * Revision 1.350  2006/11/26 06:29:16  steve
  *  Fix nexus widths for direct link assign and ternary nets.
  *
