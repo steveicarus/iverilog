@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.351 2006/11/26 07:10:30 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.352 2006/11/27 02:01:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1765,7 +1765,13 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 
 	    delete expr;
 	    if (reduced == verinum::V1)
-		  return if_->elaborate(des, scope);
+		  if (if_) {
+			return if_->elaborate(des, scope);
+		  } else {
+			NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
+			tmp->set_line(*this);
+			return tmp;
+		  }
 	    else if (else_)
 		  return else_->elaborate(des, scope);
 	    else
@@ -3341,6 +3347,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.352  2006/11/27 02:01:07  steve
+ *  Fix crash handling constant true conditional.
+ *
  * Revision 1.351  2006/11/26 07:10:30  steve
  *  Fix compile time eval of condition expresion to do reduction OR of vectors.
  *
