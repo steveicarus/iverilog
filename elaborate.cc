@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308.2.4 2006/07/10 00:21:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308.2.5 2006/11/27 01:32:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1477,7 +1477,12 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
 	    delete expr;
-	    if (val[0] == verinum::V1)
+
+	    verinum::V val_reduced = verinum::V0;
+	    for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		  val_reduced = val_reduced | val[idx];
+
+	    if (val_reduced == verinum::V1)
 		  return if_->elaborate(des, scope);
 	    else if (else_)
 		  return else_->elaborate(des, scope);
@@ -2801,6 +2806,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308.2.5  2006/11/27 01:32:24  steve
+ *  Fix evaluate of constant condition expressions.
+ *
  * Revision 1.308.2.4  2006/07/10 00:21:50  steve
  *  Add support for full_case attribute.
  *
