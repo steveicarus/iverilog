@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.141 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: stub.c,v 1.142 2006/11/28 05:56:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1418,6 +1418,12 @@ static void show_logic(ivl_net_logic_t net)
 	  case IVL_LO_BUFZ:
 	    fprintf(out, "  bufz %s", name);
 	    break;
+	  case IVL_LO_NAND:
+	    fprintf(out, "  nand %s", name);
+	    break;
+	  case IVL_LO_NOR:
+	    fprintf(out, "  nor %s", name);
+	    break;
 	  case IVL_LO_NOT:
 	    fprintf(out, "  not %s", name);
 	    break;
@@ -1671,6 +1677,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.142  2006/11/28 05:56:41  steve
+ *  Dump nand logic.
+ *
  * Revision 1.141  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *
