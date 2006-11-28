@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.24 2005/09/19 21:45:09 steve Exp $"
+#ident "$Id: logic.h,v 1.25 2006/11/28 05:57:20 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -64,11 +64,23 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
 class vvp_fun_and  : public vvp_fun_boolean_ {
 
     public:
-      explicit vvp_fun_and(unsigned wid);
+      explicit vvp_fun_and(unsigned wid, bool invert);
       ~vvp_fun_and();
 
     private:
       void run_run();
+      bool invert_;
+};
+
+class vvp_fun_eeq  : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_eeq(unsigned wid, bool invert);
+      ~vvp_fun_eeq();
+
+    private:
+      void run_run();
+      bool invert_;
 };
 
 /*
@@ -168,35 +180,37 @@ class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
 class vvp_fun_or  : public vvp_fun_boolean_ {
 
     public:
-      explicit vvp_fun_or(unsigned wid);
+      explicit vvp_fun_or(unsigned wid, bool invert);
       ~vvp_fun_or();
 
     private:
       void run_run();
+      bool invert_;
 };
 
 class vvp_fun_xor  : public vvp_fun_boolean_ {
 
     public:
-      explicit vvp_fun_xor(unsigned wid);
+      explicit vvp_fun_xor(unsigned wid, bool invert);
       ~vvp_fun_xor();
 
     private:
       void run_run();
+      bool invert_;
 };
 
 // table functor types
 
 extern const unsigned char ft_MUXX[];
 extern const unsigned char ft_EEQ[];
-extern const unsigned char ft_NAND[];
-extern const unsigned char ft_NOR[];
 extern const unsigned char ft_TRIAND[];
 extern const unsigned char ft_TRIOR[];
-extern const unsigned char ft_XNOR[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.25  2006/11/28 05:57:20  steve
+ *  Use new vvp_fun_XXX in place of old functor table for NAND/NOR/XNOR/EEQ.
+ *
  * Revision 1.24  2005/09/19 21:45:09  steve
  *  Use lazy eval of BUF/NOT/OR/XOR gates.
  *

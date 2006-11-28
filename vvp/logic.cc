@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.36 2006/01/02 05:32:07 steve Exp $"
+#ident "$Id: logic.cc,v 1.37 2006/11/28 05:57:20 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -104,8 +104,8 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 }
 
-vvp_fun_and::vvp_fun_and(unsigned wid)
-: vvp_fun_boolean_(wid)
+vvp_fun_and::vvp_fun_and(unsigned wid, bool invert)
+: vvp_fun_boolean_(wid), invert_(invert)
 {
 }
 
@@ -129,7 +129,37 @@ void vvp_fun_and::run_run()
 		  }
 
 		  bitbit = bitbit & input_[pdx].value(idx);
+		  if (invert_)
+			bitbit = ~bitbit;
 	    }
+
+	    result.set_bit(idx, bitbit);
+      }
+
+      vvp_send_vec4(ptr->out, result);
+}
+
+vvp_fun_eeq::vvp_fun_eeq(unsigned wid, bool invert)
+: vvp_fun_boolean_(wid), invert_(invert)
+{
+}
+
+vvp_fun_eeq::~vvp_fun_eeq()
+{
+}
+
+void vvp_fun_eeq::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      vvp_vector4_t result (input_[0]);
+
+      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
+	    vvp_bit4_t bitbit = result.value(idx);
+	    bitbit = (bitbit == input_[1].value(idx))? BIT4_1 : BIT4_0;
+	    if (invert_)
+		  bitbit = ~bitbit;
 
 	    result.set_bit(idx, bitbit);
       }
@@ -400,8 +430,8 @@ void vvp_fun_not::run_run()
       vvp_send_vec4(ptr->out, result);
 }
 
-vvp_fun_or::vvp_fun_or(unsigned wid)
-: vvp_fun_boolean_(wid)
+vvp_fun_or::vvp_fun_or(unsigned wid, bool invert)
+: vvp_fun_boolean_(wid), invert_(invert)
 {
 }
 
@@ -427,14 +457,16 @@ void vvp_fun_or::run_run()
 		  bitbit = bitbit | input_[pdx].value(idx);
 	    }
 
+	    if (invert_)
+		  bitbit = ~bitbit;
 	    result.set_bit(idx, bitbit);
       }
 
       vvp_send_vec4(ptr->out, result);
 }
 
-vvp_fun_xor::vvp_fun_xor(unsigned wid)
-: vvp_fun_boolean_(wid)
+vvp_fun_xor::vvp_fun_xor(unsigned wid, bool invert)
+: vvp_fun_boolean_(wid), invert_(invert)
 {
 }
 
@@ -460,6 +492,8 @@ void vvp_fun_xor::run_run()
 		  bitbit = bitbit ^ input_[pdx].value(idx);
 	    }
 
+	    if (invert_)
+		  bitbit = ~bitbit;
 	    result.set_bit(idx, bitbit);
       }
 
@@ -480,10 +514,10 @@ void compile_functor(char*label, char*type, unsigned width,
       bool strength_aware = false;
 
       if (strcmp(type, "OR") == 0) {
-	    obj = new vvp_fun_or(width);
+	    obj = new vvp_fun_or(width, false);
 
       } else if (strcmp(type, "AND") == 0) {
-	    obj = new vvp_fun_and(width);
+	    obj = new vvp_fun_and(width, false);
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj = new vvp_fun_buf();
@@ -495,6 +529,12 @@ void compile_functor(char*label, char*type, unsigned width,
       } else if (strcmp(type, "BUFIF1") == 0) {
 	    obj = new vvp_fun_bufif(false,false, ostr0, ostr1);
 	    strength_aware = true;
+
+      } else if (strcmp(type, "NAND") == 0) {
+	    obj = new vvp_fun_and(width, true);
+
+      } else if (strcmp(type, "NOR") == 0) {
+	    obj = new vvp_fun_or(width, true);
 
       } else if (strcmp(type, "NOTIF0") == 0) {
 	    obj = new vvp_fun_bufif(true,true, ostr0, ostr1);
@@ -529,22 +569,16 @@ void compile_functor(char*label, char*type, unsigned width,
 	    obj = new vvp_fun_rpmos(false);
 
       } else if (strcmp(type, "EEQ") == 0) {
-	    obj = new table_functor_s(ft_EEQ);
-
-      } else if (strcmp(type, "NAND") == 0) {
-	    obj = new table_functor_s(ft_NAND);
-
-      } else if (strcmp(type, "NOR") == 0) {
-	    obj = new table_functor_s(ft_NOR);
+	    obj = new vvp_fun_eeq(width, false);
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj = new vvp_fun_not();
 
       } else if (strcmp(type, "XNOR") == 0) {
-	    obj = new table_functor_s(ft_XNOR);
+	    obj = new vvp_fun_xor(width, true);
 
       } else if (strcmp(type, "XOR") == 0) {
-	    obj = new vvp_fun_xor(width);
+	    obj = new vvp_fun_xor(width, false);
 
       } else {
 	    yyerror("invalid functor type.");
@@ -586,6 +620,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.37  2006/11/28 05:57:20  steve
+ *  Use new vvp_fun_XXX in place of old functor table for NAND/NOR/XNOR/EEQ.
+ *
  * Revision 1.36  2006/01/02 05:32:07  steve
  *  Require explicit delay node from source.
  *

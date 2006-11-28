@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.22 2005/09/19 21:45:09 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.23 2006/11/28 05:57:20 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -57,7 +57,7 @@ static void draw_AND(void)
       printf("};\n");
 }
 #endif
-
+#if 0
 static void draw_NAND(void)
 {
       unsigned i0, i1, i2, i3;
@@ -91,7 +91,7 @@ static void draw_NAND(void)
 
       printf("};\n");
 }
-
+#endif
 #if 0
 static void draw_BUF(void)
 {
@@ -373,7 +373,7 @@ static void draw_MUXZ(void)
       printf("};\n");
 }
 #endif
-
+#if 0
 static void draw_EEQ(void)
 {
       unsigned i0, i1, i2, i3;
@@ -405,7 +405,8 @@ static void draw_EEQ(void)
 
       printf("};\n");
 }
-
+#endif
+#if 0
 static void draw_NOR(void)
 {
       unsigned i0, i1, i2, i3;
@@ -439,7 +440,7 @@ static void draw_NOR(void)
 
       printf("};\n");
 }
-
+#endif
 #if 0
 static void draw_NOT(void)
 {
@@ -508,7 +509,7 @@ static void draw_OR(void)
       printf("};\n");
 }
 #endif
-
+#if 0
 static void draw_XNOR(void)
 {
       unsigned i0, i1, i2, i3;
@@ -540,7 +541,7 @@ static void draw_XNOR(void)
 
       printf("};\n");
 }
-
+#endif
 #if 0
 static void draw_XOR(void)
 {
@@ -750,12 +751,8 @@ main()
 {
       printf("# include  \"logic.h\"\n");
       draw_MUXX();
-      draw_EEQ();
-      draw_NAND();
-      draw_NOR();
       draw_TRIAND();
       draw_TRIOR();
-      draw_XNOR();
       draw_hex_table();
       draw_oct_table();
       return 0;
@@ -763,6 +760,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.23  2006/11/28 05:57:20  steve
+ *  Use new vvp_fun_XXX in place of old functor table for NAND/NOR/XNOR/EEQ.
+ *
  * Revision 1.22  2005/09/19 21:45:09  steve
  *  Use lazy eval of BUF/NOT/OR/XOR gates.
  *
