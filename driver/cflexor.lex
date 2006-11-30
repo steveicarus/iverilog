@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cflexor.lex,v 1.8 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.9 2006/11/30 06:00:28 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -37,12 +37,14 @@
 YYLTYPE yylloc;
 
 static int comment_enter;
+ static char* trim_trailing_white(char*txt, int trim);
 
 %}
 
 %x CCOMMENT
 %x LCOMMENT
 %x PLUS_ARGS
+%x FILE_NAME
 
 %%
 
@@ -112,16 +114,49 @@ static int comment_enter;
   /* This rule matches paths and strings that may be file names. This
      is a little bit tricky, as we don't want to mistake a comment for
      a string word. */
-"/"[^\*\/].* { cflval.text = strdup(yytext);
-               return TOK_STRING; }
+"/"[\r\n] { /* Special case of file name "/" */
+      cflval.text = trim_trailing_white(yytext, 0);
+      return TOK_STRING; }
+"/"[^\*\/] { /* A file name that starts with "/". */
+      yymore();
+      BEGIN(FILE_NAME); }
+[^/\n \t\b\r+-][^/\n\r]* { /* A file name that starts with other then "/" */
+      yymore();
+      BEGIN(FILE_NAME); }
 
-[^/\n \t\b\r+-].* { cflval.text = strdup(yytext);
-                   return TOK_STRING; }
-
+<FILE_NAME>"//" {
+	/* Found a trailing comment. Returning the terminated name. */
+      cflval.text = trim_trailing_white(yytext, 2);
+      BEGIN(LCOMMENT);
+      return TOK_STRING; }
+<FILE_NAME>"/"?[^/\n\r]* {
+      yymore();
+      /* not a comment... continuing */; }
+<FILE_NAME>[\n\r] {
+	/* No trailing comment. Return the file name. */
+      cflval.text = trim_trailing_white(yytext, 0);
+      BEGIN(0);
+      return TOK_STRING; }
+       
   /* Fallback match. */
 . { return yytext[0]; }
 
 %%
+
+static char* trim_trailing_white(char*text, int trim)
+{
+      char*cp = text + strlen(text);
+      while (cp > text && trim > 0) {
+	    trim -= 1;
+	    cp -= 1;
+	    *cp = 0;
+      }
+      while (cp > text && strchr("\n\r\t\b", cp[-1]))
+	    cp -= 1;
+
+      cp[0] = 0;
+      return strdup(text);
+}
 
 int yywrap()
 {
