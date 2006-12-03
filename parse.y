@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.221 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: parse.y,v 1.222 2006/12/03 04:46:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2672,7 +2672,10 @@ spec_notifier
 	| spec_notifier ','
 		{  }
 	| spec_notifier ',' identifier
-		{ delete $3;
+                { delete $3; }
+	| spec_notifier ',' identifier '[' expr_primary ']'
+                { delete $3;
+		  delete $5;
 		}
 	| IDENTIFIER
 		{ delete $1; }
