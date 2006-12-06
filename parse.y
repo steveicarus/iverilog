@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.222 2006/12/03 04:46:51 steve Exp $"
+#ident "$Id: parse.y,v 1.223 2006/12/06 05:32:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1232,6 +1232,7 @@ gate_instance
 		  svector<PExpr*>*rng = $2;
 		  tmp->name = $1;
 		  tmp->parms = 0;
+		  tmp->parms_by_name = 0;
 		  tmp->range[0] = (*rng)[0];
 		  tmp->range[1] = (*rng)[1];
 		  tmp->file  = @1.text;
@@ -1246,10 +1247,26 @@ gate_instance
 	| IDENTIFIER '(' port_name_list ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = $1;
+		  tmp->parms = 0;
 		  tmp->parms_by_name = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete $1;
+		  $$ = tmp;
+		}
+
+	| IDENTIFIER range '(' port_name_list ')'
+		{ lgate*tmp = new lgate;
+		  svector<PExpr*>*rng = $2;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->parms_by_name = $4;
+		  tmp->range[0] = (*rng)[0];
+		  tmp->range[1] = (*rng)[1];
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  delete $1;
+		  delete rng;
 		  $$ = tmp;
 		}
 	;
