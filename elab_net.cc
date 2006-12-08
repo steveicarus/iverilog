@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.190 2006/11/26 06:29:16 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.191 2006/12/08 03:43:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1626,7 +1626,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  pvalue = tmp;
 	    }
 
-	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
+	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::IMPLICIT, pvalue.len());
 	    sig->set_line(*this);
 	    sig->data_type(IVL_VT_LOGIC);
@@ -2030,6 +2030,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 		tmp_ex = elab_and_eval(des, scope, lsb_, -1);
 		tmp = dynamic_cast<NetEConst*>(tmp_ex);
+		if (tmp == 0) {
+		      cerr << get_line() << ": internal error: "
+			   << "lsb expression is not constant?: "
+			   << *tmp_ex << ", " << *lsb_ << endl;
+		}
 		assert(tmp);
 
 		long lidx_val = tmp->value().as_long();
@@ -2845,6 +2850,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.191  2006/12/08 03:43:26  steve
+ *  Prevent name clash when processing parameter in net.
+ *
  * Revision 1.190  2006/11/26 06:29:16  steve
  *  Fix nexus widths for direct link assign and ternary nets.
  *
