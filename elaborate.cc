@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.352 2006/11/27 02:01:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.353 2006/12/08 04:09:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2268,8 +2268,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 
 	    if (nset->count() == 0) {
-		  cerr << get_line() << ": warning: No inputs to statement."
-		       << " Ignoring @*." << endl;
+		  cerr << get_line() << ": error: No inputs to statement."
+		       << " The @* cannot execute." << endl;
+		  des->errors += 1;
 		  return enet;
 	    }
 
@@ -3347,6 +3348,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.353  2006/12/08 04:09:41  steve
+ *  @* without inputs is an error.
+ *
  * Revision 1.352  2006/11/27 02:01:07  steve
  *  Fix crash handling constant true conditional.
  *
