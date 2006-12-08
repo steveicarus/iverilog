@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.48 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: verinum.cc,v 1.49 2006/12/08 19:56:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -878,16 +878,33 @@ verinum operator / (const verinum&left, const verinum&right)
 	   result is signed or not. */
       if (result.has_sign()) {
 
-	      /* XXXX FIXME XXXX Use native unsigned division to do
-		 the work. This does not work if the result is too
-		 large for the native integer. */
-	    assert(use_len <= 8*sizeof(long));
-	    long l = left.as_long();
-	    long r = right.as_long();
-	    long v = l / r;
-	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
-		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
-		  v >>= 1;
+	    if (use_len <= 8*sizeof(long)) {
+		  long l = left.as_long();
+		  long r = right.as_long();
+		  long v = l / r;
+		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+			v >>= 1;
+		  }
+
+	    } else {
+		  verinum use_left, use_right;
+		  verinum zero(verinum::V0, 1, false);
+		  bool negative = false;
+		  if (left < zero) {
+			use_left = zero - left;
+			negative ^= negative;
+		  } else {
+			use_left = left;
+		  }
+		  if (right < zero) {
+			use_right = zero - right;
+			negative ^= negative;
+		  } else {
+			use_right = right;
+		  }
+		  result = unsigned_divide(use_left, use_right);
+		  if (negative) result = zero - result;
 	    }
 
       } else {
@@ -1039,6 +1056,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.49  2006/12/08 19:56:09  steve
+ *  Handle very wide signed divide.
+ *
  * Revision 1.48  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *
