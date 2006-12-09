@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.353 2006/12/08 04:09:41 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.354 2006/12/09 01:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -3064,6 +3064,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 				   << " value=" << value.integer << endl;
 
 		  } else {
+			value.type = IVL_VT_NO_TYPE;
 			cerr << (*cur).second->get_line() << ": error: "
 			     << "specparam " << (*cur).first << " value"
 			     << " is not constant: " << *val << endl;
@@ -3348,6 +3349,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.354  2006/12/09 01:59:35  steve
+ *  Fix an uninitialized variable warning.
+ *
  * Revision 1.353  2006/12/08 04:09:41  steve
  *  @* without inputs is an error.
  *
