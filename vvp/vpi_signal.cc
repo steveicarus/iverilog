@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.74 2006/02/21 05:31:54 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.75 2006/12/09 19:06:53 steve Exp $"
 #endif
 
 /*
@@ -476,6 +476,13 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      break;
 	    }
 
+	  case vpiRealVal: {
+		bool flag = rfp->signed_flag;
+		vp->value.real = 0.0;
+		vector4_to_value(vsig->vec4_value(), vp->value.real, flag);
+		break;
+	  }
+
 	  default:
 	    fprintf(stderr, "vvp internal error: get_value: "
 		    "value type %u not implemented."
@@ -717,6 +724,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.75  2006/12/09 19:06:53  steve
+ *  Handle vpiRealVal reads of signals, and real anyedge events.
+ *
  * Revision 1.74  2006/02/21 05:31:54  steve
  *  Put strings for reg objects.
  *

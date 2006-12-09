@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.12 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: event.h,v 1.13 2006/12/09 19:06:53 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -73,6 +73,10 @@ extern const vvp_fun_edge::edge_t vvp_edge_none;
  * vector changes. Unlike the vvp_fun_edge, which watches for the LSB
  * of its inputs to change in a particular direction, the anyedge
  * functor looks at the entire input vector for any change.
+ *
+ * The anyedge is also different in that it can receive real
+ * values. in this case, any detectable change in the real value leads
+ * to an even trigger.
  */
 class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 
@@ -81,10 +85,13 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
       virtual ~vvp_fun_anyedge();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t port, double bit);
 
     private:
       bool debug_;
       vvp_vector4_t bits_[4];
+	// In case I'm a real-valued event.
+      double bitsr_[4];
 };
 
 /*
@@ -122,6 +129,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.13  2006/12/09 19:06:53  steve
+ *  Handle vpiRealVal reads of signals, and real anyedge events.
+ *
  * Revision 1.12  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *

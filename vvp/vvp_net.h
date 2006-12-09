@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.52 2006/08/04 04:37:37 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.53 2006/12/09 19:06:53 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -254,6 +254,7 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  * return value becomes false to indicate an error.
  */
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
+extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 /* vvp_vector2_t
  */
@@ -1026,6 +1027,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.53  2006/12/09 19:06:53  steve
+ *  Handle vpiRealVal reads of signals, and real anyedge events.
+ *
  * Revision 1.52  2006/08/04 04:37:37  steve
  *  Support release of a for/linked reg.
  *

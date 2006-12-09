@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.22 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: event.cc,v 1.23 2006/12/09 19:06:53 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -101,6 +101,8 @@ void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 vvp_fun_anyedge::vvp_fun_anyedge(bool debug_flag)
 : debug_(debug_flag)
 {
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+	    bitsr_[idx] = 0.0;
 }
 
 vvp_fun_anyedge::~vvp_fun_anyedge()
@@ -129,6 +131,23 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    run_waiting_threads_();
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
+      }
+}
+
+void vvp_fun_anyedge::recv_real(vvp_net_ptr_t port, double bit)
+{
+      unsigned pdx = port.port();
+      bool flag = false;
+
+      if (bitsr_[pdx] != bit) {
+	    flag = true;
+	    bitsr_[pdx] = bit;
+      }
+
+      if (flag) {
+	    run_waiting_threads_();
+	    vvp_net_t*net = port.ptr();
+	    vvp_send_vec4(net->out, vvp_vector4_t());
       }
 }
 
@@ -254,6 +273,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.23  2006/12/09 19:06:53  steve
+ *  Handle vpiRealVal reads of signals, and real anyedge events.
+ *
  * Revision 1.22  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *

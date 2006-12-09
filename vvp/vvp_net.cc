@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.55 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.56 2006/12/09 19:06:53 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -25,6 +25,7 @@
 # include  <iostream>
 # include  <typeinfo>
 # include  <limits.h>
+# include  <math.h>
 # include  <assert.h>
 
 /* *** BIT operations *** */
@@ -584,6 +585,52 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 	    msk <<= 1UL;
       }
 
+      val = res;
+      return true;
+}
+
+bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
+{
+
+      if (vec.size() == 0) {
+	    val = 0.0;
+	    return true;
+      }
+
+      if (vec.value(vec.size()-1) != BIT4_1) {
+	    signed_flag = false;
+      }
+
+      double res = 0.0;
+      if (signed_flag) {
+	    vvp_bit4_t carry = BIT4_1;
+	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+		  vvp_bit4_t a = ~vec.value(idx);
+		  vvp_bit4_t x = add_with_carry(a, BIT4_0, carry);
+		  switch (x) {
+		      case BIT4_0:
+			break;
+		      case BIT4_1:
+			res += pow(2.0, idx);
+			break;
+		      default:
+			return false;
+		  }
+	    }
+	    res *= -1.0;
+      } else {
+	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+		  switch (vec.value(idx)) {
+		      case BIT4_0:
+			break;
+		      case BIT4_1:
+			res += pow(2.0, idx);
+			break;
+		      default:
+			return false;
+		  }
+	    }
+      }
       val = res;
       return true;
 }
@@ -2209,6 +2256,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.56  2006/12/09 19:06:53  steve
+ *  Handle vpiRealVal reads of signals, and real anyedge events.
+ *
  * Revision 1.55  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *
