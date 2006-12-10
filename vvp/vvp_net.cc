@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.56 2006/12/09 19:06:53 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.57 2006/12/10 17:15:48 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -604,7 +604,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       double res = 0.0;
       if (signed_flag) {
 	    vvp_bit4_t carry = BIT4_1;
-	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    for (int idx = 0 ;  idx < vec.size() ;  idx += 1) {
 		  vvp_bit4_t a = ~vec.value(idx);
 		  vvp_bit4_t x = add_with_carry(a, BIT4_0, carry);
 		  switch (x) {
@@ -619,7 +619,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 	    }
 	    res *= -1.0;
       } else {
-	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    for (int idx = 0 ;  idx < vec.size() ;  idx += 1) {
 		  switch (vec.value(idx)) {
 		      case BIT4_0:
 			break;
@@ -2256,6 +2256,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.57  2006/12/10 17:15:48  steve
+ *  Fix build error overloading pow function.
+ *
  * Revision 1.56  2006/12/09 19:06:53  steve
  *  Handle vpiRealVal reads of signals, and real anyedge events.
  *
