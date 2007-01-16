@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.79 2006/11/10 05:44:45 steve Exp $"
+#ident "$Id: target.cc,v 1.80 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,13 +45,6 @@ bool target_t::signal_paths(const NetNet*)
 {
       return true;
 }
-
-void target_t::memory(const NetMemory*)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled memory." << endl;
-}
-
 bool target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -97,6 +90,13 @@ void target_t::lpm_add_sub(const NetAddSub*)
 	    "Unhandled NetAddSub." << endl;
 }
 
+bool target_t::lpm_array_dq(const NetArrayDq*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetArrayDq." << endl;
+      return false;
+}
+
 void target_t::lpm_clshift(const NetCLShift*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
@@ -138,13 +138,6 @@ void target_t::lpm_mux(const NetMux*)
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetMux." << endl;
 }
-
-void target_t::lpm_ram_dq(const NetRamDq*)
-{
-      cerr << "target (" << typeid(*this).name() << "): "
-	    "Unhandled NetRamDq." << endl;
-}
-
 bool target_t::concat(const NetConcat*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
@@ -380,13 +373,6 @@ void expr_scan_t::expr_concat(const NetEConcat*that)
       cerr << that->get_line() << ": expr_scan_t (" <<
 	    typeid(*this).name() << "): unhandled expr_concat." << endl;
 }
-
-void expr_scan_t::expr_memory(const NetEMemory*)
-{
-      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
-	    "unhandled expr_memory." << endl;
-}
-
 void expr_scan_t::expr_event(const NetEEvent*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -443,6 +429,12 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.80  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.79  2006/11/10 05:44:45  steve
  *  Process delay paths in second path over signals.
  *

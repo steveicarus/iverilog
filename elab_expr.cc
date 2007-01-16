@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.116 2006/11/10 04:54:26 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.117 2007/01/16 05:44:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -687,14 +687,13 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 			     bool&unsized_flag) const
 {
       NetNet*       net = 0;
-      NetMemory*    mem = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       const NetExpr*ex1, *ex2;
 
       NetScope*found_in = symbol_search(des, scope, path_,
-					net, mem, par, eve,
+					net, par, eve,
 					ex1, ex2);
 
       if (net != 0) {
@@ -741,14 +740,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       assert(scope);
 
       NetNet*       net = 0;
-      NetMemory*    mem = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       const NetExpr*ex1, *ex2;
 
       NetScope*found_in = symbol_search(des, scope, path_,
-					net, mem, par, eve,
+					net, par, eve,
 					ex1, ex2);
 
 	// If the identifier name is a parameter name, then return
@@ -760,126 +758,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
       if (net != 0)
-	    return elaborate_expr_net(des, scope, net, found_in);
-
-
-	// If the identifier names a memory, then this is a
-	// memory reference and I must generate a NetEMemory
-	// object to handle it.
-      if (mem != 0) {
-
-	    if (idx_.empty()) {
-
-		  if (msb_ || lsb_) {
-			cerr << get_line() << ": error: "
-			     << "Part select of a memory: "
-			     << mem->name() << endl;
-			des->errors += 1;
-		  }
-
-		    // If this memory is an argument to a system task,
-		    // then it is OK for it to not have an index.
-		  if (sys_task_arg) {
-			NetEMemory*node = new NetEMemory(mem);
-			node->set_line(*this);
-			return node;
-		  }
-
-		    // If it is not a simple system task argument,
-		    // this a missing index is an error.
-		  cerr << get_line() << ": error: memory " << mem->name()
-		       << " needs an index in this context." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    if (idx_.size() != mem->dimensions()) {
-		  cerr << get_line() << ": error: " << idx_.size()
-		       << " indices do not properly address a "
-		       << mem->dimensions() << "-dimension memory/array."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	      // XXXX For now, only support single word index.
-	    assert(idx_.size() == 1);
-	    PExpr*addr = idx_[0];
-	    assert(addr);
-
-	    NetExpr*i = addr->elaborate_expr(des, scope, -1, false);
-	    if (i == 0) {
-		  cerr << get_line() << ": error: Unable to elaborate "
-			"index expression `" << *addr << "'" << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    NetEMemory*node = new NetEMemory(mem, i);
-	    node->set_line(*this);
-
-	    if (msb_ == 0 && lsb_ == 0)
-		  return node;
-
-	    assert(msb_ && lsb_);
-
-	    assert(sel_ != SEL_NONE);
-
-	    if (sel_ == SEL_PART) {
-
-		  NetExpr*le = elab_and_eval(des, scope, lsb_, -1);
-		  NetExpr*me = elab_and_eval(des, scope, msb_, -1);
-
-		  NetEConst*lec = dynamic_cast<NetEConst*>(le);
-		  NetEConst*mec = dynamic_cast<NetEConst*>(me);
-
-		  if (lec == 0 || mec == 0) {
-			cerr << get_line() << ": error: Part select "
-			     << "expressions must be constant." << endl;
-			des->errors += 1;
-			delete le;
-			delete me;
-			return node;
-		  }
-
-		  verinum wedv = mec->value() - lec->value();
-		  unsigned wid = wedv.as_long() + 1;
-
-		  NetESelect*se = new NetESelect(node, le, wid);
-
-		  delete me;
-		  return se;
-	    }
-
-	    assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
-
-	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
-	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
-	    if (wid_ec == 0) {
-		  cerr << lsb_->get_line() << ": error: "
-		       << "Second expression of indexed part select "
-		       << "most be constant." << endl;
-		  des->errors += 1;
-		  return node;
-	    }
-
-	    unsigned wid = wid_ec->value().as_ulong();
-
-	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_, -1);
-	    if (idx_ex == 0) {
-		  return 0;
-	    }
-
-	    if (sel_ == SEL_IDX_DO && wid > 1) {
-		  idx_ex = make_add_expr(idx_ex, 1-(long)wid);
-	    }
-
-
-	      /* Wrap the param expression with a part select. */
-	    NetESelect*se = new NetESelect(node, idx_ex, wid);
-	    se->set_line(*this);
-	    return se;
-      }
+	    return elaborate_expr_net(des, scope, net, found_in, sys_task_arg);
 
 	// If the identifier is a named event.
 	// is a variable reference.
@@ -1177,10 +1056,63 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 }
 
 /*
+ * Handle word selects of vector arrays.
+ */
+NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
+					   NetNet*net, NetScope*found_in,
+					   bool sys_task_arg) const
+{
+      assert(sys_task_arg || !idx_.empty());
+      NetExpr*word_index = idx_.empty()
+	    ? 0
+	    : elab_and_eval(des, scope, idx_[0], -1);
+      if (word_index == 0 && !sys_task_arg)
+	    return 0;
+
+      if (NetEConst*word_addr = dynamic_cast<NetEConst*>(word_index)) {
+	    long addr = word_addr->value().as_long();
+
+	      // Special case: The index is out of range, so the value
+	      // of this expression is a 'bx vector the width of a word.
+	    if (!net->array_index_is_valid(addr)) {
+		  verinum xxx (verinum::Vx, net->vector_width());
+		  NetEConst*resx = new NetEConst(xxx);
+		  resx->set_line(*this);
+		  delete word_index;
+		  return resx;
+	    }
+
+	      // Recalculate the constant address with the adjusted base.
+	    unsigned use_addr = net->array_index_to_address(addr);
+	    if (use_addr != addr) {
+		  verinum val (use_addr, 8*sizeof(use_addr));
+		  NetEConst*tmp = new NetEConst(val);
+		  tmp->set_line(*this);
+		  delete word_index;
+		  word_index = tmp;
+	    }
+      }
+
+      NetESignal*res = new NetESignal(net, word_index);
+      res->set_line(*this);
+
+      if (sel_ == SEL_PART)
+	    return elaborate_expr_net_part_(des, scope, res, found_in);
+
+      if (sel_ == SEL_IDX_UP)
+	    return elaborate_expr_net_idx_up_(des, scope, res, found_in);
+
+      if (sel_ == SEL_IDX_DO)
+	    return elaborate_expr_net_idx_do_(des, scope, res, found_in);
+
+      return res;
+}
+
+/*
  * Handle part selects of NetNet identifiers.
  */
 NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
-					   NetNet*net, NetScope*found_in)const
+				      NetESignal*net, NetScope*found_in) const
 {
       long msv, lsv;
       assert(idx_.empty());
@@ -1199,40 +1131,37 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	      //delete lsn;
 	      //delete msn;
-	    return 0;
+	    return net;
       }
       assert(wid <= net->vector_width());
 
-      if (net->sb_to_idx(msv) < net->sb_to_idx(lsv)) {
+      if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
 	    cerr << get_line() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of order." << endl;
 	    des->errors += 1;
 	      //delete lsn;
 	      //delete msn;
-	    return 0;
+	    return net;
       }
 
 
-      if (net->sb_to_idx(msv) >= net->vector_width()) {
+      if (net->sig()->sb_to_idx(msv) >= net->vector_width()) {
 	    cerr << get_line() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
 	      //delete lsn;
 	      //delete msn;
-	    return 0;
+	    return net;
       }
-
-      NetESignal*tmp = new NetESignal(net);
-      tmp->set_line(*this);
 
 	// If the part select convers exactly the entire
 	// vector, then do not bother with it. Return the
 	// signal itself.
-      if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
-	    return tmp;
+      if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+	    return net;
 
-      NetExpr*ex = new NetEConst(verinum(net->sb_to_idx(lsv)));
-      NetESelect*ss = new NetESelect(tmp, ex, wid);
+      NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)));
+      NetESelect*ss = new NetESelect(net, ex, wid);
       ss->set_line(*this);
 
       return ss;
@@ -1242,14 +1171,10 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
  * Part select indexed up, i.e. net[<m> +: <l>]
  */
 NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
-					   NetNet*net, NetScope*found_in)const
+				      NetESignal*net, NetScope*found_in) const
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
-      assert(idx_.empty());
-
-      NetESignal*sig = new NetESignal(net);
-      sig->set_line(*this);
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
@@ -1266,11 +1191,11 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	      // If the part select convers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
-	    if (net->sb_to_idx(lsv) == 0 && wid == net->vector_width())
-		  return sig;
+	    if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+		  return net;
       }
 
-      NetESelect*ss = new NetESelect(sig, base, wid);
+      NetESelect*ss = new NetESelect(net, base, wid);
       ss->set_line(*this);
 
       if (debug_elaborate) {
@@ -1285,14 +1210,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
  * Part select up, i.e. net[<m> +: <l>]
  */
 NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
-					   NetNet*net, NetScope*found_in)const
+					   NetESignal*net, NetScope*found_in)const
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
-      assert(idx_.empty());
-
-      NetESignal*sig = new NetESignal(net);
-      sig->set_line(*this);
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
@@ -1308,12 +1229,13 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	      // If the part select convers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
-	    if (net->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
-		  return sig;
+	    if (net->sig()->sb_to_idx(lsv) == (wid-1)
+		&& wid == net->vector_width())
+		  return net;
       }
 
       NetExpr*base_adjusted = wid > 1? make_add_expr(base,1-wid) : base;
-      NetESelect*ss = new NetESelect(sig, base_adjusted, wid);
+      NetESelect*ss = new NetESelect(net, base_adjusted, wid);
       ss->set_line(*this);
 
       if (debug_elaborate) {
@@ -1325,7 +1247,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 }
 
 NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
-					  NetNet*net, NetScope*found_in) const
+				      NetESignal*net, NetScope*found_in) const
 {
       assert(msb_ == 0);
       assert(lsb_ == 0);
@@ -1338,7 +1260,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// making a mux part in the netlist.
       if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
 	    long msv = msc->value().as_long();
-	    unsigned idx = net->sb_to_idx(msv);
+	    unsigned idx = net->sig()->sb_to_idx(msv);
 
 	    if (idx >= net->vector_width()) {
 		    /* The bit select is out of range of the
@@ -1350,33 +1272,29 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 		  cerr << get_line() << ": warning: Bit select ["
 		       << msv << "] out of range of vector "
-		       << net->name() << "[" << net->msb()
-		       << ":" << net->lsb() << "]." << endl;
+		       << net->name() << "[" << net->sig()->msb()
+		       << ":" << net->sig()->lsb() << "]." << endl;
 		  cerr << get_line() << ":        : Replacing "
 		       << "expression with a constant 1'bx." << endl;
 		  delete ex;
 		  return tmp;
 	    }
 
-	    NetESignal*tmp = new NetESignal(net);
-	    tmp->set_line(*this);
 	      // If the vector is only one bit, we are done. The
 	      // bit select will return the scaler itself.
 	    if (net->vector_width() == 1)
-		  return tmp;
+		  return net;
 
 	      // Make an expression out of the index
 	    NetEConst*idx_c = new NetEConst(verinum(idx));
 	    idx_c->set_line(*net);
 
 	      // Make a bit select with the canonical index
-	    NetESelect*res = new NetESelect(tmp, idx_c, 1);
+	    NetESelect*res = new NetESelect(net, idx_c, 1);
 	    res->set_line(*net);
 
 	    return res;
       }
-
-      NetESignal*node = new NetESignal(net);
 
 	// Non-constant bit select? punt and make a subsignal
 	// device to mux the bit in the net. This is a fairly
@@ -1384,35 +1302,42 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
 
-      if (net->msb() < net->lsb()) {
-	    ex = make_sub_expr(net->lsb(), ex);
+      if (net->sig()->msb() < net->sig()->lsb()) {
+	    ex = make_sub_expr(net->sig()->lsb(), ex);
       } else {
-	    ex = make_add_expr(ex, - net->lsb());
+	    ex = make_add_expr(ex, - net->sig()->lsb());
       }
 
-      NetESelect*ss = new NetESelect(node, ex, 1);
+      NetESelect*ss = new NetESelect(net, ex, 1);
       ss->set_line(*this);
       return ss;
 }
 
 NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
-				     NetNet*net, NetScope*found_in) const
+				     NetNet*net, NetScope*found_in,
+				     bool sys_task_arg) const
 {
+      if (net->array_dimensions() > 0)
+	    return elaborate_expr_net_word_(des, scope, net, found_in, sys_task_arg);
+
+      NetESignal*node = new NetESignal(net);
+      node->set_line(*this);
+
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the
 	// selected bits. The lsb_ and msb_ expressions are from
 	// the foo[msb:lsb] expression in the original.
       if (sel_ == SEL_PART)
-	    return elaborate_expr_net_part_(des, scope, net, found_in);
+	    return elaborate_expr_net_part_(des, scope, node, found_in);
 
       if (sel_ == SEL_IDX_UP)
-	    return elaborate_expr_net_idx_up_(des, scope, net, found_in);
+	    return elaborate_expr_net_idx_up_(des, scope, node, found_in);
 
       if (sel_ == SEL_IDX_DO)
-	    return elaborate_expr_net_idx_do_(des, scope, net, found_in);
+	    return elaborate_expr_net_idx_do_(des, scope, node, found_in);
 
       if (!idx_.empty())
-	    return elaborate_expr_net_bit_(des, scope, net, found_in);
+	    return elaborate_expr_net_bit_(des, scope, node, found_in);
 
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal
@@ -1422,8 +1347,6 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       assert(lsb_ == 0);
       assert(idx_.empty());
 
-      NetESignal*node = new NetESignal(net);
-      node->set_line(*this);
       return node;
 }
 
@@ -1675,6 +1598,12 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.117  2007/01/16 05:44:14  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.116  2006/11/10 04:54:26  steve
  *  Add test_width methods for PETernary and PEString.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.79 2006/11/23 23:02:36 steve Exp $
+ *  $Id: README.txt,v 1.80 2007/01/16 05:44:16 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -369,6 +369,16 @@ path delays. The <src> for each possible delay set is a trigger that
 activates the delay.
 
         .modpath <input> , [ <src> (<delays>) ] ;
+
+ARRAY INDEX STATEMENTS:
+
+Variables can be collected into arrays. The words of the array are
+declared seperately, this statement collects them together:
+
+	<label> .array "name", <last> <first> ;
+
+the .var or .net statements after this array statement, that have the
+same "name" are collected, in order, as words.
 
 MEMORY STATEMENTS:
 

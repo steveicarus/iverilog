@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.42 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.43 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -616,6 +616,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
 
+      long array_s0 = 0;
+      long array_e0 = 0;
+
 	/* If the ident has idx expressions, then this is a
 	   memory. It can only have the idx registers after the msb
 	   and lsb expressions are filled. And, if it has one index,
@@ -639,7 +642,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    if ((lcon == 0) || (rcon == 0)) {
 		  cerr << get_line() << ": internal error: The indices "
-		       << "are not constant for memory ``"
+		       << "are not constant for array ``"
 		       << hname_.peek_tail_name() << "''." << endl;
 		  des->errors += 1;
 		  return;
@@ -653,73 +656,74 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    perm_string name = lex_strings.make(hname_.peek_tail_name());
 
-	    long lnum = lval.as_long();
-	    long rnum = rval.as_long();
-
-	    new NetMemory(scope, name, wid, lnum, rnum);
-	      // The constructor automatically adds the memory object
-	      // to the scope. Do I need to set line number information?
-
-      } else {
-
-	      /* If the net type is supply0 or supply1, replace it
-		 with a simple wire with a pulldown/pullup with supply
-		 strength. In other words, transform:
-
-		 supply0 foo;
-
-		 to:
-
-		 wire foo;
-		 pulldown #(supply0) (foo);
-
-		 This reduces the backend burden, and behaves exactly
-		 the same. */
-
-	    NetLogic*pull = 0;
-	    if (wtype == NetNet::SUPPLY0 || wtype == NetNet::SUPPLY1) {
-		  NetLogic::TYPE pull_type = (wtype==NetNet::SUPPLY1)
-			? NetLogic::PULLUP
-			: NetLogic::PULLDOWN;
-		  pull = new NetLogic(scope, scope->local_symbol(),
-				      1, pull_type, wid);
-		  pull->set_line(*this);
-		  pull->pin(0).drive0(Link::SUPPLY);
-		  pull->pin(0).drive1(Link::SUPPLY);
-		  des->add_node(pull);
-		  wtype = NetNet::WIRE;
-
-		  if (debug_elaborate) {
-			cerr << get_line() << ": debug: "
-			     << "Generate a SUPPLY pulldown for the "
-			     << "supply0 net." << endl;
-		  }
-	    }
-
-	    perm_string name = lex_strings.make(hname_.peek_tail_name());
-	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Create signal "
-		       << name << "["<<msb<<":"<<lsb<<"]"
-		       << " in scope " << scope->name() << endl;
-	    }
-
-	    NetNet*sig = new NetNet(scope, name, wtype, msb, lsb);
-	    sig->data_type(data_type_);
-	    sig->set_line(*this);
-	    sig->port_type(port_type_);
-	    sig->set_signed(get_signed());
-	    sig->set_isint(get_isint());
-
-	    if (pull)
-		  connect(sig->pin(0), pull->pin(0));
-
-	    for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
-		  sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
+	    array_s0 = lval.as_long();
+	    array_e0 = rval.as_long();
       }
+
+	/* If the net type is supply0 or supply1, replace it
+	   with a simple wire with a pulldown/pullup with supply
+	   strength. In other words, transform:
+
+	   supply0 foo;
+
+	   to:
+
+	   wire foo;
+	   pulldown #(supply0) (foo);
+
+	   This reduces the backend burden, and behaves exactly
+	   the same. */
+
+      NetLogic*pull = 0;
+      if (wtype == NetNet::SUPPLY0 || wtype == NetNet::SUPPLY1) {
+	    NetLogic::TYPE pull_type = (wtype==NetNet::SUPPLY1)
+		  ? NetLogic::PULLUP
+		  : NetLogic::PULLDOWN;
+	    pull = new NetLogic(scope, scope->local_symbol(),
+				1, pull_type, wid);
+	    pull->set_line(*this);
+	    pull->pin(0).drive0(Link::SUPPLY);
+	    pull->pin(0).drive1(Link::SUPPLY);
+	    des->add_node(pull);
+	    wtype = NetNet::WIRE;
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: "
+		       << "Generate a SUPPLY pulldown for the "
+		       << "supply0 net." << endl;
+	    }
+      }
+
+      perm_string name = lex_strings.make(hname_.peek_tail_name());
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Create signal "
+		 << name << "["<<msb<<":"<<lsb<<"]"
+		 << " in scope " << scope->name() << endl;
+      }
+
+      NetNet*sig = new NetNet(scope, name, wtype, msb, lsb,
+			      array_s0, array_e0);
+      sig->data_type(data_type_);
+      sig->set_line(*this);
+      sig->port_type(port_type_);
+      sig->set_signed(get_signed());
+      sig->set_isint(get_isint());
+
+      if (pull)
+	    connect(sig->pin(0), pull->pin(0));
+
+      for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
+	    sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
 }
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.43  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.42  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

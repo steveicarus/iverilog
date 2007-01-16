@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.71 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.72 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -170,7 +170,7 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
 struct __vpiSignal {
       struct __vpiHandle base;
       struct __vpiScope* scope;
-	/* The name of this reg/net object */
+	/* The name of this reg/net, or nil if this is an array word. */
       const char*name;
 	/* The indices that define the width and access offset. */
       int msb, lsb;
@@ -186,6 +186,12 @@ extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*net);
 extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*node);
+
+/*
+ * This function safely converts a vpiHandle back to a
+ * __vpiSignal. Return a nil if the type is not appropriate.
+ */
+extern __vpiSignal* vpip_signal_from_handle(vpiHandle obj);
 
 
 /*
@@ -444,6 +450,12 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.72  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.71  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.44 2006/09/29 01:24:34 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.45 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 /*
@@ -436,17 +436,27 @@ void callback_execute(struct __vpiCallback*cur)
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
+      array_ = 0;
+      array_word_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
+      assert(array_ == 0);
 }
 
 void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
 {
       cb->next = vpi_callbacks_;
       vpi_callbacks_ = cb;
+}
+
+void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
+{
+      assert(array_ == 0);
+      array_ = arr;
+      array_word_ = addr;
 }
 
 /*
@@ -459,6 +469,8 @@ void vvp_vpi_callback::run_vpi_callbacks()
 {
       struct __vpiCallback *next = vpi_callbacks_;
       struct __vpiCallback *prev = 0;
+
+      if (array_) array_word_change(array_, array_word_);
 
       while (next) {
 	    struct __vpiCallback*cur = next;
@@ -576,6 +588,12 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.45  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.44  2006/09/29 01:24:34  steve
  *  rwsync callback fixes from Ben Staveley (with modifications.)
  *

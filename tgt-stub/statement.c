@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.10 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: statement.c,v 1.11 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,12 +56,30 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 
       } else {
 	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    assert(sig);
 
 	    fprintf(out, "%*s{name=%s width=%u lvwidth=%u}\n",
 		    ind, "",
 		    ivl_signal_name(sig),
 		    ivl_signal_width(sig),
 		    ivl_lval_width(lval));
+
+	    if (ivl_lval_idx(lval)) {
+		  fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");
+		  show_expression(ivl_lval_idx(lval), ind+6);
+		  if (ivl_signal_array_count(sig) <= 1) {
+			fprintf(out, "%*sERROR: Address on signal with "
+				"word count=%u\n", ind+4, "",
+				ivl_signal_array_count(sig));
+			stub_errors += 1;
+		  }
+	    } else if (ivl_signal_array_count(sig) > 1) {
+		  fprintf(out, "%*sERROR: Address missing on signal with "
+			  "word count=%u\n", ind+4, "",
+			  ivl_signal_array_count(sig));
+		  stub_errors += 1;
+	    }
+
 	    if (ivl_lval_mux(lval)) {
 		  fprintf(out, "%*sBit select expression:\n", ind+4, "");
 		  show_expression(ivl_lval_mux(lval), ind+8);

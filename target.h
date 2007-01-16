@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.76 2006/11/10 05:44:45 steve Exp $"
+#ident "$Id: target.h,v 1.77 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -66,15 +66,13 @@ struct target_t {
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
 
-	/* Output a memory (called for each memory object) */
-      virtual void memory(const NetMemory*);
-
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
       virtual bool func_def(const NetScope*);
 
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(const NetAddSub*);
+      virtual bool lpm_array_dq(const NetArrayDq*);
       virtual void lpm_clshift(const NetCLShift*);
       virtual void lpm_compare(const NetCompare*);
       virtual void lpm_divide(const NetDivide*);
@@ -82,7 +80,6 @@ struct target_t {
       virtual void lpm_ff(const NetFF*);
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
-      virtual void lpm_ram_dq(const NetRamDq*);
 
       virtual bool concat(const NetConcat*);
       virtual bool part_select(const NetPartSelect*);
@@ -139,7 +136,6 @@ struct expr_scan_t {
       virtual void expr_rparam(const NetECRealParam*);
       virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);
-      virtual void expr_memory(const NetEMemory*);
       virtual void expr_event(const NetEEvent*);
       virtual void expr_scope(const NetEScope*);
       virtual void expr_select(const NetESelect*);
@@ -172,6 +168,12 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.77  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.76  2006/11/10 05:44:45  steve
  *  Process delay paths in second path over signals.
  *

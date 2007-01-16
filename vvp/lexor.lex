@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.64 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: lexor.lex,v 1.65 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -96,6 +96,8 @@
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }
+".array" { return K_ARRAY; }
+".array/port" { return K_ARRAY_PORT; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/nee"  { return K_CMP_NEE; }
@@ -212,6 +214,12 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.65  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.64  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *

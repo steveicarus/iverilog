@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.75 2006/12/09 19:06:53 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.76 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 /*
@@ -75,15 +75,22 @@ char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
       return result_buf[type];
 }
 
+struct __vpiSignal* vpip_signal_from_handle(vpiHandle ref)
+{
+      if ((ref->vpi_type->type_code != vpiNet)
+	  && (ref->vpi_type->type_code != vpiReg))
+	    return 0;
+
+      return (struct __vpiSignal*)ref;
+}
+
 /*
  * implement vpi_get for vpiReg objects.
  */
 static int signal_get(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
       switch (code) {
 
@@ -581,31 +588,19 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 #endif
-#if 0
 	  case vpiVectorVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  unsigned long aval = vp->value.vector[idx/32].aval;
 		  unsigned long bval = vp->value.vector[idx/32].bval;
 		  aval >>= idx%32;
 		  bval >>= idx%32;
-		  int bit = (aval&1) | ((bval<<1)&2);
-		  switch (bit) {
-		      case 0: /* zero */
-			functor_poke(rfp,idx, 0, St0, 0);
-			break;
-		      case 1: /* one */
-			functor_poke(rfp,idx, 1, St1, 0);
-			break;
-		      case 2: /* z */
-			functor_poke(rfp,idx, 3, HiZ, 0);
-			break;
-		      case 3: /* x */
-			functor_poke(rfp,idx, 2, StX, 0);
-			break;
-		  }
+		  int bitmask = (aval&1) | ((bval<<1)&2);
+		  static const vvp_bit4_t bit_table[4] = {
+			BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
+		  vvp_bit4_t bit = bit_table[bitmask];
+		  val.set_bit(idx, bit);
 	    }
 	    break;
-#endif
 	  case vpiBinStrVal:
 	    vpip_bin_str_to_vec4(val, vp->value.str, false);
 	    break;
@@ -707,7 +702,7 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
-      obj->name = vpip_name_string(name);
+      obj->name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
@@ -724,6 +719,12 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.76  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.75  2006/12/09 19:06:53  steve
  *  Handle vpiRealVal reads of signals, and real anyedge events.
  *

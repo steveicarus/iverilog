@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.53 2006/12/09 19:06:53 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.54 2007/01/16 05:44:17 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -765,6 +765,10 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
  *          propagate starting at the next input change.
  */
 
+/*
+* Things derived from vvp_vpi_callback may also be array'ed, so it
+* includes some members that arrays use.
+*/
 class vvp_vpi_callback {
 
     public:
@@ -776,8 +780,12 @@ class vvp_vpi_callback {
 
       virtual void get_value(struct t_vpi_value*value) =0;
 
+      void attach_as_word(class __vpiArray* arr, unsigned long addr);
+
     private:
       struct __vpiCallback*vpi_callbacks_;
+      class __vpiArray* array_;
+      unsigned long array_word_;
 };
 
 class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
@@ -1027,6 +1035,12 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.54  2007/01/16 05:44:17  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.53  2006/12/09 19:06:53  steve
  *  Handle vpiRealVal reads of signals, and real anyedge events.
  *

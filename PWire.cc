@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.11 2005/07/07 16:22:49 steve Exp $"
+#ident "$Id: PWire.cc,v 1.12 2007/01/16 05:44:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,13 +154,18 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 {
       assert(lidx_ == 0);
       assert(ridx_ == 0);
-      assert(type_ == NetNet::REG);
       lidx_ = ldx;
       ridx_ = rdx;
 }
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.12  2007/01/16 05:44:14  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.11  2005/07/07 16:22:49  steve
  *  Generalize signals to carry types.
  *

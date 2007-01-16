@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.33 2005/04/24 23:44:02 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.34 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -118,7 +118,7 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
 	// where lval is really a "reg [7:0]". In other words, part
 	// selects in the l-value are handled by loff and the lwidth().
 
-      connect(ff->pin_Data(), d->bit(0));
+      connect(ff->pin_Data(), d->sig()->pin(0));
       connect(ff->pin_Q(), a->sig()->pin(0));
 
       connect(ff->pin_Clock(), pclk->pin(0));
@@ -128,41 +128,6 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
       if (pclk->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
 
-
-	/* This lval_ represents a reg that is a WIRE in the
-	   synthesized results. This function signals the destructor
-	   to change the REG that this l-value refers to into a
-	   WIRE. It is done then, at the last minute, so that pending
-	   synthesis can continue to work with it as a WIRE. */
-      a->turn_sig_to_wire_on_release();
-}
-
-static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
-			 NetEvProbe*pclk, NetNet*ce,
-			 NetAssign_*a, unsigned rval_pinoffset)
-{
-      assert(d);
-      assert(a);
-
-	/* Connect the input Data bits of the RAM, from the r-value of
-	   the assignment. */
-      connect(ram->pin_Data(), d->bit(rval_pinoffset));
-
-	/* Connect the Address pins from the addr net discovered by the
-	   caller. */
-      connect(ram->pin_Address(), adr->pin(0));
-
-	/* Connect the input clock and the WE of the RAM. */
-      assert(pclk);
-      connect(ram->pin_InClock(), pclk->pin(0));
-      if (ce) {
-	    connect(ram->pin_WE(), ce->pin(0));
-      } /* XXX does ram CE default to true if not connected? */
-
-	/* This notices any other NetRamDq objects connected to the
-	   same NetMemory, that have the same address pins and are
-	   otherwise compatible. This absorbs them into this object. */
-      ram->absorb_partners();
 
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
@@ -207,13 +172,6 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 				   a->sig()->vector_width());
               hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
               des->add_node(ff);
-	    } else if (a->mem()) {
-	      NetMemory *m=a->mem();
-	      NetNet *adr = a->bmux()->synthesize(des);
-	      NetRamDq*ram = new NetRamDq(top->scope(), m->name(),
-					  m, adr->pin_count());
-	      hookup_RAMDQ(ram, d, adr, pclk, ce, a, rval_pinoffset);
-              des->add_node(ram);
 	    }
             rval_pinoffset += a->lwidth();
       }
@@ -233,7 +191,7 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
 
       for (unsigned idx = 0 ;  idx < asn->l_val(0)->lwidth() ;  idx += 1) {
 
-	    verinum::V bit = rsig->bit(idx).nexus()->driven_value();
+	    verinum::V bit = rsig->sig()->pin(idx).nexus()->driven_value();
 
 	    Nexus*nex = asn->l_val(0)->sig()->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink()

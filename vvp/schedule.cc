@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.44 2006/09/29 16:55:04 steve Exp $"
+#ident "$Id: schedule.cc,v 1.45 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -145,6 +145,20 @@ void assign_memory_word_s::run_run(void)
 {
       count_assign_events += 1;
       memory_set_word(mem, adr, off, val);
+}
+
+struct assign_array_word_s  : public event_s {
+      vvp_array_t mem;
+      unsigned adr;
+      vvp_vector4_t val;
+      unsigned off;
+      void run_run(void);
+};
+
+void assign_array_word_s::run_run(void)
+{
+      count_assign_events += 1;
+      array_set_word(mem, adr, off, val);
 }
 
 struct generic_event_s : public event_s {
@@ -467,6 +481,20 @@ void schedule_assign_memory_word(vvp_memory_t mem,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
+void schedule_assign_array_word(vvp_array_t mem,
+				unsigned word_addr,
+				unsigned off,
+				vvp_vector4_t val,
+				vvp_time64_t delay)
+{
+      struct assign_array_word_s*cur = new struct assign_array_word_s;
+      cur->mem = mem;
+      cur->adr = word_addr;
+      cur->off = off;
+      cur->val = val;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
 void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
@@ -617,6 +645,12 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.45  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.44  2006/09/29 16:55:04  steve
  *  Allow rosync events to create new rosync events.
  *

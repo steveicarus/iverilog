@@ -17,8 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.142 2006/11/28 05:56:41 steve Exp $"
+#ident "$Id: stub.c,v 1.143 2007/01/16 05:44:16 steve Exp $"
 #endif
+
+/*
+ * This is a sample target module. All this does is write to the
+ * output file some information about each object handle when each of
+ * the various object functions is called. This can be used to
+ * understand the behavior of the core as it uses a target module.
+ */
 
 # include "config.h"
 # include "priv.h"
@@ -127,213 +134,6 @@ const char*data_type_string(ivl_variable_type_t vtype)
       return vt;
 }
 
-const char*vt_type_string(ivl_expr_t net)
-{
-      return data_type_string(ivl_expr_value(net));
-}
-
-void show_binary_expression(ivl_expr_t net, unsigned ind)
-{
-      unsigned width = ivl_expr_width(net);
-      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
-      const char*vt   = vt_type_string(net);
-
-      fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
-	      ivl_expr_opcode(net), width, sign, vt);
-      show_expression(ivl_expr_oper1(net), ind+3);
-      show_expression(ivl_expr_oper2(net), ind+3);
-
-      switch (ivl_expr_opcode(net)) {
-
-	  case '*':
-	      /* The width of multiply expressions is the sum of the
-		 widths of the operands. This is slightly different
-		 from the way the Verilog standard does it, but allows
-		 us to keep operands smaller. */
-	    width = ivl_expr_width(ivl_expr_oper1(net));
-	    width += ivl_expr_width(ivl_expr_oper2(net));
-	    if (ivl_expr_width(net) != width) {
-		  fprintf(out, "%*sERROR: Result width incorrect\n",
-			  ind+3, "");
-		  stub_errors += 1;
-	    }
-	    break;
-
-	  default:
-	    break;
-      }
-}
-
-void show_function_call(ivl_expr_t net, unsigned ind)
-{
-      ivl_scope_t def = ivl_expr_def(net);
-      const char*vt = vt_type_string(net);
-
-      fprintf(out, "%*s<%s function %s>\n", ind, "",
-	      vt, ivl_scope_name(def));
-}
-
-void show_memory_expression(ivl_expr_t net, unsigned ind)
-{
-      unsigned width = ivl_expr_width(net);
-
-      fprintf(out, "%*s<memory width=%u>\n", ind, "",
-	      width);
-}
-
-/*
- * This is a sample target module. All this does is write to the
- * output file some information about each object handle when each of
- * the various object functions is called. This can be used to
- * understand the behavior of the core as it uses a target module.
- */
-
-void show_ternary_expression(ivl_expr_t net, unsigned ind)
-{
-      unsigned width = ivl_expr_width(net);
-      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
-
-      fprintf(out, "%*s<ternary  width=%u, %s>\n", ind, "", width, sign);
-      show_expression(ivl_expr_oper1(net), ind+4);
-      show_expression(ivl_expr_oper2(net), ind+4);
-      show_expression(ivl_expr_oper3(net), ind+4);
-
-      if (ivl_expr_width(ivl_expr_oper2(net)) != width) {
-	    fprintf(out, "ERROR: Width of TRUE expressions is %u, not %u\n",
-		    ivl_expr_width(ivl_expr_oper2(net)), width);
-	    stub_errors += 1;
-      }
-
-      if (ivl_expr_width(ivl_expr_oper3(net)) != width) {
-	    fprintf(out, "ERROR: Width of FALSE expressions is %u, not %u\n",
-		    ivl_expr_width(ivl_expr_oper3(net)), width);
-	    stub_errors += 1;
-      }
-}
-
-void show_expression(ivl_expr_t net, unsigned ind)
-{
-      unsigned idx;
-      const ivl_expr_type_t code = ivl_expr_type(net);
-      ivl_parameter_t par = ivl_expr_parameter(net);
-      unsigned width = ivl_expr_width(net);
-      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
-      const char*vt = vt_type_string(net);
-
-      switch (code) {
-
-	  case IVL_EX_BINARY:
-	    show_binary_expression(net, ind);
-	    break;
-
-	  case IVL_EX_CONCAT:
-	    fprintf(out, "%*s<concat repeat=%u, width=%u, %s, type=%s>\n",
-		    ind, "", ivl_expr_repeat(net), width, sign, vt);
-	    for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
-		  show_expression(ivl_expr_parm(net, idx), ind+3);
-
-	    break;
-
-	  case IVL_EX_MEMORY:
-	    show_memory_expression(net, ind);
-	    break;
-
-	  case IVL_EX_NUMBER: {
-		const char*bits = ivl_expr_bits(net);
-
-		fprintf(out, "%*s<number=%u'b", ind, "", width);
-		for (idx = width ;  idx > 0 ;  idx -= 1)
-		      fprintf(out, "%c", bits[idx-1]);
-
-		fprintf(out, ", %s %s", sign, vt);
-		if (par != 0)
-		      fprintf(out, ", parameter=%s",
-			      ivl_parameter_basename(par));
-
-		fprintf(out, ">\n");
-		break;
-	  }
-
-	  case IVL_EX_SELECT:
-	      /* The SELECT expression can be used to express part
-		 select, or if the base is null vector extension. */
-	    if (ivl_expr_oper2(net)) {
-		  fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-		  show_expression(ivl_expr_oper2(net), ind+3);
-	    } else {
-		  fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-	    }
-	    break;
-
-	  case IVL_EX_STRING:
-	    fprintf(out, "%*s<string=\"%s\", width=%u", ind, "",
-		    ivl_expr_string(net), ivl_expr_width(net));
-	    if (par != 0)
-		      fprintf(out, ", parameter=%s",
-			      ivl_parameter_basename(par));
-
-	    fprintf(out, ">\n");
-	    break;
-
-	  case IVL_EX_SFUNC:
-	    fprintf(out, "%*s<function=\"%s\", width=%u, %s, type=%s>\n",
-		    ind, "", ivl_expr_name(net), width, sign, vt);
-	    { unsigned cnt = ivl_expr_parms(net);
-	      unsigned idx;
-	      for (idx = 0 ;  idx < cnt ;  idx += 1)
-		    show_expression(ivl_expr_parm(net, idx), ind+3);
-	    }
-	    break;
-
-	  case IVL_EX_SIGNAL:
-	    fprintf(out, "%*s<signal=%s, width=%u, %s type=%s>\n", ind, "",
-		    ivl_expr_name(net), width, sign, vt);
-	    break;
-
-	  case IVL_EX_TERNARY:
-	    show_ternary_expression(net, ind);
-	    break;
-
-	  case IVL_EX_UNARY:
-	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign);
-	    show_expression(ivl_expr_oper1(net), ind+4);
-	    break;
-
-	  case IVL_EX_UFUNC:
-	    show_function_call(net, ind);
-	    break;
-
-	  case IVL_EX_REALNUM:
-	      {
-		    int idx;
-		    union foo {
-			  double rv;
-			  unsigned char bv[sizeof(double)];
-		    } tmp;
-		    tmp.rv = ivl_expr_dvalue(net);
-		    fprintf(out, "%*s<realnum=%f (", ind, "", tmp.rv);
-		    for (idx = sizeof(double) ;  idx > 0 ;  idx -= 1)
-			  fprintf(out, "%02x", tmp.bv[idx-1]);
-		    fprintf(out, ")");
-		    if (par != 0)
-			  fprintf(out, ", parameter=%s",
-				  ivl_parameter_basename(par));
-
-		    fprintf(out, ">\n");
-	      }
-	      break;
-
-	  default:
-	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
-	    break;
-      }
-}
-
 /*
  * The compare-like LPM nodes have input widths that match the
  * ivl_lpm_width() value, and an output width of 1. This function
@@ -386,6 +186,35 @@ static void show_lpm_add(ivl_lpm_t net)
 	      ivl_lpm_basename(net), width);
 
       show_lpm_arithmetic_pins(net);
+}
+
+static void show_lpm_array(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+      ivl_signal_t array = ivl_lpm_array(net);
+
+      fprintf(out, "  LPM_ARRAY: <width=%u, signal=%s>\n",
+	      width, ivl_signal_basename(array));
+      nex = ivl_lpm_q(net, 0);
+      assert(nex);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+      nex = ivl_lpm_select(net);
+      assert(nex);
+      fprintf(out, "    Address: %s (address width=%u)\n",
+	      ivl_nexus_name(nex), ivl_lpm_selects(net));
+
+      if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
+	    fprintf(out, "    ERROR: Data Q width doesn't match "
+		    "nexus width=%u\n", width_of_nexus(ivl_lpm_q(net,0)));
+	    stub_errors += 1;
+      }
+
+      if (ivl_signal_width(array) != width) {
+	    fprintf(out, "    ERROR: Data  width doesn't match "
+		    "word width=%u\n", ivl_signal_width(array));
+	    stub_errors += 1;
+      }
 }
 
 static void show_lpm_divide(ivl_lpm_t net)
@@ -735,42 +564,6 @@ static void show_lpm_part_bi(ivl_lpm_t net)
 }
 
 
-static void show_lpm_ram(ivl_lpm_t net)
-{
-      ivl_nexus_t nex;
-      unsigned width = ivl_lpm_width(net);
-      ivl_memory_t mem = ivl_lpm_memory(net);
-
-      fprintf(out, "  LPM_RAM: <width=%u>\n", width);
-      nex = ivl_lpm_q(net, 0);
-      assert(nex);
-      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
-      nex = ivl_lpm_select(net);
-      fprintf(out, "    Address: %s (address width=%u)\n",
-	      ivl_nexus_name(nex), ivl_lpm_selects(net));
-
-
-      if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-	    fprintf(out, "    ERROR: Data width doesn't match "
-		    "nexus width=%u\n", width_of_nexus(ivl_lpm_q(net,0)));
-	    stub_errors += 1;
-      }
-
-      if (width_of_nexus(ivl_lpm_select(net)) != ivl_lpm_selects(net)) {
-	    fprintf(out, "    ERROR: Width of address doesn't match "
-		    "nexus width=%u\n", width_of_nexus(ivl_lpm_select(net)));
-	    stub_errors += 1;
-      }
-
-	/* The width of the port must match the width of the memory
-	   word. the compile assures that for us. */
-      if (width != ivl_memory_width(mem)) {
-	    fprintf(out, "    ERROR: Width doesn't match"
-		    " memory word width=%u\n", ivl_memory_width(mem));
-	    stub_errors += 1;
-      }
-}
-
 /*
  * The reduction operators have similar characteristics and are
  * displayed here.
@@ -983,6 +776,10 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_add(net);
 	    break;
 
+	  case IVL_LPM_ARRAY:
+	    show_lpm_array(net);
+	    break;
+
 	  case IVL_LPM_DIVIDE:
 	    show_lpm_divide(net);
 	    break;
@@ -1010,10 +807,6 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_CONCAT:
 	    show_lpm_concat(net);
-	    break;
-
-	  case IVL_LPM_RAM:
-	    show_lpm_ram(net);
 	    break;
 
 	  case IVL_LPM_RE_AND:
@@ -1203,6 +996,57 @@ static void signal_nexus_const(ivl_signal_t sig,
       }
 }
 
+static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_net_const_t con;
+	    ivl_net_logic_t log;
+	    ivl_lpm_t lpm;
+	    ivl_signal_t sig;
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+
+	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
+	    const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
+
+	    if ((sig = ivl_nexus_ptr_sig(ptr))) {
+		  fprintf(out, "      SIG %s word=%u (%s0, %s1)",
+			  ivl_signal_name(sig), ivl_nexus_ptr_pin(ptr), dr0, dr1);
+
+		  if (ivl_signal_width(sig) != ivl_signal_width(net)) {
+			fprintf(out, " (ERROR: Width=%u)",
+				ivl_signal_width(sig));
+			stub_errors += 1;
+		  }
+
+		  if (ivl_signal_data_type(sig) != ivl_signal_data_type(net)) {
+			fprintf(out, " (ERROR: data type mismatch)");
+			stub_errors += 1;
+		  }
+
+		  fprintf(out, "\n");
+
+	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
+		  fprintf(out, "      LOG %s.%s[%u] (%s0, %s1)\n",
+			  ivl_scope_name(ivl_logic_scope(log)),
+			  ivl_logic_basename(log),
+			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
+
+	    } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
+		  fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
+			  ivl_scope_name(ivl_lpm_scope(lpm)),
+			  ivl_lpm_basename(lpm), dr0, dr1);
+
+	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
+		  signal_nexus_const(net, ptr, con);
+
+	    } else {
+		  fprintf(out, "      ?[%u] (%s0, %s1)\n",
+			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
+	    }
+      }
+}
 
 static void show_signal(ivl_signal_t net)
 {
@@ -1268,68 +1112,19 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
-      nex = ivl_signal_nex(net);
+      for (idx = 0 ;  idx < ivl_signal_array_count(net) ; idx += 1) {
 
-      fprintf(out, "  %s %s %s%s[%d:%d] %s  <width=%u> nexus=%s\n",
-	      type, sign, port, data_type,
-	      ivl_signal_msb(net), ivl_signal_lsb(net),
-	      ivl_signal_basename(net), ivl_signal_width(net),
-	      ivl_nexus_name(nex));
+	    nex = ivl_signal_nex(net, idx);
 
+	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  <width=%u> nexus=%s\n",
+		    type, sign, port, data_type,
+		    ivl_signal_msb(net), ivl_signal_lsb(net),
+		    ivl_signal_basename(net),
+		    idx, ivl_signal_array_base(net)+idx,
+		    ivl_signal_width(net),
+		    ivl_nexus_name(nex));
 
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_net_const_t con;
-	    ivl_net_logic_t log;
-	    ivl_lpm_t lpm;
-	    ivl_signal_t sig;
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-
-	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
-	    const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
-
-	    if ((sig = ivl_nexus_ptr_sig(ptr))) {
-		  fprintf(out, "      SIG %s (%s0, %s1)",
-			  ivl_signal_name(sig), dr0, dr1);
-
-		    /* Only pin-0 of signals is used. If this is
-		       something other then pin-0, report an error. */
-		  if (ivl_nexus_ptr_pin(ptr) != 0) {
-			fprintf(out, " (pin=%u, should be 0)",
-				ivl_nexus_ptr_pin(ptr));
-			stub_errors += 1;
-		  }
-
-		  if (ivl_signal_width(sig) != ivl_signal_width(net)) {
-			fprintf(out, " (ERROR: Width=%u)",
-				ivl_signal_width(sig));
-			stub_errors += 1;
-		  }
-
-		  if (ivl_signal_data_type(sig) != ivl_signal_data_type(net)) {
-			fprintf(out, " (ERROR: data type mismatch)");
-			stub_errors += 1;
-		  }
-
-		  fprintf(out, "\n");
-
-	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
-		  fprintf(out, "      LOG %s.%s[%u] (%s0, %s1)\n",
-			  ivl_scope_name(ivl_logic_scope(log)),
-			  ivl_logic_basename(log),
-			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
-
-	    } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
-		  fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
-			  ivl_scope_name(ivl_lpm_scope(lpm)),
-			  ivl_lpm_basename(lpm), dr0, dr1);
-
-	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
-		  signal_nexus_const(net, ptr, con);
-
-	    } else {
-		  fprintf(out, "      ?[%u] (%s0, %s1)\n",
-			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
-	    }
+	    show_nexus_details(net, nex);
       }
 
       for (idx = 0 ;  idx < ivl_signal_npath(net) ;  idx += 1) {
@@ -1677,6 +1472,12 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.143  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.142  2006/11/28 05:56:41  steve
  *  Dump nand logic.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.16 2006/10/10 23:54:28 steve Exp $"
+#ident "$Id: eval_real.c,v 1.17 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 /*
@@ -245,9 +245,22 @@ static int draw_signal_real_real(ivl_expr_t exp)
 {
       ivl_signal_t sig = ivl_expr_signal(exp);
       int res = allocate_word();
+      unsigned long word = 0;
 
-      fprintf(vvp_out, "   %%load/wr %d, V_%s;\n",
-	      res, vvp_signal_label(sig));
+      if (ivl_signal_array_count(sig) > 1) {
+	    ivl_expr_t ix = ivl_expr_oper1(exp);
+	    if (!number_is_immediate(ix, 8*sizeof(word))) {
+		    /* XXXX Need to generate a %load/ar instruction. */
+		  assert(0);
+		  return res;
+	    }
+
+	      /* The index is constant, so we can return to direct
+	         readout with the specific word selected. */
+	    word = get_number_immediate(ix);
+      }
+
+      fprintf(vvp_out, "   %%load/wr %d, v%p_%lu;\n", res, sig, word);
 
       return res;
 }
@@ -326,6 +339,12 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.17  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.16  2006/10/10 23:54:28  steve
  *  Fix rendering of signed numbers in real expressions.
  *

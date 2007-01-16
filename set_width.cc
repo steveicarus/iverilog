@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.41 2006/11/04 06:19:25 steve Exp $"
+#ident "$Id: set_width.cc,v 1.42 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -340,7 +340,7 @@ bool NetECReal::set_width(unsigned w, bool)
       expr_width(w);
       return true;
 }
-
+#if 0
 bool NetEMemory::set_width(unsigned w, bool)
 {
       if (w != mem_->width())
@@ -349,7 +349,7 @@ bool NetEMemory::set_width(unsigned w, bool)
       expr_width(w);
       return true;
 }
-
+#endif
 bool NetEParam::set_width(unsigned, bool)
 {
       return false;
@@ -374,7 +374,7 @@ bool NetESFunc::set_width(unsigned w, bool)
  */
 bool NetESignal::set_width(unsigned w, bool)
 {
-      if (w != bit_count())
+      if (w != vector_width())
 	    return false;
 
       return true;
@@ -441,6 +441,12 @@ bool NetEUReduce::set_width(unsigned w, bool)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.42  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.41  2006/11/04 06:19:25  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.43 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: eval.cc,v 1.44 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -174,7 +174,6 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
 {
       assert(scope);
       NetNet*net;
-      NetMemory*mem;
       NetEvent*eve;
       const NetExpr*expr;
 
@@ -187,7 +186,7 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
       }
 
       NetScope*found_in = symbol_search(des, scope, path_,
-					net, mem, expr, eve);
+					net, expr, eve);
 
       if (expr == 0)
 	    return 0;
@@ -276,6 +275,12 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.44  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.43  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

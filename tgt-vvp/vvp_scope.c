@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.150 2006/11/23 22:42:48 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.151 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -178,7 +178,7 @@ const char* vvp_signal_label(ivl_signal_t sig)
       return buf;
 }
 
-ivl_signal_t signal_of_nexus(ivl_nexus_t nex)
+ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
 {
       unsigned idx;
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -188,9 +188,8 @@ ivl_signal_t signal_of_nexus(ivl_nexus_t nex)
 		  continue;
 	    if (ivl_signal_local(sig))
 		  continue;
-
+	    *word = ivl_nexus_ptr_pin(ptr);
 	    return sig;
-
       }
 
       return 0;
@@ -575,11 +574,9 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       sptr = ivl_nexus_ptr_sig(nptr);
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-	      /* Input is a .var. Note that these devices have only
-		 exactly one pin (that carries a vector) so nptr_pin
-		 must be 0. */
-	    assert(nptr_pin == 0);
-	    sprintf(result, "V_%s", vvp_signal_label(sptr));
+	      /* Input is a .var. This device may be a non-zero pin
+	         because it may be an array of reg vectors. */
+	    snprintf(result, sizeof result, "v%p_%u", sptr, nptr_pin);
 	    return result;
       }
 
@@ -620,8 +617,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_ARRAY:
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
@@ -936,12 +933,13 @@ const char*draw_net_input(ivl_nexus_t nex)
 const char*draw_input_from_net(ivl_nexus_t nex)
 {
       static char result[32];
+      unsigned word;
 
-      ivl_signal_t sig = signal_of_nexus(nex);
+      ivl_signal_t sig = signal_of_nexus(nex, &word);
       if (sig == 0)
 	    return draw_net_input(nex);
 
-      snprintf(result, sizeof result, "V_%p", sig);
+      snprintf(result, sizeof result, "v%p_%u", sig, word);
       return result;
 }
 
@@ -949,7 +947,8 @@ const char*draw_input_from_net(ivl_nexus_t nex)
 /*
  * This function draws a reg/int/variable in the scope. This is a very
  * simple device to draw as there are no inputs to connect so no need
- * to scan the nexus.
+ * to scan the nexus. We do have to account for the possibility that
+ * the device is arrayed, though, by making a node for each array element.
  */
 static void draw_reg_in_scope(ivl_signal_t sig)
 {
@@ -967,9 +966,29 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    break;
       }
 
-      fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
-	      vvp_signal_label(sig), datatype_flag,
-	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+	/* If the reg objects are collected into an array, then first
+	   write out the .array record to declare the array indices. */
+      if (ivl_signal_array_count(sig) > 1) {
+	    unsigned word_count = ivl_signal_array_count(sig);
+	    unsigned iword;
+	    int last = ivl_signal_array_base(sig)+ivl_signal_array_count(sig)-1;
+	    int first = ivl_signal_array_base(sig);
+	    fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
+		    sig, vvp_mangle_name(ivl_signal_basename(sig)),
+		    last, first);
+
+	      /* Scan the words of the array... */
+	    for (iword = 0 ;  iword < word_count ; iword += 1) {
+		  fprintf(vvp_out, "v%p_%u .var%s v%p, %d %d;\n",
+			  sig, iword, datatype_flag, sig, msb, lsb);
+	    }
+
+      } else {
+
+	    fprintf(vvp_out, "v%p_0 .var%s \"%s\", %d %d;\n",
+		    sig, datatype_flag,
+		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+      }
 }
 
 
@@ -981,27 +1000,13 @@ static void draw_net_in_scope(ivl_signal_t sig)
 {
       int msb = ivl_signal_msb(sig);
       int lsb = ivl_signal_lsb(sig);
-      typedef const char*const_charp;
-      const char* arg;
-      const char* driver;
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
-
-      struct vvp_nexus_data*nex_data;
+      unsigned iword;
 
 	/* Skip the local signal. */
       if (ivl_signal_local(sig))
 	    return;
-
-	/* Connect the pin of the signal to something. */
-      {
-	    ivl_nexus_t nex = ivl_signal_nex(sig);
-	    driver = draw_net_input(nex);
-	    arg = driver;
-
-	    nex_data = (struct vvp_nexus_data*)ivl_nexus_get_private(nex);
-	    assert(nex_data);
-      }
 
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_REAL:
@@ -1011,30 +1016,70 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    break;
       }
 
-      if (nex_data->net == 0) {
-	    const char*vec8 = "";
-	    if (nex_data->drivers_count > 1)
-		  vec8 = "8";
-	    if (nex_data->flags & VVP_NEXUS_DATA_STR)
-		  vec8 = "8";
+      for (iword = 0 ;  iword < ivl_signal_array_count(sig); iword += 1) {
 
-	    fprintf(vvp_out, "V_%p .net%s%s \"%s\", %d, %d, %s;"
-		    " %u drivers%s\n",
-		    sig, vec8, datatype_flag,
-		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    msb, lsb, arg,
-		    nex_data->drivers_count,
-		    nex_data->flags&VVP_NEXUS_DATA_STR?", strength-aware":"");
-	    nex_data->net = sig;
+	    unsigned word_count = ivl_signal_array_count(sig);
+	    struct vvp_nexus_data*nex_data;
 
-      } else {
-	      /* Detect that this is an alias of nex_data->net. Create
-		 a different kind of node that refers to the alias
-		 source data instead of holding our own data. */
-	    fprintf(vvp_out, "V_%p .alias%s \"%s\", %d, %d, V_%p;\n",
-		    sig, datatype_flag,
-		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    msb, lsb, nex_data->net);
+	      /* Connect the pin of the signal to something. */
+	    ivl_nexus_t nex = ivl_signal_nex(sig, iword);
+	    const char*driver = draw_net_input(nex);
+
+	    nex_data = (struct vvp_nexus_data*)ivl_nexus_get_private(nex);
+	    assert(nex_data);
+
+	    if (nex_data->net == 0) {
+		  int strength_aware_flag = 0;
+		  const char*vec8 = "";
+		  if (nex_data->flags&VVP_NEXUS_DATA_STR)
+			strength_aware_flag = 1;
+		  if (nex_data->drivers_count > 1)
+			vec8 = "8";
+		  if (strength_aware_flag)
+			vec8 = "8";
+
+		  if (iword == 0 && word_count > 1) {
+			int last = ivl_signal_array_base(sig) + word_count-1;
+			int first = ivl_signal_array_base(sig);
+			fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
+				sig, vvp_mangle_name(ivl_signal_basename(sig)),
+				last, first);
+		  }
+		  if (word_count > 1) {
+			/* If this is a word of an array, then use an
+			   array reference in place of the net name. */
+			fprintf(vvp_out, "v%p_%u .net%s%s v%p, %d %d, %s;"
+				" %u drivers%s\n",
+				sig, iword, vec8, datatype_flag, sig,
+				msb, lsb, driver,
+				nex_data->drivers_count,
+				strength_aware_flag?", strength-aware":"");
+		  } else {
+			/* If this is an isolated word, it uses its
+			   own name. */
+			fprintf(vvp_out, "v%p_%u .net%s%s \"%s\", %d %d, %s;"
+				" %u drivers%s\n",
+				sig, iword, vec8, datatype_flag,
+				vvp_mangle_name(ivl_signal_basename(sig)),
+				msb, lsb, driver,
+				nex_data->drivers_count,
+				strength_aware_flag?", strength-aware":"");
+		  }
+		  nex_data->net = sig;
+
+	    } else {
+
+		  assert(word_count == 1);
+		  assert(ivl_signal_array_count(nex_data->net) == 1);
+
+		    /* Detect that this is an alias of nex_data->net. Create
+		    a different kind of node that refers to the alias
+		    source data instead of holding our own data. */
+		  fprintf(vvp_out, "v%p_0 .alias%s \"%s\", %d %d, v%p_0;\n",
+			  sig, datatype_flag,
+			  vvp_mangle_name(ivl_signal_basename(sig)),
+			  msb, lsb, nex_data->net);
+	    }
       }
 }
 
@@ -1373,13 +1418,16 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  fprintf(vvp_out, "L_%p .delay  L_%p/d", lptr, lptr);
 
 		  sig = ivl_expr_signal(rise_exp);
-		  fprintf(vvp_out, ", V_%p", sig);
+		  assert(ivl_signal_array_count(sig) == 1);
+		  fprintf(vvp_out, ", v%p_0", sig);
 
 		  sig = ivl_expr_signal(fall_exp);
-		  fprintf(vvp_out, ", V_%p", sig);
+		  assert(ivl_signal_array_count(sig) == 1);
+		  fprintf(vvp_out, ", v%p_0", sig);
 
 		  sig = ivl_expr_signal(decay_exp);
-		  fprintf(vvp_out, ", V_%p;\n", sig);
+		  assert(ivl_signal_array_count(sig) == 1);
+		  fprintf(vvp_out, ", v%p_0;\n", sig);
 	    }
       }
 }
@@ -1515,38 +1563,6 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
-static void draw_lpm_ram(ivl_lpm_t net)
-{
-      ivl_memory_t mem = ivl_lpm_memory(net);
-      ivl_nexus_t clk = ivl_lpm_clk(net);
-      ivl_nexus_t pin;
-
-      if (clk) {
-	    fprintf(vvp_out, "CLK_%p .event posedge, %s;\n",
-		    net, draw_net_input(clk));
-      }
-
-      fprintf(vvp_out, "L_%p .mem/port M_%p, ", net, mem);
-
-      pin = ivl_lpm_select(net);
-      fprintf(vvp_out, "%s", draw_net_input(pin));
-
-      if (clk) {
-	    fprintf(vvp_out, ", CLK_%p, ",  net);
-	    pin = ivl_lpm_enable(net);
-	    if (pin)
-		  fprintf(vvp_out, "%s", draw_net_input(pin));
-	    else
-		  fprintf(vvp_out, "C4<1>");
-
-	    pin = ivl_lpm_data(net, 0);
-	    fprintf(vvp_out, ", %s", draw_net_input(pin));
-      }
-
-      fprintf(vvp_out, ";\n");
-}
-
-
 /*
  * This function draws any functors needed to calculate the input to
  * this nexus, and leaves in the data array strings that can be used
@@ -1609,6 +1625,23 @@ static void draw_lpm_add(ivl_lpm_t net)
       draw_lpm_data_inputs(net, 0, 2, src_table);
       fprintf(vvp_out, "L_%p .arith/%s %u, %s, %s;\n",
 	      net, type, width, src_table[0], src_table[1]);
+}
+
+/*
+* The read port to an array is generated as a single record that takes
+* the address as an input.
+*/
+static void draw_lpm_array(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      ivl_signal_t mem = ivl_lpm_array(net);
+
+      fprintf(vvp_out, "L_%p .array/port v%p, ", net, mem);
+
+      nex = ivl_lpm_select(net);
+      fprintf(vvp_out, "%s", draw_net_input(nex));
+
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_lpm_cmp(ivl_lpm_t net)
@@ -1951,7 +1984,8 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	    else
 		  fprintf(vvp_out, ", ");
 
-	    fprintf(vvp_out, "V_%s", vvp_signal_label(psig));
+	    assert(ivl_signal_array_count(psig) == 1);
+	    fprintf(vvp_out, "v%p_0", psig);
       }
 
       fprintf(vvp_out, ")");
@@ -1960,8 +1994,9 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
         assert(ivl_lpm_width(net) == ivl_signal_width(psig));
+	assert(ivl_signal_array_count(psig) == 1);
 
-	fprintf(vvp_out, " V_%s", vvp_signal_label(psig));
+	fprintf(vvp_out, " v%p_0", psig);
       }
 
       fprintf(vvp_out, ";\n");
@@ -2123,16 +2158,16 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
 
-	  case IVL_LPM_RAM:
-	    draw_lpm_ram(net);
-	    return;
-
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	    draw_lpm_add(net);
+	    return;
+
+	  case IVL_LPM_ARRAY:
+	    draw_lpm_array(net);
 	    return;
 
 	  case IVL_LPM_PART_BI:
@@ -2335,6 +2370,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.151  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.150  2006/11/23 22:42:48  steve
  *  Do not intertangle modpaths due to references to input nets.
  *

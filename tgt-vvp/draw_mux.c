@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.13 2005/10/12 17:26:17 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.14 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -76,9 +76,9 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
 		  fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
-			  net, width, level, muxz, idx);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+0);
-		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx/2+1);
+			  net, level, idx/2, muxz, width);
+		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+0);
+		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+1);
 		  fprintf(vvp_out, ", L_%p/%ds",   net, level);
 		  fprintf(vvp_out, ", C4<>;\n");
 	    }
@@ -127,6 +127,12 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.14  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.13  2005/10/12 17:26:17  steve
  *  MUX nodes get inputs from nets, not from net inputs,
  *  Detect and draw alias nodes to reduce net size and

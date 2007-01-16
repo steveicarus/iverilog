@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.80 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.81 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -692,7 +692,7 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
       return osig;
 }
-
+#if 0
 NetNet* NetEMemory::synthesize(Design *des)
 {
       NetNet*adr = idx_->synthesize(des);
@@ -719,7 +719,7 @@ NetNet* NetEMemory::synthesize(Design *des)
       return osig;
 
 }
-
+#endif
 NetNet* NetESelect::synthesize(Design *des)
 {
 
@@ -890,6 +890,12 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.81  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.80  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

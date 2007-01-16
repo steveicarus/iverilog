@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.15 2006/04/16 00:15:43 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.16 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,12 +76,6 @@ NexusSet* NetEConst::nex_input()
 NexusSet* NetECReal::nex_input()
 {
       return new NexusSet;
-}
-
-NexusSet* NetEMemory::nex_input()
-{
-      NexusSet*result = idx_->nex_input();
-      return result;
 }
 
 /*
@@ -171,8 +165,8 @@ NexusSet* NetEUnary::nex_input()
 NexusSet* NetAssign_::nex_input()
 {
       NexusSet*result = new NexusSet;
-      if (bmux_) {
-	    NexusSet*tmp = bmux_->nex_input();
+      if (word_) {
+	    NexusSet*tmp = word_->nex_input();
 	    result->add(*tmp);
 	    delete tmp;
       }
@@ -393,6 +387,12 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.16  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.15  2006/04/16 00:15:43  steve
  *  Fix part selects in l-values.
  *

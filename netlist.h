@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.365 2006/11/04 06:19:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.366 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 /*
@@ -447,7 +447,12 @@ class NetNet  : public NetObj {
 	// that passed through.
       explicit NetNet(NetScope*s, perm_string n, Type t, unsigned width =1);
 
-      explicit NetNet(NetScope*s, perm_string n, Type t, long ms, long ls);
+	// This form supports an array of vectors. The [ms:ls] define
+	// the base vector, and the [s0:e0] define the array
+	// dimensions. If s0==e0, then this is not an array after
+	// all.
+      explicit NetNet(NetScope*s, perm_string n, Type t,
+		      long ms, long ls, long s0 =0, long e0 =0);
 
       virtual ~NetNet();
 
@@ -488,6 +493,21 @@ class NetNet  : public NetObj {
 	   the pin# from the index. */
       bool sb_is_valid(long sb) const;
 
+	/* This method returns 0 for scalers and vectors, and greater
+	   for arrays. The value is the number of array
+	   indices. (Currently only one array index is supported.) */
+      unsigned array_dimensions() const;
+      long array_first() const;
+
+	// This is the number of array elements.
+      unsigned array_count() const;
+
+	// This method returns a 0 based address of an array entry as
+	// indexed by idx. The Verilog source may give index ranges
+	// that are not zero based.
+      bool array_index_is_valid(long idx) const;
+      unsigned array_index_to_address(long idx) const;
+
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
@@ -524,6 +544,7 @@ class NetNet  : public NetObj {
       bool isint_;		// original type of integer
 
       long msb_, lsb_;
+      long s0_, e0_;
 
       bool local_flag_;
       unsigned eref_count_;
@@ -569,6 +590,37 @@ class NetAddSub  : public NetNode {
 
     private:
       unsigned width_;
+};
+
+/*
+ * The NetArrayDq node represents an array dereference. The NetNet
+ * that this object refers to is an array, and the Address pin selects
+ * which word of the array to place on the Result.
+*/
+class NetArrayDq  : public NetNode {
+
+    public:
+      NetArrayDq(NetScope*s, perm_string name, NetNet*mem, unsigned awid);
+      ~NetArrayDq();
+
+      unsigned width() const;
+      unsigned awidth() const;
+      unsigned size() const;
+      const NetNet*mem() const;
+
+      Link& pin_Address();
+      Link& pin_Result();
+
+      const Link& pin_Address() const;
+      const Link& pin_Result() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      NetNet*mem_;
+      unsigned awidth_;
+
 };
 
 /*
@@ -819,62 +871,6 @@ class NetFF  : public NetNode {
       verinum sset_value_;
 };
 
-
-/*
- * This class represents the declared memory object. The parser
- * creates one of these for each declared memory in the elaborated
- * design. A reference to one of these is handled by the NetEMemory
- * object, which is derived from NetExpr. This is not a node because
- * memory objects can only be accessed by behavioral code.
- */
-class NetMemory  {
-
-    public:
-      NetMemory(NetScope*sc, perm_string n, long w, long s, long e);
-      ~NetMemory();
-
-	// This is the BASE name of the memory object. It does not
-	// include scope name, get that from the scope itself.
-      perm_string name() const;
-
-	// This is the width (in bits) of a single memory position.
-      unsigned width() const { return width_; }
-
-	// This is the number of dimensions for the memory. A baseline
-	// verilog memory has always 1 dimension, but N-dimensional
-	// arrays have N.
-      unsigned dimensions() const { return 1; }
-
-      const NetScope*scope() const { return scope_; };
-
-	// This is the number of memory positions.
-      unsigned count() const;
-
-	// This method returns a 0 based address of a memory entry as
-	// indexed by idx. The Verilog source may give index ranges
-	// that are not zero based.
-      long index_to_address(long idx) const;
-
-      void dump(ostream&o, unsigned lm) const;
-
-    private:
-      perm_string name_;
-      unsigned width_;
-      long idxh_;
-      long idxl_;
-
-      friend class NetRamDq;
-      NetRamDq* ram_list_;
-
-      friend class NetScope;
-      NetMemory*snext_, *sprev_;
-      NetScope*scope_;
-
-    private: // not implemented
-      NetMemory(const NetMemory&);
-      NetMemory& operator= (const NetMemory&);
-};
-
 /*
  * This class implements a basic LPM_MULT combinational multiplier. It
  * is used as a structural representation of the * operator. The
@@ -965,57 +961,6 @@ class NetMux  : public NetNode {
       unsigned swidth_;
 };
 
-/*
- * This device represents an LPM_RAM_DQ device. The actual content is
- * represented by a NetMemory object allocated elsewhere, but that
- * object fixes the width and size of the device. The pin count of the
- * address input is given in the constructor.
- */
-class NetRamDq  : public NetNode {
-
-    public:
-      NetRamDq(NetScope*s, perm_string name, NetMemory*mem, unsigned awid);
-      ~NetRamDq();
-
-      unsigned width() const;
-      unsigned awidth() const;
-      unsigned size() const;
-      const NetMemory*mem() const;
-
-      Link& pin_InClock();
-      Link& pin_OutClock();
-      Link& pin_WE();
-
-      Link& pin_Address();
-      Link& pin_Data();
-      Link& pin_Q();
-
-      const Link& pin_InClock() const;
-      const Link& pin_OutClock() const;
-      const Link& pin_WE() const;
-
-      const Link& pin_Address() const;
-      const Link& pin_Data() const;
-      const Link& pin_Q() const;
-
-      virtual void dump_node(ostream&, unsigned ind) const;
-      virtual bool emit_node(struct target_t*) const;
-
-	// Use this method to absorb other NetRamDq objects that are
-	// connected to the same memory, and have compatible pin
-	// connections.
-      void absorb_partners();
-
-	// Use this method to count the partners (including myself)
-	// that are ports to the attached memory.
-      unsigned count_partners() const;
-
-    private:
-      NetMemory*mem_;
-      NetRamDq*next_;
-      unsigned awidth_;
-
-};
 
 /*
  * The NetReplicate node takes a vector input and makes it into a larger
@@ -1710,20 +1655,18 @@ class NetAssign_ {
 
     public:
       NetAssign_(NetNet*sig);
-      NetAssign_(NetMemory*mem);
       ~NetAssign_();
 
-	// If this expression exists, then only a single bit is to be
-	// set from the rval, and the value of this expression selects
-	// the pin that gets the value.
-      NetExpr*bmux();
-      const NetExpr*bmux() const;
+	// If this expression exists, then it is used to select a word
+	// from an array/memory.
+      NetExpr*word();
+      const NetExpr*word() const;
 
 	// Get the base index of the part select, or 0 if there is no
 	// part select.
       const NetExpr* get_base() const;
 
-      void set_bmux(NetExpr*);
+      void set_word(NetExpr*);
       void set_part(NetExpr* loff, unsigned wid);
 
 	// Get the width of the r-value that this node expects. This
@@ -1735,7 +1678,6 @@ class NetAssign_ {
       perm_string name() const;
 
       NetNet* sig() const;
-      NetMemory*mem() const;
 
 	// Mark that the synthesizer has worked with this l-value, so
 	// when it is released, the l-value signal should be turned
@@ -1755,9 +1697,8 @@ class NetAssign_ {
 
     private:
       NetNet *sig_;
-      NetMemory*mem_;
 	// Memory word index
-      NetExpr*bmux_;
+      NetExpr*word_;
 
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
@@ -3150,51 +3091,20 @@ class NetEUReduce : public NetEUnary {
 };
 
 /*
- * A reference to a memory is represented by this expression. If the
- * index is not supplied, then the node is only valid in certain
- * specific contexts.
- */
-class NetEMemory  : public NetExpr {
-
-    public:
-      NetEMemory(NetMemory*mem, NetExpr*idx =0);
-      virtual ~NetEMemory();
-
-      perm_string name () const;
-      const NetExpr* index() const;
-
-      virtual bool set_width(unsigned, bool last_chance);
-      virtual NetNet* synthesize(Design*des);
-
-      NetExpr* eval_tree();
-      virtual NetEMemory*dup_expr() const;
-
-      virtual NexusSet* nex_input();
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(ostream&) const;
-
-      const NetMemory*memory() const { return mem_; };
-
-    private:
-      NetMemory*mem_;
-      NetExpr* idx_;
-};
-
-/*
  * When a signal shows up in an expression, this type represents
  * it. From this the expression can get any kind of access to the
- * structural signal.
+ * structural signal, including arrays.
  *
- * A signal shows up as a node in the netlist so that structural
- * activity can invoke the expression. This node also supports part
- * select by indexing a range of the NetNet that is associated with
- * it. The msi() is the more significant index, and lsi() the least
- * significant index.
+ * The NetESignal may refer to an array, if the word_index is
+ * included. This expression calculates the index of the word in the
+ * array. It may only be nil if the expression refers to the whole
+ * array, and that is legal only in limited situation.
  */
 class NetESignal  : public NetExpr {
 
     public:
       NetESignal(NetNet*n);
+      NetESignal(NetNet*n, NetExpr*word_index);
       ~NetESignal();
 
       perm_string name() const;
@@ -3204,12 +3114,16 @@ class NetESignal  : public NetExpr {
       NetNet* synthesize(Design*des);
       NexusSet* nex_input();
 
-	// These methods actually reference the properties of the
-	// NetNet object that I point to.
-      unsigned bit_count() const;
-      Link& bit(unsigned idx);
+	// This is the expression for selecting an array word, if this
+	// signal refers to an array.
+      const NetExpr* word_index() const;
 
+	// This is the width of the vector that this signal refers to.
+      unsigned vector_width() const;
+	// Point back to the signal that this expression node references.
       const NetNet* sig() const;
+      NetNet* sig();
+	// Declared vector dimensions for the signal.
       unsigned msi() const;
       unsigned lsi() const;
 
@@ -3220,6 +3134,8 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
+	// Expression to select a word from the net.
+      NetExpr*word_;
 };
 
 
@@ -3276,15 +3192,6 @@ class NetScope : public Attrib {
 
       NetNet* find_signal(const char*name);
       NetNet* find_signal_in_child(const hname_t&name);
-
-
-	/* ... and these methods manage memory the same way as signals
-	   are managed above. */
-
-      void add_memory(NetMemory*);
-      void rem_memory(NetMemory*);
-
-      NetMemory* find_memory(const string&name);
 
 
 	/* The parent and child() methods allow users of NetScope
@@ -3399,8 +3306,6 @@ class NetScope : public Attrib {
 
       NetEvent *events_;
       NetNet   *signals_;
-      NetMemory*memories_;
-
       perm_string module_name_;
       union {
 	    NetTaskDef*task_;
@@ -3567,6 +3472,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.366  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.365  2006/11/04 06:19:25  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may

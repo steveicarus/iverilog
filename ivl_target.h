@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.171 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.172 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include  <stdint.h>
@@ -58,6 +58,10 @@ _BEGIN_DECL
  *
  * The following typedefs list the various cookies that may be passed
  * around.
+ *
+ * ivl_array_t
+ *    This object represent an array that can be a memory or a net
+ *    array. (They are the same from the perspective of ivl_target.h.)
  *
  * ivl_design_t
  *    This object represents the entire elaborated design. Various
@@ -137,6 +141,7 @@ _BEGIN_DECL
  * scope. These names are unique within a scope, but not necessarily
  * throughout the design.
  */
+typedef struct ivl_array_s    *ivl_array_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
@@ -153,7 +158,7 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
-typedef struct ivl_memory_s   *ivl_memory_t;
+typedef struct ivl_memory_s   *ivl_memory_t; /* DEPRECATED */
 typedef struct ivl_statement_s*ivl_statement_t;
 
 /*
@@ -178,7 +183,7 @@ typedef enum ivl_drive_e {
    and incompatibilities to be introduced. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
-	/* IVL_EX_BITSEL = 1, */
+      IVL_EX_ARRAY = 18,
       IVL_EX_BINARY = 2,
       IVL_EX_CONCAT = 3,
       IVL_EX_EVENT  = 17,
@@ -225,6 +230,7 @@ typedef enum ivl_logic_e {
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
       IVL_LPM_ADD    =  0,
+      IVL_LPM_ARRAY  = 30,
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
       IVL_LPM_CMP_EQ = 10,
@@ -252,7 +258,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SIGN_EXT=27,
       IVL_LPM_SUB    =  8,
-      IVL_LPM_RAM    =  9,
+      _IVL_LPM_RAM   =  9, /* obsolete */
       IVL_LPM_UFUNC  = 14
 } ivl_lpm_type_t;
 
@@ -574,6 +580,14 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *
  * SEMANTIC NOTES
  *
+ * - IVL_EX_ARRAY
+ * This expression type is a special case of the IVL_EX_SIGNAL where
+ * the target is an array (ivl_signal_t with an array_count) but there
+ * is no index expression. This is used only in the special situation
+ * where the array is passed to a system task/function. The function
+ * ivl_expr_signal returns the ivl_signal_t of the array object, and
+ * from that all the properties of the array can be determined.
+ *
  * - IVL_EX_BINARY
  *
  * - IVL_EX_SELECT
@@ -583,6 +597,21 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  * is the base of a vector. The compiler has already figured out any
  * conversion from signal units to vector units, so the result of
  * ivl_expr_oper1 should range from 0 to ivl_expr_width().
+ *
+ * - IVL_EX_SIGNAL
+ * This expression references a signal vector. The ivl_expr_signal
+ * function gets a handle for the signal that is referenced. The
+ * signal may be an array (see the ivl_signal_array_count function)
+ * that is addressed by the expression returned by the ivl_expr_oper1
+ * function. This expression returns a *canonical* address. The core
+ * compiler already corrected the expression to account for index
+ * bases.
+ *
+ * The ivl_expr_width function returns the vector width of the signal
+ * word. The ivl_expr_value returns the data type of the word.
+ *
+ * Bit and part selects are not done here. The IVL_EX_SELECT
+ * expression does bit/part selects on the word read from the signal.
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
@@ -975,7 +1004,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * single ivl_lpm_data input are the same with, ivl_lpm_width. This
  * device carries a vector like other LPM devices.
  *
- * - Memory port (IVL_LPM_RAM)
+ * - Memory port (IVL_LPM_RAM) (deprecated in favor of IVL_LPM_ARRAY)
  * These are structural ports into a memory device. They represent
  * address/data ports of a memory device that the context can hook to
  * for read or write. Read devices have an ivl_lpm_q output port that
@@ -1069,34 +1098,33 @@ extern ivl_expr_t  ivl_lpm_aset_value(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
+  /* IVL_LPM_ARRAY */
+extern ivl_signal_t ivl_lpm_array(ivl_lpm_t net);
   /* IVL_LPM_PART */
 extern unsigned ivl_lpm_base(ivl_lpm_t net);
-  /* IVL_LPM_FF IVL_LPM_RAM */
+  /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
-  /* IVL_LPM_FF IVL_LPM_RAM */
+  /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
+     IVL_LPM_MUX IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_RAM
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART
      IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX IVL_LPM_RAM */
+  /* IVL_LPM_MUX */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
-  /* IVL_LPM_MUX IVL_LPM_RAM */
+  /* IVL_LPM_MUX */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net);
   /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_SFUNC */
 extern const char*ivl_lpm_string(ivl_lpm_t net);
-  /* IVL_LPM_RAM */
-extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
-
 
 /* LVAL
  * The l-values of assignments are concatenation of ivl_lval_t
@@ -1149,12 +1177,21 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  * The ivl_lval_part_off is the canonical base of a part or
  * bit select.
  *
- * - Memory words
+ * - Memory words (Replace this with Array words below)
  * If the l-value is a memory word, the ivl_lval_mem function returns
  * a non-nil value. The ivl_lval_idx function will return an
  * expression that calculates an address for the memory. The compiler
  * will assure that the ivl_lval_width will exactly match the
  * ivl_memory_width of the memory word.
+ *
+ * - Array words
+ * If the l-value is an array, then ivl_lval_idx function will return
+ * an expression that calculates the address of the array word. If
+ * the referenced signal has more then one word, this expression must
+ * be present. If the signal has exactly one word (it is not an array)
+ * then the ivl_lval_idx exression must *not* be present.
+ *
+ * For array words, the ivl_lval_width is the width of the word.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
@@ -1432,17 +1469,22 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  * Signals have a name (obviously) and types. A signal may also be
  * signed or unsigned.
  *
- * ivl_signal_pins (replace these with ivl_signal_nex)
- * ivl_signal_pin
- *    The ivl_signal_pin function returns the nexus connected to the
- *    signal. If the signal is a vector, the idx can be a non-zero
- *    value, and the result is the nexus for the specified bit.
- *
  * ivl_signal_nex
  *    This is the nexus of the signal. This is used for managing
  *    connections to the rest of the net. There is exactly one pin for
- *    a signal. If the signal represents a vector, then the entire
- *    vector is carried through the single output.
+ *    each word of a signal. Each word may in turn be a vector. The
+ *    word address is the zero-based index for the word. It is up to
+ *    the context to translate different bases to the canonical address.
+ *
+ * ivl_signal_array_base
+ * ivl_signal_array_count
+ *    The signal may be arrayed. If so, the array_count is >1. Each
+ *    word of the array has its own nexus. The array_base is the
+ *    address is the Verilg source for the canonical zero word. This
+ *    may be negative, positive or zero.
+ *
+ *    Note that arraying of the signal into words is distinct from the
+ *    vectors. The width of a signal is the width of a WORD.
  *
  * ivl_signal_msb
  * ivl_signal_lsb
@@ -1503,7 +1545,9 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    key does not exist, the function returns 0.
  */
 
-extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net);
+extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
+extern int         ivl_signal_array_base(ivl_signal_t net);
+extern unsigned    ivl_signal_array_count(ivl_signal_t net);
 extern int         ivl_signal_msb(ivl_signal_t net);
 extern int         ivl_signal_lsb(ivl_signal_t net);
 extern unsigned    ivl_signal_width(ivl_signal_t net);
@@ -1706,10 +1750,6 @@ extern unsigned ivl_stmt_lvals(ivl_statement_t net);
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
-#if 0
-extern ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx);
-extern unsigned    ivl_stmt_nexus_count(ivl_statement_t net);
-#endif
   /* IVL_ST_STASK */
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
@@ -1752,6 +1792,12 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.172  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.171  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *
@@ -1781,181 +1827,5 @@ _END_DECL
  *
  * Revision 1.162  2005/11/20 15:58:25  steve
  *  Document the IVL_ST_DELAY statements.
- *
- * Revision 1.161  2005/09/19 21:45:35  steve
- *  Spelling patches from Larry.
- *
- * Revision 1.160  2005/09/01 04:11:37  steve
- *  Generate code to handle real valued muxes.
- *
- * Revision 1.159  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.158  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.157  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.156  2005/06/13 22:25:37  steve
- *  Document ivl_logic_delay function.
- *
- * Revision 1.155  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.154  2005/05/08 23:44:08  steve
- *  Add support for variable part select.
- *
- * Revision 1.153  2005/05/07 03:14:00  steve
- *  Clarify internal delays for assignments.
- *
- * Revision 1.152  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.151  2005/04/13 06:35:11  steve
- *  Make logic aware of strength.
- *
- * Revision 1.150  2005/04/08 04:52:31  steve
- *  Make clear that memory addresses are cannonical.
- *
- * Revision 1.149  2005/04/06 05:29:08  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.148  2005/04/01 06:04:30  steve
- *  Clean up handle of UDPs.
- *
- * Revision 1.147  2005/03/18 02:56:03  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.146  2005/03/09 04:53:40  steve
- *  Generate code for new form of memory ports.
- *
- * Revision 1.145  2005/03/05 05:47:42  steve
- *  Handle memory words in l-value concatenations.
- *
- * Revision 1.144  2005/03/03 04:34:42  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.143  2005/02/19 02:43:38  steve
- *  Support shifts and divide.
- *
- * Revision 1.142  2005/02/14 01:51:39  steve
- *  Handle bit selects in l-values to assignments.
- *
- * Revision 1.141  2005/02/13 01:15:07  steve
- *  Replace supply nets with wires connected to pullup/down supply devices.
- *
- * Revision 1.140  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
- *
- * Revision 1.139  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.138  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.137  2005/01/29 18:46:18  steve
- *  Netlist boolean expressions generate gate vectors.
- *
- * Revision 1.136  2005/01/29 16:47:20  steve
- *  Clarify width of nexus.
- *
- * Revision 1.135  2005/01/28 05:39:33  steve
- *  Simplified NetMult and IVL_LPM_MULT.
- *
- * Revision 1.134  2005/01/24 05:28:30  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.133  2005/01/22 17:36:59  steve
- *  stub dump signed flags of magnitude compare.
- *
- * Revision 1.132  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.131  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.130  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.129  2004/12/18 18:56:18  steve
- *  Add ivl_event_scope, and better document ivl_event_X methods.
- *
- * Revision 1.128  2004/12/15 17:10:40  steve
- *  Fixup force statement elaboration.
- *
- * Revision 1.127  2004/12/11 02:31:26  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.126  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.125  2004/09/25 01:58:12  steve
- *  Some commentary on ivl_logic_pin.
- *
- * Revision 1.124  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.123  2003/11/08 20:06:21  steve
- *  Spelling fixes in comments.
- *
- * Revision 1.122  2003/08/22 23:14:26  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.121  2003/08/15 02:23:52  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.120  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.119  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.118  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.117  2003/04/22 04:48:29  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.116  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.115  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.114  2003/03/06 01:24:37  steve
- *  Obsolete the ivl_event_name function.
- *
- * Revision 1.113  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.112  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.111  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.110  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.109  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
  */
 #endif

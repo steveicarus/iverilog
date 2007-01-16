@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.72 2006/11/04 06:16:27 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.73 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1190,50 +1190,6 @@ NetEConst* NetEConcat::eval_tree()
       return res;
 }
 
-/*
- * There are limits to our ability to evaluate a memory reference
- * expression, because the content of a memory is never
- * constant. However, the index expression may be precalculated, and
- * there are certain index values that do give us constant results.
- */
-NetExpr* NetEMemory::eval_tree()
-{
-	/* Attempt to evaluate the index expression to a constant, if
-	   it is not already. */
-      if (idx_ && !dynamic_cast<NetEConst*>(idx_)) {
-	    NetExpr* tmp = idx_->eval_tree();
-	    if (tmp) {
-		  delete idx_;
-		  idx_ = tmp;
-	    }
-      }
-
-      NetEConst*itmp = dynamic_cast<NetEConst*>(idx_);
-      if (itmp == 0)
-	    return 0;
-
-      verinum ival = itmp->value();
-
-	/* If the index expression has any x or z bits, then we know
-	   already that the expression result is a constant x. */
-      if (! ival.is_defined()) {
-	    verinum xres (verinum::Vx, mem_->width(), false);
-	    NetEConst*res = new NetEConst(xres);
-	    return res;
-      }
-
-	/* If the index expression is outside the range of the memory,
-	   then the result is a constant x. */
-      unsigned norm_idx = mem_->index_to_address(ival.as_long());
-      if (norm_idx >= mem_->count()) {
-	    verinum xres (verinum::Vx, mem_->width(), false);
-	    NetEConst*res = new NetEConst(xres);
-	    return res;
-      }
-
-      return 0;
-}
-
 NetExpr* NetEParam::eval_tree()
 {
       if (des_ == 0) {
@@ -1696,6 +1652,12 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.73  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.72  2006/11/04 06:16:27  steve
  *  Fix padding of constant eval of NetESelect.
  *

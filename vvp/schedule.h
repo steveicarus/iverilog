@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.28 2006/09/29 01:24:34 steve Exp $"
+#ident "$Id: schedule.h,v 1.29 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
 # include  "memory.h"
+# include  "array.h"
 
 /*
  * This causes a thread to be scheduled for execution. The schedule
@@ -54,6 +55,11 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   const vvp_vector4_t&val,
 				   vvp_time64_t  delay);
 
+extern void schedule_assign_array_word(vvp_array_t mem,
+				       unsigned word_address,
+				       unsigned off,
+				       vvp_vector4_t val,
+				       vvp_time64_t delay);
 extern void schedule_assign_memory_word(vvp_memory_t mem,
 					unsigned word_address,
 					unsigned off,
@@ -142,6 +148,12 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.29  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.28  2006/09/29 01:24:34  steve
  *  rwsync callback fixes from Ben Staveley (with modifications.)
  *

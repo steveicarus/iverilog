@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.130 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.131 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1531,21 +1531,39 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
  */
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 {
-      unsigned idx;
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
+
+      unsigned word = 0;
 
       if (swid > res.wid)
 	    swid = res.wid;
 
+	/* If this is an access to an array, handle that by emiting a
+	   load/av instruction. */
+      if (ivl_signal_array_count(sig) > 1) {
+	    ivl_expr_t ix = ivl_expr_oper1(exp);
+	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
+		  draw_eval_expr_into_integer(ix, 3);
+		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+			  res.base, sig, swid);
+		  return;
+	    }
+
+	      /* The index is constant, so we can return to direct
+	         readout with the specific word selected. */
+	    word = get_number_immediate(ix);
+      }
+
 	/* If this is a REG (a variable) then I can do a vector read. */
-      fprintf(vvp_out, "    %%load/v %u, V_%s, %u;\n",
-	      res.base, vvp_signal_label(sig), swid);
+      fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u;\n",
+	      res.base, sig, word, swid);
 
 	/* Pad the signal value with zeros. */
       if (swid < res.wid) {
 
 	    if (ivl_expr_signed(exp)) {
+		  unsigned idx;
 		  for (idx = swid ;  idx < res.wid ;  idx += 1)
 			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
 				res.base+idx, res.base+swid-1);
@@ -1671,6 +1689,24 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       struct vector_info res;
       unsigned idx;
 
+	/* Use this word of the signal. */
+      unsigned use_word = 0;
+	/* If this is an access to an array, handle that by emiting a
+	   load/av instruction. */
+      if (ivl_signal_array_count(sig) > 1) {
+	    ivl_expr_t ix = ivl_expr_oper1(sube);
+	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
+		  draw_eval_expr_into_integer(ix, 3);
+		  assert(0); /* XXXX Don't know how to load part
+			     select! */
+		  return res;
+	    }
+
+	      /* The index is constant, so we can return to direct
+	         readout with the specific word selected. */
+	    use_word = get_number_immediate(ix);
+      }
+
       shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
 
       fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
@@ -1683,8 +1719,8 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       if (shiv.base == 0 && ivl_expr_width(sube) == wid) {
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "   %%load/v %u, V_%p, %u;\n",
-		    res.base, sig, ivl_expr_width(sube));
+	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u;\n",
+		    res.base, sig, use_word, ivl_expr_width(sube));
 
 	    return res;
       }
@@ -1698,10 +1734,10 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
 	    res.base = allocate_vector(ivl_expr_width(sube));
 	    res.wid = ivl_expr_width(sube);
-	    fprintf(vvp_out, "   %%load/v %u, V_%p, %u; Only need %u bits\n",
-		    res.base, sig, ivl_expr_width(sube), wid);
+	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u bits\n",
+		    res.base, sig, use_word, ivl_expr_width(sube), wid);
  
-	    save_signal_lookaside(res.base, sig, res.wid);
+	    save_signal_lookaside(res.base, sig, use_word, res.wid);
 
 	    {
 		  struct vector_info tmp;
@@ -1724,8 +1760,8 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 			  ivl_expr_width(sube), wid);
 		  break;
 	    }
-	    fprintf(vvp_out, "   %%load/x.p %u, V_%p, 0;\n",
-		    res.base+idx, sig);
+	    fprintf(vvp_out, "   %%load/x.p %u, v%p_%u, 0;\n",
+		    res.base+idx, sig, use_word);
       }
 
       return res;
@@ -2209,6 +2245,12 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.131  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.130  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

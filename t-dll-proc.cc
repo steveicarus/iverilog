@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.68 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.69 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,30 +171,21 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 		  cur->n.sig = find_signal(des_, asn->sig());
 
 		  cur->idx = 0;
-		  if (asn->bmux()) {
+		    // If there is a word select expression, it is
+		    // really an array index.
+		  if (asn->word()) {
 			assert(expr_ == 0);
-			asn->bmux()->expr_scan(this);
+			asn->word()->expr_scan(this);
 
 			if (cur->n.sig->lsb_index != 0)
 			      sub_off_from_expr_(asn->sig()->lsb());
 			if (cur->n.sig->lsb_dist != 1)
 			      mul_expr_by_const_(cur->n.sig->lsb_dist);
 
-			cur->type_ = IVL_LVAL_MUX;
+			cur->type_ = IVL_LVAL_ARR;
 			cur->idx = expr_;
 			expr_ = 0;
 		  }
-	    } else if (asn->mem()) {
-		  assert(asn->mem());
-		  cur->type_ = IVL_LVAL_MEM;
-		  cur->n.mem = find_memory(des_, asn->mem());
-		  assert(cur->n.mem);
-		  cur->width_ = ivl_memory_width(cur->n.mem);
-
-		  assert(expr_ == 0);
-		  asn->bmux()->expr_scan(this);
-		  cur->idx = expr_;
-		  expr_ = 0;
 	    } else {
 		  assert(0);
 	    }
@@ -741,6 +732,12 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.69  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.68  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

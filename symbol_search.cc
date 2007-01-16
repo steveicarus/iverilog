@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.3 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.4 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -29,7 +29,6 @@
  */
 NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 		       NetNet*&net,
-		       NetMemory*&mem,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
 		       const NetExpr*&ex1, const NetExpr*&ex2)
@@ -41,7 +40,6 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 
 	/* Initialize output argument to cleared. */
       net = 0;
-      mem = 0;
       par = 0;
       eve = 0;
 
@@ -52,11 +50,6 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 
       while (scope) {
 	    if ( (net = scope->find_signal(key)) ) {
-		  delete key;
-		  return scope;
-	    }
-
-	    if ( (mem = scope->find_memory(key)) ) {
 		  delete key;
 		  return scope;
 	    }
@@ -83,6 +76,12 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.4  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.3  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

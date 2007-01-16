@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.35 2005/11/27 05:56:20 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.36 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,7 +38,6 @@
 NetScope::NetScope(NetScope*up, perm_string n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
 {
-      memories_ = 0;
       signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
@@ -358,50 +357,6 @@ NetNet* NetScope::find_signal_in_child(const hname_t&path)
       return cur->find_signal(path.peek_name(idx));
 }
 
-void NetScope::add_memory(NetMemory*mem)
-{
-      if (memories_ == 0) {
-	    mem->snext_ = mem;
-	    mem->sprev_ = mem;
-      } else {
-	    mem->snext_ = memories_->snext_;
-	    mem->sprev_ = memories_;
-	    mem->snext_->sprev_ = mem;
-	    mem->sprev_->snext_ = mem;
-      }
-      memories_ = mem;
-      mem->scope_ = this;
-}
-
-void NetScope::rem_memory(NetMemory*mem)
-{
-      assert(mem->scope_ == this);
-      if (memories_ == mem)
-	    memories_ = mem->sprev_;
-
-      if (memories_ == mem) {
-	    memories_ = 0;
-      } else {
-	    mem->sprev_->snext_ = mem->snext_;
-	    mem->snext_->sprev_ = mem->sprev_;
-      }
-      mem->scope_ = 0;
-}
-
-NetMemory* NetScope::find_memory(const string&key)
-{
-      if (memories_ == 0)
-	    return 0;
-
-      NetMemory*cur = memories_;
-      do {
-	    if (cur->name() == key.c_str())
-		  return cur;
-	    cur = cur->sprev_;
-      } while (cur != memories_);
-      return 0;
-}
-
 /*
  * This method locates a child scope by name. The name is the simple
  * name of the child, no hierarchy is searched.
@@ -457,6 +412,12 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.36  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.35  2005/11/27 05:56:20  steve
  *  Handle bit select of parameter with ranges.
  *

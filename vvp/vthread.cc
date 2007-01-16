@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.157 2006/10/05 01:23:54 steve Exp $"
+#ident "$Id: vthread.cc,v 1.158 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -533,6 +533,28 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t tmp (cp->number, BIT4_X);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
+      return true;
+}
+
+/* %assign/av <array>, <delay>, <bit>
+ * This generates an assignment event to an array. Index register 0
+ * contains the width of the vector (and the word) and index register
+ * 3 contains the canonical address of the word in memory.
+ */
+bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      unsigned off = thr->words[1].w_int;
+      unsigned adr = thr->words[3].w_int;
+
+      assert(wid > 0);
+
+      unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      schedule_assign_array_word(cp->array, adr, off, value, delay);
       return true;
 }
 
@@ -1886,15 +1908,34 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
-bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
+/*
+ * %load/av <bit>, <array-label>, <wid> ;
+ *
+ * <bit> is the thread bit address for the result
+ * <array-label> is the array to access, and
+ * <wid> is the width of the word to read.
+ *
+ * The address of the word in the array is in index register 3.
+ */
+bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
-      unsigned char val = memory_get(cp->mem, thr->words[3].w_int);
-      thr_put_bit(thr, cp->bit_idx[0], val);
-#else
-      fprintf(stderr, "XXXX %%load/m is obsolete\n");
-#endif
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+
+      vvp_vector4_t word = array_get_word(cp->array, adr);
+
+      if (word.size() != wid) {
+	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
+		    0, word.size(), wid);
+      }
+      assert(word.size() == wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, bit += 1) {
+	    vvp_bit4_t val = word.value(idx);
+	    thr_put_bit(thr, bit, val);
+      }
+
       return true;
 }
 
@@ -2864,6 +2905,25 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 
 
 /*
+ * This implements the "%set/av <label>, <bit>, <wid>" instruction. In
+ * this case, the <label> is an array label, and the <bit> and <wid>
+ * are the thread vector of a value to be written in.
+ */
+bool of_SET_AV(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned off = thr->words[1].w_int;
+      unsigned adr = thr->words[3].w_int;
+
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      array_set_word(cp->array, adr, off, value);
+      return true;
+}
+
+/*
  * This implements the "%set/mv <label>, <bit>, <wid>" instruction. In
  * this case, the <label> is a memory label, and the <bit> and <wid>
  * are the thread vector of a value to be written in.
@@ -3312,6 +3372,12 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.158  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.157  2006/10/05 01:23:54  steve
  *  Handle non-constant delays on indexed non-blocking assignments.
  *

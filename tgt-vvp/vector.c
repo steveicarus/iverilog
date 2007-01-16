@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.7 2005/09/17 01:01:00 steve Exp $"
+#ident "$Id: vector.c,v 1.8 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -32,6 +32,7 @@
 static struct allocation_score_s {
       ivl_expr_t exp;
       ivl_signal_t sig;
+      unsigned sig_word;
       unsigned  exp_bit : 24;
       unsigned  sig_bit : 24;
       unsigned alloc    :  8;
@@ -56,9 +57,10 @@ static inline void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
       allocation_map[addr].exp_bit = ebit;
 }
 
-static inline void set_sig(unsigned addr, ivl_signal_t exp, unsigned ebit)
+static inline void set_sig(unsigned addr, ivl_signal_t exp, unsigned sig_word, unsigned ebit)
 {
       allocation_map[addr].sig = exp;
+      allocation_map[addr].sig_word = sig_word;
       allocation_map[addr].sig_bit = ebit;
 }
 
@@ -139,7 +141,7 @@ void clear_expression_lookaside(void)
 
       for (idx = 0 ;  idx < lookaside_top ;  idx += 1) {
 	    set_exp(idx, 0, 0);
-	    set_sig(idx, 0, 0);
+	    set_sig(idx, 0, 0, 0);
       }
 
       lookaside_top = 0;
@@ -157,14 +159,14 @@ void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
 	   bits. */
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    set_exp(addr+idx, exp, idx);
-	    set_sig(addr+idx, 0, 0);
+	    set_sig(addr+idx, 0, 0, 0);
       }
 
       if ((addr+wid) > lookaside_top)
 	    lookaside_top = addr+wid;
 }
 
-void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned wid)
+void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned sig_word, unsigned wid)
 {
       unsigned idx;
 	/* Don't bind any of hte low bits to a signal. */
@@ -174,7 +176,7 @@ void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned wid)
       assert((addr+wid) <= MAX_VEC);
 
       for (idx = 0 ;  idx < wid ;  idx += 1)
-	    set_sig(addr+idx, sig, idx);
+	    set_sig(addr+idx, sig, sig_word, idx);
 
       if ((addr+wid) > lookaside_top)
 	    lookaside_top = addr+wid;
@@ -321,6 +323,12 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.8  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.7  2005/09/17 01:01:00  steve
  *  More robust use of precalculated expressions, and
  *  Separate lookaside for written variables that can

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.84 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: compile.h,v 1.85 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -237,6 +237,10 @@ extern char **compile_udp_table(char **table, char *row);
  * Memory Instances, Ports, and Initialization
  */
 
+extern void compile_array(char*label, char*name, int last, int first);
+
+extern void compile_array_port(char*label, char*name, char*addr);
+
 extern void compile_memory(char *label, char *name, int lsb, int msb,
 			   unsigned idxs, long *idx);
 
@@ -326,7 +330,11 @@ extern void compile_thread(char*start_sym, char*flag);
  */
 extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, char signed_flag);
-extern void compile_var_real(char*label, char*nane,
+extern void compile_var_real(char*label, char*name,
+			     int msb, int lsb);
+extern void compile_variablew(char*label, char*array_symbol,
+			     int msb, int lsb, char signed_flag);
+extern void compile_varw_real(char*label, char*array_symbol,
 			     int msb, int lsb);
 
 extern void compile_net(char*label, char*name,
@@ -334,6 +342,14 @@ extern void compile_net(char*label, char*name,
 			bool net8_flag,
 			unsigned argc, struct symb_s*argv);
 extern void compile_net_real(char*label, char*name,
+			     int msb, int lsb,
+			     unsigned argc, struct symb_s*argv);
+
+extern void compile_netw(char*label, char*array_symbol,
+			int msb, int lsb, bool signed_flag,
+			bool net8_flag,
+			unsigned argc, struct symb_s*argv);
+extern void compile_netw_real(char*label, char*array_symbol,
 			     int msb, int lsb,
 			     unsigned argc, struct symb_s*argv);
 
@@ -346,6 +362,12 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.85  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.84  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *

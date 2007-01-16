@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.88 2006/11/10 05:44:44 steve Exp $"
+#ident "$Id: emit.cc,v 1.89 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,6 +55,11 @@ bool NetAddSub::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_add_sub(this);
       return true;
+}
+
+bool NetArrayDq::emit_node(struct target_t*tgt) const
+{
+      return tgt->lpm_array_dq(this);
 }
 
 bool NetCaseCmp::emit_node(struct target_t*tgt) const
@@ -123,12 +128,6 @@ bool NetMux::emit_node(struct target_t*tgt) const
 bool NetPartSelect::emit_node(struct target_t*tgt) const
 {
       return tgt->part_select(this);
-}
-
-bool NetRamDq::emit_node(struct target_t*tgt) const
-{
-      tgt->lpm_ram_dq(this);
-      return true;
 }
 
 bool NetReplicate::emit_node(struct target_t*tgt) const
@@ -357,13 +356,6 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	    } while (cur != signals_->sig_next_);
       }
 
-      if (memories_) {
-	    NetMemory*cur = memories_->snext_;
-	    do {
-		  tgt->memory(cur);
-		  cur = cur->snext_;
-	    } while (cur != memories_->snext_);
-      }
 }
 
 bool NetScope::emit_defs(struct target_t*tgt) const
@@ -472,11 +464,6 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_rparam(this);
 }
 
-void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
-{
-      tgt->expr_memory(this);
-}
-
 void NetEParam::expr_scan(struct expr_scan_t*tgt) const
 {
       cerr << get_line() << ":internal error: unexpected NetEParam."
@@ -540,6 +527,12 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.89  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.88  2006/11/10 05:44:44  steve
  *  Process delay paths in second path over signals.
  *

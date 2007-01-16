@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.43 2005/09/14 02:53:15 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.44 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -196,27 +196,6 @@ void dll_target::expr_concat(const NetEConcat*net)
 	    assert(expr_);
 	    cur->u_.concat_.parm[idx] = expr_;
       }
-
-      expr_ = cur;
-}
-
-void dll_target::expr_memory(const NetEMemory*net)
-{
-      assert(expr_ == 0);
-      if (net->index()) {
-	    net->index()->expr_scan(this);
-	    assert(expr_);
-      }
-
-      ivl_expr_t cur = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(cur);
-
-      cur->type_ = IVL_EX_MEMORY;
-      cur->value_ = IVL_VT_VECTOR;
-      cur->width_= net->expr_width();
-      cur->signed_ = net->has_sign()? 1 : 0;
-      cur->u_.memory_.mem_ = find_memory(des_, net->memory());
-      cur->u_.memory_.idx_ = expr_;
 
       expr_ = cur;
 }
@@ -410,7 +389,18 @@ void dll_target::expr_ternary(const NetETernary*net)
 
 void dll_target::expr_signal(const NetESignal*net)
 {
+      ivl_signal_t sig = find_signal(des_, net->sig());
+
       assert(expr_ == 0);
+
+	/* If there is a word expression, generate it. */
+      ivl_expr_t word_expr = 0;
+      if (const NetExpr*word = net->word_index()) {
+	    word->expr_scan(this);
+	    assert(expr_);
+	    word_expr = expr_;
+	    expr_ = 0;
+      }
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
@@ -419,7 +409,18 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->value_= net->expr_type();
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
-      expr_->u_.signal_.sig = find_signal(des_, net->sig());
+      expr_->u_.signal_.word = word_expr;
+      expr_->u_.signal_.sig = sig;
+
+	/* Make account for the special case that this is a reference
+	   to an array as a whole. We detect this case by noting that
+	   this is an array (more then 1 word) and there is no word
+	   select expression. In that case, this is an IVL_EX_ARRAY
+	   expression instead of a SIGNAL expression. */
+      if (sig->array_words > 1 && word_expr == 0) {
+	    expr_->type_ = IVL_EX_ARRAY;
+	    expr_->width_ = 0; // Doesn't make much sense for arrays.
+      }
 }
 
 
@@ -473,6 +474,12 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.44  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.43  2005/09/14 02:53:15  steve
  *  Support bool expressions and compares handle them optimally.
  *

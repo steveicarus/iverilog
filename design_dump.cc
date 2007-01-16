@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.171 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.172 2007/01/16 05:44:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,8 +112,8 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
 /* Dump a net. This can be a wire or register. */
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << type() << ": " << name() << "[" <<
-	    pin_count() << "]";
+      o << setw(ind) << "" << type() << ": " << name()
+	<< "[" << s0_ << ":" << e0_ << " count=" << pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
       o << " " << data_type_;
@@ -166,13 +166,6 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 
       dump_obj_attr(o, ind+4);
 }
-
-void NetMemory::dump(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << ""  << name_ << "[" << width_ << "] " <<
-	    "[" << idxh_ << ":" << idxl_ << "]" << endl;
-}
-
 
 /* Dump a NetNode and its pins. Dump what I know about the netnode on
    the first line, then list all the pins, with the name of the
@@ -234,6 +227,15 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Adder (NetAddSub): " << name()
 	<< " width=" << width() << " pin_count=" << pin_count()
+	<< endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetArrayDq::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NetArrayDq: " << name()
+	<< " array=" << mem_->name()
 	<< endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -427,14 +429,6 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetRamDq::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
-	<< name() << endl;
-      dump_node_pins(o, ind+4);
-      dump_obj_attr(o, ind+4);
-}
-
 void NetReplicate::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetReplicate: "
@@ -566,21 +560,9 @@ void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
 	    o << sig_->name();
-	    if (bmux_) {
-		  o << "[" << *bmux_ << "]";
-
-	    } else if (base_) {
-		  o << "[" << *base_ << " +: " << lwid_ << "]";
+	    if (word_) {
+		  o << "[word=" << *word_ << "]";
 	    }
-      } else if (mem_) {
-	    // Is there an obvious way to flag memories in the dump
-	    // as different from the _real_ bit mux case?
-	    // o << "**memory**";
-	    o << mem_->name() << "[";
-	    if (bmux_) o << *bmux_;
-	      else     o << "**oops**";
-	    o << "]";
-
 	    if (base_) {
 		  o << "[" << *base_ << " +: " << lwid_ << "]";
 	    }
@@ -906,15 +888,6 @@ void NetScope::dump(ostream&o) const
 	    } while (cur != signals_->sig_next_);
       }
 
-	// Dump the memories,
-      if (memories_) {
-	    NetMemory*cur = memories_->snext_;
-	    do {
-		  cur->dump(o, 4);
-		  cur = cur->snext_;
-	    } while (cur != memories_->snext_);
-      }
-
 	// Dump specparams
       typedef map<perm_string,spec_val_t>::const_iterator specparam_it_t;
       for (specparam_it_t cur = specparams.begin()
@@ -1148,14 +1121,9 @@ void NetESignal::dump(ostream&o) const
 {
       if (has_sign())
 	    o << "+";
-      o << name() << "[" << msi()<<":"<<lsi() << "]";
-}
-
-void NetEMemory::dump(ostream&o) const
-{
-      o << mem_->name() << "[";
-      if (idx_) idx_->dump(o);
-      o << "]";
+      o << name();
+      if (word_) o << "[word=" << *word_ << "]";
+      o << "[" << msi()<<":"<<lsi() << "]";
 }
 
 void NetEParam::dump(ostream&o) const
@@ -1165,7 +1133,7 @@ void NetEParam::dump(ostream&o) const
       else if (name_)
 	    o << "<" << name_ << ">";
       else
-	    o << "<???>";
+	    o << "<" "???" ">";
 }
 
 void NetETernary::dump(ostream&o) const
@@ -1231,6 +1199,12 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.172  2007/01/16 05:44:14  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.171  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *

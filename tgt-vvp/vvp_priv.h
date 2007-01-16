@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.40 2006/02/02 02:43:59 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.41 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -212,7 +212,7 @@ extern void save_expression_lookaside(unsigned addr,
 				      ivl_expr_t exp,
 				      unsigned wid);
 extern void save_signal_lookaside(unsigned addr,
-				  ivl_signal_t sig,
+				  ivl_signal_t sig, unsigned use_word,
 				  unsigned wid);
 
 extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
@@ -252,6 +252,12 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.41  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.40  2006/02/02 02:43:59  steve
  *  Allow part selects of memory words in l-values.
  *

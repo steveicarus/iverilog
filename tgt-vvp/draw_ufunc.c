@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_ufunc.c,v 1.1 2005/07/13 04:52:31 steve Exp $"
+#ident "$Id: draw_ufunc.c,v 1.2 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -32,10 +32,12 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
 {
       struct vector_info res;
 
+	/* ports cannot be arrays. */
+      assert(ivl_signal_array_count(port) == 1);
+
       res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
       assert(res.wid <= ivl_signal_width(port));
-      fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
-	      vvp_signal_label(port), res.base, res.wid);
+      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base, res.wid);
 
       clr_vector(res);
 }
@@ -44,8 +46,10 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t exp)
 {
       int res = draw_eval_real(exp);
 
-      fprintf(vvp_out, "   %%set/wr V_%s, %d;\n",
-	      vvp_signal_label(port), res);
+	/* ports cannot be arrays. */
+      assert(ivl_signal_array_count(port) == 1);
+
+      fprintf(vvp_out, "   %%set/wr v%p_0, %d;\n", port, res);
 }
 
 static void draw_function_argument(ivl_signal_t port, ivl_expr_t exp)
@@ -113,8 +117,9 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
         if (load_wid > ivl_signal_width(retval))
 	      load_wid = ivl_signal_width(retval);
 
-	fprintf(vvp_out, "    %%load/v  %u, V_%s, %u;\n",
-		res.base, vvp_signal_label(retval), load_wid);
+	assert(ivl_signal_array_count(retval) == 1);
+	fprintf(vvp_out, "    %%load/v  %u, v%p_0, %u;\n",
+		res.base, retval, load_wid);
 
 	if (load_wid < swid)
 	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
@@ -148,10 +153,12 @@ int draw_ufunc_real(ivl_expr_t exp)
       fprintf(vvp_out, ", S_%p;\n", def);
       fprintf(vvp_out, "   %%join;\n");
 
+	/* Return value signal cannot be an array. */
+      assert(ivl_signal_array_count(retval) == 1);
+
 	/* Load the result into a word. */
       res = allocate_word();
-      fprintf(vvp_out, "  %%load/wr %d, V_%s;\n",
-	      res, vvp_signal_label(retval));
+      fprintf(vvp_out, "  %%load/wr %d, v%p_0;\n", res, retval);
 
       return res;
 }

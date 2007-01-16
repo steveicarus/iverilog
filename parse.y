@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.223 2006/12/06 05:32:36 steve Exp $"
+#ident "$Id: parse.y,v 1.224 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -191,8 +191,8 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <expr>    udp_initial_expr_opt
 
 %type <hier> identifier
-%type <text> register_variable
-%type <perm_strings> register_variable_list list_of_identifiers
+%type <text> register_variable net_variable
+%type <perm_strings> register_variable_list net_variable_list list_of_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -1629,7 +1629,7 @@ module_item
 	: attribute_list_opt net_type
           primitive_type_opt signed_opt range_opt
           delay3_opt
-          list_of_identifiers ';'
+          net_variable_list ';'
 
 		{ ivl_variable_type_t dtype = $3;
 		  if (dtype == IVL_VT_NO_TYPE)
@@ -2470,6 +2470,40 @@ register_variable_list
 		  delete[]$1;
 		}
 	| register_variable_list ',' register_variable
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
+		  $$ = tmp;
+		  delete[]$3;
+		}
+	;
+
+net_variable
+	: IDENTIFIER
+		{ pform_makewire(@1, $1, NetNet::IMPLICIT,
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_NO_TYPE, 0);
+		  $$ = $1;
+		}
+	| IDENTIFIER '[' expression ':' expression ']'
+		{ pform_makewire(@1, $1, NetNet::IMPLICIT,
+				 NetNet::NOT_A_PORT,
+				 IVL_VT_NO_TYPE, 0);
+		  if (! pform_expression_is_constant($3))
+			yyerror(@3, "error: msb of net range must be constant.");
+		  if (! pform_expression_is_constant($5))
+			yyerror(@3, "error: lsb of net range must be constant.");
+		  pform_set_reg_idx($1, $3, $5);
+		  $$ = $1;
+		}
+	;
+net_variable_list
+	: net_variable
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
+		  $$ = tmp;
+		  delete[]$1;
+		}
+	| net_variable_list ',' net_variable
 		{ list<perm_string>*tmp = $1;
 		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;

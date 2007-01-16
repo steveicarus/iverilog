@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.86 2006/11/22 06:10:05 steve Exp $"
+#ident "$Id: parse.y,v 1.87 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,7 +67,7 @@ static vvp_fun_modpath*modpath_dst = 0;
 
 %token K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
-%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM
+%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARRAY K_ARRAY_PORT
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -177,8 +177,13 @@ statement
 
 	| mem_init_stmt
 
+        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ';'
+                { compile_array($1, $3, $5, $6); }
+ 
+        | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_array_port($1, $3, $5); }
 
-  /* The .ufunc functor is for implementing user defined functions, or
+ /* The .ufunc functor is for implementing user defined functions, or
      other thread code that is automatically invoked if any of the
      bits in the symbols list change. */
 
@@ -476,52 +481,69 @@ statement
      creates a functor with the same name that acts as the output of
      the variable in the netlist. */
 
-	| T_LABEL K_VAR T_STRING ',' signed_t_number ',' signed_t_number ';'
-		{ compile_variable($1, $3, $5, $7, 0 /* unsigned */ ); }
+	| T_LABEL K_VAR T_STRING ',' signed_t_number signed_t_number ';'
+		{ compile_variable($1, $3, $5, $6, 0 /* unsigned */ ); }
 
-	| T_LABEL K_VAR_S T_STRING ',' signed_t_number ',' signed_t_number ';'
-		{ compile_variable($1, $3, $5, $7, 1 /* signed */ ); }
+	| T_LABEL K_VAR_S T_STRING ',' signed_t_number signed_t_number ';'
+		{ compile_variable($1, $3, $5, $6, 1 /* signed */ ); }
 
-	| T_LABEL K_VAR_I T_STRING ',' T_NUMBER ',' T_NUMBER ';'
-		{ compile_variable($1, $3, $5, $7, 2 /* integer */); }
+	| T_LABEL K_VAR_I T_STRING ',' T_NUMBER T_NUMBER ';'
+		{ compile_variable($1, $3, $5, $6, 2 /* integer */); }
 
-	| T_LABEL K_VAR_R T_STRING ',' signed_t_number ',' signed_t_number ';'
-		{ compile_var_real($1, $3, $5, $7); }
+	| T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
+		{ compile_var_real($1, $3, $5, $6); }
+
+  /* Arrayed versions of variable directives. */
+
+	| T_LABEL K_VAR T_SYMBOL ',' signed_t_number signed_t_number ';'
+		{ compile_variablew($1, $3, $5, $6, 0 /* unsigned */ ); }
+
+	| T_LABEL K_VAR_S T_SYMBOL ',' signed_t_number signed_t_number ';'
+		{ compile_variablew($1, $3, $5, $6, 1 /* signed */ ); }
+
+	| T_LABEL K_VAR_I T_SYMBOL ',' T_NUMBER T_NUMBER ';'
+		{ compile_variablew($1, $3, $5, $6, 2 /* integer */); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
-	| T_LABEL K_NET T_STRING ',' signed_t_number ',' signed_t_number
+	| T_LABEL K_NET T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, false, false, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $6, false, false, $8.cnt, $8.vect); }
 
-        | T_LABEL K_NET_S T_STRING ',' signed_t_number ',' signed_t_number
+        | T_LABEL K_NET_S T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, true, false, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $6, true, false, $8.cnt, $8.vect); }
 
-	| T_LABEL K_NET8 T_STRING ',' signed_t_number ',' signed_t_number
+	| T_LABEL K_NET8 T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, false, true, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $6, false, true, $8.cnt, $8.vect); }
 
-        | T_LABEL K_NET8_S T_STRING ',' signed_t_number ',' signed_t_number
+        | T_LABEL K_NET8_S T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $7, true, true, $9.cnt, $9.vect); }
+		{ compile_net($1, $3, $5, $6, true, true, $8.cnt, $8.vect); }
 
-        | T_LABEL K_NET_R T_STRING ',' signed_t_number ',' signed_t_number
+        | T_LABEL K_NET_R T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net_real($1, $3, $5, $7, $9.cnt, $9.vect); }
+		{ compile_net_real($1, $3, $5, $6, $8.cnt, $8.vect); }
 
-	| T_LABEL K_ALIAS T_STRING ',' signed_t_number ',' signed_t_number
+	| T_LABEL K_ALIAS T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_alias($1, $3, $5, $7, false, $9.cnt, $9.vect); }
+		{ compile_alias($1, $3, $5, $6, false, $8.cnt, $8.vect); }
 
-        | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number ',' signed_t_number
+        | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_alias($1, $3, $5, $7, true, $9.cnt, $9.vect); }
+		{ compile_alias($1, $3, $5, $6, true, $8.cnt, $8.vect); }
 
-        | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number ',' signed_t_number
+        | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_alias_real($1, $3, $5, $7, $9.cnt, $9.vect); }
+		{ compile_alias_real($1, $3, $5, $6, $8.cnt, $8.vect); }
+
+  /* Arrayed versions of net directives. */
+
+	| T_LABEL K_NET T_SYMBOL ',' signed_t_number signed_t_number
+	  ',' symbols_net ';'
+		{ compile_netw($1, $3, $5, $6, false, false, $8.cnt, $8.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
@@ -781,6 +803,12 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.87  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.86  2006/11/22 06:10:05  steve
  *  Fix spurious event from net8 that is forced.
  *

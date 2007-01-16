@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.250 2006/11/10 04:54:26 steve Exp $"
+#ident "$Id: netlist.cc,v 1.251 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -333,7 +333,7 @@ uint64_t NetDelaySrc::get_delay(unsigned idx) const
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
-    signed_(false), msb_(npins-1), lsb_(0),
+    signed_(false), msb_(npins-1), lsb_(0), s0_(0), e0_(0),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -367,11 +367,20 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       s->add_signal(this);
 }
 
-NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
-: NetObj(s, n, 1),
+static unsigned calculate_count(long s, long e)
+{
+      if (s >= e)
+	    return s - e + 1;
+      else
+	    return e - s + 1;
+}
+
+NetNet::NetNet(NetScope*s, perm_string n, Type t,
+	       long ms, long ls, long array_s, long array_e)
+: NetObj(s, n, calculate_count(array_s, array_e)),
     sig_next_(0), sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
-    msb_(ms), lsb_(ls),
+    msb_(ms), lsb_(ls), s0_(array_s), e0_(array_e),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -531,6 +540,43 @@ unsigned NetNet::sb_to_idx(long sb) const
 	    return sb - lsb_;
       else
 	    return lsb_ - sb;
+}
+
+unsigned NetNet::array_dimensions() const
+{
+      if (s0_ == e0_)
+	    return 0;
+      return 1;
+}
+
+long NetNet::array_first() const
+{
+      if (s0_ < e0_)
+	    return s0_;
+      else
+	    return e0_;
+}
+
+unsigned NetNet::array_count() const
+{
+      return calculate_count(s0_, e0_);
+}
+
+bool NetNet::array_index_is_valid(long sb) const
+{
+      if (sb < s0_ && sb < e0_)
+	    return false;
+      if (sb > e0_ && sb > s0_)
+	    return false;
+      return true;
+}
+
+unsigned NetNet::array_index_to_address(long sb) const
+{
+      if (s0_ <= e0_)
+	    return sb - s0_;
+      else
+	    return sb - e0_;
 }
 
 void NetNet::incr_eref()
@@ -971,6 +1017,55 @@ Link& NetAddSub::pin_Result()
 const Link& NetAddSub::pin_Result() const
 {
       return pin(8);
+}
+
+NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem, unsigned awid)
+: NetNode(s, n, 2),
+  mem_(mem), awidth_(awid)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("Address"), 0);
+}
+
+NetArrayDq::~NetArrayDq()
+{
+}
+
+unsigned NetArrayDq::width() const
+{
+      return mem_->vector_width();
+}
+
+unsigned NetArrayDq::awidth() const
+{
+      return awidth_;
+}
+
+const NetNet* NetArrayDq::mem() const
+{
+      return mem_;
+}
+
+Link& NetArrayDq::pin_Result()
+{
+      return pin(0);
+}
+
+Link& NetArrayDq::pin_Address()
+{
+      return pin(1);
+}
+
+const Link& NetArrayDq::pin_Result() const
+{
+      return pin(0);
+}
+
+const Link& NetArrayDq::pin_Address() const
+{
+      return pin(1);
 }
 
 /*
@@ -1428,190 +1523,6 @@ const Link& NetMux::pin_Data(unsigned s) const
       return pin(2+s);
 }
 
-
-NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
-: NetNode(s, n, 6),
-  mem_(mem), awidth_(awid)
-{
-      pin(0).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("InClock"), 0);
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("OutClock"), 0);
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("WE"), 0);
-      pin(3).set_dir(Link::INPUT);
-      pin(3).set_name(perm_string::literal("Address"), 0);
-      pin(4).set_dir(Link::INPUT);
-      pin(4).set_name(perm_string::literal("Data"), 0);
-      pin(5).set_dir(Link::OUTPUT);
-      pin(5).set_name(perm_string::literal("Q"), 0);
-
-      next_ = mem_->ram_list_;
-      mem_->ram_list_ = this;
-}
-
-NetRamDq::~NetRamDq()
-{
-      if (mem_->ram_list_ == this) {
-	    mem_->ram_list_ = next_;
-
-      } else {
-	    NetRamDq*cur = mem_->ram_list_;
-	    while (cur->next_ != this) {
-		  assert(cur->next_);
-		  cur = cur->next_;
-	    }
-	    assert(cur->next_ == this);
-	    cur->next_ = next_;
-      }
-}
-
-unsigned NetRamDq::width() const
-{
-      return mem_->width();
-}
-
-unsigned NetRamDq::awidth() const
-{
-      return awidth_;
-}
-
-unsigned NetRamDq::size() const
-{
-      return mem_->count();
-}
-
-const NetMemory* NetRamDq::mem() const
-{
-      return mem_;
-}
-
-unsigned NetRamDq::count_partners() const
-{
-      unsigned count = 0;
-      for (NetRamDq*cur = mem_->ram_list_ ;  cur ;  cur = cur->next_)
-	    count += 1;
-
-      return count;
-}
-
-void NetRamDq::absorb_partners()
-{
-      NetRamDq*cur, *tmp;
-      for (cur = mem_->ram_list_, tmp = 0
-		 ;  cur||tmp ;  cur = cur? cur->next_ : tmp) {
-	    tmp = 0;
-	    if (cur == this) continue;
-
-	    bool ok_flag = true;
-	    ok_flag &= pin_Address().is_linked(cur->pin_Address());
-
-	    if (!ok_flag) continue;
-
-	    if (pin_InClock().is_linked()
-		&& cur->pin_InClock().is_linked()
-		&& ! pin_InClock().is_linked(cur->pin_InClock()))
-		  continue;
-
-	    if (pin_OutClock().is_linked()
-		&& cur->pin_OutClock().is_linked()
-		&& ! pin_OutClock().is_linked(cur->pin_OutClock()))
-		  continue;
-
-	    if (pin_WE().is_linked()
-		&& cur->pin_WE().is_linked()
-		&& ! pin_WE().is_linked(cur->pin_WE()))
-		  continue;
-
-	    if (pin_Data().is_linked() && cur->pin_Data().is_linked()) {
-		  ok_flag &= pin_Data().is_linked(cur->pin_Data());
-	    }
-
-	    if (! ok_flag) continue;
-
-	    if (pin_Q().is_linked() && cur->pin_Q().is_linked()) {
-
-		  ok_flag &= pin_Q().is_linked(cur->pin_Q());
-	    }
-
-	    if (! ok_flag) continue;
-
-	      // I see no other reason to reject cur, so link up all
-	      // my pins and delete it.
-	    connect(pin_InClock(), cur->pin_InClock());
-	    connect(pin_OutClock(), cur->pin_OutClock());
-	    connect(pin_WE(), cur->pin_WE());
-
-	    connect(pin_Address(), cur->pin_Address());
-	    connect(pin_Data(), cur->pin_Data());
-	    connect(pin_Q(), cur->pin_Q());
-
-	    tmp = cur->next_;
-	    delete cur;
-	    cur = 0;
-      }
-}
-
-Link& NetRamDq::pin_InClock()
-{
-      return pin(0);
-}
-
-const Link& NetRamDq::pin_InClock() const
-{
-      return pin(0);
-}
-
-Link& NetRamDq::pin_OutClock()
-{
-      return pin(1);
-}
-
-const Link& NetRamDq::pin_OutClock() const
-{
-      return pin(1);
-}
-
-Link& NetRamDq::pin_WE()
-{
-      return pin(2);
-}
-
-const Link& NetRamDq::pin_WE() const
-{
-      return pin(2);
-}
-
-Link& NetRamDq::pin_Address()
-{
-      return pin(3);
-}
-
-const Link& NetRamDq::pin_Address() const
-{
-      return pin(3);
-}
-
-Link& NetRamDq::pin_Data()
-{
-      return pin(4);
-}
-
-const Link& NetRamDq::pin_Data() const
-{
-      return pin(4);
-}
-
-Link& NetRamDq::pin_Q()
-{
-      return pin(5);
-}
-
-const Link& NetRamDq::pin_Q() const
-{
-      return pin(5);
-}
-
 NetSignExtend::NetSignExtend(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 2), width_(w)
 {
@@ -2027,68 +1938,6 @@ const NetScope* NetEConstParam::scope() const
       return scope_;
 }
 
-
-NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
-: NetExpr(m->width()), mem_(m), idx_(i)
-{
-}
-
-NetEMemory::~NetEMemory()
-{
-}
-
-perm_string NetEMemory::name() const
-{
-      return mem_->name();
-}
-
-const NetExpr* NetEMemory::index() const
-{
-      return idx_;
-}
-
-NetMemory::NetMemory(NetScope*sc, perm_string n, long w, long s, long e)
-: width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
-{
-      name_ = n;
-      scope_->add_memory(this);
-}
-
-NetMemory::~NetMemory()
-{
-      assert(scope_);
-      scope_->rem_memory(this);
-}
-
-unsigned NetMemory::count() const
-{
-      if (idxh_ < idxl_)
-	    return idxl_ - idxh_ + 1;
-      else
-	    return idxh_ - idxl_ + 1;
-}
-
-perm_string NetMemory::name() const
-{
-      return name_;
-}
-
-long NetMemory::index_to_address(long idx) const
-{
-      if (idxh_ < idxl_)
-	    return idx - idxh_;
-      else
-	    return idx - idxl_;
-}
-
-
-
-NetEMemory* NetEMemory::dup_expr() const
-{
-      assert(0);
-      return 0;
-}
-
 NetEEvent::NetEEvent(NetEvent*e)
 : event_(e)
 {
@@ -2119,25 +1968,20 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->vector_width()), net_(n)
+: NetExpr(n->vector_width()), net_(n), word_(0)
 {
       net_->incr_eref();
       set_line(*n);
       cast_signed(net_->get_signed());
 }
 
-#if 0
-NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
-: NetExpr(m - l + 1), net_(n)
+NetESignal::NetESignal(NetNet*n, NetExpr*w)
+: NetExpr(n->vector_width()), net_(n), word_(w)
 {
-      assert(m >= l);
-      msi_ = m;
-      lsi_ = l;
       net_->incr_eref();
       set_line(*n);
       cast_signed(net_->get_signed());
 }
-#endif
 
 NetESignal::~NetESignal()
 {
@@ -2149,18 +1993,22 @@ perm_string NetESignal::name() const
       return net_->name();
 }
 
-unsigned NetESignal::bit_count() const
+const NetExpr* NetESignal::word_index() const
+{
+      return word_;
+}
+
+unsigned NetESignal::vector_width() const
 {
       return net_->vector_width();
 }
 
-Link& NetESignal::bit(unsigned idx)
+const NetNet* NetESignal::sig() const
 {
-      assert(idx <= 0);
-      return net_->pin(idx);
+      return net_;
 }
 
-const NetNet* NetESignal::sig() const
+NetNet* NetESignal::sig()
 {
       return net_;
 }
@@ -2342,6 +2190,12 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.251  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.250  2006/11/10 04:54:26  steve
  *  Add test_width methods for PETernary and PEString.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.13 2005/10/11 18:30:50 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.14 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -75,6 +75,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		       with VPI handles of their own. Therefore, skip
 		       them in the process of evaluating expressions. */
 		case IVL_EX_NONE:
+		case IVL_EX_ARRAY:
 		case IVL_EX_NUMBER:
 		case IVL_EX_STRING:
 		case IVL_EX_EVENT:
@@ -107,7 +108,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  } else if (ivl_expr_signed(expr) !=
 			     ivl_signal_signed(ivl_expr_signal(expr))) {
 			break;
-
+		  } else if (ivl_signal_array_count(ivl_expr_signal(expr))>1){
+			break;
 		  } else {
 			continue;
 		  }
@@ -153,6 +155,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  fprintf(vvp_out, ", \" \"");
 		  continue;
 
+		case IVL_EX_ARRAY:
+		  fprintf(vvp_out, ", v%p", ivl_expr_signal(expr));
+		  continue;
+
 		case IVL_EX_NUMBER: {
 		      unsigned bit, wid = ivl_expr_width(expr);
 		      const char*bits = ivl_expr_bits(expr);
@@ -176,13 +182,16 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			     ivl_signal_signed(ivl_expr_signal(expr))) {
 			break;
 
+		  } else if (ivl_signal_array_count(ivl_expr_signal(expr))>1){
+			break;
+
 		  } else {
-			fprintf(vvp_out, ", V_%s",
-				vvp_signal_label(ivl_expr_signal(expr)));
+			ivl_signal_t sig = ivl_expr_signal(expr);
+			assert(ivl_signal_array_count(sig) == 1);
+			fprintf(vvp_out, ", v%p_0", sig);
 			continue;
 		  }
-		  fprintf(vvp_out, ", V_%s",
-			  vvp_signal_label(ivl_expr_signal(expr)));
+		  assert(0);
 		  continue;
 
 		case IVL_EX_STRING:
@@ -291,6 +300,12 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.14  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.13  2005/10/11 18:30:50  steve
  *  Remove obsolete vvp_memory_label function.
  *

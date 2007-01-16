@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.226 2006/10/05 01:23:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.227 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -58,6 +58,8 @@ enum operand_e {
       OA_NONE,
 	/* The operand is a number, an immediate unsigned integer */
       OA_NUMBER,
+	/* The operand is a pointer to an array. */
+      OA_ARR_PTR,
 	/* The operand is a thread bit index or short integer */
       OA_BIT1,
       OA_BIT2,
@@ -87,6 +89,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%assign/av",of_ASSIGN_AV,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },
@@ -130,7 +133,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
+      { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/mv",of_LOAD_MV,3,  {OA_BIT1,     OA_MEM_PTR,  OA_BIT2} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
@@ -154,6 +157,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%release/net",of_RELEASE_NET,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%release/reg",of_RELEASE_REG,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
+      { "%set/av", of_SET_AV, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/mv", of_SET_MV, 3,  {OA_MEM_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
@@ -563,6 +567,37 @@ static void compile_mem_lookup(struct vvp_code_s *code, char *label)
 {
       struct memory_resolv_list_s *res
 	    = new struct memory_resolv_list_s;
+
+      res->code  = code;
+      res->label = label;
+
+      resolv_submit(res);
+}
+
+struct array_resolv_list_s: public resolv_list_s {
+      struct vvp_code_s *code;
+      char *label;
+      virtual bool resolve(bool mes);
+};
+
+bool array_resolv_list_s::resolve(bool mes)
+{
+      code->array = array_find(label);
+      if (code->array != 0) {
+	    free(label);
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "Array unresolved: %s\n", label);
+
+      return false;
+}
+
+static void compile_array_lookup(struct vvp_code_s*code, char*label)
+{
+      struct array_resolv_list_s *res
+	    = new struct array_resolv_list_s;
 
       res->code  = code;
       res->label = label;
@@ -1312,6 +1347,15 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		case OA_NONE:
 		  break;
 
+        	case OA_ARR_PTR:
+		  if (opa->argv[idx].ltype != L_SYMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  compile_array_lookup(code, opa->argv[idx].symb.text);
+		  break;
+
 		case OA_BIT1:
 		  if (opa->argv[idx].ltype != L_NUMB) {
 			yyerror("operand format");
@@ -1535,6 +1579,12 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.227  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.226  2006/10/05 01:23:53  steve
  *  Handle non-constant delays on indexed non-blocking assignments.
  *

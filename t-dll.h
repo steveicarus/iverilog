@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.134 2006/11/10 05:44:45 steve Exp $"
+#ident "$Id: t-dll.h,v 1.135 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -74,6 +74,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
       void lpm_add_sub(const NetAddSub*);
+      bool lpm_array_dq(const NetArrayDq*);
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);
@@ -81,7 +82,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_modulo(const NetModulo*);
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
-      void lpm_ram_dq(const NetRamDq*);
       bool concat(const NetConcat*);
       bool part_select(const NetPartSelect*);
       bool replicate(const NetReplicate*);
@@ -97,8 +97,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       void scope(const NetScope*);
       void signal(const NetNet*);
       bool signal_paths(const NetNet*);
-      void memory(const NetMemory*);
-
       ivl_dll_t dll_;
 
       ivl_design_s des_;
@@ -134,7 +132,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       struct ivl_expr_s*expr_;
       void expr_binary(const NetEBinary*);
       void expr_concat(const NetEConcat*);
-      void expr_memory(const NetEMemory*);
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
       void expr_param(const NetEConstParam*);
@@ -157,8 +154,6 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
-      static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
-
       static ivl_parameter_t scope_find_param(ivl_scope_t scope,
 					      const char*name);
 
@@ -231,6 +226,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_signal_t sig;
+		  ivl_expr_t word;
 	    } signal_;
 
 	    struct {
@@ -294,7 +290,6 @@ struct ivl_lpm_s {
 
       union {
 	    struct ivl_lpm_ff_s {
-		  unsigned swid; // ram only
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
 		  ivl_nexus_t aclr;
@@ -309,11 +304,6 @@ struct ivl_lpm_s {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
 		  } d;
-		  union { // ram only
-			ivl_nexus_t*pins;
-			ivl_nexus_t pin;
-		  } s;
-		  ivl_memory_t mem; // ram only
 		  ivl_expr_t aset_value;
 		  ivl_expr_t sset_value;
 	    } ff;
@@ -335,6 +325,12 @@ struct ivl_lpm_s {
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q,  a,  b;
 	    } arith;
+
+	    struct ivl_lpm_array_s {
+		  ivl_signal_t sig;
+		  unsigned swid;
+		  ivl_nexus_t q,  a;
+	    } array;
 
 	    struct ivl_concat_s {
 		  unsigned inputs;
@@ -380,8 +376,9 @@ struct ivl_lpm_s {
 enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
       IVL_LVAL_MUX = 1,
-      IVL_LVAL_MEM = 2,
-      IVL_LVAL_NET = 3 /* Only force can have NET l-values */
+      IVL_LVAL_MEM = 2, /* Deprecated in favor of LVAL_ARR? */
+      IVL_LVAL_NET = 3, /* Only force can have NET l-values */
+      IVL_LVAL_ARR = 4
 };
 
 struct ivl_lval_s {
@@ -589,7 +586,12 @@ struct ivl_signal_s {
       perm_string name_;
       ivl_scope_t scope_;
 
-      ivl_nexus_t pin_;
+      unsigned array_words;
+      int array_base;
+      union {
+	    ivl_nexus_t pin;
+	    ivl_nexus_t*pins;
+      };
 
       ivl_delaypath_s*path;
       unsigned npath;
@@ -680,6 +682,12 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.135  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.134  2006/11/10 05:44:45  steve
  *  Process delay paths in second path over signals.
  *

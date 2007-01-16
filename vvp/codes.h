@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.80 2006/10/05 01:23:53 steve Exp $"
+#ident "$Id: codes.h,v 1.81 2007/01/16 05:44:16 steve Exp $"
 #endif
 
 
 # include  "pointers.h"
 # include  "vvp_net.h"
 # include  "memory.h"
+# include  "array.h"
 # include  "vthread.h"
 
 typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
@@ -40,6 +41,7 @@ extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_AV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
@@ -86,7 +88,7 @@ extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_AV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
@@ -110,6 +112,7 @@ extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
+extern bool of_SET_AV(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MV(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
@@ -146,6 +149,7 @@ struct vvp_code_s {
 	    vvp_net_t    *net;
 	    vvp_code_t   cptr;
 	    vvp_memory_t mem;
+	    vvp_array_t array;
 	    struct __vpiHandle*handle;
 	    struct __vpiScope*scope;
 	    functor_t fun_ptr;
@@ -180,6 +184,12 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.81  2007/01/16 05:44:16  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.80  2006/10/05 01:23:53  steve
  *  Handle non-constant delays on indexed non-blocking assignments.
  *

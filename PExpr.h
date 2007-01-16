@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.86 2006/11/10 04:54:26 steve Exp $"
+#ident "$Id: PExpr.h,v 1.87 2007/01/16 05:44:14 steve Exp $"
 #endif
 
 # include  <string>
@@ -294,9 +294,10 @@ class PEIdent : public PExpr {
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
     private:
-      NetAssign_*elaborate_lval_net_part_(Design*, NetScope*, NetNet*) const;
-      NetAssign_*elaborate_lval_net_idx_up_(Design*, NetScope*, NetNet*) const;
-      NetAssign_*elaborate_lval_net_idx_do_(Design*, NetScope*, NetNet*) const;
+      NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
+      bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
+      bool elaborate_lval_net_idx_up_(Design*, NetScope*, NetAssign_*) const;
+      bool elaborate_lval_net_idx_do_(Design*, NetScope*, NetAssign_*) const;
 
     private:
       NetExpr*elaborate_expr_param(Design*des,
@@ -306,24 +307,30 @@ class PEIdent : public PExpr {
 				   const NetExpr*par_msb,
 				   const NetExpr*par_lsb) const;
       NetExpr*elaborate_expr_net(Design*des,
-				   NetScope*scope,
-				   NetNet*net,
-				   NetScope*found) const;
+				 NetScope*scope,
+				 NetNet*net,
+				 NetScope*found,
+				 bool sys_task_arg) const;
+      NetExpr*elaborate_expr_net_word_(Design*des,
+				       NetScope*scope,
+				       NetNet*net,
+				       NetScope*found,
+				       bool sys_task_arg) const;
       NetExpr*elaborate_expr_net_part_(Design*des,
 				   NetScope*scope,
-				   NetNet*net,
+				   NetESignal*net,
 				   NetScope*found) const;
       NetExpr*elaborate_expr_net_idx_up_(Design*des,
 				   NetScope*scope,
-				   NetNet*net,
+				   NetESignal*net,
 				   NetScope*found) const;
       NetExpr*elaborate_expr_net_idx_do_(Design*des,
 				   NetScope*scope,
-				   NetNet*net,
+				   NetESignal*net,
 				   NetScope*found) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
 				   NetScope*scope,
-				   NetNet*net,
+				   NetESignal*net,
 				   NetScope*found) const;
       hname_t path_;
 
@@ -338,12 +345,13 @@ class PEIdent : public PExpr {
 	// expression. If this is a reference to a vector, this is a
 	// bit select.
       std::vector<PExpr*> idx_;
-
-      NetNet* elaborate_net_ram_(Design*des, NetScope*scope,
-				 NetMemory*mem, unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
+      NetNet* elaborate_net_array_(Design*des, NetScope*scope,
+				   NetNet*sig, unsigned lwidth,
+				   const NetExpr* rise,
+				   const NetExpr* fall,
+				   const NetExpr* decay,
+				   Link::strength_t drive0,
+				   Link::strength_t drive1) const;
 
       NetNet* elaborate_net_bitmux_(Design*des, NetScope*scope,
 				    NetNet*sig,
@@ -354,9 +362,6 @@ class PEIdent : public PExpr {
 				    Link::strength_t drive1) const;
 
     private:
-      NetAssign_* elaborate_mem_lval_(Design*des, NetScope*scope,
-				      NetMemory*mem) const;
-
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool implicit_net_ok,
 				     bool bidirectional_flag) const;
@@ -650,6 +655,12 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.87  2007/01/16 05:44:14  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.86  2006/11/10 04:54:26  steve
  *  Add test_width methods for PETernary and PEString.
  *

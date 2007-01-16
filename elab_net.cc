@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.191 2006/12/08 03:43:26 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.192 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1594,18 +1594,10 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       assert(scope);
 
       NetNet*       sig = 0;
-      NetMemory*    mem = 0;
-      const NetExpr*par = 0;
+     const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, par, eve);
-
-	/* If the identifier is a memory instead of a signal,
-	   then handle it elsewhere. Create a RAM. */
-      if (mem != 0) {
-	    return elaborate_net_ram_(des, scope, mem, lwidth,
-				      rise, fall, decay);
-      }
+      symbol_search(des, scope, path_, sig, par, eve);
 
 	/* If this is a parameter name, then create a constant node
 	   that connects to a signal with the correct name. */
@@ -1681,6 +1673,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
       assert(sig);
 
+	/* Handle the case that this is an array elsewhere. */
+      if (sig->array_dimensions() > 0) {
+	    return elaborate_net_array_(des, scope, sig, lwidth,
+					rise, fall, decay,
+					drive0, drive1);
+      }
+
 	/* Catch the case of a non-constant bit select. That should be
 	   handled elsewhere. */
       if (! idx_.empty()) {
@@ -1728,68 +1727,77 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       return sig;
 }
 
-/*
- * When I run into an identifier in an expression that refers to a
- * memory, create a RAM port object.
- */
-NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
-				    NetMemory*mem, unsigned lwidth,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay) const
+NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
+				      NetNet*sig, unsigned lwidth,
+				      const NetExpr* rise,
+				      const NetExpr* fall,
+				      const NetExpr* decay,
+				      Link::strength_t drive0,
+				      Link::strength_t drive1) const
 {
-      assert(scope);
-
-      if (idx_.empty()) {
-	    cerr << get_line() << ": error: memory reference without"
-		  " the required index expression." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       assert(msb_ == 0);
       assert(lsb_ == 0);
       assert(idx_.size() == 1);
 
-	/* Even if this expression must be fully self determined, the
-	   index expression does not, so make sure this flag is off
-	   while elaborating the address expression. */
-      const bool must_be_self_determined_save = must_be_self_determined_flag;
-      must_be_self_determined_flag = false;
-
-      NetExpr*adr_expr = elab_and_eval(des, scope, idx_[0], -1);
-
-	/* If an offset is needed, subtract it from the address to get
-	   an expression for the canonical address. */
-      if (mem->index_to_address(0) != 0) {
-	    adr_expr = make_add_expr(adr_expr, mem->index_to_address(0));
-	    if (NetExpr*tmp = adr_expr->eval_tree()) {
-		  delete adr_expr;
-		  adr_expr = tmp;
-	    }
-      }
-      NetNet*adr = adr_expr->synthesize(des);
-      delete adr_expr;
-
-      must_be_self_determined_flag = must_be_self_determined_save;
-
-      if (adr == 0)
+      NetExpr*index_ex = elab_and_eval(des, scope, idx_[0], -1);
+      if (index_ex == 0)
 	    return 0;
 
-      NetRamDq*ram = new NetRamDq(scope, scope->local_symbol(),
-				  mem, adr->vector_width());
-      des->add_node(ram);
+      if (NetEConst*index_co = dynamic_cast<NetEConst*> (index_ex)) {
+	    long index = index_co->value().as_long();
 
-      connect(ram->pin_Address(), adr->pin(0));
+	    if (!sig->array_index_is_valid(index)) {
+		    // Oops! The index is a constant known to be
+		    // outside the array. Change the expression to a
+		    // constant X vector.
+		  verinum xxx (verinum::Vx, sig->vector_width());
+		  NetConst*con_n = new NetConst(scope, scope->local_symbol(), xxx);
+		  des->add_node(con_n);
+		  con_n->set_line(*index_co);
 
-      NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, ram->width());
-      osig->data_type(IVL_VT_LOGIC);
-      osig->local_flag(true);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::IMPLICIT, sig->vector_width());
+		  tmp->set_line(*this);
+		  tmp->local_flag(true);
+		  tmp->data_type(sig->data_type());
+		  connect(tmp->pin(0), con_n->pin(0));
+		  return tmp;
+	    }
 
-      connect(ram->pin_Q(), osig->pin(0));
+	    assert(sig->array_index_is_valid(index));
+	    index = sig->array_index_to_address(index);
 
-      return osig;
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::IMPLICIT, sig->vector_width());
+	    tmp->set_line(*this);
+	    tmp->local_flag(true);
+	    connect(tmp->pin(0), sig->pin(index));
+	    return tmp;
+      }
+
+      unsigned selwid = index_ex->expr_width();
+
+      NetArrayDq*mux = new NetArrayDq(scope, scope->local_symbol(),
+				      sig, selwid);
+      mux->set_line(*this);
+      des->add_node(mux);
+
+	// Adjust the expression to calculate the canonical offset?
+      if (long array_base = sig->array_first()) {
+	    index_ex = make_add_expr(index_ex, 0-array_base);
+      }
+
+      NetNet*index_net = index_ex->synthesize(des);
+      connect(mux->pin_Address(), index_net->pin(0));
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::IMPLICIT, sig->vector_width());
+      tmp->set_line(*this);
+      tmp->local_flag(true);
+      tmp->data_type(sig->data_type());
+      connect(tmp->pin(0), mux->pin_Result());
+
+      return tmp;
 }
 
 /*
@@ -2127,19 +2135,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       assert(scope);
 
       NetNet*       sig = 0;
-      NetMemory*    mem = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, par, eve);
-
-      if (mem != 0) {
-	    cerr << get_line() << ": error: memories (" << path_
-		 << ") cannot be l-values in continuous "
-		 << "assignments." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      symbol_search(des, scope, path_, sig, par, eve);
 
       if (eve != 0) {
 	    cerr << get_line() << ": error: named events (" << path_
@@ -2184,11 +2183,43 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    sig->port_type(NetNet::PINOUT);
       }
 
-      unsigned midx, lidx;
-      if (! eval_part_select_(des, scope, sig, midx, lidx))
-	    return 0;
+	// Default part select is the entire word.
+      unsigned midx = sig->vector_width()-1, lidx = 0;
+	// The default word select is the first.
+      unsigned widx = 0;
+
+      if (sig->array_dimensions() > 0) {
+	    assert(!idx_.empty());
+
+	    NetExpr*tmp_ex = elab_and_eval(des, scope, idx_[0], -1);
+	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
+	    assert(tmp);
+
+	    long widx_val = tmp->value().as_long();
+	    widx = sig->array_index_to_address(widx_val);
+	    delete tmp_ex;
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Use [" << widx << "]"
+		       << " to index l-value array." << endl;
+
+      } else {
+	    if (! eval_part_select_(des, scope, sig, midx, lidx))
+		  return 0;
+      }
 
       unsigned subnet_wid = midx-lidx+1;
+
+      if (sig->pin_count() > 1) {
+	    assert(widx < sig->pin_count());
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    sig->type(), sig->vector_width());
+	    tmp->set_line(*this);
+	    tmp->local_flag(true);
+	    connect(sig->pin(widx), tmp->pin(0));
+	    sig = tmp;
+      }
 
 	/* If the desired l-value vector is narrower then the
 	   signal itself, then use a NetPartSelect node to
@@ -2850,6 +2881,12 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.192  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.191  2006/12/08 03:43:26  steve
  *  Prevent name clash when processing parameter in net.
  *

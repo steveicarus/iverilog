@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2006 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.37 2006/11/04 06:19:25 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.38 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,7 +25,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
-
+# include  "compiler.h"
 # include  <iostream>
 
 /*
@@ -149,25 +149,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 				    bool is_force) const
 {
       NetNet*       reg = 0;
-      NetMemory*    mem = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, reg, mem, par, eve);
-
-      if (mem) {
-	    if (is_force) {
-		  cerr << get_line() << ": error: Memories "
-		       << "(" << path_ << " in this case)"
-		       << " are not allowed"
-		       << " as l-values to force statements." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    return elaborate_mem_lval_(des, scope, mem);
-      }
-
+      symbol_search(des, scope, path_, reg, par, eve);
       if (reg == 0) {
 	    cerr << get_line() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope->name() <<
@@ -179,14 +164,26 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       assert(reg);
 
-      if (sel_ == SEL_PART)
-	    return elaborate_lval_net_part_(des, scope, reg);
+      if (reg->array_dimensions() > 0)
+	    return elaborate_lval_net_word_(des, scope, reg);
 
-      if (sel_ == SEL_IDX_UP)
-	    return elaborate_lval_net_idx_up_(des, scope, reg);
+      if (sel_ == SEL_PART) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_part_(des, scope, lv);
+	    return lv;
+      }
 
-      if (sel_ == SEL_IDX_DO)
-	    return elaborate_lval_net_idx_do_(des, scope, reg);
+      if (sel_ == SEL_IDX_UP) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_idx_up_(des, scope, lv);
+	    return lv;
+      }
+
+      if (sel_ == SEL_IDX_DO) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_idx_do_(des, scope, lv);
+	    return lv;
+      }
 
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. Wires are not allows in this context,
@@ -300,22 +297,60 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       return lv;
 }
 
-NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
+NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg) const
+{
+      assert(idx_.size() == 1);
+
+      NetExpr*word = elab_and_eval(des, scope, idx_[0], -1);
+
+	// If there is a non-zero base to the memory, then build an
+	// expression to calculate the canonical address.
+      if (long base = reg->array_first()) {
+
+	    word = make_add_expr(word, 0-base);
+	    if (NetExpr*tmp = word->eval_tree()) {
+		  word = tmp;
+	    }
+      }
+
+      NetAssign_*lv = new NetAssign_(reg);
+      lv->set_word(word);
+
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: Set array word=" << *word << endl;
+
+	/* An array word may also have part selects applied to them. */
+
+      if (sel_ == SEL_PART)
+	    elaborate_lval_net_part_(des, scope, lv);
+
+      if (sel_ == SEL_IDX_UP)
+	    elaborate_lval_net_idx_up_(des, scope, lv);
+
+      if (sel_ == SEL_IDX_DO)
+	    elaborate_lval_net_idx_do_(des, scope, lv);
+
+      return lv;
+}
+
+bool PEIdent::elaborate_lval_net_part_(Design*des,
+				       NetScope*scope,
+				       NetAssign_*lv) const
 {
       long msb, lsb;
       bool flag = calculate_parts_(des, scope, msb, lsb);
       if (!flag)
-	    return 0;
+	    return false;
 
-      NetAssign_*lv = 0;
+      NetNet*reg = lv->sig();
+      assert(reg);
 
       if (msb == reg->msb() && lsb == reg->lsb()) {
 
 	      /* No bit select, and part select covers the entire
 		 vector. Simplest case. */
-	    lv = new NetAssign_(reg);
 
       } else {
 
@@ -331,7 +366,7 @@ NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is reversed." << endl;
 		  des->errors += 1;
-		  return 0;
+		  return false;
 	    }
 
 	      /* If the part select extends beyond the extreme of the
@@ -344,22 +379,24 @@ NetAssign_* PEIdent::elaborate_lval_net_part_(Design*des,
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
 		  des->errors += 1;
-		  return 0;
+		  return false;
 	    }
 
-	    lv = new NetAssign_(reg);
 	    lv->set_part(new NetEConst(verinum(loff)), wid);
       }
 
-      return lv;
+      return true;
 }
 
-NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
-						NetScope*scope,
-						NetNet*reg) const
+bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
+					 NetScope*scope,
+					 NetAssign_*lv) const
 {
       assert(lsb_);
       assert(msb_);
+
+      NetNet*reg = lv->sig();
+      assert(reg);
 
       if (reg->type() != NetNet::REG) {
 	    cerr << get_line() << ": error: " << path_ <<
@@ -368,7 +405,7 @@ NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
 	    cerr << reg->get_line() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
-	    return 0;
+	    return false;
       }
 
       unsigned long wid;
@@ -382,112 +419,25 @@ NetAssign_* PEIdent::elaborate_lval_net_idx_up_(Design*des,
       else if (reg->lsb() != 0)
 	    base = make_add_expr(base, - reg->lsb());
 
-      NetAssign_*lv = new NetAssign_(reg);
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: Set part select width="
+		 << wid << ", base=" << *base << endl;
+
       lv->set_part(base, wid);
 
-      return lv;
+      return true;
 }
 
-NetAssign_* PEIdent::elaborate_lval_net_idx_do_(Design*des,
-						NetScope*scope,
-						NetNet*reg) const
+bool PEIdent::elaborate_lval_net_idx_do_(Design*des,
+					 NetScope*scope,
+					 NetAssign_*lv) const
 {
       assert(lsb_);
       assert(msb_);
       cerr << get_line() << ": internal error: don't know how to "
 	    "deal with SEL_IDX_DO in lval?" << endl;
       des->errors += 1;
-      return 0;
-}
-
-NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
-					NetMemory*mem) const
-{
-      if (idx_.empty()) {
-	    cerr << get_line() << ": error: Assign to memory \""
-		 << mem->name() << "\" requires a word select index."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      if (idx_.size() != mem->dimensions()) {
-	    cerr << get_line() << ": error: " << idx_.size()
-		 << " indices do not properly address a "
-		 << mem->dimensions() << "-dimension memory/array."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-	// XXXX For now, require exactly 1 index.
-      assert(idx_.size() == 1);
-
-	/* Elaborate the address expression. */
-      NetExpr*ix = elab_and_eval(des, scope, idx_[0], -1);
-      if (ix == 0)
-	    return 0;
-
-      NetAssign_*lv = new NetAssign_(mem);
-      lv->set_bmux(ix);
-
-	/* If there is no extra part select, then we are done. */
-      if (msb_ == 0 && lsb_ == 0) {
-	    lv->set_part(0, mem->width());
-	    return lv;
-      }
-
-      assert(sel_ != SEL_NONE);
-      assert(msb_ && lsb_);
-
-      if (sel_ == SEL_PART) {
-	    NetExpr*le = elab_and_eval(des, scope, lsb_, -1);
-	    NetExpr*me = elab_and_eval(des, scope, msb_, -1);
-
-	    NetEConst*lec = dynamic_cast<NetEConst*>(le);
-	    NetEConst*mec = dynamic_cast<NetEConst*>(me);
-
-	    if (lec == 0 || mec == 0) {
-		  cerr << get_line() << ": error: Part select "
-		       << "expressions must be constant." << endl;
-		  des->errors += 1;
-		  delete le;
-		  delete me;
-		  return lv;
-	    }
-
-	    verinum wedv = mec->value() - lec->value();
-	    unsigned wid = wedv.as_long() + 1;
-
-	    lv->set_part(lec, wid);
-	    return lv;
-      }
-
-      assert(sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO);
-
-      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
-      NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
-      if (wid_ec == 0) {
-	    cerr << lsb_->get_line() << ": error: "
-		 << "Second expression of indexed part select "
-		 << "most be constant." << endl;
-	    des->errors += 1;
-	    return lv;
-      }
-
-      unsigned wid = wid_ec->value().as_ulong();
-
-      NetExpr*base_ex = elab_and_eval(des, scope, msb_, -1);
-      if (base_ex == 0) {
-	    return 0;
-      }
-
-      if (sel_ == SEL_IDX_DO && wid > 1) {
-	    base_ex = make_add_expr(base_ex, 1-(long)wid);
-      }
-
-      lv->set_part(base_ex, wid);
-      return lv;
+      return false;
 }
 
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
@@ -500,6 +450,12 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.38  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.37  2006/11/04 06:19:25  steve
  *  Remove last bits of relax_width methods, and use test_width
  *  to calculate the width of an r-value expression that may

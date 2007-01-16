@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.72 2006/10/05 01:23:54 steve Exp $
+ *  $Id: opcodes.txt,v 1.73 2007/01/16 05:44:16 steve Exp $
  */
 
 
@@ -57,7 +57,21 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
-* %assign/mv <memory-label>, <delay>, <bit>
+* %assign/av <array-label>, <delay>, <bit>
+
+The %assign/av instruction assigns a vector value to a word in the
+labeled array. The <delay> is the delay in simulation time to the
+assignment (0 for non-blocking assignment) and the <bit> is the base
+of the vector to write.
+
+The width of the word is retrieved from index register 0.
+
+The base of a part select is retrieved from index register 1.
+
+The address of the word in the memory is from index register 3. The
+address is canonical form.
+
+* %assign/mv <memory-label>, <delay>, <bit> (DEPRECATED)
 
 the %assign/mv instruction assigns a vector value to a word in the
 labeled memory. The <delay> is the delay in simulation time to the
@@ -360,12 +374,11 @@ If the matching child instruction is still running, a %join suspends
 the calling thread until the child ends. If the child is already
 ended, then the %join does not block or yield the thread.
 
-* %load/m <bit>, <memory-label> (OBSOLETE)
+* %load/av <bit>, <array-label>, <wid>
 
-This instruction loads a value from a memory bit into the specified
-thread register bit. The memory bit is addressed by index register 3.
-Bit address zero is the LSB of the first memory word.  This
-instruction loads only a single bit.
+This instruction loads a word from the specified array. The word
+address is in index register 3. The width should match the width of
+the array word.
 
 * %load/mv <bit>, <memory-label>, <wid>
 
@@ -534,6 +547,20 @@ to be read out of the variable. The <bit> is the address of the thread
 register that contains the LSB of the vector, and the <wid> is the
 size of the vector. The width must exactly match the width of the
 signal.
+
+* %set/av <array-label>, <bit>, <wid>
+
+This sets a thread vector to an array word. The <array-label>
+addresses an array device, and the <bit>,<wid> describe a vector to be
+written. Index register 3 contains the address of the word within the
+array.
+
+The base of a part select is retrieved from index register 1. The
+width is implied from the <wid> that is the argument. This is the part
+*within* the word.
+
+The address (in canonical form) is precalculated and loaded into index
+register 3. This is the address of the word within the array.
 
 * %set/mv <memory-label>, <bit>, <wid>
 

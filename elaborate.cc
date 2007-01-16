@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.354 2006/12/09 01:59:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.355 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2295,12 +2295,11 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
 		  NetNet*       sig = 0;
-		  NetMemory*    mem = 0;
 		  const NetExpr*par = 0;
 		  NetEvent*     eve = 0;
 
 		  NetScope*found_in = symbol_search(des, scope, id->path(),
-						    sig, mem, par, eve);
+						    sig, par, eve);
 
 		  if (found_in && eve) {
 			wa->add_event(eve);
@@ -2874,12 +2873,11 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       NetNet*       sig = 0;
-      NetMemory*    mem = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       NetScope*found_in = symbol_search(des, scope, event_,
-					sig, mem, par, eve);
+					sig, par, eve);
 
       if (found_in == 0) {
 	    cerr << get_line() << ": error: event <" << event_ << ">"
@@ -3349,6 +3347,12 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.355  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.354  2006/12/09 01:59:35  steve
  *  Fix an uninitialized variable warning.
  *

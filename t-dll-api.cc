@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.137 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.138 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -317,6 +317,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.idx_;
 
+	  case IVL_EX_SIGNAL:
+	    return net->u_.signal_.word;
+
 	  case IVL_EX_TERNARY:
 	    return net->u_.ternary_.cond;
 
@@ -443,6 +446,7 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
       switch (net->type_) {
 
 	  case IVL_EX_SIGNAL:
+	  case IVL_EX_ARRAY:
 	    return net->u_.signal_.sig;
 
 	  default:
@@ -707,6 +711,18 @@ extern "C" ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_signal_t ivl_lpm_array(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_ARRAY:
+	    return net->u_.array.sig;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 {
       assert(net);
@@ -726,7 +742,6 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
 	    return net->u_.ff.clk;
 	  default:
 	    assert(0);
@@ -739,7 +754,6 @@ extern "C" ivl_expr_t ivl_lpm_aset_value(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
 	    return net->u_.ff.aset_value;
 	  default:
 	    assert(0);
@@ -751,7 +765,6 @@ extern "C" ivl_expr_t ivl_lpm_sset_value(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
 	    return net->u_.ff.sset_value;
 	  default:
 	    assert(0);
@@ -775,7 +788,6 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
 {
       assert(net);
       switch (net->type) {
-	  case IVL_LPM_RAM:
 	  case IVL_LPM_FF:
 	    return net->u_.ff.we;
 	  default:
@@ -826,10 +838,6 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 		  return net->u_.shift.d;
 	    else
 		  return net->u_.shift.s;
-
-	  case IVL_LPM_RAM:
-	    assert(idx == 0);
-	    return net->u_.ff.d.pin;
 
 	  case IVL_LPM_FF:
 	    assert(idx == 0);
@@ -945,10 +953,6 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
-	  case IVL_LPM_RAM:
-	    assert(idx == 0);
-	    return net->u_.ff.q.pin;
-
 	  case IVL_LPM_FF:
 	    assert(idx == 0);
 	    return net->u_.ff.q.pin;
@@ -993,6 +997,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.repeat.q;
 
+	  case IVL_LPM_ARRAY:
+	    assert(idx == 0);
+	    return net->u_.array.q;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -1008,11 +1016,12 @@ extern "C" ivl_scope_t ivl_lpm_scope(ivl_lpm_t net)
 extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net)
 {
       switch (net->type) {
-	  case IVL_LPM_RAM:
-	    return net->u_.ff.s.pin;
 
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.s;
+
+	  case IVL_LPM_ARRAY:
+	    return net->u_.array.a;
 
 	  default:
 	    assert(0);
@@ -1023,10 +1032,10 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net)
 extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 {
       switch (net->type) {
-	  case IVL_LPM_RAM:
-	    return net->u_.ff.swid;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
+	  case IVL_LPM_ARRAY:
+	    return net->u_.array.swid;
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.inputs;
 	  default:
@@ -1040,7 +1049,6 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
-	  case IVL_LPM_RAM:
 	  case IVL_LPM_MUX:
 	    return 0;
 	  case IVL_LPM_ADD:
@@ -1079,6 +1087,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
 	    return 0;
+	  case IVL_LPM_ARRAY: // Array ports take the signedness of the array.
+	    return net->u_.array.sig->signed_;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1119,18 +1129,6 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
       return net->width;
 }
 
-extern "C" ivl_memory_t ivl_lpm_memory(ivl_lpm_t net)
-{
-      assert(net);
-      switch (net->type) {
-	  case IVL_LPM_RAM:
-	    return net->u_.ff.mem;
-	  default:
-	    assert(0);
-	    return 0;
-      }
-}
-
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
 {
       assert(net);
@@ -1143,6 +1141,8 @@ extern "C" ivl_expr_t ivl_lval_idx(ivl_lval_t net)
 {
       assert(net);
       if (net->type_ == IVL_LVAL_MEM)
+	    return net->idx;
+      if (net->type_ == IVL_LVAL_ARR)
 	    return net->idx;
       return 0x0;
 }
@@ -1174,6 +1174,7 @@ extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 	  case IVL_LVAL_REG:
 	  case IVL_LVAL_NET:
 	  case IVL_LVAL_MUX:
+	  case IVL_LVAL_ARR:
 	    return net->n.sig;
 	  default:
 	    return 0;
@@ -1520,6 +1521,16 @@ extern "C" const char* ivl_scope_tname(ivl_scope_t net)
       return net->tname_;
 }
 
+extern "C" int ivl_signal_array_base(ivl_signal_t net)
+{
+      return net->array_base;
+}
+
+extern "C" unsigned ivl_signal_array_count(ivl_signal_t net)
+{
+      return net->array_words;
+}
+
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 {
       if (net->nattr == 0)
@@ -1571,9 +1582,13 @@ extern "C" const char* ivl_signal_name(ivl_signal_t net)
       return name_buffer;
 }
 
-extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net)
+extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
 {
-      return net->pin_;
+      assert(word < net->array_words);
+      if (net->array_words > 1)
+	    return net->pins[word];
+      else
+	    return net->pin;
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
@@ -1889,6 +1904,7 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 		  sum += 1;
 		  break;
 		case IVL_LVAL_REG:
+		case IVL_LVAL_ARR:
 		  sum += ivl_lval_width(cur);
 		  break;
 		case IVL_LVAL_MEM:
@@ -1976,6 +1992,12 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.138  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.137  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

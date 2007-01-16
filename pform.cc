@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.137 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: pform.cc,v 1.138 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1197,24 +1197,21 @@ void pform_makewire(const vlltype&li, const char*nm,
 
       PWire*cur = get_wire_in_module(name);
 
-      if (cur) {
-	    if ((cur->get_wire_type() != NetNet::IMPLICIT)
-		&& (cur->get_wire_type() != NetNet::IMPLICIT_REG)) {
+	// If this is not implicit ("implicit" meaning we don't know
+	// what the type is yet) then  set thay type now.
+      if (cur && type != NetNet::IMPLICIT) {
+	    bool rc = cur->set_wire_type(type);
+	    if (rc == false) {
 		  ostringstream msg;
-		  msg << name << " previously defined at " <<
-			cur->get_line() << ".";
+		  msg << name << " definition conflicts with "
+		      << "definition at " << cur->get_line()
+		      << ".";
 		  VLerror(msg.str().c_str());
-	    } else {
-		  bool rc = cur->set_wire_type(type);
-		  if (rc == false) {
-			ostringstream msg;
-			msg << name << " definition conflicts with "
-			    << "definition at " << cur->get_line()
-			    << ".";
-			VLerror(msg.str().c_str());
-		  }
+		  cerr << "XXXX type=" << type <<", curtype=" << cur->get_wire_type() << endl;
 	    }
 
+      }
+      if (cur) {
 	    cur->set_file(li.text);
 	    cur->set_lineno(li.first_line);
 	    return;
@@ -1747,6 +1744,12 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.138  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.137  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

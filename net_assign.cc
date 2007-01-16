@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.21 2006/02/02 02:43:58 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.22 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,17 +39,10 @@ unsigned count_lval_width(const NetAssign_*idx)
 }
 
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), mem_(0), bmux_(0), base_(0)
+: sig_(s), word_(0), base_(0)
 {
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
-      more = 0;
-}
-
-NetAssign_::NetAssign_(NetMemory*s)
-: sig_(0), mem_(s), bmux_(0), base_(0)
-{
-      lwid_ = mem_->width();
       more = 0;
 }
 
@@ -62,23 +55,23 @@ NetAssign_::~NetAssign_()
       }
 
       assert( more == 0 );
-      if (bmux_) delete bmux_;
+      if (word_) delete word_;
 }
 
-void NetAssign_::set_bmux(NetExpr*r)
+void NetAssign_::set_word(NetExpr*r)
 {
-      assert(bmux_ == 0);
-      bmux_ = r;
+      assert(word_ == 0);
+      word_ = r;
 }
 
-NetExpr* NetAssign_::bmux()
+NetExpr* NetAssign_::word()
 {
-      return bmux_;
+      return word_;
 }
 
-const NetExpr* NetAssign_::bmux() const
+const NetExpr* NetAssign_::word() const
 {
-      return bmux_;
+      return word_;
 }
 
 const NetExpr* NetAssign_::get_base() const
@@ -88,17 +81,13 @@ const NetExpr* NetAssign_::get_base() const
 
 unsigned NetAssign_::lwidth() const
 {
-      if (mem_)  return lwid_;
-      else if (bmux_) return 1;
-      else return lwid_;
+      return lwid_;
 }
 
 perm_string NetAssign_::name() const
 {
       if (sig_) {
 	    return sig_->name();
-      } else if (mem_) {
-	    return mem_->name();
       } else {
 	    return perm_string::literal("");
       }
@@ -107,11 +96,6 @@ perm_string NetAssign_::name() const
 NetNet* NetAssign_::sig() const
 {
       return sig_;
-}
-
-NetMemory* NetAssign_::mem() const
-{
-      return mem_;
 }
 
 void NetAssign_::set_part(NetExpr*base, unsigned wid)
@@ -275,6 +259,12 @@ NetRelease::~NetRelease()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.22  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.21  2006/02/02 02:43:58  steve
  *  Allow part selects of memory words in l-values.
  *

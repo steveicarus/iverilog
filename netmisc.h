@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.26 2006/09/28 00:29:49 steve Exp $"
+#ident "$Id: netmisc.h,v 1.27 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -42,7 +42,6 @@
 extern NetScope* symbol_search(const Design*des,
 			       NetScope*start, hname_t path,
 			       NetNet*&net,       /* net/reg */
-			       NetMemory*&mem,    /* memory */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve,     /* named event */
 			       const NetExpr*&ex1, const NetExpr*&ex2);
@@ -50,12 +49,11 @@ extern NetScope* symbol_search(const Design*des,
 inline NetScope* symbol_search(const Design*des,
 			       NetScope*start, const hname_t&path,
 			       NetNet*&net,       /* net/reg */
-			       NetMemory*&mem,    /* memory */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve      /* named event */)
 {
       const NetExpr*ex1, *ex2;
-      return symbol_search(des, start, path, net, mem, par, eve, ex1, ex2);
+      return symbol_search(des, start, path, net, /*mem,*/ par, eve, ex1, ex2);
 }
 
 /*
@@ -122,6 +120,12 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.27  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.26  2006/09/28 00:29:49  steve
  *  Allow specparams as constants in expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.161 2006/11/10 05:44:45 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.162 2007/01/16 05:44:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -242,27 +242,6 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
       return 0;
 }
 
-/*
- * This function locates an ivl_memory_t object that matches the
- * NetMemory object. The search works by looking for the parent scope,
- * then scanning the parent scope for the NetMemory object.
- */
-ivl_memory_t dll_target::find_memory(ivl_design_s &des, const NetMemory*net)
-{
-      ivl_scope_t scope = find_scope(des, net->scope());
-      assert(scope);
-
-      const char*nname = net->name();
-
-      for (unsigned idx = 0 ;  idx < scope->nmem_ ;  idx += 1) {
-	    if (strcmp(scope->mem_[idx]->basename_, nname) == 0)
-		  return scope->mem_[idx];
-      }
-
-      assert(0);
-      return 0;
-}
-
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 {
       ivl_nexus_t tmp = new struct ivl_nexus_s;
@@ -415,14 +394,6 @@ static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
 			  scope->nlpm_*sizeof(ivl_lpm_t));
 	    scope->lpm_[scope->nlpm_-1] = net;
       }
-}
-
-static void scope_add_mem(ivl_scope_t scope, ivl_memory_t net)
-{
-      scope->nmem_ += 1;
-      scope->mem_   = (ivl_memory_t*)
-	    realloc(scope->mem_, scope->nmem_*sizeof(ivl_memory_t));
-      scope->mem_[scope->nmem_-1] = net;
 }
 
 ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
@@ -1186,20 +1157,6 @@ void dll_target::udp(const NetUDP*net)
       scope_add_logic(scope, obj);
 }
 
-void dll_target::memory(const NetMemory*net)
-{
-      ivl_memory_t obj = new struct ivl_memory_s;
-
-      obj->scope_    = find_scope(des_, net->scope());
-      obj->basename_ = net->name();
-      obj->width_    = net->width();
-      obj->signed_   = 0;
-      obj->size_     = net->count();
-      obj->root_     = -net->index_to_address(0);
-
-      scope_add_mem(obj->scope_, obj);
-}
-
 void dll_target::lpm_add_sub(const NetAddSub*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1250,6 +1207,35 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       }
 
       scope_add_lpm(obj->scope, obj);
+}
+
+bool dll_target::lpm_array_dq(const NetArrayDq*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_ARRAY;
+      obj->name = net->name();
+      obj->u_.array.sig = find_signal(des_, net->mem());
+      assert(obj->u_.array.sig);
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+      obj->width = net->width();
+      obj->u_.array.swid = net->awidth();
+
+      scope_add_lpm(obj->scope, obj);
+
+      const Nexus*nex;
+
+      nex = net->pin_Address().nexus();
+      assert(nex->t_cookie());
+      obj->u_.array.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.array.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
+      obj->u_.array.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.array.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      return true;
 }
 
 /*
@@ -1576,73 +1562,6 @@ void dll_target::lpm_ff(const NetFF*net)
       obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
       nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-}
-
-void dll_target::lpm_ram_dq(const NetRamDq*net)
-{
-      ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type  = IVL_LPM_RAM;
-      obj->name  = net->name();
-      obj->u_.ff.mem = find_memory(des_, net->mem());
-      assert(obj->u_.ff.mem);
-      obj->scope = find_scope(des_, net->mem()->scope());
-      assert(obj->scope);
-
-      obj->width = net->width();
-      obj->u_.ff.swid = net->awidth();
-
-      scope_add_lpm(obj->scope, obj);
-
-      const Nexus*nex;
-
-      // A write port is present only if something is connected to
-      // the clock input.
-
-      bool has_write_port = net->pin_InClock().is_linked();
-
-      // Connect the write clock and write enable
-
-      if (has_write_port) {
-	    nex = net->pin_InClock().nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
-	    assert(obj->u_.ff.clk);
-	    nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    nex = net->pin_WE().nexus();
-	    if (nex && nex->t_cookie()) {
-		  obj->u_.ff.we = (ivl_nexus_t) nex->t_cookie();
-		  assert(obj->u_.ff.we);
-		  nexus_lpm_add(obj->u_.ff.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-	    else
-		  obj->u_.ff.we = 0x0;
-      }
-      else {
-	    obj->u_.ff.clk = 0x0;
-	    obj->u_.ff.we = 0x0;
-      }
-
-      // Connect the address bus
-
-      nex = net->pin_Address().nexus();
-      assert(nex->t_cookie());
-      obj->u_.ff.s.pin = (ivl_nexus_t) nex->t_cookie();
-      nexus_lpm_add(obj->u_.ff.s.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-
-      // Connect the data busses
-
-      nex = net->pin_Q().nexus();
-      assert(nex->t_cookie());
-      obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
-      nexus_lpm_add(obj->u_.ff.q.pin, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-
-      if (has_write_port) {
-	    nex = net->pin_Data().nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-      }
 }
 
 /*
@@ -2192,18 +2111,32 @@ void dll_target::signal(const NetNet*net)
 	   t_cookie of the Nexus object so that I find it again when I
 	   next encounter the nexus. */
 
-      const Nexus*nex = net->pin(0).nexus();
-      if (nex->t_cookie()) {
-	    obj->pin_ = (ivl_nexus_t)nex->t_cookie();
-	    nexus_sig_add(obj->pin_, obj, 0);
+      obj->array_base = net->array_first();
+      obj->array_words = net->array_count();
+      if (obj->array_words > 1)
+	    obj->pins = new ivl_nexus_t[obj->array_words];
 
-      } else {
-	    ivl_nexus_t tmp = nexus_sig_make(obj, 0);
-	    tmp->name_ = strings_.add(nex->name());
-	    nex->t_cookie(tmp);
-	    obj->pin_ = tmp;
+      for (unsigned idx = 0 ;  idx < obj->array_words ;  idx += 1) {
+
+	    const Nexus*nex = net->pin(idx).nexus();
+	    if (nex->t_cookie()) {
+		  if (obj->array_words > 1) {
+			obj->pins[idx] = (ivl_nexus_t)nex->t_cookie();
+			nexus_sig_add(obj->pins[idx], obj, idx);
+		  } else {
+			obj->pin = (ivl_nexus_t)nex->t_cookie();
+			nexus_sig_add(obj->pin, obj, idx);
+		  }
+	    } else {
+		  ivl_nexus_t tmp = nexus_sig_make(obj, idx);
+		  tmp->name_ = strings_.add(nex->name());
+		  nex->t_cookie(tmp);
+		  if (obj->array_words > 1)
+			obj->pins[idx] = tmp;
+		  else
+			obj->pin = tmp;
+	    }
       }
-
 }
 
 bool dll_target::signal_paths(const NetNet*net)
@@ -2258,6 +2191,12 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.162  2007/01/16 05:44:15  steve
+ *  Major rework of array handling. Memories are replaced with the
+ *  more general concept of arrays. The NetMemory and NetEMemory
+ *  classes are removed from the ivl core program, and the IVL_LPM_RAM
+ *  lpm type is removed from the ivl_target API.
+ *
  * Revision 1.161  2006/11/10 05:44:45  steve
  *  Process delay paths in second path over signals.
  *
