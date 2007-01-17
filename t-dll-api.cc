@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.139 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.140 2007/01/17 05:00:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1358,19 +1358,6 @@ extern "C" ivl_lpm_t ivl_scope_lpm(ivl_scope_t net, unsigned idx)
       return net->lpm_[idx];
 }
 
-extern "C" unsigned ivl_scope_mems(ivl_scope_t net)
-{
-      assert(net);
-      return net->nmem_;
-}
-
-extern "C" ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx)
-{
-      assert(net);
-      assert(idx < net->nmem_);
-      return net->mem_[idx];
-}
-
 static unsigned scope_name_len(ivl_scope_t net)
 {
       unsigned len = 0;
@@ -1947,6 +1934,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.140  2007/01/17 05:00:12  steve
+ *  Dead code for memories in scopes.
+ *
  * Revision 1.139  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

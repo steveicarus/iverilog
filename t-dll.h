@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.136 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: t-dll.h,v 1.137 2007/01/17 05:00:12 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -531,9 +531,6 @@ struct ivl_scope_s {
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
 
-      unsigned nmem_;
-      ivl_memory_t* mem_;
-
       unsigned nparam_;
       ivl_parameter_t param_;
 
@@ -669,6 +666,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.137  2007/01/17 05:00:12  steve
+ *  Dead code for memories in scopes.
+ *
  * Revision 1.136  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

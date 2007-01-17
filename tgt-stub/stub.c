@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.143 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: stub.c,v 1.144 2007/01/17 05:00:12 steve Exp $"
 #endif
 
 /*
@@ -1378,9 +1378,6 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
 
-      for (idx = 0 ;  idx < ivl_scope_mems(net) ;  idx += 1)
-	    show_memory(ivl_scope_mem(net, idx));
-
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
 	    show_event(ivl_scope_event(net, idx));
 
@@ -1472,6 +1469,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.144  2007/01/17 05:00:12  steve
+ *  Dead code for memories in scopes.
+ *
  * Revision 1.143  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

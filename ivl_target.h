@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.173 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.174 2007/01/17 05:00:12 steve Exp $"
 #endif
 
 # include  <stdint.h>
@@ -1408,8 +1408,6 @@ extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
-extern unsigned     ivl_scope_mems(ivl_scope_t net);
-extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
@@ -1756,6 +1754,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.174  2007/01/17 05:00:12  steve
+ *  Dead code for memories in scopes.
+ *
  * Revision 1.173  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

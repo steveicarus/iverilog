@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.162 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.163 2007/01/17 05:00:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -486,8 +486,6 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->event_ = 0;
       root_->nlpm_ = 0;
       root_->lpm_ = 0;
-      root_->nmem_ = 0;
-      root_->mem_ = 0;
       make_scope_parameters(root_, s);
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
@@ -1941,8 +1939,6 @@ void dll_target::scope(const NetScope*net)
 	    scope->event_ = 0;
 	    scope->nlpm_ = 0;
 	    scope->lpm_ = 0;
-	    scope->nmem_ = 0;
-	    scope->mem_ = 0;
 	    make_scope_parameters(scope, net);
 	    scope->time_units = net->time_unit();
 	    scope->nattr = net->attr_cnt();
@@ -2191,6 +2187,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.163  2007/01/17 05:00:12  steve
+ *  Dead code for memories in scopes.
+ *
  * Revision 1.162  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
