@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.41 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.42 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -143,14 +143,6 @@ extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
 #define STUFF_OK_RO 0x0004
 
 /*
- * This function draws code to evaluate the index expression exp for
- * the memory mem. The result is loaded into index register i3, and
- * the flag bit 4 is set to 0 if the numerical value is defined, or 1
- * if not.
- */
-extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
-
-/*
  * This evaluates an expression and leaves the result in the numbered
  * integer index register. It also will set bit-4 to 1 if the value is
  * not fully defined (i.e. contains x or z).
@@ -252,6 +244,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.42  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.41  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

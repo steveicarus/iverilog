@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.138 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.139 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,33 +95,6 @@ inline static const char *basename(ivl_scope_t scope, const char *inst)
       assert(*inst == '.');
       return inst+1;
 }
-
-extern "C" const char* ivl_memory_basename(ivl_memory_t net)
-{
-      return net->basename_;
-}
-
-extern "C" ivl_scope_t ivl_memory_scope(ivl_memory_t net)
-{
-      assert(net);
-      return net->scope_;
-}
-
-extern "C" int ivl_memory_root(ivl_memory_t net)
-{
-      return net->root_;
-}
-
-extern "C" unsigned ivl_memory_size(ivl_memory_t net)
-{
-      return net->size_;
-}
-
-extern "C" unsigned ivl_memory_width(ivl_memory_t net)
-{
-      return net->width_;
-}
-
 
 extern "C" ivl_variable_type_t ivl_const_type(ivl_net_const_t net)
 {
@@ -500,12 +473,6 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
       assert(net);
       return net->width_;
-}
-
-extern "C" ivl_memory_t ivl_expr_memory(ivl_expr_t net)
-{
-      assert(net->type_ == IVL_EX_MEMORY);
-      return net->u_.memory_.mem_;
 }
 
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
@@ -1140,18 +1107,9 @@ extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
 extern "C" ivl_expr_t ivl_lval_idx(ivl_lval_t net)
 {
       assert(net);
-      if (net->type_ == IVL_LVAL_MEM)
-	    return net->idx;
+
       if (net->type_ == IVL_LVAL_ARR)
 	    return net->idx;
-      return 0x0;
-}
-
-extern "C" ivl_memory_t ivl_lval_mem(ivl_lval_t net)
-{
-      assert(net);
-      if (net->type_ == IVL_LVAL_MEM)
-	    return net->n.mem;
       return 0x0;
 }
 
@@ -1907,9 +1865,6 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 		case IVL_LVAL_ARR:
 		  sum += ivl_lval_width(cur);
 		  break;
-		case IVL_LVAL_MEM:
-		  sum += ivl_memory_width(ivl_lval_mem(cur));
-		  break;
 		default:
 		  assert(0);
 	    }
@@ -1992,6 +1947,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.139  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.138  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

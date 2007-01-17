@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.135 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: t-dll.h,v 1.136 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -376,7 +376,7 @@ struct ivl_lpm_s {
 enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
       IVL_LVAL_MUX = 1,
-      IVL_LVAL_MEM = 2, /* Deprecated in favor of LVAL_ARR? */
+      /* IVL_LVAL_MEM = 2, / Deprecated in favor of LVAL_ARR? */
       IVL_LVAL_NET = 3, /* Only force can have NET l-values */
       IVL_LVAL_ARR = 4
 };
@@ -479,19 +479,6 @@ struct ivl_nexus_s {
       struct ivl_nexus_ptr_s*ptrs_;
       const char*name_;
       void*private_data;
-};
-
-
-/*
- * Memory.
- */
-struct ivl_memory_s {
-      perm_string basename_;
-      ivl_scope_t scope_;
-      unsigned width_;
-      unsigned signed_ : 1;
-      unsigned size_;
-      int root_;
 };
 
 /*
@@ -682,6 +669,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.136  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.135  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

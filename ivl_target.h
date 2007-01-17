@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.172 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.173 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  <stdint.h>
@@ -258,7 +258,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SIGN_EXT=27,
       IVL_LPM_SUB    =  8,
-      _IVL_LPM_RAM   =  9, /* obsolete */
+      /* IVL_LPM_RAM =  9, / obsolete */
       IVL_LPM_UFUNC  = 14
 } ivl_lpm_type_t;
 
@@ -656,42 +656,7 @@ extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
-/*
- * Memory.
- * Memories are declared in Verilog source as 2 dimensional arrays of
- * reg bits. This means that they are simple arrays of vectors. The
- * vectors in the array are called "words".
- *
- * ivl_memory_name (DEPRECATED)
- *
- * ivl_memory_basename
- *    This returns the base name of the memory object. The base name
- *    does not include the name of the scopes that contains the object.
- *
- * ivl_memory_root
- *    The root of the memory is the value to add to a calculated
- *    address to get to a canonical (0-based) address. This value is
- *    used when external code wishes to access a word. All the
- *    compiled references to the word within the compiled design are
- *    converted to canonical form by the compiler.
- *
- * ivl_memory_size
- * ivl_memory_width
- *    These functions return the dimensions of the memory. The size is
- *    the number of words in the memory, and the width is the number
- *    of bits in each word.
- *
- * ivl_memory_scope
- *    This returns the scope that contains the memory.
- */
 
-extern const char*ivl_memory_basename(ivl_memory_t net);
-extern int ivl_memory_root(ivl_memory_t net);
-extern ivl_scope_t ivl_memory_scope(ivl_memory_t net);
-extern unsigned ivl_memory_size(ivl_memory_t net);
-extern unsigned ivl_memory_width(ivl_memory_t net);
-
-extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -1147,7 +1112,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *
  *    (Should this be combined with ivl_lval_idx? -Ed)
  *
- * ivl_lval_mem
+ * ivl_lval_mem (deprecated)
  *    If the l-value is a memory, this method returns an
  *    ivl_memory_t that represents that memory. Otherwise, it
  *    returns 0.
@@ -1197,7 +1162,6 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
 extern unsigned    ivl_lval_width(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); // XXXX Obsolete?
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
-extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
@@ -1792,6 +1756,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.173  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.172  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

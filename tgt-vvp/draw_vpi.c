@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.14 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.15 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -219,13 +219,6 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  }
 		  break;
 
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%p", ivl_expr_memory(expr)) ;
-			continue;
-		  }
-		  break;
-
 		default:
 		  break;
 	    }
@@ -300,6 +293,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.15  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.14  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

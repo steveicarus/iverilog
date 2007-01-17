@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.131 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.132 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1599,86 +1599,6 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
       return res;
 }
 
-/*
- * Draw code to evaluate a memory word index expression and write the
- * value into index register 3. This expression converts the run-time
- * calculated value to canonical form that the %load/mv takes.
- */
-void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
-{
-      int root = ivl_memory_root(mem);
-
-      switch (ivl_expr_type(ae)) {
-	  case IVL_EX_NUMBER: {
-		unsigned nbits = ivl_expr_width(ae);
-		const char*bits = ivl_expr_bits(ae);
-		unsigned long v = 0;
-		int unknown_flag = 0;
-		unsigned idx;
-		for (idx = 0 ;  idx < nbits ;  idx += 1)
-		      switch (bits[idx]) {
-			  case '0':
-			    break;
-			  case '1':
-			    assert(idx < (8*sizeof v));
-			    v |= 1 << idx;
-			    break;
-			  default:
-			    v = ~0UL;
-			    unknown_flag = 1;
-			    break;
-		      }
-		fprintf(vvp_out, "    %%ix/load 3, %lu;\n", v-root);
-		fprintf(vvp_out, "    %%mov 4, %c, 1;\n",
-			unknown_flag?'1':'0');
-		break;
-	  }
-	  case IVL_EX_ULONG: {
-		unsigned v = ivl_expr_uvalue(ae);
-		fprintf(vvp_out, "    %%ix/load 3, %u;\n", v-root);
-		fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
-		break;
-	  }
-	  default: {
-		struct vector_info addr = draw_eval_expr(ae, 0);
-		fprintf(vvp_out, "    %%ix/get 3, %u, %u;\n",
-			addr.base, addr.wid);
-		clr_vector(addr);
-		if (root>0)
-		      fprintf(vvp_out, "    %%ix/sub 3, %u;\n", root);
-		break;
-	  }
-      }
-}
-
-static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
-{
-      unsigned swid = ivl_expr_width(exp);
-      ivl_memory_t mem = ivl_expr_memory(exp);
-      struct vector_info res;
-
-      draw_memory_index_expr(mem, ivl_expr_oper1(exp));
-
-      if (swid > wid)
-	    swid = wid;
-
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
-
-      fprintf(vvp_out, "   %%load/mv  %u, M_%p, %u;\n",
-	      res.base, mem, swid);
-
-	/* Pad the signal value with zeros. */
-      if (swid < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, wid-swid);
-
-      if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
-
-      return res;
-}
-
 static struct vector_info draw_select_signal(ivl_expr_t sube,
 					     ivl_expr_t bit_idx,
 					     unsigned bit_wid,
@@ -2218,10 +2138,6 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    res = draw_ternary_expr(exp, wid);
 	    break;
 
-	  case IVL_EX_MEMORY:
-	    res = draw_memory_expr(exp, wid);
-	    break;
-
 	  case IVL_EX_SFUNC:
 	    res = draw_sfunc_expr(exp, wid);
 	    break;
@@ -2245,6 +2161,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.132  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.131  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

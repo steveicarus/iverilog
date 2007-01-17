@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.127 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.128 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -156,34 +156,6 @@ static void set_to_lvariable(ivl_lval_t lval,
       }
 }
 
-/*
- * This function writes the code to set a vector to a memory word. The
- * idx is the thread register that contains the address of the word in
- * the memory, and bit is the base of the thread vector. The wid is
- * the width of the vector to be written to the word.
- */
-static void set_to_memory_word(ivl_lval_t lval, unsigned idx,
-			       unsigned bit, unsigned wid)
-{
-      unsigned skip_set = transient_id++;
-      ivl_memory_t mem = ivl_lval_mem(lval);
-
-	/* Calculate the word part select into index-1 */
-      if (ivl_lval_part_off(lval)) {
-	    draw_eval_expr_into_integer(ivl_lval_part_off(lval), 1);
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-      } else {
-	    fprintf(vvp_out, "   %%ix/load 1, 0;\n");
-      }
-
-	/* Calculate the memory address into index-3 */
-      draw_memory_index_expr(mem, ivl_lval_idx(lval));
-      fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-
-      fprintf(vvp_out, "   %%set/mv M_%p, %u, %u;\n", mem, bit, wid);
-      fprintf(vvp_out, "t_%u ;\n", skip_set);
-}
-
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 unsigned bit, unsigned delay, unsigned width)
 {
@@ -283,32 +255,6 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       }
 }
 
-static void assign_to_memory_word(ivl_lval_t lval, unsigned bit,
-				  unsigned delay, unsigned wid)
-{
-      unsigned skip_set = transient_id++;
-      ivl_memory_t mem = ivl_lval_mem(lval);
-	//assert(wid == ivl_memory_width(mem));
-
-	/* Calculate the word part select into index-1 */
-      if (ivl_lval_part_off(lval)) {
-	    draw_eval_expr_into_integer(ivl_lval_part_off(lval), 1);
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-      } else {
-	    fprintf(vvp_out, "   %%ix/load 1, 0;\n");
-      }
-
-	/* Calculate the memory address into index-3 */
-      draw_memory_index_expr(mem, ivl_lval_idx(lval));
-      fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-
-	/* Load the word/part-select width into index-0 */
-      fprintf(vvp_out, "   %%ix/load 0, %u;\n", wid);
-      fprintf(vvp_out, "   %%assign/mv M_%p, %u, %u;\n", mem, delay, bit);
-      fprintf(vvp_out, "t_%u ;\n", skip_set);
-
-      clear_expression_lookaside();
-}
 
 /*
  * This is a private function to generate %set code for the
@@ -319,7 +265,6 @@ static void assign_to_memory_word(ivl_lval_t lval, unsigned bit,
 static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 {
       ivl_lval_t lval;
-      ivl_memory_t mem;
 
       unsigned wid = res.wid;
       unsigned lidx;
@@ -331,8 +276,6 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 
 	    lval = ivl_stmt_lval(net, lidx);
 
-	    mem = ivl_lval_mem(lval);
-
 	      /* Reduce bit_limit to the width of this l-value. */
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
@@ -341,12 +284,7 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 		 bit that this l-value takes. */
 	    bidx = res.base < 4? res.base : (res.base+cur_rbit);
 
-	    if (mem) {
-		  set_to_memory_word(lval, 3, bidx, bit_limit);
-
-	    } else {
-		  set_to_lvariable(lval, bidx, bit_limit);
-	    }
+	    set_to_lvariable(lval, bidx, bit_limit);
 
 	      /* Now we've consumed this many r-value bits for the
 		 current l-value. */
@@ -506,7 +444,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
-      ivl_memory_t mem;
       ivl_signal_t sig;
 
       unsigned long delay = 0;
@@ -537,27 +474,13 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
-	      mem = ivl_lval_mem(lval);
-
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
 
-	      if (mem == 0) {
-		    unsigned bidx;
+	      unsigned bidx;
 
-		    bidx = res.base < 4? res.base : (res.base+cur_rbit);
-		    assign_to_lvector(lval, bidx, delay, del, bit_limit);
-
-	      } else {
-		    unsigned bidx;
-
-		      /* XXXX don't yet know what to do with a
-			 non-constant delay exprssion. */
-		    assert(del == 0);
-
-		    bidx = res.base < 4? res.base : (res.base+cur_rbit);
-		    assign_to_memory_word(lval, bidx, delay, bit_limit);
-	      }
+	      bidx = res.base < 4? res.base : (res.base+cur_rbit);
+	      assign_to_lvector(lval, bidx, delay, del, bit_limit);
 
 	      cur_rbit += bit_limit;
 
@@ -1612,6 +1535,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.128  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.127  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

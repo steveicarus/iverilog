@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.151 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.152 2007/01/17 04:39:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -2249,19 +2249,6 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
       }
 }
 
-
-static void draw_mem_in_scope(ivl_memory_t net)
-{
-      int root = ivl_memory_root(net);
-      int last = root + ivl_memory_size(net) - 1;
-      int msb = ivl_memory_width(net) - 1;
-      int lsb = 0;
-      fprintf(vvp_out, "M_%p .mem \"%s\", %u,%u, %u,%u;\n", net,
-	      vvp_mangle_name(ivl_memory_basename(net)),
-	      msb, lsb, root, last);
-}
-
-
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2348,11 +2335,6 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_event_in_scope(event);
       }
 
-      for (idx = 0 ;  idx < ivl_scope_mems(net) ;  idx += 1) {
-	    ivl_memory_t mem = ivl_scope_mem(net, idx);
-	    draw_mem_in_scope(mem);
-      }
-
       for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1) {
 	    ivl_lpm_t lpm = ivl_scope_lpm(net, idx);
 	    draw_lpm_in_scope(lpm);
@@ -2370,6 +2352,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.152  2007/01/17 04:39:18  steve
+ *  Remove dead code related to memories.
+ *
  * Revision 1.151  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
