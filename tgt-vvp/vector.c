@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.8 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vector.c,v 1.9 2007/01/18 00:59:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -226,6 +226,10 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
 	    if (ivl_expr_width(l) != ivl_expr_width(r))
 		  return 0;
 
+	      /* Don't match array words. */
+	    if (ivl_expr_oper1(l) || ivl_expr_oper1(r))
+		  return 0;
+
 	    return 1;
 
 	  default:
@@ -323,6 +327,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.9  2007/01/18 00:59:48  steve
+ *  Do not match array words in expression lookaside.
+ *
  * Revision 1.8  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
