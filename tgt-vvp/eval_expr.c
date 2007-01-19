@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.132 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.133 2007/01/19 05:24:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1464,11 +1464,39 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
       double val = ivl_expr_dvalue(exp);
+      long ival = val;
+
+      unsigned addr, run, idx;
+      int bit;
+
+      fprintf(vvp_out, "; draw_realnum_expr(%f, %u) as %ld\n",
+	      val, wid, ival);
 
       res.base = allocate_vector(wid);
       res.wid = wid;
 
-      fprintf(vvp_out, "    ; XXXX draw_realnum_expr(%f, %u)\n", val, wid);
+      addr = res.base;
+      run = 1;
+      bit = ival & 1;
+      ival >>= 1LL;
+
+      for (idx = 1 ;  idx < wid ;  idx += 1) {
+	    int next_bit = ival & 1;
+	    ival >>= 1LL;
+
+	    if (next_bit == bit) {
+		  run += 1;
+		  continue;
+	    }
+
+	    fprintf(vvp_out, "  %%mov %u, %d, %u;\n", addr, bit, run);
+	    addr += run;
+	    run = 1;
+	    bit = next_bit;
+      }
+
+      fprintf(vvp_out, "  %%mov %u, %d, %u;\n", addr, bit, run);
+
 
       return res;
 }
@@ -2161,6 +2189,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.133  2007/01/19 05:24:53  steve
+ *  Handle real constants in vector expressions.
+ *
  * Revision 1.132  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *
