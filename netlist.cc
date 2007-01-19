@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.251 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.252 2007/01/19 04:25:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -406,9 +406,11 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	    break;
       }
 
-      pin(0).set_name(perm_string::literal("P"), 0);
-      pin(0).set_dir(dir);
-      pin(0).set_init(init_value);
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_name(perm_string::literal("P"), idx);
+	    pin(idx).set_dir(dir);
+	    pin(idx).set_init(init_value);
+      }
 
       s->add_signal(this);
 }
@@ -2190,6 +2192,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.252  2007/01/19 04:25:37  steve
+ *  Fix missing passive setting for array word pins.
+ *
  * Revision 1.251  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
