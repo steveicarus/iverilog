@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.49 2006/12/08 19:56:09 steve Exp $"
+#ident "$Id: verinum.cc,v 1.50 2007/01/19 05:42:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -776,7 +776,7 @@ verinum pow(const verinum&left, const verinum&right)
       unsigned pow_count = right.as_ulong();
 
       for (unsigned idx = 1 ;  idx < pow_count ;  idx += 1)
-	    result = result * result;
+	    result = result * left;
 
       return result;
 }
@@ -1056,6 +1056,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.50  2007/01/19 05:42:04  steve
+ *  Fix calculation of verinum pow operation.
+ *
  * Revision 1.49  2006/12/08 19:56:09  steve
  *  Handle very wide signed divide.
  *
