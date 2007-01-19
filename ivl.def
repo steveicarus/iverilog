@@ -29,7 +29,6 @@ ivl_expr_bits
 ivl_expr_def
 ivl_expr_dvalue
 ivl_expr_event
-ivl_expr_memory
 ivl_expr_name
 ivl_expr_opcode
 ivl_expr_oper1
@@ -73,7 +72,6 @@ ivl_lpm_data
 ivl_lpm_datab
 ivl_lpm_define
 ivl_lpm_enable
-ivl_lpm_memory
 ivl_lpm_name
 ivl_lpm_q
 ivl_lpm_scope
@@ -89,17 +87,10 @@ ivl_lpm_type
 ivl_lpm_width
 
 ivl_lval_idx
-ivl_lval_mem
 ivl_lval_mux
 ivl_lval_part_off
 ivl_lval_sig
 ivl_lval_width
-
-ivl_memory_basename
-ivl_memory_root
-ivl_memory_scope
-ivl_memory_size
-ivl_memory_width
 
 ivl_nexus_get_private
 ivl_nexus_name
@@ -129,8 +120,6 @@ ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
-ivl_scope_mem
-ivl_scope_mems
 ivl_scope_name
 ivl_scope_param
 ivl_scope_params
@@ -143,6 +132,8 @@ ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
 
+ivl_signal_array_base
+ivl_signal_array_count
 ivl_signal_attr
 ivl_signal_attr_cnt
 ivl_signal_attr_val
