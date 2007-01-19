@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.192 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.193 2007/01/19 04:26:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1767,10 +1767,16 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 	    assert(sig->array_index_is_valid(index));
 	    index = sig->array_index_to_address(index);
 
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Elaborate word "
+		       << index << " of " << sig->name() << endl;
+	    }
+
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, sig->vector_width());
 	    tmp->set_line(*this);
 	    tmp->local_flag(true);
+	    tmp->data_type(sig->data_type());
 	    connect(tmp->pin(0), sig->pin(index));
 	    return tmp;
       }
@@ -2881,6 +2887,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.193  2007/01/19 04:26:24  steve
+ *  Fix missing data_type mark for array words.
+ *
  * Revision 1.192  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
