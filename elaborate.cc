@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.355 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.356 2007/01/19 05:42:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1862,9 +1862,8 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	      /* Attempt to pre-evaluate the parameters. It may be
 		 possible to at least partially reduce the
 		 expression. */
-	    if (eparms[idx] && !dynamic_cast<NetEConst*>(eparms[idx])) {
-		  NetExpr*tmp = eparms[idx]->eval_tree();
-		  if (tmp != 0) {
+	    if (eparms[idx]) {
+		  if (NetExpr*tmp = eparms[idx]->eval_tree()) {
 			delete eparms[idx];
 			eparms[idx] = tmp;
 		  }
@@ -3347,6 +3346,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.356  2007/01/19 05:42:40  steve
+ *  Precalculate constant power expressions, and constant function arguments.
+ *
  * Revision 1.355  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

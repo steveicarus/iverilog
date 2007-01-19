@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.117 2007/01/16 05:44:14 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.118 2007/01/19 05:42:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -502,7 +502,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
-		  parms[idx] = tmp->elaborate_expr(des, scope, -1, false);
+		  parms[idx] = elab_and_eval(des, scope, tmp, -1);
 
 	    } else {
 		  missing_parms += 1;
@@ -1598,6 +1598,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.118  2007/01/19 05:42:40  steve
+ *  Precalculate constant power expressions, and constant function arguments.
+ *
  * Revision 1.117  2007/01/16 05:44:14  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
