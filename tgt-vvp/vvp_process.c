@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.128 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.129 2007/01/19 02:30:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -117,6 +117,9 @@ static void set_to_lvariable(ivl_lval_t lval,
 	    fprintf(vvp_out, "    %%set/x0 v%p_%lu, %u, %u;\n",
 		    sig, use_word, bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
+	      /* save_signal width of 0 CLEARS the signal from the
+	         lookaside. */
+	    save_signal_lookaside(bit, sig, use_word, 0);
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
 	      /* There is no mux expression, but a constant part
@@ -128,6 +131,10 @@ static void set_to_lvariable(ivl_lval_t lval,
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
 	    fprintf(vvp_out, "    %%set/x0 v%p_%lu, %u, %u;\n",
 		    sig, use_word, bit, wid);
+
+	      /* save_signal width of 0 CLEARS the signal from the
+	         lookaside. */
+	    save_signal_lookaside(bit, sig, use_word, 0);
 
       } else if (ivl_signal_array_count(sig) > 1) {
 
@@ -147,6 +154,10 @@ static void set_to_lvariable(ivl_lval_t lval,
 			  sig, bit, wid);
 		  fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    }
+	      /* save_signal width of 0 CLEARS the signal from the
+	         lookaside. */
+	    save_signal_lookaside(bit, sig, use_word, 0);
+
 
       } else {
 	    save_signal_lookaside(bit, sig, use_word, wid);
@@ -1535,6 +1546,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.129  2007/01/19 02:30:19  steve
+ *  Fix bad lookaside references in vvp thread code generator.
+ *
  * Revision 1.128  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

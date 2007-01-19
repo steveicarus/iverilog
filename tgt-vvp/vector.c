@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.9 2007/01/18 00:59:48 steve Exp $"
+#ident "$Id: vector.c,v 1.10 2007/01/19 02:30:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -166,6 +166,18 @@ void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
 	    lookaside_top = addr+wid;
 }
 
+static void clear_signal_lookaside_bit(unsigned idx, ivl_signal_t sig, unsigned sig_word)
+{
+      if (allocation_map[idx].alloc > 0)
+	    return;
+      if (allocation_map[idx].sig != sig)
+	    return;
+      if (allocation_map[idx].sig_word != sig_word)
+	    return;
+
+      set_sig(idx, 0, 0, 0);
+}
+
 void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned sig_word, unsigned wid)
 {
       unsigned idx;
@@ -175,11 +187,17 @@ void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned sig_word, u
 
       assert((addr+wid) <= MAX_VEC);
 
+      for (idx = 8 ;  idx < addr ;  idx += 1)
+	    clear_signal_lookaside_bit(idx, sig, sig_word);
+
       for (idx = 0 ;  idx < wid ;  idx += 1)
 	    set_sig(addr+idx, sig, sig_word, idx);
 
       if ((addr+wid) > lookaside_top)
 	    lookaside_top = addr+wid;
+
+      for (idx = addr+wid ;  idx < lookaside_top ;  idx += 1)
+	    clear_signal_lookaside_bit(idx, sig, sig_word);
 }
 
 static int compare_exp(ivl_expr_t l, ivl_expr_t r)
@@ -269,6 +287,9 @@ static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 		  return idx-match+1;
       }
 
+	/* The general expression lookup failed. If this is an
+	   IVL_EX_SIGNAL, then look again in the variable lookaside
+	   (which is saved l-values) for the expression. */
       if (ivl_expr_type(exp) != IVL_EX_SIGNAL)
 	    return 0;
 
@@ -296,6 +317,7 @@ static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 	    match += 1;
 	    if (match == wid)
 		  return idx-match+1;
+
       }
 
       return 0;
@@ -312,8 +334,13 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 {
       unsigned idx;
       unsigned la = find_expression_lookaside(exp, wid);
+      if (la == 0)
+	    return 0;
 
       if (exclusive_flag) {
+	      /* If the caller is requesting exclusive allocation of
+	         the expression, then return not-found if a lookup
+	         already matched the expression. */
 	    for (idx = 0 ;  idx < wid ;  idx += 1)
 		  if (allocation_map[la+idx].alloc)
 			return 0;
@@ -327,6 +354,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.10  2007/01/19 02:30:19  steve
+ *  Fix bad lookaside references in vvp thread code generator.
+ *
  * Revision 1.9  2007/01/18 00:59:48  steve
  *  Do not match array words in expression lookaside.
  *
