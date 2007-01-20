@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.81 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.82 2007/01/20 02:10:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -449,9 +449,13 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    osig->data_type(expr_type());
 	    osig->local_flag(true);
 
+	      // ushift is the amount of pad created by the shift.
 	    unsigned long ushift = shift>=0? shift : -shift;
 	    if (ushift > osig->vector_width())
 		  ushift = osig->vector_width();
+
+	      // part_width is the bits of the vector that survive the shift.
+	    unsigned long part_width = osig->vector_width() - ushift;
 
 	    verinum znum (verinum::V0, ushift, true);
 	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
@@ -471,6 +475,20 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    zsig->data_type(osig->data_type());
 	    connect(zcon->pin(0), zsig->pin(0));
 
+	      /* Create a part select to reduce the width of the lsig
+	         to the amount left by the shift. */
+	    NetPartSelect*psel = new NetPartSelect(lsig, shift<0? ushift : 0,
+						   part_width,
+						   NetPartSelect::VP);
+	    des->add_node(psel);
+
+	    NetNet*psig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::IMPLICIT, part_width);
+	    psig->data_type(expr_type());
+	    psig->local_flag(true);
+	    psig->set_line(*this);
+	    connect(psig->pin(0), psel->pin(0));
+
 	    NetConcat*ccat = new NetConcat(scope, scope->local_symbol(),
 					   osig->vector_width(), 2);
 	    ccat->set_line(*this);
@@ -478,10 +496,12 @@ NetNet* NetEBShift::synthesize(Design*des)
 
 	    connect(ccat->pin(0), osig->pin(0));
 	    if (shift > 0) {
+		    // Left shift.
 		  connect(ccat->pin(1), zsig->pin(0));
-		  connect(ccat->pin(2), lsig->pin(0));
+		  connect(ccat->pin(2), psig->pin(0));
 	    } else {
-		  connect(ccat->pin(1), lsig->pin(0));
+		    // Right shift
+		  connect(ccat->pin(1), psig->pin(0));
 		  connect(ccat->pin(2), zsig->pin(0));
 	    }
 
@@ -890,6 +910,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.82  2007/01/20 02:10:45  steve
+ *  Get argument widths right for shift results.
+ *
  * Revision 1.81  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

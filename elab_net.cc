@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.193 2007/01/19 04:26:24 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.194 2007/01/20 02:10:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1140,6 +1140,13 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    }
 
 	    des->add_node(part);
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Elaborate shift "
+		       << "(" << op_ << ") as concatenation of "
+		       << pad_width << " zeros with " << part_width
+		       << " bits of expression." << endl;
+	    }
 
 	      /* Attach a signal to the part select output (NetConcat
 		 input) */
@@ -2887,6 +2894,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.194  2007/01/20 02:10:45  steve
+ *  Get argument widths right for shift results.
+ *
  * Revision 1.193  2007/01/19 04:26:24  steve
  *  Fix missing data_type mark for array words.
  *
