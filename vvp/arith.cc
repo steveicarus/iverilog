@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.49 2006/07/30 02:51:36 steve Exp $"
+#ident "$Id: arith.cc,v 1.50 2007/01/20 02:09:54 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -545,7 +545,11 @@ void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
-      assert(op_a_.size() == op_b_.size());
+      if (op_a_.size() != op_b_.size()) {
+	    cerr << "COMPARISON size mismatch. "
+		 << "a=" << op_a_ << ", b=" << op_b_ << endl;
+	    assert(0);
+      }
 
       vvp_vector4_t res (1);
       res.set_bit(0, BIT4_1);
@@ -784,6 +788,9 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.50  2007/01/20 02:09:54  steve
+ *  Better size error details.
+ *
  * Revision 1.49  2006/07/30 02:51:36  steve
  *  Fix/implement signed right shift.
  *
