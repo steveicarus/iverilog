@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.356 2007/01/19 05:42:40 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.357 2007/01/21 04:26:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2690,8 +2690,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the rvalue of the increment expression, and size it
 	   for the lvalue. */
-      etmp = expr2_->elaborate_expr(des, scope, lv->lwidth(), false);
-      etmp->set_width(lv->lwidth());
+      etmp = elab_and_eval(des, scope, expr2_, lv->lwidth());
       NetAssign*step = new NetAssign(lv, etmp);
       step->set_line(*this);
 
@@ -3346,6 +3345,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.357  2007/01/21 04:26:36  steve
+ *  Clean up elaboration of for-loop increment expression.
+ *
  * Revision 1.356  2007/01/19 05:42:40  steve
  *  Precalculate constant power expressions, and constant function arguments.
  *
