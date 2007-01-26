@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.12 2006/09/29 03:57:01 steve Exp $"
+#ident "$Id: delay.h,v 1.13 2007/01/26 05:15:41 steve Exp $"
 #endif
 
 /*
@@ -77,6 +77,16 @@ class vvp_delay_t {
  */
 class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
+      struct event_ {
+	    event_(vvp_time64_t s) : sim_time(s) { }
+	    void (vvp_fun_delay::*run_run_ptr)(struct vvp_fun_delay::event_*cur);
+	    const vvp_time64_t sim_time;
+	    vvp_vector4_t ptr_vec4;
+	    vvp_vector8_t ptr_vec8;
+	    double ptr_real;
+	    struct event_*next;
+      };
+
     public:
       vvp_fun_delay(vvp_net_t*net, vvp_bit4_t init, const vvp_delay_t&d);
       ~vvp_fun_delay();
@@ -90,18 +100,42 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       virtual void run_run();
 
 
-      void run_run_vec4_();
-      void run_run_vec8_();
-      void run_run_real_();
+      void run_run_vec4_(struct vvp_fun_delay::event_*cur);
+      void run_run_vec8_(struct vvp_fun_delay::event_*cur);
+      void run_run_real_(struct vvp_fun_delay::event_*cur);
 
     private:
       vvp_net_t*net_;
       vvp_delay_t delay_;
 
-      void (vvp_fun_delay::*run_run_ptr_)();
       vvp_vector4_t cur_vec4_;
       vvp_vector8_t cur_vec8_;
       double cur_real_;
+
+      struct event_ *list_;
+      void enqueue_(struct event_*cur)
+      {
+	    if (list_) {
+		  cur->next = list_->next;
+		  list_->next = cur;
+		  list_ = cur;
+	    } else {
+		  cur->next = cur;
+		  list_ = cur;
+	    }
+      }
+      struct event_* dequeue_(void)
+      {
+	    if (list_ == 0)
+		  return 0;
+	    struct event_*cur = list_->next;
+	    if (list_ == cur)
+		  list_ = 0;
+	    else
+		  list_->next = cur->next;
+	    return cur;
+      }
+      void clean_pulse_events_(vvp_time64_t use_delay);
 };
 
 class vvp_fun_modpath;
@@ -159,6 +193,9 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.13  2007/01/26 05:15:41  steve
+ *  More literal implementation of inertial delay model.
+ *
  * Revision 1.12  2006/09/29 03:57:01  steve
  *  Modpath delay chooses correct delay for edge.
  *

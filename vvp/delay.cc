@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.15 2006/09/29 03:57:01 steve Exp $"
+#ident "$Id: delay.cc,v 1.16 2007/01/26 05:15:41 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -132,11 +132,34 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
 : net_(n), delay_(d), cur_vec4_(1)
 {
       cur_vec4_.set_bit(0, init);
-      run_run_ptr_ = 0;
+      list_ = 0;
 }
 
 vvp_fun_delay::~vvp_fun_delay()
 {
+      while (struct event_*cur = dequeue_())
+	    delete cur;
+}
+
+void vvp_fun_delay::clean_pulse_events_(vvp_time64_t use_delay)
+{
+      if (list_ == 0)
+	    return;
+
+      do {
+	    struct event_*cur = list_->next;
+	      /* If this event is far enough from the event I'm about
+	         to create, then that scheduled event is not a pulse
+	         to be eliminated, so we're done. */
+	    if (cur->sim_time+use_delay <= use_delay+schedule_simtime())
+		  break;
+
+	    if (list_ == cur)
+		  list_ = 0;
+	    else
+		  list_->next = cur->next;
+	    delete cur;
+      } while (list_);
 }
 
 /*
@@ -168,9 +191,6 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    return;
       }
 
-      if (cur_vec4_.eeq(bit))
-	    return;
-
 	/* How many bits to compare? */
       unsigned use_wid = cur_vec4_.size();
       if (bit.size() < use_wid)
@@ -188,12 +208,22 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 		  use_delay = tmp;
       }
 
+      /* what *should* happen here is we check to see if there is a
+         transaction in the queue. This would be a pulse that needs to be
+         eliminated. */
+      clean_pulse_events_(use_delay);
+
+      vvp_time64_t use_simtime = schedule_simtime() + use_delay;
+
 	/* And propagate it. */
-      cur_vec4_ = bit;
       if (use_delay == 0) {
+	    cur_vec4_ = bit;
 	    vvp_send_vec4(net_->out, cur_vec4_);
       } else {
-	    run_run_ptr_ = &vvp_fun_delay::run_run_vec4_;
+	    struct event_*cur = new struct event_(use_simtime);
+	    cur->run_run_ptr = &vvp_fun_delay::run_run_vec4_;
+	    cur->ptr_vec4 = bit;
+	    enqueue_(cur);
 	    schedule_generic(this, use_delay, false);
       }
 }
@@ -209,11 +239,15 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
       vvp_time64_t use_delay;
       use_delay = delay_.get_min_delay();
 
-      cur_vec8_ = bit;
+      vvp_time64_t use_simtime = schedule_simtime() + use_delay;
       if (use_delay == 0) {
+	    cur_vec8_ = bit;
 	    vvp_send_vec8(net_->out, cur_vec8_);
       } else {
-	    run_run_ptr_ = &vvp_fun_delay::run_run_vec8_;
+	    struct event_*cur = new struct event_(use_simtime);
+	    cur->ptr_vec8 = bit;
+	    cur->run_run_ptr = &vvp_fun_delay::run_run_vec8_;
+	    enqueue_(cur);
 	    schedule_generic(this, use_delay, false);
       }
 }
@@ -247,32 +281,50 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
       vvp_time64_t use_delay;
       use_delay = delay_.get_min_delay();
 
-      cur_real_ = bit;
+      vvp_time64_t use_simtime = schedule_simtime() + use_delay;
+
       if (use_delay == 0) {
+	    cur_real_ = bit;
 	    vvp_send_real(net_->out, cur_real_);
       } else {
-	    run_run_ptr_ = &vvp_fun_delay::run_run_real_;
+	    struct event_*cur = new struct event_(use_simtime);
+	    cur->run_run_ptr = &vvp_fun_delay::run_run_real_;
+	    cur->ptr_real = bit;
+	    enqueue_(cur);
+
 	    schedule_generic(this, use_delay, false);
       }
 }
 
 void vvp_fun_delay::run_run()
 {
-      (this->*run_run_ptr_)();
+      vvp_time64_t sim_time = schedule_simtime();
+      if (list_ == 0 || list_->next->sim_time > sim_time)
+	    return;
+
+      struct event_*cur = dequeue_();
+      if (cur == 0)
+	    return;
+
+      (this->*(cur->run_run_ptr))(cur);
+      delete cur;
 }
 
-void vvp_fun_delay::run_run_vec4_()
+void vvp_fun_delay::run_run_vec4_(struct event_*cur)
 {
+      cur_vec4_ = cur->ptr_vec4;
       vvp_send_vec4(net_->out, cur_vec4_);
 }
 
-void vvp_fun_delay::run_run_vec8_()
+void vvp_fun_delay::run_run_vec8_(struct vvp_fun_delay::event_*cur)
 {
+      cur_vec8_ = cur->ptr_vec8;
       vvp_send_vec8(net_->out, cur_vec8_);
 }
 
-void vvp_fun_delay::run_run_real_()
+void vvp_fun_delay::run_run_real_(struct vvp_fun_delay::event_*cur)
 {
+      cur_real_ = cur->ptr_real;
       vvp_send_real(net_->out, cur_real_);
 }
 
@@ -389,6 +441,9 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.16  2007/01/26 05:15:41  steve
+ *  More literal implementation of inertial delay model.
+ *
  * Revision 1.15  2006/09/29 03:57:01  steve
  *  Modpath delay chooses correct delay for edge.
  *
