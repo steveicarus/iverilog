@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.92 2006/07/31 03:50:17 steve Exp $"
+#ident "$Id: lexor.lex,v 1.93 2007/01/27 05:36:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -460,7 +460,7 @@ static verinum*make_unsized_binary(const char*txt)
 	    ptr += 1;
       }
 
-      verinum*out = new verinum(bits, size);
+      verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
       delete[]bits;
       return out;
@@ -520,7 +520,7 @@ static verinum*make_unsized_octal(const char*txt)
 	    ptr += 1;
       }
 
-      verinum*out = new verinum(bits, size);
+      verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
       delete[]bits;
       return out;
@@ -590,7 +590,7 @@ static verinum*make_unsized_hex(const char*txt)
 	    ptr += 1;
       }
 
-      verinum*out = new verinum(bits, size);
+      verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
       delete[]bits;
       return out;

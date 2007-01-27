@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.138 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.139 2007/01/27 05:36:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -199,7 +199,7 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 	    break;
       }
 
-      verinum*res = new verinum(pad, size);
+      verinum*res = new verinum(pad, size, true);
 
       unsigned copy = val->len();
       if (res->len() < copy)
@@ -1744,6 +1744,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.139  2007/01/27 05:36:11  steve
+ *  Fix padding of x when literal is sized and unsigned.
+ *
  * Revision 1.138  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

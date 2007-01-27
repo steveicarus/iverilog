@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.50 2007/01/19 05:42:04 steve Exp $"
+#ident "$Id: verinum.cc,v 1.51 2007/01/27 05:36:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -352,6 +352,12 @@ verinum pad_to_width(const verinum&that, unsigned width)
       verinum::V pad = that[that.len()-1];
       if (pad==verinum::V1 && !that.has_sign())
 	    pad = verinum::V0;
+      if (that.has_len()) {
+	    if (pad==verinum::Vx)
+		  pad = verinum::V0;
+	    if (pad==verinum::Vz)
+		  pad = verinum::V0;
+      }
 
       verinum val(pad, width, that.has_len());
 
@@ -1056,6 +1062,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.51  2007/01/27 05:36:11  steve
+ *  Fix padding of x when literal is sized and unsigned.
+ *
  * Revision 1.50  2007/01/19 05:42:04  steve
  *  Fix calculation of verinum pow operation.
  *
