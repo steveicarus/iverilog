@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.43 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.44 2007/01/29 02:07:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -703,7 +703,19 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetNet*sig = new NetNet(scope, name, wtype, msb, lsb,
 			      array_s0, array_e0);
-      sig->data_type(data_type_);
+
+      ivl_variable_type_t use_data_type = data_type_;
+      if (use_data_type == IVL_VT_NO_TYPE) {
+	    use_data_type = IVL_VT_LOGIC;
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: "
+		       << "Signal " << name
+		       << " in scope " << scope->name()
+		       << " defaults to data type " << use_data_type << endl;
+	    }
+      }
+
+      sig->data_type(use_data_type);
       sig->set_line(*this);
       sig->port_type(port_type_);
       sig->set_signed(get_signed());
@@ -718,6 +730,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.44  2007/01/29 02:07:34  steve
+ *  Types of task/function arguments set in multiple steps.
+ *
  * Revision 1.43  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

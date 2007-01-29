@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.224 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: parse.y,v 1.225 2007/01/29 02:07:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1111,7 +1111,7 @@ function_item
 	: K_input signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $2,
+						IVL_VT_NO_TYPE, $2,
 						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
@@ -1119,7 +1119,7 @@ function_item
 	| K_output signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $2,
+						IVL_VT_NO_TYPE, $2,
 						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
@@ -1128,12 +1128,13 @@ function_item
 	| K_inout signed_opt range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $2,
+						IVL_VT_NO_TYPE, $2,
 						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have inout ports.");
 		}
+
   /* When the port is an integer, infer a signed vector of the integer
      shape. Generate a range to make it work. */
 
