@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.174 2007/01/17 05:00:12 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.175 2007/01/29 01:52:51 steve Exp $"
 #endif
 
 # include  <stdint.h>
@@ -1330,7 +1330,9 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *
  * ivl_scope_def
  *    Task definition scopes carry a task definition, in the form of
- *    a statement. This method accesses that definition.
+ *    a statement. This method accesses that definition. The
+ *    ivl_scope_def function must return a statment for scopes that
+ *    are type FUNCTION or TASK, and most return nil otherwise.
  *
  * ivl_scope_event
  * ivl_scope_events
@@ -1754,6 +1756,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.175  2007/01/29 01:52:51  steve
+ *  Clarify the use of ivl_scope_def for not-functions.
+ *
  * Revision 1.174  2007/01/17 05:00:12  steve
  *  Dead code for memories in scopes.
  *

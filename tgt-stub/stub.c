@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.144 2007/01/17 05:00:12 steve Exp $"
+#ident "$Id: stub.c,v 1.145 2007/01/29 01:52:51 steve Exp $"
 #endif
 
 /*
@@ -1387,6 +1387,22 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1)
 	    show_lpm(ivl_scope_lpm(net, idx));
 
+      switch (ivl_scope_type(net)) {
+	  case IVL_SCT_FUNCTION:
+	  case IVL_SCT_TASK:
+	    fprintf(out, "  scope function/task definition\n");
+	    show_statement(ivl_scope_def(net), 6);
+	    break;
+
+	  default:
+	    if (ivl_scope_def(net)) {
+		  fprintf(out, "  ERROR: scope has an attached task definition:\n");
+		  show_statement(ivl_scope_def(net), 6);
+		  stub_errors += 1;
+	    }
+	    break;
+      }
+
       fprintf(out, "end scope %s\n", ivl_scope_name(net));
       return ivl_scope_children(net, show_scope, 0);
 }
@@ -1469,6 +1485,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.145  2007/01/29 01:52:51  steve
+ *  Clarify the use of ivl_scope_def for not-functions.
+ *
  * Revision 1.144  2007/01/17 05:00:12  steve
  *  Dead code for memories in scopes.
  *
