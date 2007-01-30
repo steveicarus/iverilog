@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.15 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.16 2007/01/30 05:28:23 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -46,6 +46,23 @@ static int is_magic_sfunc(const char*name)
       return 0;
 }
 
+static int is_fixed_memory_word(ivl_expr_t net)
+{
+      ivl_signal_t sig;
+
+      if (ivl_expr_type(net) != IVL_EX_SIGNAL)
+	    return 0;
+
+      sig = ivl_expr_signal(net);
+
+      if (ivl_signal_array_count(sig) == 1)
+	    return 1;
+
+      if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned)))
+	    return 1;
+
+      return 0;
+}
 
 static void draw_vpi_taskfunc_args(const char*call_string,
 				   ivl_statement_t tnet,
@@ -108,7 +125,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  } else if (ivl_expr_signed(expr) !=
 			     ivl_signal_signed(ivl_expr_signal(expr))) {
 			break;
-		  } else if (ivl_signal_array_count(ivl_expr_signal(expr))>1){
+		  } else if (! is_fixed_memory_word(expr)){
 			break;
 		  } else {
 			continue;
@@ -182,13 +199,18 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			     ivl_signal_signed(ivl_expr_signal(expr))) {
 			break;
 
-		  } else if (ivl_signal_array_count(ivl_expr_signal(expr))>1){
+		  } else if (! is_fixed_memory_word(expr)){
 			break;
 
 		  } else {
 			ivl_signal_t sig = ivl_expr_signal(expr);
-			assert(ivl_signal_array_count(sig) == 1);
-			fprintf(vvp_out, ", v%p_0", sig);
+			unsigned use_word = 0;
+			ivl_expr_t word_ex = ivl_expr_oper1(expr);
+			if (word_ex) {
+			      assert(number_is_immediate(word_ex, 8*sizeof(use_word)));
+			      use_word = get_number_immediate(word_ex);
+			}
+			fprintf(vvp_out, ", v%p_%u", sig, use_word);
 			continue;
 		  }
 		  assert(0);
@@ -293,6 +315,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.16  2007/01/30 05:28:23  steve
+ *  Treat VPI argument array with constant index specially.
+ *
  * Revision 1.15  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *
