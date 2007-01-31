@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.158 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vthread.cc,v 1.159 2007/01/31 22:28:55 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -486,24 +486,29 @@ bool of_ADD_WR(vthread_t thr, vvp_code_t cp)
  */
 bool of_ADDI(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+	// Collect arguments
+      unsigned bit_addr       = cp->bit_idx[0];
+      unsigned long imm_value = cp->bit_idx[1];
+      unsigned bit_width      = cp->number;
 
-      unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
+      assert(bit_addr >= 4);
 
-      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
+      unsigned word_count = (bit_width+CPU_WORD_BITS-1)/CPU_WORD_BITS;
+
+      unsigned long*lva = vector_to_array(thr, bit_addr, bit_width);
       unsigned long*lvb = 0;
       if (lva == 0)
 	    goto x_out;
 
       lvb = new unsigned long[word_count];
 
-      lvb[0] = cp->bit_idx[1];
+      lvb[0] = imm_value;
       for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
 	    lvb[idx] = 0;
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < bit_width ;  idx += 1) {
 
 	    unsigned long tmp = lvb[idx] + carry;
 	    unsigned long sum = lva[idx] + tmp;
@@ -517,9 +522,10 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 	    lva[idx] = sum;
       }
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      thr_check_addr(thr, bit_addr + bit_width - 1);
+      for (unsigned idx = 0 ;  idx < bit_width ;  idx += 1) {
 	    unsigned long bit = lva[idx/CPU_WORD_BITS] >> (idx%CPU_WORD_BITS);
-	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1UL) ? BIT4_1:BIT4_0);
+	    thr->bits4.set_bit(bit_addr+idx, (bit&1UL) ? BIT4_1:BIT4_0);
       }
 
       delete[]lva;
@@ -530,8 +536,8 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
  x_out:
       delete[]lva;
 
-      vvp_vector4_t tmp (cp->number, BIT4_X);
-      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+      vvp_vector4_t tmp (bit_width, BIT4_X);
+      thr->bits4.set_vec(bit_addr, tmp);
 
       return true;
 }
@@ -3372,6 +3378,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.159  2007/01/31 22:28:55  steve
+ *  Fix missing check for thread bits width in ADDI
+ *
  * Revision 1.158  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

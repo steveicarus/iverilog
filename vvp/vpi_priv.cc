@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.50 2006/03/06 05:43:15 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.51 2007/01/31 22:28:55 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -574,6 +574,8 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
       if (flags != vpiNoDelay) {
 	    vvp_time64_t dly;
 
+	    assert(when != 0);
+
  	    switch (when->type) {
  		case vpiScaledRealTime:
  		  dly = (vvp_time64_t)(when->real *
@@ -846,6 +848,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.51  2007/01/31 22:28:55  steve
+ *  Fix missing check for thread bits width in ADDI
+ *
  * Revision 1.50  2006/03/06 05:43:15  steve
  *  Cleanup vpi_const to use vec4 values.
  *
