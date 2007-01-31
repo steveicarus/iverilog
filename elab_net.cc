@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.194 2007/01/20 02:10:45 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.195 2007/01/31 04:21:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,7 @@
 # include  "compiler.h"
 
 # include  <iostream>
+# include  "ivl_assert.h"
 
 /*
  * This is a state flag that determines whether an elaborate_net must
@@ -1742,9 +1743,9 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 				      Link::strength_t drive0,
 				      Link::strength_t drive1) const
 {
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-      assert(idx_.size() == 1);
+      ivl_assert(*this, msb_ == 0);
+      ivl_assert(*this, lsb_ == 0);
+      ivl_assert(*this, idx_.size() == 1);
 
       NetExpr*index_ex = elab_and_eval(des, scope, idx_[0], -1);
       if (index_ex == 0)
@@ -2894,6 +2895,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.195  2007/01/31 04:21:10  steve
+ *  Add method to bind assertions to verilog source lines.
+ *
  * Revision 1.194  2007/01/20 02:10:45  steve
  *  Get argument widths right for shift results.
  *
