@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.172 2007/01/16 05:44:14 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.173 2007/02/01 03:14:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,6 +30,7 @@
 # include  <iomanip>
 # include  "netlist.h"
 # include  "compiler.h"
+# include  "ivl_assert.h"
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
 {
@@ -735,8 +736,10 @@ void NetEvTrig::dump(ostream&o, unsigned ind) const
 
 void NetEvWait::dump(ostream&o, unsigned ind) const
 {
-      assert(nevents() > 0);
-      o << setw(ind) <<"" << "@(" << event(0)->full_name();
+      o << setw(ind) <<"" << "@(";
+
+      if (nevents() > 0)
+	    o << event(0)->full_name();
 
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
 	    o << " or " << event(idx)->full_name();
@@ -1199,6 +1202,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.173  2007/02/01 03:14:33  steve
+ *  Detect and report arrays without index in net contexts.
+ *
  * Revision 1.172  2007/01/16 05:44:14  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

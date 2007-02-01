@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.195 2007/01/31 04:21:10 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.196 2007/02/01 03:14:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1683,6 +1683,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	/* Handle the case that this is an array elsewhere. */
       if (sig->array_dimensions() > 0) {
+	    if (idx_.size() == 0) {
+		  cerr << get_line() << ": error: Array " << sig->name()
+		       << " cannot be used here without an index." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    return elaborate_net_array_(des, scope, sig, lwidth,
 					rise, fall, decay,
 					drive0, drive1);
@@ -2895,6 +2902,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.196  2007/02/01 03:14:33  steve
+ *  Detect and report arrays without index in net contexts.
+ *
  * Revision 1.195  2007/01/31 04:21:10  steve
  *  Add method to bind assertions to verilog source lines.
  *
