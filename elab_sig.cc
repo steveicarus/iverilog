@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.44 2007/01/29 02:07:34 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.45 2007/02/01 05:24:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -697,7 +697,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       perm_string name = lex_strings.make(hname_.peek_tail_name());
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Create signal "
-		 << name << "["<<msb<<":"<<lsb<<"]"
+		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name
 		 << " in scope " << scope->name() << endl;
       }
 
@@ -730,6 +730,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.45  2007/02/01 05:24:08  steve
+ *  Include type in signal create message.
+ *
  * Revision 1.44  2007/01/29 02:07:34  steve
  *  Types of task/function arguments set in multiple steps.
  *
