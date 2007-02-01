@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.196 2007/02/01 03:14:33 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.197 2007/02/01 19:06:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2671,7 +2671,8 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       if (rise || fall || decay) {
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, dwidth);
-	    sig->data_type(expr_type);
+	    tmp->data_type(expr_type);
+	    tmp->local_flag(true);
 
 	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), dwidth);
 	    tmpz->rise_time(rise);
@@ -2902,6 +2903,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.197  2007/02/01 19:06:06  steve
+ *  Ternary output node is local.
+ *
  * Revision 1.196  2007/02/01 03:14:33  steve
  *  Detect and report arrays without index in net contexts.
  *
