@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.38 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.39 2007/02/01 05:25:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -190,7 +190,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_line() << ": error: " << path_ <<
-		  " is not a reg/integer/time in " << scope->name() <<
+		  " is not a valid l-value in " << scope->name() <<
 		  "." << endl;
 	    cerr << reg->get_line() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
@@ -450,6 +450,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.39  2007/02/01 05:25:26  steve
+ *  Error message better reflects more general reality.
+ *
  * Revision 1.38  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
