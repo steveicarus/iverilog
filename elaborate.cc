@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.357 2007/01/21 04:26:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.358 2007/02/01 05:52:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1622,7 +1622,6 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
-      bool fail_flag = false;
 
       if (nscope == 0)
 	    nscope = scope;
@@ -1640,8 +1639,12 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
 	    assert(list_[idx]);
 	    NetProc*tmp = list_[idx]->elaborate(des, nscope);
+	      // If the statement fails to elaborate, then simply
+	      // ignore it. Presumably, the elaborate for the
+	      // statement already generated an error message and
+	      // marked the error count in the design so no need to
+	      // do any of that here.
 	    if (tmp == 0) {
-		  fail_flag = true;
 		  continue;
 	    }
 
@@ -1653,11 +1656,6 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 		  }
 
 	    cur->append(tmp);
-      }
-
-      if (fail_flag) {
-	    delete cur;
-	    cur = 0;
       }
 
       return cur;
@@ -3345,6 +3343,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.358  2007/02/01 05:52:24  steve
+ *  More generous handling of errors in blocks.
+ *
  * Revision 1.357  2007/01/21 04:26:36  steve
  *  Clean up elaboration of for-loop increment expression.
  *
