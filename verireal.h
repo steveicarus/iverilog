@@ -19,16 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.14 2006/10/03 05:06:00 steve Exp $"
+#ident "$Id: verireal.h,v 1.15 2007/02/02 04:33:01 steve Exp $"
 #endif
 
+# include  "config.h"
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
 #else
 class ostream;
 #endif
-
-# include  <stdint.h>
 
 using namespace std;
 
@@ -86,6 +85,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.15  2007/02/02 04:33:01  steve
+ *  Use inttypes.h instead of stdint.h for portability.
+ *
  * Revision 1.14  2006/10/03 05:06:00  steve
  *  Support real valued specify delays, properly scaled.
  *

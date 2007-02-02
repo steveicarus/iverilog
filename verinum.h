@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.32 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: verinum.h,v 1.33 2007/02/02 04:33:01 steve Exp $"
 #endif
 
 # include  <string>
-# include  <stdint.h>
 
 # include  "config.h"
 #ifdef HAVE_IOSFWD
@@ -161,6 +160,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.33  2007/02/02 04:33:01  steve
+ *  Use inttypes.h instead of stdint.h for portability.
+ *
  * Revision 1.32  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

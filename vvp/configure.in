@@ -35,7 +35,7 @@ fi
 AC_PROG_INSTALL
 
 AC_LANG_CPLUSPLUS
-AC_CHECK_HEADERS(getopt.h malloc.h stdint.h iosfwd)
+AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h iosfwd)
 
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)

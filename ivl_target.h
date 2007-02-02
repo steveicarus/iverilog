@@ -19,10 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.175 2007/01/29 01:52:51 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.176 2007/02/02 04:33:00 steve Exp $"
 #endif
 
-# include  <stdint.h>
+# include  <inttypes.h>
 
 #ifdef __cplusplus
 #define _BEGIN_DECL extern "C" {
@@ -1756,6 +1756,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.176  2007/02/02 04:33:00  steve
+ *  Use inttypes.h instead of stdint.h for portability.
+ *
  * Revision 1.175  2007/01/29 01:52:51  steve
  *  Clarify the use of ivl_scope_def for not-functions.
  *

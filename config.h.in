@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.11 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: config.h.in,v 1.12 2007/02/02 04:33:00 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -37,6 +37,7 @@
 # undef HAVE_TIMES
 # undef HAVE_IOSFWD
 # undef HAVE_GETOPT_H
+# undef HAVE_INTTYPES_H
 # undef HAVE_LIBIBERTY_H
 # undef HAVE_MALLOC_H
 # undef HAVE_DLFCN_H
@@ -48,8 +49,15 @@
 # undef HAVE_SYS_WAIT_H
 # undef WORDS_BIGENDIAN
 
+#ifdef HAVE_INTTYPES_H
+# include  <inttypes.h>
+#endif
+
 /*
  * $Log: config.h.in,v $
+ * Revision 1.12  2007/02/02 04:33:00  steve
+ *  Use inttypes.h instead of stdint.h for portability.
+ *
  * Revision 1.11  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

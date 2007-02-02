@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.366 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.367 2007/02/02 04:33:00 steve Exp $"
 #endif
 
 /*
@@ -32,8 +32,8 @@
 # include  <map>
 # include  <list>
 # include  <vector>
-# include  <stdint.h>
 # include  "ivl_target.h"
+# include  "config.h"
 # include  "verinum.h"
 # include  "verireal.h"
 # include  "StringHeap.h"
@@ -3472,6 +3472,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.367  2007/02/02 04:33:00  steve
+ *  Use inttypes.h instead of stdint.h for portability.
+ *
  * Revision 1.366  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
