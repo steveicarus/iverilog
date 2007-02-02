@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.129 2007/01/19 02:30:19 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.130 2007/02/02 04:48:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -535,6 +535,10 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 	      sub_id, subscope);
       fprintf(vvp_out, "    %%jmp t_%u;\n", out_id);
       fprintf(vvp_out, "t_%u ;\n", sub_id);
+
+	/* The statement within the fork is in a new thread, so no
+	  expression lookaside is valid. */
+      clear_expression_lookaside();
 
       rc = show_stmt_block(net, subscope);
       fprintf(vvp_out, "    %%end;\n");
@@ -1546,6 +1550,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.130  2007/02/02 04:48:49  steve
+ *  Lookaside is invalid when working a new scope.
+ *
  * Revision 1.129  2007/01/19 02:30:19  steve
  *  Fix bad lookaside references in vvp thread code generator.
  *
