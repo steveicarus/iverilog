@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.82 2007/01/20 02:10:45 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.83 2007/02/05 01:42:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -473,6 +473,8 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, znum.len());
 	    zsig->data_type(osig->data_type());
+	    zsig->local_flag(true);
+	    zsig->set_line(*this);
 	    connect(zcon->pin(0), zsig->pin(0));
 
 	      /* Create a part select to reduce the width of the lsig
@@ -793,6 +795,8 @@ NetNet* NetESelect::synthesize(Design *des)
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, expr_width());
       net->data_type(expr_type());
+      net->local_flag(true);
+      net->set_line(*this);
       if (has_sign()) {
 	    NetSignExtend*pad = new NetSignExtend(scope,
 						  scope->local_symbol(),
@@ -910,6 +914,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.83  2007/02/05 01:42:31  steve
+ *  Set some missing local flags.
+ *
  * Revision 1.82  2007/01/20 02:10:45  steve
  *  Get argument widths right for shift results.
  *

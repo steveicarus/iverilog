@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.197 2007/02/01 19:06:06 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.198 2007/02/05 01:42:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1097,6 +1097,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, 1);
 		  tmp->data_type( data_type );
+		  tmp->local_flag(true);
+		  tmp->set_line(*this);
 		  connect(sign_bit->pin(0), tmp->pin(0));
 		  connect(sign_bit->pin(0), sign_pad->pin(1));
 
@@ -1893,6 +1895,8 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	/* Assume that the data types of the nets are all the same, so
 	   we can take the data type of any, the first will do. */
       osig->data_type(nets[0]->data_type());
+      osig->local_flag(true);
+      osig->set_line(*this);
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Generating part selects "
@@ -2270,6 +2274,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 				       sig->scope()->local_symbol(),
 				       NetNet::WIRE, subnet_wid);
 	    subsig->data_type( sig->data_type() );
+	    subsig->local_flag(true);
+	    subsig->set_line(*this);
 
 	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
 						  part_dir);
@@ -2903,6 +2909,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.198  2007/02/05 01:42:31  steve
+ *  Set some missing local flags.
+ *
  * Revision 1.197  2007/02/01 19:06:06  steve
  *  Ternary output node is local.
  *
