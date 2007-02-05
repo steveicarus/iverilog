@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.57 2006/12/10 17:15:48 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.58 2007/02/05 01:08:10 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1386,6 +1386,7 @@ vvp_fun_signal_base::vvp_fun_signal_base()
       needs_init_ = true;
       continuous_assign_active_ = false;
       force_link = 0;
+      cassign_link = 0;
 }
 
 void vvp_fun_signal_base::deassign()
@@ -2256,6 +2257,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.58  2007/02/05 01:08:10  steve
+ *  Handle relink of continuous assignment.
+ *
  * Revision 1.57  2006/12/10 17:15:48  steve
  *  Fix build error overloading pow function.
  *

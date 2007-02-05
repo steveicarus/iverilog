@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.54 2007/01/16 05:44:17 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.55 2007/02/05 01:08:10 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -800,6 +800,7 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
 	   source node of the force, so that subsequent %force and
 	   %release instructions can undo the link as needed. */
       struct vvp_net_t*force_link;
+      struct vvp_net_t*cassign_link;
 
     protected:
 
@@ -1035,6 +1036,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.55  2007/02/05 01:08:10  steve
+ *  Handle relink of continuous assignment.
+ *
  * Revision 1.54  2007/01/16 05:44:17  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

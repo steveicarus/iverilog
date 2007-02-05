@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.159 2007/01/31 22:28:55 steve Exp $"
+#ident "$Id: vthread.cc,v 1.160 2007/02/05 01:08:10 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -759,10 +759,23 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
 
-	/* For now, assert that the destination continuous assign
-	   input is empty. That should be so as you can have only one
-	   continuous assignment active for the destination. */
-      assert(dst->port[1].nil());
+      vvp_fun_signal_base*sig
+	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
+      assert(sig);
+
+	/* Detect the special case that we are already continuous
+	   assigning the source onto the destination. */
+      if (sig->cassign_link == src)
+	    return true;
+
+	/* If there is an existing cassign driving this node, then
+	   unlink it. We can have only 1 cassign at a time. */
+      if (sig->cassign_link != 0) {
+	    vvp_net_ptr_t tmp (dst,1);
+	    unlink_from_driver(sig->cassign_link, tmp);
+      }
+
+      sig->cassign_link = src;
 
 	/* Link the output of the src to the port[1] (the cassign
 	   port) of the destination. */
@@ -3378,6 +3391,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.160  2007/02/05 01:08:10  steve
+ *  Handle relink of continuous assignment.
+ *
  * Revision 1.159  2007/01/31 22:28:55  steve
  *  Fix missing check for thread bits width in ADDI
  *
