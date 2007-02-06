@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.10 2007/01/19 02:30:19 steve Exp $"
+#ident "$Id: vector.c,v 1.11 2007/02/06 04:43:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -105,6 +105,7 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    allocation_map[base+idx].alloc += 1;
 	    set_exp(base+idx, 0, 0);
+	    set_sig(base+idx, 0, 0, 0);
       }
 
       return base;
@@ -147,11 +148,28 @@ void clear_expression_lookaside(void)
       lookaside_top = 0;
 }
 
+static int test_expression_savable(ivl_expr_t exp)
+{
+      switch (ivl_expr_type(exp)) {
+
+	  case IVL_EX_NUMBER:
+	  case IVL_EX_STRING:
+	    return 1;
+
+	  default:
+	    return 0;
+      }
+}
+
 void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
       assert(addr >= 8);
       assert((addr+wid) <= MAX_VEC);
+
+	/* Only certain types of expressions are savable. */
+      if ( ! test_expression_savable(exp))
+	    return;
 
 	/* When saving an expression to the lookaside, also clear the
 	   signal saved in the lookaside for these bits. The reason is
@@ -354,6 +372,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.11  2007/02/06 04:43:53  steve
+ *  Expression lookaside cannot hold complex expressions
+ *
  * Revision 1.10  2007/01/19 02:30:19  steve
  *  Fix bad lookaside references in vvp thread code generator.
  *
