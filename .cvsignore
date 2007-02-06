@@ -17,6 +17,7 @@ configure
 Makefile
 check
 check.cc
+check.vvp
 config.status
 config.log
 config.cache

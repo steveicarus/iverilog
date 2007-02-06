@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.25 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: Makefile.in,v 1.26 2007/02/06 05:07:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -80,7 +80,7 @@ iverilog.ps: $(srcdir)/iverilog.man
 iverilog.pdf: iverilog.ps
 	ps2pdf iverilog.ps iverilog.pdf
 
-ifeq (@WIN32@,yes)
+ifeq (@MING32@,yes)
 INSTALL_DOC = $(prefix)/iverilog.pdf $(mandir)/man1/iverilog.1
 INSTALL_DOCDIR = $(mandir)/man1
 all: iverilog.pdf
@@ -105,4 +105,4 @@ installdirs: ../mkinstalldirs
 
 uninstall:
 	rm -f $(bindir)/iverilog@EXEEXT@
-	rm -f $(mandir)/man1/iverilog.1
+	rm -f $(mandir)/man1/iverilog.1 $(prefix)/iverilog.pdf

@@ -17,12 +17,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.16 2006/09/26 18:54:42 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.17 2007/02/06 05:07:31 steve Exp $"
 
 # These are the variables used for compiling files
-CC=gcc
-CXX=g++
-CFLAGS="@PIC@ -O -I@INCLUDEDIR@"
+CC=@IVCC@
+CXX=@IVCXX@
+CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
 
 # These are used for linking...
 LD=gcc

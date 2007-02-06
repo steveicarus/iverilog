@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.60 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: Makefile.in,v 1.61 2007/02/06 05:07:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -35,8 +35,6 @@ includedir = $(prefix)/include
 
 vpidir = $(libdir)/ivl/@vpidir1@
 
-strip_dynamic=@strip_dynamic@
-
 CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -45,7 +43,6 @@ INSTALL_DATA = @INSTALL_DATA@
 CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
-STRIP = @STRIP@
 
 ifeq (@enable_vvp32@,yes)
 vpidir32 = $(libdir)/ivl/@vpidir2@
@@ -74,7 +71,7 @@ endif
 
 LIBS = @LIBS@
 SYSTEM_VPI_LDFLAGS = $(LIBS)
-ifeq (@WIN32@,yes)
+ifeq (@MING32@,yes)
     SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
 endif
 
@@ -101,7 +98,6 @@ install32: all32 $(vpidir32)/system.vpi
 
 $(vpidir32)/system.vpi: bin32/system.vpi
 	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir32)/system.vpi
-	$(STRIP) $(strip_dynamic) $(vpidir32)/system.vpi
 
 uninstall32:
 	rm -f $(vpidir32)/system.vpi
@@ -117,7 +113,6 @@ install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft $(INSTALL
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
-	$(STRIP) $(strip_dynamic) $(vpidir)/system.vpi
 
 $(libdir)/ivl/system.sft: system.sft
 	$(INSTALL_DATA) $< $@

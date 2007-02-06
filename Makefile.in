@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.179 2006/10/30 22:45:36 steve Exp $"
+#ident "$Id: Makefile.in,v 1.180 2007/02/06 05:07:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,7 +43,6 @@ mandir = @mandir@
 libdir64 = @libdir64@
 
 dllib=@DLLIB@
-strip_dynamic=@strip_dynamic@
 
 CC = @CC@
 CXX = @CXX@
@@ -51,7 +50,6 @@ INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
-STRIP = @STRIP@
 LEX = @LEX@
 YACC = @YACC@
 
@@ -68,7 +66,7 @@ all: dep ivl@EXEEXT@
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
-ifeq (@WIN32@,yes)
+ifeq (@MING32@,yes)
 all: dep dosify.exe
 dosify.exe: dosify.c
 	$(CC) -o dosify.exe dosify.c
@@ -88,9 +86,9 @@ clean:
 	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc
 	rm -f ivl.exp iverilog-vpi.pdf iverilog-vpi.ps parse.output
-	rm -f syn-rules.output dosify.exe
+	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
-	rm -rf dep ivl@EXEEXT@
+	rm -rf dep
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
@@ -131,11 +129,10 @@ ivl@EXEEXT@: $O ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
-	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
+	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
-
 endif
 
 ifeq (@MINGW32@,yes)
@@ -145,6 +142,9 @@ all: dep iverilog-vpi
 
 iverilog-vpi: iverilog-vpi.sh
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@IVCC@;$(CC);' \
+	    -e 's;@IVCXX@;$(CXX);' \
+	    -e 's;@IVCFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@INCLUDEDIR@;@includedir@;' \
 	    -e 's;@LIBDIR64@;@libdir64@;' \
 	    -e 's;@VPIDIR1@;@vpidir1@;' -e 's;@VPIDIR2@;@vpidir2@;' \
@@ -185,7 +185,7 @@ iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
 iverilog-vpi.pdf: iverilog-vpi.ps
 	ps2pdf iverilog-vpi.ps iverilog-vpi.pdf
 
-ifeq (@WIN32@,yes)
+ifeq (@MING32@,yes)
 INSTALL_DOC = $(prefix)/iverilog-vpi.pdf $(mandir)/man1/iverilog-vpi.1
 INSTALL_DOCDIR = $(mandir)/man1
 all: dep iverilog-vpi.pdf
@@ -212,7 +212,6 @@ $(bindir)/iverilog-vpi: ./iverilog-vpi
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
-	$(STRIP) $(strip_dynamic) $(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl/xnf-s.conf
@@ -269,14 +268,14 @@ uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	for f in xnf.conf xnf-s.conf ivl; \
+	for f in xnf.conf xnf-s.conf ivl@EXEEXT@; \
 	    do rm -f $(libdir)/ivl/$$f; done
 	-rmdir $(libdir)/ivl
 	for f in verilog iverilog-vpi gverilog@EXEEXT@; \
 	    do rm -f $(bindir)/$$f; done
 	for f in ivl_target.h vpi_user.h _pli_types.h acc_user.h veriuser.h; \
 	    do rm -f $(includedir)/$$f; done
-	rm -f $(mandir)/man1/iverilog-vpi.1
+	rm -f $(mandir)/man1/iverilog-vpi.1 $(prefix)/iverilog-vpi.pdf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

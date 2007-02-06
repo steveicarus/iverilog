@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.72 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: Makefile.in,v 1.73 2007/02/06 05:07:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -41,7 +41,6 @@ INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
-STRIP = @STRIP@
 RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
@@ -97,7 +96,7 @@ vvp@EXEEXT@ libvpi.a: $O vvp.def
 	$(CXX) -o vvp@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
 	dlltool --dllname vvp@EXEEXT@ --def vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
-	$(CXX) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
 	$(CC) -c $(srcdir)/libvpi.c
@@ -105,8 +104,8 @@ libvpi.a: libvpi.c
 	ar cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a
 
-vvp: $O
-	$(CXX) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
+vvp@EXEEXT@: $O
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
 endif
 
 dep:
@@ -170,7 +169,7 @@ lexor.cc: $(srcdir)/lexor.lex
 vvp.pdf: $(srcdir)/vvp.man
 	man -t $(srcdir)/vvp.man | ps2pdf - vvp.pdf
 
-ifeq (@WIN32@,yes)
+ifeq (@MING32@,yes)
 INSTALL_DOC = $(prefix)/vvp.pdf $(mandir)/man1/vvp.1
 INSTALL_DOCDIR = $(mandir)/man1
 all: vvp.pdf
@@ -218,6 +217,6 @@ endif
 uninstall: $(UNINSTALL32)
 	rm -f $(bindir)/vvp@EXEEXT@
 	rm -f $(libdir64)/libvpi.a
-	rm -f $(mandir)/man1/vvp.1
+	rm -f $(mandir)/man1/vvp.1 $(prefix)/vvp.pdf
 
 -include $(patsubst %.o, dep/%.d, $O)
