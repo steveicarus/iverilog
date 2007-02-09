@@ -1,4 +1,11 @@
 
+Icarus Verilog for Mac OS X
+
+   NOTE: Icarus Verilog version 0.8 is known to compile "out of the
+   box" on MacOSX 10.3. OSX 10.3 users need only the developer tools
+   included with new systems or available for free download from
+   Apple. Install Xcode and skip directly to step #3.
+
 This file describes the procedure to build and install Icarus Verilog
 on Mac OS X.  I assume that you have experience with Unix and
 Terminal.app and a basic knowledge of how to download, compile and
