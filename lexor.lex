@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.86.2.3 2006/05/08 04:33:35 steve Exp $"
+#ident "$Id: lexor.lex,v 1.86.2.4 2007/02/09 05:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,7 +162,8 @@ W [ \t\b\f\r]+
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
 
 \"            { BEGIN(CSTRING); }
-<CSTRING>\\\" { yymore(); }
+<CSTRING>\\\\ { yymore(); /* Catch \\, which is a \ escaping itself */ }
+<CSTRING>\\\" { yymore(); /* Catch \", which is an escaped quote */ }
 <CSTRING>\n   { BEGIN(0);
                 yylval.text = strdup(yytext);
 		VLerror(yylloc, "Missing close quote of string.");
