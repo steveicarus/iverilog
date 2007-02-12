@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.139 2007/01/27 05:36:11 steve Exp $"
+#ident "$Id: pform.cc,v 1.140 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1562,8 +1562,26 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
       return path;
 }
 
+extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
+					 bool edge_flag, /*posedge==true */
+					 list<perm_string>*src, char pol,
+					 bool full_flag, list<perm_string>*dst,
+					 PExpr*data_source_expression)
+{
+      PSpecPath*tmp = pform_make_specify_path(li, src, pol, full_flag, dst);
+      if (edge_flag)
+	    tmp->edge = 1;
+      else
+	    tmp->edge = -1;
+      tmp->data_source_expression = data_source_expression;
+      return tmp;
+}
+
 extern PSpecPath* pform_assign_path_delay(PSpecPath*path, svector<PExpr*>*del)
 {
+      if (path == 0)
+	    return 0;
+
       assert(path->delays.size() == 0);
 
       path->delays.resize(del->count());
@@ -1578,6 +1596,8 @@ extern PSpecPath* pform_assign_path_delay(PSpecPath*path, svector<PExpr*>*del)
 
 extern void pform_module_specify_path(PSpecPath*obj)
 {
+      if (obj == 0)
+	    return;
       pform_cur_module->specify_paths.push_back(obj);
 }
 
@@ -1744,6 +1764,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.140  2007/02/12 01:52:21  steve
+ *  Parse all specify paths to pform.
+ *
  * Revision 1.139  2007/01/27 05:36:11  steve
  *  Fix padding of x when literal is sized and unsigned.
  *

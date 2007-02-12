@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.358 2007/02/01 05:52:24 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.359 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,6 +41,7 @@
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
+# include  "ivl_assert.h"
 
 
 static Link::strength_t drive_type(PGate::strength_t drv)
@@ -2914,6 +2915,28 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       if (!gn_specify_blocks_flag)
 	    return;
 
+	/* Check for various path types that are not supported. */
+
+      if (conditional) {
+	    cerr << get_line() << ": sorry: Conditional specify paths"
+		 << " are not supported." << endl;
+	    cerr << get_line() << ":      : Use -g no-specify to ignore"
+		 << " specify blocks." << endl;
+	    des->errors += 1;
+      }
+
+      ivl_assert(*this, conditional || (condition==0));
+
+      if (edge != 0) {
+	    cerr << get_line() << ": sorry: Edge sensitive specify paths"
+		 << " are not supported." << endl;
+	    cerr << get_line() << ":      : Use -g no-specify to ignore"
+		 << " specify blocks." << endl;
+	    des->errors += 1;
+      }
+
+      ivl_assert(*this, data_source_expression==0 || edge != 0);
+
       ndelays = delays.size();
       if (ndelays > 12)
 	    ndelays = 12;
@@ -3343,6 +3366,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.359  2007/02/12 01:52:21  steve
+ *  Parse all specify paths to pform.
+ *
  * Revision 1.358  2007/02/01 05:52:24  steve
  *  More generous handling of errors in blocks.
  *

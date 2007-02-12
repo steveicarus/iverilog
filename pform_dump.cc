@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.94 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.95 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -742,7 +742,18 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
 void PSpecPath::dump(std::ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "specify path (";
+      out << setw(ind) << "" << "specify path ";
+
+      if (condition)
+	    out << "if (" << *condition << ") ";
+
+      out << "(";
+      if (edge) {
+	    if (edge > 0)
+		  out << "posedge ";
+	    else
+		  out << "negedge ";
+      }
 
       for (unsigned idx = 0 ;  idx < src.size() ;  idx += 1) {
 	    if (idx > 0) out << ", ";
@@ -752,11 +763,17 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
 
       out << " => ";
 
+      if (data_source_expression)
+	    out << "(";
+
       for (unsigned idx = 0 ; idx < dst.size() ;  idx += 1) {
 	    if (idx > 0) out << ", ";
 	    assert(dst[idx]);
 	    out << dst[idx];
       }
+
+      if (data_source_expression)
+	    out << " : " << *data_source_expression << ")";
 
       out << ") = (";
       for (unsigned idx = 0 ;  idx < delays.size() ;  idx += 1) {
@@ -1007,6 +1024,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.95  2007/02/12 01:52:21  steve
+ *  Parse all specify paths to pform.
+ *
  * Revision 1.94  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

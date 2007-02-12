@@ -19,13 +19,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PSpec.h,v 1.1 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: PSpec.h,v 1.2 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  <vector>
 
+class PExpr;
+
+/*
+* The PSpecPath is the parse of a specify path, which is in its most
+* general form <path> = <delays>. The <delays> are collected into the
+* "delays" vector in all cases, and the variety is in the other
+* members.
+*
+* All paths also have a list of source names in the src vector, and a
+* list of destination names in the dst vector. These pairs are the
+* actual paths.
+*
+* If the path is a simple path, then:
+*      condition == nil
+*      edge == 0
+*      data_source_expression == nil
+*
+* If the path is conditional, then conditional == true and condition
+* is the condition expression. If the condition expression is nil,
+* then this is an ifnone conditional path.
+*
+* If edge != 0, then the path is edge sensitive and the optional
+* data_source_expression may be present.
+*/
 class PSpecPath  : public LineInfo {
 
     public:
@@ -37,10 +61,17 @@ class PSpecPath  : public LineInfo {
       void dump(std::ostream&out, unsigned ind) const;
 
     public:
+	// Condition expression, if present.
+      bool conditional;
+      class PExpr* condition;
+	// Edge specification (-1==negedge, 0 = no edge, 1==posedge)
+      int edge;
 	// Ordered set of source nodes of a path
       std::vector<perm_string> src;
 	// Ordered set of destination nodes of a path
       std::vector<perm_string> dst;
+	// Data source expression
+      class PExpr* data_source_expression;
 
       std::vector<class PExpr*>delays;
 };

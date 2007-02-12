@@ -17,13 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PSpec.cc,v 1.1 2006/09/26 19:48:40 steve Exp $"
+#ident "$Id: PSpec.cc,v 1.2 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include  "PSpec.h"
 
 PSpecPath::PSpecPath(unsigned src_cnt, unsigned dst_cnt)
-: src(src_cnt), dst(dst_cnt)
+: conditional(false), condition(0), edge(0),
+  src(src_cnt), dst(dst_cnt),
+  data_source_expression(0)
 {
 }
 

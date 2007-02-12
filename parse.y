@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.225 2007/01/29 02:07:34 steve Exp $"
+#ident "$Id: parse.y,v 1.226 2007/02/12 01:52:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,7 @@
 # include  "compiler.h"
 # include  "pform.h"
 # include  "Statement.h"
+# include  "PSpec.h"
 # include  <sstream>
 
 class PSpecPath;
@@ -179,7 +180,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %token KK_attribute
 
 %type <number>  number
-%type <flag>    signed_opt udp_reg_opt
+%type <flag>    signed_opt udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -242,6 +243,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <perm_strings>  specify_path_identifiers
 
 %type <specpath> specify_simple_path specify_simple_path_decl
+%type <specpath> specify_edge_path specify_edge_path_decl
 
 %token K_TAND
 %right '?' ':'
@@ -2518,16 +2520,28 @@ specify_item
                 { pform_module_specify_path($1);
 		}
 	| specify_edge_path_decl ';'
-		{
+		{ pform_module_specify_path($1);
 		}
 	| K_if '(' expression ')' specify_simple_path_decl ';'
-		{
+                { PSpecPath*tmp = $5;
+		  if (tmp) tmp->condition = $3;
+		  pform_module_specify_path(tmp);
 		}
 	| K_if '(' expression ')' specify_edge_path_decl ';'
-		{
+                { PSpecPath*tmp = $5;
+		  if (tmp) {
+			tmp->conditional = true;
+			tmp->condition = $3;
+		  }
+		  pform_module_specify_path(tmp);
 		}
 	| K_ifnone specify_simple_path_decl ';'
-		{
+                { PSpecPath*tmp = $2;
+		  if (tmp) {
+			tmp->conditional = true;
+			tmp->condition = 0;
+		  }
+		  pform_module_specify_path(tmp);
 		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value spec_notifier_opt ')' ';'
@@ -2572,19 +2586,29 @@ specify_item_list
 
 specify_edge_path_decl
 	: specify_edge_path '=' '(' delay_value_list ')'
-                { delete $4; }
+                { $$ = pform_assign_path_delay($1, $4); }
 	| specify_edge_path '=' delay_value_simple
+                { svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $3;
+		  $$ = pform_assign_path_delay($1, tmp);
+		}
 	;
 
+edge_operator : K_posedge { $$ = true; } | K_negedge { $$ = false; } ;
+
 specify_edge_path
-	: '(' K_posedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
+	: '(' edge_operator specify_path_identifiers spec_polarity
+	      K_EG specify_path_identifiers ')'
+                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, false, $6, 0); }
+	| '(' edge_operator specify_path_identifiers spec_polarity
+	      K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, false, $7, $9);}
+	| '(' edge_operator specify_path_identifiers spec_polarity
+	      K_SG specify_path_identifiers ')'
+                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, true, $6, 0); }
+	| '(' edge_operator specify_path_identifiers spec_polarity
+	      K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
+                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, true, $7, $9); }
 	;
 
 polarity_operator
