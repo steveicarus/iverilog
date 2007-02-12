@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.37 2006/11/28 05:57:20 steve Exp $"
+#ident "$Id: logic.cc,v 1.38 2007/02/12 05:08:27 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -129,10 +129,10 @@ void vvp_fun_and::run_run()
 		  }
 
 		  bitbit = bitbit & input_[pdx].value(idx);
-		  if (invert_)
-			bitbit = ~bitbit;
 	    }
 
+	    if (invert_)
+		  bitbit = ~bitbit;
 	    result.set_bit(idx, bitbit);
       }
 
@@ -620,6 +620,9 @@ void compile_functor(char*label, char*type, unsigned width,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.38  2007/02/12 05:08:27  steve
+ *  NAND output is inverted once AFTER AND is calculated.
+ *
  * Revision 1.37  2006/11/28 05:57:20  steve
  *  Use new vvp_fun_XXX in place of old functor table for NAND/NOR/XNOR/EEQ.
  *
