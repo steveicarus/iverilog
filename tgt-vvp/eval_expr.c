@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.133 2007/01/19 05:24:53 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.134 2007/02/12 04:37:58 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1552,6 +1552,30 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 }
 
 /*
+* This function is given an expression, the preallocated vector
+* result, and the swid that is filled in so far. The caller has
+* already calculated the load swid bits of exp into the beginning of
+* the res vector. This function just calculates the pad to fill out
+* the res area.
+*/
+static void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
+{
+      if (res.wid <= swid)
+	    return;
+
+      if (ivl_expr_signed(exp)) {
+	    unsigned idx;
+	    for (idx = swid ;  idx < res.wid ;  idx += 1)
+		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+			  res.base+idx, res.base+swid-1);
+
+      } else {
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    res.base+swid, res.wid-swid);
+      }
+}
+
+/*
  * Evaluating a signal expression means loading the bits of the signal
  * into the thread bits. Remember to account for the part select by
  * offsetting the read from the lsi (least significant index) of the
@@ -1575,6 +1599,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 		  draw_eval_expr_into_integer(ix, 3);
 		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
 			  res.base, sig, swid);
+		  pad_expr_in_place(exp, res, swid);
 		  return;
 	    }
 
@@ -1587,20 +1612,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
       fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u;\n",
 	      res.base, sig, word, swid);
 
-	/* Pad the signal value with zeros. */
-      if (swid < res.wid) {
-
-	    if (ivl_expr_signed(exp)) {
-		  unsigned idx;
-		  for (idx = swid ;  idx < res.wid ;  idx += 1)
-			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-				res.base+idx, res.base+swid-1);
-
-	    } else {
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-			  res.base+swid, res.wid-swid);
-	    }
-      }
+      pad_expr_in_place(exp, res, swid);
 }
 
 static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
@@ -2189,6 +2201,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.134  2007/02/12 04:37:58  steve
+ *  Get padding right when loading array word into big vector.
+ *
  * Revision 1.133  2007/01/19 05:24:53  steve
  *  Handle real constants in vector expressions.
  *
