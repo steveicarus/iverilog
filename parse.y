@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.226 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: parse.y,v 1.227 2007/02/13 04:39:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2675,21 +2675,30 @@ specify_path_identifiers
 specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: specparam value "
-			            "must be a constant expression.");
-			delete tmp;
-			tmp = 0;
-		  } else {
-			pform_set_specparam(lex_strings.make($1), tmp);
-		  }
+		  pform_set_specparam(lex_strings.make($1), tmp);
 		  delete $1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
-		{ delete $1;
-		  delete $3;
-		  delete $5;
-		  delete $7;
+                { PExpr*tmp = 0;
+		  switch (min_typ_max_flag) {
+		      case MIN:
+			tmp = $3;
+			delete $5;
+			delete $7;
+			break;
+		      case TYP:
+			delete $3;
+			tmp = $5;
+			delete $7;
+			break;
+		      case MAX:
+			delete $3;
+			delete $5;
+			tmp = $7;
+			break;
+		  }
+		  pform_set_specparam(lex_strings.make($1), tmp);
+		  delete $1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
 		{ delete $1;
