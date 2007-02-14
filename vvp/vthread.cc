@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.160 2007/02/05 01:08:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.161 2007/02/14 05:58:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2429,6 +2429,18 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+*  %mov/wr <dst>, <src>
+*/
+bool of_MOV_WR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned dst = cp->bit_idx[0];
+      unsigned src = cp->bit_idx[1];
+
+      thr->words[dst].w_real = thr->words[src].w_real;
+      return true;
+}
+
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -3391,6 +3403,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.161  2007/02/14 05:58:14  steve
+ *  Add the mov/wr opcode.
+ *
  * Revision 1.160  2007/02/05 01:08:10  steve
  *  Handle relink of continuous assignment.
  *

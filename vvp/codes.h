@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.81 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: codes.h,v 1.82 2007/02/14 05:58:14 steve Exp $"
 #endif
 
 
@@ -100,6 +100,7 @@ extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_S(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
+extern bool of_MOV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
@@ -184,6 +185,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.82  2007/02/14 05:58:14  steve
+ *  Add the mov/wr opcode.
+ *
  * Revision 1.81  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

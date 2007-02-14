@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.227 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: compile.cc,v 1.228 2007/02/14 05:58:14 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -145,6 +145,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mod/wr", of_MOD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mov/wr", of_MOV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul/wr", of_MUL_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1579,6 +1580,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.228  2007/02/14 05:58:14  steve
+ *  Add the mov/wr opcode.
+ *
  * Revision 1.227  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

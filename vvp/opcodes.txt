@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.73 2007/01/16 05:44:16 steve Exp $
+ *  $Id: opcodes.txt,v 1.74 2007/02/14 05:58:14 steve Exp $
  */
 
 
@@ -443,6 +443,7 @@ The /s form does signed %.
 This opcode is the real-valued modulus of the two real values.
 
 * %mov <dst>, <src>, <wid>
+* %mov/wr <dst>, <src>
 
 This instruction copies a vector from one place in register space to
 another. The destination and source vectors are assumed to be the same
