@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.16 2007/01/30 05:28:23 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.17 2007/02/14 05:59:24 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -147,7 +147,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
 
 	    switch (ivl_expr_value(expr)) {
-		case IVL_VT_VECTOR:
+		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
 		  vec[vecs] = draw_eval_expr(expr, 0);
 		  break;
 		case IVL_VT_REAL:
@@ -248,7 +249,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
 	    switch (ivl_expr_value(expr)) {
 
-		case IVL_VT_VECTOR:
+		case IVL_VT_LOGIC:
+		case IVL_VT_BOOL:
 		  fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
 			  vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
 		  break;
@@ -315,6 +317,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.17  2007/02/14 05:59:24  steve
+ *  Treat BOOL and LOGIC the same according to VPI functions.
+ *
  * Revision 1.16  2007/01/30 05:28:23  steve
  *  Treat VPI argument array with constant index specially.
  *
