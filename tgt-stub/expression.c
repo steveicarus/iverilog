@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.1 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: expression.c,v 1.2 2007/02/14 05:57:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -126,8 +126,10 @@ static void show_ternary_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt = vt_type_string(net);
 
-      fprintf(out, "%*s<ternary  width=%u, %s>\n", ind, "", width, sign);
+      fprintf(out, "%*s<ternary  width=%u, %s type=%s>\n", ind, "",
+	      width, sign, vt);
       show_expression(ivl_expr_oper1(net), ind+4);
       show_expression(ivl_expr_oper2(net), ind+4);
       show_expression(ivl_expr_oper3(net), ind+4);
@@ -214,7 +216,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 		      fprintf(out, ", parameter=%s",
 			      ivl_parameter_basename(par));
 
-	    fprintf(out, ">\n");
+	    fprintf(out, ", type=%s>\n", vt);
 	    break;
 
 	  case IVL_EX_SFUNC:
