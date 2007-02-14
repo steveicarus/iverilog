@@ -17,18 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.252 2007/01/19 04:25:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.253 2007/02/14 05:59:46 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include <iostream>
 
-# include  <cassert>
 # include  <typeinfo>
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_assert.h"
 
 
 ostream& operator<< (ostream&o, NetNet::Type t)
@@ -2069,6 +2069,19 @@ const NetExpr* NetETernary::false_expr() const
       return false_val_;
 }
 
+ivl_variable_type_t NetETernary::expr_type() const
+{
+      ivl_variable_type_t tru = true_val_->expr_type();
+      ivl_variable_type_t fal = false_val_->expr_type();
+      if (tru == IVL_VT_LOGIC && fal == IVL_VT_BOOL)
+	    return IVL_VT_LOGIC;
+      if (tru == IVL_VT_BOOL && fal == IVL_VT_LOGIC)
+	    return IVL_VT_LOGIC;
+
+      ivl_assert(*this, tru == fal);
+      return tru;
+}
+
 NetEUnary::NetEUnary(char op, NetExpr*ex)
 : NetExpr(ex->expr_width()), op_(op), expr_(ex)
 {
@@ -2192,6 +2205,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.253  2007/02/14 05:59:46  steve
+ *  Handle type of ternary expressions properly.
+ *
  * Revision 1.252  2007/01/19 04:25:37  steve
  *  Fix missing passive setting for array word pins.
  *

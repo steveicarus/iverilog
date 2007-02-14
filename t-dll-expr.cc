@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.44 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.45 2007/02/14 05:59:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -366,7 +366,7 @@ void dll_target::expr_ternary(const NetETernary*net)
       assert(expr);
 
       expr->type_  = IVL_EX_TERNARY;
-      expr->value_= IVL_VT_VECTOR;
+      expr->value_= net->expr_type();
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
 
@@ -474,6 +474,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.45  2007/02/14 05:59:46  steve
+ *  Handle type of ternary expressions properly.
+ *
  * Revision 1.44  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

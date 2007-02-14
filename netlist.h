@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.367 2007/02/02 04:33:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.368 2007/02/14 05:59:46 steve Exp $"
 #endif
 
 /*
@@ -3015,6 +3015,7 @@ class NetETernary  : public NetExpr {
       virtual NetETernary* dup_expr() const;
       virtual NetExpr* eval_tree();
 
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -3472,6 +3473,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.368  2007/02/14 05:59:46  steve
+ *  Handle type of ternary expressions properly.
+ *
  * Revision 1.367  2007/02/02 04:33:00  steve
  *  Use inttypes.h instead of stdint.h for portability.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.17 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: eval_real.c,v 1.18 2007/02/14 05:59:46 steve Exp $"
 #endif
 
 /*
@@ -281,6 +281,56 @@ static int draw_signal_real(ivl_expr_t exp)
       }
 }
 
+static int draw_ternary_real(ivl_expr_t exp)
+{
+      ivl_expr_t cond = ivl_expr_oper1(exp);
+      ivl_expr_t true_ex = ivl_expr_oper2(exp);
+      ivl_expr_t false_ex = ivl_expr_oper3(exp);
+
+      struct vector_info tst;
+
+      unsigned lab_true = local_count++;
+      unsigned lab_false = local_count++;
+
+      int tru, fal;
+      int res = allocate_word();
+
+      tst = draw_eval_expr(cond, STUFF_OK_XZ|STUFF_OK_RO);
+      if ((tst.base >= 4) && (tst.wid > 1)) {
+	    struct vector_info tmp;
+
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n",
+		    tst.base, tst.base, tst.wid);
+
+	    tmp = tst;
+	    tmp.base += 1;
+	    tmp.wid -= 1;
+	    clr_vector(tmp);
+
+	    tst.wid = 1;
+      }
+
+      fprintf(vvp_out, "  %%jmp/0  T_%d.%d, %u;\n",
+	      thread_count, lab_true, tst.base);
+
+      tru = draw_eval_real(true_ex);
+      fprintf(vvp_out, "  %%mov/wr %d, %d;\n", res, tru);
+      fprintf(vvp_out, "  %%jmp T_%d.%d;\n", thread_count, lab_false);
+      clr_word(tru);
+
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
+
+      fal = draw_eval_real(false_ex);
+      fprintf(vvp_out, "  %%mov/wr %d, %d;\n", res, fal);
+      clr_word(fal);
+
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+
+      clr_vector(tst);
+
+      return res;
+}
+
 int draw_eval_real(ivl_expr_t exp)
 {
       int res = 0;
@@ -305,6 +355,10 @@ int draw_eval_real(ivl_expr_t exp)
 
 	  case IVL_EX_SIGNAL:
 	    res = draw_signal_real(exp);
+	    break;
+
+	  case IVL_EX_TERNARY:
+	    res = draw_ternary_real(exp);
 	    break;
 
 	  case IVL_EX_UFUNC:
@@ -339,6 +393,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.18  2007/02/14 05:59:46  steve
+ *  Handle type of ternary expressions properly.
+ *
  * Revision 1.17  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
