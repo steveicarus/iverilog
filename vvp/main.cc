@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.43 2006/04/28 15:44:37 steve Exp $"
+#ident "$Id: main.cc,v 1.44 2007/02/16 23:30:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -82,15 +82,17 @@ static void my_getrusage(struct rusage *a)
       {
 	    FILE *statm;
 	    unsigned siz, rss, shd;
+	    long page_size = sysconf(_SC_PAGESIZE);
+	    if (page_size==-1) page_size=0;
 	    statm = fopen("/proc/self/statm", "r");
 	    if (!statm) {
 		  perror("/proc/self/statm");
 		  return;
 	    }
 	    if (3<=fscanf(statm, "%u%u%u", &siz, &rss, &shd)) {
-		  a->ru_maxrss = PAGE_SIZE * siz;
-		  a->ru_idrss  = PAGE_SIZE * rss;
-		  a->ru_ixrss  = PAGE_SIZE * shd;
+		  a->ru_maxrss = page_size * siz;
+		  a->ru_idrss  = page_size * rss;
+		  a->ru_ixrss  = page_size * shd;
 	    }
 	    fclose(statm);
       }
@@ -297,6 +299,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.44  2007/02/16 23:30:14  steve
+ *  Get page size from sysconf.
+ *
  * Revision 1.43  2006/04/28 15:44:37  steve
  *  Include math.h with lround implementation.
  *
