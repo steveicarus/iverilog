@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.22 2005/08/29 02:38:50 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.23 2007/02/18 06:01:25 steve Exp $"
 #endif
 
 /*
@@ -246,18 +246,22 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiIntVal:
-	    vp->value.integer = 0;
+	  case vpiRealVal: {
+	    long ival = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  switch (get_bit(rfp, idx)) {
 		      case 0:
 			break;
 		      case 1:
-			vp->value.integer |= 1 << idx;
+			ival |= 1 << idx;
 			break;
 		      case 2:
 		      case 3:
 			break;
 		  }
+	    }
+	    if (vp->format == vpiRealVal) vp->value.real = ival;
+	    else vp->value.integer = ival;
 	    }
 	    break;
 
@@ -533,6 +537,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.23  2007/02/18 06:01:25  steve
+ *  Fix print of integers as real. <larry Doolittle>
+ *
  * Revision 1.22  2005/08/29 02:38:50  steve
  *  Eliminate int to vvp_bit4_t casts.
  *
