@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.23 2007/02/18 06:01:25 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.24 2007/02/19 01:45:56 steve Exp $"
 #endif
 
 /*
@@ -245,8 +245,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vthr_vec_StringVal(rfp, vp);
 	    break;
 
-	  case vpiIntVal:
-	  case vpiRealVal: {
+	  case vpiIntVal: {
 	    long ival = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  switch (get_bit(rfp, idx)) {
@@ -260,8 +259,24 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 			break;
 		  }
 	    }
-	    if (vp->format == vpiRealVal) vp->value.real = ival;
-	    else vp->value.integer = ival;
+	    vp->value.integer = ival;
+	    }
+	    break;
+
+	  case vpiRealVal:
+	    vp->value.real = 0;
+	    for (unsigned idx = wid ;  idx > 0 ;  idx -= 1) {
+	    	  vp->value.real *= 2.0;
+		  switch (get_bit(rfp, idx-1)) {
+		      case 0:
+			break;
+		      case 1:
+			vp->value.real += 1.0;
+			break;
+		      case 2:
+		      case 3:
+			break;
+		  }
 	    }
 	    break;
 
@@ -537,6 +552,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.24  2007/02/19 01:45:56  steve
+ *  Improved version of pr1639064 patch handles huge values. (larry doolittle)
+ *
  * Revision 1.23  2007/02/18 06:01:25  steve
  *  Fix print of integers as real. <larry Doolittle>
  *
