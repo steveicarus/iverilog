@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.45 2007/02/14 05:59:46 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.46 2007/02/20 05:58:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -465,7 +465,7 @@ void dll_target::expr_unary(const NetEUnary*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_ = IVL_EX_UNARY;
-      expr_->value_= IVL_VT_VECTOR;
+      expr_->value_= net->expr_type();
       expr_->width_ = net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.unary_.op_ = net->op();
@@ -474,6 +474,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.46  2007/02/20 05:58:36  steve
+ *  Handle unary minus of real valued expressions.
+ *
  * Revision 1.45  2007/02/14 05:59:46  steve
  *  Handle type of ternary expressions properly.
  *

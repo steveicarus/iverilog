@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.2 2007/02/14 05:57:51 steve Exp $"
+#ident "$Id: expression.c,v 1.3 2007/02/20 05:58:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -238,8 +238,8 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_UNARY:
-	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign);
+	    fprintf(out, "%*s<unary \"%c\" width=%u, %s, type=%s>\n", ind, "",
+		    ivl_expr_opcode(net), width, sign, vt);
 	    show_expression(ivl_expr_oper1(net), ind+4);
 	    break;
 

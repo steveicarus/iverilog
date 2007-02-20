@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.368 2007/02/14 05:59:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.369 2007/02/20 05:58:36 steve Exp $"
 #endif
 
 /*
@@ -3056,6 +3056,7 @@ class NetEUnary  : public NetExpr {
       virtual NetEUnary* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -3076,6 +3077,7 @@ class NetEUBits : public NetEUnary {
       virtual NetNet* synthesize(Design*);
 
       virtual NetEConst* eval_tree();
+      virtual ivl_variable_type_t expr_type() const;
 };
 
 class NetEUReduce : public NetEUnary {
@@ -3088,7 +3090,7 @@ class NetEUReduce : public NetEUnary {
       virtual NetNet* synthesize(Design*);
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree();
-
+      virtual ivl_variable_type_t expr_type() const;
 };
 
 /*
@@ -3473,6 +3475,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.369  2007/02/20 05:58:36  steve
+ *  Handle unary minus of real valued expressions.
+ *
  * Revision 1.368  2007/02/14 05:59:46  steve
  *  Handle type of ternary expressions properly.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.18 2007/02/14 05:59:46 steve Exp $"
+#ident "$Id: eval_real.c,v 1.19 2007/02/20 05:58:36 steve Exp $"
 #endif
 
 /*
@@ -331,6 +331,28 @@ static int draw_ternary_real(ivl_expr_t exp)
       return res;
 }
 
+static int draw_unary_real(ivl_expr_t exp)
+{
+      ivl_expr_t sube = ivl_expr_oper1(exp);
+      int sub = draw_eval_real(sube);
+
+      if (ivl_expr_opcode(exp) == '+')
+	    return sub;
+
+      if (ivl_expr_opcode(exp) == '-') {
+	    int res = allocate_word();
+	    fprintf(vvp_out, "  %%loadi/wr %d, 0, 0; load 0.0\n", res);
+	    fprintf(vvp_out, "  %%sub/wr %d, %d;\n", res, sub);
+
+	    clr_word(sub);
+	    return res;
+      }
+
+      fprintf(vvp_out, "; XXXX unary (%c)\n", ivl_expr_opcode(exp));
+      fprintf(stderr, "XXXX evaluate unary (%c)\n", ivl_expr_opcode(exp));
+      return 0;
+}
+
 int draw_eval_real(ivl_expr_t exp)
 {
       int res = 0;
@@ -365,6 +387,10 @@ int draw_eval_real(ivl_expr_t exp)
 	    res = draw_ufunc_real(exp);
 	    break;
 
+	  case IVL_EX_UNARY:
+	    res = draw_unary_real(exp);
+	    break;
+
 	  default:
 	    if (ivl_expr_value(exp) == IVL_VT_VECTOR) {
 		  struct vector_info sv = draw_eval_expr(exp, 0);
@@ -393,6 +419,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.19  2007/02/20 05:58:36  steve
+ *  Handle unary minus of real valued expressions.
+ *
  * Revision 1.18  2007/02/14 05:59:46  steve
  *  Handle type of ternary expressions properly.
  *

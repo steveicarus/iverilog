@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.253 2007/02/14 05:59:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.254 2007/02/20 05:58:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2105,6 +2105,11 @@ NetEUnary::~NetEUnary()
       delete expr_;
 }
 
+ivl_variable_type_t NetEUnary::expr_type() const
+{
+      return expr_->expr_type();
+}
+
 NetEUBits::NetEUBits(char op, NetExpr*ex)
 : NetEUnary(op, ex)
 {
@@ -2112,6 +2117,11 @@ NetEUBits::NetEUBits(char op, NetExpr*ex)
 
 NetEUBits::~NetEUBits()
 {
+}
+
+ivl_variable_type_t NetEUBits::expr_type() const
+{
+      return expr_->expr_type();
 }
 
 NetEUReduce::NetEUReduce(char op, NetExpr*ex)
@@ -2122,6 +2132,11 @@ NetEUReduce::NetEUReduce(char op, NetExpr*ex)
 
 NetEUReduce::~NetEUReduce()
 {
+}
+
+ivl_variable_type_t NetEUReduce::expr_type() const
+{
+      return expr_->expr_type();
 }
 
 NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins,
@@ -2205,6 +2220,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.254  2007/02/20 05:58:36  steve
+ *  Handle unary minus of real valued expressions.
+ *
  * Revision 1.253  2007/02/14 05:59:46  steve
  *  Handle type of ternary expressions properly.
  *
