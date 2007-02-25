@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.176 2007/02/02 04:33:00 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.177 2007/02/25 23:08:24 steve Exp $"
 #endif
 
 # include  <inttypes.h>
@@ -612,6 +612,18 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *
  * Bit and part selects are not done here. The IVL_EX_SELECT
  * expression does bit/part selects on the word read from the signal.
+ *
+ * - IVL_EX_STRING
+ * This expression refers to a string constant. The ivl_expr_string
+ * function returns a pointer to the first byte of the string. The
+ * compiler has translated it to a "vvp escaped string" which has
+ * quoting and escapes eliminated. The string may contain octal
+ * escapes (\<oct>) so that the string text returned by
+ * ivl_expr_string will only contain graphical characters. It is up to
+ * the target to change the escaped \NNN to the proper byte value when
+ * using this string. No other escape sequences will appear in the
+ * string. Quote (") and slash (\) characters will be delivered in
+ * \NNN form.
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
@@ -1756,6 +1768,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.177  2007/02/25 23:08:24  steve
+ *  Process Verilog escape sequences much earlier.
+ *
  * Revision 1.176  2007/02/02 04:33:00  steve
  *  Use inttypes.h instead of stdint.h for portability.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.72 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.73 2007/02/25 23:08:24 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -293,6 +293,7 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
 struct __vpiStringConst {
       struct __vpiHandle base;
       char*value;
+      size_t value_len;
 };
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
@@ -450,6 +451,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.73  2007/02/25 23:08:24  steve
+ *  Process Verilog escape sequences much earlier.
+ *
  * Revision 1.72  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

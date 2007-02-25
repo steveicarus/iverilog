@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.51 2007/01/27 05:36:11 steve Exp $"
+#ident "$Id: verinum.cc,v 1.52 2007/02/25 23:08:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,9 +41,63 @@ verinum::verinum(const V*bits, unsigned nbits, bool has_len)
       }
 }
 
-verinum::verinum(const string&str)
+static string process_verilog_string_quotes(const string&str)
+{
+      string res;
+
+      int idx = 0;
+      int str_len = str.length();
+
+      while (idx < str_len) {
+	    if (str[idx] == '\\') {
+		  idx += 1;
+		  assert(idx < str_len);
+		  switch (str[idx]) {
+		      case 'n':
+			res = res + '\n';
+			idx += 1;
+			break;
+		      case 't':
+			res = res + '\t';
+			idx += 1;
+			break;
+		      case '0':
+		      case '1':
+		      case '2':
+		      case '3':
+		      case '4':
+		      case '5':
+		      case '6':
+		      case '7': {
+			    char byte_val = 0;
+			    int odx = 0;
+			    while (odx < 3 && idx+odx < str_len
+				   && str[idx+odx] >= '0'
+				   && str[idx+odx] <= '7') {
+				  byte_val = 8*byte_val + str[idx+odx]-'0';
+				  odx += 1;
+			    }
+			    idx += odx;
+			    res = res + byte_val;
+			    break;
+		      }
+		      default:
+			res = res + str[idx];
+			idx += 1;
+			break;
+		  }
+	    } else {
+		  res = res + str[idx];
+		  idx += 1;
+	    }
+      }
+      return res;
+}
+
+verinum::verinum(const string&s)
 : has_len_(true), has_sign_(false), string_flag_(true)
 {
+      string str = process_verilog_string_quotes(s);
       nbits_ = str.length() * 8;
 
 	// Special case: The string "" is 8 bits of 0.
@@ -284,29 +338,37 @@ string verinum::as_string() const
       if (nbits_ == 0)
 	    return "";
 
-      char*tmp = new char[nbits_/8+1];
-      char*cp = tmp;
+      string res;
+      bool leading_nuls = true;
       for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 8) {
+	    char char_val = 0;
 	    V*bp = bits_+idx;
-	    *cp = 0;
-	    if (*(--bp) == V1) *cp |= 0x80;
-	    if (*(--bp) == V1) *cp |= 0x40;
-	    if (*(--bp) == V1) *cp |= 0x20;
-	    if (*(--bp) == V1) *cp |= 0x10;
-	    if (*(--bp) == V1) *cp |= 0x08;
-	    if (*(--bp) == V1) *cp |= 0x04;
-	    if (*(--bp) == V1) *cp |= 0x02;
-	    if (*(--bp) == V1) *cp |= 0x01;
-	    if (*cp != 0) {
-		  cp += 1;
-		  *cp = 0;
+
+	    if (*(--bp) == V1) char_val |= 0x80;
+	    if (*(--bp) == V1) char_val |= 0x40;
+	    if (*(--bp) == V1) char_val |= 0x20;
+	    if (*(--bp) == V1) char_val |= 0x10;
+	    if (*(--bp) == V1) char_val |= 0x08;
+	    if (*(--bp) == V1) char_val |= 0x04;
+	    if (*(--bp) == V1) char_val |= 0x02;
+	    if (*(--bp) == V1) char_val |= 0x01;
+	    if (char_val == 0 && leading_nuls)
+		  continue;
+
+	    if (char_val == '"' || char_val == '\\') {
+		  char tmp[5];
+		  snprintf(tmp, sizeof tmp, "\\\%03o", char_val);
+		  res = res + tmp;
+	    } else if (char_val == ' ' || isgraph(char_val)) {
+		  res = res + char_val;
+
+	    } else {
+		  char tmp[5];
+		  snprintf(tmp, sizeof tmp, "\\\%03o", char_val);
+		  res = res + tmp;
 	    }
       }
-
-      tmp[nbits_/8] = 0;
-      string result = string(tmp);
-      delete[]tmp;
-      return result;
+      return res;
 }
 
 bool verinum::is_before(const verinum&that) const
@@ -1062,6 +1124,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.52  2007/02/25 23:08:24  steve
+ *  Process Verilog escape sequences much earlier.
+ *
  * Revision 1.51  2007/01/27 05:36:11  steve
  *  Fix padding of x when literal is sized and unsigned.
  *

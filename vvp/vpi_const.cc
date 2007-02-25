@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.36 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.37 2007/02/25 23:08:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -168,6 +168,30 @@ static const struct __vpirt vpip_string_temp_rt = {
       free_temp_string
 };
 
+static void vpip_process_string(struct __vpiStringConst*obj)
+{
+      char*chr = obj->value;
+      char*dp = obj->value;
+
+      while (*chr) {
+	    char next_char = *chr;
+
+	      /* Process octal escapes that I might find. */
+	    if (*chr == '\\') {
+		  for (int idx = 1 ;  idx <= 3 ;  idx += 1) {
+			assert(chr[idx] != 0);
+			assert(chr[idx] < '8');
+			assert(chr[idx] >= '0');
+			next_char = next_char*8 + chr[idx] - '0';
+		  }
+		  chr += 3;
+	    }
+	    *dp++ = next_char;
+	    chr += 1;
+      }
+      *dp = 0;
+      obj->value_len = dp - obj->value;
+}
 
 vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 {
@@ -179,6 +203,8 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 	    ? &vpip_string_rt
 	    : &vpip_string_temp_rt;
       obj->value = text;
+      obj->value_len = 0;
+      vpip_process_string(obj);
 
       return &obj->base;
 }
@@ -244,8 +270,11 @@ vpiHandle vpip_make_string_param(char*name, char*text)
 	    malloc(sizeof (struct __vpiStringParam));
       obj->base.vpi_type = &vpip_string_param_rt;
       obj->value = text;
+      obj->value_len = 0;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
+
+      vpip_process_string(obj);
 
       return &obj->base;
 }
@@ -589,6 +618,9 @@ vpiHandle vpip_make_real_const(double value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.37  2007/02/25 23:08:24  steve
+ *  Process Verilog escape sequences much earlier.
+ *
  * Revision 1.36  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
