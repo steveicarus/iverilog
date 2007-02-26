@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.130 2007/02/02 04:48:49 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.131 2007/02/26 01:51:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -172,14 +172,15 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 {
       unsigned skip_assign = transient_id++;
 
-	/* Store expression width into index word 0 */
-      fprintf(vvp_out, "  %%ix/load 0, %u;\n", width);
-	/* Store constant (0) word part select into index 1 */
-      fprintf(vvp_out, "  %%ix/load 1, 0;\n");
 	/* Calculate array word index into index register 3 */
       draw_eval_expr_into_integer(word_ix, 3);
 	/* Skip assignment if word expression is not defined. */
       fprintf(vvp_out, "  %%jmp/1 t_%u, 4;\n", skip_assign);
+
+	/* Store expression width into index word 0 */
+      fprintf(vvp_out, "  %%ix/load 0, %u; // word width\n", width);
+	/* Store constant (0) word part select into index 1 */
+      fprintf(vvp_out, "  %%ix/load 1, 0;\n");
 
       fprintf(vvp_out, "  %%assign/av v%p, %u, %u;\n", lsig, delay, bit);
       fprintf(vvp_out, "t_%u ;\n", skip_assign);
@@ -1550,6 +1551,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.131  2007/02/26 01:51:40  steve
+ *  Prevent lost of width while calculation address.
+ *
  * Revision 1.130  2007/02/02 04:48:49  steve
  *  Lookaside is invalid when working a new scope.
  *
