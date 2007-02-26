@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.27 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: netmisc.h,v 1.28 2007/02/26 19:49:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -87,7 +87,7 @@ extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
  * where order matters.
  *
  * make_add_expr
- *   Make a NetEBAdd expresion with <expr> the first argument and
+ *   Make a NetEBAdd expression with <expr> the first argument and
  *   <val> the second. This may get turned into a subtract if <val> is
  *   less then zero. If val is exactly zero, then return <expr> as is.
  *
@@ -120,6 +120,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.28  2007/02/26 19:49:49  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.27  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

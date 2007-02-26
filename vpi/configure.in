@@ -75,7 +75,7 @@ AC_SUBST(file64_support)
 
 # $host
 
-# Compiler option for position independent code, needed whan making shared objects.
+# Compiler option for position independent code, needed when making shared objects.
 AX_C_PICFLAG
 
 AX_LD_EXTRALIBS

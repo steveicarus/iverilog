@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.198 2007/02/05 01:42:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.199 2007/02/26 19:49:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2705,8 +2705,8 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 	/* If the MUX device results is too narrow to fill out the
 	   desired result, then pad it. It is OK to have a too-narrow
-	   result here because the dwidth choise is >= the width of
-	   both alternatives. Thus, padding here is equivilent to
+	   result here because the dwidth choice is >= the width of
+	   both alternatives. Thus, padding here is equivalent to
 	   padding inside, and is cheaper. */
       if (dwidth < width)
 	    sig = pad_to_width(des, sig, width);
@@ -2909,6 +2909,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.199  2007/02/26 19:49:48  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.198  2007/02/05 01:42:31  steve
  *  Set some missing local flags.
  *

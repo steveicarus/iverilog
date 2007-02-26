@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.152 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.153 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -47,7 +47,7 @@ static struct vvp_nexus_data*new_nexus_data()
 }
 
 /*
- *  Escape non-symbol chararacters in ids, and quotes in strings.
+ *  Escape non-symbol characters in ids, and quotes in strings.
  */
 
 inline static char hex_digit(unsigned i)
@@ -2352,6 +2352,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.153  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.152  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

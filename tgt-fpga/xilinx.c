@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.12 2004/02/15 18:03:30 steve Exp $"
+#ident "$Id: xilinx.c,v 1.13 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -273,7 +273,7 @@ edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib)
 
 /*
  * This function does a lot of the stuff common to the header
- * functions of various Xilinx familes. This includes creating the edf
+ * functions of various Xilinx families. This includes creating the edf
  * object that holds the netlist.
  */
 void xilinx_common_header(ivl_design_t des)
@@ -835,14 +835,14 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 	/* Allocate a matrix of edif_cellref_t variables. A devices
 	   will be addressed by the expression table[sdx][qdx];
-	   This should make the algorighm code easier to read. */
+	   This should make the algorithm code easier to read. */
       cells = calloc(nsel * width, sizeof(edif_cellref_t));
       table = calloc(nsel, sizeof(edif_cellref_t*));
 
       for (sdx = 0 ;  sdx < nsel ;  sdx += 1)
 	    table[sdx] = cells + sdx*width;
 
-	/* Make a 0 valued pad bit. I wlil use this for all the shifin
+	/* Make a 0 valued pad bit. I will use this for all the shift in
 	   values that are beyond the input. */
       pad0_cell = edif_cellref_create(edf, cell_0);
       pad0 = edif_joint_create(edf);
@@ -951,6 +951,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.13  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.12  2004/02/15 18:03:30  steve
  *  Cleanup of warnings.
  *

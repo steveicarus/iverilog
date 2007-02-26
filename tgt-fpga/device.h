@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.14 2003/11/12 03:20:14 steve Exp $"
+#ident "$Id: device.h,v 1.15 2007/02/26 19:49:49 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -72,7 +72,7 @@ struct device_s {
  * Return the device_t cookie given the name of the architecture. If
  * the device is not found, return 0.
  *
- * This function is used if the user specifies the archetecture
+ * This function is used if the user specifies the architecture
  * explicitly, with the -parch=name flag.
  */
 extern device_t device_from_arch(const char*arch);
@@ -80,6 +80,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.15  2007/02/26 19:49:49  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.14  2003/11/12 03:20:14  steve
  *  devices need show_cmp_gt
  *

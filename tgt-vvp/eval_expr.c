@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.134 2007/02/12 04:37:58 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.135 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -135,7 +135,7 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 
 /*
  * The STUFF_OK_XZ bit is true if the output is going to be further
- * processed so that x and z values are equivilent. This may allow for
+ * processed so that x and z values are equivalent. This may allow for
  * new optimizations.
  */
 static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
@@ -479,7 +479,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       lv = draw_eval_expr(le, STUFF_OK_XZ);
 
 	/* if the left operand has width, then evaluate the single-bit
-	   logical equivilent. */
+	   logical equivalent. */
       if ((lv.base >= 4) && (lv.wid > 1)) {
 	    struct vector_info tmp;
 	    clr_vector(lv);
@@ -493,7 +493,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       rv = draw_eval_expr(re, STUFF_OK_XZ);
 
 	/* if the right operand has width, then evaluate the single-bit
-	   logical equivilent. */
+	   logical equivalent. */
       if ((rv.base >= 4) && (rv.wid > 1)) {
 	    struct vector_info tmp;
 	    clr_vector(rv);
@@ -1104,7 +1104,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
 	/* The arithmetic instructions replace the left operand with
 	   the result. If the left operand is a replicated constant,
-	   then I need to make a writeable copy so that the
+	   then I need to make a writable copy so that the
 	   instruction can operate. */
       if (lv.base < 4) {
 	    struct vector_info tmp;
@@ -1229,7 +1229,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 
 /*
  * The concatenation operator is evaluated by evaluating each sub-
- * expression, then copying it into the continguous vector of the
+ * expression, then copying it into the contiguous vector of the
  * result. Do this until the result vector is filled.
  */
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
@@ -1782,7 +1782,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       clr_vector(shiv);
 
 	/* If the subv result is a magic constant, then make a copy in
-	   writeable vector space and work from there instead. */
+	   writable vector space and work from there instead. */
       if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
 	    res.wid = subv.wid;
@@ -2201,6 +2201,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.135  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.134  2007/02/12 04:37:58  steve
  *  Get padding right when loading array word into big vector.
  *

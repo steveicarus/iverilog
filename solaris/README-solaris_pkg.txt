@@ -1,8 +1,8 @@
-# $Id: README-solaris_pkg.txt,v 1.2 2004/10/04 01:10:56 steve Exp $
+# $Id: README-solaris_pkg.txt,v 1.3 2007/02/26 19:49:49 steve Exp $
 
 Notes about the solaris package.
 
-I.  Installing a prebuild solaris package
+I.  Installing a prebuilt solaris package
 -----------------------------------------
 
 To install the solaris package do the following as root on your machine:
@@ -24,10 +24,10 @@ To install the solaris package do the following as root on your machine:
    this will install the package.  The package will be registered under the
    name "IVLver"
 
-II.  Deinstalling the solaris package
+II.  Uninstalling the solaris package
 -------------------------------------
 
-To deinstall an installed solaris package do the following as root on your machine:
+To uninstall an installed solaris package do the following as root on your machine:
 
     pkgrm IVLver
 

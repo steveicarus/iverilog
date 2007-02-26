@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.177 2007/02/25 23:08:24 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.178 2007/02/26 19:49:49 steve Exp $"
 #endif
 
 # include  <inttypes.h>
@@ -1343,7 +1343,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  * ivl_scope_def
  *    Task definition scopes carry a task definition, in the form of
  *    a statement. This method accesses that definition. The
- *    ivl_scope_def function must return a statment for scopes that
+ *    ivl_scope_def function must return a statement for scopes that
  *    are type FUNCTION or TASK, and most return nil otherwise.
  *
  * ivl_scope_event
@@ -1654,8 +1654,8 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * - IVL_ST_DELAY, IVL_ST_DELAYX
  * These statement types are delay statements. They are a way to
  * attach a delay to a statement. The ivl_stmt_sub_stmt() function
- * gets the statment to be executed after the delay. If this an
- * ivl_ST_DELAY, then the ivl_stmt_delay_val function gets the
+ * gets the statement to be executed after the delay. If this is
+ * IVL_ST_DELAY, then the ivl_stmt_delay_val function gets the
  * constant delay. If this is IVL_ST_DELAYX, then the
  * ivl_stmt_delay_expr gets the expression of the delay. In this case,
  * the expression is not necessarily constant.
@@ -1768,6 +1768,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.178  2007/02/26 19:49:49  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.177  2007/02/25 23:08:24  steve
  *  Process Verilog escape sequences much earlier.
  *

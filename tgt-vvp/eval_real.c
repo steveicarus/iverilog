@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.19 2007/02/20 05:58:36 steve Exp $"
+#ident "$Id: eval_real.c,v 1.20 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 /*
@@ -120,7 +120,7 @@ static int draw_number_real(ivl_expr_t exp)
       }
 
 	/* If this is actually a negative number, then get the
-	   positive equivilent, and set the sign bit in the exponent
+	   positive equivalent, and set the sign bit in the exponent
 	   field. */
       if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
 	    mant = (0-mant) & ((1UL<<wid) - 1UL);
@@ -419,6 +419,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.20  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.19  2007/02/20 05:58:36  steve
  *  Handle unary minus of real valued expressions.
  *

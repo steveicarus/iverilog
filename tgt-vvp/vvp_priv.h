@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.42 2007/01/17 04:39:18 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.43 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -28,7 +28,7 @@
 
 /*
  * The target_design entry opens the output file that receives the
- * compiled design, and sets the vvp_out to the descripter.
+ * compiled design, and sets the vvp_out to the descriptor.
  */
 extern FILE* vvp_out;
 
@@ -244,6 +244,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.43  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.42  2007/01/17 04:39:18  steve
  *  Remove dead code related to memories.
  *

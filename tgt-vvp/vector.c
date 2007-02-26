@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.11 2007/02/06 04:43:53 steve Exp $"
+#ident "$Id: vector.c,v 1.12 2007/02/26 19:49:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -24,7 +24,7 @@
 
 /* Maximum vector bits in a thread. If a thread co-processor is
  * implemented, this value may need to be reduced. At that time
- * wider operatons will need to be partitioned. For example
+ * wider operations will need to be partitioned. For example
  * shift operations on WIDE (say > 64k bit) registers.
  */
 #define MAX_VEC	(256*1024)
@@ -372,6 +372,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.12  2007/02/26 19:49:50  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.11  2007/02/06 04:43:53  steve
  *  Expression lookaside cannot hold complex expressions
  *

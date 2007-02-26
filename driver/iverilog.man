@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2006/09/28 04:35:18 $" Version "$Date: 2006/09/28 04:35:18 $"
+.TH iverilog 1 "$Date: 2007/02/26 19:49:49 $" Version "$Date: 2007/02/26 19:49:49 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -62,7 +62,7 @@ Enable (default) or disable specify block support. When enabled,
 specify block code is elaborated. When disabled, specify blocks are
 parsed but ignored. Specify blocks are commonly not needed for RTL
 simulation, and in fact can hurt performance of the
-simulation. However, disabling specify blocks reduces acuracy of
+simulation. However, disabling specify blocks reduces accuracy of
 full-timing simulations.
 .TP 8
 .B -gxtypes\fI|\fP-gno-xtypes
