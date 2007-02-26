@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.7.2.1 2005/08/27 22:29:31 steve Exp $"
+#ident "$Id: edif.h,v 1.7.2.2 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -47,7 +47,7 @@
  *
  *   Declare external libraries with edif_xlibrary_create
  *     Normally, this is the single technology library that contains
- *     the primitive cells that the code generator intendes to
+ *     the primitive cells that the code generator intends to
  *     use. The library is given a name, such as VIRTEX or whatever
  *     the implementation tools expect. Cells are attached to the
  *     library later. An edif netlist may include multiple external
@@ -196,7 +196,7 @@ extern edif_cellref_t edif_cellref_create(edif_t edf, edif_cell_t cell);
 
 /* Instances can have properties attached to them. The name and value
    given here are turned into a (property <name> (string "val"))
-   sexpression attached to the instance.
+   expression attached to the instance.
 
    Examples of string properties commonly attached to cellref devices
    include such things as the INIT=<value> to initialize LUT cells in
@@ -233,6 +233,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.7.2.2  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.7.2.1  2005/08/27 22:29:31  steve
  *  Back-port edif_nexus_to_joint from tgt-edif.
  *

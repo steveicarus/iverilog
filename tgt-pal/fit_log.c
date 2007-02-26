@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fit_log.c,v 1.5 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: fit_log.c,v 1.5.2.1 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,7 @@
 # include  "priv.h"
 
 /*
- * By the time we get here, all the flip-flops iave been placed in
+ * By the time we get here, all the flip-flops have been placed in
  * macrocells, and enables attached to them. So all that's left is to
  * work backwards from each macrocell, making terms and sum-of-terms
  * from the asynchronous logic until we get to the table inputs.
@@ -128,6 +128,9 @@ int fit_logic(void)
 
 /*
  * $Log: fit_log.c,v $
+ * Revision 1.5.2.1  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.5  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

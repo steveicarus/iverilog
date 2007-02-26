@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.7 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: priv.h,v 1.7.2.1 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -88,7 +88,7 @@ extern struct pal_bind_s* bind_pin;
 
 
 /*
- * These are various stepps in the fitting process.
+ * These are various steps in the fitting process.
  */
 extern int get_pad_bindings(ivl_scope_t net, void*x);
 
@@ -102,6 +102,9 @@ extern int emit_jedec(const char*path);
 
 /*
  * $Log: priv.h,v $
+ * Revision 1.7.2.1  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.7  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

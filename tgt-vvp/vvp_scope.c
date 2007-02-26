@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.6 2006/04/16 19:26:41 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103.2.7 2007/02/26 19:51:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -29,7 +29,7 @@
 # include  <string.h>
 
 /*
- *  Escape non-symbol chararacters in ids, and quotes in strings.
+ *  Escape non-symbol characters in ids, and quotes in strings.
  */
 
 inline static char hex_digit(unsigned i)
@@ -519,7 +519,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    break;
 
 	      /* Catch the special cases that the nets are supply
-		 nets. Drive constant values uncomditionally. */
+		 nets. Drive constant values unconditionally. */
 	  case IVL_SIT_SUPPLY0:
 	    nex_private = "C<su0>";
 	    ivl_nexus_set_private(nex, nex_private);
@@ -1886,6 +1886,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103.2.7  2007/02/26 19:51:40  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.103.2.6  2006/04/16 19:26:41  steve
  *  Fix handling of exploded memories with partial or missing resets.
  *

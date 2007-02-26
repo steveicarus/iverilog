@@ -96,7 +96,7 @@ AC_C_BIGENDIAN
 
 AX_LD_EXTRALIBS
 
-# Compiler option for position independent code, needed whan making shared objects.
+# Compiler option for position independent code, needed when making shared objects.
 # CFLAGS inherited by cadpli/Makefile?
 AX_C_PICFLAG
 

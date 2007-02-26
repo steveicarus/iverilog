@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.7 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.7.2.1 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -30,7 +30,7 @@
 
 /*
  * This draws a general mux, a slice at a time. Use MUXX so that
- * unknows lead to unknown output.
+ * unknowns lead to unknown output.
  */
 static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 {
@@ -146,7 +146,7 @@ static void draw_lpm_mux_ab(ivl_lpm_t net)
       ivl_nexus_t s;
       unsigned idx, width;
 
-	/* Only support A-B muxes at this oint. */
+	/* Only support A-B muxes at this point. */
       assert(ivl_lpm_size(net) == 2);
       assert(ivl_lpm_selects(net) == 1);
 
@@ -185,6 +185,9 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.7.2.1  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.7  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *

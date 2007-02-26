@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.93.2.2 2005/01/28 18:29:29 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.93.2.3 2007/02/26 19:51:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1402,7 +1402,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
 	/* This is the bottom of the loop. branch to the top where the
-	   test is repeased, and also draw the out label. */
+	   test is repeated, and also draw the out label. */
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, out_label);
       clear_expression_lookaside();
@@ -1649,6 +1649,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.93.2.3  2007/02/26 19:51:40  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.93.2.2  2005/01/28 18:29:29  steve
  *  Add ability to compile real values into index registers.
  *

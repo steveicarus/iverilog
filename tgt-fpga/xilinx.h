@@ -19,13 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.8 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: xilinx.h,v 1.8.2.1 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 /*
  * This header file includes XILINX library support functions. They
  * manage the creation and reference of cells from the library. Use
- * the xililx_cell_* functions to get an edif_cell_t from the
+ * the xilinx_cell_* functions to get an edif_cell_t from the
  * library. The function will create the cell in the library if
  * needed, or will return the existing cell if it was already called.
  */
@@ -130,6 +130,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.8.2.1  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.8  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *

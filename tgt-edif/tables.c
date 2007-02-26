@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: tables.c,v 1.1.2.2 2005/09/25 16:35:37 steve Exp $"
+#ident "$Id: tables.c,v 1.1.2.3 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -35,7 +35,7 @@
 /*
  * This is where you hook new device types into the module. Simply
  * declare your struct device_s objects (as done with d_lpm_edif) and
- * add an enty in to the edif_device_table so that the user may invoke
+ * add an entry in to the edif_device_table so that the user may invoke
  * it via the -parch=<foo> command line switch.
  */
 extern const struct device_s d_lpm_edif;
@@ -49,6 +49,9 @@ const struct device_table_s edif_device_table[] = {
 
 /*
  * $Log: tables.c,v $
+ * Revision 1.1.2.3  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.1.2.2  2005/09/25 16:35:37  steve
  *  Add Xilinx virtex as a reference EDIF device.
  *

@@ -28,7 +28,7 @@ esac
 
 AC_CHECK_FUNCS(fopen64)
 
-# Compiler option for position independent code, needed whan making shared objects.
+# Compiler option for position independent code, needed when making shared objects.
 AX_C_PICFLAG
 
 # linker options when building a shared library

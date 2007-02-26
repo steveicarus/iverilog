@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.10 2006/11/26 01:54:05 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.11 2007/02/26 19:51:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -709,7 +709,7 @@ NetNet* NetEMemory::synthesize(Design*des)
 		  cerr << get_line() << ": debug: synthesize read of "
 		       << explode->pin_count() << " bit exploded memory." << endl;
 
-	      /* Only make a muc big enough to address the words that
+	      /* Only make a mux big enough to address the words that
 		 the address can generate. (If the address is
 		 0-extended, then only the low words are addressable.) */
 	    unsigned use_count = mem_->count();
@@ -1096,6 +1096,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.11  2007/02/26 19:51:38  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.59.2.10  2006/11/26 01:54:05  steve
  *  Add synthesis of user defined functions.
  *

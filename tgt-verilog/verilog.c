@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verilog.c,v 1.28 2004/02/15 18:03:30 steve Exp $"
+#ident "$Id: verilog.c,v 1.28.2.1 2007/02/26 19:51:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -141,7 +141,7 @@ static int draw_logic(ivl_net_logic_t net)
 }
 
 /*
- * Scan the scope and its children for logic gates. Ise the draw_logic
+ * Scan the scope and its children for logic gates. Use the draw_logic
  * function to draw the actual gate.
  */
 static int draw_scope_logic(ivl_scope_t scope, void*x)
@@ -439,6 +439,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.28.2.1  2007/02/26 19:51:39  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.28  2004/02/15 18:03:30  steve
  *  Cleanup of warnings.
  *

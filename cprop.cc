@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.6 2006/11/12 01:20:45 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47.2.7 2007/02/26 19:51:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1070,7 +1070,7 @@ void cprop_functor::lpm_mux_large(Design*des, NetMux*obj)
 	   throughout. If we find any, we can reduce the width of the
 	   MUX to eliminate the fixed value. */
 
-	/* After the following for look, this array of bools will
+	/* After the following for loop, this array of bools will
 	   contain "true" for each bit slice that is constant and
 	   identical, and "false" otherwise. The reduce_width will
 	   count the number of true entries in the flags array. */
@@ -1336,6 +1336,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47.2.7  2007/02/26 19:51:38  steve
+ *  Spelling fixes (larry doolittle)
+ *
  * Revision 1.47.2.6  2006/11/12 01:20:45  steve
  *  Prevent constant mux outputs from confusing itself.
  *

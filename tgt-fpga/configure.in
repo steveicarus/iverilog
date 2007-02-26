@@ -19,7 +19,7 @@ AC_CHECK_HEADERS(malloc.h)
 # may modify CPPFLAGS and CFLAGS
 AX_CPP_PRECOMP
 
-# Compiler option for position independent code, needed whan making shared objects.
+# Compiler option for position independent code, needed when making shared objects.
 AX_C_PICFLAG
 
 # linker options when building a shared library
