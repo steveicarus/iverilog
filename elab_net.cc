@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.199 2007/02/26 19:49:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.200 2007/02/27 06:10:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1417,7 +1417,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp);
 
 	    if (erep == 0) {
-		  cerr << get_line() << ": internal error: Unable to "
+		  cerr << get_line() << ": error: Unable to "
 		       << "evaluate constant repeat expression." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -2909,6 +2909,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.200  2007/02/27 06:10:16  steve
+ *  Better error message around repeat concatenation syntax.
+ *
  * Revision 1.199  2007/02/26 19:49:48  steve
  *  Spelling fixes (larry doolittle)
  *

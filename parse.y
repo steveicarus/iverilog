@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.227 2007/02/13 04:39:25 steve Exp $"
+#ident "$Id: parse.y,v 1.228 2007/02/27 06:10:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1092,17 +1092,22 @@ expr_primary
 		}
 	| '{' expression '{' expression_list '}' '}'
 		{ PExpr*rep = $2;
-		  if (!pform_expression_is_constant($2)) {
-			yyerror(@2, "error: Repeat expression "
-			            "must be constant.");
-			delete rep;
-			rep = 0;
-		  }
 		  PEConcat*tmp = new PEConcat(*$4, rep);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $4;
 		  $$ = tmp;
+		}
+	| '{' expression '{' expression_list '}' error '}'
+		{ PExpr*rep = $2;
+		  PEConcat*tmp = new PEConcat(*$4, rep);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $4;
+		  $$ = tmp;
+		  yyerror(@5, "error: Syntax error between internal '}' "
+			  "and closing '}' of repeat concatenation.");
+		  yyerrok;
 		}
 	;
 
