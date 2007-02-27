@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.39 2007/02/01 05:25:26 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.40 2007/02/27 05:14:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -321,6 +321,21 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (debug_elaborate)
 	    cerr << get_line() << ": debug: Set array word=" << *word << endl;
 
+	// Test for the case that the index is a constant, and is out
+	// of bounds. The "word" expression is the word index already
+	// converted to canonical address, so this just needs to check
+	// that the address is not too big.
+      if (NetEConst*word_const = dynamic_cast<NetEConst*>(word)) {
+	    verinum word_val = word_const->value();
+	    long index = word_val.as_long();
+	    if (index < 0 || index >= reg->array_count()) {
+		  cerr << get_line() << ": warning: Constant array index "
+		       << (index + reg->array_first())
+		       << " is out of range for array "
+		       << reg->name() << "." << endl;
+	    }
+      }
+
 	/* An array word may also have part selects applied to them. */
 
       if (sel_ == SEL_PART)
@@ -450,6 +465,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.40  2007/02/27 05:14:38  steve
+ *  Detect and warn about lval array index out fo bounds.
+ *
  * Revision 1.39  2007/02/01 05:25:26  steve
  *  Error message better reflects more general reality.
  *
