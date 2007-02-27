@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.132 2007/02/26 19:49:50 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.133 2007/02/27 05:13:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -91,7 +91,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 	    part_off_ex = 0;
       }
 
-	/* If the word index is a constand expression, then evaluate
+	/* If the word index is a constant expression, then evaluate
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
       if (word_ix && number_is_immediate(word_ix, 8*sizeof(use_word))) {
@@ -141,14 +141,19 @@ static void set_to_lvariable(ivl_lval_t lval,
 	      /* If the word index is a constant, then we can write
 	         directly to the word and save the index calculation. */
 	    if (word_ix == 0) {
-		  fprintf(vvp_out, "    %%set/v v%p_%lu, %u, %u;\n",
-			  sig, use_word, bit, wid);
+		  if (use_word < ivl_signal_array_count(sig)) {
+			fprintf(vvp_out, "   %%set/v v%p_%lu, %u, %u;\n",
+				sig, use_word, bit, wid);
+		  } else {
+			fprintf(vvp_out, " ; %%set/v v%p_%lu, %u, %u "
+				"OUT OF BOUNDS\n", sig, use_word, bit, wid);
+		  }
 
 	    } else {
 		  unsigned skip_set = transient_id++;
 		  unsigned index_reg = 3;
 		  draw_eval_expr_into_integer(word_ix, index_reg);
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
 		  fprintf(vvp_out, "   %%ix/load 1, 0;\n");
 		  fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
 			  sig, bit, wid);
@@ -1551,6 +1556,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.133  2007/02/27 05:13:34  steve
+ *  Do not assign to words constant-indexed out of range.
+ *
  * Revision 1.132  2007/02/26 19:49:50  steve
  *  Spelling fixes (larry doolittle)
  *
