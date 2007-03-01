@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.228 2007/02/14 05:58:14 steve Exp $"
+#ident "$Id: compile.cc,v 1.229 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1099,9 +1099,9 @@ vvp_fun_modpath* compile_modpath(char*label, struct symb_s src)
       return obj;
 }
 
-void compile_modpath_src(vvp_fun_modpath*dst,
-			 struct symb_s src,
-			 struct numbv_s vals)
+static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst,
+					    struct symb_s src,
+					    struct numbv_s vals)
 {
       vvp_time64_t use_delay[12];
 
@@ -1120,6 +1120,23 @@ void compile_modpath_src(vvp_fun_modpath*dst,
       input_connect(net, 0, src.text);
 
       dst->add_modpath_src(obj);
+      return net;
+}
+
+void compile_modpath_src(vvp_fun_modpath*dst,
+			 struct symb_s src,
+			 struct numbv_s vals)
+{
+      make_modpath_src(dst, src, vals);
+}
+
+void compile_modpath_src(vvp_fun_modpath*dst,
+			 struct symb_s src,
+			 struct numbv_s vals,
+			 struct symb_s condit_src)
+{
+      vvp_net_t*net = make_modpath_src(dst, src, vals);
+      input_connect(net, 1, condit_src.text);
 }
 
 /*
@@ -1580,6 +1597,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.229  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.228  2007/02/14 05:58:14  steve
  *  Add the mov/wr opcode.
  *

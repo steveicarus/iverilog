@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.369 2007/02/20 05:58:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.370 2007/03/01 06:19:38 steve Exp $"
 #endif
 
 /*
@@ -379,7 +379,8 @@ class NetNode  : public NetObj {
 class NetDelaySrc  : public NetObj {
 
     public:
-      explicit NetDelaySrc(NetScope*s, perm_string n, unsigned npins);
+      explicit NetDelaySrc(NetScope*s, perm_string n,
+			   unsigned nsrc, bool condit_src);
       ~NetDelaySrc();
 
 	// These functions set the delays from the values in the
@@ -401,10 +402,19 @@ class NetDelaySrc  : public NetObj {
 
       uint64_t get_delay(unsigned pe) const;
 
+      unsigned src_count() const;
+      Link&src_pin(unsigned);
+      const Link&src_pin(unsigned) const;
+
+      bool is_condit() const;
+      Link&condit_pin();
+      const Link&condit_pin() const;
+
       void dump(ostream&, unsigned ind) const;
 
     private:
       uint64_t transition_delays_[12];
+      bool condit_flag_;
 
     private: // Not implemented
       NetDelaySrc(const NetDelaySrc&);
@@ -3475,6 +3485,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.370  2007/03/01 06:19:38  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.369  2007/02/20 05:58:36  steve
  *  Handle unary minus of real valued expressions.
  *

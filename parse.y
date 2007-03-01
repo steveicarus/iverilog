@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.228 2007/02/27 06:10:16 steve Exp $"
+#ident "$Id: parse.y,v 1.229 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2529,7 +2529,10 @@ specify_item
 		}
 	| K_if '(' expression ')' specify_simple_path_decl ';'
                 { PSpecPath*tmp = $5;
-		  if (tmp) tmp->condition = $3;
+		  if (tmp) {
+			tmp->conditional = true;
+			tmp->condition = $3;
+		  }
 		  pform_module_specify_path(tmp);
 		}
 	| K_if '(' expression ')' specify_edge_path_decl ';'

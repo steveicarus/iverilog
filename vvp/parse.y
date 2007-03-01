@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.87 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: parse.y,v 1.88 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -746,6 +746,8 @@ modpath_src_list
 modpath_src
         : symbol '(' numbers ')'
                 { compile_modpath_src(modpath_dst, $1, $3); }
+        | symbol '(' numbers '?' symbol ')'
+                { compile_modpath_src(modpath_dst, $1, $3, $5); }
         ;
 
 udp_table
@@ -803,6 +805,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.88  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.87  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.178 2007/02/26 19:49:49 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.179 2007/03/01 06:19:38 steve Exp $"
 #endif
 
 # include  <inttypes.h>
@@ -387,10 +387,14 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  *    This returns the nexus that is the source end of the delay
  *    path. Transitions on the source are the start of the delay time
  *    for this path.
+*
+* ivl_path_condit
+*     This returns the nexus that tracks the condition for the
+*     delay. If the delay path is unconditional, this returns nil.
  */
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
-
+extern ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj);
 
 /* DESIGN
  * When handed a design (ivl_design_t) there are a few things that you
@@ -1768,6 +1772,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.179  2007/03/01 06:19:38  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.178  2007/02/26 19:49:49  steve
  *  Spelling fixes (larry doolittle)
  *

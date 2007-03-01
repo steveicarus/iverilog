@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.164 2007/01/29 01:52:51 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.165 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2153,7 +2153,7 @@ bool dll_target::signal_paths(const NetNet*net)
          /* Figure out how many paths there really are. */
       for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
 	    const NetDelaySrc*src = net->delay_path(idx);
-	    obj->npath += src->pin_count();
+	    obj->npath += src->src_count();
       }
 
       obj->path = new struct ivl_delaypath_s[obj->npath];
@@ -2162,8 +2162,15 @@ bool dll_target::signal_paths(const NetNet*net)
       for (unsigned idx = 0 ;  idx < net->delay_paths() ;  idx += 1) {
 	    const NetDelaySrc*src = net->delay_path(idx);
 
-	    for (unsigned pin = 0; pin < src->pin_count(); pin += 1) {
-		  const Nexus*nex = src->pin(pin).nexus();
+	      /* If this path has a condition, then hook it up. */
+	    ivl_nexus_t path_condit = 0;
+	    if (src->is_condit()) {
+		  const Nexus*nt = src->condit_pin().nexus();
+		  path_condit = (ivl_nexus_t) nt->t_cookie();
+	    }
+
+	    for (unsigned pin = 0; pin < src->src_count(); pin += 1) {
+		  const Nexus*nex = src->src_pin(pin).nexus();
 		  if (! nex->t_cookie()) {
 			cerr << src->get_line() << ": internal error: "
 			     << "No signal connected to pin " << pin
@@ -2172,13 +2179,14 @@ bool dll_target::signal_paths(const NetNet*net)
 		  }
 		  assert(nex->t_cookie());
 		  obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
-
+		  obj->path[ptr].condit = path_condit;
 		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
 			obj->path[ptr].delay[pe] = src->get_delay(pe);
 		  }
 
 		  ptr += 1;
 	    }
+
       }
 
       return true;
@@ -2189,6 +2197,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.165  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.164  2007/01/29 01:52:51  steve
  *  Clarify the use of ivl_scope_def for not-functions.
  *

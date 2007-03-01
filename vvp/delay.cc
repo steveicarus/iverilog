@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.16 2007/01/26 05:15:41 steve Exp $"
+#ident "$Id: delay.cc,v 1.17 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -375,6 +375,10 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	/* Select a time delay source that applies. */
       vvp_fun_modpath_src*src = 0;
       for (vvp_fun_modpath_src*cur = src_list_ ;  cur ;  cur=cur->next_) {
+	      /* Skip paths that are disabled by conditions. */
+	    if (cur->condition_flag_ == false)
+		  continue;
+
 	    if (src == 0) {
 		  src = cur;
 	    } else if (cur->wake_time_ > src->wake_time_) {
@@ -425,6 +429,7 @@ vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
 
       next_ = 0;
       wake_time_ = 0;
+      condition_flag_ = true;
 }
 
 vvp_fun_modpath_src::~vvp_fun_modpath_src()
@@ -433,14 +438,24 @@ vvp_fun_modpath_src::~vvp_fun_modpath_src()
 
 void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      if (port.port() != 0)
-	    return;
+      if (port.port() == 0) {
+	      // The modpath input...
+	    wake_time_ = schedule_simtime();
 
-      wake_time_ = schedule_simtime();
+      } else if (port.port() == 1) {
+	      // The modpath condition input...
+	    if (bit.value(0) == BIT4_1)
+		  condition_flag_ = true;
+	    else
+		  condition_flag_ = false;
+      }
 }
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.17  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.16  2007/01/26 05:15:41  steve
  *  More literal implementation of inertial delay model.
  *

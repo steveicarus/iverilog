@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.13 2007/01/26 05:15:41 steve Exp $"
+#ident "$Id: delay.h,v 1.14 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 /*
@@ -138,6 +138,14 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       void clean_pulse_events_(vvp_time64_t use_delay);
 };
 
+/*
+* These objects inplement module delay paths. The fun_modpath functor
+* is the output of the modpath, and the vvp_fun_modpath_src is the
+* source of the modpath. The modpath source tracks events on the
+* inputs to enable delays, and the vvp_fun_modpath, when it's time to
+* schedule, looks at the associated modpath_src objects for which
+* paths are active.
+*/
 class vvp_fun_modpath;
 class vvp_fun_modpath_src;
 
@@ -185,6 +193,7 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       vvp_fun_modpath_src*next_;
 
       vvp_time64_t wake_time_;
+      bool condition_flag_;
 
     private:
       vvp_fun_modpath_src(const vvp_fun_modpath_src&);
@@ -193,6 +202,9 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
 /*
  * $Log: delay.h,v $
+ * Revision 1.14  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.13  2007/01/26 05:15:41  steve
  *  More literal implementation of inertial delay model.
  *

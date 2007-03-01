@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.80 2007/01/16 05:44:16 steve Exp $
+ *  $Id: README.txt,v 1.81 2007/03/01 06:19:39 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -368,7 +368,7 @@ A module path delay takes data from its input, then a list of module
 path delays. The <src> for each possible delay set is a trigger that
 activates the delay.
 
-        .modpath <input> , [ <src> (<delays>) ] ;
+        .modpath <input> , [ <src> (<delays> [? <condition>]) ] ;
 
 ARRAY INDEX STATEMENTS:
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.254 2007/02/20 05:58:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.255 2007/03/01 06:19:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -237,12 +237,20 @@ NetBus::~NetBus()
 {
 }
 
-NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins)
-: NetObj(s, n, npins)
+NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n,
+			 unsigned npins, bool condit_src)
+: NetObj(s, n, npins + (condit_src?1:0))
 {
+      condit_flag_ = false;
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_name(perm_string::literal("I"), idx);
 	    pin(idx).set_dir(Link::INPUT);
+      }
+
+      if (condit_src) {
+	    condit_flag_ = true;
+	    pin(npins).set_name(perm_string::literal("COND"), 0);
+	    pin(npins).set_dir(Link::INPUT);
       }
 }
 
@@ -328,6 +336,43 @@ uint64_t NetDelaySrc::get_delay(unsigned idx) const
 {
       assert(idx < 12);
       return transition_delays_[idx];
+}
+
+unsigned NetDelaySrc::src_count() const
+{
+      if (condit_flag_)
+	    return pin_count() - 1;
+      else
+	    return pin_count();
+}
+
+Link& NetDelaySrc::src_pin(unsigned idx)
+{
+      ivl_assert(*this, idx < src_count());
+      return pin(idx);
+}
+
+const Link& NetDelaySrc::src_pin(unsigned idx) const
+{
+      ivl_assert(*this, idx < src_count());
+      return pin(idx);
+}
+
+bool NetDelaySrc::is_condit() const
+{
+      return condit_flag_;
+}
+
+Link& NetDelaySrc::condit_pin()
+{
+      ivl_assert(*this, condit_flag_);
+      return pin(pin_count()-1);
+}
+
+const Link& NetDelaySrc::condit_pin() const
+{
+      ivl_assert(*this, condit_flag_);
+      return pin(pin_count()-1);
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
@@ -2220,6 +2265,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.255  2007/03/01 06:19:38  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.254  2007/02/20 05:58:36  steve
  *  Handle unary minus of real valued expressions.
  *

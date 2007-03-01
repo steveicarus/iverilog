@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.85 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: compile.h,v 1.86 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -166,6 +166,10 @@ extern vvp_fun_modpath* compile_modpath(char*label, struct symb_s src);
 extern void compile_modpath_src(vvp_fun_modpath*dst,
 				struct symb_s input,
 				struct numbv_s d);
+extern void compile_modpath_src(vvp_fun_modpath*dst,
+				struct symb_s input,
+				struct numbv_s d,
+				struct symb_s condit_input);
 
 extern void compile_reduce_and(char*label, struct symb_s arg);
 extern void compile_reduce_or(char*label, struct symb_s arg);
@@ -362,6 +366,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.86  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.85  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

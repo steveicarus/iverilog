@@ -109,6 +109,10 @@ ivl_nexus_ptr_sig
 ivl_parameter_basename
 ivl_parameter_expr
 
+ivl_path_condit
+ivl_path_delay
+ivl_path_source
+
 ivl_scope_attr_cnt
 ivl_scope_attr_val
 ivl_scope_basename

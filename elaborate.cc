@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.359 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.360 2007/03/01 06:19:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2916,9 +2916,17 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    return;
 
 	/* Check for various path types that are not supported. */
-
+#if 0
       if (conditional) {
 	    cerr << get_line() << ": sorry: Conditional specify paths"
+		 << " are not supported." << endl;
+	    cerr << get_line() << ":      : Use -g no-specify to ignore"
+		 << " specify blocks." << endl;
+	    des->errors += 1;
+      }
+#endif
+      if (conditional && !condition) {
+	    cerr << get_line() << ": sorry: ifnone specify paths"
 		 << " are not supported." << endl;
 	    cerr << get_line() << ":      : Use -g no-specify to ignore"
 		 << " specify blocks." << endl;
@@ -2981,13 +2989,30 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    break;
       }
 
+      NetNet*condit_sig = 0;
+      if (conditional) {
+	    ivl_assert(*this, condition);
+
+	    NetExpr*tmp = elab_and_eval(des, scope, condition, -1);
+	    ivl_assert(*condition, tmp);
+
+	      // FIXME: Look for constant expressions here?
+
+	      // Get a net form.
+	    condit_sig = tmp->synthesize(des);
+	    ivl_assert(*condition, condit_sig);
+      }
+
 	/* Create all the various paths from the path specifier. */
       typedef std::vector<perm_string>::const_iterator str_vector_iter;
       for (str_vector_iter cur = dst.begin()
 		 ; cur != dst.end() ;  cur ++) {
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Path to " << (*cur) << endl;
+		  cerr << get_line() << ": debug: Path to " << (*cur);
+		  if (condit_sig)
+			cerr << " if " << condit_sig->name();
+		  cerr << endl;
 	    }
 
 	    NetNet*dst_sig = scope->find_signal(*cur);
@@ -2999,7 +3024,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    }
 
 	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
-					       src.size());
+					       src.size(), condit_sig);
 	    path->set_line(*this);
 
 	    switch (ndelays) {
@@ -3037,6 +3062,9 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  connect(src_sig->pin(0), path->pin(idx));
 		  idx += 1;
 	    }
+
+	    if (condit_sig)
+		  connect(condit_sig->pin(0), path->pin(idx));
 
 	    dst_sig->add_delay_path(path);
       }
@@ -3366,6 +3394,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.360  2007/03/01 06:19:38  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.359  2007/02/12 01:52:21  steve
  *  Parse all specify paths to pform.
  *

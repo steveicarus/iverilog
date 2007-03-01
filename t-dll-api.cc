@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.140 2007/01/17 05:00:12 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.141 2007/03/01 06:19:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1242,6 +1242,12 @@ extern "C" ivl_scope_t ivl_parameter_scope(ivl_parameter_t net)
       return net->scope;
 }
 
+extern "C" ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj)
+{
+      assert(obj);
+      return obj->condit;
+}
+
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t edg)
 {
       assert(obj);
@@ -1934,6 +1940,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.141  2007/03/01 06:19:39  steve
+ *  Add support for conditional specify delay paths.
+ *
  * Revision 1.140  2007/01/17 05:00:12  steve
  *  Dead code for memories in scopes.
  *
