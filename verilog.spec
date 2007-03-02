@@ -4,13 +4,23 @@ Version: 0.9.0.20070227
 Release: 0
 License: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog//verilog-20070227.tar.gz
+Source: verilog-20070227.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
-BuildRequires: zlib-devel, bison, flex, gperf, readline-devel
+BuildRoot: %{_tmppath}/%{name}-%{version}-20070227-%{release}-root
 
-BuildRoot: /tmp/ivl
+BuildRequires: gcc-c++, zlib-devel, bison, flex, gperf, readline-devel
+
+%ifarch x86_64
+BuildRequires: bzip2-32bit, glibc-devel-32bit, glibc-32bit, zlib-devel-32bit
+BuildRequires: termcap-32bit, readline-32bit, readline-devel-32bit
+
+%if 0%{?suse_version} == 1020
+BuildRequires: gcc-32bit, libstdc++41-devel-32bit
+%endif
+
+%endif
 
 # This provides tag allows me to use a more specific name for things
 # that actually depend on me, Icarus Verilog.
@@ -34,6 +44,9 @@ make CXXFLAGS=-O
 
 %install
 make prefix=$RPM_BUILD_ROOT/usr install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %files
 
