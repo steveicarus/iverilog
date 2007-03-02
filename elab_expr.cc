@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.118 2007/01/19 05:42:40 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.119 2007/03/02 01:55:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
+# include  "ivl_assert.h"
 
 /*
  * The default behavor for the test_width method is to just return the
@@ -1062,7 +1063,14 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 					   NetNet*net, NetScope*found_in,
 					   bool sys_task_arg) const
 {
-      assert(sys_task_arg || !idx_.empty());
+      if (idx_.empty() && !sys_task_arg) {
+	    cerr << get_line() << ": error: Array " << path()
+		 << " Needs an array index here." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      ivl_assert(*this, sys_task_arg || !idx_.empty());
       NetExpr*word_index = idx_.empty()
 	    ? 0
 	    : elab_and_eval(des, scope, idx_[0], -1);
@@ -1598,6 +1606,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.119  2007/03/02 01:55:36  steve
+ *  Better error message when operating on array.
+ *
  * Revision 1.118  2007/01/19 05:42:40  steve
  *  Precalculate constant power expressions, and constant function arguments.
  *
