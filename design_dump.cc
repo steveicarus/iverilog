@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.173 2007/02/01 03:14:33 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.174 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,7 +93,10 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 
 void NetDelaySrc::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "specify delay src "
+      o << setw(ind) << "" << "specify delay";
+      if (posedge_) o << " posedge";
+      if (negedge_) o << " negedge";
+      o << " src "
 	<< "(" << transition_delays_[IVL_PE_01]
 	<< "," << transition_delays_[IVL_PE_10]
 	<< "," << transition_delays_[IVL_PE_0z]
@@ -1202,6 +1205,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.174  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.173  2007/02/01 03:14:33  steve
  *  Detect and report arrays without index in net contexts.
  *

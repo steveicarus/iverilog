@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.146 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: stub.c,v 1.147 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 /*
@@ -1131,8 +1131,12 @@ static void show_signal(ivl_signal_t net)
 	    ivl_delaypath_t path = ivl_signal_path(net,idx);
 	    ivl_nexus_t nex = ivl_path_source(path);
 	    ivl_nexus_t con = ivl_path_condit(path);
+	    int posedge = ivl_path_source_posedge(path);
+	    int negedge = ivl_path_source_negedge(path);
 
 	    fprintf(out, "      path %s", ivl_nexus_name(nex));
+	    if (posedge) fprintf(out, " posedge");
+	    if (negedge) fprintf(out, " negedge");
 	    if (con) fprintf(out, " (if %s)", ivl_nexus_name(con));
 	    fprintf(out, " %" PRIu64 ",%" PRIu64 ",%" PRIu64
 		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
@@ -1487,6 +1491,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.147  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.146  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

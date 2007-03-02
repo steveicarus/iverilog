@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.255 2007/03/01 06:19:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.256 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -242,6 +242,8 @@ NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n,
 : NetObj(s, n, npins + (condit_src?1:0))
 {
       condit_flag_ = false;
+      posedge_ = false;
+      negedge_ = false;
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_name(perm_string::literal("I"), idx);
 	    pin(idx).set_dir(Link::INPUT);
@@ -336,6 +338,26 @@ uint64_t NetDelaySrc::get_delay(unsigned idx) const
 {
       assert(idx < 12);
       return transition_delays_[idx];
+}
+
+void NetDelaySrc::set_posedge()
+{
+      posedge_ = true;
+}
+
+void NetDelaySrc::set_negedge()
+{
+      negedge_ = true;
+}
+
+bool NetDelaySrc::is_posedge() const
+{
+      return posedge_;
+}
+
+bool NetDelaySrc::is_negedge() const
+{
+      return negedge_;
 }
 
 unsigned NetDelaySrc::src_count() const
@@ -2265,6 +2287,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.256  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.255  2007/03/01 06:19:38  steve
  *  Add support for conditional specify delay paths.
  *

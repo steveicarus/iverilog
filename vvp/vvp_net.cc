@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.58 2007/02/05 01:08:10 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.59 2007/03/02 06:13:22 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -128,6 +128,39 @@ ostream& operator<<(ostream&out, vvp_bit4_t bit)
 	    break;
       }
       return out;
+}
+
+typedef unsigned short edge_t;
+
+inline edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
+{
+      return 1 << ((from << 2) | to);
+}
+
+const edge_t vvp_edge_posedge
+      = VVP_EDGE(BIT4_0,BIT4_1)
+      | VVP_EDGE(BIT4_0,BIT4_X)
+      | VVP_EDGE(BIT4_0,BIT4_Z)
+      | VVP_EDGE(BIT4_X,BIT4_1)
+      | VVP_EDGE(BIT4_Z,BIT4_1)
+      ;
+
+const edge_t vvp_edge_negedge
+      = VVP_EDGE(BIT4_1,BIT4_0)
+      | VVP_EDGE(BIT4_1,BIT4_X)
+      | VVP_EDGE(BIT4_1,BIT4_Z)
+      | VVP_EDGE(BIT4_X,BIT4_0)
+      | VVP_EDGE(BIT4_Z,BIT4_0)
+      ;
+
+int edge(vvp_bit4_t from, vvp_bit4_t to)
+{
+      edge_t mask = VVP_EDGE(from, to);
+      if (mask & vvp_edge_posedge)
+	    return 1;
+      if (mask & vvp_edge_negedge)
+	    return -1;
+      return 0;
 }
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val)
@@ -2257,6 +2290,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.59  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.58  2007/02/05 01:08:10  steve
  *  Handle relink of continuous assignment.
  *

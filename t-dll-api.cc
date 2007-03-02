@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.141 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.142 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1259,6 +1259,16 @@ extern ivl_nexus_t ivl_path_source(ivl_delaypath_t net)
       return net->src;
 }
 
+extern int ivl_path_source_posedge(ivl_delaypath_t net)
+{
+      return net->posedge ? 1 : 0;
+}
+
+extern int ivl_path_source_negedge(ivl_delaypath_t net)
+{
+      return net->negedge ? 1 : 0;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
@@ -1940,6 +1950,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.142  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.141  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

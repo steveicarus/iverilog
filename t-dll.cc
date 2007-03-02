@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.165 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.166 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2180,6 +2180,8 @@ bool dll_target::signal_paths(const NetNet*net)
 		  assert(nex->t_cookie());
 		  obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
+		  obj->path[ptr].posedge = src->is_posedge();
+		  obj->path[ptr].negedge = src->is_negedge();
 		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {
 			obj->path[ptr].delay[pe] = src->get_delay(pe);
 		  }
@@ -2197,6 +2199,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.166  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.165  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

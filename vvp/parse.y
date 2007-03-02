@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.88 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: parse.y,v 1.89 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -745,9 +745,17 @@ modpath_src_list
 
 modpath_src
         : symbol '(' numbers ')'
-                { compile_modpath_src(modpath_dst, $1, $3); }
+                { compile_modpath_src(modpath_dst, 0, $1, $3); }
         | symbol '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, $1, $3, $5); }
+                { compile_modpath_src(modpath_dst, 0, $1, $3, $5); }
+        | symbol '+' '(' numbers ')'
+                { compile_modpath_src(modpath_dst, '+', $1, $4); }
+        | symbol '+' '(' numbers '?' symbol ')'
+                { compile_modpath_src(modpath_dst, '+', $1, $4, $6); }
+        | symbol '-' '(' numbers ')'
+                { compile_modpath_src(modpath_dst, '-', $1, $4); }
+        | symbol '-' '(' numbers '?' symbol ')'
+                { compile_modpath_src(modpath_dst, '-', $1, $4, $6); }
         ;
 
 udp_table
@@ -805,6 +813,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.89  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.88  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

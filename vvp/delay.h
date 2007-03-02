@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.14 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: delay.h,v 1.15 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 /*
@@ -180,11 +180,13 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
     public:
       vvp_fun_modpath_src(vvp_time64_t d[12]);
-    private:
+    protected:
       ~vvp_fun_modpath_src();
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+
+      virtual bool test_vec4(const vvp_vector4_t&bit);
 
     private:
 	// FIXME: Needs to be a 12-value array
@@ -200,8 +202,24 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       vvp_fun_modpath_src& operator = (const vvp_fun_modpath_src&);
 };
 
+class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
+
+    public:
+      vvp_fun_modpath_edge(vvp_time64_t del[12], bool pos, bool neg);
+
+      bool test_vec4(const vvp_vector4_t&bit);
+
+    private:
+      vvp_bit4_t old_value_;
+      bool posedge_;
+      bool negedge_;
+};
+
 /*
  * $Log: delay.h,v $
+ * Revision 1.15  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.14  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

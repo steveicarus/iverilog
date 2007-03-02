@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.370 2007/03/01 06:19:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.371 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 /*
@@ -402,6 +402,11 @@ class NetDelaySrc  : public NetObj {
 
       uint64_t get_delay(unsigned pe) const;
 
+      void set_posedge();
+      void set_negedge();
+      bool is_posedge() const;
+      bool is_negedge() const;
+
       unsigned src_count() const;
       Link&src_pin(unsigned);
       const Link&src_pin(unsigned) const;
@@ -415,6 +420,8 @@ class NetDelaySrc  : public NetObj {
     private:
       uint64_t transition_delays_[12];
       bool condit_flag_;
+      bool posedge_;
+      bool negedge_;
 
     private: // Not implemented
       NetDelaySrc(const NetDelaySrc&);
@@ -3485,6 +3492,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.371  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.370  2007/03/01 06:19:38  steve
  *  Add support for conditional specify delay paths.
  *

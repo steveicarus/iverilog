@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.229 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.230 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1099,22 +1099,49 @@ vvp_fun_modpath* compile_modpath(char*label, struct symb_s src)
       return obj;
 }
 
-static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst,
-					    struct symb_s src,
-					    struct numbv_s vals)
+static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
+				  struct symb_s src, struct numbv_s vals)
 {
       vvp_time64_t use_delay[12];
 
       assert(vals.cnt == 12);
-
       for (unsigned idx = 0 ; idx < vals.cnt ;  idx += 1) {
 	    use_delay[idx] = vals.nvec[idx];
       }
 
       numbv_clear(&vals);
 
+      vvp_fun_modpath_src*obj = 0;
+
+      if (edge == 0) {
+	    obj = new vvp_fun_modpath_src(use_delay);
+
+      } else {
+	    bool posedge, negedge;
+	    switch (edge) {
+		case 0:
+		  posedge = false;
+		  negedge = false;
+		  break;
+		case '+':
+		  posedge = true;
+		  negedge = false;
+		  break;
+		case '-':
+		  posedge = false;
+		  negedge = true;
+		  break;
+		case '*':
+		  posedge = true;
+		  negedge = false;
+		  break;
+		default:
+		  assert(0);
+	    }
+	    obj = new vvp_fun_modpath_edge(use_delay, posedge, negedge);
+      }
+
       vvp_net_t*net = new vvp_net_t;
-      vvp_fun_modpath_src*obj = new vvp_fun_modpath_src(use_delay);
       net->fun = obj;
 
       input_connect(net, 0, src.text);
@@ -1123,19 +1150,18 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst,
       return net;
 }
 
-void compile_modpath_src(vvp_fun_modpath*dst,
-			 struct symb_s src,
-			 struct numbv_s vals)
+void compile_modpath_src(vvp_fun_modpath*dst, char edge,
+			 struct symb_s src, struct numbv_s vals)
 {
-      make_modpath_src(dst, src, vals);
+      make_modpath_src(dst, edge, src, vals);
 }
 
-void compile_modpath_src(vvp_fun_modpath*dst,
+void compile_modpath_src(vvp_fun_modpath*dst, char edge,
 			 struct symb_s src,
 			 struct numbv_s vals,
 			 struct symb_s condit_src)
 {
-      vvp_net_t*net = make_modpath_src(dst, src, vals);
+      vvp_net_t*net = make_modpath_src(dst, edge, src, vals);
       input_connect(net, 1, condit_src.text);
 }
 
@@ -1597,6 +1623,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.230  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.229  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.360 2007/03/01 06:19:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.361 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2934,15 +2934,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 
       ivl_assert(*this, conditional || (condition==0));
-
-      if (edge != 0) {
-	    cerr << get_line() << ": sorry: Edge sensitive specify paths"
-		 << " are not supported." << endl;
-	    cerr << get_line() << ":      : Use -g no-specify to ignore"
-		 << " specify blocks." << endl;
-	    des->errors += 1;
-      }
-
       ivl_assert(*this, data_source_expression==0 || edge != 0);
 
       ndelays = delays.size();
@@ -3026,6 +3017,9 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
 					       src.size(), condit_sig);
 	    path->set_line(*this);
+
+	    if (edge > 0) path->set_posedge();
+	    if (edge < 0) path->set_negedge();
 
 	    switch (ndelays) {
 		case 12:
@@ -3394,6 +3388,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.361  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.360  2007/03/01 06:19:38  steve
  *  Add support for conditional specify delay paths.
  *

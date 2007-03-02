@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.55 2007/02/05 01:08:10 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.56 2007/03/02 06:13:22 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -75,6 +75,10 @@ extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
 extern vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b);
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 extern ostream& operator<< (ostream&o, vvp_bit4_t a);
+
+  /* Return >0, ==0 or <0 if the from-to transition represents a
+     posedge, no edge, or negedge. */
+extern int edge(vvp_bit4_t from, vvp_bit4_t to);
 
 /*
  * This class represents scalar values collected into vectors. The
@@ -1036,6 +1040,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.56  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.55  2007/02/05 01:08:10  steve
  *  Handle relink of continuous assignment.
  *

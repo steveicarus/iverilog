@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.154 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.155 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -693,7 +693,10 @@ static void draw_modpath(const char*label, const char*driver,
 
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
-	    fprintf(vvp_out, ",\n    %s", src_drivers[idx]);
+	    int ppos = ivl_path_source_posedge(path);
+	    int pneg = ivl_path_source_negedge(path);
+	    const char*edge = ppos? " +" : pneg ? " -" : "";
+	    fprintf(vvp_out, ",\n   %s%s", src_drivers[idx], edge);
 	    fprintf(vvp_out,
 		    " (%"PRIu64",%"PRIu64",%"PRIu64
 		    ", %"PRIu64",%"PRIu64",%"PRIu64
@@ -2366,6 +2369,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.155  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.154  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *

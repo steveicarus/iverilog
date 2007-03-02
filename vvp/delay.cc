@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.17 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: delay.cc,v 1.18 2007/03/02 06:13:22 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -440,7 +440,8 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       if (port.port() == 0) {
 	      // The modpath input...
-	    wake_time_ = schedule_simtime();
+	    if (test_vec4(bit))
+		  wake_time_ = schedule_simtime();
 
       } else if (port.port() == 1) {
 	      // The modpath condition input...
@@ -451,8 +452,36 @@ void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 }
 
+bool vvp_fun_modpath_src::test_vec4(const vvp_vector4_t&)
+{
+      return true;
+}
+
+vvp_fun_modpath_edge::vvp_fun_modpath_edge(vvp_time64_t del[12],
+					   bool pos, bool neg)
+: vvp_fun_modpath_src(del)
+{
+      old_value_ = BIT4_X;
+      posedge_ = pos;
+      negedge_ = neg;
+}
+
+bool vvp_fun_modpath_edge::test_vec4(const vvp_vector4_t&bit)
+{
+      vvp_bit4_t tmp = old_value_;
+      old_value_ = bit.value(0);
+
+      int edge_flag = edge(tmp, old_value_);
+      if (edge_flag > 0) return posedge_;
+      if (edge_flag < 0) return negedge_;
+      return false;
+}
+
 /*
  * $Log: delay.cc,v $
+ * Revision 1.18  2007/03/02 06:13:22  steve
+ *  Add support for edge sensitive spec paths.
+ *
  * Revision 1.17  2007/03/01 06:19:39  steve
  *  Add support for conditional specify delay paths.
  *
