@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.361 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.362 2007/03/03 05:56:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2916,15 +2916,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    return;
 
 	/* Check for various path types that are not supported. */
-#if 0
-      if (conditional) {
-	    cerr << get_line() << ": sorry: Conditional specify paths"
-		 << " are not supported." << endl;
-	    cerr << get_line() << ":      : Use -g no-specify to ignore"
-		 << " specify blocks." << endl;
-	    des->errors += 1;
-      }
-#endif
       if (conditional && !condition) {
 	    cerr << get_line() << ": sorry: ifnone specify paths"
 		 << " are not supported." << endl;
@@ -3014,6 +3005,14 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
+	    if (dst_sig->port_type() != NetNet::POUTPUT
+		&& dst_sig->port_type() != NetNet::PINOUT) {
+
+		  cerr << get_line() << ": error: Path destination "
+		       << *cur << " must be an output or inout port." << endl;
+		  des->errors += 1;
+	    }
+
 	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
 					       src.size(), condit_sig);
 	    path->set_line(*this);
@@ -3052,6 +3051,15 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		       ; cur_src != src.end() ;  cur_src ++) {
 		  NetNet*src_sig = scope->find_signal(*cur_src);
 		  assert(src_sig);
+
+		  if (src_sig->port_type() != NetNet::PINPUT
+		      & src_sig->port_type() != NetNet::PINOUT) {
+
+			cerr << get_line() << ": error: Path source "
+			     << *cur_src << " must be an input or inout port."
+			     << endl;
+			des->errors += 1;
+		  }
 
 		  connect(src_sig->pin(0), path->pin(idx));
 		  idx += 1;
@@ -3388,6 +3396,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.362  2007/03/03 05:56:55  steve
+ *  Check that path source/destination are ports.
+ *
  * Revision 1.361  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *
