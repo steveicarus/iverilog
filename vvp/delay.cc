@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.18 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: delay.cc,v 1.19 2007/03/04 06:26:58 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -388,6 +388,8 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    }
       }
 
+      assert(src);
+
       vvp_time64_t out_at[12];
       vvp_time64_t now = schedule_simtime();
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
@@ -479,6 +481,9 @@ bool vvp_fun_modpath_edge::test_vec4(const vvp_vector4_t&bit)
 
 /*
  * $Log: delay.cc,v $
+ * Revision 1.19  2007/03/04 06:26:58  steve
+ *  Assert that modpath finds a delay.
+ *
  * Revision 1.18  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *
