@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.34 2006/05/18 05:13:45 steve Exp $"
+#ident "$Id: udp.cc,v 1.35 2007/03/04 06:26:33 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -901,12 +901,8 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
       if (out_bit == cur_out_)
 	    return;
 
-      vvp_vector4_t out (1);
-      out.set_bit(0, out_bit);
-
-      propagate_vec4(out);
-
       cur_out_ = out_bit;
+      schedule_generic(this, 0, false);
 }
 
 
@@ -946,6 +942,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.35  2007/03/04 06:26:33  steve
+ *  UDP schedules its output instead of pushing it.
+ *
  * Revision 1.34  2006/05/18 05:13:45  steve
  *  Synchronous primitives only follow edges.
  *
