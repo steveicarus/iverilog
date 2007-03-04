@@ -3,7 +3,7 @@ Name: verilog
 Version: 0.9.0.20070227
 Release: 0
 License: GPL
-Group: Applications/Engineering
+Group: Productivity/Scientific/Electronics
 Source: verilog-20070227.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
@@ -94,3 +94,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) /usr/include/acc_user.h
 %attr(-,root,root) /usr/include/veriuser.h
 %attr(-,root,root) /usr/include/_pli_types.h
+
+%changelog -n verilog
+* Sun Feb 28 2007 - steve@icarus.com
+- Added formatting suitable for openSUSE packaging.
