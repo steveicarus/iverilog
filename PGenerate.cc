@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.cc,v 1.1 2006/04/10 02:40:18 steve Exp $"
+#ident "$Id: PGenerate.cc,v 1.2 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include  "PGenerate.h"
@@ -54,4 +54,9 @@ PWire* PGenerate::get_wire(const hname_t&name) const
 void PGenerate::add_gate(PGate*gate)
 {
       gates.push_back(gate);
+}
+
+void PGenerate::add_behavior(PProcess*proc)
+{
+      behaviors.push_back(proc);
 }

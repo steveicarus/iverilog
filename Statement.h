@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.42 2005/12/05 21:21:18 steve Exp $"
+#ident "$Id: Statement.h,v 1.43 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include  <string>
@@ -54,6 +54,8 @@ class PProcess : public LineInfo {
       : type_(t), statement_(st) { }
 
       virtual ~PProcess();
+
+      bool elaborate(Design*des, NetScope*scope) const;
 
       Type type() const { return type_; }
       Statement*statement() { return statement_; }
@@ -458,6 +460,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.43  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.42  2005/12/05 21:21:18  steve
  *  Fixes for stubborn compilers.
  *

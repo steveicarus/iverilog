@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.140 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: pform.cc,v 1.141 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1719,7 +1719,11 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
 	    delete attr;
       }
 
-      pform_cur_module->add_behavior(pp);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_behavior(pp);
+      else
+	    pform_cur_module->add_behavior(pp);
+
       return pp;
 }
 
@@ -1764,6 +1768,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.141  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.140  2007/02/12 01:52:21  steve
  *  Parse all specify paths to pform.
  *

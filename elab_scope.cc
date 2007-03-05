@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.41 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.42 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -374,6 +374,11 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 							 loop_index,
 							 genvar_verinum);
 		  scope->set_localparam(loop_index, gp);
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: "
+			     << "Create implicit localparam "
+			     << loop_index << " = " << genvar_verinum << endl;
 	    }
 
 	    scope_list_.push_back(scope);
@@ -748,6 +753,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.42  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.41  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

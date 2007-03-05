@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.362 2007/03/03 05:56:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.363 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2905,6 +2905,79 @@ NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
       return loop;
 }
 
+bool PProcess::elaborate(Design*des, NetScope*scope) const
+{
+      NetProc*cur = statement_->elaborate(des, scope);
+      if (cur == 0) {
+	    return false;
+      }
+
+      NetProcTop*top=0;
+      switch (type()) {
+	  case PProcess::PR_INITIAL:
+	    top = new NetProcTop(scope, NetProcTop::KINITIAL, cur);
+	    break;
+	  case PProcess::PR_ALWAYS:
+	    top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
+	    break;
+      }
+      ivl_assert(*this, top);
+
+	// Evaluate the attributes for this process, if there
+	// are any. These attributes are to be attached to the
+	// NetProcTop object.
+      struct attrib_list_t*attrib_list = 0;
+      unsigned attrib_list_n = 0;
+      attrib_list = evaluate_attributes(attributes, attrib_list_n, des, scope);
+
+      for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+	    top->attribute(attrib_list[adx].key,
+			   attrib_list[adx].val);
+
+      delete[]attrib_list;
+
+      top->set_line(*this);
+      des->add_process(top);
+
+	/* Detect the special case that this is a combinational
+	always block. We want to attach an _ivl_schedule_push
+	attribute to this process so that it starts up and
+	gets into its wait statement before non-combinational
+	code is executed. */
+      do {
+	    if (top->type() != NetProcTop::KALWAYS)
+		  break;
+
+	    NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
+	    if (st == 0)
+		  break;
+
+	    if (st->nevents() != 1)
+		  break;
+
+	    NetEvent*ev = st->event(0);
+
+	    if (ev->nprobe() == 0)
+		  break;
+
+	    bool anyedge_test = true;
+	    for (unsigned idx = 0 ;  anyedge_test && (idx<ev->nprobe())
+		       ; idx += 1) {
+		  const NetEvProbe*pr = ev->probe(idx);
+		  if (pr->edge() != NetEvProbe::ANYEDGE)
+			anyedge_test = false;
+	    }
+
+	    if (! anyedge_test)
+		  break;
+
+	    top->attribute(perm_string::literal("_ivl_schedule_push"),
+			   verinum(1));
+      } while (0);
+
+      return true;
+}
+
 void PSpecPath::elaborate(Design*des, NetScope*scope) const
 {
       uint64_t delay_value[12];
@@ -3171,80 +3244,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       const list<PProcess*>&sl = get_behaviors();
 
       for (list<PProcess*>::const_iterator st = sl.begin()
-		 ; st != sl.end()
-		 ; st ++ ) {
+		 ; st != sl.end() ; st ++ ) {
 
-	    NetProc*cur = (*st)->statement()->elaborate(des, scope);
-	    if (cur == 0) {
-		  result_flag = false;
-		  continue;
-	    }
-
-	    NetProcTop*top=NULL;
-	    switch ((*st)->type()) {
-		case PProcess::PR_INITIAL:
-		  top = new NetProcTop(scope, NetProcTop::KINITIAL, cur);
-		  break;
-		case PProcess::PR_ALWAYS:
-		  top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
-		  break;
-	    }
-	    assert(top);
-
-	      // Evaluate the attributes for this process, if there
-	      // are any. These attributes are to be attached to the
-	      // NetProcTop object.
-	    struct attrib_list_t*attrib_list = 0;
-	    unsigned attrib_list_n = 0;
-	    attrib_list = evaluate_attributes((*st)->attributes,
-					      attrib_list_n,
-					      des, scope);
-
-	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
-		  top->attribute(attrib_list[adx].key,
-				 attrib_list[adx].val);
-
-	    delete[]attrib_list;
-
-	    top->set_line(*(*st));
-	    des->add_process(top);
-
-	      /* Detect the special case that this is a combinational
-		 always block. We want to attach an _ivl_schedule_push
-		 attribute to this process so that it starts up and
-		 gets into its wait statement before non-combinational
-		 code is executed. */
-	    do {
-		  if (top->type() != NetProcTop::KALWAYS)
-			break;
-
-		  NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
-		  if (st == 0)
-			break;
-
-		  if (st->nevents() != 1)
-			break;
-
-		  NetEvent*ev = st->event(0);
-
-		  if (ev->nprobe() == 0)
-			break;
-
-		  bool anyedge_test = true;
-		  for (unsigned idx = 0 ;  anyedge_test && (idx<ev->nprobe())
-			     ; idx += 1) {
-			const NetEvProbe*pr = ev->probe(idx);
-			if (pr->edge() != NetEvProbe::ANYEDGE)
-			      anyedge_test = false;
-		  }
-
-		  if (! anyedge_test)
-			break;
-
-		  top->attribute(perm_string::literal("_ivl_schedule_push"),
-				 verinum(1));
-	    } while (0);
-
+	    result_flag &= (*st)->elaborate(des, scope);
       }
 
 	// Elaborate the specify paths of the module.
@@ -3279,10 +3281,12 @@ bool PGenerate::elaborate(Design*des) const
 bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 {
       typedef list<PGate*>::const_iterator gates_it_t;
-      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ ) {
-
+      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ )
 	    (*cur)->elaborate(des, scope);
-      }
+
+      typedef list<PProcess*>::const_iterator proc_it_t;
+      for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); cur++)
+	    (*cur)->elaborate(des, scope);
 
       return true;
 }
@@ -3396,6 +3400,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.363  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.362  2007/03/03 05:56:55  steve
  *  Check that path source/destination are ports.
  *

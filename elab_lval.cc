@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.40 2007/02/27 05:14:38 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.41 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  "netmisc.h"
 # include  "compiler.h"
 # include  <iostream>
+# include  "ivl_assert.h"
 
 /*
  * These methods generate a NetAssign_ object for the l-value of the
@@ -198,8 +199,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
+      ivl_assert(*this, msb_ == 0);
+      ivl_assert(*this, lsb_ == 0);
       long msb, lsb;
       NetExpr*mux;
 
@@ -210,20 +211,20 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 as a part select with a bit width of 1. If the
 		 expression it not constant, then return the
 		 expression as a mux. */
-	    assert(idx_.size() == 1);
-	    verinum*v = idx_[0]->eval_const(des, scope);
-	    if (v == 0) {
-		  NetExpr*m = idx_[0]->elaborate_expr(des, scope, -1, false);
-		  assert(m);
-		  msb = 0;
-		  lsb = 0;
-		  mux = m;
+
+	    ivl_assert(*this, idx_.size() == 1);
+
+	    NetExpr*index_expr = elab_and_eval(des, scope, idx_[0], -1);
+
+	    if (NetEConst*index_con = dynamic_cast<NetEConst*> (index_expr)) {
+		  msb = index_con->value().as_long();
+		  lsb = index_con->value().as_long();
+		  mux = 0;
 
 	    } else {
-
-		  msb = v->as_long();
-		  lsb = v->as_long();
-		  mux = 0;
+		  msb = 0;
+		  lsb = 0;
+		  mux = index_expr;
 	    }
 
       } else {
@@ -465,6 +466,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.41  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.40  2007/02/27 05:14:38  steve
  *  Detect and warn about lval array index out fo bounds.
  *

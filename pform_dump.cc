@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.95 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.96 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -819,6 +819,11 @@ void PGenerate::dump(ostream&out) const
 	    (*idx)->dump(out, 6);
       }
 
+      for (list<PProcess*>::const_iterator idx = behaviors.begin()
+		 ; idx != behaviors.end() ;  idx++) {
+	    (*idx)->dump(out, 6);
+      }
+
       out << "    endgenerate" << endl;
 }
 
@@ -1024,6 +1029,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.96  2007/03/05 05:59:10  steve
+ *  Handle processes within generate loops.
+ *
  * Revision 1.95  2007/02/12 01:52:21  steve
  *  Parse all specify paths to pform.
  *

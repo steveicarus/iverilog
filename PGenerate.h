@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.h,v 1.1 2006/04/10 02:40:18 steve Exp $"
+#ident "$Id: PGenerate.h,v 1.2 2007/03/05 05:59:10 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -31,6 +31,7 @@
 class Design;
 class NetScope;
 class PExpr;
+class PProcess;
 class PGate;
 class PWire;
 
@@ -64,6 +65,9 @@ class PGenerate : public LineInfo {
 
       list<PGate*> gates;
       void add_gate(PGate*);
+
+      list<PProcess*> behaviors;
+      void add_behavior(PProcess*behave);
 
 	// This method is called by the elaboration of a module to
 	// generate scopes. the container is the scope that is to
