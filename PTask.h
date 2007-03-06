@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PTask.h,v 1.13 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: PTask.h,v 1.14 2007/03/06 05:22:49 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -35,6 +35,7 @@ class PExpr;
 enum PTaskFuncEnum {
       PTF_NONE,
       PTF_REG,
+      PTF_REG_S,
       PTF_INTEGER,
       PTF_REAL,
       PTF_REALTIME,
@@ -117,6 +118,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.14  2007/03/06 05:22:49  steve
+ *  Support signed function return values.
+ *
  * Revision 1.13  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

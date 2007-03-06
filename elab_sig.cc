@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.45 2007/02/01 05:24:08 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.46 2007/03/06 05:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -316,6 +316,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       switch (return_type_.type) {
 
 	  case PTF_REG:
+	  case PTF_REG_S:
 	    if (return_type_.range) {
 		  NetExpr*me = elab_and_eval(des, scope,
 					     (*return_type_.range)[0], -1);
@@ -349,6 +350,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  ret_sig = new NetNet(scope, fname, NetNet::REG);
 	    }
 	    ret_sig->set_line(*this);
+	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
@@ -730,6 +732,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.46  2007/03/06 05:22:49  steve
+ *  Support signed function return values.
+ *
  * Revision 1.45  2007/02/01 05:24:08  steve
  *  Include type in signal create message.
  *

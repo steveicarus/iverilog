@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.229 2007/03/01 06:19:39 steve Exp $"
+#ident "$Id: parse.y,v 1.230 2007/03/06 05:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2427,7 +2427,8 @@ range_opt
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
-	: range      { $$.range = $1; $$.type = PTF_REG; }
+	: range           { $$.range = $1; $$.type = PTF_REG; }
+	| K_signed range  { $$.range = $2; $$.type = PTF_REG_S; }
 	| K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
 	| K_real     { $$.range = 0;  $$.type = PTF_REAL; }
 	| K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }

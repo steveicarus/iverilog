@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.3 2007/02/20 05:58:36 steve Exp $"
+#ident "$Id: expression.c,v 1.4 2007/03/06 05:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,10 +77,11 @@ static void show_binary_expression(ivl_expr_t net, unsigned ind)
 static void show_function_call(ivl_expr_t net, unsigned ind)
 {
       ivl_scope_t def = ivl_expr_def(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
       const char*vt = vt_type_string(net);
 
-      fprintf(out, "%*s<%s function %s>\n", ind, "",
-	      vt, ivl_scope_name(def));
+      fprintf(out, "%*s<%s %s function %s>\n", ind, "",
+	      vt, sign, ivl_scope_name(def));
 }
 
 static void show_memory_expression(ivl_expr_t net, unsigned ind)

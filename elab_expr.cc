@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.119 2007/03/02 01:55:36 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.120 2007/03/06 05:22:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -531,6 +531,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    func->set_line(*this);
+	    func->cast_signed(res->get_signed());
 	    return func;
       }
 
@@ -1606,6 +1608,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.120  2007/03/06 05:22:49  steve
+ *  Support signed function return values.
+ *
  * Revision 1.119  2007/03/02 01:55:36  steve
  *  Better error message when operating on array.
  *
