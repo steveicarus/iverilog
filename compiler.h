@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.31 2006/09/28 04:35:18 steve Exp $"
+#ident "$Id: compiler.h,v 1.32 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include  <list>
@@ -32,11 +32,8 @@
  */
 
 
-/* The INTEGER_WIDTH is the default width of integer variables, and
-   the presumed width of unsigned literal numbers. */
-#ifndef INTEGER_WIDTH
-# define INTEGER_WIDTH 32
-#endif
+/* The integer_width is the width of integer variables. */
+extern unsigned integer_width;
 
 /* The TIME_WIDTH is the width of time variables. */
 #ifndef TIME_WIDTH
@@ -148,6 +145,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.32  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.31  2006/09/28 04:35:18  steve
  *  Support selective control of specify and xtypes features.
  *

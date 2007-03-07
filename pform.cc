@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.141 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: pform.cc,v 1.142 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1639,8 +1639,8 @@ static void pform_set_reg_integer(const char*nm)
       }
       assert(cur);
 
-      cur->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
-		     new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH)));
+      cur->set_range(new PENumber(new verinum(integer_width-1, integer_width)),
+		     new PENumber(new verinum((uint64_t)0, integer_width)));
       cur->set_signed(true);
 }
 
@@ -1670,8 +1670,8 @@ static void pform_set_reg_time(const char*nm)
       }
       assert(cur);
 
-      cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, INTEGER_WIDTH)),
-		     new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH)));
+      cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, integer_width)),
+		     new PENumber(new verinum((uint64_t)0, integer_width)));
 }
 
 void pform_set_reg_time(list<perm_string>*names)
@@ -1768,6 +1768,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.142  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.141  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *

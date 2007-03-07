@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.72 2006/10/02 18:15:47 steve Exp $"
+#ident "$Id: main.c,v 1.73 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -112,6 +112,8 @@ const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
 
 char warning_flags[16] = "";
+
+unsigned integer_width = 32;
 
 char*mod_list = 0;
 char*command_filename = 0;
@@ -724,6 +726,8 @@ int main(int argc, char **argv)
 	    return 0;
       }
 
+      fprintf(iconfig_file, "iwidth:%u\n", integer_width);
+
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
@@ -740,6 +744,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.73  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.72  2006/10/02 18:15:47  steve
  *  Fix handling of dep path in new argument passing method.
  *

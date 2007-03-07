@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.230 2007/03/06 05:22:49 steve Exp $"
+#ident "$Id: parse.y,v 1.231 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1149,10 +1149,10 @@ function_item
                 { svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
@@ -3199,10 +3199,10 @@ task_port_item
                 { svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
@@ -3215,10 +3215,10 @@ task_port_item
 		{ svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
@@ -3231,10 +3231,10 @@ task_port_item
 		{ svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
@@ -3322,10 +3322,10 @@ task_port_decl
                 { svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
@@ -3339,10 +3339,10 @@ task_port_decl
                 { svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
@@ -3356,10 +3356,10 @@ task_port_decl
                 { svector<PExpr*>*range_stub
 			= new svector<PExpr*>(2);
 		  PExpr*re;
-		  re = new PENumber(new verinum(INTEGER_WIDTH-1,
-						INTEGER_WIDTH));
+		  re = new PENumber(new verinum(integer_width-1,
+						integer_width));
 		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, INTEGER_WIDTH));
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,

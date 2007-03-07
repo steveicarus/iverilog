@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.19 2003/11/18 06:31:46 steve Exp $"
+#ident "$Id: globals.h,v 1.20 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -49,6 +49,9 @@ extern int synth_flag;
   /* This is the name of the selected target. */
 extern const char*targ;
 
+  /* This is the integer-width argument that will be passed to ivl. */
+extern unsigned integer_width;
+
   /* Perform variable substitutions on the string. */
 extern char* substitutions(const char*str);
 
@@ -77,6 +80,9 @@ extern char* library_flags2;
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.20  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.19  2003/11/18 06:31:46  steve
  *  Remove the iverilog.conf file.
  *

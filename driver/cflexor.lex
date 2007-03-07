@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cflexor.lex,v 1.9 2006/11/30 06:00:28 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.10 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -78,6 +78,7 @@ static int comment_enter;
 
 "+libext+" { BEGIN(PLUS_ARGS); return TOK_LIBEXT; }
 
+"+integer-width+" { BEGIN(PLUS_ARGS); return TOK_INTEGER_WIDTH; }
 
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {

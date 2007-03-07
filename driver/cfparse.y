@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse.y,v 1.10 2003/09/26 21:25:58 steve Exp $"
+#ident "$Id: cfparse.y,v 1.11 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 
@@ -62,6 +62,7 @@ static void translate_file_name(char*text)
 
 %token TOK_Da TOK_Dv TOK_Dy
 %token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT
+%token TOK_INTEGER_WIDTH
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -144,6 +145,15 @@ item
      become individual -Y flags to ivl. */
 
 	| TOK_LIBEXT libext_args
+
+  /* These are various misc flags that are supported. */
+
+	| TOK_INTEGER_WIDTH TOK_PLUSARG
+                { char*tmp = substitutions($2);
+		  free($2);
+		  integer_width = strtoul(tmp,0,10);
+		  free(tmp);
+		}
 
   /* The +<word> tokens that are not otherwise matched, are
      ignored. The skip_args rule arranges for all the argument words

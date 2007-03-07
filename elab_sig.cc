@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.46 2007/03/06 05:22:49 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.47 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -356,7 +356,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    break;
 
 	  case PTF_INTEGER:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, INTEGER_WIDTH);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, integer_width);
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(true);
@@ -732,6 +732,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.47  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.46  2007/03/06 05:22:49  steve
  *  Support signed function return values.
  *

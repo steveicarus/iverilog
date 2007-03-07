@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.93 2006/09/28 04:35:18 steve Exp $"
+#ident "$Id: main.cc,v 1.94 2007/03/07 04:24:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -124,6 +124,8 @@ bool debug_synth2 = false;
  * Verbose messages enabled.
  */
 bool verbose_flag = false;
+
+unsigned integer_width = 32;
 
 /*
  * Keep a heap of identifier strings that I encounter. This is a more
@@ -277,6 +279,10 @@ static void parm_to_flagmap(const string&flag)
  *        This specifies the ivlpp command line used to process
  *        library modules as I read them in.
  *
+ *    iwidth:<bits>
+ *        This specifies the width of integer variables. (that is,
+ *        variables declared using the "integer" keyword.)
+ *
  *    module:<name>
  *        Load a VPI module.
  *
@@ -366,6 +372,9 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "ivlpp") == 0) {
 		  ivlpp_string = strdup(cp);
+
+	    } else if (strcmp(buf, "iwidth") == 0) {
+		  integer_width = strtoul(cp,0,10);
 
 	    } else if (strcmp(buf,"module") == 0) {
 		  if (vpi_module_list == 0) {
@@ -787,6 +796,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.94  2007/03/07 04:24:59  steve
+ *  Make integer width controllable.
+ *
  * Revision 1.93  2006/09/28 04:35:18  steve
  *  Support selective control of specify and xtypes features.
  *
