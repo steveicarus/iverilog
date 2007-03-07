@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.44 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: eval.cc,v 1.45 2007/03/07 00:38:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -185,7 +185,7 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
 	    return new verinum(scope->genvar_tmp_val);
       }
 
-      NetScope*found_in = symbol_search(des, scope, path_,
+      symbol_search(des, scope, path_,
 					net, expr, eve);
 
       if (expr == 0)
@@ -275,6 +275,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.45  2007/03/07 00:38:15  steve
+ *  Lint fixes.
+ *
  * Revision 1.44  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

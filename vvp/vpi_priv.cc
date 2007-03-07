@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.51 2007/01/31 22:28:55 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.52 2007/03/07 00:38:16 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -416,7 +416,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 		if (signed_flag && word_val.size() > 0)
 		      pad = word_val.value(word_val.size()-1);
 
-		for (long idx = 0 ; idx < 8*sizeof(val) ;  idx += 1) {
+		for (unsigned idx = 0 ; idx < 8*sizeof(val) ;  idx += 1) {
 		      vvp_bit4_t val4 = pad;
 		      if (idx < word_val.size())
 			    val4 = word_val.value(idx);
@@ -848,6 +848,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.52  2007/03/07 00:38:16  steve
+ *  Lint fixes.
+ *
  * Revision 1.51  2007/01/31 22:28:55  steve
  *  Fix missing check for thread bits width in ADDI
  *

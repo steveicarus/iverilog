@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.4 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.5 2007/03/07 00:38:16 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -116,7 +116,7 @@ static double float_string(struct byte_source*src)
 	    if (ch == '-' || ch == '+') {
 		  str = realloc(str, len+2);
 		  str[len++] = ch;
-		  ch - byte_getc(src);
+		  ch = byte_getc(src);
 	    }
 
 	    while (isdigit(ch)) {

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.120 2007/03/06 05:22:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.121 2007/03/07 00:38:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -695,7 +695,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
-      NetScope*found_in = symbol_search(des, scope, path_,
+      symbol_search(des, scope, path_,
 					net, par, eve,
 					ex1, ex2);
 
@@ -706,7 +706,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 		  break;
 		case SEL_PART:
 		    { long msb, lsb;
-		      bool flag = calculate_parts_(des, scope, msb, lsb);
+		      calculate_parts_(des, scope, msb, lsb);
 		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
 		      break;
 		    }
@@ -1608,6 +1608,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.121  2007/03/07 00:38:15  steve
+ *  Lint fixes.
+ *
  * Revision 1.120  2007/03/06 05:22:49  steve
  *  Support signed function return values.
  *

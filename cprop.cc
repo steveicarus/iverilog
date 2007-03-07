@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.55 2006/05/24 04:32:57 steve Exp $"
+#ident "$Id: cprop.cc,v 1.56 2007/03/07 00:38:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -215,7 +215,9 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 
 void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 {
+#if 0
       NetScope*scope = obj->scope();
+#endif
 
       switch (obj->type()) {
 #if 0
@@ -948,6 +950,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.56  2007/03/07 00:38:15  steve
+ *  Lint fixes.
+ *
  * Revision 1.55  2006/05/24 04:32:57  steve
  *  Fix handling of ternary-to-bufif0 constant propagation.
  *

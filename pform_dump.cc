@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.96 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.97 2007/03/07 00:38:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -629,6 +629,9 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	  case PTF_REG:
 	    out << "reg ";
 	    break;
+	  case PTF_REG_S:
+	    out << "reg_s ";
+	    break;
 	  case PTF_INTEGER:
 	    out << "integer ";
 	    break;
@@ -1029,6 +1032,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.97  2007/03/07 00:38:15  steve
+ *  Lint fixes.
+ *
  * Revision 1.96  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *
