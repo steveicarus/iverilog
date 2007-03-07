@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.60 2007/03/07 00:38:16 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.61 2007/03/07 03:55:42 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -644,7 +644,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 		      case BIT4_0:
 			break;
 		      case BIT4_1:
-			res += pow(2.0, idx);
+			res += pow(2.0, (int)idx);
 			break;
 		      default:
 			return false;
@@ -657,7 +657,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 		      case BIT4_0:
 			break;
 		      case BIT4_1:
-			res += pow(2.0, idx);
+			res += pow(2.0, (int)idx);
 			break;
 		      default:
 			return false;
@@ -2290,6 +2290,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.61  2007/03/07 03:55:42  steve
+ *  Cast to remove ambiguities calling pow function.
+ *
  * Revision 1.60  2007/03/07 00:38:16  steve
  *  Lint fixes.
  *
