@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.42 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.43 2007/03/08 06:11:35 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -379,6 +379,14 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 			cerr << get_line() << ": debug: "
 			     << "Create implicit localparam "
 			     << loop_index << " = " << genvar_verinum << endl;
+	    }
+
+	      // Scan the generated scope for gates that may create
+	      // their own scopes.
+	    typedef list<PGate*>::const_iterator pgate_list_it_t;
+	    for (pgate_list_it_t cur = gates.begin()
+		       ; cur != gates.end() ;  cur ++) {
+		  (*cur) ->elaborate_scope(des, scope);
 	    }
 
 	    scope_list_.push_back(scope);
@@ -753,6 +761,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.43  2007/03/08 06:11:35  steve
+ *  Elaborate scopes of modules instantated in generate loops.
+ *
  * Revision 1.42  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *

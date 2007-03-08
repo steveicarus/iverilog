@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.47 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.48 2007/03/08 06:11:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -281,6 +281,12 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 		       << cur->path() << " in scope " << scope->name() << endl;
 
 	    cur->elaborate_sig(des, scope);
+      }
+
+      typedef list<PGate*>::const_iterator pgate_list_it_t;
+      for (pgate_list_it_t cur = gates.begin()
+		 ; cur != gates.end() ;  cur ++) {
+	    (*cur) ->elaborate_sig(des, scope);
       }
 
       return true;
@@ -732,6 +738,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.48  2007/03/08 06:11:35  steve
+ *  Elaborate scopes of modules instantated in generate loops.
+ *
  * Revision 1.47  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *
