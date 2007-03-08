@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2007/02/26 19:49:49 $" Version "$Date: 2007/02/26 19:49:49 $"
+.TH iverilog 1 "$Date: 2007/03/08 03:06:47 $" Version "$Date: 2007/03/08 03:06:47 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -318,6 +318,12 @@ become munged.
 .TP 8
 .B +tolower-filename\fP
 This is similar to the \fB+toupper-filename\fP hack described above.
+
+.TP 8
+.B +integer-width+\fIvalue\fP
+This allows the programmer to select the width for integer variables
+in the verilog source. The default is 32, the value can be any desired
+integer value.
 
 .SH "VARIABLES IN COMMAND FILES"
 
