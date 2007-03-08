@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.12 2006/06/02 04:48:50 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.13 2007/03/08 05:30:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -124,13 +124,13 @@ NetExpr* make_sub_expr(long val, NetExpr*expr)
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope,
-		       const PExpr*pe, int expr_wid)
+		       const PExpr*pe, int expr_wid, int prune_width)
 {
       NetExpr*tmp = pe->elaborate_expr(des, scope, expr_wid, false);
       if (tmp == 0)
 	    return 0;
 
-      if (NetExpr*tmp2 = tmp->eval_tree()) {
+      if (NetExpr*tmp2 = tmp->eval_tree(prune_width)) {
 	    delete tmp;
 	    tmp = tmp2;
       }
@@ -141,6 +141,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.13  2007/03/08 05:30:03  steve
+ *  Limit the calculated widths of constants.
+ *
  * Revision 1.12  2006/06/02 04:48:50  steve
  *  Make elaborate_expr methods aware of the width that the context
  *  requires of it. In the process, fix sizing of the width of unary

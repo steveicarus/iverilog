@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.371 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.372 2007/03/08 05:30:03 steve Exp $"
 #endif
 
 /*
@@ -1116,7 +1116,10 @@ class NetExpr  : public LineInfo {
 	// equivalent expression that is reduced as far as compile
 	// time knows how. Essentially, this is designed to fold
 	// constants.
-      virtual NetExpr*eval_tree();
+	//
+	// The prune_to_width is the maximum width that the result
+	// should be. If it is -1, then do not prune the result.
+      virtual NetExpr*eval_tree(int prune_to_width = -1);
 
 	// Make a duplicate of myself, and subexpressions if I have
 	// any. This is a deep copy operation.
@@ -2635,7 +2638,7 @@ class NetEBAdd : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBAdd* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
 };
 
@@ -2654,7 +2657,7 @@ class NetEBDiv : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBDiv* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
 };
 
@@ -2680,7 +2683,7 @@ class NetEBBits : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBBits* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
 
       virtual NetNet* synthesize(Design*);
 };
@@ -2711,7 +2714,7 @@ class NetEBComp : public NetEBinary {
       virtual bool has_width() const;
       virtual ivl_variable_type_t expr_type() const;
       virtual NetEBComp* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
 
       virtual NetNet* synthesize(Design*);
 
@@ -2741,7 +2744,7 @@ class NetEBLogic : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBLogic* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
 
     private:
@@ -2761,7 +2764,7 @@ class NetEBMult : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBMult* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
 
     private:
@@ -2783,7 +2786,7 @@ class NetEBPow : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBPow* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
 
     private:
@@ -2814,7 +2817,7 @@ class NetEBShift : public NetEBinary {
       virtual bool has_width() const;
 
       virtual NetEBShift* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
 
       virtual NetNet* synthesize(Design*);
 
@@ -2849,7 +2852,7 @@ class NetEConcat  : public NetExpr {
       virtual bool has_width() const;
       virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEConcat* dup_expr() const;
-      virtual NetEConst*  eval_tree();
+      virtual NetEConst*  eval_tree(int prune_to_width = -1);
       virtual NetNet*synthesize(Design*);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2881,7 +2884,7 @@ class NetEParam  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetEParam* dup_expr() const;
 
       virtual void dump(ostream&) const;
@@ -2920,7 +2923,7 @@ class NetESelect  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance =false);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetESelect* dup_expr() const;
       virtual NetNet*synthesize(Design*des);
       virtual void dump(ostream&) const;
@@ -3030,7 +3033,7 @@ class NetETernary  : public NetExpr {
       const NetExpr*false_expr() const;
 
       virtual NetETernary* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input();
@@ -3071,7 +3074,7 @@ class NetEUnary  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance);
 
       virtual NetEUnary* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input();
@@ -3093,7 +3096,7 @@ class NetEUBits : public NetEUnary {
 
       virtual NetNet* synthesize(Design*);
 
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
 };
 
@@ -3106,7 +3109,7 @@ class NetEUReduce : public NetEUnary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetNet* synthesize(Design*);
       virtual NetEUReduce* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
 };
 
@@ -3492,6 +3495,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.372  2007/03/08 05:30:03  steve
+ *  Limit the calculated widths of constants.
+ *
  * Revision 1.371  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

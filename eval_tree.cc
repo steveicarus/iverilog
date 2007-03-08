@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.73 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.74 2007/03/08 05:30:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,7 @@
 
 # include  "netlist.h"
 
-NetExpr* NetExpr::eval_tree()
+NetExpr* NetExpr::eval_tree(int prune_to_width)
 {
       return 0;
 }
@@ -51,7 +51,7 @@ void NetEBinary::eval_sub_tree_()
       }
 }
 
-NetEConst* NetEBAdd::eval_tree()
+NetEConst* NetEBAdd::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
@@ -115,7 +115,7 @@ NetEConst* NetEBAdd::eval_tree()
       return 0;
 }
 
-NetEConst* NetEBBits::eval_tree()
+NetEConst* NetEBBits::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
 
@@ -690,7 +690,7 @@ NetEConst* NetEBComp::eval_neeqeq_()
       return res;
 }
 
-NetEConst* NetEBComp::eval_tree()
+NetEConst* NetEBComp::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
 
@@ -728,7 +728,7 @@ NetEConst* NetEBComp::eval_tree()
  * The NetEBDiv operator includes the / and % operators. First evaluate
  * the sub-expressions, then perform the required operation.
  */
-NetExpr* NetEBDiv::eval_tree()
+NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
 
@@ -798,7 +798,7 @@ NetExpr* NetEBDiv::eval_tree()
       return 0;
 }
 
-NetEConst* NetEBLogic::eval_tree()
+NetEConst* NetEBLogic::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
@@ -917,7 +917,7 @@ NetExpr* NetEBMult::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEBMult::eval_tree()
+NetExpr* NetEBMult::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
 
@@ -990,7 +990,7 @@ NetExpr* NetEBPow::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEBPow::eval_tree()
+NetExpr* NetEBPow::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
 
@@ -1015,7 +1015,7 @@ NetExpr* NetEBPow::eval_tree()
  * Evaluate the shift operator if possible. For this to work, both
  * operands must be constant.
  */
-NetEConst* NetEBShift::eval_tree()
+NetEConst* NetEBShift::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
       NetEConst*re = dynamic_cast<NetEConst*>(right_);
@@ -1042,7 +1042,7 @@ NetEConst* NetEBShift::eval_tree()
 		  cerr << get_line() << ": debug: "
 		       << "Evaluate " << lv << "<<" << op() << ">> "
 		       << rv << ", wid=" << wid << ", shift=" << shift
-		       << ", lv.las_len()=" << lv.has_len() << endl;
+		       << ", lv.has_len()=" << lv.has_len() << endl;
 	    }
 
 	    if ((wid == 0) || ! lv.has_len()) {
@@ -1055,6 +1055,9 @@ NetEConst* NetEBShift::eval_tree()
 		  if (op() == 'l')
 			wid = lv.len() + shift;
 	    }
+
+	    if (prune_to_width > 0 && wid > prune_to_width)
+		  wid = prune_to_width;
 
 	    assert(wid);
 	    verinum nv (verinum::V0, wid, lv.has_len());
@@ -1096,7 +1099,7 @@ NetEConst* NetEBShift::eval_tree()
       return res;
 }
 
-NetEConst* NetEConcat::eval_tree()
+NetEConst* NetEConcat::eval_tree(int prune_to_width)
 {
       unsigned repeat_val = repeat();
       unsigned local_errors = 0;
@@ -1190,7 +1193,7 @@ NetEConst* NetEConcat::eval_tree()
       return res;
 }
 
-NetExpr* NetEParam::eval_tree()
+NetExpr* NetEParam::eval_tree(int prune_to_width)
 {
       if (des_ == 0) {
 	    assert(scope_ == 0);
@@ -1297,7 +1300,7 @@ NetExpr* NetEParam::eval_tree()
       }
 }
 
-NetEConst* NetESelect::eval_tree()
+NetEConst* NetESelect::eval_tree(int prune_to_width)
 {
       NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
       if (expr == 0) {
@@ -1370,7 +1373,7 @@ NetEConst* NetESelect::eval_tree()
  * evaluates to x or z, then merge the constant bits of the true and
  * false expressions.
  */
-NetExpr* NetETernary::eval_tree()
+NetExpr* NetETernary::eval_tree(int prune_to_width)
 {
       NetExpr*tmp;
 
@@ -1507,7 +1510,7 @@ void NetEUnary::eval_expr_()
       expr_ = oper;
 }
 
-NetEConst* NetEUnary::eval_tree()
+NetEConst* NetEUnary::eval_tree(int prune_to_width)
 {
       eval_expr_();
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
@@ -1564,12 +1567,12 @@ NetEConst* NetEUnary::eval_tree()
 }
 
 
-NetEConst* NetEUBits::eval_tree()
+NetEConst* NetEUBits::eval_tree(int prune_to_width)
 {
-      return NetEUnary::eval_tree();
+      return NetEUnary::eval_tree(prune_to_width);
 }
 
-NetEConst* NetEUReduce::eval_tree()
+NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 {
       eval_expr_();
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
@@ -1652,6 +1655,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.74  2007/03/08 05:30:02  steve
+ *  Limit the calculated widths of constants.
+ *
  * Revision 1.73  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

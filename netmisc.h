@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.28 2007/02/26 19:49:49 steve Exp $"
+#ident "$Id: netmisc.h,v 1.29 2007/03/08 05:30:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -112,14 +112,22 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * it can. If the expression cannot be elaborated, return 0.
  *
  * The expr_width is the width of the context where the expression is
- * being elaborated, or -1 if the expression is self-determinted width.
+ * being elaborated, or -1 if the expression is self-determined width.
+ *
+ * Also, the prune_width is the maximum width of the result, and it
+ * passed to the eval_tree method of the expression to limit constant
+ * results if possible.
  */
 class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
-			      const PExpr*pe, int expr_wid);
+			      const PExpr*pe, int expr_wid,
+			      int prune_width =-1);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.29  2007/03/08 05:30:03  steve
+ *  Limit the calculated widths of constants.
+ *
  * Revision 1.28  2007/02/26 19:49:49  steve
  *  Spelling fixes (larry doolittle)
  *

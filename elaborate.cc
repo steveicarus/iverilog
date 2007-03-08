@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.363 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.364 2007/03/08 05:30:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1442,8 +1442,9 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       bool unsized_flag = false;
       use_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
 
-	/* Now elaborate to the expected width. */
-      NetExpr*rv = elab_and_eval(des, scope, rval(), use_width);
+	/* Now elaborate to the expected width. Pass the lwidth to
+	   prune any constant result to fit with the lvalue at hand. */
+      NetExpr*rv = elab_and_eval(des, scope, rval(), use_width, lv->lwidth());
       if (rv == 0) return 0;
       assert(rv);
 
@@ -3400,6 +3401,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.364  2007/03/08 05:30:02  steve
+ *  Limit the calculated widths of constants.
+ *
  * Revision 1.363  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *
