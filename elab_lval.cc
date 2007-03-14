@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.41 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.42 2007/03/14 05:06:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -164,6 +164,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       assert(reg);
+
+	// This is the special case that the l-value is an entire
+	// memory. This is, in fact, an error.
+      if (reg->array_dimensions() > 0 && idx_.size() == 0) {
+	    cerr << get_line() << ": error: Cannot assign to array "
+		 << path_ << ". Did you forget a word index?" << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (reg->array_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
@@ -466,6 +475,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.42  2007/03/14 05:06:49  steve
+ *  Replace some asserts with ivl_asserts.
+ *
  * Revision 1.41  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *

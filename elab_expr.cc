@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.121 2007/03/07 00:38:15 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.122 2007/03/14 05:06:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1125,7 +1125,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
       long msv, lsv;
-      assert(idx_.empty());
+      ivl_assert(*this, idx_.empty());
       bool flag = calculate_parts_(des, scope, msv, lsv);
       if (!flag)
 	    return 0;
@@ -1143,7 +1143,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	      //delete msn;
 	    return net;
       }
-      assert(wid <= net->vector_width());
+      ivl_assert(*this, wid <= net->vector_width());
 
       if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
 	    cerr << get_line() << ": error: part select ["
@@ -1608,6 +1608,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.122  2007/03/14 05:06:49  steve
+ *  Replace some asserts with ivl_asserts.
+ *
  * Revision 1.121  2007/03/07 00:38:15  steve
  *  Lint fixes.
  *
