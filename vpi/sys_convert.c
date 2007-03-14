@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_convert.c,v 1.6 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_convert.c,v 1.7 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -86,10 +86,10 @@ static void double2bits(double real, PLI_UINT32 bits[2])
 #endif
 }
 
-static PLI_INT32 sizetf_32 (char*x) { return 32; }
-static PLI_INT32 sizetf_64 (char*x) { return 64; }
+static PLI_INT32 sizetf_32 (PLI_BYTE8*x) { return 32; }
+static PLI_INT32 sizetf_64 (PLI_BYTE8*x) { return 64; }
 
-static PLI_INT32 sys_convert_compiletf(char *name)
+static PLI_INT32 sys_convert_compiletf(PLI_BYTE8*name)
 {
     vpiHandle call_hand, argv, arg;
     PLI_INT32 rtn = 0;
@@ -116,7 +116,7 @@ static PLI_INT32 sys_convert_compiletf(char *name)
     return rtn;
 }
 
-static PLI_INT32 sys_bitstoreal_calltf(char *user)
+static PLI_INT32 sys_bitstoreal_calltf(PLI_BYTE8*user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -147,7 +147,7 @@ static PLI_INT32 sys_bitstoreal_calltf(char *user)
     return 0;
 }
 
-static PLI_INT32 sys_itor_calltf(char *user)
+static PLI_INT32 sys_itor_calltf(PLI_BYTE8*user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -174,7 +174,7 @@ static PLI_INT32 sys_itor_calltf(char *user)
     return 0;
 }
 
-static PLI_INT32 sys_realtobits_calltf(char *user)
+static PLI_INT32 sys_realtobits_calltf(PLI_BYTE8*user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -211,7 +211,7 @@ static PLI_INT32 sys_realtobits_calltf(char *user)
     return 0;
 }
 
-static PLI_INT32 sys_rtoi_calltf(char *user)
+static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
 {
     vpiHandle sys, argv, arg;
     s_vpi_value value;
@@ -281,6 +281,9 @@ void sys_convert_register()
 
 /*
  * $Log: sys_convert.c,v $
+ * Revision 1.7  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.6  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

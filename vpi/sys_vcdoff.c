@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcdoff.c,v 1.4 2006/10/30 22:45:38 steve Exp $"
+#ident "$Id: sys_vcdoff.c,v 1.5 2007/03/14 04:05:52 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -41,17 +41,17 @@
 
 static FILE*dump_file = 0;
 
-static PLI_INT32 sys_dumpoff_calltf(char*name)
+static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
 {
       return 0;
 }
 
-static PLI_INT32 sys_dumpon_calltf(char*name)
+static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
 {
       return 0;
 }
 
-static PLI_INT32 sys_dumpall_calltf(char*name)
+static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
 {
       return 0;
 }
@@ -70,7 +70,7 @@ static void open_dumpfile(const char*path)
       }
 }
 
-static PLI_INT32 sys_dumpfile_calltf(char*name)
+static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
       char*path;
 
@@ -113,7 +113,7 @@ static PLI_INT32 sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpvars_calltf(char*name)
+static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 {
       if (dump_file == 0) {
 	    open_dumpfile("dumpfile.vcd");
@@ -171,6 +171,9 @@ void sys_vcdoff_register()
 
 /*
  * $Log: sys_vcdoff.c,v $
+ * Revision 1.5  2007/03/14 04:05:52  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.4  2006/10/30 22:45:38  steve
  *  Updates for Cygwin portability (pr1585922)
  *

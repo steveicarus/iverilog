@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random_mti.c,v 1.4 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_random_mti.c,v 1.5 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -61,7 +61,7 @@ static long mti_dist_uniform(long*seed, long start, long end)
 }
 
 
-static PLI_INT32 sys_mti_dist_uniform_calltf(char*name)
+static PLI_INT32 sys_mti_dist_uniform_calltf(PLI_BYTE8*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -110,12 +110,12 @@ static PLI_INT32 sys_mti_dist_uniform_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_mti_dist_uniform_sizetf(char*x)
+static PLI_INT32 sys_mti_dist_uniform_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
 
-static PLI_INT32 sys_mti_random_calltf(char*name)
+static PLI_INT32 sys_mti_random_calltf(PLI_BYTE8*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -174,7 +174,7 @@ static PLI_INT32 sys_mti_random_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_mti_random_sizetf(char*x)
+static PLI_INT32 sys_mti_random_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
@@ -202,6 +202,9 @@ void sys_random_mti_register()
 
 /*
  * $Log: sys_random_mti.c,v $
+ * Revision 1.5  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.4  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

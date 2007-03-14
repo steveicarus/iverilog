@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.18 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.19 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -100,7 +100,7 @@ static int check_file_name(const char*name, vpiHandle item)
 }
 
 
-static PLI_INT32 sys_readmem_calltf(char*name)
+static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 {
       int code;
       int wwid;
@@ -355,7 +355,7 @@ static PLI_INT32 sys_readmem_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_writemem_calltf(char*name)
+static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 {
       int wwid;
       char*path;
@@ -594,6 +594,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.19  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.18  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

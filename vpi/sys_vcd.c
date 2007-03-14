@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.57 2006/10/30 22:45:38 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.58 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -268,7 +268,7 @@ inline static int install_dumpvars_callback(void)
       return 0;
 }
 
-static PLI_INT32 sys_dumpoff_calltf(char*name)
+static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -299,7 +299,7 @@ static PLI_INT32 sys_dumpoff_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpon_calltf(char*name)
+static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -330,7 +330,7 @@ static PLI_INT32 sys_dumpon_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpall_calltf(char*name)
+static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -403,7 +403,7 @@ static void open_dumpfile(void)
       }
 }
 
-static PLI_INT32 sys_dumpfile_compiletf(char*name)
+static PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -445,12 +445,12 @@ static PLI_INT32 sys_dumpfile_compiletf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpfile_calltf(char*name)
+static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
       return 0;
 }
 
-static PLI_INT32 sys_dumpflush_calltf(char*name)
+static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
 {
       if (dump_file)
 	    fflush(dump_file);
@@ -673,7 +673,7 @@ static int draw_scope(vpiHandle item)
  * This function is also used in sys_lxt to check the arguments of the
  * lxt variant of $dumpvars.
  */
-PLI_INT32 sys_vcd_dumpvars_compiletf(char*name)
+PLI_INT32 sys_vcd_dumpvars_compiletf(PLI_BYTE8*name)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
@@ -711,7 +711,7 @@ PLI_INT32 sys_vcd_dumpvars_compiletf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpvars_calltf(char*name)
+static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 {
       unsigned depth;
       s_vpi_value value;
@@ -835,6 +835,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.58  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.57  2006/10/30 22:45:38  steve
  *  Updates for Cygwin portability (pr1585922)
  *

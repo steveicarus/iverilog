@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.36 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.37 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 
@@ -58,10 +58,10 @@ typedef struct t_vpi_systf_data {
       PLI_INT32 type;
       PLI_INT32 sysfunctype;
       const char *tfname;
-      PLI_INT32 (*calltf)(char*);
-      PLI_INT32 (*compiletf)(char*);
-      PLI_INT32 (*sizetf)(char*);
-      char      *user_data;
+      PLI_INT32 (*calltf)   (PLI_BYTE8*);
+      PLI_INT32 (*compiletf)(PLI_BYTE8*);
+      PLI_INT32 (*sizetf)   (PLI_BYTE8*);
+      PLI_BYTE8 *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
 /* The type in the above structure can have one of the following
@@ -419,6 +419,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.37  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.36  2004/10/04 01:10:56  steve
  *  Clean up spurious trailing white space.
  *

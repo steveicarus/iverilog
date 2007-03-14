@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.73 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_display.c,v 1.74 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -925,7 +925,7 @@ static int get_default_format(char *name)
     return default_format;
 }
 
-static PLI_INT32 sys_display_calltf(char *name)
+static PLI_INT32 sys_display_calltf(PLI_BYTE8*name)
 {
       struct strobe_cb_info*info;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -974,7 +974,7 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
       return 0;
 }
 
-static PLI_INT32 sys_strobe_calltf(char*name)
+static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
@@ -1104,7 +1104,7 @@ static PLI_INT32 monitor_cb_1(p_cb_data cause)
       return 0;
 }
 
-static PLI_INT32 sys_monitor_calltf(char*name)
+static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
 {
       unsigned idx;
       struct t_cb_data cb;
@@ -1171,14 +1171,14 @@ static PLI_INT32 sys_monitor_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_monitoron_calltf(char*name)
+static PLI_INT32 sys_monitoron_calltf(PLI_BYTE8*name)
 {
       monitor_enabled = 1;
       monitor_cb_1(0);
       return 0;
 }
 
-static PLI_INT32 sys_monitoroff_calltf(char*name)
+static PLI_INT32 sys_monitoroff_calltf(PLI_BYTE8*name)
 {
       monitor_enabled = 0;
       return 0;
@@ -1187,7 +1187,7 @@ static PLI_INT32 sys_monitoroff_calltf(char*name)
 /* Implement $fdisplay and $fwrite.
  * Perhaps this could be merged into sys_display_calltf.
  */
-static PLI_INT32 sys_fdisplay_calltf(char *name)
+static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 {
       struct strobe_cb_info info;
       unsigned int mcd;
@@ -1251,7 +1251,7 @@ static PLI_INT32 sys_fdisplay_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_compiletf(char *xx)
+static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*xx)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
@@ -1273,7 +1273,7 @@ static PLI_INT32 sys_timeformat_compiletf(char *xx)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_calltf(char *xx)
+static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
 {
       s_vpi_value value;
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
@@ -1560,6 +1560,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.74  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.73  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

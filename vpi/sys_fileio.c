@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.9 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.10 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -33,7 +33,7 @@
 /*
  * Implement the $fopen system function.
  */
-static PLI_INT32 sys_fopen_compiletf(char *name)
+static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -81,7 +81,7 @@ static PLI_INT32 sys_fopen_compiletf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_fopen_calltf(char *name)
+static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 {
       s_vpi_value value;
       char *mode_string = 0;
@@ -126,7 +126,7 @@ static PLI_INT32 sys_fopen_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_fopen_sizetf(char*x)
+static PLI_INT32 sys_fopen_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
@@ -134,7 +134,7 @@ static PLI_INT32 sys_fopen_sizetf(char*x)
 /*
  * Implement $fclose system function
  */
-static PLI_INT32 sys_fclose_calltf(char *name)
+static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       int type;
@@ -170,14 +170,14 @@ static PLI_INT32 sys_fclose_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_fflush_calltf(char *name)
+static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 {
       fflush(0);
       return 0;
 }
 
 
-static PLI_INT32 sys_fputc_calltf(char *name)
+static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       int type;
@@ -224,7 +224,7 @@ static PLI_INT32 sys_fputc_calltf(char *name)
       return fputc(x, fp);
 }
 
-static PLI_INT32 sys_fgetc_calltf(char *name)
+static PLI_INT32 sys_fgetc_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       int type;
@@ -269,12 +269,12 @@ static PLI_INT32 sys_fgetc_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_fgetc_sizetf(char*x)
+static PLI_INT32 sys_fgetc_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
 
-static PLI_INT32 sys_fgets_compiletf(char*name)
+static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -307,7 +307,7 @@ static PLI_INT32 sys_fgets_compiletf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_fgets_calltf(char *name)
+static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       FILE*fd;
@@ -357,7 +357,7 @@ static PLI_INT32 sys_fgets_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_ungetc_compiletf(char*name)
+static PLI_INT32 sys_ungetc_compiletf(PLI_BYTE8*name)
 {
       int type;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -385,7 +385,7 @@ static PLI_INT32 sys_ungetc_compiletf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_ungetc_calltf(char *name)
+static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       unsigned char x;
@@ -429,7 +429,7 @@ static PLI_INT32 sys_ungetc_calltf(char *name)
       return 0;
 }
 
-static PLI_INT32 sys_ungetc_sizetf(char*x)
+static PLI_INT32 sys_ungetc_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
@@ -510,6 +510,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.10  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.9  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

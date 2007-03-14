@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_priv.h,v 1.7 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_priv.h,v 1.8 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -29,7 +29,7 @@
  * This function is used by sys_vcd and sys_lxt as the dumpvars
  * compiletf function.
  */
-extern PLI_INT32 sys_vcd_dumpvars_compiletf(char*name);
+extern PLI_INT32 sys_vcd_dumpvars_compiletf(PLI_BYTE8*name);
 
 /*
  * Context structure for PRNG in mt19937int.c
@@ -59,6 +59,9 @@ extern struct timeformat_info_s timeformat_info;
 
 /*
  * $Log: sys_priv.h,v $
+ * Revision 1.8  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.7  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

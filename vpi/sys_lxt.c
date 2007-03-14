@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.27 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.28 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -310,7 +310,7 @@ inline static int install_dumpvars_callback(void)
       return 0;
 }
 
-static PLI_INT32 sys_dumpoff_calltf(char*name)
+static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -340,7 +340,7 @@ static PLI_INT32 sys_dumpoff_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpon_calltf(char*name)
+static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -370,7 +370,7 @@ static PLI_INT32 sys_dumpon_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpall_calltf(char*name)
+static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -426,7 +426,7 @@ static void open_dumpfile(const char*path)
       }
 }
 
-static PLI_INT32 sys_dumpfile_calltf(char*name)
+static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
       char*path;
 
@@ -470,7 +470,7 @@ static PLI_INT32 sys_dumpfile_calltf(char*name)
 /*
  * The LXT1 format has no concept of file flushing.
  */
-static PLI_INT32 sys_dumpflush_calltf(char*name)
+static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
 {
       return 0;
 }
@@ -674,7 +674,7 @@ static int draw_scope(vpiHandle item)
       return depth;
 }
 
-static PLI_INT32 sys_dumpvars_calltf(char*name)
+static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 {
       unsigned depth;
       s_vpi_value value;
@@ -819,6 +819,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.28  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.27  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *

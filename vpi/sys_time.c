@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.11 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_time.c,v 1.12 2007/03/14 04:05:51 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -37,17 +37,17 @@ static vpiHandle module_of_function(vpiHandle obj)
       return obj;
 }
 
-static PLI_INT32 sys_time_sizetf(char*x)
+static PLI_INT32 sys_time_sizetf(PLI_BYTE8*x)
 {
       return 64;
 }
 
-static PLI_INT32 sys_stime_sizetf(char*x)
+static PLI_INT32 sys_stime_sizetf(PLI_BYTE8*x)
 {
       return 32;
 }
 
-static PLI_INT32 sys_time_calltf(char*name)
+static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -102,7 +102,7 @@ static PLI_INT32 sys_time_calltf(char*name)
       return 0;
 }
 
-static PLI_INT32 sys_realtime_calltf(char*name)
+static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -169,6 +169,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.12  2007/03/14 04:05:51  steve
+ *  VPI tasks take PLI_BYTE* by the standard.
+ *
  * Revision 1.11  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *
