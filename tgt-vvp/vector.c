@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.12 2007/02/26 19:49:50 steve Exp $"
+#ident "$Id: vector.c,v 1.13 2007/03/20 04:26:56 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -200,7 +200,7 @@ void save_signal_lookaside(unsigned addr, ivl_signal_t sig, unsigned sig_word, u
 {
       unsigned idx;
 	/* Don't bind any of hte low bits to a signal. */
-      if (addr < 8)
+      if (addr < 8 && wid > 0)
 	    return;
 
       assert((addr+wid) <= MAX_VEC);
@@ -372,6 +372,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.13  2007/03/20 04:26:56  steve
+ *  Clear lookaside even if source bit is a constant.
+ *
  * Revision 1.12  2007/02/26 19:49:50  steve
  *  Spelling fixes (larry doolittle)
  *
