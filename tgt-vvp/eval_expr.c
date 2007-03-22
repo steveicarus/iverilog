@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.135 2007/02/26 19:49:50 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.136 2007/03/22 16:08:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1685,9 +1685,9 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    return res;
       }
 
-	/* Try the special case that hte part is at the beginning and
+	/* Try the special case that the part is at the beginning and
 	   nearly the width of the signal. In this case, just load the
-	   entire signal in one go then simply drop the excess bits. */
+	   entire signal in one go, then simply drop the excess bits. */
       if (shiv.base == 0
 	  && (ivl_expr_width(sube) > wid)
 	  && (ivl_expr_width(sube) < (wid+wid/10))) {
@@ -2201,6 +2201,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.136  2007/03/22 16:08:18  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.135  2007/02/26 19:49:50  steve
  *  Spelling fixes (larry doolittle)
  *

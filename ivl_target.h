@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.180 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.181 2007/03/22 16:08:16 steve Exp $"
 #endif
 
 # include  <inttypes.h>
@@ -767,7 +767,7 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  * These devices are grouped as logic devices with zero inputs because
  * the outputs have the same characteristics as other logic
  * devices. They are special only in that they have zero inputs, and
- * their drivers typically have strength other then strong.
+ * their drivers typically have strength other than strong.
  *
  * - IVL_LO_UDP
  * User defined primitives (UDPs) are like any other logic devices, in
@@ -926,7 +926,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * inputs. In fact, the compiler doesn't assure that the widths of the
  * inputs add up to the width of the output, but the possibility
  * exists. It is *not* an error for the sum of the input widths to be
- * more then the width of the output, although the possibility of
+ * more than the width of the output, although the possibility of
  * overflow exists at run time.
  *
  * Multiply may be signed. If so, the output should be sign extended
@@ -1175,7 +1175,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  * - Array words
  * If the l-value is an array, then ivl_lval_idx function will return
  * an expression that calculates the address of the array word. If
- * the referenced signal has more then one word, this expression must
+ * the referenced signal has more than one word, this expression must
  * be present. If the signal has exactly one word (it is not an array)
  * then the ivl_lval_idx exression must *not* be present.
  *
@@ -1344,7 +1344,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  * ivl_scope_children
  *    A scope may in turn contain other scopes. This method iterates
  *    through all the child scopes of a given scope. If the function
- *    returns any value other then 0, the iteration stops and the
+ *    returns any value other than 0, the iteration stops and the
  *    method returns that value. Otherwise, iteration continues until
  *    the children run out.
  *
@@ -1355,7 +1355,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *    Task definition scopes carry a task definition, in the form of
  *    a statement. This method accesses that definition. The
  *    ivl_scope_def function must return a statement for scopes that
- *    are type FUNCTION or TASK, and most return nil otherwise.
+ *    are type FUNCTION or TASK, and must return nil otherwise.
  *
  * ivl_scope_event
  * ivl_scope_events
@@ -1599,7 +1599,7 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 /*
  * The following functions retrieve specific single values from the
  * statement. These values are the bits of data and parameters that
- * make up the statement. Many of these functions apply to more then
+ * make up the statement. Many of these functions apply to more than
  * one type of statement, so the comment in front of them tells which
  * statement types can be passed to the function.
  *
@@ -1618,7 +1618,7 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * ivl_stmt_lval
  * ivl_stmt_lvals
  *    Return the number of l-values for an assignment statement, or
- *    the specific l-value. If there is more then 1 l-value, then the
+ *    the specific l-value. If there is more than 1 l-value, then the
  *    l-values are presumed to be vector values concatenated together
  *    from msb (idx==0) to lsb.
  *
@@ -1779,6 +1779,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.181  2007/03/22 16:08:16  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.180  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

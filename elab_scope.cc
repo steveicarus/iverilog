@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.43 2007/03/08 06:11:35 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.44 2007/03/22 16:08:15 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -288,7 +288,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       }
 
 	// Scan through all the named events in this scope. We do not
-	// need anything more then the current scope to do this
+	// need anything more than the current scope to do this
 	// elaboration, so do it now. This allows for normal
 	// elaboration to reference these events.
 
@@ -761,6 +761,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.44  2007/03/22 16:08:15  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.43  2007/03/08 06:11:35  steve
  *  Elaborate scopes of modules instantated in generate loops.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.364 2007/03/08 05:30:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.365 2007/03/22 16:08:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -318,7 +318,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    name = scope->local_symbol();
 
 	/* If the Verilog source has a range specification for the
-	   gates, then I am expected to make more then one
+	   gates, then I am expected to make more than one
 	   gate. Figure out how many are desired. */
       if (msb_) {
 	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
@@ -1778,7 +1778,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 		  return new NetBlock(NetBlock::SEQU, 0);
       }
 
-	// If the condition expression is more then 1 bits, then
+	// If the condition expression is more than 1 bits, then
 	// generate a comparison operator to get the result down to
 	// one bit. Turn <e> into <e> != 0;
 
@@ -2406,7 +2406,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// If the condition expression is more then 1 bits, then
+	// If the condition expression is more than 1 bits, then
 	// generate a reduction operator to get the result down to
 	// one bit. In other words, Turn <e> into |<e>;
 
@@ -3401,6 +3401,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.365  2007/03/22 16:08:15  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.364  2007/03/08 05:30:02  steve
  *  Limit the calculated widths of constants.
  *

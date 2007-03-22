@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.155 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.156 2007/03/22 16:08:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -379,7 +379,7 @@ static int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 
 /*
  * Given a nexus, look for a signal that has module delay
- * paths. Return that signal. (There should be no more then 1.) If we
+ * paths. Return that signal. (There should be no more than 1.) If we
  * don't find any, then return nil.
  */
 static ivl_signal_t find_modpath(ivl_nexus_t nex)
@@ -809,7 +809,7 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 		  continue;
 
 	      /* Mark the strength-aware flag if the driver can
-		 generate values other then the standard "6"
+		 generate values other than the standard "6"
 		 strength. */
 	    if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
 		  nex_flags |= VVP_NEXUS_DATA_STR;
@@ -1764,7 +1764,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 	    lpm_concat_inputs(net, 0, icnt, src_table);
 
       } else {
-	      /* If there are more then 4 inputs, things get more
+	      /* If there are more than 4 inputs, things get more
 		 complicated. We need to generate a balanced tree of
 		 .concat nodes to blend the inputs down to a single
 		 root node, that becomes the output from the
@@ -2369,6 +2369,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.156  2007/03/22 16:08:18  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.155  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

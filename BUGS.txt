@@ -104,7 +104,7 @@ module may not be needed as long as the ``-s <name>'' switch is
 given.
 
 So when you send a test case, ask yourself "Can poor overworked Steve
-invoke the error without any Verilog other then what is included?" And
+invoke the error without any Verilog other than what is included?" And
 while we are at it, please place a copyright notice in your test
 program and include a GPL license statement if you can. Your test
 program may find its way into the test suite, and the notices will
@@ -160,8 +160,11 @@ I must insist that any copyright material submitted for inclusion
 include the GPL license notice as shown in the rest of the source.
 
 
-$Id: BUGS.txt,v 1.4 2003/02/19 04:36:31 steve Exp $
+$Id: BUGS.txt,v 1.5 2007/03/22 16:08:14 steve Exp $
 $Log: BUGS.txt,v $
+Revision 1.5  2007/03/22 16:08:14  steve
+ Spelling fixes from Larry
+
 Revision 1.4  2003/02/19 04:36:31  steve
  Notes on hte bug database.
 

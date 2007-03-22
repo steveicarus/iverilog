@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.231 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: parse.y,v 1.232 2007/03/22 16:08:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -3158,7 +3158,7 @@ statement_opt
 	| ';' { $$ = 0; }
 	;
 
-  /* Task items are, other then the statement, task port items and
+  /* Task items are, other than the statement, task port items and
      other block items. */
 task_item
         : block_item_decl  { $$ = new svector<PWire*>(0); }

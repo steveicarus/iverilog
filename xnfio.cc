@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.29 2004/02/20 18:53:36 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.30 2007/03/22 16:08:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -308,7 +308,7 @@ void xnfio_f::lpm_compare(Design*des, NetCompare*dev)
 
 bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 {
-	/* Even if side B is all constant, if there are more then 4
+	/* Even if side B is all constant, if there are more than 4
 	   signals on side A we will not be able to fit the operation
 	   into a function unit, so we might as well accept a
 	   comparator. Give up. */
@@ -365,6 +365,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.30  2007/03/22 16:08:18  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.29  2004/02/20 18:53:36  steve
  *  Addtrbute keys are perm_strings.
  *

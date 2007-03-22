@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.7 2003/02/09 23:33:26 steve Exp $
+ *  $Id: vpi.txt,v 1.8 2007/03/22 16:08:19 steve Exp $
  */
 
 
@@ -108,7 +108,7 @@ A scope is created with a .scope directive, like so:
 The scope takes a string name as the first parameter. If there is an
 additional parameter, it is a label of the directive for the parent
 scope. Scopes that have no parent are root scopes. It is an error to
-declare a scope with the same name more then once in a parent scope.
+declare a scope with the same name more than once in a parent scope.
 
 The name string given when creating the scope is the basename for the
 scope. The vvp automatically constructs full names from the scope

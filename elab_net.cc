@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.200 2007/02/27 06:10:16 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.201 2007/03/22 16:08:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -761,7 +761,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 
 	// Make an output signal that is the width of the l-value.
 	// Due to above calculation of rwidth, we know that the result
-	// will be no more then the l-value, so it is safe to connect
+	// will be no more than the l-value, so it is safe to connect
 	// all the result pins to the osig.
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -1507,7 +1507,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list.
 
-	   Allow for a repeat count other then 1 by repeating the
+	   Allow for a repeat count other than 1 by repeating the
 	   connect loop as many times as necessary. */
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -1617,7 +1617,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    assert(pc);
 	    verinum pvalue = pc->value();
 
-	      /* If the desired lwidth is more then the width of the
+	      /* If the desired lwidth is more than the width of the
 		 constant value, extend the value to fit the desired
 		 output. */
 	    if (lwidth > pvalue.len()) {
@@ -2909,6 +2909,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.201  2007/03/22 16:08:14  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.200  2007/02/27 06:10:16  steve
  *  Better error message around repeat concatenation syntax.
  *

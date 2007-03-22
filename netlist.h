@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.372 2007/03/08 05:30:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.373 2007/03/22 16:08:16 steve Exp $"
 #endif
 
 /*
@@ -1530,7 +1530,7 @@ class NetUReduce  : public NetNode {
  *      N   -- (1x)
  *
  * It also takes one of the following glob letters to represent more
- * then one item.
+ * than one item.
  *
  *      p   -- 01, 0x or x1 // check this with the lexer
  *      n   -- 10, 1x or x0 // check this with the lexer
@@ -1543,7 +1543,7 @@ class NetUReduce  : public NetNode {
  * SEQUENTIAL
  * These objects have a single bit of memory. The logic table includes
  * an entry for the current value, and allows edges on the inputs. In
- * canonical form, inly then entries that generate 0, 1 or - (no change)
+ * canonical form, only the entries that generate 0, 1 or - (no change)
  * are listed.
  *
  * COMBINATIONAL
@@ -3495,6 +3495,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.373  2007/03/22 16:08:16  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.372  2007/03/08 05:30:03  steve
  *  Limit the calculated widths of constants.
  *

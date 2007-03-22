@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.12 2006/05/01 20:47:58 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.13 2007/03/22 16:08:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,7 +84,7 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list.
 
-	   Allow for a repeat count other then 1 by repeating the
+	   Allow for a repeat count other than 1 by repeating the
 	   connect loop as many times as necessary. */
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -169,6 +169,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.13  2007/03/22 16:08:14  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.12  2006/05/01 20:47:58  steve
  *  More explicit datatype setup.
  *

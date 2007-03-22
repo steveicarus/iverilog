@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.81 2007/03/01 06:19:39 steve Exp $
+ *  $Id: README.txt,v 1.82 2007/03/22 16:08:19 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -83,7 +83,7 @@ references symbolically.)
 
 If the functor is part of a vector, then the symbol is the
 vvp_ipoint_t for the first functor. The [] operator can then be used
-to reference a functor other then the first in the vector.
+to reference a functor other than the first in the vector.
 
 There are some special symbols that in certain contexts have special
 meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
@@ -164,7 +164,7 @@ implementation. Most of the core gate types have built in tables.
 The initial values of all the inputs and the output is x. Any other
 value is passed around as run-time behavior. If the inputs have C<?>
 symbols, then the inputs are initialized to the specified bit value,
-and if this causes the output to be something other then x, a
+and if this causes the output to be something other than x, a
 propagation event is created to be executed at the start of run time.
 
 The strengths of inputs are ignored by functors, and the output has

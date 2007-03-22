@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.6 2007/03/14 04:05:51 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.7 2007/03/22 16:08:19 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -256,7 +256,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			byte_ungetc(src, ch);
 
 	    } else if (*fmtp != '%') {
-		    /* Characters other then % match themselves. */
+		    /* Characters other than % match themselves. */
 		  ch = byte_getc(src);
 		  if (ch != *fmtp) {
 			byte_ungetc(src, ch);

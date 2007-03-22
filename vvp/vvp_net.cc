@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.61 2007/03/07 03:55:42 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.62 2007/03/22 16:08:19 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -410,7 +410,7 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 
       } else if (that.size_ <= BITS_PER_WORD) {
 
-	      /* This vector is more then a word, but that vector is
+	      /* This vector is more than a word, but that vector is
 		 still small. Write into the destination, possibly
 		 spanning two destination works, depending on whether
 		 the source vector spans a word transition. */
@@ -2290,6 +2290,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.62  2007/03/22 16:08:19  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.61  2007/03/07 03:55:42  steve
  *  Cast to remove ambiguities calling pow function.
  *

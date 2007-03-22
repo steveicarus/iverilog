@@ -71,7 +71,7 @@ The msys package is available from the mingw download site. This is
 not the compiler but a collection of *nix tools ported to Windows and
 wrapped in a convenient installer. The msys package is all the various
 basic tools (shells, file utils, etc) and the msysDTK is extra
-developer tools other then the compiler.
+developer tools other than the compiler.
 
 Download the msys-1.x.x.exe and msysdtc-1.x.x.exe binaries. These are
 self-installing packages. Install msys first, and then msysDTC. Most

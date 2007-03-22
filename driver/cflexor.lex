@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cflexor.lex,v 1.10 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.11 2007/03/22 16:08:18 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -121,7 +121,7 @@ static int comment_enter;
 "/"[^\*\/] { /* A file name that starts with "/". */
       yymore();
       BEGIN(FILE_NAME); }
-[^/\n \t\b\r+-][^/\n\r]* { /* A file name that starts with other then "/" */
+[^/\n \t\b\r+-][^/\n\r]* { /* A file name that starts with other than "/" */
       yymore();
       BEGIN(FILE_NAME); }
 

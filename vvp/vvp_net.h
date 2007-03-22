@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.56 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.57 2007/03/22 16:08:19 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -914,7 +914,7 @@ class vvp_fun_signal_real  : public vvp_fun_signal_base {
 
 /*
  * Wide Functors:
- * Wide functors represent special devices that may have more then 4
+ * Wide functors represent special devices that may have more than 4
  * input ports. These devices need a set of N/4 actual functors to
  * catch the inputs, and use another to deliver the output.
  *
@@ -1040,6 +1040,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.57  2007/03/22 16:08:19  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.56  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: svector.h,v 1.10 2005/06/14 19:13:43 steve Exp $"
+#ident "$Id: svector.h,v 1.11 2007/03/22 16:08:17 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -31,7 +31,7 @@
 /*
  * This is a way simplified vector class that cannot grow or shrink,
  * and is really only able to handle values. It is intended to be
- * lighter weight then the STL list class.
+ * lighter weight than the STL list class.
  */
 
 template <class TYPE> class svector {
@@ -109,6 +109,9 @@ template <> inline svector<std::string>::svector(unsigned size)
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.11  2007/03/22 16:08:17  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.10  2005/06/14 19:13:43  steve
  *  gcc3/4 compile errors.
  *

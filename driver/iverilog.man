@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2007/03/08 03:06:47 $" Version "$Date: 2007/03/08 03:06:47 $"
+.TH iverilog 1 "$Date: 2007/03/22 16:08:18 $" Version "$Date: 2007/03/22 16:08:18 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -68,7 +68,7 @@ full-timing simulations.
 .B -gxtypes\fI|\fP-gno-xtypes
 Enable (default) or disable support for extended types. Enabling
 extended types allows for new types that are supported by Icarus
-Verilog as extensions beyond the baseline verilog. It may be necessary
+Verilog as extensions beyond the baseline Verilog. It may be necessary
 to disable extended types if compiling code that clashes with the few
 new keywords used to implement the type system.
 .TP 8
@@ -199,7 +199,7 @@ implies the synthesis \fB-S\fP flag.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
-switch. All the warning types (other then \fBall\fP) can also be
+switch. All the warning types (other than \fBall\fP) can also be
 prefixed with \fBno-\fP to turn off that warning. This is most useful
 after a \fB-Wall\fP argument to suppress isolated warning types.
 
@@ -264,7 +264,7 @@ well as # comments, if the # starts the line.
 .I "file name"
 A simple file name or file path is taken to be the name of a Verilog
 source file. The path starts with the first non-white-space
-character. Variables are substitued in file names.
+character. Variables are substituted in file names.
 
 .TP 8
 .B -y\ \fIlibdir\fP
@@ -322,7 +322,7 @@ This is similar to the \fB+toupper-filename\fP hack described above.
 .TP 8
 .B +integer-width+\fIvalue\fP
 This allows the programmer to select the width for integer variables
-in the verilog source. The default is 32, the value can be any desired
+in the Verilog source. The default is 32, the value can be any desired
 integer value.
 
 .SH "VARIABLES IN COMMAND FILES"
@@ -331,7 +331,7 @@ In certain cases, iverilog supports variables in command files. These
 are strings of the form "$(\fIvarname\fP)", where \fIvarname\fP is the
 name of the environment variable to read. The entire string is
 replaced with the contents of that variable. Variables are only
-substitued in contexts that explicitly support them, including file
+substituted in contexts that explicitly support them, including file
 and directory strings.
 
 Variable values come from the operating system environment, and not

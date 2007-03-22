@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.12 2006/03/05 05:45:58 steve Exp $"
+#ident "$Id: memory.h,v 1.13 2007/03/22 16:08:19 steve Exp $"
 #endif
 
 #include "vvp_net.h"
@@ -119,7 +119,7 @@ long memory_word_right_range(vvp_memory_t mem);
  *
  * NOTE: This functor is unique in that it needs to store the
  * vvp_net_t pointer associated with it. It needs this because it can
- * received input from other then its ports. Notably, the memory
+ * received input from other than its ports. Notably, the memory
  * itself reports word changes.
  */
 class vvp_fun_memport  : public vvp_net_fun_t {
@@ -157,6 +157,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.13  2007/03/22 16:08:19  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.12  2006/03/05 05:45:58  steve
  *  Add support for memory value change callbacks.
  *

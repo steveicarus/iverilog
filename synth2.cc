@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.45 2005/08/27 04:32:08 steve Exp $"
+#ident "$Id: synth2.cc,v 1.46 2007/03/22 16:08:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -766,7 +766,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       assert(events_in.count() == 0);
 
-	/* This can't be other then one unless there are named events,
+	/* This can't be other than one unless there are named events,
 	   which I cannot synthesize. */
       assert(nevents_ == 1);
       NetEvent*ev = events_[0];
@@ -1000,6 +1000,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.46  2007/03/22 16:08:17  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.45  2005/08/27 04:32:08  steve
  *  Handle synthesis of fully packed case statements.
  *

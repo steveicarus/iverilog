@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.46 2007/02/20 05:58:36 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.47 2007/03/22 16:08:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -414,7 +414,7 @@ void dll_target::expr_signal(const NetESignal*net)
 
 	/* Make account for the special case that this is a reference
 	   to an array as a whole. We detect this case by noting that
-	   this is an array (more then 1 word) and there is no word
+	   this is an array (more than 1 word) and there is no word
 	   select expression. In that case, this is an IVL_EX_ARRAY
 	   expression instead of a SIGNAL expression. */
       if (sig->array_words > 1 && word_expr == 0) {
@@ -474,6 +474,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.47  2007/03/22 16:08:18  steve
+ *  Spelling fixes from Larry
+ *
  * Revision 1.46  2007/02/20 05:58:36  steve
  *  Handle unary minus of real valued expressions.
  *

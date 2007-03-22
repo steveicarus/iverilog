@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt.vl,v 1.4 2004/10/04 01:10:56 steve Exp $"
+ *   $Id: sqrt.vl,v 1.5 2007/03/22 16:08:18 steve Exp $"
  */
 
  /*
@@ -50,7 +50,7 @@
   * where sqrt(y) is the exact square root of y and floor(N) is the
   * largest integer <= N.
   *
-  * For 32bit numbers, this will never run more then 16 iterations,
+  * For 32 bit numbers, this will never run more than 16 iterations,
   * which amounts to 16 clocks.
   */
 

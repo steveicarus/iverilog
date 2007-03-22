@@ -16,13 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt-virtex.v,v 1.4 2003/11/25 18:35:31 steve Exp $"
+ *   $Id: sqrt-virtex.v,v 1.5 2007/03/22 16:08:18 steve Exp $"
  */
 
 /*
  * This module is a synthesizeable square-root function. It is also a
  * detailed example of how to target Xilinx Virtex parts using
- * Icarus Verilog. In fact, for no particular reason other then to
+ * Icarus Verilog. In fact, for no particular reason other than to
  * be excessively specific, I will step through the process of
  * generating a design for a Spartan-II XC2S15-VQ100, and also how to
  * generate a generic library part for larger Virtex designs.
@@ -129,7 +129,7 @@
  * This command creates from the chip.ngd the file "chip_root.v" that
  * contains Verilog code that simulates the mapped design. This output
  * Verilog has the single root module "chip_root", which came from the
- * name of the root module when we were making hte EDIF file in the
+ * name of the root module when we were making the EDIF file in the
  * first place. The module has ports named just line the ports of the
  * chip_root module below.
  *
@@ -183,7 +183,7 @@
   * where sqrt(y) is the exact square root of y and floor(N) is the
   * largest integer <= N.
   *
-  * For 32bit numbers, this will never run more then 16 iterations,
+  * For 32 bit numbers, this will never run more than 16 iterations,
   * which amounts to 16 clocks.
   */
 
