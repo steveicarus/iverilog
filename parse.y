@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.5 2006/12/03 04:58:20 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.6 2007/03/23 19:31:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1038,7 +1038,7 @@ function_item
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have inout ports.");
 		}
-	| block_item_decl
+	| attribute_list_opt block_item_decl
                 { $$ = 0; }
 	;
 
@@ -1585,7 +1585,7 @@ module_item
   /* block_item_decl rule is shared with task blocks and named
      begin/end. */
 
-	| block_item_decl
+	| attribute_list_opt block_item_decl
 
   /* */
 
