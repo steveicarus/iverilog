@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.6 2007/03/23 19:31:22 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.7 2007/03/23 23:22:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1030,10 +1030,26 @@ function_item
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have output ports.");
 		}
+	| K_output K_signed range_opt list_of_identifiers ';'
+                { svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, true,
+						$3, $4,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		  yyerror(@1, "Functions may not have output ports.");
+		}
 	| K_inout range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, false,
 						$2, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		  yyerror(@1, "Functions may not have inout ports.");
+		}
+	| K_inout K_signed range_opt list_of_identifiers ';'
+                { svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, true,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have inout ports.");
@@ -2863,6 +2879,13 @@ task_item
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
+	| K_input K_signed range_opt list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, true,
+						$3, $4,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
 	| K_output range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT, false,
@@ -2870,10 +2893,24 @@ task_item
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
+	| K_output K_signed range_opt list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT, true,
+						$3, $4,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
 	| K_inout range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT, false,
 						$2, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_signed range_opt list_of_identifiers ';'
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT, true,
+						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
