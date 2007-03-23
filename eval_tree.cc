@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62.2.4 2007/03/23 20:59:25 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.62.2.5 2007/03/23 23:02:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -367,7 +367,9 @@ NetEConst* NetEBComp::eval_leeq_()
 	   equal to the largest value the left side can possibly
 	   have. */
       assert(left_->expr_width() > 0);
-      verinum lv (verinum::V1, left_->expr_width());
+      verinum lv (verinum::V1, left_->expr_width() + 1);
+      lv.set(left_->expr_width(), verinum::V0);
+      lv.has_sign( left_->has_sign() );
       if (lv <= rv) {
 	    verinum result(verinum::V1, 1);
 	    return new NetEConst(result);
@@ -1551,6 +1553,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.62.2.5  2007/03/23 23:02:31  steve
+ *  Fix compile time eval of <= comparison.
+ *
  * Revision 1.62.2.4  2007/03/23 20:59:25  steve
  *  Fix compile time evaluation of < operator.
  *
