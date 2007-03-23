@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.26.2.3 2005/12/07 03:28:45 steve Exp $"
+#ident "$Id: verinum.h,v 1.26.2.4 2007/03/23 20:59:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -74,6 +74,7 @@ class verinum {
 	// A number is "defined" if there are no x or z bits in its value.
       bool is_defined() const;
       bool is_zero() const;
+      bool is_negative() const;
 
 	// A number is "a string" if its value came directly from
 	// an ASCII description instead of a number value.
@@ -151,6 +152,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.26.2.4  2007/03/23 20:59:26  steve
+ *  Fix compile time evaluation of < operator.
+ *
  * Revision 1.26.2.3  2005/12/07 03:28:45  steve
  *  Support constant concatenation of constants.
  *

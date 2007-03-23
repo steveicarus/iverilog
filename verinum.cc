@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.43.2.2 2005/12/07 03:28:44 steve Exp $"
+#ident "$Id: verinum.cc,v 1.43.2.3 2007/03/23 20:59:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -317,6 +317,20 @@ bool verinum::is_zero() const
       return true;
 }
 
+bool verinum::is_negative() const
+{
+      if (! has_sign_)
+	    return false;
+
+      if (nbits_ == 0)
+	    return false;
+
+      if (bits_[nbits_-1] == verinum::V1)
+	    return true;
+
+      return false;
+}
+
 /*
  * This function returns a version of the verinum that has only as
  * many bits as are needed to accurately represent the value. It takes
@@ -501,6 +515,18 @@ verinum::V operator <= (const verinum&left, const verinum&right)
 
 verinum::V operator < (const verinum&left, const verinum&right)
 {
+      if (left.has_sign() && right.has_sign()) {
+	    if (!left.is_defined())
+		  return verinum::Vx;
+	    if (!right.is_defined())
+		  return verinum::Vx;
+	    long diff = left.as_long() - right.as_long();
+	    if (diff < 0)
+		  return verinum::V1;
+	    else
+		  return verinum::V0;
+      }
+
       unsigned idx;
       for (idx = left.len() ; idx > right.len() ;  idx -= 1) {
 	    if (left[idx-1] != verinum::V0) return verinum::V0;
@@ -960,6 +986,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.43.2.3  2007/03/23 20:59:26  steve
+ *  Fix compile time evaluation of < operator.
+ *
  * Revision 1.43.2.2  2005/12/07 03:28:44  steve
  *  Support constant concatenation of constants.
  *
