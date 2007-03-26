@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.140 2007/03/26 16:51:49 steve Exp $"
+#ident "$Id: t-dll.h,v 1.141 2007/03/26 20:32:47 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -477,12 +477,18 @@ struct ivl_nexus_ptr_s {
 # define __NEXUS_PTR_CON 2
 # define __NEXUS_PTR_LPM 3
 
+/*
+ * NOTE: ONLY allocat ivl_nexus_s objects with the included "new" operator.
+ */
 struct ivl_nexus_s {
       unsigned nptr_;
       struct ivl_nexus_ptr_s*ptrs_;
       const Nexus*nexus_;
       const char*name_;
       void*private_data;
+
+      void* operator new (size_t s);
+      void  operator delete(void*obj, size_t s); // Not implemented
 };
 
 /*
@@ -670,6 +676,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.141  2007/03/26 20:32:47  steve
+ *  More efficient allocate of ivl_nexus_t objects.
+ *
  * Revision 1.140  2007/03/26 16:51:49  steve
  *  do not calculate nexus name unless needed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.168 2007/03/26 18:17:51 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.169 2007/03/26 20:32:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,6 +101,31 @@ inline void ivl_dlclose(ivl_dll_t dll)
 inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
+
+/*
+ * The custom new operator for the ivl_nexus_s type allows us to
+ * allocate nexus objects in blocks. There are generally lots of them
+ * permanently allocated, and allocating them in blocks reduces the
+ * allocation overhead.
+ */
+static struct ivl_nexus_s * nexus_pool_ptr = 0;
+static int nexus_pool_remaining = 0;
+static const size_t NEXUS_POOL_SIZE = 4096;
+
+void* ivl_nexus_s::operator new(size_t s)
+{
+      assert(s == sizeof(struct ivl_nexus_s));
+      if (nexus_pool_remaining <= 0) {
+	    nexus_pool_ptr = new struct ivl_nexus_s[NEXUS_POOL_SIZE];
+	    nexus_pool_remaining = NEXUS_POOL_SIZE;
+      }
+
+      struct ivl_nexus_s*tmp = nexus_pool_ptr;
+      nexus_pool_ptr += 1;
+      nexus_pool_remaining -= 1;
+
+      return tmp;
+}
 
 inline static const char *basename(ivl_scope_t scope, const char *inst)
 {
@@ -231,7 +256,7 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
       ivl_scope_t scope = find_scope(des, net->scope());
       assert(scope);
 
-      const char*nname = net->name();
+      perm_string nname = net->name();
 
       for (unsigned idx = 0 ;  idx < scope->nsigs_ ;  idx += 1) {
 	    if (strcmp(scope->sigs_[idx]->name_, nname) == 0)
@@ -2200,6 +2225,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.169  2007/03/26 20:32:47  steve
+ *  More efficient allocate of ivl_nexus_t objects.
+ *
  * Revision 1.168  2007/03/26 18:17:51  steve
  *  Remove pretense of general use for t_cookie.
  *
