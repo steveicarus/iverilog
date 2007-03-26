@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.373 2007/03/22 16:08:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.374 2007/03/26 18:17:50 steve Exp $"
 #endif
 
 /*
@@ -275,8 +275,8 @@ class Nexus {
 	   the value that has been driven. */
       verinum::V driven_value() const;
 
-      void* t_cookie() const;
-      void* t_cookie(void*) const;
+      ivl_nexus_t t_cookie() const;
+      ivl_nexus_t t_cookie(ivl_nexus_t) const;
 
     private:
       Link*list_;
@@ -284,7 +284,7 @@ class Nexus {
       void relink(Link*);
 
       mutable char* name_; /* Cache the calculated name for the Nexus. */
-      mutable void* t_cookie_;
+      mutable ivl_nexus_t t_cookie_;
 
       enum VALUE { NO_GUESS, V0, V1, Vx, Vz, VAR };
       mutable VALUE driven_;
@@ -3495,6 +3495,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.374  2007/03/26 18:17:50  steve
+ *  Remove pretense of general use for t_cookie.
+ *
  * Revision 1.373  2007/03/22 16:08:16  steve
  *  Spelling fixes from Larry
  *

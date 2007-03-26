@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.167 2007/03/26 16:51:49 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.168 2007/03/26 18:17:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -635,7 +635,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 	   me. This saves me the trouble of allocating them.) */
 
       assert(net->pin(0).nexus()->t_cookie());
-      obj->pins_[0] = (ivl_nexus_t) net->pin(0).nexus()->t_cookie();
+      obj->pins_[0] = net->pin(0).nexus()->t_cookie();
       ivl_nexus_ptr_t out_ptr = nexus_log_add(obj->pins_[0], obj, 0);
 
 
@@ -676,7 +676,7 @@ bool dll_target::bufz(const NetBUFZ*net)
       }
 
       assert(net->pin(1).nexus()->t_cookie());
-      obj->pins_[1] = (ivl_nexus_t) net->pin(1).nexus()->t_cookie();
+      obj->pins_[1] = net->pin(1).nexus()->t_cookie();
       nexus_log_add(obj->pins_[1], obj, 1);
 
 	/* Attach the logic device to the scope that contains it. */
@@ -814,7 +814,7 @@ void dll_target::logic(const NetLogic*net)
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
-	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+	    obj->pins_[idx] = nex->t_cookie();
 	    ivl_nexus_ptr_t tmp = nexus_log_add(obj->pins_[idx], obj, idx);
 	    if (idx == 0)
 		  out_ptr = tmp;
@@ -884,13 +884,13 @@ bool dll_target::sign_extend(const NetSignExtend*net)
       nex = net->pin(0).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.reduce.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.reduce.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin(1).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.reduce.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.reduce.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
@@ -936,13 +936,13 @@ bool dll_target::ureduce(const NetUReduce*net)
       nex = net->pin(0).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.reduce.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.reduce.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin(1).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.reduce.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.reduce.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
@@ -966,19 +966,19 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       nex = net->pin(1).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin(2).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin(0).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       scope_add_lpm(obj->scope, obj);
@@ -1007,7 +1007,7 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
       nex = net->pin(0).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.sfunc.pins[0] = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.sfunc.pins[0] = nex->t_cookie();
       nexus_lpm_add(obj->u_.sfunc.pins[0], obj, 0,
 		    IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1015,7 +1015,7 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
 	    nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.sfunc.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.sfunc.pins[idx] = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.sfunc.pins[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
@@ -1060,7 +1060,7 @@ bool dll_target::net_function(const NetUserFunc*net)
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
-	    ivl_nexus_t nn = (ivl_nexus_t)nex->t_cookie();
+	    ivl_nexus_t nn = nex->t_cookie();
 	    assert(nn);
 
 	    obj->u_.ufunc.pins[idx] = nn;
@@ -1137,7 +1137,7 @@ void dll_target::udp(const NetUDP*net)
 	    }
 
 	    assert(nex->t_cookie());
-	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+	    obj->pins_[idx] = nex->t_cookie();
 	    nexus_log_add(obj->pins_[idx], obj, idx);
       }
 
@@ -1184,19 +1184,19 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_DataA().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_DataB().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	/* If the carry output is connected, then connect the extra Q
@@ -1226,12 +1226,12 @@ bool dll_target::lpm_array_dq(const NetArrayDq*net)
 
       nex = net->pin_Address().nexus();
       assert(nex->t_cookie());
-      obj->u_.array.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.array.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.array.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
-      obj->u_.array.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.array.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.array.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       return true;
@@ -1268,19 +1268,19 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.shift.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.shift.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.shift.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_Data().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.shift.d = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.shift.d = nex->t_cookie();
       nexus_lpm_add(obj->u_.shift.d, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_Distance().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.shift.s = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.shift.s = nex->t_cookie();
       nexus_lpm_add(obj->u_.shift.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
@@ -1309,12 +1309,12 @@ void dll_target::lpm_compare(const NetCompare*net)
       nex = net->pin_DataA().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
 
       nex = net->pin_DataB().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
 
 
       if (net->pin_AGEB().is_linked()) {
@@ -1322,7 +1322,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_GE;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1331,7 +1331,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_GT;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1340,7 +1340,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_GE;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1351,7 +1351,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_GT;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1362,7 +1362,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_EQ;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1371,7 +1371,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    obj->type = IVL_LPM_CMP_NE;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.arith.q = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
@@ -1410,19 +1410,19 @@ void dll_target::lpm_divide(const NetDivide*net)
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_DataA().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_DataB().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 
@@ -1448,19 +1448,19 @@ void dll_target::lpm_modulo(const NetModulo*net)
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_DataA().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_DataB().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
@@ -1484,7 +1484,7 @@ void dll_target::lpm_ff(const NetFF*net)
 	   point back to this device. */
       nex = net->pin_Clock().nexus();
       assert(nex->t_cookie());
-      obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.ff.clk = nex->t_cookie();
       assert(obj->u_.ff.clk);
       nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
@@ -1493,7 +1493,7 @@ void dll_target::lpm_ff(const NetFF*net)
       if (net->pin_Enable().is_linked()) {
 	    nex = net->pin_Enable().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.we = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.ff.we = nex->t_cookie();
 	    assert(obj->u_.ff.we);
 	    nexus_lpm_add(obj->u_.ff.we, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       } else {
@@ -1503,7 +1503,7 @@ void dll_target::lpm_ff(const NetFF*net)
       if (net->pin_Aclr().is_linked()) {
 	    nex = net->pin_Aclr().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.aclr = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.ff.aclr = nex->t_cookie();
 	    assert(obj->u_.ff.aclr);
 	    nexus_lpm_add(obj->u_.ff.aclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       } else {
@@ -1513,7 +1513,7 @@ void dll_target::lpm_ff(const NetFF*net)
       if (net->pin_Aset().is_linked()) {
 	    nex = net->pin_Aset().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.aset = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.ff.aset = nex->t_cookie();
 	    assert(obj->u_.ff.aset);
 	    nexus_lpm_add(obj->u_.ff.aset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
@@ -1528,7 +1528,7 @@ void dll_target::lpm_ff(const NetFF*net)
       if (net->pin_Sclr().is_linked()) {
 	    nex = net->pin_Sclr().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.sclr = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.ff.sclr = nex->t_cookie();
 	    assert(obj->u_.ff.sclr);
 	    nexus_lpm_add(obj->u_.ff.sclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       } else {
@@ -1538,7 +1538,7 @@ void dll_target::lpm_ff(const NetFF*net)
       if (net->pin_Sset().is_linked()) {
 	    nex = net->pin_Sset().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.sset = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.ff.sset = nex->t_cookie();
 	    assert(obj->u_.ff.sset);
 	    nexus_lpm_add(obj->u_.ff.sset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
@@ -1552,13 +1552,13 @@ void dll_target::lpm_ff(const NetFF*net)
 
       nex = net->pin_Q().nexus();
       assert(nex->t_cookie());
-      obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.ff.q.pin = nex->t_cookie();
       nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
 		    IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_Data().nexus();
       assert(nex->t_cookie());
-      obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.ff.d.pin = nex->t_cookie();
       nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 }
@@ -1584,19 +1584,19 @@ void dll_target::lpm_mult(const NetMult*net)
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
       nex = net->pin_DataA().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       nex = net->pin_DataB().nexus();
       assert(nex->t_cookie());
 
-      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 
@@ -1626,14 +1626,14 @@ void dll_target::lpm_mux(const NetMux*net)
 	/* Connect the output bits. */
       nex = net->pin_Result().nexus();
       assert(nex->t_cookie());
-      obj->u_.mux.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.mux.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.mux.q, obj, 0,
 		    IVL_DR_STRONG, IVL_DR_STRONG);
 
 	/* Connect the select bits. */
       nex = net->pin_Sel().nexus();
       assert(nex->t_cookie());
-      obj->u_.mux.s = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.mux.s = nex->t_cookie();
       nexus_lpm_add(obj->u_.mux.s, obj, 0,
 		    IVL_DR_HiZ, IVL_DR_HiZ);
 
@@ -1643,7 +1643,7 @@ void dll_target::lpm_mux(const NetMux*net)
 
       for (unsigned sdx = 0 ;  sdx < selects ;  sdx += 1) {
 	    nex = net->pin_Data(sdx).nexus();
-	    ivl_nexus_t tmp = (ivl_nexus_t) nex->t_cookie();
+	    ivl_nexus_t tmp = nex->t_cookie();
 	    obj->u_.mux.d[sdx] = tmp;
 	    nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       }
@@ -1669,7 +1669,7 @@ bool dll_target::concat(const NetConcat*net)
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.concat.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.concat.pins[idx] = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.concat.pins[idx], obj, 0, dr, dr);
       }
 
@@ -1713,20 +1713,20 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    nex = net->pin(0).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.q = nex->t_cookie();
 
 	      /* NetPartSelect:pin(1) is the input pin. */
 	    nex = net->pin(1).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.a = nex->t_cookie();
 
 	      /* If the part select has an additional pin, that pin is
 		 a variable select base. */
 	    if (net->pin_count() >= 3) {
 		  nex = net->pin(2).nexus();
 		  assert(nex->t_cookie());
-		  obj->u_.part.s = (ivl_nexus_t) nex->t_cookie();
+		  obj->u_.part.s = nex->t_cookie();
 	    }
 	    break;
 
@@ -1735,13 +1735,13 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    nex = net->pin(1).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.q = nex->t_cookie();
 
 	      /* NetPartSelect:pin(0) is the input pin. */
 	    nex = net->pin(0).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.a = nex->t_cookie();
 	    break;
 
 	  case IVL_LPM_PART_BI:
@@ -1751,13 +1751,13 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    nex = net->pin(0).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.q = nex->t_cookie();
 
 	      /* NetPartSelect:pin(1) is the input pin. */
 	    nex = net->pin(1).nexus();
 	    assert(nex->t_cookie());
 
-	    obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+	    obj->u_.part.a = nex->t_cookie();
 	    break;
 
 	  default:
@@ -1799,14 +1799,14 @@ bool dll_target::replicate(const NetReplicate*net)
       const Nexus*nex = net->pin(0).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.repeat.q = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.repeat.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.repeat.q, obj, 0, dr, dr);
 
       dr = IVL_DR_HiZ;
       nex = net->pin(1).nexus();
       assert(nex->t_cookie());
 
-      obj->u_.repeat.a = (ivl_nexus_t) nex->t_cookie();
+      obj->u_.repeat.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.repeat.a, obj, 0, dr, dr);
 
       scope_add_lpm(obj->scope, obj);
@@ -1867,7 +1867,7 @@ bool dll_target::net_const(const NetConst*net)
       drive_from_link(net->pin(0), drv0, drv1);
       const Nexus*nex = net->pin(0).nexus();
       assert(nex->t_cookie());
-      obj->pin_ = (ivl_nexus_t) nex->t_cookie();
+      obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
 
@@ -1897,7 +1897,7 @@ bool dll_target::net_literal(const NetLiteral*net)
       drive_from_link(net->pin(0), drv0, drv1);
       const Nexus*nex = net->pin(0).nexus();
       assert(nex->t_cookie());
-      obj->pin_ = (ivl_nexus_t) nex->t_cookie();
+      obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
       des_.nconsts += 1;
@@ -2119,10 +2119,10 @@ void dll_target::signal(const NetNet*net)
 	    const Nexus*nex = net->pin(idx).nexus();
 	    if (nex->t_cookie()) {
 		  if (obj->array_words > 1) {
-			obj->pins[idx] = (ivl_nexus_t)nex->t_cookie();
+			obj->pins[idx] = nex->t_cookie();
 			nexus_sig_add(obj->pins[idx], obj, idx);
 		  } else {
-			obj->pin = (ivl_nexus_t)nex->t_cookie();
+			obj->pin = nex->t_cookie();
 			nexus_sig_add(obj->pin, obj, idx);
 		  }
 	    } else {
@@ -2167,7 +2167,7 @@ bool dll_target::signal_paths(const NetNet*net)
 	    ivl_nexus_t path_condit = 0;
 	    if (src->is_condit()) {
 		  const Nexus*nt = src->condit_pin().nexus();
-		  path_condit = (ivl_nexus_t) nt->t_cookie();
+		  path_condit = nt->t_cookie();
 	    }
 
 	    for (unsigned pin = 0; pin < src->src_count(); pin += 1) {
@@ -2179,7 +2179,7 @@ bool dll_target::signal_paths(const NetNet*net)
 			     << "." << endl;
 		  }
 		  assert(nex->t_cookie());
-		  obj->path[ptr].src = (ivl_nexus_t) nex->t_cookie();
+		  obj->path[ptr].src = nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
 		  obj->path[ptr].posedge = src->is_posedge();
 		  obj->path[ptr].negedge = src->is_negedge();
@@ -2200,6 +2200,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.168  2007/03/26 18:17:51  steve
+ *  Remove pretense of general use for t_cookie.
+ *
  * Revision 1.167  2007/03/26 16:51:49  steve
  *  do not calculate nexus name unless needed.
  *

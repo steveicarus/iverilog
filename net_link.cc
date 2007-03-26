@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.19 2006/02/02 02:43:58 steve Exp $"
+#ident "$Id: net_link.cc,v 1.20 2007/03/26 18:17:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -304,14 +304,14 @@ const Link* Nexus::first_nlink() const
       return list_;
 }
 
-void* Nexus::t_cookie() const
+ivl_nexus_t Nexus::t_cookie() const
 {
       return t_cookie_;
 }
 
-void* Nexus::t_cookie(void*val)const
+ivl_nexus_t Nexus::t_cookie(ivl_nexus_t val)const
 {
-      void*tmp = t_cookie_;
+      ivl_nexus_t tmp = t_cookie_;
       t_cookie_ = val;
       return tmp;
 }
@@ -525,6 +525,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.20  2007/03/26 18:17:50  steve
+ *  Remove pretense of general use for t_cookie.
+ *
  * Revision 1.19  2006/02/02 02:43:58  steve
  *  Allow part selects of memory words in l-values.
  *
