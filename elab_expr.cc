@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.122 2007/03/14 05:06:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.123 2007/03/26 19:23:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1125,7 +1125,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
       long msv, lsv;
-      ivl_assert(*this, idx_.empty());
+      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
       bool flag = calculate_parts_(des, scope, msv, lsv);
       if (!flag)
 	    return 0;
@@ -1186,6 +1186,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       assert(lsb_ != 0);
       assert(msb_ != 0);
 
+      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
+
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
       unsigned long wid = 0;
@@ -1224,6 +1226,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 {
       assert(lsb_ != 0);
       assert(msb_ != 0);
+
+      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
 
       NetExpr*base = elab_and_eval(des, scope, msb_, -1);
 
@@ -1608,6 +1612,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.123  2007/03/26 19:23:13  steve
+ *  Handle part select of array words.
+ *
  * Revision 1.122  2007/03/14 05:06:49  steve
  *  Replace some asserts with ivl_asserts.
  *
