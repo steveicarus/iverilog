@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.139 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: t-dll.h,v 1.140 2007/03/26 16:51:49 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -480,6 +480,7 @@ struct ivl_nexus_ptr_s {
 struct ivl_nexus_s {
       unsigned nptr_;
       struct ivl_nexus_ptr_s*ptrs_;
+      const Nexus*nexus_;
       const char*name_;
       void*private_data;
 };
@@ -669,6 +670,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.140  2007/03/26 16:51:49  steve
+ *  do not calculate nexus name unless needed.
+ *
  * Revision 1.139  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

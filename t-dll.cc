@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.166 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.167 2007/03/26 16:51:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1920,7 +1920,7 @@ void dll_target::scope(const NetScope*net)
 	    unsigned i;
 	    scope = NULL;
 	    for (i = 0; i < des_.nroots_ && scope == NULL; i++) {
-		  if (strcmp(des_.roots_[i]->name_, net->name().c_str()) == 0)
+		  if (strcmp(des_.roots_[i]->name_, net->basename()) == 0)
 			scope = des_.roots_[i];
 	    }
 	    assert(scope);
@@ -2127,7 +2127,8 @@ void dll_target::signal(const NetNet*net)
 		  }
 	    } else {
 		  ivl_nexus_t tmp = nexus_sig_make(obj, idx);
-		  tmp->name_ = strings_.add(nex->name());
+		  tmp->nexus_ = nex;
+		  tmp->name_ = 0;
 		  nex->t_cookie(tmp);
 		  if (obj->array_words > 1)
 			obj->pins[idx] = tmp;
@@ -2199,6 +2200,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.167  2007/03/26 16:51:49  steve
+ *  do not calculate nexus name unless needed.
+ *
  * Revision 1.166  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *
