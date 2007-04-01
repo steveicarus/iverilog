@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.123 2007/03/26 19:23:13 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.124 2007/04/01 05:28:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1205,7 +1205,18 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	      // signal itself.
 	    if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
 		  return net;
+
+	      // Otherwise, make a part select that covers the right range.
+	    NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)));
+	    NetESelect*ss = new NetESelect(net, ex, wid);
+	    ss->set_line(*this);
+
+	    delete base;
+	    return ss;
       }
+
+      if (long offset = net->lsi())
+	    base = make_add_expr(base, 0-offset);
 
       NetESelect*ss = new NetESelect(net, base, wid);
       ss->set_line(*this);
@@ -1243,18 +1254,28 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	      // If the part select convers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
-	    if (net->sig()->sb_to_idx(lsv) == (wid-1)
-		&& wid == net->vector_width())
+	    if (net->sig()->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
 		  return net;
+
+	      // Otherwise, make a part select that covers the right range.
+	    NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)-wid+1));
+	    NetESelect*ss = new NetESelect(net, ex, wid);
+	    ss->set_line(*this);
+
+	    delete base;
+	    return ss;
       }
 
-      NetExpr*base_adjusted = wid > 1? make_add_expr(base,1-wid) : base;
+      long offset = net->lsi();
+      NetExpr*base_adjusted = wid > 1
+	    ? make_add_expr(base,1-(long)wid-offset)
+	    : (offset == 0? base : make_add_expr(base, 0-offset));
       NetESelect*ss = new NetESelect(net, base_adjusted, wid);
       ss->set_line(*this);
 
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Elaborate part "
-		 << "select base="<< *base << ", wid="<< wid << endl;
+		 << "select base="<< *base_adjusted << ", wid="<< wid << endl;
       }
 
       return ss;
@@ -1612,6 +1633,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.124  2007/04/01 05:28:26  steve
+ *  Get offsets into indexed part selects correct.
+ *
  * Revision 1.123  2007/03/26 19:23:13  steve
  *  Handle part select of array words.
  *
