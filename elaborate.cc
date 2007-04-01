@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.365 2007/03/22 16:08:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.366 2007/04/01 23:01:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1928,7 +1928,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       if (nparms() != def->port_count()) {
 	    cerr << get_line() << ": error: Port count mismatch in call to ``"
-		 << path_ << "''." << endl;
+		 << path_ << "''. Got " << nparms()
+		 << " ports, expecting " << def->port_count() << " ports." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -3401,6 +3402,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.366  2007/04/01 23:01:10  steve
+ *  Improve port mismatch error message.
+ *
  * Revision 1.365  2007/03/22 16:08:15  steve
  *  Spelling fixes from Larry
  *
