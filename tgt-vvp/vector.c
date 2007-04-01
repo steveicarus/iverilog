@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.14 2007/03/22 16:08:18 steve Exp $"
+#ident "$Id: vector.c,v 1.15 2007/04/01 05:26:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -167,17 +167,19 @@ void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
       assert(addr >= 8);
       assert((addr+wid) <= MAX_VEC);
 
-	/* Only certain types of expressions are savable. */
-      if ( ! test_expression_savable(exp))
-	    return;
-
 	/* When saving an expression to the lookaside, also clear the
 	   signal saved in the lookaside for these bits. The reason is
 	   that an expression calculation will replace any signal
 	   bits. */
+      for (idx = 0 ;  idx < wid ;  idx += 1)
+	    set_sig(addr+idx, 0, 0, 0);
+
+	/* Only certain types of expressions are savable. */
+      if ( ! test_expression_savable(exp))
+	    return;
+
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    set_exp(addr+idx, exp, idx);
-	    set_sig(addr+idx, 0, 0, 0);
       }
 
       if ((addr+wid) > lookaside_top)
@@ -372,6 +374,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.15  2007/04/01 05:26:17  steve
+ *  Fix that save expression lookaside always clears cached variable values.
+ *
  * Revision 1.14  2007/03/22 16:08:18  steve
  *  Spelling fixes from Larry
  *
