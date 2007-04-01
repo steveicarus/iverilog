@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.232 2007/03/22 16:08:17 steve Exp $"
+#ident "$Id: parse.y,v 1.233 2007/04/01 23:02:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -221,7 +221,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
-%type <exprs> expression_list
+%type <exprs> expression_list_with_nuls expression_list_proper
 %type <exprs> assign assign_list
 %type <indexed_identifier> indexed_identifier
 
@@ -236,7 +236,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
-%type <statement> statement statement_opt
+%type <statement> statement statement_or_null
 %type <statement_list> statement_list
 
 %type <letter> spec_polarity
@@ -443,24 +443,24 @@ block_item_decls_opt
 	;
 
 case_item
-	: expression_list ':' statement_opt
+	: expression_list_proper ':' statement_or_null
 		{ PCase::Item*tmp = new PCase::Item;
 		  tmp->expr = *$1;
 		  tmp->stat = $3;
 		  delete $1;
 		  $$ = tmp;
 		}
-	| K_default ':' statement_opt
+	| K_default ':' statement_or_null
 		{ PCase::Item*tmp = new PCase::Item;
 		  tmp->stat = $3;
 		  $$ = tmp;
 		}
-	| K_default  statement_opt
+	| K_default  statement_or_null
 		{ PCase::Item*tmp = new PCase::Item;
 		  tmp->stat = $2;
 		  $$ = tmp;
 		}
-	| error ':' statement_opt
+	| error ':' statement_or_null
 		{ yyerror(@1, "error: Incomprehensible case expression.");
 		  yyerrok;
 		}
@@ -969,9 +969,14 @@ expression
 
   /* Many contexts take a comma separated list of expressions. Null
      expressions can happen anywhere in the list, so there are two
-     extra rules for parsing and installing those nulls. */
-expression_list
-	: expression_list ',' expression
+     extra rules in expression_list_with_nuls for parsing and
+     installing those nulls.
+
+     The expression_list_proper rules do not allow null items in the
+     expression list, so can be used where nul expressions are not allowed. */
+
+expression_list_with_nuls
+	: expression_list_with_nuls ',' expression
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
 		  delete $1;
 		  $$ = tmp;
@@ -987,13 +992,25 @@ expression_list
 		  $$ = tmp;
 		}
 
-	| expression_list ','
+	| expression_list_with_nuls ','
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
 		  delete $1;
 		  $$ = tmp;
 		}
 	;
 
+expression_list_proper
+	: expression_list_proper ',' expression
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| expression
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
+        ;
 
 expr_primary
 	: number
@@ -1062,14 +1079,14 @@ expr_primary
      function call. If a system identifier, then a system function
      call. */
 
-	| identifier '(' expression_list ')'
+	| identifier '(' expression_list_proper ')'
                 { PECallFunction*tmp = new PECallFunction(*$1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER '(' expression_list ')'
+	| SYSTEM_IDENTIFIER '(' expression_list_proper ')'
                 { PECallFunction*tmp = new PECallFunction(hname_t($1), *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1083,14 +1100,14 @@ expr_primary
 
   /* Various kinds of concatenation expressions. */
 
-	| '{' expression_list '}'
+	| '{' expression_list_proper '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $2;
 		  $$ = tmp;
 		}
-	| '{' expression '{' expression_list '}' '}'
+	| '{' expression '{' expression_list_proper '}' '}'
 		{ PExpr*rep = $2;
 		  PEConcat*tmp = new PEConcat(*$4, rep);
 		  tmp->set_file(@1.text);
@@ -1098,7 +1115,7 @@ expr_primary
 		  delete $4;
 		  $$ = tmp;
 		}
-	| '{' expression '{' expression_list '}' error '}'
+	| '{' expression '{' expression_list_proper '}' error '}'
 		{ PExpr*rep = $2;
 		  PEConcat*tmp = new PEConcat(*$4, rep);
 		  tmp->set_file(@1.text);
@@ -1201,7 +1218,7 @@ function_item_list
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
 gate_instance
-	: IDENTIFIER '(' expression_list ')'
+	: IDENTIFIER '(' expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = $1;
 		  tmp->parms = $3;
@@ -1211,7 +1228,7 @@ gate_instance
 		  $$ = tmp;
 		}
 
-	| IDENTIFIER range '(' expression_list ')'
+	| IDENTIFIER range '(' expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  svector<PExpr*>*rng = $2;
 		  tmp->name = $1;
@@ -1224,7 +1241,7 @@ gate_instance
 		  delete rng;
 		  $$ = tmp;
 		}
-	| '(' expression_list ')'
+	| '(' expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = "";
 		  tmp->parms = $2;
@@ -1557,7 +1574,7 @@ lpvalue
 		  tmp->sel_ = PEIdent::SEL_IDX_DO;
 		  $$ = tmp;
 		}
-	| '{' expression_list '}'
+	| '{' expression_list_proper '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1831,12 +1848,15 @@ module_item
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
      definitions in the task_body to take on the scope of the task
-     instead of the module. */
+     instead of the module. Note that these runs accept for the task
+     body statement_or_null, although the standard does not allow null
+     statements in the task body. But we continue to accept it as an
+     extension. */
 
 	| K_task IDENTIFIER ';'
 		{ pform_push_scope($2); }
 	  task_item_list_opt
-	  statement_opt
+	  statement_or_null
 	  K_endtask
 		{ PTask*tmp = new PTask;
 		  perm_string tmp2 = lex_strings.make($2);
@@ -1853,7 +1873,7 @@ module_item
 		{ pform_push_scope($2); }
           '(' task_port_decl_list ')' ';'
 	  task_item_list_opt
-	  statement_opt
+	  statement_or_null
 	  K_endtask
 		{ PTask*tmp = new PTask;
 		  perm_string tmp2 = lex_strings.make($2);
@@ -2147,7 +2167,7 @@ localparam_assign_list
      approved by WG1364 on 6/28/1998. */
 
 parameter_value_opt
-	: '#' '(' expression_list ')'
+	: '#' '(' expression_list_with_nuls ')'
 		{ struct parmvalue_t*tmp = new struct parmvalue_t;
 		  tmp->by_order = $3;
 		  tmp->by_name = 0;
@@ -2944,23 +2964,23 @@ statement
 		{ yyerrok; }
 	| K_casez '(' expression ')' error K_endcase
 		{ yyerrok; }
-	| K_if '(' expression ')' statement_opt %prec less_than_K_else
+	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_if '(' expression ')' statement_opt K_else statement_opt
+	| K_if '(' expression ')' statement_or_null K_else statement_or_null
 		{ PCondit*tmp = new PCondit($3, $5, $7);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_if '(' error ')' statement_opt %prec less_than_K_else
+	| K_if '(' error ')' statement_or_null %prec less_than_K_else
 		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
-	| K_if '(' error ')' statement_opt K_else statement_opt
+	| K_if '(' error ')' statement_or_null K_else statement_or_null
 		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
@@ -2993,7 +3013,7 @@ statement
 		{ $$ = 0;
 		  yyerror(@3, "error: Error in while loop condition.");
 		}
-	| delay1 statement_opt
+	| delay1 statement_or_null
 		{ PExpr*del = (*$1)[0];
 		  assert($1->count() == 1);
 		  PDelayStatement*tmp = new PDelayStatement(del, $2);
@@ -3001,7 +3021,7 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| event_control statement_opt
+	| event_control statement_or_null
 		{ PEventStatement*tmp = $1;
 		  if (tmp == 0) {
 			yyerror(@1, "error: Invalid event control.");
@@ -3011,14 +3031,14 @@ statement
 			$$ = tmp;
 		  }
 		}
-	| '@' '*' statement_opt
+	| '@' '*' statement_or_null
 		{ PEventStatement*tmp = new PEventStatement;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_statement($3);
 		  $$ = tmp;
 		}
-	| '@' '(' '*' ')' statement_opt
+	| '@' '(' '*' ')' statement_or_null
 		{ PEventStatement*tmp = new PEventStatement;
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -3092,7 +3112,7 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_wait '(' expression ')' statement_opt
+	| K_wait '(' expression ')' statement_or_null
 		{ PEventStatement*tmp;
 		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
 		  tmp = new PEventStatement(etmp);
@@ -3101,7 +3121,7 @@ statement
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
-	| SYSTEM_IDENTIFIER '(' expression_list ')' ';'
+	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
 		{ PCallTask*tmp = new PCallTask(hname_t($1), *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -3117,12 +3137,25 @@ statement
 		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier '(' expression_list ')' ';'
+	| identifier '(' expression_list_proper ')' ';'
 		{ PCallTask*tmp = new PCallTask(*$1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  delete $3;
+		  $$ = tmp;
+		}
+
+  /* NOTE: The standard doesn't really support an empty argument list
+     between parentheses, but it seems natural, and people commonly
+     want it. So accept it explicitly. */
+
+	| identifier '(' ')' ';'
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier ';'
@@ -3153,7 +3186,7 @@ statement_list
 		}
 	;
 
-statement_opt
+statement_or_null
 	: statement
 	| ';' { $$ = 0; }
 	;
