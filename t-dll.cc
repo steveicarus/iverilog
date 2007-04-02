@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.169 2007/03/26 20:32:47 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.170 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2052,6 +2052,8 @@ void dll_target::signal(const NetNet*net)
       obj->isint_ = false;
       obj->local_ = (net->local_flag() && (net->peek_eref() == 0))? 1 : 0;
 
+      obj->array_dimensions_ = net->array_dimensions();
+
       switch (net->port_type()) {
 
 	  case NetNet::PINPUT:
@@ -2225,6 +2227,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.170  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.169  2007/03/26 20:32:47  steve
  *  More efficient allocate of ivl_nexus_t objects.
  *

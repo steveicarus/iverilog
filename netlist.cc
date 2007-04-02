@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.256 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: netlist.cc,v 1.257 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -400,7 +400,7 @@ const Link& NetDelaySrc::condit_pin() const
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
-    signed_(false), msb_(npins-1), lsb_(0), s0_(0), e0_(0),
+    signed_(false), msb_(npins-1), lsb_(0), dimensions_(0), s0_(0), e0_(0),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -434,6 +434,46 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       s->add_signal(this);
 }
 
+NetNet::NetNet(NetScope*s, perm_string n, Type t,
+	       long ms, long ls)
+: NetObj(s, n, 1),
+    sig_next_(0), sig_prev_(0), type_(t),
+    port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
+    msb_(ms), lsb_(ls), dimensions_(0), s0_(0), e0_(0),
+    local_flag_(false), eref_count_(0), lref_count_(0)
+{
+      assert(s);
+
+      verinum::V init_value = verinum::Vz;
+      Link::DIR dir = Link::PASSIVE;
+
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	    init_value = verinum::Vx;
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY0:
+	    init_value = verinum::V0;
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY1:
+	    init_value = verinum::V1;
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_name(perm_string::literal("P"), idx);
+	    pin(idx).set_dir(dir);
+	    pin(idx).set_init(init_value);
+      }
+
+      s->add_signal(this);
+}
+
 static unsigned calculate_count(long s, long e)
 {
       if (s >= e)
@@ -447,7 +487,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, calculate_count(array_s, array_e)),
     sig_next_(0), sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
-    msb_(ms), lsb_(ls), s0_(array_s), e0_(array_e),
+    msb_(ms), lsb_(ls), dimensions_(1), s0_(array_s), e0_(array_e),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -613,9 +653,7 @@ unsigned NetNet::sb_to_idx(long sb) const
 
 unsigned NetNet::array_dimensions() const
 {
-      if (s0_ == e0_)
-	    return 0;
-      return 1;
+      return dimensions_;
 }
 
 long NetNet::array_first() const
@@ -2287,6 +2325,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.257  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.256  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

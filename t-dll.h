@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.141 2007/03/26 20:32:47 steve Exp $"
+#ident "$Id: t-dll.h,v 1.142 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -572,6 +572,9 @@ struct ivl_signal_s {
       unsigned isint_  : 1;
       unsigned local_  : 1;
 
+	/* For now, support only 0 or 1 array dimensions. */
+      unsigned array_dimensions_ : 1;
+
 	/* These encode the run-time index for the least significant
 	   bit, and the distance to the second bit. */
       signed lsb_index;
@@ -676,6 +679,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.142  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.141  2007/03/26 20:32:47  steve
  *  More efficient allocate of ivl_nexus_t objects.
  *

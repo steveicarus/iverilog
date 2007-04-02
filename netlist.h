@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.374 2007/03/26 18:17:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.375 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 /*
@@ -469,7 +469,9 @@ class NetNet  : public NetObj {
 	// dimensions. If s0==e0, then this is not an array after
 	// all.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      long ms, long ls, long s0 =0, long e0 =0);
+		      long ms, long ls);
+      explicit NetNet(NetScope*s, perm_string n, Type t,
+		      long ms, long ls, long s0, long e0);
 
       virtual ~NetNet();
 
@@ -561,6 +563,7 @@ class NetNet  : public NetObj {
       bool isint_;		// original type of integer
 
       long msb_, lsb_;
+      const unsigned dimensions_;
       long s0_, e0_;
 
       bool local_flag_;
@@ -3495,6 +3498,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.375  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.374  2007/03/26 18:17:50  steve
  *  Remove pretense of general use for t_cookie.
  *

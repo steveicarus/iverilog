@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.181 2007/03/22 16:08:16 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.182 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include  <inttypes.h>
@@ -1473,6 +1473,10 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    Note that arraying of the signal into words is distinct from the
  *    vectors. The width of a signal is the width of a WORD.
  *
+ * ivl_signal_dimensions
+ *    The signal may be an array (of vectors) in which case this
+ *    function returns >0, the number of dimensions of the array.
+ *
  * ivl_signal_msb
  * ivl_signal_lsb
  * ivl_signal_width
@@ -1535,6 +1539,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
 extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
 extern int         ivl_signal_array_base(ivl_signal_t net);
 extern unsigned    ivl_signal_array_count(ivl_signal_t net);
+extern unsigned    ivl_signal_dimensions(ivl_signal_t net);
 extern int         ivl_signal_msb(ivl_signal_t net);
 extern int         ivl_signal_lsb(ivl_signal_t net);
 extern unsigned    ivl_signal_width(ivl_signal_t net);
@@ -1779,6 +1784,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.182  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.181  2007/03/22 16:08:16  steve
  *  Spelling fixes from Larry
  *

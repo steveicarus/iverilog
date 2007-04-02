@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.156 2007/03/22 16:08:18 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.157 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -985,7 +985,7 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
 	/* If the reg objects are collected into an array, then first
 	   write out the .array record to declare the array indices. */
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    unsigned word_count = ivl_signal_array_count(sig);
 	    unsigned iword;
 	    int last = ivl_signal_array_base(sig)+ivl_signal_array_count(sig)-1;
@@ -1036,6 +1036,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
       for (iword = 0 ;  iword < ivl_signal_array_count(sig); iword += 1) {
 
 	    unsigned word_count = ivl_signal_array_count(sig);
+	    unsigned dimensions = ivl_signal_dimensions(sig);
 	    struct vvp_nexus_data*nex_data;
 
 	      /* Connect the pin of the signal to something. */
@@ -1055,14 +1056,14 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  if (strength_aware_flag)
 			vec8 = "8";
 
-		  if (iword == 0 && word_count > 1) {
+		  if (iword == 0 && dimensions > 0) {
 			int last = ivl_signal_array_base(sig) + word_count-1;
 			int first = ivl_signal_array_base(sig);
 			fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
 				sig, vvp_mangle_name(ivl_signal_basename(sig)),
 				last, first);
 		  }
-		  if (word_count > 1) {
+		  if (dimensions > 0) {
 			/* If this is a word of an array, then use an
 			   array reference in place of the net name. */
 			fprintf(vvp_out, "v%p_%u .net%s%s v%p, %d %d, %s;"
@@ -2369,6 +2370,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.157  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.156  2007/03/22 16:08:18  steve
  *  Spelling fixes from Larry
  *

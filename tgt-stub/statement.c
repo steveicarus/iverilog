@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.12 2007/01/17 05:00:12 steve Exp $"
+#ident "$Id: statement.c,v 1.13 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,10 +40,10 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
       if (ivl_lval_idx(lval)) {
 	    fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");
 	    show_expression(ivl_lval_idx(lval), ind+6);
-	    if (ivl_signal_array_count(sig) <= 1) {
+	    if (ivl_signal_dimensions(sig) < 1) {
 		  fprintf(out, "%*sERROR: Address on signal with "
-			  "word count=%u\n", ind+4, "",
-			  ivl_signal_array_count(sig));
+			  "array dimensions=%u\n", ind+4, "",
+			  ivl_signal_dimensions(sig));
 		  stub_errors += 1;
 	    }
       } else if (ivl_signal_array_count(sig) > 1) {

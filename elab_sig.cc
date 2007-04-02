@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.48 2007/03/08 06:11:35 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.49 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -626,6 +626,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       long array_s0 = 0;
       long array_e0 = 0;
+      unsigned array_dimensions = 0;
 
 	/* If the ident has idx expressions, then this is a
 	   memory. It can only have the idx registers after the msb
@@ -664,6 +665,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    perm_string name = lex_strings.make(hname_.peek_tail_name());
 
+	    array_dimensions = 1;
 	    array_s0 = lval.as_long();
 	    array_e0 = rval.as_long();
       }
@@ -709,8 +711,10 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		 << " in scope " << scope->name() << endl;
       }
 
-      NetNet*sig = new NetNet(scope, name, wtype, msb, lsb,
-			      array_s0, array_e0);
+
+      NetNet*sig = array_dimensions > 0
+	    ? new NetNet(scope, name, wtype, msb, lsb, array_s0, array_e0)
+	    : new NetNet(scope, name, wtype, msb, lsb);
 
       ivl_variable_type_t use_data_type = data_type_;
       if (use_data_type == IVL_VT_NO_TYPE) {
@@ -738,6 +742,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.49  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.48  2007/03/08 06:11:35  steve
  *  Elaborate scopes of modules instantated in generate loops.
  *

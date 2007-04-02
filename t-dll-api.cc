@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.143 2007/03/26 16:51:48 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.144 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1502,6 +1502,11 @@ extern "C" unsigned ivl_signal_array_count(ivl_signal_t net)
       return net->array_words;
 }
 
+extern "C" unsigned ivl_signal_dimensions(ivl_signal_t net)
+{
+      return net->array_dimensions_;
+}
+
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 {
       if (net->nattr == 0)
@@ -1960,6 +1965,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.144  2007/04/02 01:12:34  steve
+ *  Seperate arrayness from word count
+ *
  * Revision 1.143  2007/03/26 16:51:48  steve
  *  do not calculate nexus name unless needed.
  *

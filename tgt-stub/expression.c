@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.4 2007/03/06 05:22:49 steve Exp $"
+#ident "$Id: expression.c,v 1.5 2007/04/02 01:12:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,8 +38,9 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
       unsigned width = ivl_signal_width(sig);
       const char*vt   = vt_type_string(net);
 
-      fprintf(out, "%*sArray: %s, word_count=%u, width=%u, type=%s\n",
-	      ind, "", name, ivl_signal_array_count(sig), width, vt);
+      fprintf(out, "%*sArray: %s, word_count=%u (%u dimensions), width=%u, type=%s\n",
+	      ind, "", name, ivl_signal_array_count(sig),
+	      ivl_signal_dimensions(sig), width, vt);
 }
 
 static void show_binary_expression(ivl_expr_t net, unsigned ind)
