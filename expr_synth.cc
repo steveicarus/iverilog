@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.83 2007/02/05 01:42:31 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.84 2007/04/04 02:31:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -519,7 +519,6 @@ NetNet* NetEBShift::synthesize(Design*des)
       osig->data_type(expr_type());
       osig->local_flag(true);
 
-      assert(op() == 'l');
       NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
 				      osig->vector_width(),
 				      rsig->vector_width(),
@@ -914,6 +913,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.84  2007/04/04 02:31:57  steve
+ *  Remove useless assert
+ *
  * Revision 1.83  2007/02/05 01:42:31  steve
  *  Set some missing local flags.
  *
