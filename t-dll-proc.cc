@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.69 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.70 2007/04/04 01:50:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -172,13 +172,16 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 
 		  cur->idx = 0;
 		    // If there is a word select expression, it is
-		    // really an array index.
+		    // really an array index. Note that the word index
+		    // expression is already converted to canonical
+		    // form by elaboration.
 		  if (asn->word()) {
 			assert(expr_ == 0);
 			asn->word()->expr_scan(this);
-
-			if (cur->n.sig->lsb_index != 0)
-			      sub_off_from_expr_(asn->sig()->lsb());
+			  // lsb_dist is the distance for this
+			  // index. If this is >1, then this may be an
+			  // array of arrays, so we need to multiply
+			  // to get the canonical index.
 			if (cur->n.sig->lsb_dist != 1)
 			      mul_expr_by_const_(cur->n.sig->lsb_dist);
 
@@ -732,6 +735,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.70  2007/04/04 01:50:38  steve
+ *  t-dll should not canonicalize word addresses, elaboration already does it.
+ *
  * Revision 1.69  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
