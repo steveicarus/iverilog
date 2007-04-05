@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.12 2005/02/14 04:58:50 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.13 2007/04/05 01:53:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,6 +77,10 @@ void NetCase::nex_output(NexusSet&out)
 {
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 
+	      // Empty statements clearly have no output.
+	    if (items_[idx].statement == 0)
+		  continue;
+
 	    assert(items_[idx].statement);
 	    items_[idx].statement->nex_output(out);
       }
@@ -119,6 +123,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.13  2007/04/05 01:53:52  steve
+ *  Probe of case statement inputs can skip nul statements.
+ *
  * Revision 1.12  2005/02/14 04:58:50  steve
  *  l-value input may be a vector.
  *
