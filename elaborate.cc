@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.366 2007/04/01 23:01:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.367 2007/04/05 03:09:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,10 +87,17 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(pin(0));
       assert(pin(1));
 
+      /* Normally, l-values to continuous assignments are NOT allowed
+         to implicitly declare nets. However, so many tools do allow
+         it that Icarus Verilog will allow it, at least if extensions
+         are enabled. */
+      bool implicit_lval_ok = false;
+      if (generation_flag == GN_VER2001X)
+	    implicit_lval_ok = true;
+
 	/* Elaborate the l-value. */
-      NetNet*lval = pin(0)->elaborate_lnet(des, scope);
+      NetNet*lval = pin(0)->elaborate_lnet(des, scope, implicit_lval_ok);
       if (lval == 0) {
-	    des->errors += 1;
 	    return;
       }
 
@@ -3402,6 +3409,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.367  2007/04/05 03:09:50  steve
+ *  Allow implicit wires in assign l-value.
+ *
  * Revision 1.366  2007/04/01 23:01:10  steve
  *  Improve port mismatch error message.
  *
