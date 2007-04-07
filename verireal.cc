@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.18 2006/10/03 05:06:00 steve Exp $"
+#ident "$Id: verireal.cc,v 1.19 2007/04/07 04:46:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,6 +104,20 @@ double verireal::as_double() const
       return value_;
 }
 
+verireal operator+ (const verireal&l, const verireal&r)
+{
+      verireal res;
+      res.value_ = l.value_ + r.value_;
+      return res;
+}
+
+verireal operator- (const verireal&l, const verireal&r)
+{
+      verireal res;
+      res.value_ = l.value_ - r.value_;
+      return res;
+}
+
 verireal operator* (const verireal&l, const verireal&r)
 {
       verireal res;
@@ -161,6 +175,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.19  2007/04/07 04:46:18  steve
+ *  Handle evaluate of addition of real valued constants.
+ *
  * Revision 1.18  2006/10/03 05:06:00  steve
  *  Support real valued specify delays, properly scaled.
  *

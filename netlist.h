@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.375 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.376 2007/04/07 04:46:18 steve Exp $"
 #endif
 
 /*
@@ -2622,6 +2622,7 @@ class NetEBinary  : public NetExpr {
       NetExpr* right_;
 
       void eval_sub_tree_();
+      bool get_real_arguments_(verireal&lv, verireal&rv);
 };
 
 /*
@@ -2641,8 +2642,11 @@ class NetEBAdd : public NetEBinary {
 
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBAdd* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*);
+
+    private:
+      NetECReal* eval_tree_real_();
 };
 
 /*
@@ -3498,6 +3502,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.376  2007/04/07 04:46:18  steve
+ *  Handle evaluate of addition of real valued constants.
+ *
  * Revision 1.375  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

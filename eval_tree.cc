@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.74 2007/03/08 05:30:02 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.75 2007/04/07 04:46:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,7 @@
 # include  <iostream>
 
 # include  "netlist.h"
+# include  "ivl_assert.h"
 
 NetExpr* NetExpr::eval_tree(int prune_to_width)
 {
@@ -51,9 +52,61 @@ void NetEBinary::eval_sub_tree_()
       }
 }
 
-NetEConst* NetEBAdd::eval_tree(int prune_to_width)
+bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
+{
+      switch (left_->expr_type()) {
+	  case IVL_VT_REAL: {
+		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
+		if (lc == 0) return false;
+		lval = lc->value();
+		break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+		if (lc == 0) return false;
+		verinum tmp = lc->value();
+		lval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      switch (right_->expr_type()) {
+	  case IVL_VT_REAL: {
+		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
+		if (rc == 0) return 0;
+		rval = rc->value();
+		break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+		if (rc == 0) return 0;
+		verinum tmp = rc->value();
+		rval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+
+      return true;
+}
+
+NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 {
       eval_sub_tree_();
+
+      if (left_->expr_type() == IVL_VT_REAL || right_->expr_type()==IVL_VT_REAL)
+	    return eval_tree_real_();
+
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 
@@ -113,6 +166,31 @@ NetEConst* NetEBAdd::eval_tree(int prune_to_width)
 
 	/* Nothing more to be done, the value is not constant. */
       return 0;
+}
+
+NetECReal* NetEBAdd::eval_tree_real_()
+{
+      verireal lval;
+      verireal rval;
+      bool flag = get_real_arguments_(lval, rval);
+      if (!flag) return 0;
+
+      verireal res_val;
+
+      switch (op()) {
+	  case '+':
+	    res_val = lval + rval;
+	    break;
+	  case '-':
+	    res_val = lval - rval;
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+      }
+
+      NetECReal*res = new NetECReal( res_val );
+      res->set_line(*this);
+      return res;
 }
 
 NetEConst* NetEBBits::eval_tree(int prune_to_width)
@@ -864,52 +942,14 @@ NetEConst* NetEBLogic::eval_tree(int prune_to_width)
       return new NetEConst(verinum(res, 1));
 }
 
+
 NetExpr* NetEBMult::eval_tree_real_()
 {
       verireal lval;
       verireal rval;
 
-      switch (left_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
-		if (lc == 0) return 0;
-		lval = lc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-		if (lc == 0) return 0;
-		verinum tmp = lc->value();
-		lval = verireal(tmp.as_long());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
-      switch (right_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
-		if (rc == 0) return 0;
-		rval = rc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-		if (rc == 0) return 0;
-		verinum tmp = rc->value();
-		rval = verireal(tmp.as_long());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
+      bool flag = get_real_arguments_(lval, rval);
+      if (! flag) return 0;
 
 
       NetECReal*res = new NetECReal(lval * rval);
@@ -942,48 +982,8 @@ NetExpr* NetEBPow::eval_tree_real_()
       verireal lval;
       verireal rval;
 
-      switch (left_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
-		if (lc == 0) return 0;
-		lval = lc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-		if (lc == 0) return 0;
-		verinum tmp = lc->value();
-		lval = verireal(tmp.as_long());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
-      switch (right_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
-		if (rc == 0) return 0;
-		rval = rc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-		if (rc == 0) return 0;
-		verinum tmp = rc->value();
-		rval = verireal(tmp.as_long());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
+      bool flag = get_real_arguments_(lval, rval);
+      if (! flag) return 0;
 
       NetECReal*res = new NetECReal( pow(lval,rval) );
       res->set_line(*this);
@@ -1655,6 +1655,9 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.75  2007/04/07 04:46:18  steve
+ *  Handle evaluate of addition of real valued constants.
+ *
  * Revision 1.74  2007/03/08 05:30:02  steve
  *  Limit the calculated widths of constants.
  *

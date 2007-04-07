@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.15 2007/02/02 04:33:01 steve Exp $"
+#ident "$Id: verireal.h,v 1.16 2007/04/07 04:46:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -43,6 +43,8 @@ class verinum;
 class verireal {
 
       friend ostream& operator<< (ostream&, const verireal&);
+      friend verireal operator+ (const verireal&, const verireal&);
+      friend verireal operator- (const verireal&, const verireal&);
       friend verireal operator* (const verireal&, const verireal&);
       friend verireal operator/ (const verireal&, const verireal&);
       friend verireal operator/ (const verireal&, const verinum&);
@@ -85,6 +87,9 @@ extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.16  2007/04/07 04:46:19  steve
+ *  Handle evaluate of addition of real valued constants.
+ *
  * Revision 1.15  2007/02/02 04:33:01  steve
  *  Use inttypes.h instead of stdint.h for portability.
  *
