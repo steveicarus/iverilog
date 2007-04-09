@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_finish.c,v 1.10 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: sys_finish.c,v 1.11 2007/04/09 22:49:33 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -25,9 +25,9 @@
 # include  "vpi_user.h"
 # include  <string.h>
 
-static PLI_INT32 sys_finish_calltf(char *name)
+static PLI_INT32 sys_finish_calltf(PLI_BYTE8*name)
 {
-      if (strcmp(name,"$stop") == 0) {
+      if (strcmp((char*)name,"$stop") == 0) {
 	    vpi_sim_control(vpiStop, 0);
 	    return 0;
       }
@@ -45,7 +45,7 @@ void sys_finish_register()
       tf_data.calltf    = sys_finish_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$finish";
+      tf_data.user_data = (PLI_BYTE8*)"$finish";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
@@ -53,12 +53,15 @@ void sys_finish_register()
       tf_data.calltf    = sys_finish_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$stop";
+      tf_data.user_data = (PLI_BYTE8*)"$stop";
       vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_finish.c,v $
+ * Revision 1.11  2007/04/09 22:49:33  steve
+ *  More strict use of PLI_BYTE8 type.
+ *
  * Revision 1.10  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *
