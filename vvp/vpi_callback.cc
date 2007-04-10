@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.45 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.46 2007/04/10 04:32:05 steve Exp $"
 #endif
 
 /*
@@ -39,12 +39,15 @@
 #endif
 # include  <stdlib.h>
 
+/*
+* The vpi_free_object() call to a callback doesn't actually delete
+* anything, we instead allow the object to run its course and delete
+* itself. The semantics of vpi_free_object for a callback is that it
+* deletes the *handle*, and not the object itself, so given the vvp
+* implementation, there is nothing to do here.
+*/
 static int free_simple_callback(vpiHandle ref)
 {
-      assert(ref);
-      assert(ref->vpi_type);
-      assert(ref->vpi_type->type_code == vpiCallback);
-      delete ref;
       return 1;
 }
 
@@ -98,6 +101,14 @@ struct __vpiCallback* new_vpi_callback()
       obj->cb_sync = 0;
       obj->next    = 0;
       return obj;
+}
+
+static void delete_vpi_callback(struct __vpiCallback* ref)
+{
+      assert(ref);
+      assert(ref->base.vpi_type);
+      assert(ref->base.vpi_type->type_code == vpiCallback);
+      delete ref;
 }
 
 
@@ -192,7 +203,7 @@ void sync_cb::run_run()
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
-      vpi_free_object(&cur->base);
+      delete_vpi_callback(cur);
 }
 
 static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
@@ -287,14 +298,14 @@ void vpiPresim(void) {
 	    cur = EndOfCompile;
 	    EndOfCompile = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpi_free_object(&cur->base);
+	    delete_vpi_callback(cur);
       }
 
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpi_free_object(&cur->base);
+	    delete_vpi_callback(cur);
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -313,7 +324,7 @@ void vpiPostsim(void) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpi_free_object(&cur->base);
+	    delete_vpi_callback(cur);
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -331,7 +342,7 @@ void vpiNextSimTime(void)
 	    cur = NextSimTime;
 	    NextSimTime = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpi_free_object(&cur->base);
+	    delete_vpi_callback(cur);
       }
 
 }
@@ -487,13 +498,13 @@ void vvp_vpi_callback::run_vpi_callbacks()
 
 		  vpi_callbacks_ = next;
 		  cur->next = 0;
-		  vpi_free_object(&cur->base);
+		  delete_vpi_callback(cur);
 
 	    } else {
 		  assert(prev->next == cur);
 		  prev->next = next;
 		  cur->next = 0;
-		  vpi_free_object(&cur->base);
+		  delete_vpi_callback(cur);
 	    }
       }
 }
@@ -588,6 +599,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.46  2007/04/10 04:32:05  steve
+ *  vpi_free_object doesnot free callback out from under runtime.
+ *
  * Revision 1.45  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
