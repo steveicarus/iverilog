@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.157 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.158 2007/04/10 01:26:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -987,18 +987,12 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	   write out the .array record to declare the array indices. */
       if (ivl_signal_dimensions(sig) > 0) {
 	    unsigned word_count = ivl_signal_array_count(sig);
-	    unsigned iword;
-	    int last = ivl_signal_array_base(sig)+ivl_signal_array_count(sig)-1;
+	    int last = ivl_signal_array_base(sig)+word_count-1;
 	    int first = ivl_signal_array_base(sig);
-	    fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
-		    sig, vvp_mangle_name(ivl_signal_basename(sig)),
-		    last, first);
-
-	      /* Scan the words of the array... */
-	    for (iword = 0 ;  iword < word_count ; iword += 1) {
-		  fprintf(vvp_out, "v%p_%u .var%s v%p, %d %d;\n",
-			  sig, iword, datatype_flag, sig, msb, lsb);
-	    }
+	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d, %d %d;\n",
+		    sig, datatype_flag,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    last, first, msb, lsb);
 
       } else {
 
@@ -1066,10 +1060,10 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  if (dimensions > 0) {
 			/* If this is a word of an array, then use an
 			   array reference in place of the net name. */
-			fprintf(vvp_out, "v%p_%u .net%s%s v%p, %d %d, %s;"
+			fprintf(vvp_out, "v%p_%u .net%s%s v%p %u, %d %d, %s;"
 				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, sig,
-				msb, lsb, driver,
+				iword, msb, lsb, driver,
 				nex_data->drivers_count,
 				strength_aware_flag?", strength-aware":"");
 		  } else {
@@ -2370,6 +2364,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.158  2007/04/10 01:26:15  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.157  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

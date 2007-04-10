@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: array.cc,v 1.1 2007/01/18 00:24:10 steve Exp $"
+#ident "$Id: array.cc,v 1.2 2007/04/10 01:26:16 steve Exp $"
 #endif
 
 # include  "array.h"
@@ -301,28 +301,21 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       return &(obj->base);
 }
 
-void array_attach_word(vvp_array_t array, vpiHandle word)
+void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 {
-      unsigned idx;
-      for (idx = 0 ;  idx < array->array_count ;  idx += 1) {
-	    if (array->words[idx] == 0) {
-		  array->words[idx] = word;
-		  break;
-	    }
-      }
-
-      assert(idx < array->array_count);
+      assert(addr < array->array_count);
+      array->words[addr] = word;
 
       if (struct __vpiSignal*sig = vpip_signal_from_handle(word)) {
 	    vvp_net_t*net = sig->node;
 	    assert(net);
 	    vvp_fun_signal_base*fun = dynamic_cast<vvp_fun_signal_base*>(net->fun);
 	    assert(fun);
-	    fun->attach_as_word(array, idx);
+	    fun->attach_as_word(array, addr);
       }
 }
 
-void compile_array(char*label, char*name, int last, int first)
+static vpiHandle common_array_build(char*label, char*name, int last, int first)
 {
       vpiHandle obj = vpip_make_array(label, name, first, last);
 	/* Add this into the table of VPI objects. This is used for
@@ -331,6 +324,51 @@ void compile_array(char*label, char*name, int last, int first)
       compile_vpi_symbol(label, obj);
 	/* Blindly attach to the scope as an object. */
       vpip_attach_to_current_scope(obj);
+
+      return obj;
+}
+
+void compile_var_array(char*label, char*name, int last, int first,
+		   int msb, int lsb, char signed_flag)
+{
+      vpiHandle obj = common_array_build(label, name, last, first);
+
+      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      vvp_array_t array = array_find(label);
+
+	/* Make the words. */
+      for (unsigned idx = 0 ;  idx < arr->array_count ;  idx += 1) {
+	    char buf[64];
+	    snprintf(buf, sizeof buf, "%s_%u", label, idx);
+	    compile_variablew(strdup(buf), array, idx, msb, lsb, signed_flag);
+      }
+
+      free(label);
+      free(name);
+}
+
+void compile_real_array(char*label, char*name, int last, int first,
+			int msb, int lsb)
+{
+      vpiHandle obj = common_array_build(label, name, last, first);
+
+      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      vvp_array_t array = array_find(label);
+
+	/* Make the words. */
+      for (unsigned idx = 0 ;  idx < arr->array_count ;  idx += 1) {
+	    char buf[64];
+	    snprintf(buf, sizeof buf, "%s_%u", label, idx);
+	    compile_varw_real(strdup(buf), array, idx, msb, lsb);
+      }
+
+      free(label);
+      free(name);
+}
+
+void compile_net_array(char*label, char*name, int last, int first)
+{
+      vpiHandle obj = common_array_build(label, name, last, first);
 
       free(label);
       free(name);
@@ -429,6 +467,9 @@ void compile_array_port(char*label, char*array, char*addr)
 
 /*
  * $Log: array.cc,v $
+ * Revision 1.2  2007/04/10 01:26:16  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.1  2007/01/18 00:24:10  steve
  *  Add missing array source files to CVS.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.87 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: compile.h,v 1.88 2007/04/10 01:26:16 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -243,7 +243,14 @@ extern char **compile_udp_table(char **table, char *row);
  * Memory Instances, Ports, and Initialization
  */
 
-extern void compile_array(char*label, char*name, int last, int first);
+extern void compile_var_array(char*label, char*name,
+			      int last, int first,
+			      int msb, int lsb, char signed_flag);
+extern void compile_real_array(char*label, char*name,
+			       int last, int first,
+			       int msb, int lsb);
+extern void compile_net_array(char*label, char*name,
+			      int last, int first);
 
 extern void compile_array_port(char*label, char*name, char*addr);
 
@@ -338,10 +345,6 @@ extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, char signed_flag);
 extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
-extern void compile_variablew(char*label, char*array_symbol,
-			     int msb, int lsb, char signed_flag);
-extern void compile_varw_real(char*label, char*array_symbol,
-			     int msb, int lsb);
 
 extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
@@ -352,6 +355,7 @@ extern void compile_net_real(char*label, char*name,
 			     unsigned argc, struct symb_s*argv);
 
 extern void compile_netw(char*label, char*array_symbol,
+			 unsigned long array_addr,
 			int msb, int lsb, bool signed_flag,
 			bool net8_flag,
 			unsigned argc, struct symb_s*argv);
@@ -368,6 +372,9 @@ extern void compile_alias_real(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.88  2007/04/10 01:26:16  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.87  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

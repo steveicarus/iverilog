@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.89 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: parse.y,v 1.90 2007/04/10 01:26:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,7 +67,8 @@ static vvp_fun_modpath*modpath_dst = 0;
 
 %token K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
-%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARRAY K_ARRAY_PORT
+%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARRAY K_ARRAY_I K_ARRAY_R
+%token K_ARRAY_S K_ARRAY_PORT
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -177,8 +178,20 @@ statement
 
 	| mem_init_stmt
 
+        | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
+ 
+        | T_LABEL K_ARRAY_I T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_var_array($1, $3, $5, $6, $8, $9, 2); }
+ 
+        | T_LABEL K_ARRAY_R T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_real_array($1, $3, $5, $6, $8, $9); }
+ 
+        | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
+                { compile_var_array($1, $3, $5, $6, $8, $9, 1); }
+ 
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ';'
-                { compile_array($1, $3, $5, $6); }
+                { compile_net_array($1, $3, $5, $6); }
  
         | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_SYMBOL ';'
 		{ compile_array_port($1, $3, $5); }
@@ -493,17 +506,6 @@ statement
 	| T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
 		{ compile_var_real($1, $3, $5, $6); }
 
-  /* Arrayed versions of variable directives. */
-
-	| T_LABEL K_VAR T_SYMBOL ',' signed_t_number signed_t_number ';'
-		{ compile_variablew($1, $3, $5, $6, 0 /* unsigned */ ); }
-
-	| T_LABEL K_VAR_S T_SYMBOL ',' signed_t_number signed_t_number ';'
-		{ compile_variablew($1, $3, $5, $6, 1 /* signed */ ); }
-
-	| T_LABEL K_VAR_I T_SYMBOL ',' T_NUMBER T_NUMBER ';'
-		{ compile_variablew($1, $3, $5, $6, 2 /* integer */); }
-
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
@@ -541,9 +543,10 @@ statement
 
   /* Arrayed versions of net directives. */
 
-	| T_LABEL K_NET T_SYMBOL ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_netw($1, $3, $5, $6, false, false, $8.cnt, $8.vect); }
+        | T_LABEL K_NET T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_netw($1, $3, $4, $6, $7, false, false, $9.cnt, $9.vect); }
 
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
@@ -813,6 +816,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.90  2007/04/10 01:26:16  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.89  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

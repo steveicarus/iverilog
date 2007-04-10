@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.65 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: lexor.lex,v 1.66 2007/04/10 01:26:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -97,6 +97,9 @@
 ".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }
 ".array" { return K_ARRAY; }
+".array/i" { return K_ARRAY_I; }
+".array/real" { return K_ARRAY_R; }
+".array/s" { return K_ARRAY_S; }
 ".array/port" { return K_ARRAY_PORT; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
@@ -214,6 +217,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.66  2007/04/10 01:26:16  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.65  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

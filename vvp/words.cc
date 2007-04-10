@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.8 2007/01/16 05:44:17 steve Exp $"
+#ident "$Id: words.cc,v 1.9 2007/04/10 01:26:16 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -32,7 +32,9 @@
 #endif
 # include  <assert.h>
 
-void compile_var_real(char*label, char*name, int msb, int lsb)
+static void __compile_var_real(char*label, char*name,
+			       vvp_array_t array, unsigned long array_addr,
+			       int msb, int lsb)
 {
       vvp_fun_signal_real*fun = new vvp_fun_signal_real;
       vvp_net_t*net = new vvp_net_t;
@@ -40,28 +42,45 @@ void compile_var_real(char*label, char*name, int msb, int lsb)
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_real_var(name, net);
-      free(name);
 
       compile_vpi_symbol(label, obj);
-      free(label);
 
-      vpip_attach_to_current_scope(obj);
+      if (name) {
+	    assert(!array);
+	    vpip_attach_to_current_scope(obj);
+      }
+      if (array) {
+	    assert(!name);
+	    array_attach_word(array, array_addr, obj);
+      }
+      free(label);
+      if (name) free(name);
+}
+
+void compile_var_real(char*label, char*name, int msb, int lsb)
+{
+      __compile_var_real(label, name, 0, 0, msb, lsb);
+}
+
+void compile_varw_real(char*label, vvp_array_t array,
+		       unsigned long addr,
+		       int msb, int lsb)
+{
+      __compile_var_real(label, 0, array, addr, msb, lsb);
 }
 
 /*
  * A variable is a special functor, so we allocate that functor and
  * write the label into the symbol table.
  */
-static void __compile_var(char*label, char*name, char*array_label,
+static void __compile_var(char*label, char*name,
+			  vvp_array_t array, unsigned long array_addr,
 			  int msb, int lsb, char signed_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
       vvp_fun_signal*vsig = new vvp_fun_signal(wid);
       vvp_net_t*node = new vvp_net_t;
-
-      vvp_array_t array = array_label? array_find(array_label) : 0;
-      assert(array_label? array!=0 : true);
 
       node->fun = vsig;
       define_functor_symbol(label, node);
@@ -81,23 +100,30 @@ static void __compile_var(char*label, char*name, char*array_label,
 	// it is attached to the addressed array.
       if (array) {
 	    assert(!name);
-	    array_attach_word(array, obj);
+	    array_attach_word(array, array_addr, obj);
       }
       free(label);
       if (name) free(name);
-      if (array_label) free(array_label);
 }
 
 void compile_variable(char*label, char*name,
 		      int msb, int lsb, char signed_flag)
 {
-      __compile_var(label, name, 0, msb, lsb, signed_flag);
+      __compile_var(label, name, 0, 0, msb, lsb, signed_flag);
 }
 
-void compile_variablew(char*label, char*array_label,
+/*
+* In this case, the variable it intended to be attached to the array
+* as a word. The array_addr is the *canonical* address of the word in
+* the array.
+*
+* This function is actually used by the compile_array function,
+* instead of directly by the parser.
+*/
+void compile_variablew(char*label, vvp_array_t array, unsigned long array_addr,
 		       int msb, int lsb, char signed_flag)
 {
-      __compile_var(label, 0, array_label, msb, lsb, signed_flag);
+      __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag);
 }
 
 /*
@@ -111,7 +137,8 @@ void compile_variablew(char*label, char*array_label,
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
  */
-static void __compile_net(char*label, char*name, char*array_label,
+static void __compile_net(char*label, char*name,
+			  char*array_label, unsigned long array_addr,
 			  int msb, int lsb,
 			  bool signed_flag, bool net8_flag,
 			  unsigned argc, struct symb_s*argv)
@@ -141,7 +168,7 @@ static void __compile_net(char*label, char*name, char*array_label,
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
       if (array)
-	    array_attach_word(array, obj);
+	    array_attach_word(array, array_addr, obj);
 
       free(label);
       if (name) free(name);
@@ -154,17 +181,17 @@ void compile_net(char*label, char*name,
 		 bool signed_flag, bool net8_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      __compile_net(label, name, 0,
+      __compile_net(label, name, 0, 0,
 		    msb, lsb, signed_flag, net8_flag,
 		    argc, argv);
 }
 
-void compile_netw(char*label, char*array_label,
+void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		 int msb, int lsb,
 		 bool signed_flag, bool net8_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      __compile_net(label, 0, array_label,
+      __compile_net(label, 0, array_label, array_addr,
 		    msb, lsb, signed_flag, net8_flag,
 		    argc, argv);
 }
@@ -241,6 +268,9 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 /*
  * $Log: words.cc,v $
+ * Revision 1.9  2007/04/10 01:26:16  steve
+ *  variable arrays generated without writing a record for each word.
+ *
  * Revision 1.8  2007/01/16 05:44:17  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory
