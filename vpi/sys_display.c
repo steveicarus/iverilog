@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.74 2007/03/14 04:05:51 steve Exp $"
+#ident "$Id: sys_display.c,v 1.75 2007/04/10 04:56:26 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -1251,24 +1251,42 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
+{
+	/* The default timeformat prints times in unit of simulation
+	   precision. */
+      timeformat_info.suff  = strdup("");
+      timeformat_info.units = vpi_get(vpiTimePrecision, 0);
+      timeformat_info.prec  = 0;
+      timeformat_info.width = 20;
+      return 0;
+}
+
 static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*xx)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
       vpiHandle tmp;
+      int lp;
 
-      assert(argv);
-      tmp = vpi_scan(argv);
-      assert(tmp);
-      assert(vpi_get(vpiType, tmp) == vpiConstant);
-
-      tmp = vpi_scan(argv);
-      assert(tmp);
-      assert(vpi_get(vpiType, tmp) == vpiConstant);
-
-      tmp = vpi_scan(argv);
-      assert(tmp);
-      assert(vpi_get(vpiType, tmp) == vpiConstant);
+      if (argv) {
+            for (lp=0; lp<4; lp++) {
+                  tmp = vpi_scan(argv);
+                  if (tmp) {
+                        if (vpi_get(vpiType, tmp) != vpiConstant) {
+                              vpi_printf("$timeformat's arguments must be");
+                              vpi_printf(" constant.\n");
+                              vpi_control(vpiFinish, -1);
+                        }
+                  } else {
+                        vpi_printf("$timeformat requires zero or four");
+                        vpi_printf(" arguments!\n");
+                        vpi_control(vpiFinish, -1);
+                        return 0;
+                  }
+            }
+	    vpi_free_object(argv);
+      }
 
       return 0;
 }
@@ -1278,40 +1296,35 @@ static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
       s_vpi_value value;
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
-      vpiHandle units = vpi_scan(argv);
-      vpiHandle prec  = vpi_scan(argv);
-      vpiHandle suff  = vpi_scan(argv);
-      vpiHandle wid   = vpi_scan(argv);
 
-      vpi_free_object(argv);
+      if (argv) {
+            vpiHandle units = vpi_scan(argv);
+            vpiHandle prec  = vpi_scan(argv);
+            vpiHandle suff  = vpi_scan(argv);
+            vpiHandle wid   = vpi_scan(argv);
 
-      value.format = vpiIntVal;
-      vpi_get_value(units, &value);
-      timeformat_info.units = value.value.integer;
+            vpi_free_object(argv);
 
-      value.format = vpiIntVal;
-      vpi_get_value(prec, &value);
-      timeformat_info.prec = value.value.integer;
+            value.format = vpiIntVal;
+            vpi_get_value(units, &value);
+            timeformat_info.units = value.value.integer;
 
-      value.format = vpiStringVal;
-      vpi_get_value(suff, &value);
-      timeformat_info.suff = strdup(value.value.str);
+            value.format = vpiIntVal;
+            vpi_get_value(prec, &value);
+            timeformat_info.prec = value.value.integer;
 
-      value.format = vpiIntVal;
-      vpi_get_value(wid, &value);
-      timeformat_info.width = value.value.integer;
+            value.format = vpiStringVal;
+            vpi_get_value(suff, &value);
+            timeformat_info.suff = strdup(value.value.str);
 
-      return 0;
-}
+            value.format = vpiIntVal;
+            vpi_get_value(wid, &value);
+            timeformat_info.width = value.value.integer;
+      } else {
+            /* If no arguments are given then use the default values. */
+            sys_end_of_compile(NULL);
+      }
 
-static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
-{
-	/* The default timeformat prints times in unit of simulation
-	   precision. */
-      timeformat_info.suff  = strdup("");
-      timeformat_info.units = vpi_get(vpiTimePrecision, 0);
-      timeformat_info.prec  = 0;
-      timeformat_info.width = 20;
       return 0;
 }
 
@@ -1560,6 +1573,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.75  2007/04/10 04:56:26  steve
+ *  Cleanup timeformat argument checking.
+ *
  * Revision 1.74  2007/03/14 04:05:51  steve
  *  VPI tasks take PLI_BYTE* by the standard.
  *
