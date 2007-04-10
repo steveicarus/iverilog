@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.158 2007/04/10 01:26:15 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.159 2007/04/10 03:40:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -34,8 +34,9 @@ struct vvp_nexus_data {
       const char*net_input;
       unsigned drivers_count;
       int flags;
-	/* draw_net_in_scope uses this */
+	/* draw_net_in_scope uses these to identify the controlling word. */
       ivl_signal_t net;
+      unsigned net_word;
 };
 #define VVP_NEXUS_DATA_STR 0x0001
 
@@ -1078,19 +1079,19 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				strength_aware_flag?", strength-aware":"");
 		  }
 		  nex_data->net = sig;
+		  nex_data->net_word = iword;
 
 	    } else {
 
 		  assert(word_count == 1);
-		  assert(ivl_signal_array_count(nex_data->net) == 1);
 
 		    /* Detect that this is an alias of nex_data->net. Create
 		    a different kind of node that refers to the alias
 		    source data instead of holding our own data. */
-		  fprintf(vvp_out, "v%p_0 .alias%s \"%s\", %d %d, v%p_0;\n",
+		  fprintf(vvp_out, "v%p_0 .alias%s \"%s\", %d %d, v%p_%u;\n",
 			  sig, datatype_flag,
 			  vvp_mangle_name(ivl_signal_basename(sig)),
-			  msb, lsb, nex_data->net);
+			  msb, lsb, nex_data->net, nex_data->net_word);
 	    }
       }
 }
@@ -2364,6 +2365,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.159  2007/04/10 03:40:04  steve
+ *  Allow nexus aliases to array words.
+ *
  * Revision 1.158  2007/04/10 01:26:15  steve
  *  variable arrays generated without writing a record for each word.
  *
