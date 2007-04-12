@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.38 2007/04/12 04:25:58 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.39 2007/04/12 04:45:52 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -319,6 +319,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	  case vpiDecStrVal:
 	  case vpiOctStrVal:
 	  case vpiHexStrVal:
+          case vpiScalarVal:
 	  case vpiIntVal:
 	  case vpiVectorVal:
 	  case vpiStringVal:
@@ -617,6 +618,9 @@ vpiHandle vpip_make_real_const(double value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.39  2007/04/12 04:45:52  steve
+ *  Support for vpi_get_value of scaler values. (ravi@bluespec)
+ *
  * Revision 1.38  2007/04/12 04:25:58  steve
  *  vpip_make_binary_const cannot free the string passed in to it.
  *

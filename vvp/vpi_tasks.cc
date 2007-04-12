@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.34 2007/04/12 04:33:39 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.35 2007/04/12 04:45:53 steve Exp $"
 #endif
 
 /*
@@ -291,6 +291,25 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
       vvp_vector4_t val (vwid);
 
       switch (vp->format) {
+
+          case vpiScalarVal: {
+	        switch(vp->value.scalar) {
+		      case vpi0:
+			val.set_bit(0, BIT4_0);
+                        break;
+		      case vpi1:
+                        val.set_bit(0, BIT4_1);
+                        break;
+		      case vpiX:
+                        val.set_bit(0, BIT4_X);
+                        break;
+		      case vpiZ:
+                        val.set_bit(0, BIT4_Z);
+                        break;
+		      default:
+                        assert(0);
+                }
+          }
 
 	  case vpiIntVal: {
 		long tmp = vp->value.integer;
@@ -614,6 +633,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.35  2007/04/12 04:45:53  steve
+ *  Support for vpi_get_value of scaler values. (ravi@bluespec)
+ *
  * Revision 1.34  2007/04/12 04:33:39  steve
  *  Add support for vpiSize on system task handle. (ravi@bluespec.com)
  *

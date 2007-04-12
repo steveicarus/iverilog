@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.52 2007/03/07 00:38:16 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.53 2007/04/12 04:45:52 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -409,6 +409,25 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 		vp->value.str = rbuf;
 		break;
 	  }
+
+          case vpiScalarVal: {
+	        // scalars should be of size 1
+	        assert(width == 1);
+	        switch(word_val.value(0)) {
+		    case BIT4_0:
+		      vp->value.scalar = vpi0;
+		      break;
+	            case BIT4_1:
+                      vp->value.scalar = vpi1;
+                      break;
+	            case BIT4_X:
+                      vp->value.scalar = vpiX;
+	            case BIT4_Z:
+                      vp->value.scalar = vpiZ;
+                      break;
+		}
+                break;
+          }
 
 	  case vpiIntVal: {
 		long val = 0;
@@ -848,6 +867,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.53  2007/04/12 04:45:52  steve
+ *  Support for vpi_get_value of scaler values. (ravi@bluespec)
+ *
  * Revision 1.52  2007/03/07 00:38:16  steve
  *  Lint fixes.
  *
