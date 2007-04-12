@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.75 2007/04/10 04:56:26 steve Exp $"
+#ident "$Id: sys_display.c,v 1.76 2007/04/12 02:50:51 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -1328,6 +1328,54 @@ static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
+static char *pts_convert(int value)
+{
+      char *string;
+      switch (value) {
+            case   0: string = "s";     break;
+            case  -1: string = "100ms"; break;
+            case  -2: string = "10ms";  break;
+            case  -3: string = "1ms";   break;
+            case  -4: string = "100us"; break;
+            case  -5: string = "10us";  break;
+            case  -6: string = "1us";   break;
+            case  -7: string = "100ns"; break;
+            case  -8: string = "10ns";  break;
+            case  -9: string = "1ns";   break;
+            case -10: string = "100ps"; break;
+            case -11: string = "10ps";  break;
+            case -12: string = "1ps";   break;
+            case -13: string = "100fs"; break;
+            case -14: string = "10fs";  break;
+            case -15: string = "1fs";   break;
+            default: assert(0);
+      }
+      return string;
+}
+
+static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
+{
+      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+      vpiHandle scope;
+      if (!argv) {
+            vpiHandle parent = vpi_handle(vpiScope, sys);
+            while (parent) {
+                   scope = parent;
+                   parent = vpi_handle(vpiScope, scope);
+            }
+      } else {
+            scope = vpi_scan(argv);
+            vpi_free_object(argv);
+      }
+      
+      vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, scope));
+      vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
+      vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));
+
+      return 0;
+}
+
 void sys_display_register()
 {
       s_cb_data cb_data;
@@ -1564,6 +1612,13 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       vpi_register_systf(&tf_data);
 
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$printtimescale";
+      tf_data.calltf    = sys_printtimescale_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      vpi_register_systf(&tf_data);
+
       cb_data.reason = cbEndOfCompile;
       cb_data.cb_rtn = sys_end_of_compile;
       cb_data.user_data = "system";
@@ -1573,6 +1628,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.76  2007/04/12 02:50:51  steve
+ *  Add printtimescale (caryr)
+ *
  * Revision 1.75  2007/04/10 04:56:26  steve
  *  Cleanup timeformat argument checking.
  *
