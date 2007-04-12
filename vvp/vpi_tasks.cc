@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.33 2006/09/22 22:33:00 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.34 2007/04/12 04:33:39 steve Exp $"
 #endif
 
 /*
@@ -79,6 +79,21 @@ static int systask_get(int type, vpiHandle ref)
       switch (type) {
 	  case vpiTimeUnit:
 	    return rfp->scope->time_units;
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+// support getting vpiSize for a system function call
+static int sysfunc_get(int type, vpiHandle ref)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+      switch (type) {
+	  case vpiSize:
+	    return rfp->vwid;
 	  default:
 	    return vpiUndefined;
       }
@@ -355,7 +370,7 @@ static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
-      0,
+      sysfunc_get,
       systask_get_str,
       0,
       sysfunc_put_value,
@@ -365,7 +380,7 @@ static const struct __vpirt vpip_sysfunc_rt = {
 
 static const struct __vpirt vpip_sysfunc_real_rt = {
       vpiSysFuncCall,
-      0,
+      sysfunc_get,
       systask_get_str,
       0,
       sysfunc_put_real_value,
@@ -375,7 +390,7 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
 
 static const struct __vpirt vpip_sysfunc_4net_rt = {
       vpiSysFuncCall,
-      0,
+      sysfunc_get,
       systask_get_str,
       0,
       sysfunc_put_4net_value,
@@ -385,7 +400,7 @@ static const struct __vpirt vpip_sysfunc_4net_rt = {
 
 static const struct __vpirt vpip_sysfunc_rnet_rt = {
       vpiSysFuncCall,
-      0,
+      sysfunc_get,
       systask_get_str,
       0,
       sysfunc_put_rnet_value,
@@ -599,6 +614,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.34  2007/04/12 04:33:39  steve
+ *  Add support for vpiSize on system task handle. (ravi@bluespec.com)
+ *
  * Revision 1.33  2006/09/22 22:33:00  steve
  *  Correct return code for vpi_put_userdata.
  *
