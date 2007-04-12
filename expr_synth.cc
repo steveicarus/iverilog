@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.84 2007/04/04 02:31:57 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.85 2007/04/12 05:21:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -665,46 +665,36 @@ NetNet* NetEUReduce::synthesize(Design*des)
       osig->data_type(expr_type());
       osig->local_flag(true);
 
-      perm_string oname = scope->local_symbol();
-      NetLogic*gate;
+      NetUReduce::TYPE rtype = NetUReduce::NONE;
 
       switch (op()) {
 	  case 'N':
 	  case '!':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::NOR, 1);
+	    rtype = NetUReduce::NOR;
 	    break;
-
 	  case '&':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::AND, 1);
+	    rtype = NetUReduce::AND;
 	    break;
-
 	  case '|':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::OR, 1);
+	    rtype = NetUReduce::OR;
 	    break;
-
 	  case '^':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::XOR, 1);
+	    rtype = NetUReduce::XOR;
 	    break;
-
 	  case 'A':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::NAND, 1);
+	    rtype = NetUReduce::XNOR;
 	    break;
-
 	  case 'X':
-	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::XNOR, 1);
+	    rtype = NetUReduce::XNOR;
 	    break;
-
 	  default:
 	    cerr << get_line() << ": internal error: "
 		 << "Unable to synthesize " << *this << "." << endl;
 	    return 0;
       }
+
+      NetUReduce*gate = new NetUReduce(scope, scope->local_symbol(),
+				       rtype, isig->vector_width());
 
       des->add_node(gate);
       connect(gate->pin(0), osig->pin(0));
@@ -713,34 +703,7 @@ NetNet* NetEUReduce::synthesize(Design*des)
 
       return osig;
 }
-#if 0
-NetNet* NetEMemory::synthesize(Design *des)
-{
-      NetNet*adr = idx_->synthesize(des);
 
-      NetScope*scope = adr->scope();
-
-      NetRamDq*ram = new NetRamDq(scope, scope->local_symbol(),
-				  mem_, adr->vector_width());
-      des->add_node(ram);
-      ram->set_line(*this);
-
-      connect(ram->pin_Address(), adr->pin(0));
-
-	/* Create an output signal to receive the data. Assume that
-	   memories return LOGIC. */
-      NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, ram->width());
-      osig->data_type(IVL_VT_LOGIC);
-      osig->local_flag(true);
-      osig->set_line(*this);
-
-      connect(ram->pin_Q(), osig->pin(0));
-
-      return osig;
-
-}
-#endif
 NetNet* NetESelect::synthesize(Design *des)
 {
 
@@ -913,6 +876,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.85  2007/04/12 05:21:54  steve
+ *  fix handling of unary reduction logic in certain nets.
+ *
  * Revision 1.84  2007/04/04 02:31:57  steve
  *  Remove useless assert
  *
