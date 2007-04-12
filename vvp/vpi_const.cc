@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.37 2007/02/25 23:08:24 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.38 2007/04/12 04:25:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -350,7 +350,7 @@ static const struct __vpirt vpip_binary_rt = {
  * ASCII string, with each letter a 4-value bit. The first character
  * may be an 's' if the vector is signed.
  */
-vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
+vpiHandle vpip_make_binary_const(unsigned wid, const char*bits)
 {
       struct __vpiBinaryConst*obj;
 
@@ -387,7 +387,6 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 	    obj->bits.set_bit(idx, val);
       }
 
-      free(bits);
       return &(obj->base);
 }
 
@@ -618,6 +617,9 @@ vpiHandle vpip_make_real_const(double value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.38  2007/04/12 04:25:58  steve
+ *  vpip_make_binary_const cannot free the string passed in to it.
+ *
  * Revision 1.37  2007/02/25 23:08:24  steve
  *  Process Verilog escape sequences much earlier.
  *

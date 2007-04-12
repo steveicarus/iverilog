@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.90 2007/04/10 01:26:16 steve Exp $"
+#ident "$Id: parse.y,v 1.91 2007/04/12 04:25:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -668,7 +668,9 @@ argument
 	: T_STRING
 		{ $$ = vpip_make_string_const($1); }
 	| T_VECTOR
-		{ $$ = vpip_make_binary_const($1.idx, $1.text); }
+		{ $$ = vpip_make_binary_const($1.idx, $1.text);
+		  free($1.text);
+		}
 	;
 
 
@@ -816,6 +818,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.91  2007/04/12 04:25:58  steve
+ *  vpip_make_binary_const cannot free the string passed in to it.
+ *
  * Revision 1.90  2007/04/10 01:26:16  steve
  *  variable arrays generated without writing a record for each word.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.73 2007/02/25 23:08:24 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.74 2007/04/12 04:25:59 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -308,7 +308,7 @@ struct __vpiBinaryConst {
       int sized_flag   :1;
 };
 
-vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
+vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag);
 
@@ -451,6 +451,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.74  2007/04/12 04:25:59  steve
+ *  vpip_make_binary_const cannot free the string passed in to it.
+ *
  * Revision 1.73  2007/02/25 23:08:24  steve
  *  Process Verilog escape sequences much earlier.
  *
