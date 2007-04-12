@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.159 2007/04/10 03:40:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.160 2007/04/12 04:40:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1939,6 +1939,7 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 	    fprintf(vvp_out, "r");
 	    break;
 	  case IVL_VT_LOGIC:
+          case IVL_VT_BOOL:
 	    fprintf(vvp_out, "v%d", width_of_nexus(nex));
 	    break;
 	  default:
@@ -2365,6 +2366,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.160  2007/04/12 04:40:37  steve
+ *  nexus vectors of VT_BOOL objects. (ravi@bluespec)
+ *
  * Revision 1.159  2007/04/10 03:40:04  steve
  *  Allow nexus aliases to array words.
  *
