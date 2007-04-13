@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.142 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: pform.cc,v 1.143 2007/04/13 02:34:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1563,16 +1563,13 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 }
 
 extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
-					 bool edge_flag, /*posedge==true */
+					 int edge_flag, /*posedge==true */
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst,
 					 PExpr*data_source_expression)
 {
       PSpecPath*tmp = pform_make_specify_path(li, src, pol, full_flag, dst);
-      if (edge_flag)
-	    tmp->edge = 1;
-      else
-	    tmp->edge = -1;
+      tmp->edge = edge_flag;
       tmp->data_source_expression = data_source_expression;
       return tmp;
 }
@@ -1768,6 +1765,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.143  2007/04/13 02:34:35  steve
+ *  Parse edge sensitive paths without edge specifier.
+ *
  * Revision 1.142  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *

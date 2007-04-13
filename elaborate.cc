@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.367 2007/04/05 03:09:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.368 2007/04/13 02:34:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -3007,7 +3007,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 
       ivl_assert(*this, conditional || (condition==0));
-      ivl_assert(*this, data_source_expression==0 || edge != 0);
 
       ndelays = delays.size();
       if (ndelays > 12)
@@ -3099,8 +3098,13 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 					       src.size(), condit_sig);
 	    path->set_line(*this);
 
-	    if (edge > 0) path->set_posedge();
-	    if (edge < 0) path->set_negedge();
+	      // The presence of the data_source_expression indicates
+	      // that this is an edge sensitive path. If so, then set
+	      // the edges. Note that edge==0 is BOTH edges.
+	    if (data_source_expression) {
+		  if (edge >= 0) path->set_posedge();
+		  if (edge <= 0) path->set_negedge();
+	    }
 
 	    switch (ndelays) {
 		case 12:
@@ -3409,6 +3413,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.368  2007/04/13 02:34:35  steve
+ *  Parse edge sensitive paths without edge specifier.
+ *
  * Revision 1.367  2007/04/05 03:09:50  steve
  *  Allow implicit wires in assign l-value.
  *

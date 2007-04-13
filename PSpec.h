@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PSpec.h,v 1.2 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: PSpec.h,v 1.3 2007/04/13 02:34:35 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -47,8 +47,8 @@ class PExpr;
 * is the condition expression. If the condition expression is nil,
 * then this is an ifnone conditional path.
 *
-* If edge != 0, then the path is edge sensitive and the optional
-* data_source_expression may be present.
+* If data_source_expression != nil, then the path is edge sensitive
+* and the edge might not be 0.
 */
 class PSpecPath  : public LineInfo {
 

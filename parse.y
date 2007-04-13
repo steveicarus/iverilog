@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.233 2007/04/01 23:02:03 steve Exp $"
+#ident "$Id: parse.y,v 1.234 2007/04/13 02:34:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2626,18 +2626,22 @@ specify_edge_path_decl
 edge_operator : K_posedge { $$ = true; } | K_negedge { $$ = false; } ;
 
 specify_edge_path
-	: '(' edge_operator specify_path_identifiers spec_polarity
-	      K_EG specify_path_identifiers ')'
-                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, false, $6, 0); }
+	: '('               specify_path_identifiers spec_polarity
+	      K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+                    { int edge_flag = 0;
+		      $$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, false, $6, $8); }
 	| '(' edge_operator specify_path_identifiers spec_polarity
 	      K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, false, $7, $9);}
-	| '(' edge_operator specify_path_identifiers spec_polarity
-	      K_SG specify_path_identifiers ')'
-                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, true, $6, 0); }
+                    { int edge_flag = $2? 1 : -1;
+		      $$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, false, $7, $9);}
+	| '('               specify_path_identifiers spec_polarity
+	      K_SG  '(' specify_path_identifiers polarity_operator expression ')' ')'
+                    { int edge_flag = 0;
+		      $$ = pform_make_specify_edge_path(@1, edge_flag, $2, $3, true, $6, $8); }
 	| '(' edge_operator specify_path_identifiers spec_polarity
 	      K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
-                    { $$ = pform_make_specify_edge_path(@1, $2, $3, $4, true, $7, $9); }
+                    { int edge_flag = $2? 1 : -1;
+		      $$ = pform_make_specify_edge_path(@1, edge_flag, $3, $4, true, $7, $9); }
 	;
 
 polarity_operator

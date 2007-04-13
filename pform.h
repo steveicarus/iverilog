@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.88 2007/02/12 01:52:21 steve Exp $"
+#ident "$Id: pform.h,v 1.89 2007/04/13 02:34:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -266,7 +266,7 @@ extern PSpecPath*pform_make_specify_path(const struct vlltype&li,
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst);
 extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
-					 bool edge_flag, /*posedge==true */
+					 int edge_flag, /*posedge==true */
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst,
 					 PExpr*data_source_expression);
@@ -334,6 +334,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.89  2007/04/13 02:34:35  steve
+ *  Parse edge sensitive paths without edge specifier.
+ *
  * Revision 1.88  2007/02/12 01:52:21  steve
  *  Parse all specify paths to pform.
  *
