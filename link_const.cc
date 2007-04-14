@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: link_const.cc,v 1.17 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: link_const.cc,v 1.18 2007/04/14 03:10:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -132,6 +132,8 @@ verinum::V Nexus::driven_value() const
 
 	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
 
+		    // If we find an attached SUPPLY0/1, the we know
+		    // from that what the driven value is. Stop now.
 		  if (sig->type() == NetNet::SUPPLY0) {
 			driven_ = V0;
 			return verinum::V0;
@@ -139,6 +141,16 @@ verinum::V Nexus::driven_value() const
 		  if (sig->type() == NetNet::SUPPLY1) {
 			driven_ = V1;
 			return verinum::V1;
+		  }
+
+		    // If we find an attached TRI0/1, then this is a
+		    // good guess for the driven value, but keep
+		    // looking for something better.
+		  if (sig->type() == NetNet::TRI0) {
+			val = verinum::V0;
+		  }
+		  if (sig->type() == NetNet::TRI1) {
+			val = verinum::V1;
 		  }
 	    }
       }
@@ -164,6 +176,9 @@ verinum::V Nexus::driven_value() const
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.18  2007/04/14 03:10:51  steve
+ *  Properly account for tri0 connected to otherwise open mux input.
+ *
  * Revision 1.17  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *
