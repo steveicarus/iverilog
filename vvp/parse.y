@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.91 2007/04/12 04:25:58 steve Exp $"
+#ident "$Id: parse.y,v 1.92 2007/04/14 03:27:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -365,6 +365,10 @@ statement
   /* System function call */
         | T_LABEL K_SFUNC T_STRING ',' T_STRING ',' symbols ';'
                 { compile_sfunc($1, $3, $5, $7.cnt, $7.vect); }
+
+  /* System function call - no arguments */
+        | T_LABEL K_SFUNC T_STRING ',' T_STRING ';'
+                { compile_sfunc($1, $3, $5, 0, NULL); }
 
   /* Shift nodes. */
 
@@ -818,6 +822,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.92  2007/04/14 03:27:51  steve
+ *  Handle system functions with no arguments.
+ *
  * Revision 1.91  2007/04/12 04:25:58  steve
  *  vpip_make_binary_const cannot free the string passed in to it.
  *
