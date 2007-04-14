@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.75 2007/03/22 16:08:19 steve Exp $
+ *  $Id: opcodes.txt,v 1.76 2007/04/14 04:43:02 steve Exp $
  */
 
 
@@ -379,6 +379,12 @@ ended, then the %join does not block or yield the thread.
 This instruction loads a word from the specified array. The word
 address is in index register 3. The width should match the width of
 the array word.
+
+* %load/avx.p <bit>, <array-label>, <index>
+
+This instruction is similar ro %load/av, but it loads only a single
+bit, and the <index> is the selector for the bit to use. If <index> is
+out of range, then x is loaded.
 
 * %load/mv <bit>, <memory-label>, <wid>
 

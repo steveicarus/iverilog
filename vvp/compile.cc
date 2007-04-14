@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.230 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.231 2007/04/14 04:43:02 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -134,6 +134,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
+      { "%load/avx.p",of_LOAD_AVX_P,3,{OA_BIT1, OA_ARR_PTR,  OA_BIT2} },
       { "%load/mv",of_LOAD_MV,3,  {OA_BIT1,     OA_MEM_PTR,  OA_BIT2} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
@@ -1623,6 +1624,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.231  2007/04/14 04:43:02  steve
+ *  Finish up part select of array words.
+ *
  * Revision 1.230  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

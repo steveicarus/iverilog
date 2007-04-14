@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.82 2007/02/14 05:58:14 steve Exp $"
+#ident "$Id: codes.h,v 1.83 2007/04/14 04:43:02 steve Exp $"
 #endif
 
 
@@ -89,6 +89,7 @@ extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AV(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
@@ -185,6 +186,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.83  2007/04/14 04:43:02  steve
+ *  Finish up part select of array words.
+ *
  * Revision 1.82  2007/02/14 05:58:14  steve
  *  Add the mov/wr opcode.
  *

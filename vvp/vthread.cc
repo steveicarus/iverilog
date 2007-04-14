@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.161 2007/02/14 05:58:14 steve Exp $"
+#ident "$Id: vthread.cc,v 1.162 2007/04/14 04:43:02 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1959,6 +1959,36 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/avx.p <bit>, <array-label>, <idx> ;
+ *
+ * <bit> is the thread bit address for the result
+ * <array-label> is the array to access, and
+ * <wid> is the width of the word to read.
+ *
+ * The address of the word in the array is in index register 3.
+ */
+bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned index = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+
+      unsigned use_index = thr->words[index].w_int;
+
+      vvp_vector4_t word = array_get_word(cp->array, adr);
+
+      if (use_index >= word.size()) {
+	    thr_put_bit(thr, bit, BIT4_X);
+      } else {
+	    thr_put_bit(thr, bit, word.value(use_index));
+      }
+
+      thr->words[index].w_int = use_index + 1;
+
+      return true;
+}
+
+/*
  * %load/mv <bit>, <mem-label>, <wid> ;
  *
  * <bit> is the thread bit address for the result
@@ -3403,6 +3433,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.162  2007/04/14 04:43:02  steve
+ *  Finish up part select of array words.
+ *
  * Revision 1.161  2007/02/14 05:58:14  steve
  *  Add the mov/wr opcode.
  *
