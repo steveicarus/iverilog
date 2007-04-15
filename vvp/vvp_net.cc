@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.62 2007/03/22 16:08:19 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.63 2007/04/15 02:07:24 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -1085,6 +1085,9 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
 
       vvp_vector2_t mask (1, dividend.size());
 
+	// Make the dividend 1 bit larger to prevent overflow of
+	// divtmp in startup.
+      dividend = vvp_vector2_t(dividend, dividend.size()+1);
       vvp_vector2_t divtmp (divisor, dividend.size());
 
       while (divtmp < dividend) {
@@ -2290,6 +2293,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.63  2007/04/15 02:07:24  steve
+ *  Fix div/mod calculation that caused a hang for some divisions.
+ *
  * Revision 1.62  2007/03/22 16:08:19  steve
  *  Spelling fixes from Larry
  *
