@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.85 2007/04/12 05:21:54 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.86 2007/04/15 01:37:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,7 @@
 
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_assert.h"
 
 NetNet* NetExpr::synthesize(Design*des)
 {
@@ -713,31 +714,15 @@ NetNet* NetESelect::synthesize(Design *des)
 
       NetScope*scope = sub->scope();
 
-      unsigned off = 0;
+      NetNet*off = 0;
 
+	// This handles the case that the NetESelect exists to do an
+	// actual part/bit select. Generate a NetPartSelect object to
+	// do the work, and replace "sub" with the selected output.
       if (base_ != 0) {
-	      // For now, only handle constant part selects in this
-	      // context. NOTE: the elaboration that created the
-	      // NetESelect already translated the part base to
-	      // canonical form, so the base_ is canonical already.
-	    NetEConst*bcon = dynamic_cast<NetEConst*>(base_);
-	    assert(bcon);
+	    off = base_->synthesize(des);
 
-	    long bval = bcon->value().as_long();
-	    assert(bval >= 0);
-	    off = bval;
-      }
-
-	/* If there is a part select, then generate a PartSelect node
-	   to actually do the part select. This does not expansion,
-	   that is handled later. */
-      if ((off != 0) || (off+expr_width() < sub->vector_width())) {
-	    unsigned wid = expr_width();
-	    if ((wid + off) > sub->vector_width())
-		  wid = sub->vector_width() - off;
-
-	    NetPartSelect*sel = new NetPartSelect(sub, off, wid,
-						  NetPartSelect::VP);
+	    NetPartSelect*sel = new NetPartSelect(sub, off, expr_width());
 	    sel->set_line(*this);
 	    des->add_node(sel);
 
@@ -750,9 +735,19 @@ NetNet* NetESelect::synthesize(Design *des)
 	    connect(sub->pin(0), sel->pin(0));
       }
 
-	/* Done? Vector is already the right width? then stop now. */
+
+	// Now look for the case that the NetESelect actually exists
+	// to change the width of the expression. (i.e. to do
+	// padding.) If this was for an actual part select that at
+	// this point the output vector_width is exactly right, and we
+	// are done.
       if (sub->vector_width() == expr_width())
 	    return sub;
+
+	// The vector_width is not exactly right, so the source is
+	// probably asking for padding. Create nodes to do sign
+	// extension or 0 extension, depending on the has_sign() mode
+	// of the expression.
 
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, expr_width());
@@ -876,6 +871,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.86  2007/04/15 01:37:29  steve
+ *  Allow bit/part select of vectors in continuous assignments.
+ *
  * Revision 1.85  2007/04/12 05:21:54  steve
  *  fix handling of unary reduction logic in certain nets.
  *
