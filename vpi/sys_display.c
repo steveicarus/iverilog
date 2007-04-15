@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.76 2007/04/12 02:50:51 steve Exp $"
+#ident "$Id: sys_display.c,v 1.77 2007/04/15 20:45:40 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -1604,6 +1604,30 @@ void sys_display_register()
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
 
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fwriteh";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fwriteh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fwriteo";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fwriteo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fwriteb";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fwriteb";
+      vpi_register_systf(&tf_data);
+
 	//============================ timeformat
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$timeformat";
@@ -1628,6 +1652,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.77  2007/04/15 20:45:40  steve
+ *  Attach line number information to task calls.
+ *
  * Revision 1.76  2007/04/12 02:50:51  steve
  *  Add printtimescale (caryr)
  *

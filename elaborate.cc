@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.368 2007/04/13 02:34:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.369 2007/04/15 20:45:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1947,6 +1947,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	   to make a sequential block to hold the generated code. */
       if (nparms() == 0) {
 	    cur = new NetUTask(task);
+	    cur->set_line(*this);
 	    return cur;
       }
 
@@ -1987,6 +1988,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	/* Generate the task call proper... */
       cur = new NetUTask(task);
+      cur->set_line(*this);
       block->append(cur);
 
 
@@ -3413,6 +3415,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.369  2007/04/15 20:45:40  steve
+ *  Attach line number information to task calls.
+ *
  * Revision 1.368  2007/04/13 02:34:35  steve
  *  Parse edge sensitive paths without edge specifier.
  *
