@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.369 2007/04/15 20:45:40 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.370 2007/04/16 01:10:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -3006,6 +3006,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_line() << ":      : Use -g no-specify to ignore"
 		 << " specify blocks." << endl;
 	    des->errors += 1;
+	    return;
       }
 
       ivl_assert(*this, conditional || (condition==0));
@@ -3415,6 +3416,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.370  2007/04/16 01:10:07  steve
+ *  Properly ignore unsupported ifnone.
+ *
  * Revision 1.369  2007/04/15 20:45:40  steve
  *  Attach line number information to task calls.
  *
