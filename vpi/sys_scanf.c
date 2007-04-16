@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.7 2007/03/22 16:08:19 steve Exp $"
+#ident "$Id: sys_scanf.c,v 1.8 2007/04/16 00:09:58 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -36,14 +36,17 @@ struct byte_source {
 
 static int byte_getc(struct byte_source*byte)
 {
+      int ch;
       if (byte->str) {
 	    if (byte->str[0] == 0)
 		  return EOF;
-	    else
-		  return *(byte->str)++;
+
+	    return *(byte->str)++;
       }
 
-      return fgetc(byte->fd);
+      ch = fgetc(byte->fd);
+      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch);
+      return ch;
 }
 
 static void byte_ungetc(struct byte_source*src, int ch)
@@ -231,6 +234,9 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
       int rc = 0;
       int ch;
 
+      int match_fail = 0;
+
+	/* Get the format string. */
       item = vpi_scan(argv);
       assert(item);
 
@@ -238,7 +244,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
       vpi_get_value(item, &val);
       fmtp = fmt = strdup(val.value.str);
 
-      while ( fmtp && *fmtp != 0 ) {
+      while ( fmtp && *fmtp != 0 && !match_fail) {
 
 	    if (isspace(*fmtp)) {
 		    /* White space matches a string of white space in
@@ -296,7 +302,14 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 		  code = *fmtp;
 		  fmtp += 1;
 
+		    /* The format string is parsed:
+		       - length_field is the length,
+		       - code is the format code character,
+		       - suppress_flag is true if the length is an arg.
+		       Now we interpret the code. */
 		  switch (code) {
+
+			  /* Read a '%' character from the input. */
 		      case '%':
 			ch = byte_getc(src);
 			if (ch != '%') {
@@ -305,14 +318,19 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			}
 			break;
 
+			/* Read a binary integer. If there is a match,
+			   store that integer in the next argument and
+			   increment the completion count. */
 		      case 'b':
 			  /* binary integer */
 			tmp = malloc(2);
 			value = 0;
 			tmp[0] = 0;
+			match_fail = 1;
 
 			ch = byte_getc(src);
 			while (strchr("01xXzZ?_", ch)) {
+			      match_fail = 0;
 			      if (ch == '?')
 				    ch = 'x';
 			      if (ch != '_') {
@@ -325,6 +343,12 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			}
 			byte_ungetc(src, ch);
 
+			if (match_fail) {
+			      free(tmp);
+			      break;
+			}
+
+			  /* Matched a binary value, put it to an argument. */
 			item = vpi_scan(argv);
 			assert(item);
 
@@ -348,6 +372,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			break;
 
 		      case 'd':
+			match_fail = 1;
 			  /* Decimal integer */
 			ch = byte_getc(src);
 			if (ch == '-') {
@@ -356,10 +381,15 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			}
 			value = 0;
 			while ( isdigit(ch) ) {
+			      match_fail = 0;
 			      value *= 10;
 			      value += ch - '0';
 			      ch = byte_getc(src);
 			}
+
+			if (match_fail)
+			      break;
+
 			item = vpi_scan(argv);
 			assert(item);
 
@@ -379,6 +409,8 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 
 		      case 'h':
 		      case 'x':
+			match_fail = 1;
+
 			  /* Hex integer */
 			tmp = malloc(2);
 			value = 0;
@@ -386,6 +418,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 
 			ch = byte_getc(src);
 			while (strchr("0123456789abcdefABCDEFxXzZ?_", ch)) {
+			      match_fail = 0;
 			      if (ch == '?')
 				    ch = 'x';
 			      if (ch != '_') {
@@ -397,6 +430,11 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			      ch = byte_getc(src);
 			}
 			byte_ungetc(src, ch);
+
+			if (match_fail) {
+			      free(tmp);
+			      break;
+			}
 
 			item = vpi_scan(argv);
 			assert(item);
@@ -409,6 +447,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			break;
 
 		      case 'o':
+			match_fail = 1;
 			  /* binary integer */
 			tmp = malloc(2);
 			value = 0;
@@ -416,6 +455,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 
 			ch = byte_getc(src);
 			while (strchr("01234567xXzZ?_", ch)) {
+			      match_fail = 0;
 			      if (ch == '?')
 				    ch = 'x';
 			      if (ch != '_') {
@@ -427,6 +467,11 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			      ch = byte_getc(src);
 			}
 			byte_ungetc(src, ch);
+
+			if (match_fail) {
+			      free(tmp);
+			      break;
+			}
 
 			item = vpi_scan(argv);
 			assert(item);
