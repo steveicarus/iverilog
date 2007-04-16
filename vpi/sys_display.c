@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.77 2007/04/15 20:45:40 steve Exp $"
+#ident "$Id: sys_display.c,v 1.78 2007/04/16 00:47:12 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -279,16 +279,17 @@ static void format_time(unsigned mcd, int fsize,
 
 	/* Fill the leading characters to make up the desired
 	   width. This may require a '0' if the last character
-	   written was the decimal point. */
+	   written was the decimal point. This may also require a '0'
+	   if there are no other characters at all in the ouput. */
       if (fusize > 0) {
 	    while (bp > start_address) {
-		  if (*bp == '.')
+		  if (*bp == '.' || strcmp(bp, timeformat_info.suff) == 0)
 			*--bp = '0';
 		  else
 			*--bp = ' ';
 	    }
       } else {
-	    if (*bp == '.')
+	    if (*bp == '.' || strcmp(bp, timeformat_info.suff) == 0)
 		  *--bp = '0';
       }
 
@@ -1652,6 +1653,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.78  2007/04/16 00:47:12  steve
+ *  Fix missing zero if time value is exactly 0.
+ *
  * Revision 1.77  2007/04/15 20:45:40  steve
  *  Attach line number information to task calls.
  *
