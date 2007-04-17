@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.201 2007/03/22 16:08:14 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.202 2007/04/17 04:18:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1752,9 +1752,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 				      Link::strength_t drive0,
 				      Link::strength_t drive1) const
 {
-      ivl_assert(*this, msb_ == 0);
-      ivl_assert(*this, lsb_ == 0);
-      ivl_assert(*this, idx_.size() == 1);
+      ivl_assert(*this, idx_.size() >= 1);
 
       NetExpr*index_ex = elab_and_eval(des, scope, idx_[0], -1);
       if (index_ex == 0)
@@ -1819,6 +1817,36 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       tmp->local_flag(true);
       tmp->data_type(sig->data_type());
       connect(tmp->pin(0), mux->pin_Result());
+
+      unsigned midx, lidx;
+      if (eval_part_select_(des, scope, sig, midx, lidx)) do {
+
+	    unsigned part_count = midx-lidx+1;
+
+	      // Maybe this is a full-width constant part select? If
+	      // so, do nothing.
+	    if (part_count == sig->vector_width())
+		  break;
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Elaborate part select"
+		       << " of word from " << sig->name() << "[base="<<lidx
+		       << " wid=" << part_count << "]" << endl;
+	    }
+
+	    NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count,
+						 NetPartSelect::VP);
+	    ps->set_line(*sig);
+	    des->add_node(ps);
+
+	    NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, part_count-1, 0);
+	    tmp2->data_type( tmp->data_type() );
+	    tmp2->local_flag(true);
+	    connect(tmp2->pin(0), ps->pin(0));
+
+	    tmp = tmp2;
+      } while (0);
 
       return tmp;
 }
@@ -2017,7 +2045,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case PEIdent::SEL_IDX_UP: {
 		assert(msb_);
 		assert(lsb_);
-		assert(idx_.empty());
+		assert(idx_.size() == sig->array_dimensions());
 
 		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
@@ -2051,7 +2079,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case PEIdent::SEL_PART: {
 		assert(msb_);
 		assert(lsb_);
-		assert(idx_.empty());
+		assert(idx_.size() == sig->array_dimensions());
 
 		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
@@ -2101,11 +2129,12 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  }
 
 	  case PEIdent::SEL_NONE:
-	    if (!idx_.empty()) {
+	    if (idx_.size() > sig->array_dimensions()) {
+		  unsigned a_dims = sig->array_dimensions();
 		  assert(msb_ == 0);
 		  assert(lsb_ == 0);
-		  assert(idx_.size() == 1);
-		  verinum*mval = idx_[0]->eval_const(des, scope);
+		  assert(idx_.size() == a_dims+1);
+		  verinum*mval = idx_[a_dims]->eval_const(des, scope);
 		  if (mval == 0) {
 			cerr << get_line() << ": error: Index of " << path_ <<
 			      " needs to be constant in this context." <<
@@ -2909,6 +2938,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.202  2007/04/17 04:18:10  steve
+ *  Support part select of array words in net contexts.
+ *
  * Revision 1.201  2007/03/22 16:08:14  steve
  *  Spelling fixes from Larry
  *
