@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.8 2006/06/18 04:15:50 steve Exp $"
+#ident "$Id: net_func.cc,v 1.9 2007/04/17 04:17:47 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -102,7 +102,7 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
       if (parms_count != dscope->func_def()->port_count()) {
 	    cerr << get_line() << ": error: Function " << dscope->name()
-		 << " expects " << (dscope->func_def()->port_count()-1)
+		 << " expects " << (dscope->func_def()->port_count())
 		 << " arguments, you passed " << parms_count << "."
 		 << endl;
 	    des->errors += 1;
@@ -149,6 +149,9 @@ unsigned NetSysFunc::vector_width() const
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.9  2007/04/17 04:17:47  steve
+ *  Fix argument count in function error message.
+ *
  * Revision 1.8  2006/06/18 04:15:50  steve
  *  Add support for system functions in continuous assignments.
  *
