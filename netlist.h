@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.376 2007/04/07 04:46:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.377 2007/04/17 04:34:23 steve Exp $"
 #endif
 
 /*
@@ -2482,6 +2482,7 @@ class NetUTask  : public NetProc {
       const NetScope* task() const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3502,6 +3503,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.377  2007/04/17 04:34:23  steve
+ *  Fix handling calls to tasks in combinational always block
+ *
  * Revision 1.376  2007/04/07 04:46:18  steve
  *  Handle evaluate of addition of real valued constants.
  *

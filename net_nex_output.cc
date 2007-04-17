@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.13 2007/04/05 01:53:52 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.14 2007/04/17 04:34:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,6 +115,15 @@ void NetSTask::nex_output(NexusSet&out)
 {
 }
 
+/*
+* Consider a task call to not have any outputs. This is not quite
+* right, we should be listing as outputs all the output ports, but for
+* the purposes that this method is used, this will do for now.
+*/
+void NetUTask::nex_output(NexusSet&out)
+{
+}
+
 void NetWhile::nex_output(NexusSet&out)
 {
       if (proc_ != 0)
@@ -123,6 +132,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.14  2007/04/17 04:34:23  steve
+ *  Fix handling calls to tasks in combinational always block
+ *
  * Revision 1.13  2007/04/05 01:53:52  steve
  *  Probe of case statement inputs can skip nul statements.
  *
