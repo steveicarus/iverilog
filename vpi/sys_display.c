@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.78 2007/04/16 00:47:12 steve Exp $"
+#ident "$Id: sys_display.c,v 1.79 2007/04/18 02:40:20 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -543,7 +543,10 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    my_mcd_printf(mcd, "%*.*g", fsize, ffsize, value.value.real);
+            if (fmt == 'e')
+	          my_mcd_printf(mcd, "%*.*e", fsize, ffsize, value.value.real);
+            else
+	          my_mcd_printf(mcd, "%*.*E", fsize, ffsize, value.value.real);
 
 	    use_count = 1;
 	    break;
@@ -585,7 +588,10 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    my_mcd_printf(mcd, "%*.*g", fsize, ffsize, value.value.real);
+            if (fmt == 'g')
+	          my_mcd_printf(mcd, "%*.*g", fsize, ffsize, value.value.real);
+            else
+	          my_mcd_printf(mcd, "%*.*G", fsize, ffsize, value.value.real);
 
 	    use_count = 1;
 	    break;
@@ -1653,6 +1659,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.79  2007/04/18 02:40:20  steve
+ *  Add support for Gg and Ee formats.
+ *
  * Revision 1.78  2007/04/16 00:47:12  steve
  *  Fix missing zero if time value is exactly 0.
  *
