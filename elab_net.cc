@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.202 2007/04/17 04:18:10 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.203 2007/04/18 01:40:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -948,14 +948,17 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	    }
 
 	    NetConst*odev = new NetConst(scope, scope->local_symbol(), res);
+	    des->add_node(odev);
+	    odev->set_line(*this);
+
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, lwidth);
-	    for (unsigned idx = 0 ;  idx < lwidth ;  idx += 1)
-		  connect(odev->pin(idx), osig->pin(idx));
-
-	    des->add_node(odev);
-	    osig->data_type(IVL_VT_LOGIC);
+	    osig->set_line(*this);
 	    osig->local_flag(true);
+	    osig->data_type(IVL_VT_LOGIC);
+
+	    connect(odev->pin(0), osig->pin(0));
+
 	    return osig;
       }
 
@@ -2938,6 +2941,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.203  2007/04/18 01:40:49  steve
+ *  Fix elaboration of multiply of two constants.
+ *
  * Revision 1.202  2007/04/17 04:18:10  steve
  *  Support part select of array words in net contexts.
  *
