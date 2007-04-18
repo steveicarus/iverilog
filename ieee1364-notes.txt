@@ -1,4 +1,7 @@
 
+NOTE: THE CONTENTS OF THIS FILE ARE BEING MOVED TO THE DOCUMENTATION
+WIKI AT http://iverilog.wikia.com. PLEASE ADD NEW ENTRIES THERE.
+
                 Icarus Verilog vs. IEEE1364
                 Copyright 2000 Stephen Williams
 
@@ -498,8 +501,11 @@ of 4-value behavior in the dead zone, and appears more user friendly
 when viewed by reasonable viewers.
 
 
-$Id: ieee1364-notes.txt,v 1.18 2007/03/22 16:08:16 steve Exp $
+$Id: ieee1364-notes.txt,v 1.19 2007/04/18 02:36:13 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.19  2007/04/18 02:36:13  steve
+ Put to iverilog wiki for further notes.
+
 Revision 1.18  2007/03/22 16:08:16  steve
  Spelling fixes from Larry
 
