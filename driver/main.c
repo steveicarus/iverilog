@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.73 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: main.c,v 1.74 2007/04/18 03:23:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,7 +136,6 @@ char*iconfig_common_path = iconfig_common_path_buf;
 
 int synth_flag = 0;
 int verbose_flag = 0;
-int command_file = 0;
 
 FILE *fp;
 
@@ -144,6 +143,48 @@ char line[MAXSIZE];
 char tmp[MAXSIZE];
 
 static char ivl_root[MAXSIZE];
+
+/* Structure to keep a FIFO list of the command files */
+typedef struct t_command_file {
+      char *filename;
+      struct t_command_file *next;
+} s_command_file, *p_command_file;
+p_command_file cmd_file_head = NULL;  /* The FIFO head */
+p_command_file cmd_file_tail = NULL;  /* The FIFO tail */
+
+/* Function to add a comamnd file name to the FIFO. */
+void add_cmd_file(const char* filename)
+{
+      p_command_file new;
+
+      new = (p_command_file) malloc(sizeof(s_command_file));
+      new->filename = strdup(filename);
+      new->next = NULL;
+      if (cmd_file_head == NULL) {
+            cmd_file_head = new;
+            cmd_file_tail = new;
+      } else {
+            cmd_file_tail->next = new;
+            cmd_file_tail = new;
+      }
+}
+
+/* Function to return the top comamnd file name from the FIFO. */
+char *get_cmd_file()
+{
+      char *filename;
+
+      if (cmd_file_head == NULL) filename = NULL;
+      else {
+            p_command_file head;
+
+            filename = cmd_file_head->filename;
+            head = cmd_file_head;
+            cmd_file_head = cmd_file_head->next;
+            free(head);
+      }
+      return filename;
+}
 
 #ifdef __MINGW32__
 # include  <io.h>
@@ -522,8 +563,7 @@ int main(int argc, char **argv)
 		  }
 		  break;
  		case 'c':
-		  command_filename = malloc(strlen(optarg)+1);
- 		  strcpy(command_filename, optarg);
+		  add_cmd_file(optarg);
  		  break;
 		case 'D':
 		  process_define(optarg);
@@ -641,7 +681,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
 
-      if (command_filename) {
+      while ( (command_filename = get_cmd_file()) ) {
 	    int rc;
 
 	    if (( fp = fopen(command_filename, "r")) == NULL ) {
@@ -657,6 +697,7 @@ int main(int argc, char **argv)
 			  command_filename);
 		  return 1;
 	    }
+            free(command_filename);
       }
 
       if (depfile) {
@@ -744,6 +785,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.74  2007/04/18 03:23:38  steve
+ *  Add support for multiple command files. (Cary R.)
+ *
  * Revision 1.73  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *
