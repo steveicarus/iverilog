@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.53 2007/04/12 04:45:52 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.54 2007/04/18 01:57:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -487,9 +487,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    break;
 
 	  case vpiRealVal: {
-		unsigned long val;
-		vector4_to_value(word_val, val);
-		vp->value.real = val;
+		vector4_to_value(word_val, vp->value.real, signed_flag);
 		break;
 	  }
       }
@@ -867,6 +865,9 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.54  2007/04/18 01:57:07  steve
+ *  Fix vpi_get_value vpiRealVal of signed constants.
+ *
  * Revision 1.53  2007/04/12 04:45:52  steve
  *  Support for vpi_get_value of scaler values. (ravi@bluespec)
  *
