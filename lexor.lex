@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.94 2007/02/09 05:19:04 steve Exp $"
+#ident "$Id: lexor.lex,v 1.95 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,6 +53,7 @@ extern YYLTYPE yylloc;
 struct file_name_cell {
       const char*text;
       struct file_name_cell*next;
+      bool library_flag;
 };
 
 static struct file_name_cell*file_names = 0;
@@ -72,6 +73,13 @@ static const char* set_file_name(char*text)
       cur = new struct file_name_cell;
       cur->text = text;
       cur->next = file_names;
+
+	/* Check this file name with the list of library file
+	   names. If there is a match, then turn on the
+	   pform_library_flag. This is how the parser knows that
+	   modules declared in this file are library modules. */
+      cur->library_flag = library_file_map[cur->text];
+      pform_library_flag = cur->library_flag;
       return text;
 }
 

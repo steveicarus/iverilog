@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.94 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: main.cc,v 1.95 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,6 +94,7 @@ map<string,const char*> flags;
 char*vpi_module_list = 0;
 
 map<perm_string,unsigned> missing_modules;
+map<string,bool> library_file_map;
 
 list<const char*> library_suff;
 
@@ -283,6 +284,11 @@ static void parm_to_flagmap(const string&flag)
  *        This specifies the width of integer variables. (that is,
  *        variables declared using the "integer" keyword.)
  *
+ *    library_file:<path>
+ *        This marks that a source file with the given path is a
+ *        library. Any modules in that file are marked as library
+ *        modules.
+ *
  *    module:<name>
  *        Load a VPI module.
  *
@@ -375,6 +381,10 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "iwidth") == 0) {
 		  integer_width = strtoul(cp,0,10);
+
+	    } else if (strcmp(buf, "library_file") == 0) {
+		  const char* path = strdup(cp);
+		  library_file_map[path] = true;
 
 	    } else if (strcmp(buf,"module") == 0) {
 		  if (vpi_module_list == 0) {
@@ -643,11 +653,20 @@ int main(int argc, char*argv[])
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end()
 		       ; mod++) {
-		  if (mentioned_p[(*mod).second->mod_name()] == false) {
-			if (verbose_flag)
-			      cout << " " << (*mod).second->mod_name();
-			roots.push_back((*mod).second->mod_name());
-		  }
+
+		    /* Don't choose library modules. */
+		  if ((*mod).second->library_flag)
+			continue;
+
+		    /* Don't choose modules instantiated in other
+		       modules. */
+		  if (mentioned_p[(*mod).second->mod_name()])
+			continue;
+
+		    /* What's left might as well be chosen as a root. */
+		  if (verbose_flag)
+			cout << " " << (*mod).second->mod_name();
+		  roots.push_back((*mod).second->mod_name());
 	    }
 	    if (verbose_flag)
 		  cout << endl;
@@ -796,6 +815,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.95  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.94  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *

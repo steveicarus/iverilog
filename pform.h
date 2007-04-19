@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.89 2007/04/13 02:34:35 steve Exp $"
+#ident "$Id: pform.h,v 1.90 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -68,6 +68,12 @@ struct vlltype;
 extern enum MIN_TYP_MAX { MIN, TYP, MAX } min_typ_max_flag;
 extern unsigned min_typ_max_warn;
 PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max);
+
+/*
+ * This flag is true if the lexor thinks we are in a library source
+ * file.
+ */
+extern bool pform_library_flag;
 
 /*
  * These type are lexical types -- that is, types that are used as
@@ -334,6 +340,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.90  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.89  2007/04/13 02:34:35  steve
  *  Parse edge sensitive paths without edge specifier.
  *

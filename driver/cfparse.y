@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse.y,v 1.11 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: cfparse.y,v 1.12 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 
@@ -84,7 +84,7 @@ item
 	: TOK_STRING
 		{ char*tmp = substitutions($1);
 		  translate_file_name(tmp);
-		  process_file_name(tmp);
+		  process_file_name(tmp, 0);
 		  free($1);
 		  free(tmp);
 		}
@@ -99,9 +99,7 @@ item
         | TOK_Dv TOK_STRING
 		{ char*tmp = substitutions($2);
 		  translate_file_name(tmp);
-		  process_file_name(tmp);
-		  fprintf(stderr, "%s:%u: Ignoring -v in front of %s\n",
-			  @1.text, @1.first_line, $2);
+		  process_file_name(tmp, 1);
 		  free($2);
 		  free(tmp);
 		}

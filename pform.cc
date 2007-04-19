@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.143 2007/04/13 02:34:35 steve Exp $"
+#ident "$Id: pform.cc,v 1.144 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -50,6 +50,9 @@ extern int VLparse();
      exactly one module currently being parsed, since verilog does not
      allow nested module definitions. */
 static Module*pform_cur_module = 0;
+
+bool pform_library_flag = false;
+
   /* increment this for generate schemes within a module, and set it
      to zero when a new module starts. */
 static unsigned scope_generate_counter = 1;
@@ -242,6 +245,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 
       pform_cur_module->set_file(file);
       pform_cur_module->set_lineno(lineno);
+      pform_cur_module->library_flag = pform_library_flag;
 
 	/* The generate scheme numbering starts with *1*, not
 	   zero. That's just the way it is, thanks to the standard. */
@@ -1765,6 +1769,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.144  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.143  2007/04/13 02:34:35  steve
  *  Parse edge sensitive paths without edge specifier.
  *

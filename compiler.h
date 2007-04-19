@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.32 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: compiler.h,v 1.33 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -117,13 +117,20 @@ extern char*ivlpp_string;
 
 extern map<perm_string,unsigned> missing_modules;
 
+  /* Files that are library files are in this map. The lexor compares
+     file names as it processes `line directives, and if the file name
+     matches an entry in this table, it will turn on the
+     library_active_flag so that modules know that they are in a
+     library. */
+extern map<string,bool> library_file_map;
+
 /*
  * the lex_strings are perm_strings made up of tokens from the source
  * file. Identifiers are so likely to be used many times that it makes
  * much sense to use a StringHeapLex to hold them.
  */
 extern StringHeapLex lex_strings;
-
+extern StringHeap misc_strings;
 
 /*
  * system task/function listings.
@@ -145,6 +152,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.33  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.32  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *

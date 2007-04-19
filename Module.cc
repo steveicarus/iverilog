@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.25 2004/10/04 01:10:51 steve Exp $"
+#ident "$Id: Module.cc,v 1.26 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@
 Module::Module(perm_string n)
 : name_(n)
 {
+      library_flag = false;
       default_nettype = NetNet::NONE;
 }
 
@@ -150,6 +151,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.26  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.25  2004/10/04 01:10:51  steve
  *  Clean up spurious trailing white space.
  *

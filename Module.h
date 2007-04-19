@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.41 2006/09/23 04:57:19 steve Exp $"
+#ident "$Id: Module.h,v 1.42 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include  <list>
@@ -67,6 +67,12 @@ class Module : public LineInfo {
 	   name. This make must be a permallocated string. */
       explicit Module(perm_string name);
       ~Module();
+
+	/* Initially false. This is set to true if the module has been
+	   declared as a library module. This makes the module
+	   ineligible for being chosen as an implicit root. It has no
+	   other effect. */
+      bool library_flag;
 
       NetNet::Type default_nettype;
 
@@ -176,6 +182,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.42  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.41  2006/09/23 04:57:19  steve
  *  Basic support for specify timing.
  *

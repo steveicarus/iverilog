@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.20 2007/03/07 04:24:59 steve Exp $"
+#ident "$Id: globals.h,v 1.21 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -56,7 +56,7 @@ extern unsigned integer_width;
 extern char* substitutions(const char*str);
 
   /* Add the name to the list of source files. */
-extern void process_file_name(const char*name);
+extern void process_file_name(const char*name, int lib_flag);
 
   /* Add the name to the list of library directories. */
 extern void process_library_switch(const char*name);
@@ -80,6 +80,9 @@ extern char* library_flags2;
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.21  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.20  2007/03/07 04:24:59  steve
  *  Make integer width controllable.
  *

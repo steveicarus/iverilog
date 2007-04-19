@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.74 2007/04/18 03:23:38 steve Exp $"
+#ident "$Id: main.c,v 1.75 2007/04/19 02:52:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -403,7 +403,7 @@ void process_define(const char*name)
  * .sft suffix, and if so pass that as a sys_func file. Otherwise, it
  * is a Verilog source file to be written into the file list.
  */
-void process_file_name(const char*name)
+void process_file_name(const char*name, int lib_flag)
 {
       if (strlen(name) > 4 && strcasecmp(".sft", name+strlen(name)-4) == 0) {
 	    fprintf(iconfig_file,"sys_func:%s\n", name);
@@ -411,6 +411,8 @@ void process_file_name(const char*name)
       } else {
 	    fprintf(source_file, "%s\n", name);
 	    source_count += 1;
+	    if (lib_flag)
+		  fprintf(iconfig_file,"library_file:%s\n", name);
       }
 }
 
@@ -707,7 +709,7 @@ int main(int argc, char **argv)
 	/* Finally, process all the remaining words on the command
 	   line as file names. */
       for (idx = optind ;  idx < argc ;  idx += 1)
-	    process_file_name(argv[idx]);
+	    process_file_name(argv[idx], 0);
 
 
       fclose(source_file);
@@ -785,6 +787,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.75  2007/04/19 02:52:53  steve
+ *  Add support for -v flag in command file.
+ *
  * Revision 1.74  2007/04/18 03:23:38  steve
  *  Add support for multiple command files. (Cary R.)
  *
