@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.92 2007/04/14 03:27:51 steve Exp $"
+#ident "$Id: parse.y,v 1.93 2007/04/19 01:19:06 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -552,6 +552,21 @@ statement
           symbols_net ';'
                  { compile_netw($1, $3, $4, $6, $7, false, false, $9.cnt, $9.vect); }
 
+        | T_LABEL K_NET_S T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_netw($1, $3, $4, $6, $7, true, false, $9.cnt, $9.vect); }
+
+        | T_LABEL K_NET8 T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_netw($1, $3, $4, $6, $7, false, true, $9.cnt, $9.vect); }
+
+        | T_LABEL K_NET8_S T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_netw($1, $3, $4, $6, $7, true, true, $9.cnt, $9.vect); }
+
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 
@@ -822,6 +837,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.93  2007/04/19 01:19:06  steve
+ *  Handle arrayed strength-aware net devices.
+ *
  * Revision 1.92  2007/04/14 03:27:51  steve
  *  Handle system functions with no arguments.
  *
