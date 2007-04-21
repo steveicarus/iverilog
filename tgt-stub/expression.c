@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.5 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: expression.c,v 1.6 2007/04/21 03:20:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,7 +101,14 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       ivl_expr_t word = ivl_expr_oper1(net);
 
       ivl_signal_t sig = ivl_expr_signal(net);
+      unsigned dimensions = ivl_signal_dimensions(sig);
       unsigned word_count = ivl_signal_array_count(sig);
+
+      if (dimensions == 0 && word_count != 1) {
+	    fprintf(out, "%*sERROR: Word count = %u for non-array object\n",
+		    ind, "", word_count);
+	    stub_errors += 1;
+      }
 
       fprintf(out, "%*s<signal=%s, words=%u, width=%u, %s type=%s>\n", ind, "",
 	      ivl_expr_name(net), word_count, width, sign, vt);
@@ -109,11 +116,11 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       /* If the expression refers to a signal array, then there must
          also be a word select expression, and if the signal is not an
          array, there must NOT be a word expression. */
-      if (word_count == 1 && word != 0) {
+      if (dimensions == 0 && word != 0) {
 	    fprintf(out, "%*sERROR: Unexpected word expression\n", ind+2, "");
 	    stub_errors += 1;
       }
-      if (word_count > 1 && word == 0) {
+      if (dimensions >= 1 && word == 0) {
 	    fprintf(out, "%*sERROR: Missing word expression\n", ind+2, "");
 	    stub_errors += 1;
       }
