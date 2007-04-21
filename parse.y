@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.234 2007/04/13 02:34:35 steve Exp $"
+#ident "$Id: parse.y,v 1.235 2007/04/21 04:45:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -222,7 +222,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
-%type <exprs> assign assign_list
+%type <exprs> cont_assign cont_assign_list
 %type <indexed_identifier> indexed_identifier
 
 %type <exprs> range range_opt
@@ -1375,6 +1375,7 @@ indexed_identifier
 		  tmp->idx_.push_back($3);
 		  $$ = tmp;
 		}
+        ;
 
   /* This is a list of identifiers. The result is a list of strings,
      each one of the identifiers in the list. These are simple,
@@ -1583,7 +1584,10 @@ lpvalue
 		}
 	;
 
-assign
+
+  /* Continuous assignments have a list of individual assignments. */
+
+cont_assign
 	: lpvalue '=' expression
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
 		  (*tmp)[0] = $1;
@@ -1592,14 +1596,14 @@ assign
 		}
 	;
 
-assign_list
-	: assign_list ',' assign
+cont_assign_list
+	: cont_assign_list ',' cont_assign
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, *$3);
 		  delete $1;
 		  delete $3;
 		  $$ = tmp;
 		}
-	| assign
+	| cont_assign
 		{ $$ = $1; }
 	;
 
@@ -1825,9 +1829,9 @@ module_item
 
   /* Continuous assignment can have an optional drive strength, then
      an optional delay3 that applies to all the assignments in the
-     assign_list. */
+     cont_assign_list. */
 
-	| K_assign drive_strength_opt delay3_opt assign_list ';'
+	| K_assign drive_strength_opt delay3_opt cont_assign_list ';'
 		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
 
   /* Always and initial items are behavioral processes. */
