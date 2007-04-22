@@ -1,14 +1,14 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.9.0.20070227
+Version: 0.9.0.20070421
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
-Source: verilog-20070227.tar.gz
+Source: verilog-20070421.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-20070227-%{release}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-20070421-%{release}-root
 
 BuildRequires: gcc-c++, zlib-devel, bison, flex, gperf, readline-devel
 
@@ -32,7 +32,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20070227
+%setup -n verilog-20070421
 
 %build
 %ifarch x86_64
