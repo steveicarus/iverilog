@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.4 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.5 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -36,7 +36,7 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
       assert(scope);
 
 	/* Get the tail name of the object we are looking for. */
-      char*key = path.remove_tail_name();
+      perm_string key = path.remove_tail_name();
 
 	/* Initialize output argument to cleared. */
       net = 0;
@@ -49,20 +49,14 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 	    scope = des->find_scope(scope, path);
 
       while (scope) {
-	    if ( (net = scope->find_signal(key)) ) {
-		  delete key;
+	    if ( (net = scope->find_signal(key)) )
 		  return scope;
-	    }
 
-	    if ( (eve = scope->find_event(key)) ) {
-		  delete key;
+	    if ( (eve = scope->find_event(key)) )
 		  return scope;
-	    }
 
-	    if ( (par = scope->get_parameter(key, ex1, ex2)) ) {
-		  delete key;
+	    if ( (par = scope->get_parameter(key, ex1, ex2)) )
 		  return scope;
-	    }
 
 	    if (scope->type() == NetScope::MODULE)
 		  scope = 0;
@@ -70,12 +64,14 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 		  scope = scope->parent();
       }
 
-      delete key;
       return 0;
 }
 
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.5  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.4  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

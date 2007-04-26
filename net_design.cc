@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.50 2006/08/08 05:11:37 steve Exp $"
+#ident "$Id: net_design.cc,v 1.51 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -201,9 +201,7 @@ void NetScope::run_defparams(Design*des)
 	    NetExpr*val = (*pp).second;
 	    hname_t path = (*pp).first;
 
-	    char*tmp = path.remove_tail_name();
-	    perm_string perm_name = lex_strings.make(tmp);
-	    delete[]tmp;
+	    perm_string perm_name = path.remove_tail_name();
 
 	      /* If there is no path on the name, then the targ_scope
 		 is the current scope. */
@@ -429,22 +427,20 @@ NetNet* Design::find_signal(NetScope*scope, hname_t path)
 {
       assert(scope);
 
-      char*key = path.remove_tail_name();
+      perm_string key = path.remove_tail_name();
       if (path.peek_name(0))
 	    scope = find_scope(scope, path);
 
       while (scope) {
-	    if (NetNet*net = scope->find_signal(key)) {
-		  delete key;
+	    if (NetNet*net = scope->find_signal(key))
 		  return net;
-	    }
 
 	    if (scope->type() == NetScope::MODULE)
 		  break;
+
 	    scope = scope->parent();
       }
 
-      delete key;
       return 0;
 }
 
@@ -562,6 +558,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.51  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.50  2006/08/08 05:11:37  steve
  *  Handle 64bit delay constants.
  *

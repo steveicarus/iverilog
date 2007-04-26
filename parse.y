@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.235 2007/04/21 04:45:36 steve Exp $"
+#ident "$Id: parse.y,v 1.236 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -605,7 +605,7 @@ delay_value_simple
 		  }
 		}
 	| IDENTIFIER
-		{ PEIdent*tmp = new PEIdent(hname_t($1));
+                { PEIdent*tmp = new PEIdent(hname_t(lex_strings.make($1)));
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -1033,7 +1033,8 @@ expr_primary
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER
-                { PECallFunction*tmp = new PECallFunction(hname_t($1));
+                { perm_string tn = lex_strings.make($1);
+		  PECallFunction*tmp = new PECallFunction(hname_t(tn));
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -1087,7 +1088,8 @@ expr_primary
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_proper ')'
-                { PECallFunction*tmp = new PECallFunction(hname_t($1), *$3);
+                { perm_string tn = lex_strings.make($1);
+		  PECallFunction*tmp = new PECallFunction(hname_t(tn), *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -1346,12 +1348,12 @@ gatetype
      hierarchical name from left to right, forming a list of names. */
 identifier
 	: IDENTIFIER
-		{ $$ = new hname_t($1);
+                { $$ = new hname_t(lex_strings.make($1));
 		  delete $1;
 		}
 	| identifier '.' IDENTIFIER
 		{ hname_t * tmp = $1;
-		  tmp->append($3);
+		  tmp->append(lex_strings.make($3));
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -2313,7 +2315,7 @@ port_reference
 		}
 
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ PEIdent*wtmp = new PEIdent(hname_t($1));
+                { PEIdent*wtmp = new PEIdent(hname_t(lex_strings.make($1)));
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
@@ -2336,7 +2338,7 @@ port_reference
 		}
 
 	| IDENTIFIER '[' expression ']'
-		{ PEIdent*tmp = new PEIdent(hname_t($1));
+                { PEIdent*tmp = new PEIdent(hname_t(lex_strings.make($1)));
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
@@ -2355,7 +2357,7 @@ port_reference
 	| IDENTIFIER '[' error ']'
 		{ yyerror(@1, "error: invalid port bit select");
 		  Module::port_t*ptmp = new Module::port_t;
-		  PEIdent*wtmp = new PEIdent(hname_t($1));
+		  PEIdent*wtmp = new PEIdent(hname_t(lex_strings.make($1)));
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
 		  ptmp->name = lex_strings.make($1);
@@ -3130,7 +3132,7 @@ statement
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-		{ PCallTask*tmp = new PCallTask(hname_t($1), *$3);
+                { PCallTask*tmp = new PCallTask(hname_t(lex_strings.make($1)), *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -3139,7 +3141,7 @@ statement
 		}
 	| SYSTEM_IDENTIFIER ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(hname_t($1), pt);
+		  PCallTask*tmp = new PCallTask(hname_t(lex_strings.make($1)), pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -3521,7 +3523,7 @@ udp_sequ_entry
 udp_initial
 	: K_initial IDENTIFIER '=' number ';'
 		{ PExpr*etmp = new PENumber($4);
-		  PEIdent*itmp = new PEIdent(hname_t($2));
+		  PEIdent*itmp = new PEIdent(hname_t(lex_strings.make($2)));
 		  PAssign*atmp = new PAssign(itmp, etmp);
 		  atmp->set_file(@2.text);
 		  atmp->set_lineno(@2.first_line);
@@ -3590,31 +3592,34 @@ udp_port_decl
 	: K_input list_of_identifiers ';'
 		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire($2,
+                { PWire*pp = new PWire(lex_strings.make($2),
 				       NetNet::IMPLICIT,
 				       NetNet::POUTPUT,
 				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
+		  delete $2;
 		}
 	| K_reg IDENTIFIER ';'
-		{ PWire*pp = new PWire($2,
+                { PWire*pp = new PWire(lex_strings.make($2),
 				       NetNet::REG,
 				       NetNet::PIMPLICIT,
 				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
+		  delete $2;
 		}
 	| K_reg K_output IDENTIFIER ';'
-		{ PWire*pp = new PWire($3,
+                { PWire*pp = new PWire(lex_strings.make($3),
 				       NetNet::REG,
 				       NetNet::POUTPUT,
 				       IVL_VT_LOGIC);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
+		  delete $3;
 		}
 	;
 

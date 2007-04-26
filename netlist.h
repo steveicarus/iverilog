@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.377 2007/04/17 04:34:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.378 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 /*
@@ -3220,10 +3220,7 @@ class NetScope : public Attrib {
 
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
-
       NetNet* find_signal(const char*name);
-      NetNet* find_signal_in_child(const hname_t&name);
-
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
@@ -3503,6 +3500,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.378  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.377  2007/04/17 04:34:23  steve
  *  Fix handling calls to tasks in combinational always block
  *

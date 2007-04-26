@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.h,v 1.4 2002/11/02 03:27:51 steve Exp $"
+#ident "$Id: HName.h,v 1.5 2007/04/26 03:06:21 steve Exp $"
 #endif
 
 # include  <iostream>
+# include  "StringHeap.h"
 #ifdef __GNUC__
 #if __GNUC__ > 2
 using namespace std;
@@ -38,28 +39,28 @@ class hname_t {
 
     public:
       hname_t ();
-      explicit hname_t (const char*text);
+      explicit hname_t (perm_string text);
       hname_t (const hname_t&that);
       ~hname_t();
 
 	// This method adds a name to the end of the hierarchical
 	// path. This becomes a new base name.
-      void append(const char*text);
+      void append(perm_string text);
 
 	// This method adds a name to the *front* of the hierarchical
 	// path. The base name remains the same, unless this is the
 	// only component.
-      void prepend(const char*text);
+      void prepend(perm_string text);
 
 	// This method removes the tail name from the hierarchy, and
 	// returns a pointer to that tail name. That tail name now
 	// must be removed by the caller.
-      char* remove_tail_name();
+      perm_string remove_tail_name();
 
 	// Return the given component in the hierarchical name. If the
 	// idx is too large, return 0.
-      const char*peek_name(unsigned idx) const;
-      const char*peek_tail_name() const;
+      perm_string peek_name(unsigned idx) const;
+      perm_string peek_tail_name() const;
 
 	// Return the number of components in the hierarchical
 	// name. If this is a simple name, this will return 1.
@@ -69,10 +70,13 @@ class hname_t {
 
     private:
       union {
-	    char**array_;
-	    char* item_;
+	    perm_string*array_;
+	    char* item_[sizeof(perm_string)];
       };
       unsigned count_;
+
+      perm_string& item_ref1_() { return *(perm_string*)item_; }
+      const perm_string& item_ref1_() const { return *(perm_string*)item_; }
 
     private: // not implemented
       hname_t& operator= (const hname_t&);
@@ -83,6 +87,9 @@ extern bool operator == (const hname_t&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.5  2007/04/26 03:06:21  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.4  2002/11/02 03:27:51  steve
  *  Allow named events to be referenced by
  *  hierarchical names.

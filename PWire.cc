@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.12 2007/01/16 05:44:14 steve Exp $"
+#ident "$Id: PWire.cc,v 1.13 2007/04/26 03:06:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ lidx_(0), ridx_(0)
       }
 }
 
-PWire::PWire(char*n,
+PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
 	     ivl_variable_type_t dt)
@@ -160,6 +160,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.13  2007/04/26 03:06:21  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.12  2007/01/16 05:44:14  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

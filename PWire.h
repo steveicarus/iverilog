@@ -1,7 +1,7 @@
 #ifndef __PWire_H
 #define __PWire_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.19 2006/04/10 00:37:42 steve Exp $"
+#ident "$Id: PWire.h,v 1.20 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "LineInfo.h"
 # include  <map>
 # include  "svector.h"
+# include  "StringHeap.h"
 
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
@@ -53,7 +54,7 @@ class PWire : public LineInfo {
 	    NetNet::Type t,
 	    NetNet::PortType pt,
 	    ivl_variable_type_t dt);
-      PWire(char*name,
+      PWire(perm_string name,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
 	    ivl_variable_type_t dt);
@@ -110,6 +111,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.20  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.19  2006/04/10 00:37:42  steve
  *  Add support for generate loops w/ wires and gates.
  *
@@ -146,40 +150,5 @@ class PWire : public LineInfo {
  *
  * Revision 1.10  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
- *
- * Revision 1.9  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.8  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a seperate pass.
- *
- * Revision 1.7  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.6  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.5  1999/06/17 05:34:42  steve
- *  Clean up interface of the PWire class,
- *  Properly match wire ranges.
- *
- * Revision 1.4  1999/06/02 15:38:46  steve
- *  Line information with nets.
- *
- * Revision 1.3  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.2  1998/11/23 00:20:22  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.1  1998/11/03 23:28:55  steve
- *  Introduce verilog to CVS.
- *
  */
 #endif

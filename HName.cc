@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.cc,v 1.5 2002/11/02 03:27:52 steve Exp $"
+#ident "$Id: HName.cc,v 1.6 2007/04/26 03:06:21 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -31,13 +31,12 @@
 
 hname_t::hname_t()
 {
-      item_ = 0;
       count_ = 0;
 }
 
-hname_t::hname_t(const char*text)
+hname_t::hname_t(perm_string text)
 {
-      item_ = strdup(text);
+      new (item_) perm_string(text);
       count_ = 1;
 }
 
@@ -46,15 +45,14 @@ hname_t::hname_t(const hname_t&that)
       count_ = that.count_;
       switch (count_) {
 	  case 0:
-	    item_ = 0;
 	    break;
 	  case 1:
-	    item_ = strdup(that.item_);
+	    new(item_) perm_string (that.item_ref1_());
 	    break;
 	  default:
-	    array_ = new char*[count_];
+	    array_ = new perm_string[count_];
 	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
-		  array_[idx] = strdup(that.array_[idx]);
+		  array_[idx] = that.array_[idx];
 	    break;
       }
 }
@@ -65,11 +63,9 @@ hname_t::~hname_t()
 	  case 0:
 	    break;
 	  case 1:
-	    free(item_);
+	    item_ref1_().~perm_string();
 	    break;
 	  default:
-	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
-		  free(array_[idx]);
 	    delete[]array_;
 	    break;
       }
@@ -80,52 +76,54 @@ unsigned hname_t::component_count() const
       return count_;
 }
 
-void hname_t::append(const char*text)
+void hname_t::append(perm_string text)
 {
-      char**tmp;
+      perm_string*tmp;
 
       switch (count_) {
 	  case 0:
 	    count_ = 1;
-	    item_ = strdup(text);
+	    new (item_) perm_string(text);
 	    break;
 	  case 1:
 	    count_ = 2;
-	    tmp = new char*[2];
-	    tmp[0] = item_;
-	    tmp[1] = strdup(text);
+	    tmp = new perm_string[2];
+	    tmp[0] = item_ref1_();
+	    tmp[1] = text;
+	    item_ref1_().~perm_string();
 	    array_ = tmp;
 	    break;
 	  default:
-	    tmp = new char*[count_+1];
+	    tmp = new perm_string[count_+1];
 	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
 		  tmp[idx] = array_[idx];
 	    delete[]array_;
 	    array_ = tmp;
-	    array_[count_] = strdup(text);
+	    array_[count_] = text;
 	    count_ += 1;
       }
 }
 
-void hname_t::prepend(const char*text)
+void hname_t::prepend(perm_string text)
 {
-      char**tmp;
+      perm_string*tmp;
 
       switch (count_) {
 	  case 0:
 	    count_ = 1;
-	    item_ = strdup(text);
+	    new (item_) perm_string(text);
 	    break;
 	  case 1:
 	    count_ = 2;
-	    tmp = new char*[2];
-	    tmp[0] = strdup(text);
-	    tmp[1] = item_;
+	    tmp = new perm_string[2];
+	    tmp[0] = text;
+	    tmp[1] = item_ref1_();
+	    item_ref1_().~perm_string();
 	    array_ = tmp;
 	    break;
 	  default:
-	    tmp = new char*[count_+1];
-	    tmp[0] = strdup(text);
+	    tmp = new perm_string[count_+1];
+	    tmp[0] = text;
 	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
 		  tmp[idx+1] = array_[idx];
 	    delete[]array_;
@@ -134,29 +132,29 @@ void hname_t::prepend(const char*text)
       }
 }
 
-char* hname_t::remove_tail_name()
+perm_string hname_t::remove_tail_name()
 {
       if (count_ == 0)
-	    return 0;
+	    return perm_string();
 
       if (count_ == 1) {
-	    char*tmp = item_;
+	    perm_string tmp = item_ref1_();
 	    count_ = 0;
-	    item_ = 0;
+	    item_ref1_().~perm_string();
 	    return tmp;
       }
 
       if (count_ == 2) {
-	    char*tmp1 = array_[0];
-	    char*tmp2 = array_[1];
+	    perm_string tmp1 = array_[0];
+	    perm_string tmp2 = array_[1];
 	    delete[]array_;
 	    count_ = 1;
-	    item_ = tmp1;
+	    new (item_) perm_string(tmp1);
 	    return tmp2;
       }
 
-      char*tmpo = array_[count_-1];
-      char**tmpa = new char*[count_-1];
+      perm_string tmpo = array_[count_-1];
+      perm_string*tmpa = new perm_string[count_-1];
       for (unsigned idx = 0 ;  idx < count_-1 ;  idx += 1)
 	    tmpa[idx] = array_[idx];
 
@@ -166,24 +164,24 @@ char* hname_t::remove_tail_name()
       return tmpo;
 }
 
-const char* hname_t::peek_name(unsigned idx) const
+perm_string hname_t::peek_name(unsigned idx) const
 {
       if (idx >= count_)
-	    return 0;
+	    return perm_string();
 
       if (count_ == 1)
-	    return item_;
+	    return item_ref1_();
 
       return array_[idx];
 }
 
-const char* hname_t::peek_tail_name() const
+perm_string hname_t::peek_tail_name() const
 {
       switch (count_) {
 	  case 0:
-	    return 0;
+	    return perm_string();
 	  case 1:
-	    return item_;
+	    return item_ref1_();
 	  default:
 	    return array_[count_-1];
       }
@@ -258,6 +256,9 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.6  2007/04/26 03:06:21  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.5  2002/11/02 03:27:52  steve
  *  Allow named events to be referenced by
  *  hierarchical names.

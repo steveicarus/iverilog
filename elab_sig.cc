@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.49 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.50 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -61,6 +61,22 @@ static bool signal_is_in_port(const svector<Module::port_t*>&ports,
       }
 
       return false;
+}
+
+static NetNet*find_signal_in_scope(NetScope*scope, const hname_t&path)
+{
+      NetScope*cur = scope;
+      unsigned idx = 0;
+
+      while (path.peek_name(idx+1)) {
+	    cur = cur->child(path.peek_name(idx));
+	    if (cur == 0)
+		  return 0;
+
+	    idx += 1;
+      }
+
+      return cur->find_signal(path.peek_name(idx));
 }
 
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
@@ -110,7 +126,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    PWire*cur = (*wt).second;
 	    cur->elaborate_sig(des, scope);
 
-	    NetNet*sig = scope->find_signal_in_child(cur->path());
+	    NetNet*sig = find_signal_in_scope(scope, cur->path());
 
 	      // If this wire is a signal of the module (as opposed to
 	      // a port of a function) and is a port, then check that
@@ -509,7 +525,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	   follow the scopes down to the base where I actually want to
 	   elaborate the NetNet object. */
       { hname_t tmp_path = hname_;
-        free(tmp_path.remove_tail_name());
+        tmp_path.remove_tail_name();
 	for (unsigned idx = 0 ;  tmp_path.peek_name(idx) ;  idx += 1) {
 	      scope = scope->child(tmp_path.peek_name(idx));
 
@@ -742,6 +758,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.50  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.49  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.36 2007/01/16 05:44:15 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.37 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -337,27 +337,6 @@ NetNet* NetScope::find_signal(const char*key)
 }
 
 /*
- * This method searches for the signal within this scope. If the path
- * has hierarchy, I follow the child scopes until I get the base name,
- * and look for the key in the deepest scope.
- */
-NetNet* NetScope::find_signal_in_child(const hname_t&path)
-{
-      NetScope*cur = this;
-      unsigned idx = 0;
-
-      while (path.peek_name(idx+1)) {
-	    cur = cur->child(path.peek_name(idx));
-	    if (cur == 0)
-		  return 0;
-
-	    idx += 1;
-      }
-
-      return cur->find_signal(path.peek_name(idx));
-}
-
-/*
  * This method locates a child scope by name. The name is the simple
  * name of the child, no hierarchy is searched.
  */
@@ -412,6 +391,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.37  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.36  2007/01/16 05:44:15  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

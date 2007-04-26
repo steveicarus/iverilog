@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.144 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: pform.cc,v 1.145 2007/04/26 03:06:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -91,20 +91,19 @@ static hname_t scope_stack;
 
 void pform_push_scope(char*name)
 {
-      scope_stack.append(name);
+      scope_stack.append(lex_strings.make(name));
 }
 
 void pform_pop_scope()
 {
-      char*tmp = scope_stack.remove_tail_name();
+      perm_string tmp = scope_stack.remove_tail_name();
       assert(tmp);
-      free(tmp);
 }
 
 static hname_t hier_name(const char*tail)
 {
       hname_t name = scope_stack;
-      name.append(tail);
+      name.append(lex_strings.make(tail));
       return name;
 }
 
@@ -278,7 +277,7 @@ Module::port_t* pform_module_port_reference(char*name,
 					    unsigned lineno)
 {
       Module::port_t*ptmp = new Module::port_t;
-      PEIdent*tmp = new PEIdent(hname_t(name));
+      PEIdent*tmp = new PEIdent(hname_t(lex_strings.make(name)));
       tmp->set_file(file);
       tmp->set_lineno(lineno);
       ptmp->name = lex_strings.make(name);
@@ -514,7 +513,7 @@ void pform_make_udp(perm_string name, list<string>*parms,
 
 	    hname_t pname = (*decl)[idx]->path();
 
-	    if (PWire*cur = defs[pname.peek_name(0)]) {
+	    if (PWire*cur = defs[pname.peek_name(0).str()]) {
 		  bool rc = true;
 		  assert((*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
@@ -527,7 +526,7 @@ void pform_make_udp(perm_string name, list<string>*parms,
 		  }
 
 	    } else {
-		  defs[pname.peek_name(0)] = (*decl)[idx];
+		  defs[pname.peek_name(0).str()] = (*decl)[idx];
 	    }
       }
 
@@ -1286,10 +1285,11 @@ void pform_makewire(const vlltype&li,
 	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, dt, 0);
 	    pform_set_net_range(first->name, range, signed_flag, dt);
 
-	    hname_t name = hier_name(first->name);
+	    perm_string first_name = lex_strings.make(first->name);
+	    hname_t name = hier_name(first_name);
 	    PWire*cur = get_wire_in_module(name);
 	    if (cur != 0) {
-		  PEIdent*lval = new PEIdent(hname_t(first->name));
+		  PEIdent*lval = new PEIdent(hname_t(first_name));
 		  lval->set_file(li.text);
 		  lval->set_lineno(li.first_line);
 		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
@@ -1769,6 +1769,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.145  2007/04/26 03:06:22  steve
+ *  Rework hname_t to use perm_strings.
+ *
  * Revision 1.144  2007/04/19 02:52:53  steve
  *  Add support for -v flag in command file.
  *
