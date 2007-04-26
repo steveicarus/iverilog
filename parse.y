@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.201.2.7 2007/03/23 23:22:57 steve Exp $"
+#ident "$Id: parse.y,v 1.201.2.8 2007/04/26 00:50:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1602,6 +1602,7 @@ module_item
      begin/end. */
 
 	| attribute_list_opt block_item_decl
+                { ; }
 
   /* */
 
