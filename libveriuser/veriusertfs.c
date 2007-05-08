@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.16 2006/10/30 22:45:37 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.17 2007/05/08 22:01:26 steve Exp $"
 #endif
 
 /*
@@ -58,7 +58,7 @@ void veriusertfs_register_table(p_tfcell vtable)
       p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
-      char trace_buf[1024];
+      static char trace_buf[1024];
 
       if (!pli_trace && (path = getenv("PLI_TRACE"))) {
 	    if (strcmp(path,"-") == 0)
@@ -69,8 +69,8 @@ void veriusertfs_register_table(p_tfcell vtable)
 			perror(path);
 			exit(1);
 		  }
-		  setvbuf(pli_trace, trace_buf, _IOLBF, sizeof(trace_buf));
 	    }
+	    setvbuf(pli_trace, trace_buf, _IOLBF, sizeof(trace_buf));
       }
 
       for (tf = vtable; tf; tf++) {
@@ -389,6 +389,9 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.17  2007/05/08 22:01:26  steve
+ *  Trace file line buffer must be static.
+ *
  * Revision 1.16  2006/10/30 22:45:37  steve
  *  Updates for Cygwin portability (pr1585922)
  *
