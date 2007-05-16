@@ -81,7 +81,7 @@ AC_CHECK_FUNCS(lround)
 # Linux does not provide mem stats in rusage, use /proc/self/statm.
 
 AC_CHECK_HEADERS(sys/resource.h)
-case "${host}" in *linux*) AC_DEFINE(LINUX) ;; esac
+case "${host}" in *linux*) AC_DEFINE([LINUX], [1], [Host operating system is Linux.]) ;; esac
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC

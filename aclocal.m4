@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.6 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.7 2007/05/16 23:59:12 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -48,7 +48,7 @@ AC_DEFUN([AX_C_UNDERSCORES_LEADING],
 [AS_VAR_SET(ax_cv_c_underscores_leading, yes)],
 [AS_VAR_SET(ax_cv_c_underscores_leading, no)])])
 if test $ax_cv_c_underscores_leading = yes -a "$CYGWIN" != "yes" -a "$MINGW32" != "yes"; then
- AC_DEFINE(NEED_LU)
+ AC_DEFINE([NEED_LU], [1], [Symbol names in object files produced by C compiler have leading underscores.])
 fi
 ])# AX_C_UNDERSCORES_LEADING
 
@@ -63,7 +63,7 @@ AC_DEFUN([AX_C_UNDERSCORES_TRAILING],
 [AS_VAR_SET(ax_cv_c_underscores_trailing, yes)],
 [AS_VAR_SET(ax_cv_c_underscores_trailing, no)])])
 if test $ax_cv_c_underscores_trailing = yes; then
- AC_DEFINE(NEED_TU)
+ AC_DEFINE([NEED_TU], [1], [Symbol names in object files produced by C compiler have trailing underscores.])
 fi
 ])# AX_C_UNDERSCORES_TRAILING
 
