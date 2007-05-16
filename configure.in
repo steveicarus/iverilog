@@ -69,7 +69,7 @@ AC_TRY_LINK(
 #include <sys/times.h>
 ,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
 do_times=yes
-AC_DEFINE(HAVE_TIMES,1),
+AC_DEFINE([HAVE_TIMES], [1], [The times system call is available in the host operating system.]),
 do_times=no
 )
 AC_MSG_RESULT($do_times)

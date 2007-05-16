@@ -21,8 +21,8 @@ AX_CPP_PRECOMP
 # Do some more operating system specific setup.
 case "${host}" in
     *-*-linux*)
-	AC_DEFINE(_LARGEFILE_SOURCE)
-	AC_DEFINE(_LARGEFILE64_SOURCE)
+	AC_DEFINE([_LARGEFILE_SOURCE], [1], [Indicates LFS (i.e. the ability to create files larger than 2 GiB on 32-bit operating systems).])
+	AC_DEFINE([_LARGEFILE64_SOURCE], [1], [Indicates LFS (i.e. the ability to create files larger than 2 GiB on 32-bit operating systems).])
 	;;
 esac
 
