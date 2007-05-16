@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.cc,v 1.6 2007/04/26 03:06:21 steve Exp $"
+#ident "$Id: HName.cc,v 1.7 2007/05/16 19:12:33 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -28,6 +28,17 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+
+inline perm_string& hname_t::item_ref1_()
+{
+      return *reinterpret_cast<perm_string*>(item_);
+}
+
+inline const perm_string& hname_t::item_ref1_() const
+{
+      return *reinterpret_cast<const perm_string*>(item_);
+}
+
 
 hname_t::hname_t()
 {
@@ -256,6 +267,9 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.7  2007/05/16 19:12:33  steve
+ *  Fix hname_t use of space for 1 perm_string.
+ *
  * Revision 1.6  2007/04/26 03:06:21  steve
  *  Rework hname_t to use perm_strings.
  *

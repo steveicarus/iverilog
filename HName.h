@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.h,v 1.5 2007/04/26 03:06:21 steve Exp $"
+#ident "$Id: HName.h,v 1.6 2007/05/16 19:12:33 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -71,12 +71,12 @@ class hname_t {
     private:
       union {
 	    perm_string*array_;
-	    char* item_[sizeof(perm_string)];
+	    char item_[sizeof(perm_string)];
       };
       unsigned count_;
 
-      perm_string& item_ref1_() { return *(perm_string*)item_; }
-      const perm_string& item_ref1_() const { return *(perm_string*)item_; }
+      perm_string& item_ref1_();
+      const perm_string& item_ref1_() const;
 
     private: // not implemented
       hname_t& operator= (const hname_t&);
@@ -87,6 +87,9 @@ extern bool operator == (const hname_t&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.6  2007/05/16 19:12:33  steve
+ *  Fix hname_t use of space for 1 perm_string.
+ *
  * Revision 1.5  2007/04/26 03:06:21  steve
  *  Rework hname_t to use perm_strings.
  *
